@@ -2,6 +2,14 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
 import type { CheckContext, PageContext } from "../../check-context";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 const REQUIRED_LANDMARKS = [
   {
@@ -34,24 +42,24 @@ export class AriaLandmarksAudit extends Audit {
     failureTitle: "ARIA landmarks complete",
     description:
       "Claude computer use and browser agents rely on ARIA landmarks to identify page regions (navigation, main content, footer). Missing landmarks force agents to guess page structure from raw HTML, leading to misclicked elements and incorrect content extraction.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/operability-safety/aria-landmarks.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "high",
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "Claude computer use and browser agents rely on ARIA landmarks to identify page regions (navigation, main content, footer). Missing landmarks force agents to guess page structure from raw HTML, leading to misclicked elements and incorrect content extraction.",
       fix: "Ensure your page has all four required landmarks: <header> (banner), <main>, <nav> (navigation), and <footer> (contentinfo). Use semantic HTML elements or ARIA roles.",
       code: '<header role="banner">...</header>\n<nav role="navigation">...</nav>\n<main role="main">...</main>\n<footer role="contentinfo">...</footer>',
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl: "https://www.w3.org/WAI/ARIA/apg/patterns/landmarks/",
       tags: ["a11y", "aria", "landmarks", "accessibility"],
     },
@@ -93,7 +101,7 @@ export class AriaLandmarksAudit extends Audit {
         "Page has banner/header, main, navigation, and contentinfo/footer landmarks",
         `Present: ${present.join(", ")}; Missing: ${missing.join(", ")}`,
         {
-          priority: "high",
+          priority: CheckPriority.High,
           description: `Claude computer use and browser agents rely on ARIA landmarks to identify page regions (navigation, main content, footer). Missing landmarks (${missing.join(", ")}) force agents to guess page structure from raw HTML, leading to misclicked elements and incorrect content extraction.`,
           code: missing
             .map((m) => {
@@ -114,7 +122,7 @@ export class AriaLandmarksAudit extends Audit {
       "Page has banner/header, main, navigation, and contentinfo/footer landmarks",
       `Present: ${present.join(", ")}; Missing: ${missing.join(", ")}`,
       {
-        priority: "high",
+        priority: CheckPriority.High,
         description: `Claude computer use and browser agents rely on ARIA landmarks to identify page regions (navigation, main content, footer). Missing landmarks (${missing.join(", ")}) force agents to guess page structure from raw HTML, leading to misclicked elements and incorrect content extraction.`,
         code: missing
           .map((m) => {

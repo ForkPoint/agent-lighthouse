@@ -2,6 +2,14 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext, PageContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /**
  * One comparison key per URL: host without `www.`, lower-cased path with no
@@ -109,25 +117,25 @@ export class CanonicalLinksAudit extends Audit {
     failureTitle: "Canonical URLs point at the wrong page",
     description:
       'A `<link rel="canonical">` tells crawlers which URL is the authoritative version of a page, and the URL they pick is the one eligible to be shown — and cited — in AI answers. The value matters more than the presence: pages that all canonicalize onto the homepage remove themselves from the index.',
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/access-crawl-control/canonical.md",
     // Gate exemption: being refused is what this category reports.
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "medium",
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "A canonical pointing at the wrong URL is worse than no canonical at all: when every page canonicalizes onto the homepage — a common CMS and SPA template bug — the pages consolidate onto one URL and drop out of the index that AI Overviews and AI Mode draw on. A canonical pointing at another domain hands the attribution there.",
       fix: "Give each page a self-referential <link rel=\"canonical\"> in <head> holding that page's own preferred URL. Check templates that emit a hard-coded canonical, and make sure client-side routing updates the tag rather than leaving the shell's value in place.",
       code: '<link rel="canonical" href="https://yoursite.com/this-page" />',
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl:
         "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls",
       tags: ["canonical", "seo", "discoverability"],
@@ -177,7 +185,7 @@ export class CanonicalLinksAudit extends Audit {
           .map((p) => `${p.url} → ${p.targets[0]!.href}`)
           .join(" | "),
         {
-          priority: "high",
+          priority: CheckPriority.High,
           description:
             "Every one of these pages tells crawlers that the homepage is the authoritative version of its content, so their own URLs are consolidated away and stop being eligible to appear — or be cited — in AI answers. This is usually a template emitting one hard-coded canonical for every route.",
           code: '<link rel="canonical" href="https://yoursite.com/this-page" />',
@@ -192,7 +200,7 @@ export class CanonicalLinksAudit extends Audit {
         expected,
         invalid.map((p) => `${p.url} → ${p.invalid.join(", ")}`).join(" | "),
         {
-          priority: "high",
+          priority: CheckPriority.High,
           description:
             "A canonical that does not resolve to an http(s) URL is ignored, so the page falls back to whatever URL the crawler happened to fetch — and any duplicate variants of it stay unconsolidated.",
           code: '<link rel="canonical" href="https://yoursite.com/this-page" />',
@@ -228,7 +236,7 @@ export class CanonicalLinksAudit extends Audit {
         expected,
         pages.map((p) => `${p.url} → ${p.targets[0]!.href}`).join(" | "),
         {
-          priority: "high",
+          priority: CheckPriority.High,
           description:
             "When most scanned pages name the same other URL as canonical, their own URLs are consolidated away. Pagination and filtered variants legitimately do this for a page or two; a site-wide pattern is a template bug.",
           code: '<link rel="canonical" href="https://yoursite.com/this-page" />',
@@ -245,7 +253,7 @@ export class CanonicalLinksAudit extends Audit {
           .map((p) => `${p.url} → ${p.targets.map((t) => t.href).join(" vs ")}`)
           .join(" | "),
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "A page with two canonical elements naming different URLs gives crawlers no usable preference — Google may ignore both and pick its own canonical. Emit exactly one.",
           code: '<link rel="canonical" href="https://yoursite.com/this-page" />',
@@ -260,7 +268,7 @@ export class CanonicalLinksAudit extends Audit {
         expected,
         offSite.map((p) => `${p.url} → ${p.targets[0]!.href}`).join(" | "),
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "A cross-domain canonical hands consolidation — and the citation — to the other domain. That is correct for content you syndicated from elsewhere and a serious defect otherwise.",
           code: '<link rel="canonical" href="https://yoursite.com/this-page" />',
@@ -288,7 +296,7 @@ export class CanonicalLinksAudit extends Audit {
         expected,
         detail,
         {
-          priority: all ? "medium" : "low",
+          priority: all ? CheckPriority.Medium : CheckPriority.Low,
           description:
             'Google states a site "will likely do just fine without specifying a canonical preference" and will choose a canonical itself, so this is a missed opportunity rather than a defect: a self-referential canonical is how you make that choice yourself and keep parameterized and trailing-slash variants consolidated onto one citable URL.',
           code: '<link rel="canonical" href="https://yoursite.com/this-page" />',

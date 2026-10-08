@@ -9,6 +9,7 @@ import {
   mockPageContext,
   unreachedSiteContext,
 } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 describe("FakeHeadingsAudit", () => {
   const audit = new FakeHeadingsAudit();
@@ -25,7 +26,7 @@ describe("FakeHeadingsAudit", () => {
       mockPageContext("https://example.com/", html, 0),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("No fake headings detected");
   });
 
@@ -40,7 +41,7 @@ describe("FakeHeadingsAudit", () => {
       mockPageContext("https://example.com/", html, 0),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("Found 5 fake heading(s)");
   });
 
@@ -54,7 +55,7 @@ describe("FakeHeadingsAudit", () => {
       mockPageContext("https://example.com/", html, 0),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("Found 2 fake heading(s)");
   });
 
@@ -68,7 +69,7 @@ describe("FakeHeadingsAudit", () => {
       mockPageContext("https://example.com/", html, 0),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // A bold statistic or score is an emphasised value, not a section title.
@@ -81,7 +82,7 @@ describe("FakeHeadingsAudit", () => {
     const result = audit.audit(
       mockCheckContext([mockPageContext("https://example.com/", html, 0)]),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // Hidden subtrees are not in the outline an agent reads, fake or real.
@@ -93,7 +94,7 @@ describe("FakeHeadingsAudit", () => {
     const result = audit.audit(
       mockCheckContext([mockPageContext("https://example.com/", html, 0)]),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // The dossier flags a heading only where one is structurally missing.
@@ -104,7 +105,7 @@ describe("FakeHeadingsAudit", () => {
     const result = audit.audit(
       mockCheckContext([mockPageContext("https://example.com/", html, 0)]),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("does not flag labels inside header, label or figcaption", () => {
@@ -117,7 +118,7 @@ describe("FakeHeadingsAudit", () => {
     const result = audit.audit(
       mockCheckContext([mockPageContext("https://example.com/", html, 0)]),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("still flags a styled title introducing a section with no heading", () => {
@@ -127,7 +128,7 @@ describe("FakeHeadingsAudit", () => {
     const result = audit.audit(
       mockCheckContext([mockPageContext("https://example.com/", html, 0)]),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("Found 1 fake heading(s)");
   });
 
@@ -141,7 +142,7 @@ describe("FakeHeadingsAudit", () => {
       mockPageContext("https://example.com/", html, 0),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("Found 2 fake heading(s)");
   });
 
@@ -154,7 +155,7 @@ describe("FakeHeadingsAudit", () => {
       mockPageContext("https://example.com/", html, 0),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("does not flag long bold paragraphs (emphasis, not headings)", () => {
@@ -170,7 +171,7 @@ describe("FakeHeadingsAudit", () => {
       mockPageContext("https://example.com/", html, 0),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("counts fake headings across multiple pages", () => {
@@ -182,7 +183,7 @@ describe("FakeHeadingsAudit", () => {
       ),
     );
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("Found 5 fake heading(s)");
   });
 
@@ -193,7 +194,9 @@ describe("FakeHeadingsAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new FakeHeadingsAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext(pages, rootFiles),
@@ -205,7 +208,7 @@ describe("FakeHeadingsAudit", () => {
     expect(
       plan.skipped.find((stub) => stub.id === FakeHeadingsAudit.meta.id)
         ?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 
   // Heading-like text is body text. A shell serves none, so it has neither fake
@@ -214,9 +217,11 @@ describe("FakeHeadingsAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new FakeHeadingsAudit();
     const rendered = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(rendered.status, "the same input rendered is judged").not.toBe("na");
+    expect(rendered.status, "the same input rendered is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const shell = await instance.audit(shellSiteContext());
-    expect(shell.status).toBe("na");
+    expect(shell.status).toBe(CheckStatus.NotApplicable);
   });
 });

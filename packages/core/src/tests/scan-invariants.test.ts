@@ -1,12 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { invariantViolations, READS_RENDERED_BODY } from "./scan-invariants";
 import { TAG_SCAN_ERROR, TAG_SKIPPED_NO_EVIDENCE } from "../constants";
-import type {
-  CheckResult,
+import type { CheckResult, ScanReport, ScanValidity } from "../types";
+import {
+  CheckPriority,
   CheckStatus,
   EvidenceKey,
-  ScanReport,
-  ScanValidity,
+  ScoreDisplayMode,
+  ScoreTier,
 } from "../types";
 
 /**
@@ -26,11 +27,11 @@ function check(overrides: Partial<CheckResult> & { id: string }): CheckResult {
     category: "content-extraction",
     title: "A check",
     description: "A synthetic check.",
-    status: "pass" as CheckStatus,
+    status: CheckStatus.Pass as CheckStatus,
     score: 1,
     weight: 1,
-    scoreDisplayMode: "binary",
-    priority: "medium",
+    scoreDisplayMode: ScoreDisplayMode.Binary,
+    priority: CheckPriority.Medium,
     impact: "Some impact.",
     fix: "Some fix.",
     ...overrides,
@@ -38,10 +39,10 @@ function check(overrides: Partial<CheckResult> & { id: string }): CheckResult {
 }
 
 const ALL_MET: Record<EvidenceKey, boolean> = {
-  "origin-reachable": true,
-  "unblocked-fetches": true,
-  "rendered-body": true,
-  "sample-adequate": true,
+  [EvidenceKey.OriginReachable]: true,
+  [EvidenceKey.UnblockedFetches]: true,
+  [EvidenceKey.RenderedBody]: true,
+  [EvidenceKey.SampleAdequate]: true,
 };
 
 function validity(overrides: Partial<ScanValidity> = {}): ScanValidity {
@@ -60,7 +61,7 @@ function report(overrides: Partial<ScanReport> = {}): ScanReport {
     url: "https://example.com",
     domain: "example.com",
     overallScore: 60,
-    scoreTier: "partially-ready",
+    scoreTier: ScoreTier.PartiallyReady,
     scanValidity: validity(),
     categories: [],
     topPasses: [],
@@ -96,7 +97,7 @@ describe("scan invariants", () => {
       const violations = invariantViolations(report(), [
         check({
           id: "a/threw",
-          status: "na",
+          status: CheckStatus.NotApplicable,
           score: 0,
           tags: [TAG_SCAN_ERROR],
         }),
@@ -139,7 +140,7 @@ describe("scan invariants", () => {
       scoreTier: null,
       scanValidity: validity({
         judgeable: false,
-        evidence: { ...ALL_MET, "origin-reachable": false },
+        evidence: { ...ALL_MET, [EvidenceKey.OriginReachable]: false },
         unscoredReason: "The scan never reached the site.",
       }),
     });
@@ -153,7 +154,7 @@ describe("scan invariants", () => {
     it("stays quiet when every check declined", () => {
       expect(
         invariantViolations(unreachable, [
-          check({ id: "a/na", status: "na", score: 0 }),
+          check({ id: "a/na", status: CheckStatus.NotApplicable, score: 0 }),
         ]),
       ).toEqual([]);
     });
@@ -162,7 +163,7 @@ describe("scan invariants", () => {
   describe("rule 4 — a shell forbids a pass only from a body-reading audit", () => {
     const shell = report({
       scanValidity: validity({
-        evidence: { ...ALL_MET, "rendered-body": false },
+        evidence: { ...ALL_MET, [EvidenceKey.RenderedBody]: false },
       }),
     });
 
@@ -188,7 +189,7 @@ describe("scan invariants", () => {
     it("fires when the flag disagrees with the evidence map", () => {
       const lying = report({
         scanValidity: validity({
-          evidence: { ...ALL_MET, "unblocked-fetches": false },
+          evidence: { ...ALL_MET, [EvidenceKey.UnblockedFetches]: false },
         }),
       });
       expect(invariantViolations(lying, [check({ id: "a/b" })])).toEqual([
@@ -207,7 +208,7 @@ describe("scan invariants", () => {
       check({ id: "a/ran" }),
       check({
         id: "a/gated",
-        status: "na",
+        status: CheckStatus.NotApplicable,
         score: 0,
         tags: [TAG_SKIPPED_NO_EVIDENCE],
       }),
@@ -278,13 +279,13 @@ describe("scan invariants", () => {
         scoreTier: null,
         scanValidity: validity({
           judgeable: false,
-          evidence: { ...ALL_MET, "origin-reachable": false },
+          evidence: { ...ALL_MET, [EvidenceKey.OriginReachable]: false },
           unscoredReason: "The scan never reached the site.",
         }),
       });
       expect(
         invariantViolations(unscored, [
-          check({ id: "a/na", status: "na", score: 0 }),
+          check({ id: "a/na", status: CheckStatus.NotApplicable, score: 0 }),
         ]),
       ).toEqual([]);
     });

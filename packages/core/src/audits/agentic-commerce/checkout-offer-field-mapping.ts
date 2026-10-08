@@ -10,6 +10,16 @@ import { weightForGrade } from "../../scorer";
 import type { CheckContext, PageContext } from "../../check-context";
 import { flattenJsonLd } from "../../parser";
 import { extractProductFieldVerification } from "../../product-fields";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FieldStatus,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** Character caps the feed spec rejects rows on. */
 const CAPS = {
@@ -324,26 +334,26 @@ export class CheckoutOfferFieldMappingAudit extends Audit {
     failureTitle: "Checkout-eligible offer field mapping",
     description:
       "Audits each PDP against the exact required-and-conditional field set of the OpenAI product feed spec, including its character caps and its conditional triggers, so the merchant learns which rows will be rejected before uploading a feed.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/agentic-commerce/checkout-offer-field-mapping.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: ["product"],
-    defaultPriority: "high",
+    applicablePageTypes: [PageType.Product],
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "Falsifiable claim: the OpenAI feed spec enumerates a closed set of required fields (item_id <=100, title <=150, description <=5000, brand <=70, url, image_url, price with ISO 4217 currency, availability from a 5-value enum, target_countries) plus three conditional triggers that reject rows: gtin-or-mpn required unless identifier_exists=no; availability_date required when availability is pre_order or backorder; seller_privacy_policy and seller_tos required when is_eligible_checkout=true. Validation is row-by-row, so individual products fail silently while the feed as a whole succeeds. A PDP that cannot supply these values forces the merchant to hand-author or scrape them, which is precisely where price mismatch enters. Disproof condition: rows lacking gtin/mpn and identifier_exists being accepted as checkout-eligible.",
       fix: "Publish the feed values on the PDP itself so the row is derived rather than hand-authored: a sku or mpn under 100 characters, a name under 150, a brand name under 70, an absolute HTTPS image URL, a bare decimal price with a 3-letter ISO 4217 priceCurrency, and an availability value from InStock / OutOfStock / PreOrder / BackOrder. Replace AggregateOffer with a per-variant Offer so the price resolves to one number. Add availabilityStarts whenever the offer is a pre-order or backorder, and check the GTIN check digit before publishing.",
       code: SAMPLE,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/agentic-commerce/checkout-offer-field-mapping/",
       tags: ["acp", "feed", "product-schema", "commerce"],
@@ -352,7 +362,7 @@ export class CheckoutOfferFieldMappingAudit extends Audit {
 
   private recommendation() {
     return {
-      priority: "high" as const,
+      priority: CheckPriority.High,
       description: CheckoutOfferFieldMappingAudit.meta.description,
       code: SAMPLE,
     };
@@ -396,7 +406,7 @@ export class CheckoutOfferFieldMappingAudit extends Audit {
     }
 
     return this.pass(
-      `Every required field maps cleanly onto a feed row${presence.gtin === "found" ? " with a valid GTIN" : ""}.`,
+      `Every required field maps cleanly onto a feed row${presence.gtin === FieldStatus.Found ? " with a valid GTIN" : ""}.`,
       EXPECTED,
       foundText,
       found.page.url,

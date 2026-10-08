@@ -5,6 +5,7 @@ import {
   mockPageContext,
   mockFetchResult,
 } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 // isSafeUrl performs a real DNS lookup before the audit follows an advertised
 // <link>. Stub it with an offline stand-in that still blocks loopback and
@@ -61,7 +62,7 @@ describe("OpenApiExistsAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("api-catalog");
   });
 
@@ -75,7 +76,7 @@ describe("OpenApiExistsAudit", () => {
       "/openapi.json": mockFetchResult(SPEC, 200, "application/json"),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("api-catalog");
   });
 
@@ -88,7 +89,7 @@ describe("OpenApiExistsAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("rejects a JSON 200 at /.well-known/api-catalog that carries no linkset", async () => {
@@ -100,7 +101,7 @@ describe("OpenApiExistsAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).not.toBe("pass");
+    expect(result.status).not.toBe(CheckStatus.Pass);
   });
 
   // ── root OpenAPI document ───────────────────────────────────
@@ -110,7 +111,7 @@ describe("OpenApiExistsAudit", () => {
       "/openapi.json": mockFetchResult(SPEC, 200, "application/json"),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("/openapi.json");
   });
 
@@ -123,7 +124,7 @@ describe("OpenApiExistsAudit", () => {
     const ctx = mockCheckContext([], {
       "/openapi.json": mockFetchResult(swagger, 200, "application/json"),
     });
-    expect((await audit.audit(ctx)).status).toBe("pass");
+    expect((await audit.audit(ctx)).status).toBe(CheckStatus.Pass);
   });
 
   it("warns when /openapi.json serves a JSON object that is not an OpenAPI document", async () => {
@@ -135,7 +136,7 @@ describe("OpenApiExistsAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("not a valid OpenAPI");
   });
 
@@ -144,7 +145,7 @@ describe("OpenApiExistsAudit", () => {
       "/openapi.yaml": mockFetchResult(YAML_SPEC, 200, "application/yaml"),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("/openapi.yaml");
   });
 
@@ -157,14 +158,14 @@ describe("OpenApiExistsAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("rejects a YAML body with no paths key", async () => {
     const ctx = mockCheckContext([], {
       "/openapi.yaml": mockFetchResult("foo: bar\n", 200, "application/yaml"),
     });
-    expect((await audit.audit(ctx)).status).toBe("na");
+    expect((await audit.audit(ctx)).status).toBe(CheckStatus.NotApplicable);
   });
 
   // ── absorbed openapi-link (4.18): the head link is a hint, not a gate ──
@@ -177,7 +178,7 @@ describe("OpenApiExistsAudit", () => {
     ]);
     ctx.fetch = async () => mockFetchResult(SPEC, 200, "application/json");
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("/api/v2/openapi.json");
   });
 
@@ -188,7 +189,7 @@ describe("OpenApiExistsAudit", () => {
       ),
     ]);
     ctx.fetch = async () => mockFetchResult(SPEC, 200, "application/json");
-    expect((await audit.audit(ctx)).status).toBe("pass");
+    expect((await audit.audit(ctx)).status).toBe(CheckStatus.Pass);
   });
 
   it("accepts a YAML link and a charset-parameterised MIME type", async () => {
@@ -198,7 +199,7 @@ describe("OpenApiExistsAudit", () => {
       ),
     ]);
     ctx.fetch = async () => mockFetchResult(YAML_SPEC, 200, "application/yaml");
-    expect((await audit.audit(ctx)).status).toBe("pass");
+    expect((await audit.audit(ctx)).status).toBe(CheckStatus.Pass);
   });
 
   it("accepts an alternate link typed application/vnd.oai.openapi whatever the href", async () => {
@@ -208,7 +209,7 @@ describe("OpenApiExistsAudit", () => {
       ),
     ]);
     ctx.fetch = async () => mockFetchResult(SPEC, 200, "application/json");
-    expect((await audit.audit(ctx)).status).toBe("pass");
+    expect((await audit.audit(ctx)).status).toBe(CheckStatus.Pass);
   });
 
   it("finds the link on a developer page rather than only the homepage", async () => {
@@ -221,7 +222,7 @@ describe("OpenApiExistsAudit", () => {
       ),
     ]);
     ctx.fetch = async () => mockFetchResult(SPEC, 200, "application/json");
-    expect((await audit.audit(ctx)).status).toBe("pass");
+    expect((await audit.audit(ctx)).status).toBe(CheckStatus.Pass);
   });
 
   it("warns when an advertised spec URL does not resolve to a spec", async () => {
@@ -233,7 +234,7 @@ describe("OpenApiExistsAudit", () => {
     ctx.fetch = async () =>
       mockFetchResult("<html><body>404</body></html>", 404, "text/html");
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("advertised");
   });
 
@@ -250,7 +251,7 @@ describe("OpenApiExistsAudit", () => {
     };
     const result = await audit.audit(ctx);
     expect(called).toBe(false);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("not safe to probe");
   });
 
@@ -260,7 +261,7 @@ describe("OpenApiExistsAudit", () => {
         '<link rel="alternate" type="application/rss+xml" href="/feed.xml">',
       ),
     ]);
-    expect((await audit.audit(ctx)).status).toBe("na");
+    expect((await audit.audit(ctx)).status).toBe(CheckStatus.NotApplicable);
   });
 
   // ── applicability and verifiability ─────────────────────────
@@ -268,7 +269,7 @@ describe("OpenApiExistsAudit", () => {
   it("is not applicable to a site with no API surface at all", async () => {
     const ctx = mockCheckContext([page("")], {});
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("No API surface");
   });
 
@@ -280,7 +281,7 @@ describe("OpenApiExistsAudit", () => {
       reason: "challenge",
     };
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("Cloudflare");
   });
 
@@ -289,6 +290,6 @@ describe("OpenApiExistsAudit", () => {
       "/openapi.json": mockFetchResult("not json {{{", 200, "application/json"),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
   });
 });

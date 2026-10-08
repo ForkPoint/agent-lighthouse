@@ -1,6 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { SpeakableSchemaAudit } from "./speakable-schema";
 import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
+import {
+  AuditTier,
+  CheckStatus,
+  EvidenceGrade,
+  PageType,
+  ScoreDisplayMode,
+} from "../../types";
 
 const ld = (obj: unknown) =>
   `<script type="application/ld+json">${JSON.stringify(obj)}</script>`;
@@ -35,7 +42,7 @@ describe("SpeakableSchemaAudit", () => {
   describe("meta", () => {
     it("is gated to news/article page types", () => {
       expect(SpeakableSchemaAudit.meta.applicablePageTypes).toEqual([
-        "article",
+        PageType.Article,
       ]);
     });
 
@@ -44,10 +51,12 @@ describe("SpeakableSchemaAudit", () => {
     // change" and scopes it to U.S. English Google Home users and
     // English-language news publishers.
     it("carries grade B / tier scored / weight 0.6", () => {
-      expect(SpeakableSchemaAudit.meta.evidenceGrade).toBe("B");
-      expect(SpeakableSchemaAudit.meta.tier).toBe("scored");
+      expect(SpeakableSchemaAudit.meta.evidenceGrade).toBe(EvidenceGrade.B);
+      expect(SpeakableSchemaAudit.meta.tier).toBe(AuditTier.Scored);
       expect(SpeakableSchemaAudit.meta.weight).toBe(0.6);
-      expect(SpeakableSchemaAudit.meta.scoreDisplayMode).toBe("ternary");
+      expect(SpeakableSchemaAudit.meta.scoreDisplayMode).toBe(
+        ScoreDisplayMode.Ternary,
+      );
     });
 
     it("never claims Alexa or Siri consume speakable", () => {
@@ -69,20 +78,20 @@ describe("SpeakableSchemaAudit", () => {
     it("is not applicable when no news/article page was scanned", () => {
       const ctx = mockCheckContext([]);
       const result = audit.audit(ctx);
-      expect(result.status).toBe("na");
+      expect(result.status).toBe(CheckStatus.NotApplicable);
       expect(result.message).toContain("No news or article page");
     });
 
     it("is not applicable for a product page with no article content", () => {
       const ctx = mockCheckContext([]);
-      expect(audit.audit(ctx).status).toBe("na");
+      expect(audit.audit(ctx).status).toBe(CheckStatus.NotApplicable);
     });
 
     it("brings a non-content page into scope when it carries Article markup", () => {
       const ctx = mockCheckContext([
         homepage(ld(newsArticle({ speakable: speakableSpec }))),
       ]);
-      expect(audit.audit(ctx).status).toBe("pass");
+      expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
     });
   });
 
@@ -92,7 +101,7 @@ describe("SpeakableSchemaAudit", () => {
         newsPage(ld(newsArticle({ speakable: speakableSpec }))),
       ]);
       const result = audit.audit(ctx);
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.message).toContain("1 of 1");
     });
 
@@ -109,7 +118,7 @@ describe("SpeakableSchemaAudit", () => {
           ),
         ),
       ]);
-      expect(audit.audit(ctx).status).toBe("pass");
+      expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
     });
 
     it("accepts xpath as the alternative selector property", () => {
@@ -125,7 +134,7 @@ describe("SpeakableSchemaAudit", () => {
           ),
         ),
       ]);
-      expect(audit.audit(ctx).status).toBe("pass");
+      expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
     });
 
     it("accepts an array of SpeakableSpecification nodes", () => {
@@ -144,7 +153,7 @@ describe("SpeakableSchemaAudit", () => {
           ),
         ),
       ]);
-      expect(audit.audit(ctx).status).toBe("pass");
+      expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
     });
 
     it("detects speakable on a node nested inside @graph", () => {
@@ -159,7 +168,7 @@ describe("SpeakableSchemaAudit", () => {
           }),
         ),
       ]);
-      expect(audit.audit(ctx).status).toBe("pass");
+      expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
     });
 
     it("accepts speakable on a WebPage node", () => {
@@ -173,7 +182,7 @@ describe("SpeakableSchemaAudit", () => {
           }),
         ),
       ]);
-      expect(audit.audit(ctx).status).toBe("pass");
+      expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
     });
 
     it("accepts an array @type that includes an eligible host type", () => {
@@ -187,7 +196,7 @@ describe("SpeakableSchemaAudit", () => {
           }),
         ),
       ]);
-      expect(audit.audit(ctx).status).toBe("pass");
+      expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
     });
   });
 
@@ -195,7 +204,7 @@ describe("SpeakableSchemaAudit", () => {
     it("fails when an article page carries no speakable at all", () => {
       const ctx = mockCheckContext([newsPage(ld(newsArticle()))]);
       const result = audit.audit(ctx);
-      expect(result.status).toBe("fail");
+      expect(result.status).toBe(CheckStatus.Fail);
       expect(result.message).toContain("No speakable");
     });
 
@@ -215,7 +224,7 @@ describe("SpeakableSchemaAudit", () => {
           }),
         ),
       ]);
-      expect(audit.audit(ctx).status).toBe("fail");
+      expect(audit.audit(ctx).status).toBe(CheckStatus.Fail);
     });
 
     it("fails when SpeakableSpecification carries no selector at all", () => {
@@ -224,7 +233,7 @@ describe("SpeakableSchemaAudit", () => {
           ld(newsArticle({ speakable: { "@type": "SpeakableSpecification" } })),
         ),
       ]);
-      expect(audit.audit(ctx).status).toBe("fail");
+      expect(audit.audit(ctx).status).toBe(CheckStatus.Fail);
     });
 
     it("fails when the selector is an empty string", () => {
@@ -240,7 +249,7 @@ describe("SpeakableSchemaAudit", () => {
           ),
         ),
       ]);
-      expect(audit.audit(ctx).status).toBe("fail");
+      expect(audit.audit(ctx).status).toBe(CheckStatus.Fail);
     });
   });
 
@@ -254,7 +263,7 @@ describe("SpeakableSchemaAudit", () => {
         newsPage(ld(newsArticle()), "https://example.com/news/two"),
       ]);
       const result = audit.audit(ctx);
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.message).toContain("1 of 2");
     });
 
@@ -270,7 +279,7 @@ describe("SpeakableSchemaAudit", () => {
         ),
       ]);
       const result = audit.audit(ctx);
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.message).toContain("2 of 2");
     });
   });

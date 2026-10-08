@@ -2,6 +2,15 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
 import type { CheckContext } from "../../check-context";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** Coerce an unknown JSON value to a string; non-strings → ''. */
 function asString(val: unknown): string {
@@ -57,25 +66,25 @@ export class LastModifiedSchemaAudit extends Audit {
     failureTitle: "Last modified date in schema",
     description:
       "AI engines use dateModified in JSON-LD to determine content freshness. Content that shows recent updates is prioritized over stale content.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/answer-readiness/last-modified-schema.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: ["article"],
-    defaultPriority: "medium",
+    applicablePageTypes: [PageType.Article],
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "AI generative engines use dateModified in JSON-LD to rank content by freshness. Without it, agents cannot determine when your content was last reviewed, causing it to be treated as potentially stale compared to competitors with recent dateModified values.",
       fix: "Add a dateModified property to your Article/BlogPosting JSON-LD that differs from datePublished. Update dateModified automatically whenever you revise the content.",
       code: '{\n  "@type": "Article",\n  "datePublished": "2025-01-01T10:00:00Z",\n  "dateModified": "2025-01-20T10:00:00Z"\n}',
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl: "https://schema.org/dateModified",
       tags: ["freshness", "json-ld", "schema", "generative-engine"],
     },
@@ -89,7 +98,7 @@ export class LastModifiedSchemaAudit extends Audit {
         "JSON-LD dateModified present and different from datePublished",
         "No pages scanned",
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "AI engines use dateModified in JSON-LD to determine content freshness. Content that shows recent updates is prioritized over stale content.",
           code: '"dateModified": "2025-01-20T10:00:00Z"',
@@ -131,7 +140,7 @@ export class LastModifiedSchemaAudit extends Audit {
             "JSON-LD dateModified present and different from datePublished",
             `dateModified: ${dateModified}${datePublished ? `, datePublished: ${asString(datePublished)}` : ""}`,
             {
-              priority: "low",
+              priority: CheckPriority.Low,
               description:
                 "AI engines compare dateModified to datePublished to detect actively maintained content. When they match, agents treat the content as never-updated since publication. Update dateModified each time you revise content to signal freshness.",
             },
@@ -146,7 +155,7 @@ export class LastModifiedSchemaAudit extends Audit {
       "JSON-LD dateModified present and different from datePublished",
       "Not found",
       {
-        priority: "medium",
+        priority: CheckPriority.Medium,
         description:
           "AI generative engines use dateModified in JSON-LD to rank content by freshness. Without it, agents cannot determine when your content was last reviewed, causing it to be treated as potentially stale. Add dateModified and update it whenever you revise content.",
         code: '"datePublished": "2025-01-01T10:00:00Z",\n"dateModified": "2025-01-20T10:00:00Z"',

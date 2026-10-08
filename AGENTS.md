@@ -50,6 +50,7 @@ pnpm lint               # oxlint
 pnpm check:dossiers     # registry <-> dossier agreement, both directions
 pnpm check:requires     # each audit's `requires` matches what its source reads
 pnpm check:audit-map    # audit map <-> codebase & dossier agreement
+pnpm check:enums        # no string literal where an enum constant exists
 pnpm changeset          # one per user-visible change
 ```
 
@@ -200,13 +201,23 @@ Write for a reader, not for a researcher:
 - oxlint is the only linter. There is no ESLint config and none should appear.
   Use `// oxlint-disable-*` if a suppression is genuinely needed.
 - Prettier for formatting: `pnpm format`.
+- Name enum values through their constant, never as a string: `CheckStatus.Pass`,
+  `PageType.Product`, `EvidenceKey.RenderedBody`. Each public string union in
+  core is a const object plus a type of the same name, and its Zod schema reads
+  from that object. `pnpm check:enums` rejects a plain string wherever the type
+  checker sees one of those types, and finds new enums by that shape on its own.
+  It also rejects a new `"a" | "b"` union: declare an enum, or a constant list
+  (`as const` array with `(typeof LIST)[number]`) when the code iterates the
+  set. Tagged-union discriminants and `Pick`/`Omit`/`Record` key lists pass.
+  Exempt files and kept unions are listed with a reason in
+  `scripts/check-enums.ts`.
 
 ## Before you commit
 
-All seven, in order:
+All eight, in order:
 
 ```bash
-pnpm build && pnpm test && pnpm typecheck && pnpm lint && pnpm check:dossiers && pnpm check:requires && pnpm check:audit-map
+pnpm build && pnpm test && pnpm typecheck && pnpm lint && pnpm check:dossiers && pnpm check:requires && pnpm check:audit-map && pnpm check:enums
 ```
 
 `check:dossiers` and `check:requires` read the _built_ core bundle, so

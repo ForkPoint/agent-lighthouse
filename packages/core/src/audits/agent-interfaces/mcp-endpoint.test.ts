@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { McpEndpointAudit } from "./mcp-endpoint";
 import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
 import type { FetchOptions, FetchResult } from "../../fetcher";
+import { CheckStatus } from "../../types";
 
 // isSafeUrl performs a real DNS lookup before the audit POSTs to the declared
 // endpoint. Stub it with an offline stand-in that still blocks loopback and
@@ -77,7 +78,7 @@ describe("McpEndpointAudit", () => {
         mockFetchResult(initializeResult({ resources: {} }), 200),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("valid JSON-RPC");
   });
 
@@ -104,7 +105,7 @@ describe("McpEndpointAudit", () => {
         ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("treats 401 with WWW-Authenticate as a present, authorization-protected server", async () => {
@@ -116,14 +117,14 @@ describe("McpEndpointAudit", () => {
       return r;
     };
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("authorization required");
   });
 
   it("still fails on a bare 401 with no WWW-Authenticate challenge", async () => {
     const ctx = ctxWithServers();
     ctx.fetch = async () => mockFetchResult("", 401);
-    expect((await audit.audit(ctx)).status).toBe("fail");
+    expect((await audit.audit(ctx)).status).toBe(CheckStatus.Fail);
   });
 
   it("refuses to POST to a private-network endpoint", async () => {
@@ -135,7 +136,7 @@ describe("McpEndpointAudit", () => {
     };
     const result = await audit.audit(ctx);
     expect(called).toBe(false);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("not safe to probe");
   });
 
@@ -143,7 +144,7 @@ describe("McpEndpointAudit", () => {
     const ctx = ctxWithServers();
     ctx.fetch = async () => mockFetchResult("<html>not json-rpc</html>", 200);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("not valid JSON-RPC");
   });
 
@@ -151,7 +152,7 @@ describe("McpEndpointAudit", () => {
     const ctx = ctxWithServers();
     ctx.fetch = async () => mockFetchResult("", 500);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("HTTP 500");
   });
 
@@ -161,7 +162,7 @@ describe("McpEndpointAudit", () => {
       throw new Error("network");
     };
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("not reachable");
   });
 
@@ -169,7 +170,7 @@ describe("McpEndpointAudit", () => {
 
   it("fails when no endpoint is declared anywhere", async () => {
     const ctx = mockCheckContext([], {});
-    expect((await audit.audit(ctx)).status).toBe("fail");
+    expect((await audit.audit(ctx)).status).toBe(CheckStatus.Fail);
   });
 
   it("fails when no server URL is present", async () => {
@@ -180,7 +181,7 @@ describe("McpEndpointAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No server URL");
   });
 
@@ -192,7 +193,7 @@ describe("McpEndpointAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("no servers array");
   });
 
@@ -216,7 +217,7 @@ describe("McpEndpointAudit", () => {
       initialize: () =>
         mockFetchResult(initializeResult({ resources: {} }), 200),
     });
-    expect((await audit.audit(ctx)).status).toBe("pass");
+    expect((await audit.audit(ctx)).status).toBe(CheckStatus.Pass);
   });
 
   // ── absorbed mcp-capabilities (5.14): capabilities off the wire ──
@@ -229,7 +230,7 @@ describe("McpEndpointAudit", () => {
       toolsList: () => mockFetchResult(toolsListResult([]), 200),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("tools");
     expect(result.found).toContain("resources");
   });
@@ -240,7 +241,7 @@ describe("McpEndpointAudit", () => {
       initialize: () => mockFetchResult(initializeResult({}), 200),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("no capabilities");
   });
 
@@ -250,7 +251,7 @@ describe("McpEndpointAudit", () => {
       initialize: () => mockFetchResult(initializeResult({ tools: null }), 200),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("no capabilities");
   });
 
@@ -273,7 +274,7 @@ describe("McpEndpointAudit", () => {
         ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("2/2");
   });
 
@@ -291,7 +292,7 @@ describe("McpEndpointAudit", () => {
         ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("readOnlyHint");
   });
 
@@ -308,7 +309,7 @@ describe("McpEndpointAudit", () => {
         ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("0/1");
   });
 
@@ -319,7 +320,7 @@ describe("McpEndpointAudit", () => {
       toolsList: () => mockFetchResult("", 500),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("tools/list not answered");
   });
 
@@ -332,6 +333,6 @@ describe("McpEndpointAudit", () => {
     };
     const result = await audit.audit(ctx);
     expect(toolsListCalls).toBe(0);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 });

@@ -104,6 +104,19 @@ const CATEGORY_HTML = `<html><head>
 const CONTENT_HTML = `<html><body><main><h1>Hello</h1><p>Some content here.</p></main></body></html>`;
 
 import { defaultOriginCache, computeOriginCacheKey } from "./origin-cache";
+import {
+  AttemptOutcome,
+  AuditTier,
+  CheckPriority,
+  CheckStatus,
+  ClassificationConfidence,
+  EvidenceKey,
+  FieldStatus,
+  PageType,
+  PageTypeSource,
+  ScoreDisplayMode,
+} from "./types";
+import { PhaseId } from "./progress";
 
 beforeEach(() => {
   h.map.clear();
@@ -232,9 +245,15 @@ describe("runScan — page overrides", () => {
     set("https://example.com/blog/post", CONTENT_HTML);
 
     const overrides: PageOverride[] = [
-      { url: "https://example.com/products/special", pageType: "product" },
-      { url: "https://example.com/", pageType: "content" }, // homepage collision → skipped
-      { url: "https://example.com/products/special/", pageType: "content" }, // dup key → skipped
+      {
+        url: "https://example.com/products/special",
+        pageType: PageType.Product,
+      },
+      { url: "https://example.com/", pageType: PageType.Content }, // homepage collision → skipped
+      {
+        url: "https://example.com/products/special/",
+        pageType: PageType.Content,
+      }, // dup key → skipped
     ];
 
     const report = await runScan(url, { pages: overrides });
@@ -243,7 +262,7 @@ describe("runScan — page overrides", () => {
       (p) => p.url === "https://example.com/products/special",
     );
     expect(special).toBeDefined();
-    expect(special?.pageType).toBe("product");
+    expect(special?.pageType).toBe(PageType.Product);
     // The override URL must not be fetched twice via discovery.
     expect(
       report.pagesScanned.filter((p) => p.url.includes("/products/special")),
@@ -251,7 +270,7 @@ describe("runScan — page overrides", () => {
 
     // A product override turns on field-level verification.
     expect(report.productFields).toBeDefined();
-    expect(report.productFields?.sku).toBe("found");
+    expect(report.productFields?.sku).toBe(FieldStatus.Found);
   });
 });
 
@@ -295,7 +314,9 @@ describe("runScan — the evidence gate", () => {
     const gated = checks.filter((c) => c.tags?.includes("skipped:no-evidence"));
 
     expect(gated.length).toBeGreaterThan(0);
-    expect(gated.every((c) => c.status === "na")).toBe(true);
+    expect(gated.every((c) => c.status === CheckStatus.NotApplicable)).toBe(
+      true,
+    );
     expect(gated[0].explanation).toContain("Not assessed");
   });
 
@@ -307,7 +328,7 @@ describe("runScan — the evidence gate", () => {
       .flatMap((c) => c.checks)
       .find((c) => c.id === "content-extraction/server-rendered");
 
-    expect(serverRendered?.status).toBe("fail");
+    expect(serverRendered?.status).toBe(CheckStatus.Fail);
     expect(serverRendered?.tags ?? []).not.toContain("skipped:no-evidence");
   });
 
@@ -358,7 +379,7 @@ describe("runScan — the evidence gate", () => {
 
     expect(typeof report.overallScore).toBe("number");
     expect(report.scanValidity?.judgeable).toBe(true);
-    expect(report.scanValidity?.evidence["rendered-body"]).toBe(true);
+    expect(report.scanValidity?.evidence[EvidenceKey.RenderedBody]).toBe(true);
   });
 
   it("keeps na out of the recommendations", async () => {
@@ -371,7 +392,7 @@ describe("runScan — the evidence gate", () => {
     const naIds = new Set(
       report.categories
         .flatMap((c) => c.checks)
-        .filter((c) => c.status === "na")
+        .filter((c) => c.status === CheckStatus.NotApplicable)
         .map((c) => c.id),
     );
     const recommendedIds = (
@@ -401,9 +422,9 @@ describe("runScan — evidence tier", () => {
     expect(
       all.every(
         (c) =>
-          c.tier === "scored" ||
-          c.tier === "informative" ||
-          c.tier === "experimental",
+          c.tier === AuditTier.Scored ||
+          c.tier === AuditTier.Informative ||
+          c.tier === AuditTier.Experimental,
       ),
     ).toBe(true);
   });
@@ -552,7 +573,7 @@ describe("runScan — the scan budget", () => {
     const cut = checks.filter((c) => c.tags?.includes("skipped:scan-budget"));
 
     expect(cut.length).toBeGreaterThan(0);
-    expect(cut.every((c) => c.status === "na")).toBe(true);
+    expect(cut.every((c) => c.status === CheckStatus.NotApplicable)).toBe(true);
     expect(cut[0].explanation).toContain("The scan budget of 200 ms ran out.");
     expect(report.conditions?.budget).toMatchObject({
       limitMs: 200,
@@ -627,13 +648,13 @@ describe("runScan — conditions name the target", () => {
     set("https://example.com/", PRODUCT_HTML);
 
     const report = await runScan(target, {
-      pages: [{ url: "https://example.com/", pageType: "product" }],
+      pages: [{ url: "https://example.com/", pageType: PageType.Product }],
     });
 
     expect(report.conditions?.url).toBe(target);
     expect(report.pagesScanned[0]?.url).toBe("https://example.com/");
     expect(report.conditions?.pageType.type).not.toBe("product");
-    expect(report.conditions?.pageType.source).toBe("detected");
+    expect(report.conditions?.pageType.source).toBe(PageTypeSource.Detected);
   });
 });
 
@@ -651,12 +672,12 @@ describe("runScan — non-root scan URL", () => {
       expect(report.pagesScanned).toEqual([
         {
           url,
-          pageType: pageType === "content" ? "unknown" : pageType,
+          pageType: pageType === PageType.Content ? "unknown" : pageType,
           classification: {
-            type: pageType === "content" ? "unknown" : pageType,
-            source: "declared",
+            type: pageType === PageType.Content ? "unknown" : pageType,
+            source: PageTypeSource.Declared,
             confidence:
-              pageType === "content" || pageType === "unknown"
+              pageType === PageType.Content || pageType === PageType.Unknown
                 ? "unknown"
                 : "strong",
             signals: [`declared:${pageType}`],
@@ -669,7 +690,7 @@ describe("runScan — non-root scan URL", () => {
       const canonical = report.categories
         .flatMap((c) => c.checks)
         .find((c) => c.id === "access-crawl-control/canonical");
-      expect(canonical?.status).toBe("pass");
+      expect(canonical?.status).toBe(CheckStatus.Pass);
       expect(canonical?.tags ?? []).not.toContain("skipped:no-evidence");
     },
   );
@@ -706,10 +727,10 @@ describe("runScan — page overrides", () => {
     }
 
     const overrides: PageOverride[] = [
-      { url: "https://example.com/o1", pageType: "content" },
-      { url: "https://example.com/o2", pageType: "content" },
-      { url: "https://example.com/o3", pageType: "content" },
-      { url: "https://example.com/o4", pageType: "content" },
+      { url: "https://example.com/o1", pageType: PageType.Content },
+      { url: "https://example.com/o2", pageType: PageType.Content },
+      { url: "https://example.com/o3", pageType: PageType.Content },
+      { url: "https://example.com/o4", pageType: PageType.Content },
     ];
 
     const report = await runScan(url, { pages: overrides });
@@ -738,7 +759,7 @@ describe("runScan — report assembly fallbacks", () => {
         title: "t",
         description: "d",
         score: 0,
-        scoreDisplayMode: "binary",
+        scoreDisplayMode: ScoreDisplayMode.Binary,
         impact: "Low",
         fix: "f",
         explanation: "e",
@@ -748,10 +769,30 @@ describe("runScan — report assembly fallbacks", () => {
 
     const crafted: AuditRunResult = {
       checks: [
-        mk({ id: "m1", status: "fail", priority: "mystery", score: 0 }),
-        mk({ id: "m2", status: "fail", priority: "enigma", score: 0 }),
-        mk({ id: "m3", status: "pass", priority: "low", score: 1 }),
-        mk({ id: "m4", status: "pass", priority: "low", score: 1 }),
+        mk({
+          id: "m1",
+          status: CheckStatus.Fail,
+          priority: "mystery",
+          score: 0,
+        }),
+        mk({
+          id: "m2",
+          status: CheckStatus.Fail,
+          priority: "enigma",
+          score: 0,
+        }),
+        mk({
+          id: "m3",
+          status: CheckStatus.Pass,
+          priority: CheckPriority.Low,
+          score: 1,
+        }),
+        mk({
+          id: "m4",
+          status: CheckStatus.Pass,
+          priority: CheckPriority.Low,
+          score: 1,
+        }),
       ] as AuditRunResult["checks"],
       categories: [
         {
@@ -789,7 +830,7 @@ describe("runScan — report assembly fallbacks", () => {
         title: "t",
         description: "d",
         score: 0,
-        scoreDisplayMode: "binary",
+        scoreDisplayMode: ScoreDisplayMode.Binary,
         impact: "Low",
         fix: "f",
         explanation: "e",
@@ -801,28 +842,28 @@ describe("runScan — report assembly fallbacks", () => {
     const applicable = [
       mk({
         id: "structured-data/service-schema",
-        status: "pass",
-        priority: "low",
+        status: CheckStatus.Pass,
+        priority: CheckPriority.Low,
         score: 1,
       }),
       mk({
         id: "machine-discovery/llms-txt-exists",
-        status: "pass",
-        priority: "low",
+        status: CheckStatus.Pass,
+        priority: CheckPriority.Low,
         score: 1,
       }),
       mk({
         id: "cp1",
         category: "access-crawl-control",
-        status: "pass",
-        priority: "low",
+        status: CheckStatus.Pass,
+        priority: CheckPriority.Low,
         score: 1,
       }),
       mk({
         id: "tr1",
         category: "content-extraction",
-        status: "pass",
-        priority: "low",
+        status: CheckStatus.Pass,
+        priority: CheckPriority.Low,
         score: 1,
       }),
     ];
@@ -831,28 +872,28 @@ describe("runScan — report assembly fallbacks", () => {
     const naStubs = [
       mk({
         id: "agentic-commerce/offer-schema",
-        status: "na",
-        priority: "low",
+        status: CheckStatus.NotApplicable,
+        priority: CheckPriority.Low,
         score: 0,
       }),
       mk({
         id: "machine-discovery/llms-txt-structure",
-        status: "na",
-        priority: "low",
+        status: CheckStatus.NotApplicable,
+        priority: CheckPriority.Low,
         score: 0,
       }),
       mk({
         id: "cp2",
         category: "access-crawl-control",
-        status: "na",
-        priority: "low",
+        status: CheckStatus.NotApplicable,
+        priority: CheckPriority.Low,
         score: 0,
       }),
       mk({
         id: "tr2",
         category: "content-extraction",
-        status: "na",
-        priority: "low",
+        status: CheckStatus.NotApplicable,
+        priority: CheckPriority.Low,
         score: 0,
       }),
     ];
@@ -993,10 +1034,15 @@ describe("readiness vitals — v2 id translation", () => {
         category: r.v2Category,
         title: "t",
         description: "d",
-        status: r.score === 1 ? "pass" : r.score === 0 ? "fail" : "warn",
+        status:
+          r.score === 1
+            ? CheckStatus.Pass
+            : r.score === 0
+              ? CheckStatus.Fail
+              : CheckStatus.Warn,
         score: r.score,
-        scoreDisplayMode: "binary",
-        priority: "low",
+        scoreDisplayMode: ScoreDisplayMode.Binary,
+        priority: CheckPriority.Low,
         impact: "Low",
         fix: "f",
         explanation: "e",
@@ -1025,10 +1071,10 @@ describe("readiness vitals — v2 id translation", () => {
           category: "content-extraction",
           title: "t",
           description: "d",
-          status: "warn",
+          status: CheckStatus.Warn,
           score: 0.5,
-          scoreDisplayMode: "binary",
-          priority: "low",
+          scoreDisplayMode: ScoreDisplayMode.Binary,
+          priority: CheckPriority.Low,
           impact: "Low",
           fix: "f",
           explanation: "e",
@@ -1040,10 +1086,10 @@ describe("readiness vitals — v2 id translation", () => {
           category: "operability-safety",
           title: "t",
           description: "d",
-          status: "fail",
+          status: CheckStatus.Fail,
           score: 0,
-          scoreDisplayMode: "binary",
-          priority: "low",
+          scoreDisplayMode: ScoreDisplayMode.Binary,
+          priority: CheckPriority.Low,
           impact: "Low",
           fix: "f",
           explanation: "e",
@@ -1074,7 +1120,7 @@ describe("runScan — informative checks stay out of recommendations and top lis
         title: "t",
         description: "d",
         score: 0,
-        scoreDisplayMode: "binary",
+        scoreDisplayMode: ScoreDisplayMode.Binary,
         impact: "Low",
         fix: "f",
         explanation: "e",
@@ -1087,26 +1133,31 @@ describe("runScan — informative checks stay out of recommendations and top lis
         mk({
           id: "info-fail",
           description: "info-fail-description",
-          status: "fail",
-          priority: "critical",
+          status: CheckStatus.Fail,
+          priority: CheckPriority.Critical,
           score: 0,
-          scoreDisplayMode: "informative",
+          scoreDisplayMode: ScoreDisplayMode.Informative,
         }),
         mk({
           id: "real-fail",
           description: "real-fail-description",
-          status: "fail",
-          priority: "high",
+          status: CheckStatus.Fail,
+          priority: CheckPriority.High,
           score: 0,
         }),
         mk({
           id: "info-pass",
-          status: "pass",
-          priority: "low",
+          status: CheckStatus.Pass,
+          priority: CheckPriority.Low,
           score: 1,
-          scoreDisplayMode: "informative",
+          scoreDisplayMode: ScoreDisplayMode.Informative,
         }),
-        mk({ id: "real-pass", status: "pass", priority: "low", score: 1 }),
+        mk({
+          id: "real-pass",
+          status: CheckStatus.Pass,
+          priority: CheckPriority.Low,
+          score: 1,
+        }),
       ] as AuditRunResult["checks"],
       categories: [
         {
@@ -1157,10 +1208,10 @@ describe("runScan — informative checks stay out of readiness vitals", () => {
         category: "misc",
         title: "t",
         description: "d",
-        status: "pass",
-        priority: "low",
+        status: CheckStatus.Pass,
+        priority: CheckPriority.Low,
         score: 1,
-        scoreDisplayMode: "binary",
+        scoreDisplayMode: ScoreDisplayMode.Binary,
         impact: "Low",
         fix: "f",
         explanation: "e",
@@ -1210,16 +1261,16 @@ describe("runScan — informative checks stay out of readiness vitals", () => {
       mk({
         id: "machine-discovery/llms-txt-link-descriptions",
         category: "content-structure",
-        status: "fail",
+        status: CheckStatus.Fail,
         score: 0,
-        scoreDisplayMode: "informative",
+        scoreDisplayMode: ScoreDisplayMode.Informative,
       }),
       mk({
         id: "cp-2",
         category: "access-crawl-control",
-        status: "fail",
+        status: CheckStatus.Fail,
         score: 0,
-        scoreDisplayMode: "informative",
+        scoreDisplayMode: ScoreDisplayMode.Informative,
       }),
     ];
 
@@ -1281,22 +1332,22 @@ describe("runScan — progress events", () => {
 
     // fetch-root emits one unit:done per fetched root file.
     const rootUnits = events.filter(
-      (e) => e.type === "unit:done" && e.phase === "fetch-root",
+      (e) => e.type === "unit:done" && e.phase === PhaseId.FetchRoot,
     );
     const rootStart = events.find(
-      (e) => e.type === "phase:start" && e.phase === "fetch-root",
+      (e) => e.type === "phase:start" && e.phase === PhaseId.FetchRoot,
     )!;
     expect(rootStart).toMatchObject({ totalUnits: rootUnits.length });
     expect(rootUnits.length).toBeGreaterThan(20);
 
     // audits phase: every runnable audit settles into exactly one unit event.
     const auditsStart = events.find(
-      (e) => e.type === "phase:start" && e.phase === "audits",
+      (e) => e.type === "phase:start" && e.phase === PhaseId.Audits,
     )!;
     const auditUnits = events.filter(
       (e) =>
         (e.type === "unit:done" || e.type === "unit:fail") &&
-        e.phase === "audits",
+        e.phase === PhaseId.Audits,
     );
     expect(auditsStart).toMatchObject({ totalUnits: auditUnits.length });
     expect(auditUnits.length).toBeGreaterThan(100);
@@ -1379,13 +1430,13 @@ describe("runScan — mounted site sitemap scope", () => {
       expect(
         checks.find((check) => check.id === "machine-discovery/sitemap-exists")
           ?.status,
-      ).toBe("pass");
+      ).toBe(CheckStatus.Pass);
       expect(
         checks.find(
           (check) =>
             check.id === "machine-discovery/sitemap-lastmod-verifiability",
         )?.status,
-      ).toBe("pass");
+      ).toBe(CheckStatus.Pass);
       expect(h.calls).toContain("https://example.com/project/page/");
       expect(h.calls).not.toContain("https://example.com/other-project/post/");
       expect(h.calls).toContain("https://example.com/robots.txt");
@@ -1461,13 +1512,13 @@ describe("runScan — v7 article scope", () => {
       const articleChecks = checks.filter((c) => articleIds.includes(c.id));
       expect(articleChecks).toHaveLength(12);
       for (const check of articleChecks) {
-        expect(check.status, check.id).toBe("na");
+        expect(check.status, check.id).toBe(CheckStatus.NotApplicable);
         expect(check.tags, check.id).toContain("skipped:page-type");
       }
       expect(
         checks.find((c) => c.id === "content-extraction/language-attribute")
           ?.status,
-      ).toBe("pass");
+      ).toBe(CheckStatus.Pass);
       expect(report.pagesScanned[0].classification?.type).toBe("unknown");
     },
   );
@@ -1484,12 +1535,12 @@ describe("runScan — v7 article scope", () => {
       );
       const report = await runScan(
         url,
-        declared ? { pageType: "article" } : {},
+        declared ? { pageType: PageType.Article } : {},
       );
       const check = report.categories
         .flatMap((c) => c.checks)
         .find((c) => c.id === "structured-data/article-schema");
-      expect(check?.status).toBe("fail");
+      expect(check?.status).toBe(CheckStatus.Fail);
       expect(check?.scoreDisplayMode).toBe(
         declared ? "ternary" : "informative",
       );
@@ -1497,7 +1548,7 @@ describe("runScan — v7 article scope", () => {
       expect(report.conditions?.pageType).toEqual({
         type: "article",
         source: declared ? "declared" : "detected",
-        confidence: "strong",
+        confidence: ClassificationConfidence.Strong,
         signals: [declared ? "declared:article" : "article-open-graph"],
       });
       expect(report.pagesScanned[0].classification).toEqual(
@@ -1509,8 +1560,8 @@ describe("runScan — v7 article scope", () => {
     const report = await runScan("https://example.com/unread");
     expect(report.conditions?.pageType).toEqual({
       type: "unknown",
-      source: "detected",
-      confidence: "unknown",
+      source: PageTypeSource.Detected,
+      confidence: ClassificationConfidence.Unknown,
       signals: ["page-unread"],
     });
   });
@@ -1524,23 +1575,25 @@ describe("runScan — selected page evidence and mixed scope", () => {
     const url = "https://example.com/story";
     set(url, article);
     const report = await runScan(url, {
-      pages: [{ url: "https://example.com/missing", pageType: "article" }],
+      pages: [
+        { url: "https://example.com/missing", pageType: PageType.Article },
+      ],
     });
     const check = report.categories
       .flatMap((c) => c.checks)
       .find((c) => c.id === "structured-data/article-schema")!;
-    expect(check.status).toBe("na");
+    expect(check.status).toBe(CheckStatus.NotApplicable);
     expect(check.tags).toContain("skipped:no-evidence");
     expect(check.advisoryResults?.[0]).toMatchObject({
-      status: "fail",
-      scoreDisplayMode: "informative",
+      status: CheckStatus.Fail,
+      scoreDisplayMode: ScoreDisplayMode.Informative,
     });
     expect(check.coverage?.unreadUrls).toEqual(["https://example.com/missing"]);
     expect(report.pageAttempts).toContainEqual({
       url: "https://example.com/missing",
-      pageType: "article",
-      source: "declared",
-      outcome: "unread",
+      pageType: PageType.Article,
+      source: PageTypeSource.Declared,
+      outcome: AttemptOutcome.Unread,
       status: 404,
     });
     expect(report.pagesScanned.map((p) => p.url)).toEqual([url]);
@@ -1554,7 +1607,7 @@ describe("runScan — selected page evidence and mixed scope", () => {
     const traces: import("./audit-trace").AuditTrace[] = [];
     const events: import("./progress").ScanEvent[] = [];
     const report = await runScan(url, {
-      pages: [{ url: declared, pageType: "article" }],
+      pages: [{ url: declared, pageType: PageType.Article }],
       onAuditTrace: (t) => traces.push(t),
       onEvent: (e) => events.push(e),
       includeExperimental: true,
@@ -1569,12 +1622,12 @@ describe("runScan — selected page evidence and mixed scope", () => {
     expect(check.coverage?.inputUrls).toEqual([declared]);
     expect(check.advisoryResults?.[0].coverage?.inputUrls).toEqual([url]);
     const auditTrace = traces.find((t) => t.id === check.id)!;
-    expect(auditTrace.advisoryResults?.[0].status).toBe("fail");
+    expect(auditTrace.advisoryResults?.[0].status).toBe(CheckStatus.Fail);
     // Tracker completion counts both executed and skipped registrations.
     const done = events.filter(
       (e) =>
         (e.type === "unit:done" || e.type === "unit:fail") &&
-        e.phase === "audits",
+        e.phase === PhaseId.Audits,
     );
     expect(done).toHaveLength(checks.length);
   });

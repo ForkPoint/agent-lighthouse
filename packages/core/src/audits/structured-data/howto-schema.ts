@@ -3,6 +3,15 @@ import { Audit } from "../../audit";
 import type { CheckContext, PageContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
 import { flattenJsonLd } from "../../parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "../../types";
 
 function matchesType(schema: Record<string, unknown>, type: string): boolean {
   const t = schema["@type"];
@@ -42,19 +51,19 @@ export class HowToSchemaAudit extends Audit {
     failureTitle: "HowTo schema",
     description:
       "AI agents use HowTo schema to present step-by-step instructions as structured answers. Without it, agents must parse your numbered headings heuristically, which often breaks step ordering or misses steps entirely.",
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "informative"),
-    evidenceGrade: "C",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/structured-data/howto-schema.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: ["content", "unknown", "article"],
-    defaultPriority: "low",
+    applicablePageTypes: [PageType.Unknown, PageType.Article],
+    defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
         "Without HowTo schema, AI agents must heuristically parse your numbered headings to extract step-by-step instructions. This often results in broken step ordering, missed steps, or incomplete instructions in AI-generated answers, reducing your content utility.",
@@ -68,7 +77,7 @@ export class HowToSchemaAudit extends Audit {
     { "@type": "HowToStep", "name": "Verify your email", "text": "Click the link in the confirmation email." }
   ]
 }`,
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl: "https://schema.org/HowTo",
       tags: ["json-ld", "schema", "content", "how-to", "instructions"],
     },
@@ -85,7 +94,7 @@ export class HowToSchemaAudit extends Audit {
         "HowTo schema with step array on pages with sequential numbered headings.",
         "No sequential numbered headings found.",
         {
-          priority: "low",
+          priority: CheckPriority.Low,
           description:
             "AI agents use HowTo schema to present step-by-step instructions as structured answers. If your content includes processes or tutorials, add HowTo JSON-LD so agents can walk users through steps one at a time.",
           code: `{
@@ -126,7 +135,7 @@ export class HowToSchemaAudit extends Audit {
         "HowTo schema with step array on pages with sequential numbered headings.",
         `${pagesWithHowTo.length}/${pagesWithSteps.length} pages with HowTo schema`,
         {
-          priority: "low",
+          priority: CheckPriority.Low,
           description:
             "AI agents use HowTo schema to present step-by-step instructions as structured answers. Without it, agents must parse your numbered headings heuristically, which often breaks step ordering or misses steps entirely.",
           code: `{
@@ -147,7 +156,7 @@ export class HowToSchemaAudit extends Audit {
       "HowTo schema with step array on pages with sequential numbered headings.",
       `${pagesWithHowTo.length}/${pagesWithSteps.length} pages with HowTo schema`,
       {
-        priority: "low",
+        priority: CheckPriority.Low,
         description:
           "AI agents use HowTo schema to present step-by-step instructions as structured answers. Without it, agents must parse your numbered headings heuristically, which often breaks step ordering or misses steps entirely.",
         code: `{

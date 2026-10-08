@@ -3,6 +3,15 @@ import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
 import type { CheckContext, PageContext } from "../../check-context";
 import { findReviewNodes } from "./review-signals";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "../../types";
 
 /**
  * Quantified social proof — the factor the GEO benchmark actually measured.
@@ -116,25 +125,25 @@ export class TrustSignalsAudit extends Audit {
     failureTitle: "Trust and evidence signals on homepage",
     description:
       "A 252,000-trial controlled study across six LLMs (arXiv 2605.25517) measured two page factors that shift which source an AI answer engine cites: quantified social proof (OR 2.14, significant in 4 of 6 models) and claims paired with evidence (OR 2.09, 5 of 6 models). The same study found promotional tone's effect too small and inconsistent to guide, and it named comparison content in its practical implications without measuring it. This audit scores those two page factors and nothing else.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/answer-readiness/trust-signals.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: ["homepage"],
-    defaultPriority: "low",
+    applicablePageTypes: [PageType.Homepage],
+    defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
         'Trust cues in retrieved page text change which source an answer engine cites, but only the measured ones: quantified ratings/review counts (OR 2.14 to >10,000, significant in 4 of 6 models) and claims paired with evidence (OR 2.09 to >10,000, 5 of 6 models). The same study found "Overly Promotional" tone significant in only 3 of 6 models with mixed direction — neutral phrasing won where the effect was significant — so puffery earns nothing. It named comparison content only in its practical implications and never measured it, so comparison content is reported unscored by answer-readiness/comparison-tables rather than counted here. These are the "smaller gains" tier: topic match, price, recency and list position dwarf them.',
       fix: 'Put a number on your social proof ("Rated 4.8/5 across 1,204 reviews", "Trusted by 12,000 teams"), and back factual claims with outbound citations or attributed sources instead of hedging. Delete promotional adjectives — they do not move citation. Comparison content is reported separately and unscored by answer-readiness/comparison-tables — the same study only names it in its practical implications and never measured it.',
       code: '<section>\n  <p>Rated <strong>4.8 out of 5</strong> across <strong>1,204 reviews</strong>.</p>\n  <p>Independent testing confirms a 40% reduction in latency\n     (<a href="https://example.org/benchmark">2026 benchmark report</a>),\n     and <cite>NIST SP 800-90B</cite> documents the method.</p>\n</section>',
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl: "https://arxiv.org/abs/2605.25517",
       tags: ["trust", "social-proof", "generative-engine", "geo"],
     },
@@ -233,7 +242,7 @@ export class TrustSignalsAudit extends Audit {
         EXPECTED,
         found,
         {
-          priority: "low",
+          priority: CheckPriority.Low,
           description: `Missing: ${missing.join("; ")}. These are the factors a 252,000-trial study measured as moving AI citation, and a pass needs every one still in scope here. Promotional adjectives are not among them.`,
           code: TrustSignalsAudit.meta.guidance?.code,
         },
@@ -246,7 +255,7 @@ export class TrustSignalsAudit extends Audit {
       EXPECTED,
       found,
       {
-        priority: "low",
+        priority: CheckPriority.Low,
         description: `Missing: ${missing.join("; ")}. A 252,000-trial controlled study across six LLMs measured both as shifting which source an answer engine cites. Quantify your social proof and cite evidence for factual claims. Comparison content is reported separately and unscored by answer-readiness/comparison-tables.`,
         code: TrustSignalsAudit.meta.guidance?.code,
       },

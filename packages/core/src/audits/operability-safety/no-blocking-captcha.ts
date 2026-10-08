@@ -3,6 +3,13 @@ import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
 import type { CheckContext } from "../../check-context";
 import { scanReadPageText, unreadPageTextReason } from "../../scan-evidence";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /**
  * CAPTCHA inclusions, matched on the script that loads the widget or the
@@ -27,16 +34,16 @@ export class NoBlockingCaptchaAudit extends Audit {
     failureTitle: "Forms don't use blocking CAPTCHA",
     description:
       'Blocking CAPTCHAs like reCAPTCHA and hCaptcha prevent AI agents from completing forms on behalf of users. When someone asks an AI assistant to "fill out the contact form on Example.com," the CAPTCHA blocks the action entirely. Use honeypot fields or invisible server-side validation instead.',
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/operability-safety/no-blocking-captcha.md",
     // Gate exemption: a captcha wall is what this audit reports, and a wall denies
     // `origin-reachable` — gating on it made the finding unreachable for the 403 that
     // produced it. The wall branch reads `wafProtection`, not any response body.
     requires: [],
-    defaultPriority: "high",
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         'Blocking CAPTCHAs completely prevent AI agents from submitting forms on behalf of users. When a user asks an agent to "fill out the contact form," the CAPTCHA blocks the action entirely, forcing the user to do it manually or go to a competitor.',
@@ -54,7 +61,7 @@ export class NoBlockingCaptchaAudit extends Audit {
 </form>
 
 <!-- Server-side: reject if website_url is filled -->`,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       tags: ["forms", "captcha", "accessibility", "bot-detection"],
     },
   };
@@ -71,7 +78,7 @@ export class NoBlockingCaptchaAudit extends Audit {
         "No bot wall or blocking CAPTCHA between an agent and the page",
         `${waf.name}: ${waf.reason}`,
         {
-          priority: "high",
+          priority: CheckPriority.High,
           description: NoBlockingCaptchaAudit.meta.description,
         },
         ctx.baseUrl,
@@ -127,7 +134,7 @@ export class NoBlockingCaptchaAudit extends Audit {
       "No recaptcha, hcaptcha, or turnstile script includes detected",
       `CAPTCHA: ${uniqueTypes.join(", ")} on ${[...new Set(detectedCaptchas.map((c) => c.page))].join(", ")}`,
       {
-        priority: "high",
+        priority: CheckPriority.High,
         description: NoBlockingCaptchaAudit.meta.description,
         code: `<!-- Replace CAPTCHA with a honeypot field -->\n<form action="/api/contact" method="POST">\n  <!-- Hidden honeypot field - bots fill this, humans don't -->\n  <input type="text" name="website_url" style="display:none"\n    tabindex="-1" autocomplete="off" />\n\n  <input type="text" name="name" required />\n  <input type="email" name="email" required />\n  <textarea name="message" required></textarea>\n  <button type="submit">Send</button>\n</form>\n\n<!-- Server-side: reject if website_url is filled -->`,
       },

@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { OpenApiServersAudit } from "./openapi-servers";
 import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
 import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
+import { CheckStatus } from "../../types";
 
 function specWithServers(servers: unknown): string {
   return JSON.stringify({ openapi: "3.0.3", servers, paths: {} });
@@ -19,7 +20,7 @@ describe("OpenApiServersAudit", () => {
     });
     ctx.fetch = async () => mockFetchResult("", 200);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("reachable");
   });
 
@@ -32,7 +33,7 @@ describe("OpenApiServersAudit", () => {
     });
     ctx.fetch = async () => mockFetchResult("", 503);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("HTTP 503");
   });
 
@@ -45,8 +46,8 @@ describe("OpenApiServersAudit", () => {
     });
     ctx.fetch = async () => mockFetchResult("", 404);
     const result = await audit.audit(ctx);
-    expect(result.status).not.toBe("pass");
-    expect(result.status).toBe("warn");
+    expect(result.status).not.toBe(CheckStatus.Pass);
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("HTTP 404");
   });
 
@@ -61,7 +62,7 @@ describe("OpenApiServersAudit", () => {
       throw new Error("network");
     };
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("could not be reached");
   });
 
@@ -71,7 +72,7 @@ describe("OpenApiServersAudit", () => {
   it("declines when there is no spec", async () => {
     const ctx = mockCheckContext([], {});
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.found).toBe("No readable OpenAPI document");
   });
 
@@ -87,7 +88,7 @@ describe("OpenApiServersAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No servers array");
   });
 
@@ -99,7 +100,7 @@ describe("OpenApiServersAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("no entries with a url");
   });
 
@@ -111,6 +112,6 @@ describe("OpenApiServersAudit", () => {
       "/openapi.json": mockFetchResult("invalid json {{{", 200),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 });

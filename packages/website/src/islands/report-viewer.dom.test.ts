@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach } from "vitest";
 import { mountReportViewer, MAX_REPORT_BYTES } from "./report-viewer";
+import {
+  AttemptOutcome,
+  PageType,
+  PageTypeSource,
+  ScoreTier,
+} from "@forkpoint/agent-lighthouse-core";
 
 /**
  * The interaction layer, against a fixture that mirrors what `pages/index.astro`
@@ -55,7 +61,7 @@ async function drop(file: File): Promise<Event> {
 const REPORT = {
   url: "https://example.com/",
   overallScore: 74,
-  scoreTier: "partially-ready",
+  scoreTier: ScoreTier.PartiallyReady,
   categories: [{ name: "AI Discovery", score: 91, checks: [{ id: "a" }] }],
   pagesScanned: [{ url: "https://example.com/", pageType: "home" }],
   durationMs: 4200,
@@ -229,10 +235,10 @@ it("renders uploaded scope text as text, never markup", async () => {
     pageAttempts: [
       {
         url: '<img src=x onerror="alert(1)">',
-        outcome: "unread",
+        outcome: AttemptOutcome.Unread,
         status: 503,
-        pageType: "unknown",
-        source: "detected",
+        pageType: PageType.Unknown,
+        source: PageTypeSource.Detected,
       },
     ],
   });

@@ -3,6 +3,15 @@ import { Audit } from "../../audit";
 import type { CheckContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
 import { flattenJsonLd } from "../../parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "../../types";
 
 function matchesType(schema: Record<string, unknown>, type: string): boolean {
   const t = schema["@type"];
@@ -34,19 +43,19 @@ export class AuthorSchemaAudit extends Audit {
     failureTitle: "Author schema with credentials",
     description:
       "AI systems assign higher confidence to content from named experts with verifiable credentials. Person schema with jobTitle, sameAs, and affiliation lets AI agents cross-reference author identity across platforms, boosting your content in RAG trust scoring.",
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "informative"),
-    evidenceGrade: "C",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/structured-data/author-schema.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: ["article"],
-    defaultPriority: "medium",
+    applicablePageTypes: [PageType.Article],
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "AI systems assign higher trust to content from named experts with verifiable credentials. Without Person schema containing jobTitle, sameAs, and affiliation, AI agents cannot cross-reference your author identity across platforms, lowering your content ranking in RAG trust scoring and reducing citation likelihood.",
@@ -65,7 +74,7 @@ export class AuthorSchemaAudit extends Audit {
     "name": "Your Company"
   }
 }`,
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl: "https://schema.org/Person",
       tags: ["json-ld", "schema", "author", "trust", "E-E-A-T"],
     },
@@ -111,7 +120,7 @@ export class AuthorSchemaAudit extends Audit {
         "Person schema with name, jobTitle, sameAs, and affiliation.",
         "None",
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "AI systems assign higher confidence to content from named experts with verifiable credentials. Person schema with jobTitle, sameAs, and affiliation lets AI agents cross-reference author identity across platforms, boosting your content in RAG trust scoring.",
           code: `{
@@ -149,7 +158,7 @@ export class AuthorSchemaAudit extends Audit {
       "Person schema with name, jobTitle, sameAs, and affiliation.",
       `Person schema missing ${missing.join(", ")}`,
       {
-        priority: "medium",
+        priority: CheckPriority.Medium,
         description: `AI systems cross-reference author identity across platforms for trust scoring. Missing properties (${missing.join(", ")}) prevent agents from verifying author credentials, reducing confidence in your content. Add them to your Person schema.`,
         code: `{
   "@type": "Person",

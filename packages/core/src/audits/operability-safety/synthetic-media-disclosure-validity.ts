@@ -9,6 +9,14 @@ import {
   extractXmp,
   MAX_IMAGES,
 } from "../../gatherers/media";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** Images sampled per page, before the per-scan cap applies. */
 const PER_PAGE = 3;
@@ -121,24 +129,24 @@ export class SyntheticMediaDisclosureValidityAudit extends Audit {
       "This site’s AI disclosure is written in a form no machine reads",
     description:
       "Reads `Iptc4xmpExt:DigitalSourceType` out of each image’s XMP packet and tests it against the ratified IPTC NewsCodes vocabulary. The property is typed as a URI, so a bare token, an `https` variant of the `http` vocabulary URI, a trailing slash or free text all read as nothing to a consumer. Also compares the XMP declaration against what the asset’s own C2PA manifest says.",
-    scoreDisplayMode: "ternary",
-    tier: "scored",
-    evidenceGrade: "B",
-    weight: weightForGrade("B", "scored"),
-    defaultPriority: "medium",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    tier: AuditTier.Scored,
+    evidenceGrade: EvidenceGrade.B,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    defaultPriority: CheckPriority.Medium,
     dossier:
       "docs/evidence/audits/operability-safety/synthetic-media-disclosure-validity.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     guidance: {
       impact:
         "Disclosure only counts if a machine can read it. IPTC types `DigitalSourceType` as a URI from a controlled vocabulary, so a consumer matching against that vocabulary silently ignores `AI-generated`, a bare `trainedAlgorithmicMedia`, or an `https://` spelling of the `http://` vocabulary URI. The publisher believes the image is disclosed; every machine reader sees an undisclosed image. Worse is an asset whose XMP and C2PA manifest disagree about whether a human took the photo — two provenance channels, one of them wrong.",
       fix: "Write the full vocabulary URI, exactly: `http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia`. Keep the `http` scheme the vocabulary itself uses, no trailing slash, no free text, and make sure the value agrees with the digital source type asserted in the asset’s C2PA manifest.",
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/synthetic-media-disclosure-validity/",
       tags: ["ai-disclosure", "iptc", "xmp", "provenance"],

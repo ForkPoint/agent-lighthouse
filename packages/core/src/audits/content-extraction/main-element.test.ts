@@ -8,6 +8,7 @@ import {
   mockPageContext,
   unreachedSiteContext,
 } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 describe("MainElementAudit", () => {
   const audit = new MainElementAudit();
@@ -18,7 +19,7 @@ describe("MainElementAudit", () => {
       "<html><body><main><p>Content</p></main></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("1/1");
   });
 
@@ -32,7 +33,7 @@ describe("MainElementAudit", () => {
       "<html><body><div>No main</div></body></html>",
     );
     const result = audit.audit(mockCheckContext([home, other]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("1/2");
   });
 
@@ -42,13 +43,13 @@ describe("MainElementAudit", () => {
       "<html><body><div>No main</div></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("0/1");
   });
 
   it("declines an empty page sample", () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.found).toBe("No pages scanned");
   });
 
@@ -71,9 +72,9 @@ describe("MainElementAudit", () => {
       return result;
     });
     expect(results.map((result) => result.status)).toEqual([
-      "warn",
-      "warn",
-      "warn",
+      CheckStatus.Warn,
+      CheckStatus.Warn,
+      CheckStatus.Warn,
     ]);
     for (const result of results) {
       expect(result.found).toContain("1/3");
@@ -92,7 +93,9 @@ describe("MainElementAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new MainElementAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext(pages, rootFiles),
@@ -103,6 +106,6 @@ describe("MainElementAudit", () => {
     );
     expect(
       plan.skipped.find((stub) => stub.id === MainElementAudit.meta.id)?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 });

@@ -3,6 +3,15 @@ import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
 import type { CheckContext, PageContext } from "../../check-context";
 import { getMainContentText, flattenJsonLd } from "../../parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "../../types";
 
 /**
  * Update wording, absorbed from v1 9.10 `last-updated-indicator`. Global so the
@@ -174,25 +183,25 @@ export class DatesOnContentAudit extends Audit {
     failureTitle: "Dates on content pages",
     description:
       'Date extractors read the byline date off a content page from <time datetime>, JSON-LD datePublished/dateModified, article:*_time meta tags or a clearly labelled visible date; a page carrying none of them has no date any downstream consumer can attach to it. A modification date (or a visible "last updated" label with a date beside it) is the full signal; a publication date alone is a partial one.',
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/answer-readiness/dates-on-content.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: ["article"],
-    defaultPriority: "medium",
+    applicablePageTypes: [PageType.Article],
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "Google estimates a byline date from a page's visible date and its datePublished/dateModified structured data, and can show it in results — the same results AI Overviews and AI Mode draw their supporting links from. The open extraction stack (htmldate, under trafilatura) reads the same fields in the same order. A page with no date at all gives every one of them nothing to read.",
       fix: 'Add a visible date using the <time> element with a machine-readable datetime attribute on every content page, near the title or byline. When you revise a page, label the revision ("Last updated") and set dateModified — that is what turns a partial result into a pass.',
       code: '<p>Published: <time datetime="2025-01-15">January 15, 2025</time><br>\nLast updated: <time datetime="2025-04-02">April 2, 2025</time></p>',
-      effort: "trivial",
+      effort: FixEffort.Trivial,
       tags: ["freshness", "html", "answer-engine"],
     },
   };
@@ -251,7 +260,7 @@ export class DatesOnContentAudit extends Audit {
         {
           // Low: a dated article that has never been revised is correct as it
           // stands. v1 9.10 hard-failed exactly this page.
-          priority: "low",
+          priority: CheckPriority.Low,
           description:
             'Google asks that a revision be both labelled ("Last updated") and expressed as dateModified, and htmldate resolves updated dates as a first-class output. Without one, an extractor can date the page but not tell how current it is — so add the modification date when, and only when, you actually revise the page.',
           code: '<p>Last updated: <time datetime="2025-04-02">April 2, 2025</time></p>',
@@ -265,7 +274,7 @@ export class DatesOnContentAudit extends Audit {
       expected,
       "Not found",
       {
-        priority: "medium",
+        priority: CheckPriority.Medium,
         description:
           "Google estimates a byline date from a page's visible date and its datePublished/dateModified structured data, and the open extraction stack reads the same fields. A page carrying neither gives every consumer nothing to date it by.",
         code: '<p>Published: <time datetime="2025-01-15">January 15, 2025</time></p>',

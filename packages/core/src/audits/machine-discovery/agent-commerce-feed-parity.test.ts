@@ -7,6 +7,7 @@ import {
 } from "../../__tests__/test-utils";
 import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
 import type { FetchOptions, FetchResult } from "../../fetcher";
+import { CheckStatus, HttpMethod } from "../../types";
 
 vi.mock("../../fetcher", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../fetcher")>();
@@ -87,7 +88,8 @@ function run(html: string | undefined, imageType = "image/jpeg") {
     const path = new URL(o.url).pathname;
     if (path === "/sitemap.xml")
       return mockFetchResult(xml, 200, "application/xml");
-    if (o.method === "HEAD") return mockFetchResult("", 200, imageType);
+    if (o.method === HttpMethod.Head)
+      return mockFetchResult("", 200, imageType);
     if (o.url === URL_0 && html) return mockFetchResult(html, 200, "text/html");
     return mockFetchResult("", 404);
   };
@@ -105,12 +107,12 @@ describe("AgentCommerceFeedParityAudit", () => {
     const result = await run(
       "<html><head></head><body><main><p>An article.</p></main></body></html>",
     );
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("passes a product page that satisfies both feed specs", async () => {
     const result = await run(pageHtml(product()));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // The single most common defect in the wild: the enum name without its URL.
@@ -118,7 +120,7 @@ describe("AgentCommerceFeedParityAudit", () => {
     const node = product();
     (node["offers"] as Record<string, unknown>)["availability"] = "InStock";
     const result = await run(pageHtml(node));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("availability");
   });
 
@@ -127,7 +129,7 @@ describe("AgentCommerceFeedParityAudit", () => {
     node["description"] =
       "A resole kit with <strong>every</strong> tool included.";
     const result = await run(pageHtml(node));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("description");
   });
 
@@ -135,7 +137,7 @@ describe("AgentCommerceFeedParityAudit", () => {
     const node = product();
     node["itemCondition"] = "https://schema.org/DamagedCondition";
     const result = await run(pageHtml(node));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("itemCondition");
   });
 
@@ -143,7 +145,7 @@ describe("AgentCommerceFeedParityAudit", () => {
     const node = product();
     delete (node["offers"] as Record<string, unknown>)["eligibleRegion"];
     const result = await run(pageHtml(node));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("country");
   });
 
@@ -155,14 +157,14 @@ describe("AgentCommerceFeedParityAudit", () => {
       "@type": "OfferShippingDetails",
       shippingDestination: { "@type": "DefinedRegion", addressCountry: "US" },
     };
-    expect((await run(pageHtml(node))).status).toBe("pass");
+    expect((await run(pageHtml(node))).status).toBe(CheckStatus.Pass);
   });
 
   it("fails when the page exposes sibling variants but no item_group_id source", async () => {
     const body =
       '<select name="variant"><option value="s">Small</option><option value="m">Medium</option></select>';
     const result = await run(pageHtml(product(), { body }));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("item_group_id");
   });
 
@@ -171,14 +173,14 @@ describe("AgentCommerceFeedParityAudit", () => {
     node["inProductGroupWithID"] = "ARK";
     const body =
       '<select name="variant"><option value="s">Small</option><option value="m">Medium</option></select>';
-    expect((await run(pageHtml(node, { body }))).status).toBe("pass");
+    expect((await run(pageHtml(node, { body }))).status).toBe(CheckStatus.Pass);
   });
 
   // Automatic item updates overwrite the feed from the page, so the two prices
   // must be the same number.
   it("fails when the JSON-LD price is absent from the prices rendered on the page", async () => {
     const result = await run(pageHtml(product(), { visiblePrice: "$39.99" }));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("29.99");
     expect(result.message).toContain("39.99");
   });
@@ -189,7 +191,7 @@ describe("AgentCommerceFeedParityAudit", () => {
         canonical: "https://example.com/products/p-0-canonical",
       }),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("canonical");
   });
 
@@ -199,7 +201,7 @@ describe("AgentCommerceFeedParityAudit", () => {
     const node = product();
     node["image"] = "https://example.com/img/ark-001.webp";
     const result = await run(pageHtml(node), "image/webp");
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("image/webp");
   });
 
@@ -247,7 +249,7 @@ describe("AgentCommerceFeedParityAudit", () => {
       "https://example.com/img/ark-001.jpg",
       "https://example.com/img/ark-001-back.jpg",
     ];
-    expect((await run(pageHtml(node))).status).toBe("pass");
+    expect((await run(pageHtml(node))).status).toBe(CheckStatus.Pass);
   });
 
   it("reads an ImageObject's url", async () => {
@@ -256,7 +258,7 @@ describe("AgentCommerceFeedParityAudit", () => {
       "@type": "ImageObject",
       url: "https://example.com/img/ark-001.jpg",
     };
-    expect((await run(pageHtml(node))).status).toBe("pass");
+    expect((await run(pageHtml(node))).status).toBe(CheckStatus.Pass);
   });
 
   it("takes the price from an AggregateOffer's lowPrice", async () => {
@@ -266,12 +268,12 @@ describe("AgentCommerceFeedParityAudit", () => {
     delete offers["price"];
     offers["lowPrice"] = 29.99;
     offers["highPrice"] = 29.99;
-    expect((await run(pageHtml(node))).status).toBe("pass");
+    expect((await run(pageHtml(node))).status).toBe(CheckStatus.Pass);
   });
 
   it("takes the price from a variant Offer and the group id from productGroupID", async () => {
     const result = await run(pageHtml(productGroup()));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("resolves offers.seller by @id against a node the page defines", async () => {
@@ -286,7 +288,7 @@ describe("AgentCommerceFeedParityAudit", () => {
         { "@type": "OnlineStore", "@id": STORE_ID, name: "Alpine Store" },
       ],
     };
-    expect((await run(pageHtml(graph))).status).toBe("pass");
+    expect((await run(pageHtml(graph))).status).toBe(CheckStatus.Pass);
   });
 
   // True positive: a reference to a node nobody defines carries no name.
@@ -296,7 +298,7 @@ describe("AgentCommerceFeedParityAudit", () => {
       "@id": STORE_ID,
     };
     const result = await run(pageHtml(group));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain(STORE_ID);
     expect(result.message).toContain("no node on the page defines");
   });
@@ -306,7 +308,7 @@ describe("AgentCommerceFeedParityAudit", () => {
     const node = product();
     node["image"] = ["http://example.com/img/ark-001.jpg"];
     const result = await run(pageHtml(node));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("is not an absolute HTTPS URL");
   });
 });

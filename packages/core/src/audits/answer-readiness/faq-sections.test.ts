@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { FaqSectionsAudit } from "./faq-sections";
 import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 describe("FaqSectionsAudit", () => {
   const audit = new FaqSectionsAudit();
@@ -15,7 +16,7 @@ describe("FaqSectionsAudit", () => {
       </head><body><main><p>Some content.</p></main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("FAQPage structured data");
   });
 
@@ -29,7 +30,7 @@ describe("FaqSectionsAudit", () => {
       </main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("FAQ label");
   });
 
@@ -44,7 +45,7 @@ describe("FaqSectionsAudit", () => {
       </main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("accordion");
   });
 
@@ -57,13 +58,13 @@ describe("FaqSectionsAudit", () => {
       </main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No FAQ sections found");
   });
 
   it("fails when no pages were scanned", () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No pages scanned");
   });
 
@@ -82,7 +83,7 @@ describe("FaqSectionsAudit", () => {
       </head><body><main><p>Content here.</p></main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("FAQPage structured data");
   });
 
@@ -100,7 +101,7 @@ describe("FaqSectionsAudit", () => {
       </main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("accordion");
   });
 
@@ -115,7 +116,7 @@ describe("FaqSectionsAudit", () => {
       </main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("Frequently Asked Questions");
   });
 
@@ -131,7 +132,7 @@ describe("FaqSectionsAudit", () => {
       </head><body><main><p>No FAQ content on this page at all.</p></main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("passes when question-formatted <details><summary> elements are present", () => {
@@ -146,7 +147,7 @@ describe("FaqSectionsAudit", () => {
       </main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("accordion");
   });
 });

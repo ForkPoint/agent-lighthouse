@@ -8,6 +8,7 @@ import {
   mockFetchResult,
   unreachedSiteContext,
 } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 describe("LlmsFullTxtAudit", () => {
   const audit = new LlmsFullTxtAudit();
@@ -17,7 +18,7 @@ describe("LlmsFullTxtAudit", () => {
       "/llms-full.txt": mockFetchResult("# Site\n\nFull content", 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("llms-full.txt exists");
   });
 
@@ -26,14 +27,14 @@ describe("LlmsFullTxtAudit", () => {
       "/llms-full.txt": mockFetchResult("", 404),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("HTTP 404");
   });
 
   it("fails when llms-full.txt was not fetched at all", () => {
     const ctx = mockCheckContext([], {});
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No llms-full.txt file found");
   });
 
@@ -44,7 +45,9 @@ describe("LlmsFullTxtAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new LlmsFullTxtAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext(pages, rootFiles),
@@ -55,6 +58,6 @@ describe("LlmsFullTxtAudit", () => {
     );
     expect(
       plan.skipped.find((stub) => stub.id === LlmsFullTxtAudit.meta.id)?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 });

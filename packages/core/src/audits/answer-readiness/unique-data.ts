@@ -3,6 +3,15 @@ import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
 import type { CheckContext } from "../../check-context";
 import { getMainContentText } from "../../parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "../../types";
 
 // Match only unit/currency/percent/magnitude-anchored figures. A bare
 // `\d+\.\d+` matched shoe sizes, raw JS floats and phone-number fragments,
@@ -32,27 +41,27 @@ export class UniqueDataAudit extends Audit {
     failureTitle: "Unique data or statistics",
     description:
       "AI generative engines prioritize content with original, citable data points over vague claims. Include specific statistics and metrics.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/answer-readiness/unique-data.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     // The grade-B study measured statistics added to informational content.
     // A storefront homepage or a product grid is outside that population.
-    applicablePageTypes: ["content", "unknown", "article"],
-    defaultPriority: "medium",
+    applicablePageTypes: [PageType.Unknown, PageType.Article],
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "AI generative engines prioritize content with unique, citable data points because agents can quote exact figures in generated answers. Content without specific numbers reads as opinion rather than evidence, reducing its chances of being cited.",
       fix: "Add specific statistics, percentages, dollar amounts, and measurable metrics to your content. Include original data from surveys, benchmarks, or internal metrics where possible.",
       code: "<p>Results from our 2024 survey of 1,200 developers show that 73% prefer structured APIs, with an average integration time of 2.5 hours.</p>",
-      effort: "easy",
+      effort: FixEffort.Easy,
       tags: ["content-quality", "data", "generative-engine"],
     },
   };
@@ -65,7 +74,7 @@ export class UniqueDataAudit extends Audit {
         "Content has numbers, percentages, or original data points",
         "No pages scanned",
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "AI generative engines prioritize content with original, citable data points over vague claims. Include specific statistics and metrics.",
           code: "<p>Our platform handles 50,000 requests/second with 99.9% uptime.</p>",
@@ -98,7 +107,7 @@ export class UniqueDataAudit extends Audit {
         "Content has numbers, percentages, or original data points",
         `Examples: ${allMatches.join(", ")}`,
         {
-          priority: "low",
+          priority: CheckPriority.Low,
           description:
             "AI generative engines prefer content with concrete, citable data over vague claims. Adding more statistics, percentages, and specific metrics makes your content more quotable in AI-generated answers, increasing the likelihood of being cited as a source.",
           code: "<p>Our solution improves performance by 65%, reduces costs by $2,500/month, and serves 10,000+ daily users.</p>",
@@ -112,7 +121,7 @@ export class UniqueDataAudit extends Audit {
       "Content has numbers, percentages, or original data points",
       "Not found",
       {
-        priority: "medium",
+        priority: CheckPriority.Medium,
         description:
           "AI generative engines prioritize content with unique, citable data points because agents can quote exact figures in generated answers. Content without specific numbers reads as opinion rather than evidence, reducing its chances of being selected as a source in AI responses.",
         code: "<p>Results from our 2024 survey of 1,200 developers show that 73% prefer structured APIs over unstructured endpoints.</p>",

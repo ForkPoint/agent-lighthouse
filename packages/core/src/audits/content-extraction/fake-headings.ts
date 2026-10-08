@@ -1,11 +1,19 @@
 import type { CheerioAPI } from "cheerio";
 import type { AnyNode } from "domhandler";
-import type { AuditMeta, AuditResult, CheckPriority } from "../../types";
+import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
 import { scanReadPageText, unreadPageTextReason } from "../../scan-evidence";
 import { hiddenFromReaders } from "../../dom-visibility";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /**
  * Classes that commonly impersonate a heading in utility-CSS markup
@@ -117,24 +125,24 @@ export class FakeHeadingsAudit extends Audit {
     failureTitle: "Fake headings detected",
     description:
       'AI agents chunk and outline page content by reading real <h1>–<h6> tags. When a page styles a <div>, <span>, <p>, or <b> to look like a heading (large text, bold weight, "heading" classes) instead of using a semantic heading element, that text is invisible to the agent\'s document outline — sections cannot be navigated, summarized, or cited correctly. This audit is distinct from the sequential-heading check (content-extraction/sequential-headings), which verifies that real headings appear in the right order, while this audit catches content that impersonates headings without using heading tags at all. Replace styled generic elements with the appropriate <h1>–<h6> level.',
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/content-extraction/fake-headings.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "medium",
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "AI agents build content outlines exclusively from <h1>–<h6> elements. Text that only looks like a heading is treated as ordinary body copy, so agents miss your section structure entirely — summaries flatten into a wall of text, section-level citations become impossible, and chunking for retrieval splits content at arbitrary points instead of at your intended section boundaries.",
       fix: "Replace generic elements styled to look like headings with real heading tags. Pick the level that reflects the content's position in the outline (h2 for major sections under the h1, h3 for subsections, and so on), and move the visual styling to CSS targeting those heading elements instead of utility classes on divs and spans.",
       code: '<!-- Before: looks like a heading, invisible to agents -->\n<div class="text-2xl font-bold">Pricing Plans</div>\n\n<!-- After: semantic and styleable -->\n<h2 class="text-2xl font-bold">Pricing Plans</h2>',
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl:
         "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Heading_Elements",
       tags: ["headings", "semantic", "chunking", "structure"],
@@ -202,7 +210,7 @@ export class FakeHeadingsAudit extends Audit {
       description: string;
       code: string;
     } = {
-      priority: "medium",
+      priority: CheckPriority.Medium,
       description:
         "AI agents chunk and outline page content by reading real <h1>–<h6> tags. Elements styled to look like headings are invisible to that outline, so sections cannot be navigated, summarized, or cited correctly. Replace styled generic elements with the appropriate heading level.",
       code: '<!-- Before -->\n<div class="text-2xl font-bold">Pricing Plans</div>\n\n<!-- After -->\n<h2 class="text-2xl font-bold">Pricing Plans</h2>',

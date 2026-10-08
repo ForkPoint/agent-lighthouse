@@ -16,6 +16,7 @@
     "check:requires": "node --import tsx scripts/check-requires.ts",
     "check:audit-boundaries": "node scripts/check-audit-boundaries.mjs",
     "check:audit-map": "node --import tsx scripts/build-audit-map.ts --check",
+    "check:enums": "node --import tsx scripts/check-enums.ts",
     "build:audit-map": "node --import tsx scripts/build-audit-map.ts",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md}\"",
@@ -37,6 +38,7 @@
     "tsup": "^8.3.5",
     "tsx": "^4.23.15",
     "typescript": "~7.0.2",
+    "typescript-api": "npm:typescript@6.0.3",
     "vitest": "^5.0.3"
   },
   "packageManager": "pnpm@10.34.6",

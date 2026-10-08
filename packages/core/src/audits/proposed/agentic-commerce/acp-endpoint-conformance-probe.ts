@@ -1,6 +1,7 @@
 import type { AuditMeta, AuditResult } from "../../../types";
 import { Audit } from "../../../audit";
 import type { CheckContext } from "../../../check-context";
+import { CheckPriority, FixEffort, ScoreDisplayMode } from "../../../types";
 
 // TODO: implement proposed audit "ACP Endpoint Conformance Probe".
 // Status: stub — not registered in any category index; returns notApplicable until implemented.
@@ -36,14 +37,14 @@ export class AcpEndpointConformanceProbeAudit extends Audit {
     failureTitle: "ACP Endpoint Conformance Probe",
     description:
       "For merchants who have already stood up ACP endpoints, a non-destructive unauthenticated conformance suite against the five checkout paths — error-envelope shape, required header echoes, API-Version handling and status-code contracts.",
-    scoreDisplayMode: "binary",
+    scoreDisplayMode: ScoreDisplayMode.Binary,
     weight: 0,
-    defaultPriority: "medium",
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "Falsifiable claim: the spec fixes exact contracts that can be tested WITHOUT authenticating. Endpoints must be HTTPS and JSON. Errors must return the envelope {type, code, message, param?} rather than an HTML error page. Responses MUST echo Idempotency-Key and Request-Id. GET /checkout_sessions/{unknown} must return 404; /cancel must return 405 when not cancelable; POST /checkout_sessions returns 201 on success. API-Version is a required YYYY-MM-DD header. A merchant failing these fails silently in production because the agent sees a malformed error and cannot distinguish 'out of stock' from 'your integration is broken'. Disproof condition: agents tolerating HTML error bodies where the envelope is specified.",
       fix: "TODO: written when the audit is implemented.",
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/proposals/agentic-commerce/acp-endpoint-conformance-probe.md",
       tags: ["proposed", "agentic-commerce"],

@@ -6,6 +6,7 @@ import {
   isAnthropicAllowed,
   checkSensitivePaths,
 } from "./_robots-txt-helpers";
+import { RobotsRuleType } from "../../gatherers/robots";
 
 describe("parseRobotsTxt", () => {
   it("parses user-agent groups with allow/disallow rules", () => {
@@ -80,20 +81,24 @@ describe("parseRobotsTxt", () => {
 
 describe("isBlanketBlocked", () => {
   it("is true for Disallow: / with no Allow: /", () => {
-    expect(isBlanketBlocked([{ type: "disallow", path: "/" }])).toBe(true);
+    expect(
+      isBlanketBlocked([{ type: RobotsRuleType.Disallow, path: "/" }]),
+    ).toBe(true);
   });
 
   it("is false when Allow: / counters Disallow: /", () => {
     expect(
       isBlanketBlocked([
-        { type: "disallow", path: "/" },
-        { type: "allow", path: "/" },
+        { type: RobotsRuleType.Disallow, path: "/" },
+        { type: RobotsRuleType.Allow, path: "/" },
       ]),
     ).toBe(false);
   });
 
   it("is false without a Disallow: /", () => {
-    expect(isBlanketBlocked([{ type: "disallow", path: "/api/" }])).toBe(false);
+    expect(
+      isBlanketBlocked([{ type: RobotsRuleType.Disallow, path: "/api/" }]),
+    ).toBe(false);
   });
 });
 

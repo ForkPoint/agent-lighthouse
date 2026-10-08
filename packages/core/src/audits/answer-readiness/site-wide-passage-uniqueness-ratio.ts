@@ -9,6 +9,14 @@ import {
   shingles,
   jaccard,
 } from "../../gatherers/text-metrics";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** Below this, both document frequency and clustering are arithmetic on too few pages. */
 const MIN_PAGES = 3;
@@ -121,24 +129,24 @@ export class SiteWidePassageUniquenessRatioAudit extends Audit {
       "The site’s pages repeat each other, so only one of them can be cited",
     description:
       "Measures two things no single-page check can see: what share of each page’s sentences are its own rather than repeated across its siblings, and which pages are near-duplicates of each other at five-gram Jaccard 0.9 or above. Near-duplicate pages that all name themselves canonical compete against each other for one slot.",
-    scoreDisplayMode: "ternary",
-    tier: "scored",
-    evidenceGrade: "B",
-    weight: weightForGrade("B", "scored"),
-    defaultPriority: "medium",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    tier: AuditTier.Scored,
+    evidenceGrade: EvidenceGrade.B,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    defaultPriority: CheckPriority.Medium,
     dossier:
       "docs/evidence/audits/answer-readiness/site-wide-passage-uniqueness-ratio.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     guidance: {
       impact:
         "A search engine clusters duplicate and near-duplicate URLs and elects one canonical; the losers have their signals folded into the winner. A cluster of near-duplicate pages that each name themselves canonical therefore competes against itself, and at most one member stays citable however good the others are. Separately, a page whose sentences are mostly site-wide template produces chunks whose embeddings encode the template rather than the page, so every page built from that template lands in the same place in vector space and none is a distinctive match for any question.",
       fix: 'Merge near-duplicate pages into one, or point the weaker members at the strongest with rel="canonical" so the election has an answer. For pages that stay, raise the share of text that is theirs alone: cut the repeated intro, the repeated legal paragraph and the repeated call to action, and let each page carry the sentences only it can carry.',
-      effort: "complex",
+      effort: FixEffort.Complex,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/answer-readiness/site-wide-passage-uniqueness-ratio/",
       tags: ["duplication", "canonical", "retrieval", "crawl"],

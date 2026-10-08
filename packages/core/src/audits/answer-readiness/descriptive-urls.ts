@@ -2,6 +2,14 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
 import type { CheckContext } from "../../check-context";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 const BAD_SLUG_PATTERNS = [
   /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i, // UUID
@@ -22,20 +30,20 @@ export class DescriptiveUrlsAudit extends Audit {
     failureTitle: "Descriptive URL slugs",
     description:
       "AI engines use URL text as a content signal. Descriptive slugs help agents understand page topics before fetching the content.",
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "informative"),
-    evidenceGrade: "C",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/answer-readiness/descriptive-urls.md",
     // Gate exemption: a URL is readable whether or not the page behind it rendered text.
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "high",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "AI engines use URL text as a pre-fetch topic signal and display URLs in generated citations. Non-descriptive slugs with UUIDs or numeric IDs provide no topical context, reducing your content's relevance score before the page is even crawled.",
       fix: "Replace non-descriptive URL slugs (UUIDs, numeric IDs, encoded params) with keyword-rich, human-readable paths that describe the page content.",
       code: "<!-- Change:\n  /post-123/        -> /how-to-optimize-for-ai/\n  /p/456/           -> /pricing-comparison/\n  /?id=789          -> /getting-started-guide/\n  /article/abc-def  -> /ai-search-best-practices/ -->",
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       tags: ["url-structure", "seo", "generative-engine"],
     },
   };
@@ -48,7 +56,7 @@ export class DescriptiveUrlsAudit extends Audit {
         "Page URLs use readable slugs (no UUIDs, no /post-123/, no encoded params)",
         "No pages scanned",
         {
-          priority: "high",
+          priority: CheckPriority.High,
           description:
             "AI engines use URL text as a content signal. Descriptive slugs help agents understand page topics before fetching the content.",
           code: "<!-- Use: /how-to-optimize-for-ai/ instead of /post-123/ -->",
@@ -85,7 +93,7 @@ export class DescriptiveUrlsAudit extends Audit {
         "Page URLs use readable slugs (no UUIDs, no /post-123/, no encoded params)",
         badUrls.slice(0, 3).join(", "),
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "AI engines use URL text as a pre-fetch topic signal and display URLs in generated citations. Non-descriptive slugs with UUIDs or numeric IDs provide no topical context, reducing your content's relevance score before the page is even crawled. Replace with keyword-rich slugs.",
           code: "<!-- Change /post-123/ to /how-to-optimize-for-ai-agents/ -->",
@@ -99,7 +107,7 @@ export class DescriptiveUrlsAudit extends Audit {
       "Page URLs use readable slugs (no UUIDs, no /post-123/, no encoded params)",
       badUrls.slice(0, 3).join(", "),
       {
-        priority: "high",
+        priority: CheckPriority.High,
         description:
           "AI engines use URL text as a pre-fetch topic signal and display URLs in generated citations. All your scanned pages have non-descriptive slugs (UUIDs, numeric IDs), providing zero topical context. Restructure to keyword-rich slugs that describe the page content.",
         code: "<!-- Change:\n  /post-123/ -> /how-to-optimize-for-ai/\n  /p/456/    -> /pricing-comparison/\n  /?id=789   -> /getting-started-guide/ -->",

@@ -1,11 +1,11 @@
-import type { PhaseId, ScanEvent } from "@forkpoint/agent-lighthouse-core";
+import { type ScanEvent, PhaseId } from "@forkpoint/agent-lighthouse-core";
 
 export const PHASE_LABELS: Record<PhaseId, string> = {
-  "fetch-root": "Root files",
-  "fetch-pages": "Pages",
-  analyze: "Page analysis",
-  audits: "Audits",
-  report: "Report",
+  [PhaseId.FetchRoot]: "Root files",
+  [PhaseId.FetchPages]: "Pages",
+  [PhaseId.Analyze]: "Page analysis",
+  [PhaseId.Audits]: "Audits",
+  [PhaseId.Report]: "Report",
 };
 
 const SPINNER = ["|", "/", "-", "\\"];

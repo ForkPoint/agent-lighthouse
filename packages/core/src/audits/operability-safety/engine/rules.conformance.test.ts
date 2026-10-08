@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { JSDOM } from "jsdom";
 import { runRules, SUPPORTED_RULE_IDS } from "./rules";
+import { CheckStatus } from "../../../types";
+import { RuleStatus } from "./rules";
 
 /**
  * One passing and one failing document per supported rule.
@@ -42,7 +44,10 @@ interface Case {
    * their check when the answer needs a human. `runner.ts` maps `incomplete`
    * to a status the audits treat as "not a clean pass", never as a defect.
    */
-  reject?: "fail" | "incomplete";
+  reject?: Extract<
+    RuleStatus,
+    typeof RuleStatus.Fail | typeof RuleStatus.Incomplete
+  >;
   /** Head markup, for the rules that live there. */
   head?: string;
   failHead?: string;
@@ -238,7 +243,7 @@ describe("accessibility engine — rule conformance", () => {
       '<!doctype html><html lang="en"><head><title>T</title></head><body aria-hidden="true"><p>Hi</p></body></html>',
     ).window.document;
     expect(runRules(d, ["aria-hidden-body"])["aria-hidden-body"]?.status).toBe(
-      "fail",
+      CheckStatus.Fail,
     );
   });
 
@@ -247,7 +252,7 @@ describe("accessibility engine — rule conformance", () => {
       '<!doctype html><html lang="en"><head><title>  </title></head><body><p>Hi</p></body></html>',
     ).window.document;
     expect(runRules(d, ["document-title"])["document-title"]?.status).toBe(
-      "fail",
+      CheckStatus.Fail,
     );
   });
 
@@ -255,7 +260,7 @@ describe("accessibility engine — rule conformance", () => {
     const result = runRules(doc("<button></button>"), ["button-name"])[
       "button-name"
     ];
-    expect(result?.status).toBe("fail");
+    expect(result?.status).toBe(CheckStatus.Fail);
     expect(result?.nodes.length).toBeGreaterThan(0);
     expect(result?.nodes[0]?.target).toContain("button");
   });

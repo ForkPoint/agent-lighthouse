@@ -5,6 +5,14 @@ import { isSafeUrl } from "../../url-utils";
 import { probeRsl } from "../../gatherers/rsl";
 import { parseRobots, isPathAllowed } from "../../gatherers/robots";
 import { detailLines } from "../../detail-lines";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** Where a trust.txt may live, in the order the spec added them. */
 const TRUST_TXT_PATHS = ["/trust.txt", "/.well-known/trust.txt"];
@@ -73,19 +81,19 @@ export class TrustTxtReciprocityCoherenceAudit extends Audit {
       "This site’s trust.txt claims are unreciprocated or contradict robots.txt",
     description:
       "For publishers who maintain a trust.txt: validates the attribute names, resolves each `belongto=` against that association’s own trust.txt to see whether it lists this domain back, and compares `datatrainingallowed=` against what robots.txt actually tells AI crawlers. Reported as a trust signal only — no AI engine is documented as a trust.txt consumer, so nothing here affects the score.",
-    scoreDisplayMode: "informative",
-    tier: "informative",
-    evidenceGrade: "C",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    tier: AuditTier.Informative,
+    evidenceGrade: EvidenceGrade.C,
     weight: 0,
-    defaultPriority: "low",
+    defaultPriority: CheckPriority.Low,
     dossier:
       "docs/evidence/audits/operability-safety/trust-txt-reciprocity-coherence.md",
-    requires: ["origin-reachable", "unblocked-fetches"],
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
     guidance: {
       impact:
         "trust.txt association attributes are defined as reciprocal: `belongto=<association>` means something only if that association’s own trust.txt carries `member=<this domain>`. That makes the claim checkable rather than self-asserted, which is the whole point of publishing it. Separately, `datatrainingallowed=no` beside a robots.txt that leaves GPTBot and ClaudeBot free to crawl states two opposite policies, and the channel that actually gates crawlers is the one that says yes. Adoption caveat: no AI engine, answer engine or crawler is documented as reading trust.txt.",
       fix: "Ask each association you claim to belong to for a reciprocal `member=` line, drop the ones that will not reciprocate, and make `datatrainingallowed=` say the same thing your robots.txt AI-bot groups say.",
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/trust-txt-reciprocity-coherence/",
       tags: ["trust-txt", "provenance", "advisory"],

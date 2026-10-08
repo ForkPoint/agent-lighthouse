@@ -3134,7 +3134,6 @@
         "pageTypes": [
           "article",
           "category",
-          "content",
           "product",
           "unknown"
         ]
@@ -3346,7 +3345,6 @@
         "pageTypeGate": "restricted",
         "pageTypes": [
           "article",
-          "content",
           "unknown"
         ]
       },
@@ -3392,7 +3390,6 @@
         "pageTypeGate": "restricted",
         "pageTypes": [
           "article",
-          "content",
           "unknown"
         ]
       },
@@ -4230,7 +4227,6 @@
         "pageTypeGate": "restricted",
         "pageTypes": [
           "article",
-          "content",
           "unknown"
         ]
       },
@@ -4362,7 +4358,6 @@
         "pageTypeGate": "restricted",
         "pageTypes": [
           "article",
-          "content",
           "unknown"
         ]
       },
@@ -4448,7 +4443,6 @@
         "pageTypeGate": "restricted",
         "pageTypes": [
           "article",
-          "content",
           "unknown"
         ]
       },
@@ -5365,7 +5359,6 @@
         "pageTypeGate": "restricted",
         "pageTypes": [
           "article",
-          "content",
           "unknown"
         ]
       },
@@ -8401,7 +8394,6 @@
         "pageTypes": [
           "article",
           "category",
-          "content",
           "product",
           "unknown"
         ]
@@ -8532,7 +8524,6 @@
         "pageTypeGate": "restricted",
         "pageTypes": [
           "article",
-          "content",
           "unknown"
         ]
       },
@@ -8796,7 +8787,6 @@
         "pageTypeGate": "restricted",
         "pageTypes": [
           "article",
-          "content",
           "homepage",
           "unknown"
         ]

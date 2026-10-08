@@ -5,24 +5,25 @@
  * ./_shared.ts.
  */
 import { base, defineA11yAudit, graded } from "./_shared";
+import { CheckPriority, EvidenceGrade, FixEffort } from "../../types";
 
 export const MetaRefreshAudit = defineA11yAudit({
   rules: ["meta-refresh"],
   meta: {
     ...base,
-    ...graded("A", "meta-refresh"),
+    ...graded(EvidenceGrade.A, "meta-refresh"),
     id: "operability-safety/meta-refresh",
     title: "No time-based auto-refresh/redirect",
     failureTitle: "Time-based meta refresh present",
     description:
       'A <meta http-equiv="refresh"> that reloads/redirects after a delay disrupts an agent mid-read and can trap it in unexpected navigation.',
-    defaultPriority: "medium",
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "Auto-refresh changes the page out from under an agent that is reading or acting, corrupting its state and any in-progress task.",
       fix: "Remove time-based meta refresh; use proper server redirects (3xx) for instant redirects.",
       code: '<!-- BAD --> <meta http-equiv="refresh" content="5;url=/next">',
-      effort: "easy",
+      effort: FixEffort.Easy,
       tags: ["navigation", "agent"],
     },
   },

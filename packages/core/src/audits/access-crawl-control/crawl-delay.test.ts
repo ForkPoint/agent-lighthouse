@@ -8,6 +8,7 @@ import {
   mockFetchResult,
   unreachedSiteContext,
 } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 describe("CrawlDelayAudit", () => {
   const audit = new CrawlDelayAudit();
@@ -18,7 +19,7 @@ describe("CrawlDelayAudit", () => {
       "/robots.txt": mockFetchResult(robots, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("No Crawl-delay directives");
   });
 
@@ -28,7 +29,7 @@ describe("CrawlDelayAudit", () => {
       "/robots.txt": mockFetchResult(robots, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("reasonable");
     expect(result.message).toContain("5s");
   });
@@ -39,7 +40,7 @@ describe("CrawlDelayAudit", () => {
       "/robots.txt": mockFetchResult(robots, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("Excessive Crawl-delay");
     expect(result.message).toContain("30s");
   });
@@ -47,7 +48,7 @@ describe("CrawlDelayAudit", () => {
   it("warns when robots.txt is missing", () => {
     const ctx = mockCheckContext([], {});
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("No robots.txt found");
   });
 
@@ -58,7 +59,9 @@ describe("CrawlDelayAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new CrawlDelayAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext(pages, rootFiles),
@@ -69,6 +72,6 @@ describe("CrawlDelayAudit", () => {
     );
     expect(
       plan.skipped.find((stub) => stub.id === CrawlDelayAudit.meta.id)?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 });

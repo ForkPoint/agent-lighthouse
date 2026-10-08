@@ -10,6 +10,14 @@ import {
   originOfVariant,
   MAX_IMAGES,
 } from "../../gatherers/media";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** Images sampled per page, before the per-scan cap applies. */
 const PER_PAGE = 3;
@@ -23,24 +31,24 @@ export class C2paManifestSurvivesDeliveryAudit extends Audit {
       "This site’s image pipeline strips Content Credentials before delivery",
     description:
       "Fetches the images a page actually serves and looks for a C2PA manifest store in the bytes. Where a served image is a transformed variant — Next.js image optimization, Cloudflare Image Resizing, a WordPress rendition — the origin asset is fetched too and the two are compared. An origin that carries a manifest whose variant does not is a pipeline stripping provenance in transit.",
-    scoreDisplayMode: "ternary",
-    tier: "scored",
-    evidenceGrade: "B",
-    weight: weightForGrade("B", "scored"),
-    defaultPriority: "medium",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    tier: AuditTier.Scored,
+    evidenceGrade: EvidenceGrade.B,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    defaultPriority: CheckPriority.Medium,
     dossier:
       "docs/evidence/audits/operability-safety/c2pa-manifest-survives-delivery.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     guidance: {
       impact:
         "Signing an image at creation proves nothing if the bytes a crawler downloads are unsigned. Image transformation layers discard Content Credentials by default — Cloudflare states outright that with preservation disabled, existing Content Credentials are always discarded — so the publisher sees signed assets in their library while every consumer sees stripped ones. The provenance work is done and none of it reaches the reader.",
       fix: "Turn on Content Credentials preservation in the image pipeline (Cloudflare Images has an explicit setting; Next.js image optimization and most CDN resizers need the manifest copied through or the asset served unoptimized). Verify by fetching the URL the page actually renders, not the asset in the library.",
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/c2pa-manifest-survives-delivery/",
       tags: ["c2pa", "provenance", "content-credentials", "images"],

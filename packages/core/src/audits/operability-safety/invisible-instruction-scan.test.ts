@@ -14,6 +14,7 @@ import {
 } from "../../__tests__/test-utils";
 import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
 import type { FetchOptions } from "../../fetcher";
+import { CheckStatus } from "../../types";
 
 // isSafeUrl performs a real DNS lookup before a linked stylesheet is fetched.
 // Stub it with an offline stand-in that still blocks loopback and private
@@ -63,20 +64,20 @@ describe("InvisibleInstructionScanAudit", () => {
     const result = await run(
       "<main><p>Ordinary visible copy about our product.</p></main>",
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // The decoded string is the whole point of the finding: an operator needs to
   // see what the page is telling agents to do.
   it("fails on display:none text carrying a lexicon hit, quoting the hidden string", async () => {
     const result = await run(`<div style="display:none">${INJECTION}</div>`);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("Ignore all previous instructions");
   });
 
   it("fails on text at opacity: 0 carrying a lexicon hit", async () => {
     const result = await run(`<div style="opacity:0">${INJECTION}</div>`);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("fails on visibility:hidden, font-size:0 and off-screen positioning", async () => {
@@ -87,15 +88,17 @@ describe("InvisibleInstructionScanAudit", () => {
       "text-indent:-9999px",
     ]) {
       const result = await run(`<div style="${style}">${INJECTION}</div>`);
-      expect(result.status, style).toBe("fail");
+      expect(result.status, style).toBe(CheckStatus.Fail);
     }
   });
 
   it("fails on the hidden attribute and on aria-hidden text", async () => {
-    expect((await run(`<div hidden>${INJECTION}</div>`)).status).toBe("fail");
+    expect((await run(`<div hidden>${INJECTION}</div>`)).status).toBe(
+      CheckStatus.Fail,
+    );
     expect(
       (await run(`<div aria-hidden="true">${INJECTION}</div>`)).status,
-    ).toBe("fail");
+    ).toBe(CheckStatus.Fail);
   });
 
   // Colour-on-colour is the technique Brave demonstrated against Comet, and it
@@ -104,14 +107,14 @@ describe("InvisibleInstructionScanAudit", () => {
     const result = await run(
       `<div style="background-color:#ffffff"><span style="color:#fefefe">${INJECTION}</span></div>`,
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("does not flag readable text on a contrasting background", async () => {
     const result = await run(
       `<div style="background-color:#ffffff"><span style="color:#111111">${INJECTION}</span></div>`,
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("allowlists a short sr-only clip idiom with no lexicon hit", async () => {
@@ -119,14 +122,14 @@ describe("InvisibleInstructionScanAudit", () => {
       `<span class="sr-only" style="clip:rect(0,0,0,0);position:absolute">Search products</span>
        <main><p>Visible copy.</p></main>`,
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("does not allowlist an sr-only span that carries a lexicon hit", async () => {
     const result = await run(
       `<span class="sr-only" style="clip:rect(0,0,0,0);position:absolute">${INJECTION}</span>`,
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("allowlists a skip link and an aria-live region", async () => {
@@ -135,7 +138,7 @@ describe("InvisibleInstructionScanAudit", () => {
        <div aria-live="polite" style="display:none">Loading results</div>
        <main id="main"><p>Visible copy.</p></main>`,
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("warns on a long hidden payload with zero lexicon hits", async () => {
@@ -144,7 +147,7 @@ describe("InvisibleInstructionScanAudit", () => {
         5,
       );
     const result = await run(`<div style="display:none">${filler}</div>`);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("unexplained payload");
   });
 
@@ -154,7 +157,7 @@ describe("InvisibleInstructionScanAudit", () => {
       '<link rel="stylesheet" href="/s.css">',
       { "https://example.test/s.css": ".ghost { display: none }" },
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   // Not fetching a third party's bytes is the right call, but a result built on
@@ -202,7 +205,9 @@ describe("InvisibleInstructionScanAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new InvisibleInstructionScanAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext(pages, rootFiles),
@@ -215,6 +220,6 @@ describe("InvisibleInstructionScanAudit", () => {
       plan.skipped.find(
         (stub) => stub.id === InvisibleInstructionScanAudit.meta.id,
       )?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 });

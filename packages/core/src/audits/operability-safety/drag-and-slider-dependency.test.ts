@@ -3,6 +3,12 @@ import { DragAndSliderDependencyAudit } from "./drag-and-slider-dependency";
 import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
 import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
 import type { CheckContext } from "../../check-context";
+import {
+  AuditTier,
+  CheckStatus,
+  EvidenceGrade,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** A page at `url` carrying `body`. */
 function page(body: string, url = "https://example.com/"): CheckContext {
@@ -31,7 +37,7 @@ describe("DragAndSliderDependencyAudit", () => {
         '<fieldset><label for="p">Max price</label><input id="p" type="range" min="0" max="500"><input type="number" min="0" max="500"></fieldset>',
       ),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.details?.["sliders"]).toBe(0);
   });
 
@@ -41,7 +47,7 @@ describe("DragAndSliderDependencyAudit", () => {
         '<fieldset><label for="p">Max price</label><input id="p" type="range"></fieldset>',
       ),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.details?.["sliders"]).toBe(1);
     expect(result.message).toContain("numeric");
   });
@@ -64,7 +70,7 @@ describe("DragAndSliderDependencyAudit", () => {
         '<fieldset><div role="slider" aria-label="Max price" aria-valuenow="100" aria-valuemin="0" aria-valuemax="500"></div><select><option>100</option></select></fieldset>',
       ),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.details?.["sliderAria"]).toBe(0);
   });
 
@@ -114,13 +120,13 @@ describe("DragAndSliderDependencyAudit", () => {
     const result = await audit.audit(
       page('<p>Just prose.</p><a href="/x">Link</a>'),
     );
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("registers as a scored grade-B audit", () => {
     const { meta } = DragAndSliderDependencyAudit;
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
-    expect(meta.scoreDisplayMode).toBe("binary");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
+    expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Binary);
   });
 });

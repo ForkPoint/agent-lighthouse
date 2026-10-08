@@ -3,6 +3,14 @@ import { Audit } from "../../audit";
 import type { CheckContext } from "../../check-context";
 import { parseRobotsTxt } from "./_robots-txt-helpers";
 import { weightForGrade } from "../../scorer";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 export class CrawlDelayAudit extends Audit {
   static override meta: AuditMeta = {
@@ -12,20 +20,20 @@ export class CrawlDelayAudit extends Audit {
     failureTitle: "Crawl-delay is reasonable",
     description:
       "Excessive Crawl-delay values (over 10 seconds) dramatically slow AI indexing, meaning your latest content may take days or weeks to appear in AI search results.",
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "informative"),
-    evidenceGrade: "C",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/access-crawl-control/crawl-delay.md",
     // Gate exemption: being refused is what this category reports.
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "high",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "Excessive Crawl-delay values (over 10 seconds) dramatically slow AI indexing, meaning your latest content may take days or weeks to appear in AI search results while competitors with lower delays get indexed faster.",
       fix: "Reduce Crawl-delay to 5 seconds or less, or remove it entirely if your server can handle the crawl load. Most modern servers can handle AI crawler traffic without throttling.",
       code: "User-agent: *\nCrawl-delay: 5",
-      effort: "trivial",
+      effort: FixEffort.Trivial,
       tags: ["robots-txt", "performance", "crawler-permissions"],
     },
   };
@@ -39,7 +47,7 @@ export class CrawlDelayAudit extends Audit {
         "If Crawl-delay is present, it is <= 10 seconds",
         "No robots.txt found",
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "Without a robots.txt file, there is no way to verify crawl-delay settings. Create a robots.txt file to explicitly manage crawler behavior.",
           code: "User-agent: *\nAllow: /",
@@ -71,7 +79,7 @@ export class CrawlDelayAudit extends Audit {
         "If Crawl-delay is present, it is <= 10 seconds",
         `Excessive delays: ${details}`,
         {
-          priority: "high",
+          priority: CheckPriority.High,
           description:
             "Excessive Crawl-delay values (over 10 seconds) dramatically slow AI indexing, meaning your latest content may take days or weeks to appear in AI search results. Reduce to 5 seconds or less, or remove the directive entirely if your server can handle the load.",
           code: "User-agent: *\nCrawl-delay: 5",

@@ -3,6 +3,12 @@ import { ChunkBoundaryReferentIntegrityAudit } from "./chunk-boundary-referent-i
 import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
 import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
 import type { CheckContext } from "../../check-context";
+import {
+  AuditTier,
+  CheckPriority,
+  CheckStatus,
+  EvidenceGrade,
+} from "../../types";
 
 /** Forty-plus words that never name the product, so entity presence is the variable. */
 const FILLER =
@@ -33,14 +39,14 @@ describe("ChunkBoundaryReferentIntegrityAudit", () => {
     expect(
       (await audit.audit(page("<p>Just prose about the copper kettle.</p>")))
         .status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 
   it("passes a page whose every section names its subject", async () => {
     const result = await audit.audit(
       page([clean("Boiling"), clean("Descaling"), clean("Warranty")].join("")),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("flags a chunk that opens on a demonstrative with no referent", async () => {
@@ -99,7 +105,7 @@ describe("ChunkBoundaryReferentIntegrityAudit", () => {
       ),
     ]);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect((result.details!["entities"] as string[]).length).toBeGreaterThan(1);
   });
 
@@ -109,7 +115,7 @@ describe("ChunkBoundaryReferentIntegrityAudit", () => {
     const atFloor = await audit.audit(
       page([clean("A"), clean("B"), clean("C"), clean("D"), broken].join("")),
     );
-    expect(atFloor.status).not.toBe("fail");
+    expect(atFloor.status).not.toBe(CheckStatus.Fail);
     // 2 clean of 4 -> 0.50.
     const below = await audit.audit(
       page(
@@ -118,7 +124,7 @@ describe("ChunkBoundaryReferentIntegrityAudit", () => {
         ),
       ),
     );
-    expect(below.status).toBe("fail");
+    expect(below.status).toBe(CheckStatus.Fail);
   });
 
   it("quotes the offending sentence under its heading", async () => {
@@ -131,8 +137,8 @@ describe("ChunkBoundaryReferentIntegrityAudit", () => {
 
   it("registers as a scored grade-B audit with high priority", () => {
     const { meta } = ChunkBoundaryReferentIntegrityAudit;
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
-    expect(meta.defaultPriority).toBe("high");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
+    expect(meta.defaultPriority).toBe(CheckPriority.High);
   });
 });

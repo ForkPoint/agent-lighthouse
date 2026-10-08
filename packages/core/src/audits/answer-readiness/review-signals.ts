@@ -3,6 +3,15 @@ import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
 import type { CheckContext, PageContext } from "../../check-context";
 import { flattenJsonLd } from "../../parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** Parse a schema.org count that may be serialized as a number or a string. */
 function numericCount(value: unknown): number | null {
@@ -218,25 +227,25 @@ export class ReviewSignalsAudit extends Audit {
     failureTitle: "Review/testimonial signals",
     description:
       "Google parses schema.org Review/AggregateRating to render review rich results, and attributed quotations are the best-measured lever in the GEO literature. This audit passes on machine-readable social proof — review structured data, or quotations carried in <blockquote> with attribution — and warns when review UI is on the page but nothing machine-readable is behind it.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/answer-readiness/review-signals.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: ["homepage", "product"],
-    defaultPriority: "medium",
+    applicablePageTypes: [PageType.Homepage, PageType.Product],
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         'AI generative engines use reviews and testimonials as social proof when recommending your product or service. Without machine-readable review signals, agents have no evidence to cite when users ask "is this product any good?".',
       fix: "Add Review or AggregateRating JSON-LD schema, and attribute testimonial quotes with <blockquote> plus <cite>, <footer> or a <figcaption> — an unattributed pull-quote is decoration, not social proof.",
       code: '<blockquote cite="https://example.com/review">\n  <p>"Great product -- reduced our deployment time by 50%."</p>\n  <footer>- <cite>Jane Smith, CEO at Company</cite></footer>\n</blockquote>',
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl: "https://schema.org/Review",
       tags: ["trust", "social-proof", "schema", "generative-engine"],
     },
@@ -336,7 +345,7 @@ export class ReviewSignalsAudit extends Audit {
         expected,
         [...weak, pullQuotes].filter(Boolean).join("; "),
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "The page shows review UI, but nothing an agent can read: client-injected widget markup or a visible review count. Add Review/AggregateRating structured data server-side, and attribute testimonial quotes with <cite>, <footer> or a <figcaption>.",
           code: '<script type="application/ld+json">\n{"@context":"https://schema.org","@type":"Product","aggregateRating":{"@type":"AggregateRating","ratingValue":"4.5","reviewCount":"120"}}\n</script>',
@@ -352,7 +361,7 @@ export class ReviewSignalsAudit extends Audit {
       expected,
       pullQuotes ? `${pullQuotes}, no attribution` : "Not found",
       {
-        priority: "medium",
+        priority: CheckPriority.Medium,
         description:
           'AI generative engines use reviews and testimonials as social proof when recommending your product or service. Attributed quotations and Review/AggregateRating schema make social proof machine-readable, giving agents concrete evidence to cite when users ask "is X any good?".',
         code: '<blockquote cite="https://example.com/review">\n  <p>"Great product — reduced our deployment time by 50%."</p>\n  <footer>- <cite>Jane Smith, CEO at Company</cite></footer>\n</blockquote>',

@@ -2,6 +2,15 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
 import type { CheckContext } from "../../check-context";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** Coerce an unknown JSON value to a string; non-strings → ''. */
 function asString(val: unknown): string {
@@ -70,25 +79,25 @@ export class NamedAuthorAudit extends Audit {
     failureTitle: "Named author attribution",
     description:
       'AI systems assign higher confidence to content from named experts. Generic authors like "Staff" or "Admin" reduce trust scoring because agents cannot verify expertise.',
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "informative"),
-    evidenceGrade: "C",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/answer-readiness/named-author.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: ["article"],
-    defaultPriority: "high",
+    applicablePageTypes: [PageType.Article],
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         'AI systems assign higher confidence to content from named experts. Generic authors like "Staff" or "Admin" reduce trust scoring because agents cannot verify expertise, causing your content to rank lower in AI-generated recommendations.',
       fix: "Replace generic author names with real person names in your JSON-LD author property, meta author tag, and visible byline. Include a jobTitle for additional authority.",
       code: '"author": {\n  "@type": "Person",\n  "name": "Jane Smith",\n  "jobTitle": "Senior Engineer"\n}',
-      effort: "easy",
+      effort: FixEffort.Easy,
       tags: ["trust", "e-e-a-t", "json-ld", "generative-engine"],
     },
   };
@@ -101,7 +110,7 @@ export class NamedAuthorAudit extends Audit {
         'JSON-LD author or visible byline with a named person (not "Staff", "Admin", "Team")',
         "No pages scanned",
         {
-          priority: "high",
+          priority: CheckPriority.High,
           description:
             'AI systems assign higher confidence to content from named experts. Generic authors like "Staff" or "Admin" reduce trust scoring because agents cannot verify expertise.',
           code: '"author": { "@type": "Person", "name": "Jane Smith" }',
@@ -183,7 +192,7 @@ export class NamedAuthorAudit extends Audit {
       'JSON-LD author or visible byline with a named person (not "Staff", "Admin", "Team")',
       "Not found",
       {
-        priority: "high",
+        priority: CheckPriority.High,
         description:
           'AI systems assign higher confidence to content from named experts. Generic authors like "Staff" or "Admin" reduce trust scoring because agents cannot verify expertise. A named person with verifiable credentials lets AI RAG systems cross-reference the author across platforms for authority validation.',
         code: '"author": { "@type": "Person", "name": "Jane Smith", "jobTitle": "Senior Engineer" }',

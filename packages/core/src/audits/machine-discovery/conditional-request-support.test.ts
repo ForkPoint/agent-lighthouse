@@ -8,6 +8,7 @@ import {
 import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
 import type { FetchOptions, FetchResult } from "../../fetcher";
 import type { AuditResult } from "../../types";
+import { AuditTier, CheckStatus, EvidenceGrade } from "../../types";
 
 vi.mock("../../fetcher", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../fetcher")>();
@@ -105,7 +106,7 @@ describe("ConditionalRequestSupportAudit", () => {
   it("passes when every surface carries a stable validator and answers 304", async () => {
     const { result } = run();
     const r = await result;
-    expect(r.status).toBe("pass");
+    expect(r.status).toBe(CheckStatus.Pass);
     expect(r.details?.["revalidatingSurfaces"]).toBeGreaterThan(0);
     expect(strings(r, "perSurface")[0]).toContain("ETag+Last-Modified");
   });
@@ -113,7 +114,7 @@ describe("ConditionalRequestSupportAudit", () => {
   it("fails an unstable validator, quoting both ETags in the finding", async () => {
     const { result } = run({ etag: '"a"', etagAfter: '"b"' });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures").join(" ")).toContain("the ETag did");
   });
 
@@ -131,7 +132,7 @@ describe("ConditionalRequestSupportAudit", () => {
   it("fails a surface with no validator at all, and reports what a poll costs", async () => {
     const { result } = run({});
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures")[0]).toContain(
       "neither ETag nor Last-Modified",
     );
@@ -141,7 +142,7 @@ describe("ConditionalRequestSupportAudit", () => {
   it("warns on no-store or private on a public discovery surface", async () => {
     const { result } = run({ etag: '"v1"', cacheControl: "no-store" });
     const r = await result;
-    expect(r.status).toBe("warn");
+    expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "warnings")[0]).toContain("no-store");
   });
 
@@ -177,8 +178,8 @@ describe("ConditionalRequestSupportAudit", () => {
 
   it("is a scored grade B audit with an id inside the cap", () => {
     const { meta } = ConditionalRequestSupportAudit;
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
     expect(meta.weight).toBeCloseTo(0.6);
     expect(meta.id.length).toBeLessThanOrEqual(64);
   });

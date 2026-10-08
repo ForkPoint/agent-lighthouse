@@ -9,6 +9,14 @@ import {
   readAiCatalog,
 } from "./_ard";
 import type { ArdEntry, ArdManifest } from "./_ard";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /**
  * The keys Hugging Face's hf-discover actually indexes.
@@ -103,19 +111,19 @@ export class AiCatalogMetadataAudit extends Audit {
     failureTitle: "AI Catalog complete metadata",
     description:
       "Consumers rank AI catalog entries on their metadata: Hugging Face's hf-discover builds its match text from each entry's description, tags, capabilities and representativeQueries. An entry with only an identifier and a type is legal ARD but is nearly unmatchable, so agents searching for what you offer will not surface it.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/agent-interfaces/ai-catalog-metadata.md",
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "medium",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "A thin catalog entry is a catalog entry nobody finds. Consumers match a user query against the entry text, so entries with no description, tags, capabilities or representative queries lose to better-described alternatives even when your service is the better answer.",
       fix: "Name the catalog operator in host.displayName (and add a did:web identifier), then give every entry a plain-language description plus at least one of tags, capabilities or representativeQueries. Optional enrichment on top: an ISO 8601 updatedAt on each entry, and a trustManifest on the host or on individual entries — both are entry/host fields, not manifest-root ones.",
       code: SAMPLE,
-      effort: "trivial",
+      effort: FixEffort.Trivial,
       docsUrl: "https://github.com/ards-project/ard-spec/blob/main/spec/ard.md",
       tags: ["ai-catalog", "metadata", "agent-protocol", "ard"],
     },
@@ -123,7 +131,7 @@ export class AiCatalogMetadataAudit extends Audit {
 
   private recommendation() {
     return {
-      priority: "medium" as const,
+      priority: CheckPriority.Medium,
       description: AiCatalogMetadataAudit.meta.description,
       code: SAMPLE,
     };

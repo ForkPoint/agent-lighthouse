@@ -8,6 +8,15 @@ import { Audit } from "../../audit";
 import type { CheckContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
 import { flattenJsonLd } from "../../parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "../../types";
 
 function matchesAnyType(
   schema: Record<string, unknown>,
@@ -29,19 +38,19 @@ export class ProductDetailsAudit extends Audit {
     failureTitle: "Advanced product details",
     description:
       "AI agents use a product's name, brand, category, and availability status to filter search results and answer availability queries. A Product without a name cannot be matched to a catalog entry at all; missing brand, category or availability makes it less likely to surface in filtered AI recommendations.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/structured-data/advanced-product-details.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: ["product"],
-    defaultPriority: "medium",
+    applicablePageTypes: [PageType.Product],
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         'Missing brand, category, or availability in your Product schema means AI agents cannot filter or surface your products in response to specific shopping queries. Your products are less likely to appear in AI-generated comparisons and "best of" recommendations.',
@@ -60,7 +69,7 @@ export class ProductDetailsAudit extends Audit {
     "availability": "https://schema.org/InStock"
   }
 }`,
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl: "https://schema.org/Product",
       tags: ["json-ld", "schema", "product", "ecommerce"],
     },
@@ -122,7 +131,7 @@ export class ProductDetailsAudit extends Audit {
         "Product schema with name, brand, category, and availability.",
         `Missing ${["name", ...missing].join(", ")}`,
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "name is a required Product property in Google's merchant-listing extraction: without it the product cannot be matched to a catalog entry at all, so brand, category and availability have nothing to attach to.",
         },
@@ -143,7 +152,7 @@ export class ProductDetailsAudit extends Audit {
         "Product schema with name, brand, category, and availability.",
         `Missing ${missing.join(", ")}`,
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description: `AI agents use ${missing.join(", ")} to accurately categorize and recommend your products.`,
         },
       );
@@ -154,7 +163,7 @@ export class ProductDetailsAudit extends Audit {
       "Product schema with name, brand, category, and availability.",
       "None",
       {
-        priority: "medium",
+        priority: CheckPriority.Medium,
         description:
           "AI agents require brand and availability information to provide accurate shopping advice.",
       },

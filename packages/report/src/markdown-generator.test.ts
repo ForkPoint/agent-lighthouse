@@ -5,6 +5,16 @@ import type {
   ScanReport,
 } from "@forkpoint/agent-lighthouse-core";
 import { generateMarkdownSummary } from "./markdown-generator";
+import {
+  AuditTier,
+  CheckPriority,
+  CheckStatus,
+  EvidenceKey,
+  PageType,
+  PageTypeSource,
+  ScoreDisplayMode,
+  ScoreTier,
+} from "@forkpoint/agent-lighthouse-core";
 
 function check(over: Partial<CheckResult> = {}): CheckResult {
   return {
@@ -12,10 +22,10 @@ function check(over: Partial<CheckResult> = {}): CheckResult {
     category: "agent-interfaces",
     title: "title",
     description: "desc",
-    status: "pass",
+    status: CheckStatus.Pass,
     score: 1,
-    scoreDisplayMode: "binary",
-    priority: "medium",
+    scoreDisplayMode: ScoreDisplayMode.Binary,
+    priority: CheckPriority.Medium,
     impact: "",
     fix: "",
     ...over,
@@ -42,12 +52,12 @@ function report(categories: CategoryResult[]): ScanReport {
     url: "https://x.test/",
     domain: "x.test",
     overallScore: 42,
-    scoreTier: "needs-work",
+    scoreTier: ScoreTier.NeedsWork,
     categories,
     topPasses: [],
     topFails: [],
     recommendations: [],
-    pagesScanned: [{ url: "https://x.test/", pageType: "homepage" }],
+    pagesScanned: [{ url: "https://x.test/", pageType: PageType.Homepage }],
     scannedAt: "2026-01-01T00:00:00.000Z",
     durationMs: 1234,
   };
@@ -90,7 +100,7 @@ describe("generateMarkdownSummary", () => {
             checks: Array.from({ length: count }, (_, i) =>
               check({
                 id: `skipped-${i}`,
-                status: "na",
+                status: CheckStatus.NotApplicable,
                 tags: ["skipped:no-evidence"],
               }),
             ),
@@ -99,12 +109,14 @@ describe("generateMarkdownSummary", () => {
         scanValidity: {
           judgeable: false,
           evidence: {
-            "origin-reachable": false,
-            "unblocked-fetches": true,
-            "rendered-body": false,
-            "sample-adequate": false,
+            [EvidenceKey.OriginReachable]: false,
+            [EvidenceKey.UnblockedFetches]: true,
+            [EvidenceKey.RenderedBody]: false,
+            [EvidenceKey.SampleAdequate]: false,
           },
-          reasons: { "origin-reachable": "The homepage answered HTTP 403." },
+          reasons: {
+            [EvidenceKey.OriginReachable]: "The homepage answered HTTP 403.",
+          },
         },
       });
       expect(md).toContain(
@@ -121,7 +133,12 @@ describe("generateMarkdownSummary", () => {
       report([
         cat({
           id: "agent-interfaces",
-          checks: [check({ status: "na", tags: ["skipped:no-evidence"] })],
+          checks: [
+            check({
+              status: CheckStatus.NotApplicable,
+              tags: ["skipped:no-evidence"],
+            }),
+          ],
         }),
       ]),
     );
@@ -177,11 +194,11 @@ describe("generateMarkdownSummary", () => {
         cat({
           id: "agent-interfaces",
           checks: [
-            check({ tier: "scored" }),
+            check({ tier: AuditTier.Scored }),
             check({
               id: "adv",
-              tier: "informative",
-              scoreDisplayMode: "informative",
+              tier: AuditTier.Informative,
+              scoreDisplayMode: ScoreDisplayMode.Informative,
             }),
           ],
         }),
@@ -193,7 +210,10 @@ describe("generateMarkdownSummary", () => {
   it("says nothing about advisories when there are none", () => {
     const md = generateMarkdownSummary(
       report([
-        cat({ id: "agent-interfaces", checks: [check({ tier: "scored" })] }),
+        cat({
+          id: "agent-interfaces",
+          checks: [check({ tier: AuditTier.Scored })],
+        }),
       ]),
     );
     expect(md).not.toContain("advisory");
@@ -207,10 +227,10 @@ describe("generateMarkdownSummary", () => {
           checks: [
             check({
               id: "a",
-              tier: "informative",
-              scoreDisplayMode: "informative",
+              tier: AuditTier.Informative,
+              scoreDisplayMode: ScoreDisplayMode.Informative,
             }),
-            check({ id: "b", tier: "experimental" }),
+            check({ id: "b", tier: AuditTier.Experimental }),
           ],
         }),
       ]),
@@ -228,12 +248,14 @@ describe("generateMarkdownSummary — an unscored scan", () => {
       scanValidity: {
         judgeable: false,
         evidence: {
-          "origin-reachable": false,
-          "unblocked-fetches": true,
-          "rendered-body": false,
-          "sample-adequate": false,
+          [EvidenceKey.OriginReachable]: false,
+          [EvidenceKey.UnblockedFetches]: true,
+          [EvidenceKey.RenderedBody]: false,
+          [EvidenceKey.SampleAdequate]: false,
         },
-        reasons: { "origin-reachable": "The homepage answered HTTP 403." },
+        reasons: {
+          [EvidenceKey.OriginReachable]: "The homepage answered HTTP 403.",
+        },
         unscoredReason: "The homepage answered HTTP 403.",
       },
     });
@@ -250,7 +272,7 @@ describe("generateMarkdownSummary — scan conditions", () => {
       ...report([]),
       conditions: {
         url: "https://x.test/",
-        pageType: { type: "homepage", source: "detected" },
+        pageType: { type: PageType.Homepage, source: PageTypeSource.Detected },
         origin: {
           origin: "https://x.test",
           version: "v1",
@@ -285,7 +307,7 @@ describe("generateMarkdownSummary — scan conditions", () => {
       ...report([]),
       conditions: {
         url: "https://x.test/",
-        pageType: { type: "homepage", source: "detected" },
+        pageType: { type: PageType.Homepage, source: PageTypeSource.Detected },
         origin: {
           origin: "https://x.test",
           version: "v1",
@@ -317,7 +339,7 @@ describe("generateMarkdownSummary — scan conditions", () => {
 describe("scan conditions — the budget line", () => {
   const conditions = {
     url: "https://x.test/",
-    pageType: { type: "homepage" as const, source: "detected" as const },
+    pageType: { type: "homepage" as const, source: PageTypeSource.Detected },
     origin: {
       origin: "https://x.test",
       version: "v1",

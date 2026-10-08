@@ -7,12 +7,11 @@ import {
   extractRdfa,
 } from "../parser";
 import { buildScanEvidence } from "../scan-evidence";
-import { detectWafProtection } from "../waf-detector";
+import { detectWafProtection, WafProvider } from "../waf-detector";
 import type { CheckContext, PageContext } from "../check-context";
 import type { FetchResult } from "../fetcher";
-import type { EvidenceKey } from "../scan-evidence";
 import type { WafProtection } from "../waf-detector";
-import type { PageType } from "../types";
+import { EvidenceKey, PageType, PageTypeSource } from "../types";
 
 /**
  * Scan states in which an audit has the least to go on and the most freedom to
@@ -131,7 +130,7 @@ function toPageContext(
   return {
     url,
     pageType,
-    pageTypeSource: "declared",
+    pageTypeSource: PageTypeSource.Declared,
     fetchResult: result,
     $,
     jsonLd,
@@ -177,7 +176,10 @@ function state(spec: StateSpec): HostileState {
     missing: spec.missing,
     nothingObtained: spec.nothingObtained,
     build: () => {
-      const pages = pagesFrom(spec.homepage, spec.pageType ?? "homepage");
+      const pages = pagesFrom(
+        spec.homepage,
+        spec.pageType ?? PageType.Homepage,
+      );
       const waf =
         spec.waf?.(spec.homepage, spec.rootFiles) ?? spec.wafProtection ?? null;
       return {
@@ -211,10 +213,10 @@ const CLOUDFLARE_CHALLENGE =
 const blocked = state({
   name: "blocked",
   missing: [
-    "origin-reachable",
-    "unblocked-fetches",
-    "rendered-body",
-    "sample-adequate",
+    EvidenceKey.OriginReachable,
+    EvidenceKey.UnblockedFetches,
+    EvidenceKey.RenderedBody,
+    EvidenceKey.SampleAdequate,
   ],
   nothingObtained: true,
   homepage: fetchResult({
@@ -232,7 +234,7 @@ const blocked = state({
   })),
   wafProtection: {
     isBlocked: true,
-    provider: "cloudflare",
+    provider: WafProvider.Cloudflare,
     name: "Cloudflare",
     reason: "HTTP 403 with a cf-ray header",
     statusCode: 403,
@@ -295,7 +297,11 @@ const CHALLENGE_200_HEADERS = {
 
 const challengedAt200 = state({
   name: "challenged-at-200",
-  missing: ["unblocked-fetches", "rendered-body", "sample-adequate"],
+  missing: [
+    EvidenceKey.UnblockedFetches,
+    EvidenceKey.RenderedBody,
+    EvidenceKey.SampleAdequate,
+  ],
   nothingObtained: true,
   homepage: fetchResult({
     url: HOME_URL,
@@ -348,7 +354,7 @@ const TEXT_BEARING_WALL_HTML =
 
 const textBearingWall = state({
   name: "text-bearing-wall",
-  missing: ["unblocked-fetches"],
+  missing: [EvidenceKey.UnblockedFetches],
   nothingObtained: true,
   homepage: fetchResult({
     url: HOME_URL,
@@ -370,10 +376,10 @@ const textBearingWall = state({
 const throttled = state({
   name: "throttled",
   missing: [
-    "origin-reachable",
-    "unblocked-fetches",
-    "rendered-body",
-    "sample-adequate",
+    EvidenceKey.OriginReachable,
+    EvidenceKey.UnblockedFetches,
+    EvidenceKey.RenderedBody,
+    EvidenceKey.SampleAdequate,
   ],
   nothingObtained: true,
   homepage: fetchResult({
@@ -391,7 +397,7 @@ const throttled = state({
   })),
   wafProtection: {
     isBlocked: true,
-    provider: "rate-limited",
+    provider: WafProvider.RateLimited,
     name: "Rate limit (HTTP 429)",
     reason: "The site answered HTTP 429 — too many requests",
     statusCode: 429,
@@ -425,7 +431,7 @@ const PARKED_PAGE =
 
 const redirectedAway = state({
   name: "redirected-away",
-  missing: ["origin-reachable"],
+  missing: [EvidenceKey.OriginReachable],
   nothingObtained: true,
   homepage: fetchResult({
     url: HOME_URL,
@@ -455,7 +461,11 @@ const PDF_BODY =
 
 const nonHtml = state({
   name: "non-html",
-  missing: ["origin-reachable", "rendered-body", "sample-adequate"],
+  missing: [
+    EvidenceKey.OriginReachable,
+    EvidenceKey.RenderedBody,
+    EvidenceKey.SampleAdequate,
+  ],
   nothingObtained: true,
   homepage: fetchResult({
     url: HOME_URL,
@@ -483,7 +493,7 @@ export const SHELL_HTML =
  */
 const shell = state({
   name: "shell",
-  missing: ["rendered-body", "sample-adequate"],
+  missing: [EvidenceKey.RenderedBody, EvidenceKey.SampleAdequate],
   nothingObtained: false,
   homepage: fetchResult({
     url: HOME_URL,

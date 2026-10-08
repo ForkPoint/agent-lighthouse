@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { OfferSchemaAudit } from "./offer-schema";
 import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 const ld = (obj: unknown) =>
   `<script type="application/ld+json">${JSON.stringify(obj)}</script>`;
@@ -23,20 +24,20 @@ describe("OfferSchemaAudit", () => {
   it("is not applicable when there are no product pages", () => {
     const ctx = mockCheckContext([]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("No product pages");
   });
 
   it("passes when a product page has an offers prop with price + priceCurrency", () => {
     const ctx = mockCheckContext([productPage(ld(productWithOffer))]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("detects an array-wrapped Product with offers", () => {
     const ctx = mockCheckContext([productPage(ld([productWithOffer]))]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("fails when a product page has no Offer schema", () => {
@@ -50,7 +51,7 @@ describe("OfferSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No Offer schema found");
   });
 
@@ -63,7 +64,7 @@ describe("OfferSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toBe("1/2 product pages with Offer schema");
   });
 
@@ -80,7 +81,7 @@ describe("OfferSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("handles a typeless schema alongside an Offer (return false branch)", () => {
@@ -100,7 +101,7 @@ describe("OfferSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("detects an Offer when offers property is an array (Array.isArray offers branch)", () => {
@@ -119,6 +120,6 @@ describe("OfferSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 });

@@ -26,6 +26,14 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 const TDMREP_PATH = "/.well-known/tdmrep.json";
 const RESERVATION_HEADER = "tdm-reservation";
@@ -168,27 +176,27 @@ export class TdmRepAudit extends Audit {
     failureTitle: "TDM-Rep declaration",
     description:
       "TDM-Rep is a W3C Community Group Final Report — explicitly not a W3C Standard — that defines a machine-readable text-and-data-mining reservation, anchored in EU DSM Directive Article 4. Its value is legal evidence of an opt-out, not agent behaviour: no major AI crawler operator documents honouring it. This audit reports what a site declares and in which direction, and never scores it either way.",
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "experimental"),
-    evidenceGrade: "C",
-    tier: "experimental",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Experimental),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Experimental,
     dossier: "docs/evidence/audits/access-crawl-control/tdm-rep.md",
     // Gate exemption: being refused is what this category reports.
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     // Nothing consumes the signal, so nothing here should outrank an item that
     // changes what an agent can do.
-    defaultPriority: "low",
+    defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
         "A TDM reservation is evidence of an opt-out under EU DSM Article 4, in the form the W3C CG defined for it. It is not enforcement: no major AI crawler operator documents honouring the protocol, and the standards momentum has moved to the IETF AIPREF working group. Declaring one neither helps nor hinders an agent reading your site, which is why this audit reports it rather than scoring it.",
       fix: 'If you want the Article 4 reservation on record, publish it in one of the forms the CG report defines: a tdm-reservation response header (its preferred technique), a /.well-known/tdmrep.json holding an array of objects each with location and tdm-reservation, or <meta name="tdm-reservation"> with the same value on every page. Use 1 to reserve and 0 to permit, and keep the value consistent across the site.',
       code: SAMPLE,
-      effort: "trivial",
+      effort: FixEffort.Trivial,
       docsUrl:
         "https://www.w3.org/community/reports/tdmrep/CG-FINAL-tdmrep-20240510/",
       tags: [
@@ -214,7 +222,7 @@ export class TdmRepAudit extends Audit {
           `The tdm-reservation response header carries "${header.value}", which is not a value the protocol defines (it accepts 1 or 0), so your licensing position cannot be read from it.`,
           EXPECTED,
           `tdm-reservation header: ${header.value} (unrecognized)`,
-          "low",
+          CheckPriority.Low,
           pageUrl,
         );
       }
@@ -233,7 +241,7 @@ export class TdmRepAudit extends Audit {
         `A JSON document is served at ${TDMREP_PATH} but it does not parse, so no agent or licensing tool can read your policy.`,
         EXPECTED,
         `${TDMREP_PATH} served, malformed JSON`,
-        "low",
+        CheckPriority.Low,
         pageUrl,
       );
     }
@@ -242,7 +250,7 @@ export class TdmRepAudit extends Audit {
         `${TDMREP_PATH} parses but is not the shape the spec defines: an array of objects, each with a location and a tdm-reservation.`,
         EXPECTED,
         `${TDMREP_PATH} served, non-conforming shape`,
-        "low",
+        CheckPriority.Low,
         pageUrl,
       );
     }
@@ -254,7 +262,7 @@ export class TdmRepAudit extends Audit {
           `${TDMREP_PATH} declares tdm-reservation ${file.reservations.join(", ")}, which is not a value the protocol defines (it accepts 1 or 0).`,
           EXPECTED,
           `${TDMREP_PATH}: tdm-reservation ${file.reservations.join(", ")} (unrecognized)`,
-          "low",
+          CheckPriority.Low,
           pageUrl,
         );
       }
@@ -263,7 +271,7 @@ export class TdmRepAudit extends Audit {
           `${TDMREP_PATH} declares more than one reservation across its entries (${file.reservations.join(", ")}); that is legal per-location, but a consumer reading only the site root will see whichever entry matches.`,
           EXPECTED,
           `${TDMREP_PATH}: mixed reservations ${file.reservations.join(", ")}`,
-          "low",
+          CheckPriority.Low,
           pageUrl,
         );
       }
@@ -283,7 +291,7 @@ export class TdmRepAudit extends Audit {
         `The scanned pages disagree about the reservation: ${meta.values.join(" and ")}. A per-page declaration only covers its own page, so a site-wide position needs the same value everywhere, or the well-known file.`,
         EXPECTED,
         `meta tdm-reservation: conflicting values ${meta.values.join(", ")}`,
-        "low",
+        CheckPriority.Low,
         meta.pageUrl,
       );
     }
@@ -295,7 +303,7 @@ export class TdmRepAudit extends Audit {
           `<meta name="tdm-reservation" content="${value}"> is not a value the protocol defines (it accepts 1 or 0), so your licensing position cannot be read from it.`,
           EXPECTED,
           `meta tdm-reservation: ${value} (unrecognized)`,
-          "low",
+          CheckPriority.Low,
           meta.pageUrl,
         );
       }

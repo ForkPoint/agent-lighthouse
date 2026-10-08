@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { SitemapLastmodAudit } from "./sitemap-lastmod";
 import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 /** Build a sitemap; each entry is a [loc, hasLastmod] tuple. */
 const sitemap = (entries: Array<[string, boolean]>) =>
@@ -29,7 +30,7 @@ describe("SitemapLastmodAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("have <lastmod>");
   });
 
@@ -46,7 +47,7 @@ describe("SitemapLastmodAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("of URL entries have <lastmod>");
   });
 
@@ -55,13 +56,13 @@ describe("SitemapLastmodAudit", () => {
       "/sitemap.xml": mockFetchResult(sitemap([]), 200, "application/xml"),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("declines when no sitemap is found", async () => {
     const ctx = mockCheckContext([]);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("uses sitemap-index.xml as fallback when sitemap.xml is absent (covers line 16 branch)", async () => {
@@ -76,6 +77,6 @@ describe("SitemapLastmodAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 });

@@ -22,6 +22,7 @@ import {
   parseAuditReviews,
   REVIEW_PATH,
 } from "./audit-index";
+import { AuditTier, EvidenceGrade } from "../packages/core/src/types";
 
 const REPO_ROOT = path.resolve(__dirname, "..");
 const AUDIT_MAP_JSON_PATH = path.resolve(
@@ -184,8 +185,8 @@ function generateAuditMap(): AuditMapDataset {
       slug: m.id.split("/")[1]!,
       title: m.title,
       ...indexFields,
-      tier: m.tier ?? "scored",
-      evidenceGrade: m.evidenceGrade ?? "A",
+      tier: m.tier ?? AuditTier.Scored,
+      evidenceGrade: m.evidenceGrade ?? EvidenceGrade.A,
       weight: m.weight,
       scoreDisplayMode: m.scoreDisplayMode,
       dossier: m.dossier ?? `docs/evidence/audits/${m.id}.md`,

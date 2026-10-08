@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { SvgBloatAudit } from "./svg-bloat";
 import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 const pathData = (bytes: number) =>
   `<path d="${"M0 0L1 1".repeat(Math.ceil(bytes / 8))}"/>`;
@@ -16,7 +17,7 @@ describe("SvgBloatAudit", () => {
       mockPageContext("https://example.com/", html, 0),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("No inline SVG");
   });
 
@@ -26,7 +27,7 @@ describe("SvgBloatAudit", () => {
       mockPageContext("https://example.com/", html, 0),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("unhidden");
   });
 
@@ -36,7 +37,7 @@ describe("SvgBloatAudit", () => {
       mockPageContext("https://example.com/", html, 0),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("0 unhidden");
   });
 
@@ -46,7 +47,7 @@ describe("SvgBloatAudit", () => {
       mockPageContext("https://example.com/", html, 0),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("warns when an unhidden SVG exceeds 2KB", () => {
@@ -55,7 +56,7 @@ describe("SvgBloatAudit", () => {
       mockPageContext("https://example.com/", html, 0),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("exceed 2KB");
     expect(result.found).toContain("Top offenders");
   });
@@ -66,7 +67,7 @@ describe("SvgBloatAudit", () => {
       mockPageContext("https://example.com/", html, 0),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("Severe SVG context bloat");
   });
 
@@ -84,7 +85,7 @@ describe("SvgBloatAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("https://example.com/about");
   });
 
@@ -95,7 +96,7 @@ describe("SvgBloatAudit", () => {
       mockPageContext("https://example.com/", html, 0),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("bloating agent context");
   });
 
@@ -113,7 +114,7 @@ describe("SvgBloatAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
   });
   // The data-URI fold: base64 is priced in tokens, wherever it sits.
   const base64 = (chars: number) =>
@@ -151,7 +152,7 @@ describe("SvgBloatAudit", () => {
     const result = audit.audit(
       mockCheckContext([mockPageContext("https://example.com/", html, 0)]),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("alt text");
   });
 
@@ -170,6 +171,6 @@ describe("SvgBloatAudit", () => {
     const result = audit.audit(
       mockCheckContext([mockPageContext("https://example.com/", html, 0)]),
     );
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 });

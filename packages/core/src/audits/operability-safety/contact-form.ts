@@ -4,6 +4,14 @@ import { weightForGrade } from "../../scorer";
 import type { CheckContext } from "../../check-context";
 import { extractForms } from "../../parser";
 import { openApiOperations, readOpenApiSpec } from "../../gatherers/openapi";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 const CONTACT_INDICATORS = [
   "contact",
@@ -64,18 +72,18 @@ export class ContactFormAudit extends Audit {
     failureTitle: "Contact/lead form endpoint",
     description:
       'AI agents increasingly handle tasks like "contact this company for a quote" on behalf of users. Without a machine-submittable contact form, agents cannot complete these requests, sending users to competitors who have one. Provide an HTML form or an API endpoint.',
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "informative"),
-    evidenceGrade: "C",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/operability-safety/contact-form.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "high",
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         'When users ask AI agents to "contact this company for a quote" or "send a message to their support team," the agent needs a machine-submittable form or API endpoint. Without one, the agent cannot complete the request and users turn to competitors.',
@@ -97,7 +105,7 @@ export class ContactFormAudit extends Audit {
     }
   }
 }`,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       tags: ["forms", "contact", "lead-generation"],
     },
   };
@@ -158,7 +166,7 @@ export class ContactFormAudit extends Audit {
       "Page has a contact/inquiry form or OpenAPI has a POST contact endpoint",
       "No contact form detected",
       {
-        priority: "high",
+        priority: CheckPriority.High,
         description: ContactFormAudit.meta.description,
         code: `<!-- HTML form approach -->\n<form action="/api/contact" method="POST">\n  <input type="text" name="name" placeholder="Name" required />\n  <input type="email" name="email" placeholder="Email" required />\n  <textarea name="message" placeholder="Message" required></textarea>\n  <button type="submit">Send</button>\n</form>\n\n<!-- Or OpenAPI approach -->\n"paths": {\n  "/api/contact": {\n    "post": {\n      "operationId": "submitContact",\n      "summary": "Submit a contact inquiry"\n    }\n  }\n}`,
       },

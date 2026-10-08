@@ -9,6 +9,14 @@ import {
   REALTIME_CRAWLERS,
 } from "./_robots-txt-helpers";
 import { weightForGrade } from "../../scorer";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /**
  * Returns the bots from the given list that have at least one explicit
@@ -63,20 +71,20 @@ export class AgentGovernanceAudit extends Audit {
     failureTitle: "Blanket robots.txt block also shuts out live AI agents",
     description:
       "Not all AI bots are the same. Training crawlers like GPTBot, CCBot, and Google-Extended scrape your content to build datasets, while conversational and retrieval agents like ChatGPT-User, Claude-User, and OAI-SearchBot fetch pages live to answer real user questions and can send referral traffic back to you. Many sites want to block the former while welcoming the latter — but a single catch-all User-agent: * cannot express that distinction. Granular robots.txt governance names both categories explicitly so each gets the access policy you actually intend.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/access-crawl-control/agent-governance.md",
     // Gate exemption: being refused is what this category reports.
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "medium",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "Without separate rules for training crawlers and live conversational agents, you cannot block dataset scraping while still appearing in ChatGPT, Claude, and Perplexity answers. A blanket policy either locks you out of AI-powered discovery entirely or leaves your content open to bulk training crawls you never agreed to.",
       fix: "Add explicit User-agent groups in robots.txt for both categories: name training crawlers (GPTBot, CCBot, Google-Extended, ClaudeBot) with the policy you want, and separately name live agents (ChatGPT-User, Claude-User, OAI-SearchBot) — typically with Allow: / so your site stays visible in AI answers.",
       code: "# Block dataset-training crawlers\nUser-agent: GPTBot\nDisallow: /\n\nUser-agent: CCBot\nDisallow: /\n\n# Welcome live conversational agents\nUser-agent: ChatGPT-User\nAllow: /\n\nUser-agent: Claude-User\nAllow: /\n\nUser-agent: *\nAllow: /",
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl: "https://platform.openai.com/docs/bots",
       tags: ["robots-txt", "crawler-permissions", "ai-governance"],
     },
@@ -139,7 +147,7 @@ export class AgentGovernanceAudit extends Audit {
         "robots.txt blocks every agent through the catch-all group. Under the RFC 9309 fallback that block also applies to live conversational agents, so the site is closed to the agents that cite and link back to it, not only to dataset crawlers.",
         expected,
         "Catch-all blocks all agents, no per-agent exceptions",
-        { priority: "medium" },
+        { priority: CheckPriority.Medium },
       );
       result.details = details;
       return result;
@@ -180,7 +188,7 @@ export class AgentGovernanceAudit extends Audit {
       `Only ${covered} are explicitly governed in robots.txt — no rules for ${missing}.`,
       expected,
       `Training: ${trainingNamed.map((b) => b.displayName).join(", ") || "none"}; Realtime: ${realtimeNamed.map((b) => b.displayName).join(", ") || "none"}`,
-      { priority: "medium" },
+      { priority: CheckPriority.Medium },
     );
     result.details = details;
     return result;

@@ -12,6 +12,7 @@ import {
 import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
 import type { FetchOptions, FetchResult } from "../../fetcher";
 import type { AuditResult } from "../../types";
+import { AuditTier, CheckStatus, EvidenceGrade } from "../../types";
 
 vi.mock("../../fetcher", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../fetcher")>();
@@ -93,7 +94,7 @@ describe("OrganizationIdentifierRegistryResolutionAudit", () => {
 
   it("is notApplicable when no organization identifier is declared", async () => {
     const { result, requests } = run({ organization: { name: "Example Inc" } });
-    expect((await result).status).toBe("na");
+    expect((await result).status).toBe(CheckStatus.NotApplicable);
     expect(requests).toHaveLength(0);
   });
 
@@ -125,7 +126,7 @@ describe("OrganizationIdentifierRegistryResolutionAudit", () => {
       },
     });
     const r = await result;
-    expect(r.status).toBe("pass");
+    expect(r.status).toBe(CheckStatus.Pass);
     expect(requests[0]?.url).toContain(`filter[lei]=${VALID_LEI}`);
     expect(strings(r, "resolved").join(" ")).toContain("ACTIVE/ISSUED");
   });
@@ -135,7 +136,7 @@ describe("OrganizationIdentifierRegistryResolutionAudit", () => {
       organization: { name: "Example Inc", leiCode: "5493001KJTIIGC8Y1R13" },
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures").join(" ")).toContain("check digits");
     expect(requests).toHaveLength(0);
   });
@@ -146,7 +147,7 @@ describe("OrganizationIdentifierRegistryResolutionAudit", () => {
       gleif: null,
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures").join(" ")).toContain("no record");
   });
 
@@ -160,7 +161,7 @@ describe("OrganizationIdentifierRegistryResolutionAudit", () => {
       gleif: { legalName: "Unrelated Holdings SA" },
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures").join(" ")).toContain("Unrelated Holdings");
   });
 
@@ -174,7 +175,7 @@ describe("OrganizationIdentifierRegistryResolutionAudit", () => {
       gleif: { registrationStatus: "LAPSED" },
     });
     const r = await result;
-    expect(r.status).toBe("warn");
+    expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "warnings").join(" ")).toContain("LAPSED");
   });
 
@@ -187,7 +188,7 @@ describe("OrganizationIdentifierRegistryResolutionAudit", () => {
       },
     });
     const r = await result;
-    expect(r.status).toBe("warn");
+    expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "advisories").join(" ")).toContain(`0199:${VALID_LEI}`);
   });
 
@@ -196,7 +197,7 @@ describe("OrganizationIdentifierRegistryResolutionAudit", () => {
       organization: { name: "Example Inc", iso6523Code: VALID_LEI },
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures").join(" ")).toContain("issuing-agency prefix");
   });
 
@@ -210,14 +211,14 @@ describe("OrganizationIdentifierRegistryResolutionAudit", () => {
       gleifStatus: 503,
     });
     const r = await result;
-    expect(r.status).toBe("warn");
+    expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "warnings").join(" ")).toContain("503");
   });
 
   it("registers as a scored grade-B audit", () => {
     const { meta } = OrganizationIdentifierRegistryResolutionAudit;
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
     expect(meta.weight).toBeCloseTo(0.6);
     expect(meta.id.length).toBeLessThanOrEqual(64);
   });

@@ -16,7 +16,16 @@ import {
   AI_CRAWLER_UAS,
   sharedUaProbes,
   type UaProbe,
+  BlockClass,
 } from "../../gatherers/ua-parity";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** How many content URLs to compare. */
 const MAX_URLS = 3;
@@ -154,7 +163,7 @@ function labelFor(token: string): string {
  */
 function usable(probe: UaProbe): boolean {
   return (
-    (probe.blockClass === "ok" || probe.blockClass === "soft-block") &&
+    (probe.blockClass === BlockClass.Ok || probe.blockClass === "soft-block") &&
     probe.probeStatus >= 200 &&
     probe.probeStatus < 300 &&
     probe.baselineText.length > 0
@@ -189,26 +198,26 @@ export class BotContentDeltaDeclaredAudit extends Audit {
     failureTitle: "AI crawlers get different content with nothing declaring it",
     description:
       "Fetches sampled content URLs as a browser and as GPTBot, ClaudeBot and PerplexityBot, then measures the difference two ways — main-text length ratio and 5-gram shingle similarity — because a stub and a rewritten page look identical on length alone. Where a difference exists, requires Google's restricted-content markup and checks that the declared cssSelector resolves against the served DOM.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/access-crawl-control/bot-content-delta-declared.md",
     // Gate exemption: being refused is what this category reports.
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "high",
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "Google states that isAccessibleForFree: false with hasPart/cssSelector markup 'helps Google differentiate paywalled content from the practice of cloaking, which violates spam policies' — serving a crawler less than a user is sanctioned only when it is declared. The measurement is falsifiable both ways: extract the main text of URL U under a browser UA and under crawler UA C, and if the length ratio falls below 0.6 or the 5-gram shingle similarity below 0.7, the site conditions content on the User-Agent. The declaration is equally checkable, and the declared cssSelector must match a real element in the served HTML — which is where most implementations silently fail, leaving markup that validates and points at nothing. The second-order cost is not the spam risk: an answer engine that only ever sees the stub cites the stub.",
       fix: "Decide which of the two you mean. If the crawler should see the whole page, stop conditioning the response on the User-Agent — serve the same main content and let robots.txt carry the policy. If part of the page is genuinely restricted, declare it: put isAccessibleForFree: false on the Article (or other CreativeWork) and add a hasPart WebPageElement with isAccessibleForFree: false and a cssSelector, then verify that selector matches the element in the HTML you actually serve. A selector that matches nothing is markup with no effect. Never serve a crawler a longer, keyword-heavy variant of the page: that is the case the spam policies name outright.",
       code: SAMPLE,
-      effort: "complex",
+      effort: FixEffort.Complex,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/access-crawl-control/bot-content-delta-declared/",
       tags: ["cloaking", "paywall", "crawlers", "structured-data"],
@@ -284,7 +293,7 @@ export class BotContentDeltaDeclaredAudit extends Audit {
         findings.length > MAX_SHOWN
           ? ` (${findings.length - MAX_SHOWN} more)`
           : "";
-      return this.fail(`${shown}${more}.`, EXPECTED, found, "high");
+      return this.fail(`${shown}${more}.`, EXPECTED, found, CheckPriority.High);
     }
 
     return this.pass(

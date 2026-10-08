@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { PublicationDateAudit } from "./publication-date";
 import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 describe("PublicationDateAudit", () => {
   const audit = new PublicationDateAudit();
@@ -11,7 +12,7 @@ describe("PublicationDateAudit", () => {
       `<html><body><article><time datetime="2025-01-15">January 15, 2025</time><p>Body</p></article></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("structured date");
   });
 
@@ -21,7 +22,7 @@ describe("PublicationDateAudit", () => {
       `<html><body><main><p>Published January 15, 2025 by us.</p></main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("Visible date found");
   });
 
@@ -31,13 +32,13 @@ describe("PublicationDateAudit", () => {
       `<html><body><main><p>This article has no date at all.</p></main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No visible publication date found");
   });
 
   it("is not-applicable when there are no article content pages", () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("No article content pages");
   });
 
@@ -47,7 +48,7 @@ describe("PublicationDateAudit", () => {
       `<html><body><main><p>Published <time>January 15, 2025</time>.</p></main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("structured date");
   });
 
@@ -62,7 +63,7 @@ describe("PublicationDateAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("JSON-LD");
   });
 
@@ -75,7 +76,7 @@ describe("PublicationDateAudit", () => {
       </html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("meta");
   });
 
@@ -86,7 +87,7 @@ describe("PublicationDateAudit", () => {
     );
     page.url = "::not-a-valid-url::";
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No visible publication date");
   });
 
@@ -98,7 +99,7 @@ describe("PublicationDateAudit", () => {
     page.fetchResult.body =
       '<?xml version="1.0" encoding="UTF-8"?><sitemapindex></sitemapindex>';
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("treats content page with .xml URL as not applicable", () => {
@@ -108,7 +109,7 @@ describe("PublicationDateAudit", () => {
     );
     page.url = "https://example.com/blog/feed.xml";
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("passes when date found via JSON-LD inside @graph (covers findJsonLdDate false-branch)", () => {
@@ -122,7 +123,7 @@ describe("PublicationDateAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("JSON-LD");
   });
 
@@ -137,7 +138,7 @@ describe("PublicationDateAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("passes when date found via uploadDate field in JSON-LD", () => {
@@ -151,7 +152,7 @@ describe("PublicationDateAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("falls through when <time> element has no text and no datetime (covers if(v) false branch)", () => {
@@ -160,7 +161,7 @@ describe("PublicationDateAudit", () => {
       `<html><body><main><p>Content without date. <time></time></p></main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No visible publication date");
   });
 });

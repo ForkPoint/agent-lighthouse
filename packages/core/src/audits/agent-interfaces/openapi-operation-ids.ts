@@ -9,6 +9,14 @@ import {
   readOpenApiPaths,
   readOpenApiSpec,
 } from "../../gatherers/openapi";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /**
  * The naming rule folded in from v1 5.23 (webmcp-tool-naming) on 2026-08-22.
@@ -38,13 +46,13 @@ export class OpenApiOperationIdsAudit extends Audit {
     failureTitle: "OpenAPI has operationIds",
     description:
       "AI agents use operationIds as stable function names when calling your API. Without unique operationIds, agents must guess endpoint names from paths, leading to ambiguity and errors. An operationId that is not a legal function name (spaces, punctuation, or more than 64 characters) cannot be registered as a tool at all.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/agent-interfaces/openapi-operation-ids.md",
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "medium",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "AI agents use operationIds as stable function names when calling your API. Without unique operationIds, agents must infer endpoint names from URL paths, leading to ambiguous calls, naming collisions, and broken integrations.",
@@ -63,7 +71,7 @@ export class OpenApiOperationIdsAudit extends Audit {
     }
   }
 }`,
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl: "https://swagger.io/specification/#operation-object",
       tags: ["openapi", "operation-ids", "api"],
     },
@@ -94,7 +102,7 @@ export class OpenApiOperationIdsAudit extends Audit {
         EXPECTED,
         paths.found,
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description: OpenApiOperationIdsAudit.meta.description,
           code: `"paths": {\n  "/contact": {\n    "post": {\n      "operationId": "submitContactForm"\n    }\n  }\n}`,
         },
@@ -160,7 +168,7 @@ export class OpenApiOperationIdsAudit extends Audit {
         EXPECTED,
         `Illegal operationId(s): ${[...new Set(illegal)].join(", ")}${missing > 0 ? `; ${missing} missing` : ""}${duplicates > 0 ? `; ${duplicates} duplicate(s)` : ""}${suffix}`,
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "A tool-calling runtime registers each operationId as a function name. Anthropic requires that name to match ^[a-zA-Z0-9_-]{1,64}$, so an operationId carrying spaces, punctuation or more than 64 characters cannot be registered verbatim and the operation is unreachable.",
           code: `"paths": {\n  "/contact": {\n    "post": {\n      "operationId": "submitContactForm"\n    }\n  }\n}`,
@@ -173,7 +181,7 @@ export class OpenApiOperationIdsAudit extends Audit {
       EXPECTED,
       `${issues.join(", ")}${suffix}`,
       {
-        priority: "medium",
+        priority: CheckPriority.Medium,
         description: OpenApiOperationIdsAudit.meta.description,
         code: `"paths": {\n  "/contact": {\n    "post": {\n      "operationId": "submitContactForm",\n      "summary": "Submit a contact inquiry"\n    }\n  },\n  "/search": {\n    "get": {\n      "operationId": "searchContent",\n      "summary": "Search site content"\n    }\n  }\n}`,
       },

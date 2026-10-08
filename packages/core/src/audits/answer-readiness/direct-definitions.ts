@@ -13,6 +13,15 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
 import type { CheckContext, PageContext } from "../../check-context";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "../../types";
 
 /**
  * Per-language lexical patterns.
@@ -132,7 +141,13 @@ function openingProse(page: PageContext): string {
   return paragraphs.slice(0, 3).join(" ");
 }
 
-type Coverage = "markup" | "prose" | "none";
+const Coverage = {
+  Markup: "markup",
+  Prose: "prose",
+  None: "none",
+} as const;
+
+type Coverage = (typeof Coverage)[keyof typeof Coverage];
 
 interface Assessed {
   url: string;
@@ -168,13 +183,14 @@ function assess(page: PageContext): Assessed | undefined {
   const lexicalIntent = rules.intent.test(headingText(page));
   if (!structuralIntent && !lexicalIntent) return undefined;
 
-  if (signals.length > 0) return { url: page.url, coverage: "markup", signals };
+  if (signals.length > 0)
+    return { url: page.url, coverage: Coverage.Markup, signals };
 
   const prose = openingProse(page);
   if (isSubstantive(prose) && rules.copula.test(prose)) {
-    return { url: page.url, coverage: "prose", signals };
+    return { url: page.url, coverage: Coverage.Prose, signals };
   }
-  return { url: page.url, coverage: "none", signals };
+  return { url: page.url, coverage: Coverage.None, signals };
 }
 
 const EXPECTED =
@@ -194,26 +210,26 @@ export class DirectDefinitionsAudit extends Audit {
     failureTitle: "Definition markup on definitional pages",
     description:
       "HTML-AAM maps <dfn> and <dt>/<dd> to the term and definition roles, and WHATWG requires the definition to sit alongside the term it defines, so the pairing survives extraction intact. No consumer is documented as acting on that mapping, and prose definitions are read perfectly well, so this is reported as upside on pages that already answer a definitional question — never as a defect.",
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "informative"),
-    evidenceGrade: "C",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/answer-readiness/direct-definitions.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: ["content", "unknown", "article"],
+    applicablePageTypes: [PageType.Unknown, PageType.Article],
     // Never a defect, so never above the actionable items.
-    defaultPriority: "low",
+    defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
         "A term marked with <dfn> or paired in a <dl> carries an explicit term/definition role through the accessibility tree and through extractors that preserve structure. A prose definition carries the same information without the roles — measurably fine for retrieval, and Google states no special markup is needed for generative search — so the upside here is modest and the absence of markup is not a problem to fix.",
       fix: 'On pages that answer "what is X?", wrap the term in <dfn> at its defining instance, or pair terms and definitions in a <dl>/<dt>/<dd>. Keep the definition in the same paragraph or list group as the term, which is what the HTML spec requires for the pairing to be conformant. Note that markdown conversion flattens <dl>, so do not restructure prose that already reads well.',
       code: SAMPLE,
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl:
         "https://html.spec.whatwg.org/multipage/text-level-semantics.html#the-dfn-element",
       tags: ["content-structure", "html", "answer-engine"],
@@ -233,8 +249,8 @@ export class DirectDefinitionsAudit extends Audit {
       );
     }
 
-    const withMarkup = assessed.filter((a) => a.coverage === "markup");
-    const prose = assessed.filter((a) => a.coverage === "prose");
+    const withMarkup = assessed.filter((a) => a.coverage === Coverage.Markup);
+    const prose = assessed.filter((a) => a.coverage === Coverage.Prose);
     const coverage = `${withMarkup.length} of ${assessed.length} definitional page(s) use <dfn> or <dl> markup`;
 
     if (withMarkup.length === assessed.length) {
@@ -256,13 +272,13 @@ export class DirectDefinitionsAudit extends Audit {
       prose.length > 0
         ? ` ${prose.length} of them state the definition in prose, which extraction reads without difficulty.`
         : "";
-    const first = assessed.find((a) => a.coverage !== "markup")!;
+    const first = assessed.find((a) => a.coverage !== Coverage.Markup)!;
 
     return this.warn(
       `${coverage}.${proseNote} Pairing the term with <dfn> or a <dl> adds the term/definition roles HTML-AAM defines; it is an improvement rather than a fix.`,
       EXPECTED,
       `${coverage}${prose.length > 0 ? `, ${prose.length} prose-only` : ""}`,
-      "low",
+      CheckPriority.Low,
       first.url,
     );
   }

@@ -1,12 +1,10 @@
 import type {
   CheckResult,
   CategoryResult,
-  EvidenceKey,
   AuditMeta,
-  ScoreDisplayMode,
   AuditCoverage,
 } from "./types";
-import { logger } from "./logger";
+import { logger, LogLevel } from "./logger";
 import {
   TAG_SKIPPED_PAGE_TYPE,
   TAG_SCAN_ERROR,
@@ -35,6 +33,14 @@ import type { ScanEvidence } from "./scan-evidence";
 import { CheckResultSchema } from "./schemas";
 import { auditPageTypes, normalizeAuditMeta } from "./audit-applicability";
 import { cacheOwner } from "./gatherers/cache-owner";
+import {
+  AttemptOutcome,
+  CheckStatus,
+  CoverageProvenance,
+  EvidenceKey,
+  PageTypeSource,
+  ScoreDisplayMode,
+} from "./types";
 
 /** How much of a failure message a report is willing to carry. */
 const MAX_ERROR_CHARS = 400;
@@ -81,7 +87,7 @@ function stubCheck(
     category: meta.category,
     title: meta.title,
     description: meta.description,
-    status: "na",
+    status: CheckStatus.NotApplicable,
     score: 0,
     weight: meta.weight,
     scoreDisplayMode: meta.scoreDisplayMode,
@@ -152,8 +158,30 @@ export interface AuditScope {
   advisoryPages?: PageContext[];
 }
 
-function orderedPages(pages: PageContext[]): PageContext[] {
-  return [...pages].sort((a, b) => (a.url ?? "").localeCompare(b.url ?? ""));
+/**
+ * Compare strings by UTF-16 code unit, the order `Array#sort` uses by default.
+ * `localeCompare` would weight case and punctuation by the host's locale, so
+ * the same URLs could sort differently on two machines.
+ */
+export function compareCodePoints(a: string, b: string): number {
+  return a < b ? -1 : a > b ? 1 : 0;
+}
+
+/**
+ * The scan target first, then every other page in code-point URL order.
+ *
+ * The order does not depend on crawl order, but `pages[0]` stays the URL the
+ * caller asked to scan whenever that page is in the population. Many audits
+ * still judge `pages[0]` as the target.
+ */
+function orderedPages(pages: PageContext[], targetUrl?: string): PageContext[] {
+  const isTarget = (p: PageContext) =>
+    targetUrl !== undefined && p.url === targetUrl;
+  return [...pages].sort(
+    (a, b) =>
+      Number(isTarget(b)) - Number(isTarget(a)) ||
+      compareCodePoints(a.url ?? "", b.url ?? ""),
+  );
 }
 
 export function scopeAudit(
@@ -163,35 +191,37 @@ export function scopeAudit(
   const types = auditPageTypes(meta);
   if (!types?.length)
     return {
-      pages: orderedPages(ctx.pages),
+      pages: orderedPages(ctx.pages, ctx.targetUrl),
       scoreDisplayMode: meta.scoreDisplayMode,
-      provenance: "all",
+      provenance: CoverageProvenance.All,
     };
   const matches = ctx.pages.filter((p) => types.includes(p.pageType));
   const declared = orderedPages(
-    matches.filter((p) => p.pageTypeSource === "declared"),
+    matches.filter((p) => p.pageTypeSource === PageTypeSource.Declared),
+    ctx.targetUrl,
   );
   const detected = orderedPages(
-    matches.filter((p) => p.pageTypeSource !== "declared"),
+    matches.filter((p) => p.pageTypeSource !== PageTypeSource.Declared),
+    ctx.targetUrl,
   );
-  const attempted = (source: "declared" | "detected") =>
+  const attempted = (source: PageTypeSource) =>
     ctx.pageAttempts?.some(
       (p) => types.includes(p.pageType) && p.source === source,
     );
-  if (declared.length || attempted("declared"))
+  if (declared.length || attempted(PageTypeSource.Declared))
     return {
       pages: declared,
       scoreDisplayMode: meta.scoreDisplayMode,
-      provenance: "declared",
-      ...(detected.length || attempted("detected")
+      provenance: CoverageProvenance.Declared,
+      ...(detected.length || attempted(PageTypeSource.Detected)
         ? { advisoryPages: detected }
         : {}),
     };
-  if (detected.length || attempted("detected"))
+  if (detected.length || attempted(PageTypeSource.Detected))
     return {
       pages: detected,
-      scoreDisplayMode: "informative",
-      provenance: "detected",
+      scoreDisplayMode: ScoreDisplayMode.Informative,
+      provenance: CoverageProvenance.Detected,
     };
   return null;
 }
@@ -220,17 +250,17 @@ function planAssessment(
   const attempts = (ctx.pageAttempts ?? []).filter(
     (p) =>
       (!types?.length || types.includes(p.pageType)) &&
-      (provenance === "all" || p.source === provenance),
+      (provenance === CoverageProvenance.All || p.source === provenance),
   );
   const needsText = meta.requires?.some(
-    (k) => k === "rendered-body" || k === "sample-adequate",
+    (k) => k === EvidenceKey.RenderedBody || k === EvidenceKey.SampleAdequate,
   );
   const inputs =
     enforce && needsText
       ? pages.filter((p) => hasPageText(ctx.evidence, p))
       : pages;
   const urls = (values: string[]) =>
-    [...new Set(values.filter(Boolean))].sort();
+    [...new Set(values.filter(Boolean))].sort(compareCodePoints);
   const coverage: AuditCoverage = {
     provenance,
     selectedUrls: urls([
@@ -240,7 +270,9 @@ function planAssessment(
     inputUrls: urls(inputs.map((p) => p.url)),
     unreadUrls: urls([
       ...pages.filter((p) => !hasPageText(ctx.evidence, p)).map((p) => p.url),
-      ...attempts.filter((p) => p.outcome === "unread").map((p) => p.url),
+      ...attempts
+        .filter((p) => p.outcome === AttemptOutcome.Unread)
+        .map((p) => p.url),
     ]),
   };
   const evidence = evidenceForPages(ctx.evidence, inputs);
@@ -251,13 +283,15 @@ function planAssessment(
     Boolean(types?.length) &&
     attempts.length > 0 &&
     inputs.length === 0 &&
-    attempts.every((p) => p.outcome === "unread");
+    attempts.every((p) => p.outcome === AttemptOutcome.Unread);
   const skipped =
     unmet.length || failedPopulation
       ? {
           ...stubCheck(
             meta,
-            TAG_SKIPPED_NO_EVIDENCE,
+            // A fetch failure says nothing about what the site lacks, so it
+            // must not count toward `gatedMassShare` and the unscored threshold.
+            unmet.length ? TAG_SKIPPED_NO_EVIDENCE : TAG_SKIPPED_PAGE_TYPE,
             unmet.length
               ? gateExplanation(view, meta, unmet)
               : "Not assessed: no selected page could be fetched.",
@@ -291,7 +325,7 @@ function gateExplanation(
 ): string {
   const reasons = unmet.map((key) => ctx.evidence.reasons[key]).filter(Boolean);
 
-  if (unmet.includes("sample-adequate") && reasons.length === 0) {
+  if (unmet.includes(EvidenceKey.SampleAdequate) && reasons.length === 0) {
     const wanted = auditPageTypes(meta)?.join("/") || undefined;
     return wanted
       ? `Not assessed: no scanned ${wanted} page served readable text.`
@@ -330,17 +364,33 @@ export function planAudits(
   for (const cat of config.categories) {
     const regs = config.audits[cat.id] ?? [];
     for (const registration of regs) {
-      const reg = {
-        ...registration,
-        meta: normalizeAuditMeta(registration.meta),
-      };
+      let meta: AuditMeta;
+      try {
+        meta = normalizeAuditMeta(registration.meta);
+      } catch (err) {
+        // One malformed custom audit degrades to its own stub, like any other
+        // per-audit failure, instead of aborting the whole scan.
+        logger.error(
+          { err, auditId: registration.meta.id },
+          "[scanner] Audit error",
+        );
+        skipped.push(
+          stubCheck(
+            registration.meta,
+            TAG_SCAN_ERROR,
+            `Audit failed to run: ${describeError(err)}`,
+          ),
+        );
+        continue;
+      }
+      const reg = { ...registration, meta };
       if (unread) {
         skipped.push(stubCheck(reg.meta, TAG_SKIPPED_NO_EVIDENCE, unreadWhy));
         continue;
       }
       const scope = scopeAudit(ctx, reg.meta);
       if (!scope) {
-        const wanted = (reg.meta.applicablePageTypes ?? []).join("/");
+        const wanted = (auditPageTypes(reg.meta) ?? []).join("/");
         skipped.push(
           stubCheck(
             reg.meta,
@@ -367,8 +417,8 @@ export function planAudits(
             ctx,
             reg.meta,
             scope.advisoryPages,
-            "detected",
-            "informative",
+            CoverageProvenance.Detected,
+            ScoreDisplayMode.Informative,
             enforce,
           ),
         );
@@ -452,7 +502,7 @@ export async function runAudits(
       : stub;
   };
 
-  const tracing = Boolean(onTrace) || logger.level === "debug";
+  const tracing = Boolean(onTrace) || logger.level === LogLevel.Debug;
   const trace = (check: CheckResult, durationMs: number): void => {
     if (!tracing) return;
     const record = traceFromCheck(check, durationMs);
@@ -599,8 +649,8 @@ function buildWeightedCategoryResult(
     // unproven evidence that must not move the score.
     score: calculateCategoryScore(checks),
     checks,
-    passCount: checks.filter((c) => c.status === "pass").length,
-    warnCount: checks.filter((c) => c.status === "warn").length,
-    failCount: checks.filter((c) => c.status === "fail").length,
+    passCount: checks.filter((c) => c.status === CheckStatus.Pass).length,
+    warnCount: checks.filter((c) => c.status === CheckStatus.Warn).length,
+    failCount: checks.filter((c) => c.status === CheckStatus.Fail).length,
   };
 }

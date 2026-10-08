@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import { DocumentTitleAudit } from "./document-title";
 import { mockCheckContext } from "../../__tests__/test-utils";
 import { pageWithA11y, runA11yAudit } from "./_test-utils";
+import { AuditTier, CheckStatus, EvidenceGrade } from "../../types";
+import { RuleStatus } from "./engine/rules";
 
 describe("DocumentTitleAudit", () => {
   it("registers under the document-title id with its dossier and grade", () => {
@@ -11,14 +13,14 @@ describe("DocumentTitleAudit", () => {
     expect(DocumentTitleAudit.meta.dossier).toBe(
       "docs/evidence/audits/operability-safety/document-title.md",
     );
-    expect(DocumentTitleAudit.meta.evidenceGrade).toBe("A");
-    expect(DocumentTitleAudit.meta.tier).toBe("scored");
+    expect(DocumentTitleAudit.meta.evidenceGrade).toBe(EvidenceGrade.A);
+    expect(DocumentTitleAudit.meta.tier).toBe(AuditTier.Scored);
   });
 
   it("wires exactly its a11y rule(s)", () => {
     const ctx = mockCheckContext([
       pageWithA11y("https://example.com/", {
-        "document-title": { status: "pass", nodes: [] },
+        "document-title": { status: CheckStatus.Pass, nodes: [] },
       }),
     ]);
     const result = runA11yAudit(DocumentTitleAudit, ctx);
@@ -29,49 +31,51 @@ describe("DocumentTitleAudit", () => {
     const ctx = mockCheckContext([
       pageWithA11y("https://example.com/", {
         "document-title": {
-          status: "fail",
+          status: CheckStatus.Fail,
           nodes: [{ target: "#offender", summary: "violation" }],
         },
       }),
     ]);
     const result = runA11yAudit(DocumentTitleAudit, ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("#offender");
   });
 
   it("passes when every constituent rule passes", () => {
     const ctx = mockCheckContext([
       pageWithA11y("https://example.com/", {
-        "document-title": { status: "pass", nodes: [] },
+        "document-title": { status: CheckStatus.Pass, nodes: [] },
       }),
     ]);
-    expect(runA11yAudit(DocumentTitleAudit, ctx).status).toBe("pass");
+    expect(runA11yAudit(DocumentTitleAudit, ctx).status).toBe(CheckStatus.Pass);
   });
 
   it("is na when no constituent rule applies", () => {
     const ctx = mockCheckContext([
       pageWithA11y("https://example.com/", {
-        "document-title": { status: "inapplicable", nodes: [] },
+        "document-title": { status: RuleStatus.Inapplicable, nodes: [] },
       }),
     ]);
-    expect(runA11yAudit(DocumentTitleAudit, ctx).status).toBe("na");
+    expect(runA11yAudit(DocumentTitleAudit, ctx).status).toBe(
+      CheckStatus.NotApplicable,
+    );
   });
 
   // Ported from the former _a11y.test.ts (aggregation cases).
   it("fails when any constituent rule has a violation on any page", () => {
     const ctx = mockCheckContext([
       pageWithA11y("https://example.com/", {
-        "document-title": { status: "pass", nodes: [] },
+        "document-title": { status: CheckStatus.Pass, nodes: [] },
       }),
       pageWithA11y("https://example.com/p", {
         "document-title": {
-          status: "fail",
+          status: CheckStatus.Fail,
           nodes: [{ target: "html", summary: "no title" }],
         },
       }),
     ]);
     const result = runA11yAudit(DocumentTitleAudit, ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("html");
   });
 
@@ -79,7 +83,7 @@ describe("DocumentTitleAudit", () => {
     const ctx = mockCheckContext([
       pageWithA11y("https://example.com/", {
         "document-title": {
-          status: "fail",
+          status: CheckStatus.Fail,
           nodes: [
             { target: "#a", summary: "" },
             { target: "#b", summary: "" },
@@ -92,7 +96,7 @@ describe("DocumentTitleAudit", () => {
       }),
     ]);
     const result = runA11yAudit(DocumentTitleAudit, ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("#a");
     expect(result.found).not.toContain("#f");
   });
@@ -100,11 +104,11 @@ describe("DocumentTitleAudit", () => {
   it('falls back to "see report" in found when a failing rule has no nodes', () => {
     const ctx = mockCheckContext([
       pageWithA11y("https://example.com/", {
-        "document-title": { status: "fail", nodes: [] },
+        "document-title": { status: CheckStatus.Fail, nodes: [] },
       }),
     ]);
     const result = runA11yAudit(DocumentTitleAudit, ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("see report");
   });
 });

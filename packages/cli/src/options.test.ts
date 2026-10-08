@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { CATEGORY_IDS } from "@forkpoint/agent-lighthouse-core";
+import {
+  CATEGORY_IDS,
+  CheckStatus,
+  PageType,
+} from "@forkpoint/agent-lighthouse-core";
 import {
   getArgValue,
   splitList,
@@ -441,15 +445,23 @@ describe("selectDebugChecks", () => {
     {
       id: "structured-data/json-ld-present",
       title: "JSON-LD present",
-      status: "pass",
+      status: CheckStatus.Pass,
     },
     {
       id: "structured-data/faqpage-schema",
       title: "FAQPage schema",
-      status: "fail",
+      status: CheckStatus.Fail,
     },
-    { id: "agent-interfaces/webmcp", title: "WebMCP endpoint", status: "warn" },
-    { id: "agent-interfaces/openapi", title: "OpenAPI document", status: "na" },
+    {
+      id: "agent-interfaces/webmcp",
+      title: "WebMCP endpoint",
+      status: CheckStatus.Warn,
+    },
+    {
+      id: "agent-interfaces/openapi",
+      title: "OpenAPI document",
+      status: CheckStatus.NotApplicable,
+    },
   ];
 
   it("selects every fail and warn for the reserved value 'fails'", () => {
@@ -513,7 +525,7 @@ describe("--page-type", () => {
       ["--page-type", "category"],
       "https://example.com",
     );
-    expect(o.pageType).toBe("category");
+    expect(o.pageType).toBe(PageType.Category);
   });
 
   it("rejects a value that names no page type, at parse time", () => {
@@ -609,10 +621,8 @@ describe("--timeout from the config file", () => {
 describe("v7 manual page declarations", () => {
   it("reads config declarations and lets the flag override the target only", () => {
     const config = {
-      pageType: "product" as const,
-      pages: [
-        { url: "https://example.com/guide", pageType: "article" as const },
-      ],
+      pageType: PageType.Product,
+      pages: [{ url: "https://example.com/guide", pageType: PageType.Article }],
     };
     const before = structuredClone(config);
     expect(parseCliOptions([], "https://example.com", config)).toMatchObject(
@@ -620,7 +630,7 @@ describe("v7 manual page declarations", () => {
     );
     expect(
       parseCliOptions(["--page-type=unknown"], "https://example.com", config),
-    ).toMatchObject({ pageType: "unknown", pages: config.pages });
+    ).toMatchObject({ pageType: PageType.Unknown, pages: config.pages });
     expect(config).toEqual(before);
   });
   it.each([
@@ -631,13 +641,14 @@ describe("v7 manual page declarations", () => {
     "rejects missing declaration $args instead of detecting silently",
     ({ args }) => {
       expect(
-        parseCliOptions(args, "https://example.com", { pageType: "article" })
-          .invalidPageType,
+        parseCliOptions(args, "https://example.com", {
+          pageType: PageType.Article,
+        }).invalidPageType,
       ).toBe("");
     },
   );
   it.each([
-    { pages: [{ url: "broken", pageType: "article" }] },
+    { pages: [{ url: "broken", pageType: PageType.Article }] },
     { pageType: "author" },
     { pages: [{ url: "https://example.com", pageType: "typo" }] },
   ])("rejects invalid config %j", (config) => {
@@ -651,10 +662,10 @@ describe("v7 manual page declarations", () => {
       {
         id: "mixed",
         title: "Mixed",
-        status: "pass",
-        advisoryResults: [{ status: "fail" }],
+        status: CheckStatus.Pass,
+        advisoryResults: [{ status: CheckStatus.Fail }],
       },
-      { id: "pass", title: "Pass", status: "pass" },
+      { id: "pass", title: "Pass", status: CheckStatus.Pass },
     ];
     expect(selectDebugChecks(checks, "fails")).toEqual([checks[0]]);
   });

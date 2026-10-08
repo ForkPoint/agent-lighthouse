@@ -11,6 +11,7 @@ import {
 import type { FetchResult } from "../../fetcher";
 import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
 import type { CheckContext } from "../../check-context";
+import { AuditTier, CheckStatus, EvidenceGrade } from "../../types";
 
 function site(
   robots?: string,
@@ -36,7 +37,7 @@ describe("AiprefContentUsageDeclarationValidityAudit", () => {
 
   it("is notApplicable when nothing declares a preference", async () => {
     expect((await audit.audit(site("User-agent: *\nAllow: /\n"))).status).toBe(
-      "na",
+      CheckStatus.NotApplicable,
     );
   });
 
@@ -46,7 +47,7 @@ describe("AiprefContentUsageDeclarationValidityAudit", () => {
         "Content-Usage: search=y\n\nUser-agent: GPTBot\nContent-Usage: train-ai=n\nAllow: /\n",
       ),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.details?.["declarations"]).toBe(2);
   });
 
@@ -54,7 +55,7 @@ describe("AiprefContentUsageDeclarationValidityAudit", () => {
     const result = await audit.audit(
       site("User-agent: *\nAllow: /\nContent-Usage: /ai-ok/ train-ai=y\n"),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.details?.["declarations"]).toBe(1);
   });
 
@@ -62,7 +63,7 @@ describe("AiprefContentUsageDeclarationValidityAudit", () => {
     const result = await audit.audit(
       site("User-agent: *\nAllow: /\nContent-Usage: ai-input=n\n"),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect((result.details!["syntaxErrors"] as string[])[0]).toContain(
       "not an AIPREF category",
     );
@@ -74,7 +75,7 @@ describe("AiprefContentUsageDeclarationValidityAudit", () => {
     const result = await audit.audit(
       site("User-agent: *\nAllow: /\nContent-Usage: train-ai=yes\n"),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect((result.details!["syntaxErrors"] as string[])[0]).toContain(
       "legacy Content-Signal syntax",
     );
@@ -86,7 +87,7 @@ describe("AiprefContentUsageDeclarationValidityAudit", () => {
         "User-agent: *\nDisallow: /private/\nContent-Usage: /private/ train-ai=y\n",
       ),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect((result.details!["inertDeclarations"] as string[])[0]).toContain(
       '"disallow: /private/"',
     );
@@ -98,7 +99,7 @@ describe("AiprefContentUsageDeclarationValidityAudit", () => {
         "User-agent: *\nDisallow: /private/\nContent-Usage: train-ai=n\nContent-Usage: /private/ search=y\n",
       ),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.details?.["inertDeclarations"]).toHaveLength(1);
   });
 
@@ -108,7 +109,7 @@ describe("AiprefContentUsageDeclarationValidityAudit", () => {
         "content-usage": "train-ai=y",
       }),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect((result.details!["channelDisagreements"] as string[])[0]).toContain(
       "train-ai over /",
     );
@@ -118,7 +119,7 @@ describe("AiprefContentUsageDeclarationValidityAudit", () => {
     const result = await audit.audit(
       site("User-agent: *\nContent-Signal: ai-train=no\nAllow: /\n"),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.details?.["legacyContentSignalLines"]).toHaveLength(1);
     expect(result.remediation).toContain("Content-Usage: train-ai=n");
   });
@@ -129,7 +130,7 @@ describe("AiprefContentUsageDeclarationValidityAudit", () => {
         "content-usage": "train-ai=n",
       }),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.details?.["effectiveDeclarations"]).toBe(2);
   });
 
@@ -142,7 +143,7 @@ describe("AiprefContentUsageDeclarationValidityAudit", () => {
     expect(
       (await audit.audit(reached)).status,
       "the same header reached is judged",
-    ).toBe("pass");
+    ).toBe(CheckStatus.Pass);
 
     const challenged = challengedSiteContext(reached.pages, reached.rootFiles);
     const plan = planAudits(challenged, defaultConfig);
@@ -154,13 +155,13 @@ describe("AiprefContentUsageDeclarationValidityAudit", () => {
         (stub) =>
           stub.id === AiprefContentUsageDeclarationValidityAudit.meta.id,
       )?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 
   it("is a scored grade B audit with an id inside the cap", () => {
     const { meta } = AiprefContentUsageDeclarationValidityAudit;
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
     expect(meta.weight).toBeCloseTo(0.6);
     expect(meta.id.length).toBeLessThanOrEqual(64);
   });

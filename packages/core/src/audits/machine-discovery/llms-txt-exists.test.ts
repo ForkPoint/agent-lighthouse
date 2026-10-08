@@ -5,6 +5,7 @@ import {
   mockPageContext,
   mockFetchResult,
 } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 const pageWithHead = (head: string) =>
   mockPageContext(
@@ -20,7 +21,7 @@ describe("LlmsTxtExistsAudit", () => {
       "/llms.txt": mockFetchResult("# My Site\n\n> Intro", 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // The file is an optional community convention with no documented agent
@@ -32,7 +33,7 @@ describe("LlmsTxtExistsAudit", () => {
       "/llms.txt": mockFetchResult("", 404),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("No llms.txt at the site root");
   });
 
@@ -44,14 +45,14 @@ describe("LlmsTxtExistsAudit", () => {
       ),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("missing markdown heading");
   });
 
   it("is not applicable when fetch result is completely missing", () => {
     const ctx = mockCheckContext([], {});
     const result = audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   describe("discovery <link> (absorbed from llms-txt-link, v1 4.11)", () => {
@@ -62,7 +63,7 @@ describe("LlmsTxtExistsAudit", () => {
         "/llms.txt": mockFetchResult("# My Site", 200),
       });
       const result = audit.audit(ctx);
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.found).toContain("no discovery <link>");
     });
 
@@ -76,7 +77,7 @@ describe("LlmsTxtExistsAudit", () => {
         { "/llms.txt": mockFetchResult("# My Site", 200) },
       );
       const result = audit.audit(ctx);
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.found).toContain("discovery <link>");
       expect(result.found).not.toContain("no discovery <link>");
     });
@@ -153,7 +154,7 @@ describe("LlmsTxtExistsAudit", () => {
         },
       );
       const result = audit.audit(ctx);
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.message).toContain("links to llms.txt");
     });
   });

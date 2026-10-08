@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { FormErrorMessagesAudit } from "./form-error-messages";
 import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
 import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
+import { AuditTier, CheckStatus, EvidenceGrade } from "../../types";
 
 const page = (html: string, url = "https://example.com/signup") =>
   mockPageContext(url, `<html lang="en"><body>${html}</body></html>`);
@@ -23,13 +24,13 @@ describe("FormErrorMessagesAudit", () => {
           </form>`),
         ]),
       );
-      expect(result.status).toBe("na");
+      expect(result.status).toBe(CheckStatus.NotApplicable);
       expect(result.found).toContain("No required or invalid-state field");
     });
 
     it("is na when the page has no fields at all", () => {
       const result = audit.audit(mockCheckContext([page("<p>brochure</p>")]));
-      expect(result.status).toBe("na");
+      expect(result.status).toBe(CheckStatus.NotApplicable);
     });
 
     it("ignores hidden, submit, button, reset and image controls", () => {
@@ -44,7 +45,7 @@ describe("FormErrorMessagesAudit", () => {
           </form>`),
         ]),
       );
-      expect(result.status).toBe("na");
+      expect(result.status).toBe(CheckStatus.NotApplicable);
     });
   });
 
@@ -60,7 +61,7 @@ describe("FormErrorMessagesAudit", () => {
           </form>`),
         ]),
       );
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.found).toContain("1 of 1");
       expect(result.found).toContain("invalid-state");
     });
@@ -76,7 +77,7 @@ describe("FormErrorMessagesAudit", () => {
           </form>`),
         ]),
       );
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.message).not.toContain("aria-describedby.");
     });
 
@@ -88,7 +89,7 @@ describe("FormErrorMessagesAudit", () => {
           </form>`),
         ]),
       );
-      expect(result.status).toBe("fail");
+      expect(result.status).toBe(CheckStatus.Fail);
       expect(result.found).toContain("0 of 1");
     });
 
@@ -100,7 +101,7 @@ describe("FormErrorMessagesAudit", () => {
           </form>`),
         ]),
       );
-      expect(result.status).toBe("fail");
+      expect(result.status).toBe(CheckStatus.Fail);
     });
 
     it("warns on partial coverage of invalid-state fields", () => {
@@ -113,7 +114,7 @@ describe("FormErrorMessagesAudit", () => {
           </form>`),
         ]),
       );
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.found).toContain("1 of 2");
     });
 
@@ -124,7 +125,7 @@ describe("FormErrorMessagesAudit", () => {
           page('<form><input id="a" aria-invalid="false"></form>'),
         ]),
       );
-      expect(result.status).toBe("na");
+      expect(result.status).toBe(CheckStatus.NotApplicable);
     });
 
     it("prefers the invalid-state population over required fields", () => {
@@ -138,7 +139,7 @@ describe("FormErrorMessagesAudit", () => {
           </form>`),
         ]),
       );
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.found).toContain("1 of 1");
     });
   });
@@ -153,7 +154,7 @@ describe("FormErrorMessagesAudit", () => {
           </form>`),
         ]),
       );
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.found).toContain("required");
     });
 
@@ -166,7 +167,7 @@ describe("FormErrorMessagesAudit", () => {
           </form>`),
         ]),
       );
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
     });
 
     // The vacuous pass the code review found: 1 of 240 wired inputs used to
@@ -184,7 +185,7 @@ describe("FormErrorMessagesAudit", () => {
           </form>`),
         ]),
       );
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.found).toContain("1 of 10");
     });
 
@@ -194,7 +195,7 @@ describe("FormErrorMessagesAudit", () => {
           page('<form><input id="a" required><input id="b" required></form>'),
         ]),
       );
-      expect(result.status).toBe("fail");
+      expect(result.status).toBe(CheckStatus.Fail);
       expect(result.found).toContain("0 of 2");
     });
   });
@@ -211,7 +212,7 @@ describe("FormErrorMessagesAudit", () => {
           </div>`),
         ]),
       );
-      expect(result.status).toBe("fail");
+      expect(result.status).toBe(CheckStatus.Fail);
       expect(result.found).toContain("0 of 2");
     });
 
@@ -226,7 +227,7 @@ describe("FormErrorMessagesAudit", () => {
           </form>`),
         ]),
       );
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
     });
 
     it("attributes the result to the page it was measured on", () => {
@@ -254,7 +255,7 @@ describe("FormErrorMessagesAudit", () => {
           ),
         ]),
       );
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.found).toContain("1 of 2");
     });
   });
@@ -264,8 +265,8 @@ describe("FormErrorMessagesAudit", () => {
 
     it("keeps the id, and stays grade A / scored / weight 1.0", () => {
       expect(meta.id).toBe("operability-safety/form-error-messages");
-      expect(meta.evidenceGrade).toBe("A");
-      expect(meta.tier).toBe("scored");
+      expect(meta.evidenceGrade).toBe(EvidenceGrade.A);
+      expect(meta.tier).toBe(AuditTier.Scored);
       expect(meta.weight).toBe(1.0);
     });
 

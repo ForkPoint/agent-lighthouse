@@ -3,6 +3,14 @@ import { Audit } from "../../audit";
 import type { CheckContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
 import { judgePages } from "../../gatherers/pages";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 export class MainElementAudit extends Audit {
   static override meta: AuditMeta = {
@@ -12,24 +20,24 @@ export class MainElementAudit extends Audit {
     failureTitle: "<main> element present",
     description:
       "AI scrapers use <main> to identify primary content and discard nav/footer chrome, reducing hallucination risk from boilerplate text. Without <main>, agents must guess which content is primary versus navigational, often ingesting menus and footers into their context window.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/content-extraction/main-element.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "high",
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "Without a <main> element, AI scrapers cannot distinguish primary content from navigation, sidebars, and footer boilerplate. This causes agents to ingest menus, disclaimers, and repeated chrome into their context window, increasing hallucination risk and reducing answer relevance.",
       fix: "Add a single <main> element to every page wrapping only the primary content area. Do not include site navigation, sidebars, or footers inside <main>. There should be exactly one <main> per page.",
       code: "<body>\n  <header><!-- Navigation --></header>\n  <main>\n    <!-- Primary page content only -->\n  </main>\n  <footer><!-- Footer --></footer>\n</body>",
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/main",
       tags: ["landmarks", "main", "structure", "semantic", "html"],
     },
@@ -74,7 +82,7 @@ export class MainElementAudit extends Audit {
         expected,
         found,
         {
-          priority: "high",
+          priority: CheckPriority.High,
           description:
             "AI scrapers use <main> to identify primary content and discard nav/footer chrome, reducing hallucination risk from boilerplate text. Without <main>, agents must guess which content is primary versus navigational, often ingesting menus and footers into their context window.",
           code: "<main>\n  <!-- Primary page content here -->\n</main>",

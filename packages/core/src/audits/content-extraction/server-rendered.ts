@@ -3,6 +3,14 @@ import { Audit } from "../../audit";
 import type { CheckContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
 import { pageRendersText } from "../../scan-evidence";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /**
  * Attach measurement details to a result the base helpers built.
@@ -25,20 +33,20 @@ export class ServerRenderedAudit extends Audit {
     failureTitle: "Server-rendered content",
     description:
       "AI crawlers like GPTBot and ClaudeBot do not execute JavaScript. Content only visible after JS execution is completely invisible to them, meaning your site effectively has no content in AI knowledge bases. Use SSR (server-side rendering) or SSG (static site generation) to serve content in the initial HTML response.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/content-extraction/server-rendered.md",
     // Gate exemption: A shell is what this audit reports. Gating it would delete the finding.
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "critical",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.Critical,
     guidance: {
       impact:
         "AI crawlers (GPTBot, ClaudeBot, PerplexityBot) do not execute JavaScript. If your content is only rendered client-side, these crawlers see an empty or near-empty page. Your products, articles, and brand information are completely absent from AI knowledge bases, meaning AI-generated answers never reference your site.",
       fix: "Switch from client-side rendering to server-side rendering (SSR) or static site generation (SSG). Frameworks like Next.js, Nuxt, SvelteKit, and Astro all support SSR/SSG. Ensure your homepage and key landing pages return meaningful HTML content in the initial response.",
       code: "// Next.js App Router (server component by default):\nexport default async function Page() {\n  const data = await fetchProducts();\n  return <ProductList items={data} />;\n}\n\n// Or with getServerSideProps (Pages Router):\nexport async function getServerSideProps() {\n  const data = await fetchProducts();\n  return { props: { data } };\n}",
-      effort: "complex",
+      effort: FixEffort.Complex,
       docsUrl: "https://web.dev/articles/rendering-on-the-web",
       tags: ["rendering", "ssr", "critical"],
     },
@@ -83,7 +91,7 @@ export class ServerRenderedAudit extends Audit {
     }
 
     const failGuidance = {
-      priority: "critical" as const,
+      priority: CheckPriority.Critical,
       description:
         "AI crawlers like GPTBot and ClaudeBot do not execute JavaScript. Content only visible after JS execution is completely invisible to them, meaning your site effectively has no content in AI knowledge bases. Use SSR (server-side rendering) or SSG (static site generation) to serve content in the initial HTML response.",
       code: "// Next.js SSR example:\nexport async function getServerSideProps() {\n  const data = await fetchData();\n  return { props: { data } };\n}",

@@ -7,6 +7,7 @@ import {
   hasNamedGroup,
   isPathAllowed,
 } from "../../gatherers/robots";
+import { CheckPriority } from "../../types";
 
 /**
  * Base audit class for the per-bot robots.txt permission checks.
@@ -85,7 +86,7 @@ export abstract class CrawlerBotAudit extends Audit {
         ? `Its own group (User-agent: ${token}) disallows /`
         : `The catch-all group disallows / and no group names ${token}`,
       {
-        priority: "high",
+        priority: CheckPriority.High,
         description: `If the block was not intended, remove the Disallow rule that applies to ${token}. A named User-agent: ${token} group with Allow: / also lifts it, but under RFC 9309 §2.2.1 a named group replaces the catch-all for that bot, so copy into it every catch-all Disallow line ${token} should still obey.`,
         code: `User-agent: ${token}\nAllow: /`,
       },

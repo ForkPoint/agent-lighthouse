@@ -15,6 +15,7 @@ import {
 import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
 import type { FetchOptions, FetchResult } from "../../fetcher";
 import type { AuditResult } from "../../types";
+import { AuditTier, CheckStatus, EvidenceGrade } from "../../types";
 
 vi.mock("../../fetcher", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../fetcher")>();
@@ -150,14 +151,14 @@ describe("WebBotAuthRequestToleranceAudit", () => {
 
   it("passes when the signed request is answered the same way", async () => {
     const { result } = run();
-    expect((await result).status).toBe("pass");
+    expect((await result).status).toBe(CheckStatus.Pass);
   });
 
   it("fails a 400, 403 or 421 answered only to the signed request", async () => {
     for (const status of [400, 403, 421]) {
       const { result } = run({ signed: answer(status, {}, "") });
       const r = await result;
-      expect(r.status, `status ${status}`).toBe("fail");
+      expect(r.status, `status ${status}`).toBe(CheckStatus.Fail);
       expect(r.message).toContain(`HTTP ${status}`);
     }
   });
@@ -165,7 +166,7 @@ describe("WebBotAuthRequestToleranceAudit", () => {
   it("reports a 431 as its own finding", async () => {
     const { result } = run({ signed: answer(431, {}, "") });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(r.message).toContain("header-size limit");
     expect(r.remediation).toContain("header size limit");
   });
@@ -175,7 +176,7 @@ describe("WebBotAuthRequestToleranceAudit", () => {
       signed: answer(200, {}, "<html><body>nope</body></html>"),
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(r.details?.["bodyRatio"]).toBeLessThan(0.4);
   });
 
@@ -184,25 +185,25 @@ describe("WebBotAuthRequestToleranceAudit", () => {
       signed: answer(403, { "accept-signature": 'sig1=("@authority")' }, ""),
     });
     const r = await result;
-    expect(r.status).toBe("pass");
+    expect(r.status).toBe(CheckStatus.Pass);
     expect(r.details?.["negotiatesSignatures"]).toBe(true);
   });
 
   it("reports behaviour varying on the signature headers without Vary naming them", async () => {
     const { result } = run({ signed: answer(204, {}, PAGE) });
     const r = await result;
-    expect(r.status).toBe("warn");
+    expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "findings")[0]).toContain("shared cache");
 
     const declared = run({
       signed: answer(204, { vary: "Signature-Agent" }, PAGE),
     });
-    expect((await declared.result).status).toBe("pass");
+    expect((await declared.result).status).toBe(CheckStatus.Pass);
   });
 
   it("is notApplicable when the unsigned baseline is not 2xx", async () => {
     const { result } = run({ baseline: answer(503, {}, "") });
-    expect((await result).status).toBe("na");
+    expect((await result).status).toBe(CheckStatus.NotApplicable);
   });
 
   it("says a pass means the door is not nailed shut, not that signatures are verified", () => {
@@ -216,8 +217,8 @@ describe("WebBotAuthRequestToleranceAudit", () => {
 
   it("is a scored grade B audit with an id inside the cap", () => {
     const { meta } = WebBotAuthRequestToleranceAudit;
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
     expect(meta.weight).toBeCloseTo(0.6);
     expect(meta.id.length).toBeLessThanOrEqual(64);
   });

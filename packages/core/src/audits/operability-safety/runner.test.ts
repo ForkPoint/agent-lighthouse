@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { runA11yForHtml, stripStyles } from "./runner";
+import { CheckStatus } from "../../types";
 
 // The runner builds a fresh jsdom per call and runs the vendored a11y rules
 // against it, fully isolated, re-runnable, and concurrency-safe.
@@ -29,12 +30,12 @@ describe("runA11yForHtml", () => {
   it("reports violations vs passes correctly", async () => {
     const bad = await runA11yForHtml(noTitle, "https://bad.test/", RULES);
     // Invalid `role="notarole"` → aria-roles violation.
-    expect(bad["aria-roles"]?.status).toBe("fail");
+    expect(bad["aria-roles"]?.status).toBe(CheckStatus.Fail);
     // No <title> → document-title violation.
-    expect(bad["document-title"]?.status).toBe("fail");
+    expect(bad["document-title"]?.status).toBe(CheckStatus.Fail);
 
     const good = await runA11yForHtml(withTitle, "https://good.test/", RULES);
-    expect(good["document-title"]?.status).toBe("pass");
+    expect(good["document-title"]?.status).toBe(CheckStatus.Pass);
   });
 
   it("reports failing-node targets for violations", async () => {
@@ -90,7 +91,7 @@ describe("runA11yForHtml", () => {
       <style>${bloat}</style><link rel="stylesheet" href="/big.css"></head>
       <body><button style="display:none">Go</button></body></html>`;
     const r = await runA11yForHtml(html, "https://css.test/", RULES);
-    expect(r["document-title"]?.status).toBe("pass");
+    expect(r["document-title"]?.status).toBe(CheckStatus.Pass);
   });
 });
 

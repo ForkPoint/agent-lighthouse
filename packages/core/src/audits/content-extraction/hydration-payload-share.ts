@@ -10,6 +10,14 @@ import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
 import type { CheckContext, PageContext } from "../../check-context";
 import { getMainContentText } from "../../parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** The repo-wide rough token estimator; no tokenizer dependency is carried. */
 const CHARS_PER_TOKEN = 4;
@@ -204,25 +212,25 @@ export class HydrationPayloadShareAudit extends Audit {
     failureTitle: "Inlined hydration-state payload share",
     description:
       'Detect and size serialized framework state inlined in the HTML document: <script id="__NEXT_DATA__">, self.__next_f.push( flight chunks, window.__NUXT__, __remixContext, window.__APOLLO_STATE__, window.__INITIAL_STATE__, <script type="application/json"> islands, and Astro/Svelte island props. Three independent failure conditions: (1) any single state payload > 128 kB, (2) total state payload > 30% of document tokens, (3) state payload duplicates > 50% of the main-content text (content shipped twice in one response).',
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/content-extraction/hydration-payload-share.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "medium",
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "These blobs are inlined into every HTML response by design, and the framework vendor itself flags > 128 kB as a defect. A browser parses them and throws them away after hydration; a non-rendering AI crawler cannot — it tokenizes the JSON verbatim, including escaped HTML, CDN image variants, GraphQL type metadata and the full body text a second time. The causal claim is falsifiable per page: strip these script nodes, re-tokenize, and the delta is the exact context cost that carries zero incremental information, since duplicate #3 is byte-identical content the agent already has.",
       fix: "Return identifiers and view-model fields from the server data function, not the rendered body — the HTML already carries the text. Move large lists behind a client fetch or a route segment, drop GraphQL cache normalization metadata from the serialized store, and keep image variant tables out of props. Where a framework inlines the payload unconditionally, split the route so the heavy data loads on interaction instead of on first paint.",
       code: SAMPLE,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/content-extraction/hydration-payload-share/",
       tags: ["token-economics", "hydration", "framework", "duplication"],
@@ -231,7 +239,7 @@ export class HydrationPayloadShareAudit extends Audit {
 
   private recommendation() {
     return {
-      priority: "medium" as const,
+      priority: CheckPriority.Medium,
       description: HydrationPayloadShareAudit.meta.description,
       code: SAMPLE,
     };

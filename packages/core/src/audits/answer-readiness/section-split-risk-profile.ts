@@ -6,6 +6,14 @@ import type { CheckContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
 import { countTokens } from "../../gatherers/tokens";
 import { detailLines } from "../../detail-lines";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /**
  * The retrieval window most pipelines chunk to.
@@ -63,24 +71,24 @@ export class SectionSplitRiskProfileAudit extends Audit {
     failureTitle: "Sections are longer than the window that will chunk them",
     description:
       "Counts each `h2`/`h3` section with a real BPE tokenizer and reports the four ways a page chunks badly: sections over the 512-token window (each producing headless tail chunks), a long page with no headings to cut on, sections too thin to embed distinctly, and single tables or lists whose serialization exceeds the window on its own.",
-    scoreDisplayMode: "ternary",
-    tier: "scored",
-    evidenceGrade: "B",
-    weight: weightForGrade("B", "scored"),
-    defaultPriority: "medium",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    tier: AuditTier.Scored,
+    evidenceGrade: EvidenceGrade.B,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    defaultPriority: CheckPriority.Medium,
     dossier:
       "docs/evidence/audits/answer-readiness/section-split-risk-profile.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     guidance: {
       impact:
         "Retrieval pipelines cut pages into fixed windows. A section longer than the window becomes one chunk carrying the heading and one or more tail chunks carrying none — and a tail chunk is text with no subject, which retrieves badly and cites worse. A page with no headings at all is cut at arbitrary offsets throughout.",
       fix: "Add an `h2` or `h3` roughly every 400 tokens of prose, and split a specification table that runs past the window into per-topic tables so the header row stays with its rows.",
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/answer-readiness/section-split-risk-profile/",
       tags: ["retrieval", "chunking", "content", "answer-engines"],

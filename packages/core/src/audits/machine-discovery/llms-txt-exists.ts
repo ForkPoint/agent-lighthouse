@@ -3,6 +3,14 @@ import { Audit } from "../../audit";
 import type { CheckContext, PageContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
 import type { FetchResult } from "../../fetcher";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 function isOk(result: FetchResult): boolean {
   return result.status === 200;
@@ -44,24 +52,24 @@ export class LlmsTxtExistsAudit extends Audit {
     failureTitle: "llms.txt exists",
     description:
       "llms.txt is a community convention: a markdown index of your site at /llms.txt. No AI vendor documents a crawler or agent that reads it, and Google states Search ignores it, so this check is reported and never scored. Chrome Lighthouse checks the same three conformance rules and treats a missing file as not applicable.",
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "informative"),
-    evidenceGrade: "C",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/machine-discovery/llms-txt-exists.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "low",
+    defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
         "Thousands of sites publish an llms.txt, including every major AI lab, but as publishers rather than readers. No vendor documentation names an agent that fetches it, and Google Search Central states Search ignores it. Publishing one is cheap and harmless; it is not a documented path to any AI answer.",
       fix: 'Optional. If you publish one, create /llms.txt in markdown with an H1 heading, at least one [text](url) link and more than 50 characters — the three rules the one shipping checker enforces. Optionally advertise it with <link rel="alternate" href="/llms.txt"> in <head>.',
       code: '# Your Site Name\n\n> Brief description of your site for AI agents.\n\n## Pages\n- [Home](/): Main landing page\n- [About](/about/): Company information\n\n## Resources\n- [Sitemap](/sitemap.xml): Full URL list\n- [RSS](/rss.xml): Content feed\n\n<!-- optional discovery hint in <head> -->\n<link rel="alternate" type="text/markdown" href="/llms.txt" title="llms.txt">',
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl: "https://llmstxt.org/",
       tags: ["llms-txt", "discoverability"],
     },
@@ -95,7 +103,7 @@ export class LlmsTxtExistsAudit extends Audit {
         "The page links to llms.txt but the file is not served at the site root.",
         "GET /llms.txt returns 200 with markdown starting with #",
         `${status}; ${linkNote}`,
-        "low",
+        CheckPriority.Low,
         page?.url,
       );
     }
@@ -105,7 +113,7 @@ export class LlmsTxtExistsAudit extends Audit {
         "llms.txt missing markdown heading.",
         "Body starts with # (H1 heading)",
         `Body starts with "${result.body.trimStart().slice(0, 40)}..."; ${linkNote}`,
-        "low",
+        CheckPriority.Low,
         page?.url,
       );
     }

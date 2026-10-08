@@ -6,6 +6,13 @@ import {
   mockFetchResult,
 } from "../../__tests__/test-utils";
 import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
+import {
+  AuditTier,
+  CheckPriority,
+  CheckStatus,
+  EvidenceGrade,
+  ScoreDisplayMode,
+} from "../../types";
 
 const page = (body: string, url = "https://example.com/") =>
   mockPageContext(url, `<html lang="en"><body>${body}</body></html>`);
@@ -32,7 +39,7 @@ describe("WebmcpRegisteredToolsAudit", () => {
           ),
         ]),
       );
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.found).toContain("search_products");
     });
 
@@ -49,7 +56,7 @@ describe("WebmcpRegisteredToolsAudit", () => {
           ),
         ]),
       );
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.found).toContain("add_to_cart");
       expect(result.found).toContain("checkout");
     });
@@ -60,7 +67,7 @@ describe("WebmcpRegisteredToolsAudit", () => {
           page(script(`navigator.modelContext.registerTool("get_status", fn)`)),
         ]),
       );
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.found).toContain("get_status");
     });
 
@@ -71,7 +78,7 @@ describe("WebmcpRegisteredToolsAudit", () => {
       const result = audit.audit(
         mockCheckContext([page(js), page(js, "https://example.com/shop")]),
       );
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.found).toContain("1 tool");
     });
 
@@ -81,7 +88,7 @@ describe("WebmcpRegisteredToolsAudit", () => {
           page(script("if (navigator.modelContext) { init(); }")),
         ]),
       );
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.message).toContain("navigator.modelContext");
     });
 
@@ -91,14 +98,14 @@ describe("WebmcpRegisteredToolsAudit", () => {
           page(script('window.registerTool({ name: "not_webmcp" });')),
         ]),
       );
-      expect(result.status).toBe("na");
+      expect(result.status).toBe(CheckStatus.NotApplicable);
     });
 
     it("does not read external script bodies it never fetched", () => {
       const result = audit.audit(
         mockCheckContext([page('<script src="/bundle.js"></script>')]),
       );
-      expect(result.status).toBe("na");
+      expect(result.status).toBe(CheckStatus.NotApplicable);
       expect(result.message).toContain("cannot execute");
     });
   });
@@ -112,7 +119,7 @@ describe("WebmcpRegisteredToolsAudit", () => {
           ),
         ]),
       );
-      expect(result.status).toBe("na");
+      expect(result.status).toBe(CheckStatus.NotApplicable);
       expect(result.message).toContain("webmcp-declarative-forms");
     });
 
@@ -127,7 +134,7 @@ describe("WebmcpRegisteredToolsAudit", () => {
           ),
         ]),
       );
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.found).toContain("checkout");
     });
   });
@@ -147,7 +154,7 @@ describe("WebmcpRegisteredToolsAudit", () => {
           ),
         }),
       );
-      expect(result.status).toBe("na");
+      expect(result.status).toBe(CheckStatus.NotApplicable);
     });
 
     it("never fails a site for the absence of the manifest", () => {
@@ -156,7 +163,7 @@ describe("WebmcpRegisteredToolsAudit", () => {
           "/.well-known/webmcp": mockFetchResult("", 404),
         }),
       );
-      expect(result.status).not.toBe("fail");
+      expect(result.status).not.toBe(CheckStatus.Fail);
     });
 
     it("mentions neither the well-known path nor webmcp.link in its guidance", () => {
@@ -172,14 +179,14 @@ describe("WebmcpRegisteredToolsAudit", () => {
 
     it("is grade B, experimental, weight 0, informative", () => {
       expect(meta.id).toBe("agent-interfaces/webmcp-registered-tools");
-      expect(meta.evidenceGrade).toBe("B");
-      expect(meta.tier).toBe("experimental");
+      expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+      expect(meta.tier).toBe(AuditTier.Experimental);
       expect(meta.weight).toBe(0);
-      expect(meta.scoreDisplayMode).toBe("informative");
+      expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Informative);
     });
 
     it("drops the high priority it carried as a hard fail", () => {
-      expect(meta.defaultPriority).toBe("low");
+      expect(meta.defaultPriority).toBe(CheckPriority.Low);
     });
   });
 });

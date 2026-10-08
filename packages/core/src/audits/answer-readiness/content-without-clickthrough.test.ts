@@ -9,6 +9,7 @@ import {
   mockPageContext,
   unreachedSiteContext,
 } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 describe("ContentWithoutClickthroughAudit", () => {
   const audit = new ContentWithoutClickthroughAudit();
@@ -22,7 +23,7 @@ describe("ContentWithoutClickthroughAudit", () => {
       </main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("click-through teasers");
   });
 
@@ -36,7 +37,7 @@ describe("ContentWithoutClickthroughAudit", () => {
       `<html><body><main><p>${body}</p></main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("No excessive click-through teasers");
   });
 
@@ -46,7 +47,7 @@ describe("ContentWithoutClickthroughAudit", () => {
       "<html><body><main><p>Short content here.</p></main></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("Insufficient content");
   });
 
@@ -64,12 +65,12 @@ describe("ContentWithoutClickthroughAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("fails when no pages were scanned", () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No pages scanned");
   });
 
@@ -81,7 +82,7 @@ describe("ContentWithoutClickthroughAudit", () => {
       "<html><body><main><p>Welcome to our store.</p></main></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("passes when the only non-homepage page has an .xml URL (filtered out)", () => {
@@ -91,7 +92,7 @@ describe("ContentWithoutClickthroughAudit", () => {
       "<html><body><main><p>Atom feed content.</p></main></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("passes when the only non-homepage page body starts with <?xml (filtered out)", () => {
@@ -101,7 +102,7 @@ describe("ContentWithoutClickthroughAudit", () => {
       '<?xml version="1.0"?><rss><channel><title>Feed</title></channel></rss>',
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("warns when a non-homepage page has no <main> element and insufficient content", () => {
@@ -112,7 +113,7 @@ describe("ContentWithoutClickthroughAudit", () => {
       "<html><body><p>Short content without a main element here.</p></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("Insufficient content");
   });
 
@@ -130,7 +131,7 @@ describe("ContentWithoutClickthroughAudit", () => {
     );
     page.url = "not-a-valid-url";
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("truncates the found field when combined teaser details exceed 200 chars", () => {
@@ -149,7 +150,7 @@ describe("ContentWithoutClickthroughAudit", () => {
       teaserHtml,
     );
     const result = audit.audit(mockCheckContext([page1, page2]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("...");
   });
 
@@ -160,7 +161,9 @@ describe("ContentWithoutClickthroughAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new ContentWithoutClickthroughAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext(pages, rootFiles),
@@ -173,7 +176,7 @@ describe("ContentWithoutClickthroughAudit", () => {
       plan.skipped.find(
         (stub) => stub.id === ContentWithoutClickthroughAudit.meta.id,
       )?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 
   // Teasers are body copy. The low-content branch skips the homepage, which on a
@@ -183,9 +186,11 @@ describe("ContentWithoutClickthroughAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new ContentWithoutClickthroughAudit();
     const rendered = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(rendered.status, "the same input rendered is judged").not.toBe("na");
+    expect(rendered.status, "the same input rendered is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const shell = await instance.audit(shellSiteContext());
-    expect(shell.status).toBe("na");
+    expect(shell.status).toBe(CheckStatus.NotApplicable);
   });
 });

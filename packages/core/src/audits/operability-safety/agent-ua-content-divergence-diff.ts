@@ -10,6 +10,14 @@ import {
 } from "../../gatherers/ua-parity";
 import { INSTRUCTION_LEXICON } from "./invisible-instruction-scan";
 import { parseHtml, extractJsonLd, getMainContentText } from "../../parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /**
  * Word-set overlap below which two variants are no longer the same page.
@@ -100,18 +108,18 @@ export class AgentUaContentDivergenceDiffAudit extends Audit {
     failureTitle: "AI crawlers are served different content from browsers",
     description:
       "Compares the main content, and the JSON-LD, that each AI-crawler User-Agent receives against the same URL fetched as Chrome, and reports where they diverge. An unrecognised control bot is probed too, so bot management is told apart from deliberate agent-specific branching, and a crawler that is simply blocked is reported without lowering the score.",
-    scoreDisplayMode: "ternary",
-    tier: "scored",
-    evidenceGrade: "B",
-    weight: weightForGrade("B", "scored"),
-    defaultPriority: "high",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    tier: AuditTier.Scored,
+    evidenceGrade: EvidenceGrade.B,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    defaultPriority: CheckPriority.High,
     dossier:
       "docs/evidence/audits/operability-safety/agent-ua-content-divergence-diff.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     guidance: {
       impact:
@@ -126,7 +134,7 @@ if ($http_user_agent ~* "GPTBot|ClaudeBot") {
 # robots.txt
 User-agent: GPTBot
 Disallow: /members/`,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/agent-ua-content-divergence-diff/",
       tags: ["injection-safety", "security", "agent-trust", "cloaking"],

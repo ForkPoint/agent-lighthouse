@@ -3,6 +3,15 @@ import { Audit } from "../../audit";
 import type { CheckContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
 import { flattenJsonLd } from "../../parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "../../types";
 
 const ORG_TYPES = [
   "Organization",
@@ -56,19 +65,19 @@ export class OrganizationSchemaAudit extends Audit {
     failureTitle: "Organization schema",
     description:
       "AI agents use Organization schema to identify your brand, logo, and contact info. Without it, agents cannot confidently attribute content to your organization or display your branding in AI-generated answers. Add this JSON-LD to your homepage <head>.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/structured-data/organization-schema.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: ["homepage"],
-    defaultPriority: "high",
+    applicablePageTypes: [PageType.Homepage],
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "Without Organization schema, AI agents cannot confidently attribute content to your brand or display your logo in AI-generated answers. Your organization becomes anonymous in AI recommendations, losing brand visibility and trust signals.",
@@ -84,7 +93,7 @@ export class OrganizationSchemaAudit extends Audit {
     "https://linkedin.com/company/yourcompany"
   ]
 }`,
-      effort: "trivial",
+      effort: FixEffort.Trivial,
       docsUrl: "https://schema.org/Organization",
       tags: ["json-ld", "schema", "organization", "brand"],
     },
@@ -102,7 +111,7 @@ export class OrganizationSchemaAudit extends Audit {
         "Organization schema with name, url, and logo.",
         "None",
         {
-          priority: "high",
+          priority: CheckPriority.High,
           description:
             "AI agents use Organization schema to identify your brand, logo, and contact info. Without it, agents cannot confidently attribute content to your organization or display your branding in AI-generated answers. Add this JSON-LD to your homepage <head>.",
           code: `<script type="application/ld+json">
@@ -136,7 +145,7 @@ export class OrganizationSchemaAudit extends Audit {
       "Organization schema with name, url, and logo.",
       `Organization schema missing ${missing.join(", ")}`,
       {
-        priority: "high",
+        priority: CheckPriority.High,
         description: `AI agents use Organization schema properties to identify your brand, display your logo, and link to your site. Missing properties (${missing.join(", ")}) reduce your organization's visibility in AI-generated answers. Add them to your existing Organization schema.`,
         code: `{
   "@context": "https://schema.org",

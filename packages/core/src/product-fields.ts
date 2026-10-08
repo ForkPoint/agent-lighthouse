@@ -1,5 +1,6 @@
-import type { FieldStatus, ProductFieldVerification } from "./types";
+import type { ProductFieldVerification } from "./types";
 import type { PageContext } from "./check-context";
+import { FieldStatus, PageType } from "./types";
 
 const PRODUCT_TYPES = ["Product", "IndividualProduct", "ProductModel"];
 
@@ -45,14 +46,14 @@ function first(v: unknown): Record<string, unknown> | undefined {
 }
 
 const EMPTY: ProductFieldVerification = {
-  sku: "missing",
-  gtin: "missing",
-  brand: "missing",
-  category: "missing",
-  availability: "missing",
-  priceCurrency: "missing",
-  stockLevel: "missing",
-  reviewCount: "missing",
+  sku: FieldStatus.Missing,
+  gtin: FieldStatus.Missing,
+  brand: FieldStatus.Missing,
+  category: FieldStatus.Missing,
+  availability: FieldStatus.Missing,
+  priceCurrency: FieldStatus.Missing,
+  stockLevel: FieldStatus.Missing,
+  reviewCount: FieldStatus.Missing,
 };
 
 /**
@@ -63,7 +64,7 @@ const EMPTY: ProductFieldVerification = {
 export function extractProductFieldVerification(
   pages: PageContext[],
 ): ProductFieldVerification {
-  const productPages = pages.filter((p) => p.pageType === "product");
+  const productPages = pages.filter((p) => p.pageType === PageType.Product);
 
   let product: Record<string, unknown> | undefined;
   let sourceUrl: string | undefined;
@@ -82,7 +83,8 @@ export function extractProductFieldVerification(
 
   const offer = first(product["offers"] ?? product["offer"]);
   const rating = first(product["aggregateRating"]);
-  const st = (b: boolean): FieldStatus => (b ? "found" : "missing");
+  const st = (b: boolean): FieldStatus =>
+    b ? FieldStatus.Found : FieldStatus.Missing;
 
   const hasGtin = ["gtin", "gtin8", "gtin12", "gtin13", "gtin14"].some((k) =>
     has(product![k]),
@@ -115,9 +117,17 @@ export function extractProductFieldVerification(
     // Price and currency are both required for a clean "found"; price-only
     // (e.g. a malformed priceCurrency) reads partial rather than missing.
     priceCurrency:
-      price && currency ? "found" : price || currency ? "partial" : "missing",
+      price && currency
+        ? FieldStatus.Found
+        : price || currency
+          ? FieldStatus.Partial
+          : FieldStatus.Missing,
     // Explicit inventory count = found; an availability enum alone = partial.
-    stockLevel: inventory ? "found" : availability ? "partial" : "missing",
+    stockLevel: inventory
+      ? FieldStatus.Found
+      : availability
+        ? FieldStatus.Partial
+        : FieldStatus.Missing,
     reviewCount: st(reviewCount),
     sourceUrl,
   };

@@ -3,7 +3,6 @@ import { defaultConfig } from "../../audit-config";
 import { planAudits, runAudits } from "../../audit-runner";
 import { AuditResultSchema } from "../../schemas";
 import { buildScanEvidence } from "../../scan-evidence";
-import type { PageType } from "../../types";
 import { NoNofollowAudit } from "./no-nofollow";
 import {
   attributableFixture,
@@ -12,6 +11,7 @@ import {
   shellSiteContext,
   unreachedSiteContext,
 } from "../../__tests__/test-utils";
+import { CheckStatus, PageType } from "../../types";
 
 describe("NoNofollowAudit", () => {
   const audit = new NoNofollowAudit();
@@ -26,7 +26,7 @@ describe("NoNofollowAudit", () => {
       mockPageContext("https://example.com/", clean),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("No scanned pages have nofollow");
   });
 
@@ -36,7 +36,7 @@ describe("NoNofollowAudit", () => {
       mockPageContext("https://example.com/about", nofollow, 1),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("have nofollow directives");
   });
 
@@ -45,14 +45,14 @@ describe("NoNofollowAudit", () => {
       mockPageContext("https://example.com/", nofollow),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("have nofollow directives");
   });
 
   it("declines when no pages were scanned", () => {
     const ctx = mockCheckContext([]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("No pages scanned");
   });
 
@@ -64,7 +64,7 @@ describe("NoNofollowAudit", () => {
       mockPageContext("https://example.com/", noMeta),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("No scanned pages have nofollow");
   });
 
@@ -78,7 +78,7 @@ describe("NoNofollowAudit", () => {
     ];
     const ctx = mockCheckContext(pages);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("+1 more");
   });
 
@@ -89,7 +89,9 @@ describe("NoNofollowAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new NoNofollowAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext(pages, rootFiles),
@@ -100,14 +102,14 @@ describe("NoNofollowAudit", () => {
     );
     expect(
       plan.skipped.find((stub) => stub.id === NoNofollowAudit.meta.id)?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 
   // `requires` deliberately omits `rendered-body`: the meta tag and the header
   // this audit reads are served whole by a page whose body renders nothing.
   it("still judges a page that served no readable text", async () => {
     const result = await new NoNofollowAudit().audit(shellSiteContext());
-    expect(result.status).not.toBe("na");
+    expect(result.status).not.toBe(CheckStatus.NotApplicable);
   });
 });
 
@@ -126,7 +128,9 @@ describe("no-nofollow page scope", () => {
           : []),
       ];
       const result = audit.audit(mockCheckContext(pages));
-      expect(result.status).toBe(includeClean ? "warn" : "fail");
+      expect(result.status).toBe(
+        includeClean ? CheckStatus.Warn : CheckStatus.Fail,
+      );
       expect(result.pageUrl).toBe("https://example.com/a");
       expect(result.found).toContain("https://example.com/a");
       expect(result.found).toContain("https://example.com/z");
@@ -148,14 +152,19 @@ describe("no-nofollow page scope", () => {
       ),
     ];
     const result = audit.audit(mockCheckContext(pages));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("(truncated)");
     expect(AuditResultSchema.safeParse(result).success).toBe(true);
-    expect(audit.toCheckResult(result).status).toBe("warn");
+    expect(audit.toCheckResult(result).status).toBe(CheckStatus.Warn);
   });
 
   for (const source of ["declared", "detected"] as const) {
-    it.each<PageType>(["homepage", "product", "category", "content"])(
+    it.each<PageType>([
+      PageType.Homepage,
+      PageType.Product,
+      PageType.Category,
+      PageType.Content,
+    ])(
       `reads headers on empty-body %s pages with ${source} provenance`,
       async (pageType) => {
         const page = mockPageContext(
@@ -192,7 +201,7 @@ describe("no-nofollow page scope", () => {
           },
         });
         const check = output.categories[0]!.checks[0]!;
-        expect(check.status).toBe("fail");
+        expect(check.status).toBe(CheckStatus.Fail);
         expect(check.weight).toBe(NoNofollowAudit.meta.weight);
         expect(check.pageUrl).toBe(page.url);
         expect(check.details?.found).toContain(page.url);

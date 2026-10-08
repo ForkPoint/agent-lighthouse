@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { AnthropicAudit } from "./anthropic-ai";
 import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
+import { CheckPriority, CheckStatus } from "../../types";
 
 const ctxFor = (robots?: string, status = 200) =>
   mockCheckContext(
@@ -16,7 +17,7 @@ describe("AnthropicAudit (ClaudeBot)", () => {
   describe("the scored signal is ClaudeBot alone", () => {
     it("passes when ClaudeBot is allowed by its own group", () => {
       const result = audit.audit(ctxFor("User-agent: ClaudeBot\nAllow: /"));
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.score).toBe(1);
       expect(result.message).toContain("its own robots.txt group");
       expect(result.details?.namedGroup).toBe(true);
@@ -24,7 +25,7 @@ describe("AnthropicAudit (ClaudeBot)", () => {
 
     it("passes on a versioned product token, which RFC 9309 matching accepts", () => {
       const result = audit.audit(ctxFor("User-agent: ClaudeBot/1.0\nAllow: /"));
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.details?.namedGroup).toBe(true);
     });
 
@@ -32,15 +33,15 @@ describe("AnthropicAudit (ClaudeBot)", () => {
       const result = audit.audit(
         ctxFor("User-agent: ClaudeBot\nDisallow: /\n\nUser-agent: *\nAllow: /"),
       );
-      expect(result.status).toBe("fail");
+      expect(result.status).toBe(CheckStatus.Fail);
       expect(result.score).toBe(0);
       expect(result.found).toContain("Its own group disallows /");
-      expect(result.priority).toBe("medium");
+      expect(result.priority).toBe(CheckPriority.Medium);
     });
 
     it("fails when a blanket catch-all block reaches ClaudeBot", () => {
       const result = audit.audit(ctxFor("User-agent: *\nDisallow: /"));
-      expect(result.status).toBe("fail");
+      expect(result.status).toBe(CheckStatus.Fail);
       expect(result.found).toContain("The catch-all group disallows /");
     });
   });
@@ -55,7 +56,7 @@ describe("AnthropicAudit (ClaudeBot)", () => {
           "User-agent: anthropic-ai\nAllow: /\n\nUser-agent: ClaudeBot\nDisallow: /",
         ),
       );
-      expect(result.status).toBe("fail");
+      expect(result.status).toBe(CheckStatus.Fail);
       expect(result.score).toBe(0);
     });
 
@@ -67,7 +68,7 @@ describe("AnthropicAudit (ClaudeBot)", () => {
           "User-agent: anthropic-ai\nDisallow: /\n\nUser-agent: *\nAllow: /",
         ),
       );
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.score).toBe(1);
     });
 
@@ -75,7 +76,7 @@ describe("AnthropicAudit (ClaudeBot)", () => {
       const result = audit.audit(
         ctxFor("User-agent: anthropic-ai\nAllow: /\n\nUser-agent: *\nAllow: /"),
       );
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.found).toContain("legacy anthropic-ai group present");
       expect(result.found).toContain(
         "not a documented Anthropic access control",
@@ -89,7 +90,7 @@ describe("AnthropicAudit (ClaudeBot)", () => {
           "User-Agent: ANTHROPIC-AI\nAllow: /\n\nuser-agent: claude-web\nAllow: /",
         ),
       );
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.details?.legacyTokens).toEqual([
         "anthropic-ai",
         "Claude-Web",
@@ -106,7 +107,7 @@ describe("AnthropicAudit (ClaudeBot)", () => {
   describe("access state, not the shape of the file", () => {
     it("passes when only the catch-all allows, with no group naming ClaudeBot", () => {
       const result = audit.audit(ctxFor("User-agent: *\nAllow: /"));
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.score).toBe(1);
       expect(result.message).toContain("catch-all");
       expect(result.details?.namedGroup).toBe(false);
@@ -115,7 +116,7 @@ describe("AnthropicAudit (ClaudeBot)", () => {
 
     it("passes when no group in the file applies to ClaudeBot at all", () => {
       const result = audit.audit(ctxFor("User-agent: GPTBot\nDisallow: /"));
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.found).toContain("No group applies to ClaudeBot");
       expect(result.details?.hasCatchAll).toBe(false);
     });
@@ -124,31 +125,31 @@ describe("AnthropicAudit (ClaudeBot)", () => {
       const result = audit.audit(
         ctxFor("Sitemap: https://example.com/sitemap.xml"),
       );
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
     });
   });
 
   describe("an unreadable robots.txt is not applicable", () => {
     it("returns na when robots.txt is missing", () => {
       const result = audit.audit(ctxFor(undefined));
-      expect(result.status).toBe("na");
+      expect(result.status).toBe(CheckStatus.NotApplicable);
       expect(result.score).toBe(0);
       expect(result.found).toBe("No robots.txt found");
     });
 
     it("returns na on a non-200 response", () => {
       const result = audit.audit(ctxFor("User-agent: *\nAllow: /", 500));
-      expect(result.status).toBe("na");
+      expect(result.status).toBe(CheckStatus.NotApplicable);
     });
 
     it("returns na on an empty body", () => {
       const result = audit.audit(ctxFor(""));
-      expect(result.status).toBe("na");
+      expect(result.status).toBe(CheckStatus.NotApplicable);
     });
 
     it("returns na on an HTML error page served at /robots.txt", () => {
       const result = audit.audit(ctxFor("<html><body>Not found</body></html>"));
-      expect(result.status).toBe("na");
+      expect(result.status).toBe(CheckStatus.NotApplicable);
       expect(result.found).toContain("no user-agent groups");
     });
   });

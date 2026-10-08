@@ -9,7 +9,16 @@ import {
   sharedCanonicalCheck,
   type FeedDocument,
   type FeedEntry,
+  FeedFormat,
 } from "../../gatherers/feeds";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** Entries whose identity is checked. The newest twenty is what a consumer reads. */
 const MAX_ENTRIES = 20;
@@ -59,19 +68,19 @@ export class FeedEntryIdentityAndCanonicalIntegrityAudit extends Audit {
       "This site’s feed entries cannot be identified or point away from their canonical URLs",
     description:
       'Checks the identity half of a feed: that every entry carries exactly the id and timestamp its format requires, that no id repeats, and that item links are absolute HTTPS URLs which match the `rel="canonical"` of the page they open — no redirect, no tracking parameters the canonical does not carry.',
-    scoreDisplayMode: "ternary",
-    tier: "scored",
-    evidenceGrade: "B",
-    weight: weightForGrade("B", "scored"),
-    defaultPriority: "medium",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    tier: AuditTier.Scored,
+    evidenceGrade: EvidenceGrade.B,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    defaultPriority: CheckPriority.Medium,
     dossier:
       "docs/evidence/audits/machine-discovery/feed-entry-identity-and-canonical-integrity.md",
-    requires: ["origin-reachable", "unblocked-fetches"],
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
     guidance: {
       impact:
         'A feed is how a consumer tracks what changed without re-crawling the site, and identity is what makes that possible: the id says "this is the same item you saw last time". An entry with no id, or with an id that repeats, forces the consumer to guess — usually by URL, which is exactly the thing that changes. A link that carries `utm_` parameters or redirects somewhere else creates a second address for one page, so the item the consumer stores is not the page the site considers canonical.',
       fix: "Give every entry a stable id — an `atom:id` that never changes, or an RSS `<guid>` that is an absolute URL when `isPermaLink` is true — and never reuse one. Point item links at the canonical URL itself, with no tracking parameters and no redirect in between. Serve the feed as its registered media type, with no byte-order mark before the first element.",
-      effort: "complex",
+      effort: FixEffort.Complex,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/machine-discovery/feed-entry-identity-and-canonical-integrity/",
       tags: ["feeds", "rss", "atom", "canonical"],
@@ -128,7 +137,7 @@ export class FeedEntryIdentityAndCanonicalIntegrityAudit extends Audit {
           ids.set(entry.id, (ids.get(entry.id) ?? 0) + 1);
         }
 
-        if (feed.declaredType === "atom") {
+        if (feed.declaredType === FeedFormat.Atom) {
           if (entry.idCount > 1)
             failures.push(
               `${label}: ${entry.idCount} atom:id elements; RFC 4287 allows exactly one`,
@@ -145,7 +154,7 @@ export class FeedEntryIdentityAndCanonicalIntegrityAudit extends Audit {
           }
         }
 
-        if (feed.declaredType === "rss" && entry.idIsPermalink) {
+        if (feed.declaredType === FeedFormat.Rss && entry.idIsPermalink) {
           let absolute = false;
           try {
             absolute = new URL(entry.id).protocol.startsWith("http");

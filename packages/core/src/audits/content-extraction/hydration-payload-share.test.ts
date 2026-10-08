@@ -3,6 +3,7 @@ import { HydrationPayloadShareAudit } from "./hydration-payload-share";
 import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
 import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
 import { AuditResultSchema } from "../../schemas";
+import { CheckStatus } from "../../types";
 
 /** Enough visible prose that a small payload stays a small share of the page. */
 const PROSE =
@@ -29,7 +30,7 @@ describe("HydrationPayloadShareAudit", () => {
   });
 
   it("is notApplicable when the page inlines no hydration state", () => {
-    expect(run(`<main>${PROSE}</main>`).status).toBe("na");
+    expect(run(`<main>${PROSE}</main>`).status).toBe(CheckStatus.NotApplicable);
   });
 
   // Next.js itself flags a single payload over 128 kB as a defect.
@@ -40,7 +41,7 @@ describe("HydrationPayloadShareAudit", () => {
     const result = run(
       `<main>${PROSE}</main><script id="__NEXT_DATA__" type="application/json">${blob}</script>`,
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("__NEXT_DATA__");
     expect(result.message).toContain("128");
   });
@@ -52,7 +53,7 @@ describe("HydrationPayloadShareAudit", () => {
     const result = run(
       `<main>${PROSE}</main>${frame(1)}${frame(2)}${frame(3)}`,
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("self.__next_f");
     expect(result.found).toContain("1 state payload");
   });
@@ -73,10 +74,10 @@ describe("HydrationPayloadShareAudit", () => {
           : `<script>self.__next_f.push([1,"${"y".repeat(70_000)}"])</script>`;
       const a = paddedPage("https://example.test/a", script);
       const b = paddedPage("https://example.test/b", script);
-      expect(audit.audit(mockCheckContext([a])).status).toBe("pass");
-      expect(audit.audit(mockCheckContext([b])).status).toBe("pass");
+      expect(audit.audit(mockCheckContext([a])).status).toBe(CheckStatus.Pass);
+      expect(audit.audit(mockCheckContext([b])).status).toBe(CheckStatus.Pass);
       const result = audit.audit(mockCheckContext([a, b]));
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.found).toContain("2 state payload(s)");
       expect(result.pageUrl).toBe(a.url);
       expect(audit.audit(mockCheckContext([b, a]))).toEqual(result);
@@ -90,7 +91,7 @@ describe("HydrationPayloadShareAudit", () => {
     const small = paddedPage("https://example.test/a-small", script(2_000));
     const large = paddedPage("https://example.test/z-large", script(140_000));
     const result = audit.audit(mockCheckContext([small, large]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("single-payload ceiling");
     expect(result.found).toContain("2 state payload(s)");
     expect(result.pageUrl).toBe(large.url);
@@ -123,7 +124,7 @@ describe("HydrationPayloadShareAudit", () => {
     const result = run(
       `<main><article>${body}</article></main><script id="__NEXT_DATA__" type="application/json">${blob}</script>`,
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("duplicat");
     expect(result.message).toMatch(/\d+(\.\d+)?% of the main-content/);
   });
@@ -135,7 +136,7 @@ describe("HydrationPayloadShareAudit", () => {
     const result = run(
       `<main>${PROSE}</main><script id="__NEXT_DATA__" type="application/json">${blob}</script>`,
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("warns when total state sits between 15% and 30% of the document", () => {
@@ -145,7 +146,7 @@ describe("HydrationPayloadShareAudit", () => {
     const result = run(
       `<main><p>Short page.</p></main><script id="__NEXT_DATA__" type="application/json">${blob}</script>${"<p>Copy.</p>".repeat(1_500)}`,
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
   });
 
   it("reports the estimated token cost of the payloads", () => {

@@ -1,6 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { ReviewSignalsAudit } from "./review-signals";
 import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import {
+  AuditTier,
+  CheckStatus,
+  EvidenceGrade,
+  ScoreDisplayMode,
+} from "../../types";
 
 describe("ReviewSignalsAudit", () => {
   const audit = new ReviewSignalsAudit();
@@ -15,7 +21,7 @@ describe("ReviewSignalsAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("JSON-LD");
   });
 
@@ -29,7 +35,7 @@ describe("ReviewSignalsAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("JSON-LD");
   });
 
@@ -39,7 +45,7 @@ describe("ReviewSignalsAudit", () => {
       `<html><body><div class="yotpo-reviews-stars">4.8 out of 5</div></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("review widget markup");
     expect(result.message).toContain("not machine-readable");
   });
@@ -51,7 +57,7 @@ describe("ReviewSignalsAudit", () => {
       "https://example.com/products/widget",
       `<html><body><div class="star-rating"></div></body></html>`,
     );
-    expect(audit.audit(mockCheckContext([page])).status).toBe("fail");
+    expect(audit.audit(mockCheckContext([page])).status).toBe(CheckStatus.Fail);
   });
 
   it('warns rather than passes on visible "N reviews" text', () => {
@@ -60,7 +66,7 @@ describe("ReviewSignalsAudit", () => {
       `<html><body><p>1,234 reviews from happy customers</p></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("reviews");
   });
 
@@ -70,13 +76,13 @@ describe("ReviewSignalsAudit", () => {
       `<html><body><p>Just a plain product description.</p></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No review or testimonial signals found");
   });
 
   it("reports na when no pages were scanned", () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("No pages were scanned");
   });
 
@@ -91,7 +97,7 @@ describe("ReviewSignalsAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("attributed quotation");
   });
 
@@ -105,7 +111,7 @@ describe("ReviewSignalsAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("attributed quotation");
   });
 
@@ -120,7 +126,7 @@ describe("ReviewSignalsAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("attributed quotation");
   });
 
@@ -136,7 +142,7 @@ describe("ReviewSignalsAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("JSON-LD");
   });
 
@@ -155,7 +161,7 @@ describe("ReviewSignalsAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("1 unattributed pull-quote(s)");
   });
 
@@ -166,7 +172,7 @@ describe("ReviewSignalsAudit", () => {
       `<html><body><blockquote></blockquote><p>Just a plain product description.</p></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("rejects a zero reviewCount as social proof", () => {
@@ -179,7 +185,7 @@ describe("ReviewSignalsAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("counts a non-zero reviewCount carried directly on the node", () => {
@@ -192,7 +198,7 @@ describe("ReviewSignalsAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // A storefront that ships the review property with nothing in it has
@@ -207,7 +213,7 @@ describe("ReviewSignalsAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   // A ratingCount-only node was reported as `reviewCount`, naming a field the
@@ -222,7 +228,7 @@ describe("ReviewSignalsAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("ratingCount");
     expect(result.found).not.toContain("reviewCount");
   });
@@ -238,7 +244,7 @@ describe("ReviewSignalsAudit", () => {
       1,
     );
     const result = audit.audit(mockCheckContext([plain, quoted]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.pageUrl).toBe("https://example.com/products/widget");
   });
 
@@ -257,7 +263,7 @@ describe("ReviewSignalsAudit", () => {
       1,
     );
     const result = audit.audit(mockCheckContext([widgetOnly, structured]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // Google prohibits markup not "sourced directly from users", so the presence
@@ -275,7 +281,7 @@ describe("ReviewSignalsAudit", () => {
         `<html><body><script type="application/ld+json">${payload}</script></body></html>`,
       );
       expect(audit.audit(mockCheckContext([page])).status, payload).toBe(
-        "fail",
+        CheckStatus.Fail,
       );
     }
   });
@@ -285,7 +291,7 @@ describe("ReviewSignalsAudit", () => {
       "https://example.com/products/thing",
       `<html><body><script type="application/ld+json">{"@context":"https://schema.org","@type":"Product","review":[{"@type":"Review","author":{"@type":"Person","name":"Jane Smith"}}]}</script></body></html>`,
     );
-    expect(audit.audit(mockCheckContext([page])).status).toBe("pass");
+    expect(audit.audit(mockCheckContext([page])).status).toBe(CheckStatus.Pass);
   });
 
   it("counts an AggregateRating that carries a rating value", () => {
@@ -293,7 +299,7 @@ describe("ReviewSignalsAudit", () => {
       "https://example.com/products/thing",
       `<html><body><script type="application/ld+json">{"@context":"https://schema.org","@type":"Product","aggregateRating":{"@type":"AggregateRating","ratingValue":"4.5"}}</script></body></html>`,
     );
-    expect(audit.audit(mockCheckContext([page])).status).toBe("pass");
+    expect(audit.audit(mockCheckContext([page])).status).toBe(CheckStatus.Pass);
   });
 
   // The regex used to run against raw body text, so an inline JSON payload
@@ -303,7 +309,7 @@ describe("ReviewSignalsAudit", () => {
       "https://example.com/products/thing",
       `<html><body><script>window.__DATA__ = {"label":"1234 reviews"};</script></body></html>`,
     );
-    expect(audit.audit(mockCheckContext([page])).status).toBe("fail");
+    expect(audit.audit(mockCheckContext([page])).status).toBe(CheckStatus.Fail);
   });
 
   // The review-vocabulary evidence is commerce-scoped. A blog page's markup
@@ -314,7 +320,7 @@ describe("ReviewSignalsAudit", () => {
       "<html><body><p>Home</p></body></html>",
       0,
     );
-    expect(audit.audit(mockCheckContext([home])).status).toBe("fail");
+    expect(audit.audit(mockCheckContext([home])).status).toBe(CheckStatus.Fail);
   });
 
   it("accepts a relative cite attribute as attribution", () => {
@@ -322,7 +328,7 @@ describe("ReviewSignalsAudit", () => {
       "https://example.com/",
       `<html><body><blockquote cite="/press/review"><p>"Excellent."</p></blockquote></body></html>`,
     );
-    expect(audit.audit(mockCheckContext([page])).status).toBe("pass");
+    expect(audit.audit(mockCheckContext([page])).status).toBe(CheckStatus.Pass);
   });
 
   it("rejects a cite attribute that names no document", () => {
@@ -330,7 +336,7 @@ describe("ReviewSignalsAudit", () => {
       "https://example.com/",
       `<html><body><blockquote cite="see our press page"><p>"Excellent."</p></blockquote></body></html>`,
     );
-    expect(audit.audit(mockCheckContext([page])).status).toBe("fail");
+    expect(audit.audit(mockCheckContext([page])).status).toBe(CheckStatus.Fail);
   });
 
   it("rejects an empty cite element as attribution", () => {
@@ -338,14 +344,14 @@ describe("ReviewSignalsAudit", () => {
       "https://example.com/",
       `<html><body><blockquote><p>"Excellent."</p><cite></cite></blockquote></body></html>`,
     );
-    expect(audit.audit(mockCheckContext([page])).status).toBe("fail");
+    expect(audit.audit(mockCheckContext([page])).status).toBe(CheckStatus.Fail);
   });
 
   it("keeps the grade-B scored registration", () => {
     const { meta } = ReviewSignalsAudit;
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
     expect(meta.weight).toBeCloseTo(0.6);
-    expect(meta.scoreDisplayMode).toBe("ternary");
+    expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Ternary);
   });
 });

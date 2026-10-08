@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { OpenApiOperationIdsAudit } from "./openapi-operation-ids";
 import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
 import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
+import { CheckStatus } from "../../types";
 
 describe("OpenApiOperationIdsAudit", () => {
   const audit = new OpenApiOperationIdsAudit();
@@ -17,7 +18,7 @@ describe("OpenApiOperationIdsAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("unique, registrable operationIds");
   });
 
@@ -34,7 +35,7 @@ describe("OpenApiOperationIdsAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found?.match(/search content/g)).toHaveLength(1);
   });
 
@@ -49,7 +50,7 @@ describe("OpenApiOperationIdsAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("1 missing");
   });
 
@@ -64,7 +65,7 @@ describe("OpenApiOperationIdsAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("duplicate");
   });
 
@@ -88,18 +89,20 @@ describe("OpenApiOperationIdsAudit", () => {
 
     it("fails an operationId containing spaces and punctuation, naming it", () => {
       const result = audit.audit(ctxWith(["Get user's profile (v2)"]));
-      expect(result.status).toBe("fail");
+      expect(result.status).toBe(CheckStatus.Fail);
       expect(result.message).toContain("cannot be registered");
       expect(result.found).toContain("Get user's profile (v2)");
     });
 
     it("fails an operationId longer than 64 characters", () => {
       const result = audit.audit(ctxWith(["a".repeat(65)]));
-      expect(result.status).toBe("fail");
+      expect(result.status).toBe(CheckStatus.Fail);
     });
 
     it("accepts exactly 64 characters (boundary)", () => {
-      expect(audit.audit(ctxWith(["a".repeat(64)])).status).toBe("pass");
+      expect(audit.audit(ctxWith(["a".repeat(64)])).status).toBe(
+        CheckStatus.Pass,
+      );
     });
 
     // 5.23's VERB_PATTERN rejected these; the structural rule accepts them,
@@ -107,20 +110,20 @@ describe("OpenApiOperationIdsAudit", () => {
     it("accepts snake_case and kebab-case ids that 5.23’s verb allowlist rejected", () => {
       expect(
         audit.audit(ctxWith(["get_weather", "search-products"])).status,
-      ).toBe("pass");
+      ).toBe(CheckStatus.Pass);
     });
 
     it("accepts a non-English / domain verb that 5.23’s allowlist rejected", () => {
       expect(
         audit.audit(ctxWith(["provisionTenant", "ingestDocument"])).status,
-      ).toBe("pass");
+      ).toBe(CheckStatus.Pass);
     });
 
     // Deviation from 5.23's suggested "namespaced separator" escape hatch: a
     // dot is not legal in a tool-call function name, so it still fails.
     it("fails a dotted namespace, which no runtime can register verbatim", () => {
       const result = audit.audit(ctxWith(["products.search"]));
-      expect(result.status).toBe("fail");
+      expect(result.status).toBe(CheckStatus.Fail);
       expect(result.found).toContain("products.search");
     });
 
@@ -135,7 +138,7 @@ describe("OpenApiOperationIdsAudit", () => {
         "/openapi.json": mockFetchResult(spec, 200),
       });
       const result = audit.audit(ctx);
-      expect(result.status).toBe("fail");
+      expect(result.status).toBe(CheckStatus.Fail);
       expect(result.message).toContain("1 missing");
     });
 
@@ -152,7 +155,7 @@ describe("OpenApiOperationIdsAudit", () => {
   // The missing/duplicate/illegal verdicts above are unchanged.
   it("declines when there is no spec", () => {
     const result = audit.audit(mockCheckContext([], {}));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.found).toBe("No readable OpenAPI document");
   });
 
@@ -165,7 +168,7 @@ describe("OpenApiOperationIdsAudit", () => {
       "/openapi.json": mockFetchResult(JSON.stringify({ paths: {} }), 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("no operationIds");
   });
 
@@ -173,7 +176,7 @@ describe("OpenApiOperationIdsAudit", () => {
     const ctx = mockCheckContext([], {
       "/openapi.json": mockFetchResult("invalid json {{{", 200),
     });
-    expect(audit.audit(ctx).status).toBe("na");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.NotApplicable);
   });
 
   it("declines on a document with no paths key — no operation was ever read", () => {
@@ -182,7 +185,7 @@ describe("OpenApiOperationIdsAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("no operations");
   });
 
@@ -194,7 +197,7 @@ describe("OpenApiOperationIdsAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("paths object is malformed");
     expect(result.found).toBe(
       'paths entry "/null-path" is null, not a path item object',
@@ -207,7 +210,7 @@ describe("OpenApiOperationIdsAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toBe("paths is an array, not an object");
   });
 
@@ -217,7 +220,7 @@ describe("OpenApiOperationIdsAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toBe(
       'paths entry "/products" is a string, not a path item object',
     );
@@ -229,7 +232,7 @@ describe("OpenApiOperationIdsAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toBe(
       'paths entry "/products" is an array, not a path item object',
     );
@@ -248,7 +251,7 @@ describe("OpenApiOperationIdsAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("All 2 operation(s)");
     expect(result.message).toContain("Skipped 1 unreadable entry");
     expect(result.found).toBe("2 unique operationId(s); 1 unreadable");
@@ -264,7 +267,7 @@ describe("OpenApiOperationIdsAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("1 missing");
     expect(result.found).toContain("1 unreadable");
   });
@@ -275,7 +278,7 @@ describe("OpenApiOperationIdsAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toBe(
       'paths entry "/x" declares get as a string, not an operation object',
     );
@@ -287,7 +290,7 @@ describe("OpenApiOperationIdsAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.found).toBe("0 operations");
   });
 });

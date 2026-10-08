@@ -10,6 +10,14 @@ import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
 import type { CheckContext, PageContext } from "../../check-context";
 import { accessibleName, isElement } from "./_agent-affordances";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** Consent platforms, by the marker they leave in the served HTML. */
 const PLATFORMS: ReadonlyArray<{ name: string; pattern: RegExp }> = [
@@ -154,25 +162,25 @@ export class FirstContactConsentGateOperabilityAudit extends Audit {
     failureTitle: "First-contact consent gate: cost to get past it",
     description:
       "Reports the cold-session consent layer an agent meets before any task work: whether the primary content exists in the served HTML behind it, whether the accept and reject controls carry accessible names and live in the top document rather than a cross-origin iframe, whether main content is hidden from the accessibility tree while the layer is open, and how many clicks a refusal costs. Diagnostic only — it never moves the score.",
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "informative"),
-    evidenceGrade: "C",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier:
       "docs/evidence/audits/operability-safety/first-contact-consent-gate-operability.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "low",
+    defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
         "An agent arriving with no cookies spends its first actions on the consent layer, before any step of the actual task. Three properties decide whether it can. A layer rendered inside a cross-origin iframe is invisible to a DOM-text extractor that reads only the top document, so the agent's text and its screenshot disagree and it acts on content it cannot actually see. Accept and reject controls built as unroled, unnamed divs are unaddressable in a snapshot for the same reason a ghost-clickable div is. And main content set `inert` or `aria-hidden=\"true\"` while the layer is open empties every snapshot until the layer is gone — axe's own guidance is that `aria-hidden` removes the element and all its children from the accessibility API. The evidence here is convention rather than documented consumer behaviour, which is why this audit reports rather than scores.",
       fix: 'Render the consent layer in the top document, not in a cross-origin iframe. Give the accept and reject controls real `<button>` elements with visible text, and offer a one-click refusal beside the one-click acceptance rather than sending a refusal through a preferences journey. Leave the page itself in the DOM behind the layer, and do not set `inert` or `aria-hidden="true"` on main content — use a focus trap inside the dialog instead.',
       code: SAMPLE,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/first-contact-consent-gate-operability/",
       tags: ["agent-operability", "consent", "first-contact"],
@@ -181,7 +189,7 @@ export class FirstContactConsentGateOperabilityAudit extends Audit {
 
   private recommendation() {
     return {
-      priority: "low" as const,
+      priority: CheckPriority.Low,
       description: FirstContactConsentGateOperabilityAudit.meta.description,
       code: SAMPLE,
     };

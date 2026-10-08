@@ -1,5 +1,10 @@
 import type { CheckResult, ScanReport } from "@forkpoint/agent-lighthouse-core";
-import { isInformative } from "@forkpoint/agent-lighthouse-core";
+import {
+  isInformative,
+  AuditTier,
+  CheckStatus,
+  CoverageProvenance,
+} from "@forkpoint/agent-lighthouse-core";
 
 export interface AssessmentView {
   status: CheckResult["status"];
@@ -20,29 +25,47 @@ export interface PageScopeView {
   audits: AuditScopeView[];
 }
 
+/**
+ * Whether an audit's population is worth listing on its own.
+ *
+ * Every executed audit carries coverage, so listing all of them repeats about
+ * 215 URL lists for checks that passed over the full sample. A reader, or a
+ * calling agent's context, needs the populations that differ from that:
+ * advisory results, a typed population, unread inputs, or a finding.
+ */
+function isNotableScope(check: CheckResult): boolean {
+  if (check.advisoryResults?.length) return true;
+  const coverage = check.coverage;
+  if (!coverage) return false;
+  return (
+    coverage.provenance !== CoverageProvenance.All ||
+    coverage.unreadUrls.length > 0 ||
+    check.status === CheckStatus.Fail ||
+    check.status === CheckStatus.Warn
+  );
+}
+
 /** Keep population details separate from audit counts and score summaries. */
 export function buildPageScope(
   report: ScanReport,
   checks: CheckResult[],
 ): PageScopeView | undefined {
   const pages = report.pagesScanned ?? [];
-  const audits = checks
-    .filter((c) => c.coverage || c.advisoryResults?.length)
-    .map((c) => ({
-      id: c.id,
-      title: c.title,
-      assessments: [c, ...(c.advisoryResults ?? [])].map((a, index) => ({
-        status: a.status,
-        advisory:
-          index > 0 ||
-          isInformative(a) ||
-          (a.tier !== undefined && a.tier !== "scored"),
-        ...(a.coverage ? { coverage: a.coverage } : {}),
-        ...(a.explanation ? { explanation: a.explanation } : {}),
-        ...(a.displayValue ? { displayValue: a.displayValue } : {}),
-        ...(a.fix ? { fix: a.fix } : {}),
-      })),
-    }));
+  const audits = checks.filter(isNotableScope).map((c) => ({
+    id: c.id,
+    title: c.title,
+    assessments: [c, ...(c.advisoryResults ?? [])].map((a, index) => ({
+      status: a.status,
+      advisory:
+        index > 0 ||
+        isInformative(a) ||
+        (a.tier !== undefined && a.tier !== AuditTier.Scored),
+      ...(a.coverage ? { coverage: a.coverage } : {}),
+      ...(a.explanation ? { explanation: a.explanation } : {}),
+      ...(a.displayValue ? { displayValue: a.displayValue } : {}),
+      ...(a.fix ? { fix: a.fix } : {}),
+    })),
+  }));
   if (
     !audits.length &&
     !report.pageAttempts &&
@@ -81,7 +104,7 @@ export function formatAuditScope(audit: AuditScopeView): string {
   return audit.assessments
     .map((a) => {
       const lines = [
-        `${a.coverage?.provenance ?? "Scope not recorded"} — ${a.status.toUpperCase()} — ${a.advisory ? "Advisory — not scored" : a.status === "na" ? "Not assessed — not scored" : "Primary result"}`,
+        `${a.coverage?.provenance ?? "Scope not recorded"} — ${a.status.toUpperCase()} — ${a.advisory ? "Advisory — not scored" : a.status === CheckStatus.NotApplicable ? "Not assessed — not scored" : "Primary result"}`,
       ];
       if (a.explanation) lines.push(a.explanation);
       if (a.displayValue) lines.push(`Finding: ${a.displayValue}`);
@@ -96,7 +119,11 @@ export function formatAuditScope(audit: AuditScopeView): string {
           );
         }
       } else lines.push("Coverage not recorded.");
-      if (a.fix && a.status !== "pass" && a.status !== "na")
+      if (
+        a.fix &&
+        a.status !== CheckStatus.Pass &&
+        a.status !== CheckStatus.NotApplicable
+      )
         lines.push(`Suggested fix: ${a.fix}`);
       return lines.join("\n");
     })

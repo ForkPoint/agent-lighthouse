@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { NoBrokenAiEndpointsAudit } from "./no-broken-ai-endpoints";
 import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 // NOTE: The audit calls isSafeUrl() (which runs dns.lookup) before fetching.
 // We use literal public IP hosts so dns.lookup resolves locally without a
@@ -14,7 +15,7 @@ describe("NoBrokenAiEndpointsAudit", () => {
   it("warns when no AI endpoint URLs are found", async () => {
     const ctx = mockCheckContext([], {});
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("No AI endpoint URLs found");
   });
 
@@ -25,7 +26,7 @@ describe("NoBrokenAiEndpointsAudit", () => {
     ctx.fetch = async (opts) =>
       mockFetchResult("", opts.url.includes("/broken") ? 404 : 200);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("reachable");
   });
 
@@ -35,7 +36,7 @@ describe("NoBrokenAiEndpointsAudit", () => {
     });
     ctx.fetch = async () => mockFetchResult("", 404);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("broken or unreachable");
     expect(result.message).toContain("404");
   });
@@ -51,7 +52,7 @@ describe("NoBrokenAiEndpointsAudit", () => {
     ctx.fetch = async (opts) =>
       mockFetchResult("", opts.url.includes("/broken") ? 404 : 200);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("broken or unreachable");
   });
 
@@ -66,7 +67,7 @@ describe("NoBrokenAiEndpointsAudit", () => {
     });
     ctx.fetch = async () => mockFetchResult("", 200);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("reachable");
   });
 
@@ -77,7 +78,7 @@ describe("NoBrokenAiEndpointsAudit", () => {
     });
     ctx.fetch = async () => mockFetchResult("", 200);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("collects URLs from navigation.json arrays", async () => {
@@ -87,7 +88,7 @@ describe("NoBrokenAiEndpointsAudit", () => {
     });
     ctx.fetch = async () => mockFetchResult("", 200);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("collects markdown-format links from llms.txt", async () => {
@@ -97,7 +98,7 @@ describe("NoBrokenAiEndpointsAudit", () => {
     });
     ctx.fetch = async () => mockFetchResult("", 200);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("skips ai-catalog.json when services property is falsy", async () => {
@@ -111,7 +112,7 @@ describe("NoBrokenAiEndpointsAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("No AI endpoint URLs found");
   });
 
@@ -129,7 +130,7 @@ describe("NoBrokenAiEndpointsAudit", () => {
     });
     ctx.fetch = async () => mockFetchResult("", 200);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("reachable");
   });
 
@@ -147,7 +148,7 @@ describe("NoBrokenAiEndpointsAudit", () => {
     ctx.baseUrl = "http://8.8.8.8";
     ctx.fetch = async () => mockFetchResult("", 200);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("reachable");
   });
 
@@ -164,7 +165,7 @@ describe("NoBrokenAiEndpointsAudit", () => {
     });
     ctx.fetch = async () => mockFetchResult("", 200);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("handles nav.json with null and relative URL values", async () => {
@@ -182,7 +183,7 @@ describe("NoBrokenAiEndpointsAudit", () => {
     ctx.baseUrl = "http://8.8.8.8";
     ctx.fetch = async () => mockFetchResult("", 200);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("reachable");
   });
 
@@ -196,7 +197,7 @@ describe("NoBrokenAiEndpointsAudit", () => {
     // The audit used to answer "All 0 AI endpoint URL(s) are reachable" here: a
     // pass for a census of nothing. One URL was listed and none was requested,
     // so the honest verdict names that.
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("none of them could be requested");
     expect(result.found).toContain("0 reachable to check");
   });
@@ -209,7 +210,7 @@ describe("NoBrokenAiEndpointsAudit", () => {
       throw new Error("network error");
     };
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("Broken: 1");
   });
 });

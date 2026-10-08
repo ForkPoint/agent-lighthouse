@@ -11,6 +11,8 @@
 import * as fs from "node:fs";
 import { runScan } from "../../packages/core/src/index";
 import type { AuditTrace } from "../../packages/core/src/index";
+import { CheckStatus } from "../../packages/core/src/types";
+import { AuditOutcome } from "../../packages/core/src/audit-trace";
 
 const READS_PAGES = new Set(
   fs
@@ -20,16 +22,24 @@ const READS_PAGES = new Set(
     .filter(Boolean),
 );
 
-const TARGETS: Array<{ url: string; kind: "shell" | "waf" | "control" }> = [
-  { url: "https://excalidraw.com", kind: "shell" },
-  { url: "https://www.tldraw.com", kind: "shell" },
-  { url: "https://web.telegram.org", kind: "shell" },
-  { url: "https://mail.proton.me", kind: "shell" },
-  { url: "https://music.youtube.com", kind: "shell" },
-  { url: "https://ridge.com", kind: "waf" },
-  { url: "https://westontable.com", kind: "waf" },
-  { url: "https://developer.mozilla.org", kind: "control" },
-  { url: "https://allbirds.com", kind: "control" },
+const TargetKind = {
+  Shell: "shell",
+  Waf: "waf",
+  Control: "control",
+} as const;
+
+type TargetKind = (typeof TargetKind)[keyof typeof TargetKind];
+
+const TARGETS: Array<{ url: string; kind: TargetKind }> = [
+  { url: "https://excalidraw.com", kind: TargetKind.Shell },
+  { url: "https://www.tldraw.com", kind: TargetKind.Shell },
+  { url: "https://web.telegram.org", kind: TargetKind.Shell },
+  { url: "https://mail.proton.me", kind: TargetKind.Shell },
+  { url: "https://music.youtube.com", kind: TargetKind.Shell },
+  { url: "https://ridge.com", kind: TargetKind.Waf },
+  { url: "https://westontable.com", kind: TargetKind.Waf },
+  { url: "https://developer.mozilla.org", kind: TargetKind.Control },
+  { url: "https://allbirds.com", kind: TargetKind.Control },
 ];
 
 interface SiteResult {
@@ -97,7 +107,7 @@ async function scanOne(t: { url: string; kind: string }): Promise<SiteResult> {
   res.totals.total = traces.length;
   for (const tr of traces) {
     res.totals[
-      tr.outcome === "ran"
+      tr.outcome === AuditOutcome.Ran
         ? "ran"
         : tr.outcome === "skipped"
           ? "skipped"
@@ -105,9 +115,9 @@ async function scanOne(t: { url: string; kind: string }): Promise<SiteResult> {
     ]++;
     res.status[tr.status] = (res.status[tr.status] ?? 0) + 1;
     if (READS_PAGES.has(tr.id)) {
-      const s = tr.status as "pass" | "fail" | "warn" | "na";
+      const s = tr.status as CheckStatus;
       res.claimedWithoutPages[s] = (res.claimedWithoutPages[s] ?? 0) + 1;
-      if (s !== "na") res.claimIds.push(`${s}:${tr.id}`);
+      if (s !== CheckStatus.NotApplicable) res.claimIds.push(`${s}:${tr.id}`);
     }
   }
   res.traces = traces.map((t) => ({

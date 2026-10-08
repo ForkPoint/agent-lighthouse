@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { ProductIdentifiersAudit } from "./product-identifiers";
 import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 const ld = (obj: unknown) =>
   `<script type="application/ld+json">${JSON.stringify(obj)}</script>`;
@@ -25,7 +26,7 @@ describe("ProductIdentifiersAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No Product schema found");
   });
 
@@ -41,7 +42,7 @@ describe("ProductIdentifiersAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("sku");
   });
 
@@ -59,7 +60,7 @@ describe("ProductIdentifiersAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("detects identifiers on a Product nested inside @graph", () => {
@@ -72,7 +73,7 @@ describe("ProductIdentifiersAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("fails when a Product has no identifiers", () => {
@@ -86,7 +87,7 @@ describe("ProductIdentifiersAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No unique product identifiers");
   });
 
@@ -103,7 +104,7 @@ describe("ProductIdentifiersAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("sku");
   });
 });

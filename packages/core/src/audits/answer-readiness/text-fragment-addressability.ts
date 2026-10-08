@@ -11,6 +11,14 @@ import { weightForGrade } from "../../scorer";
 import type { CheckContext, PageContext } from "../../check-context";
 import { allJsonLdNodes } from "../../parser";
 import { notRendered } from "../../dom-visibility";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** Elements the spec's block-boundary rule treats as block-level. */
 const BLOCK_SELECTOR =
@@ -332,25 +340,25 @@ export class TextFragmentAddressabilityAudit extends Audit {
     failureTitle: "Text-fragment citation addressability",
     description:
       "Determines whether a citing surface can construct a working `#:~:text=` deep link to the page's actual answer sentences. Hard-fails on the documented `Document-Policy: force-load-at-top` opt-out header, then simulates the spec's matching algorithm over the parsed DOM to prove each candidate answer span is (a) contained in a single block-level element, (b) unambiguous or disambiguable with a same-block prefix/suffix, and (c) free of characters that break normalization. Outputs the working fragment URLs as a fix artifact.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/answer-readiness/text-fragment-addressability.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "medium",
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "Google Search auto-generates text-fragment URLs to land users on the exact featured-snippet text, and the spec requires each of prefix/start/end/suffix to match within a single block-level element. When an answer sentence is fragmented across block boundaries, or the header opt-out is set, the fragment silently fails and the link degrades to page-top. Falsifiable and directly testable: take the citing surface’s own generated URL, load it, and observe whether the browser scrolls and highlights. Two failure classes are binary and deterministic — the opt-out header, and a start string that straddles two blocks.",
       fix: "Remove `force-load-at-top` from the `Document-Policy` response header; it is header-only, so there is nothing to remove in the markup. Keep each answer sentence inside one block-level element rather than splitting it across sibling paragraphs, spans-in-divs or table cells. Strip soft hyphens and zero-width characters from body copy. Where an answer sentence repeats verbatim across the page, give at least one occurrence some same-block context so a citing surface can pin it.",
       code: SAMPLE,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/answer-readiness/text-fragment-addressability/",
       tags: ["citation", "text-fragment", "deep-link", "answer-selection"],
@@ -359,7 +367,7 @@ export class TextFragmentAddressabilityAudit extends Audit {
 
   private recommendation() {
     return {
-      priority: "medium" as const,
+      priority: CheckPriority.Medium,
       description: TextFragmentAddressabilityAudit.meta.description,
       code: SAMPLE,
     };

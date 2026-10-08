@@ -4,6 +4,14 @@ import type { CheckContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
 import type { FetchResult } from "../../fetcher";
 import { extractMarkdownLinks } from "../../parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 function isOk(result: FetchResult): boolean {
   return result.status === 200;
@@ -17,20 +25,20 @@ export class LlmsTxtLinkDescriptionsAudit extends Audit {
     failureTitle: "llms.txt links include descriptions",
     description:
       "Link descriptions help AI agents understand what each page covers without visiting it, reducing unnecessary crawling.",
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "informative"),
-    evidenceGrade: "C",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier:
       "docs/evidence/audits/machine-discovery/llms-txt-link-descriptions.md",
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "medium",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "Links without descriptions force AI agents to visit every page to understand its content, wasting crawl budget and slowing down response generation. Described links let agents filter relevant pages instantly.",
       fix: "Add a colon and brief description after each link URL in your llms.txt file. Describe what the page covers in a few words so agents can decide which pages to visit.",
       code: "- [Getting Started](/docs/start): Step-by-step guide for new users\n- [API Reference](/docs/api): Complete endpoint documentation\n- [Pricing](/pricing): Plans and pricing information",
-      effort: "trivial",
+      effort: FixEffort.Trivial,
       docsUrl: "https://llmstxt.org/",
       tags: ["llms-txt", "discoverability"],
     },
@@ -45,7 +53,7 @@ export class LlmsTxtLinkDescriptionsAudit extends Audit {
         "Links follow - [Name](url): description",
         "File not found",
         {
-          priority: "critical",
+          priority: CheckPriority.Critical,
           description:
             "First, create your llms.txt file (see check 1.1). Link descriptions help AI agents understand what each page covers without visiting it, reducing unnecessary crawling.",
           code: `# Your Site Name\n\n> Brief description of your site for AI agents.\n\n## Pages\n- [Home](/): Main landing page\n- [About](/about/): Company information`,
@@ -61,7 +69,7 @@ export class LlmsTxtLinkDescriptionsAudit extends Audit {
         "Links follow - [Name](url): description pattern",
         "No links found",
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "Without links, AI agents cannot discover your pages from llms.txt. Add links to your most important pages using the markdown list format with descriptions so agents know what each page covers.",
           code: `- [Getting Started](/docs/start): Step-by-step guide for new users\n- [API Reference](/docs/api): Complete endpoint documentation\n- [Pricing](/pricing): Plans and pricing information`,
@@ -78,7 +86,7 @@ export class LlmsTxtLinkDescriptionsAudit extends Audit {
         "All links follow - [Name](url): description",
         `${withDescription.length}/${links.length} have descriptions`,
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "Link descriptions help AI agents decide which pages to visit without crawling them all. Add a colon and brief description after each link URL explaining what the page covers.",
           code: `- [Page Name](/path): Brief description of the page content and purpose`,
@@ -92,7 +100,7 @@ export class LlmsTxtLinkDescriptionsAudit extends Audit {
         "All links follow - [Name](url): description",
         `${withDescription.length}/${links.length} have descriptions`,
         {
-          priority: "low",
+          priority: CheckPriority.Low,
           description:
             "Some links are missing descriptions. Adding descriptions to all links helps AI agents efficiently filter relevant pages without visiting each one.",
           code: `- [Page Name](/path): Brief description of the page content and purpose`,

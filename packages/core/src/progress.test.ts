@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { ProgressTracker, PHASE_WEIGHTS } from "./progress";
-import type { PhaseId, ScanEvent } from "./progress";
+import { ProgressTracker, PHASE_WEIGHTS, PhaseId } from "./progress";
+import type { ScanEvent } from "./progress";
 
 function collect(): { events: ScanEvent[]; tracker: ProgressTracker } {
   const events: ScanEvent[] = [];
@@ -8,11 +8,11 @@ function collect(): { events: ScanEvent[]; tracker: ProgressTracker } {
 }
 
 const PHASES: PhaseId[] = [
-  "fetch-root",
-  "fetch-pages",
-  "analyze",
-  "audits",
-  "report",
+  PhaseId.FetchRoot,
+  PhaseId.FetchPages,
+  PhaseId.Analyze,
+  PhaseId.Audits,
+  PhaseId.Report,
 ];
 
 describe("ProgressTracker", () => {
@@ -43,7 +43,7 @@ describe("ProgressTracker", () => {
   it("fraction within a phase tracks completed/total × phase weight", () => {
     const { tracker } = collect();
     tracker.scanStart("https://example.com/");
-    tracker.phaseStart("fetch-root", 4);
+    tracker.phaseStart(PhaseId.FetchRoot, 4);
     tracker.unitDone();
     expect(tracker.fraction).toBeCloseTo(
       PHASE_WEIGHTS["fetch-root"] * 0.25,
@@ -60,22 +60,22 @@ describe("ProgressTracker", () => {
   it("is monotonic non-decreasing across a simulated full scan", () => {
     const { events, tracker } = collect();
     tracker.scanStart("https://example.com/");
-    tracker.phaseStart("fetch-root", 36);
+    tracker.phaseStart(PhaseId.FetchRoot, 36);
     for (let i = 0; i < 36; i++) tracker.unitDone(`/file-${i}`);
     tracker.phaseDone();
-    tracker.phaseStart("fetch-pages", 1);
+    tracker.phaseStart(PhaseId.FetchPages, 1);
     tracker.unitDone("https://example.com/");
     tracker.setPhaseTotal(6);
     for (let i = 0; i < 5; i++) tracker.unitDone(`https://example.com/p${i}`);
     tracker.phaseDone();
-    tracker.phaseStart("analyze", 6);
+    tracker.phaseStart(PhaseId.Analyze, 6);
     for (let i = 0; i < 6; i++) tracker.unitDone();
     tracker.phaseDone();
-    tracker.phaseStart("audits", 207);
+    tracker.phaseStart(PhaseId.Audits, 207);
     for (let i = 0; i < 206; i++) tracker.unitDone(`1.${i} t`);
     tracker.unitFail("9.9 broken", "boom");
     tracker.phaseDone();
-    tracker.phaseStart("report", 1);
+    tracker.phaseStart(PhaseId.Report, 1);
     tracker.unitDone();
     tracker.phaseDone();
     tracker.scanDone(42);
@@ -92,12 +92,12 @@ describe("ProgressTracker", () => {
 
   it("unit:fail counts as settled work and carries the error", () => {
     const { events, tracker } = collect();
-    tracker.phaseStart("audits", 2);
+    tracker.phaseStart(PhaseId.Audits, 2);
     tracker.unitFail("a A", "kaboom");
     tracker.unitDone("b B");
     const fail = events.find((e) => e.type === "unit:fail")!;
     expect(fail).toMatchObject({
-      phase: "audits",
+      phase: PhaseId.Audits,
       label: "a A",
       error: "kaboom",
     });
@@ -106,7 +106,7 @@ describe("ProgressTracker", () => {
 
   it("setPhaseTotal corrects the total upward without moving fraction backwards", () => {
     const { events, tracker } = collect();
-    tracker.phaseStart("fetch-pages", 1);
+    tracker.phaseStart(PhaseId.FetchPages, 1);
     tracker.unitDone("https://example.com/");
     const before = tracker.fraction;
     expect(before).toBeCloseTo(PHASE_WEIGHTS["fetch-pages"], 10);
@@ -121,7 +121,7 @@ describe("ProgressTracker", () => {
 
   it("setPhaseTotal never shrinks below the completed count", () => {
     const { tracker } = collect();
-    tracker.phaseStart("fetch-pages", 1);
+    tracker.phaseStart(PhaseId.FetchPages, 1);
     tracker.unitDone();
     tracker.setPhaseTotal(0);
     expect(tracker.fraction).toBeCloseTo(PHASE_WEIGHTS["fetch-pages"], 10);

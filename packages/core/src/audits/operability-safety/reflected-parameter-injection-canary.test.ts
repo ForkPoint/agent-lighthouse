@@ -8,6 +8,14 @@ import {
 import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
 import type { CheckContext } from "../../check-context";
 import type { FetchOptions } from "../../fetcher";
+import {
+  AuditTier,
+  CheckPriority,
+  CheckStatus,
+  EvidenceGrade,
+  ScoreDisplayMode,
+  HttpMethod,
+} from "../../types";
 
 vi.mock("../../fetcher", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../fetcher")>();
@@ -32,6 +40,17 @@ function sentValue(url: string): string {
   return decodeURIComponent(parsed.pathname.slice(1));
 }
 
+const ReflectionSlot = {
+  Title: "title",
+  Og: "og",
+  Canonical: "canonical",
+  Jsonld: "jsonld",
+  Text: "text",
+  None: "none",
+} as const;
+
+type ReflectionSlot = (typeof ReflectionSlot)[keyof typeof ReflectionSlot];
+
 /**
  * A site that echoes whatever it was sent into one named slot.
  *
@@ -39,7 +58,7 @@ function sentValue(url: string): string {
  * reflection that warns and one that fails.
  */
 function reflectingSite(
-  slot: "title" | "og" | "canonical" | "jsonld" | "text" | "none",
+  slot: ReflectionSlot,
   opts: { noindex?: boolean } = {},
 ): { ctx: CheckContext; calls: () => number } {
   let calls = 0;
@@ -67,7 +86,9 @@ function reflectingSite(
     };
     const head = `${robots}${slot === "text" || slot === "none" ? "" : bodies[slot]}`;
     const body =
-      slot === "text" ? `<p>No results for ${echo}.</p>` : "<p>No results.</p>";
+      slot === ReflectionSlot.Text
+        ? `<p>No results for ${echo}.</p>`
+        : "<p>No results.</p>";
     return mockFetchResult(
       `<html><head>${head}</head><body>${body}</body></html>`,
       200,
@@ -85,46 +106,46 @@ describe("ReflectedParameterInjectionCanaryAudit", () => {
   });
 
   it("passes a site that reflects nothing", async () => {
-    const { ctx } = reflectingSite("none");
+    const { ctx } = reflectingSite(ReflectionSlot.None);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("fails a canary reflected into the title", async () => {
-    const { ctx } = reflectingSite("title");
+    const { ctx } = reflectingSite(ReflectionSlot.Title);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("title");
   });
 
   it("fails a canary reflected into og:description", async () => {
-    const { ctx } = reflectingSite("og");
-    expect((await audit.audit(ctx)).status).toBe("fail");
+    const { ctx } = reflectingSite(ReflectionSlot.Og);
+    expect((await audit.audit(ctx)).status).toBe(CheckStatus.Fail);
   });
 
   it("fails a canary reflected into the canonical href", async () => {
-    const { ctx } = reflectingSite("canonical");
-    expect((await audit.audit(ctx)).status).toBe("fail");
+    const { ctx } = reflectingSite(ReflectionSlot.Canonical);
+    expect((await audit.audit(ctx)).status).toBe(CheckStatus.Fail);
   });
 
   it("fails a canary reflected into a JSON-LD string value", async () => {
-    const { ctx } = reflectingSite("jsonld");
-    expect((await audit.audit(ctx)).status).toBe("fail");
+    const { ctx } = reflectingSite(ReflectionSlot.Jsonld);
+    expect((await audit.audit(ctx)).status).toBe(CheckStatus.Fail);
   });
 
   // A noindex page renders the text but never becomes an answer source.
   it("warns on a text-node reflection when the page is noindex", async () => {
-    const { ctx } = reflectingSite("text", { noindex: true });
-    expect((await audit.audit(ctx)).status).toBe("warn");
+    const { ctx } = reflectingSite(ReflectionSlot.Text, { noindex: true });
+    expect((await audit.audit(ctx)).status).toBe(CheckStatus.Warn);
   });
 
   it("fails the same text-node reflection on an indexable page", async () => {
-    const { ctx } = reflectingSite("text");
-    expect((await audit.audit(ctx)).status).toBe("fail");
+    const { ctx } = reflectingSite(ReflectionSlot.Text);
+    expect((await audit.audit(ctx)).status).toBe(CheckStatus.Fail);
   });
 
   it("says whether the canary came back escaped and whether brackets survived", async () => {
-    const { ctx } = reflectingSite("title");
+    const { ctx } = reflectingSite(ReflectionSlot.Title);
     const result = await audit.audit(ctx);
     expect(result.found).toMatch(/raw|escaped/);
     expect(result.found).toContain("angle bracket");
@@ -132,14 +153,14 @@ describe("ReflectedParameterInjectionCanaryAudit", () => {
 
   // The probe budget is a hard cap, not an average.
   it("sends at most five probes", async () => {
-    const { ctx, calls } = reflectingSite("none");
+    const { ctx, calls } = reflectingSite(ReflectionSlot.None);
     await audit.audit(ctx);
     expect(calls()).toBeLessThanOrEqual(5);
   });
 
   it("sends only read-only GETs to the scanned origin", async () => {
     const seen: FetchOptions[] = [];
-    const { ctx } = reflectingSite("none");
+    const { ctx } = reflectingSite(ReflectionSlot.None);
     const inner = ctx.fetch;
     ctx.fetch = async (options: FetchOptions) => {
       seen.push(options);
@@ -148,7 +169,7 @@ describe("ReflectedParameterInjectionCanaryAudit", () => {
     await audit.audit(ctx);
     expect(seen.length).toBeGreaterThan(0);
     for (const options of seen) {
-      expect(options.method ?? "GET").toBe("GET");
+      expect(options.method ?? HttpMethod.Get).toBe("GET");
       expect(new URL(options.url).origin).toBe("https://example.com");
     }
   });
@@ -162,14 +183,14 @@ describe("ReflectedParameterInjectionCanaryAudit", () => {
     ]);
     ctx.fetch = async () => mockFetchResult("", 0);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("registers as a scored grade-B audit with critical priority", () => {
     const { meta } = ReflectedParameterInjectionCanaryAudit;
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
-    expect(meta.defaultPriority).toBe("critical");
-    expect(meta.scoreDisplayMode).toBe("ternary");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
+    expect(meta.defaultPriority).toBe(CheckPriority.Critical);
+    expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Ternary);
   });
 });

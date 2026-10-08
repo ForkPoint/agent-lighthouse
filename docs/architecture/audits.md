@@ -293,18 +293,18 @@ P3 retained the following 10 broad lists to preserve the old general-content
 population. Their dossiers record the migration as a deviation. They are
 follow-up review targets, not the recommended pattern for new audits.
 
-| Audit                                 | Current inclusion list                       | Evidence condition to review before changing scope                                                                                 |
-| ------------------------------------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `answer-readiness/comparison-tables`  | category, product, content, unknown, article | Establish comparison intent independently of table markup. The current body counts tables without an intent guard.                 |
-| `structured-data/breadcrumb-schema`   | category, product, content, unknown, article | Review the existing URL-depth selection against the documented hierarchy obligation. Do not use the list only to exclude homepage. |
-| `answer-readiness/direct-definitions` | content, unknown, article                    | The body already selects definitional intent. Confirm its source-backed population and aggregation across other types.             |
-| `answer-readiness/external-citations` | content, unknown, article                    | Establish the claims or content for which citations are justified. The current body counts external links without an intent guard. |
-| `answer-readiness/unique-data`        | content, unknown, article                    | Establish when original data is an applicable obligation. Do not require numbers on every page.                                    |
-| `content-extraction/aside-element`    | content, unknown, article                    | The body already selects supplementary blocks. Confirm that selection and its denominator across other types.                      |
-| `content-extraction/code-language`    | content, unknown, article                    | Select present code blocks. Review the current warning on absent blocks against the absence rule.                                  |
-| `content-extraction/time-element`     | content, unknown, article                    | Detect date-bearing content independently of `<time>` markup. The current body fails when no `<time>` exists.                      |
-| `structured-data/howto-schema`        | content, unknown, article                    | Review the existing sequential-heading intent test and its absent-feature warning.                                                 |
-| `structured-data/service-schema`      | homepage, content, unknown, article          | The body already tests service intent. Confirm selection and aggregation across other types before removing the list.              |
+| Audit                                 | Current inclusion list              | Evidence condition to review before changing scope                                                                                 |
+| ------------------------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `answer-readiness/comparison-tables`  | category, product, unknown, article | Establish comparison intent independently of table markup. The current body counts tables without an intent guard.                 |
+| `structured-data/breadcrumb-schema`   | category, product, unknown, article | Review the existing URL-depth selection against the documented hierarchy obligation. Do not use the list only to exclude homepage. |
+| `answer-readiness/direct-definitions` | unknown, article                    | The body already selects definitional intent. Confirm its source-backed population and aggregation across other types.             |
+| `answer-readiness/external-citations` | unknown, article                    | Establish the claims or content for which citations are justified. The current body counts external links without an intent guard. |
+| `answer-readiness/unique-data`        | unknown, article                    | Establish when original data is an applicable obligation. Do not require numbers on every page.                                    |
+| `content-extraction/aside-element`    | unknown, article                    | The body already selects supplementary blocks. Confirm that selection and its denominator across other types.                      |
+| `content-extraction/code-language`    | unknown, article                    | Select present code blocks. Review the current warning on absent blocks against the absence rule.                                  |
+| `content-extraction/time-element`     | unknown, article                    | Detect date-bearing content independently of `<time>` markup. The current body fails when no `<time>` exists.                      |
+| `structured-data/howto-schema`        | unknown, article                    | Review the existing sequential-heading intent test and its absent-feature warning.                                                 |
+| `structured-data/service-schema`      | homepage, unknown, article          | The body already tests service intent. Confirm selection and aggregation across other types before removing the list.              |
 
 This inspection changes documentation only. It does not remove lists, add
 exclusions, change verdicts, or complete the deferred feature-gate migration.
@@ -318,7 +318,7 @@ scan target is `declared` from `--page-type`, each URL named in
 found is `detected`.
 
 The runner selects a primary population and, when needed, an advisory population.
-It sorts each input set by URL. A universal audit uses all matching readable input
+It puts the scan target first in each input set and sorts the rest by URL code point, so `pages[0]` stays the target whenever the target is in the set. A universal audit uses all matching readable input
 under its existing evidence requirements. A typed audit uses declared matches for
 its primary result. Detected matches run as informative even when declared matches
 exist. A detected-only scan has one informative primary result.

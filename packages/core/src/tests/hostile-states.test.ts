@@ -8,6 +8,7 @@ import {
   SHELL_STATE,
 } from "./hostile-states";
 import { EVIDENCE_KEYS } from "../scan-evidence";
+import { EvidenceKey } from "../types";
 
 describe("hostile scan states", () => {
   it("offers seven states, six of which hold no evidence about the site", () => {
@@ -56,7 +57,7 @@ describe("hostile scan states", () => {
     for (const name of ["redirected-away", "non-html"]) {
       const ctx = HOSTILE_STATES.find((s) => s.name === name)!.build();
       expect(ctx.pages, name).toHaveLength(1);
-      expect(ctx.evidence.met["origin-reachable"], name).toBe(false);
+      expect(ctx.evidence.met[EvidenceKey.OriginReachable], name).toBe(false);
     }
   });
 
@@ -64,8 +65,8 @@ describe("hostile scan states", () => {
     const parked = HOSTILE_STATES.find(
       (s) => s.name === "redirected-away",
     )!.build();
-    expect(parked.evidence.met["rendered-body"]).toBe(true);
-    expect(parked.evidence.met["sample-adequate"]).toBe(true);
+    expect(parked.evidence.met[EvidenceKey.RenderedBody]).toBe(true);
+    expect(parked.evidence.met[EvidenceKey.SampleAdequate]).toBe(true);
     expect(parked.evidence.judgeable).toBe(false);
   });
 
@@ -87,8 +88,8 @@ describe("hostile scan states", () => {
     )!.build();
     expect(ctx.pages).toHaveLength(1);
     expect(ctx.pages[0]!.fetchResult.status).toBe(200);
-    expect(ctx.evidence.met["origin-reachable"]).toBe(true);
-    expect(ctx.evidence.met["unblocked-fetches"]).toBe(false);
+    expect(ctx.evidence.met[EvidenceKey.OriginReachable]).toBe(true);
+    expect(ctx.evidence.met[EvidenceKey.UnblockedFetches]).toBe(false);
     expect(ctx.evidence.judgeable).toBe(false);
     // The live detector, not the fixture, is what calls this a wall.
     expect(ctx.wafProtection?.isBlocked).toBe(true);

@@ -3,6 +3,7 @@ import { TableMarkdownRoundTripLossAudit } from "./table-markdown-round-trip-los
 import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
 import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
 import type { CheckContext } from "../../check-context";
+import { AuditTier, CheckStatus, EvidenceGrade } from "../../types";
 
 /** A page whose main content is `markup`. */
 function page(markup: string): CheckContext {
@@ -31,12 +32,12 @@ describe("TableMarkdownRoundTripLossAudit", () => {
     const result = await audit.audit(
       page("<p>Prose only.</p><table><tr><td>one</td></tr></table>"),
     );
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("passes a clean two-column table with zero loss", async () => {
     const result = await audit.audit(page(CLEAN));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.details?.["lostCells"]).toBe(0);
     expect(result.details?.["score"]).toBe(1);
   });
@@ -63,7 +64,7 @@ describe("TableMarkdownRoundTripLossAudit", () => {
         <tr><td>2026</td><td>1610</td><td>Dublin</td></tr>
       </table>`),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.details?.["headerlessNumericTables"]).toBe(1);
     expect((result.details!["findings"] as string[]).join(" ")).toContain(
       "no header cell",
@@ -79,7 +80,7 @@ describe("TableMarkdownRoundTripLossAudit", () => {
         <tr><td>Team</td><td>99</td></tr>
       </table>`),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.details?.["strandedUnitTables"]).toBe(1);
     expect((result.details!["findings"] as string[]).join(" ")).toContain(
       "arrive unitless",
@@ -128,8 +129,8 @@ describe("TableMarkdownRoundTripLossAudit", () => {
 
   it("is a scored grade B audit", () => {
     const { meta } = TableMarkdownRoundTripLossAudit;
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
     expect(meta.weight).toBeCloseTo(0.6);
   });
 });

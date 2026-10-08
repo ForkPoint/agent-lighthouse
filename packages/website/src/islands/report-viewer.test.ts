@@ -1,5 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { ReportShapeError, summarize, scoreClass } from "./report-viewer";
+import {
+  AttemptOutcome,
+  CheckStatus,
+  ClassificationConfidence,
+  CoverageProvenance,
+  PageType,
+  PageTypeSource,
+  ScoreTier,
+} from "@forkpoint/agent-lighthouse-core";
 
 /**
  * `summarize` reads a file the visitor chose. Nothing about its contents is
@@ -14,7 +23,7 @@ const REPORT = {
   url: "https://example.com/",
   domain: "example.com",
   overallScore: 74,
-  scoreTier: "partially-ready",
+  scoreTier: ScoreTier.PartiallyReady,
   categories: [
     {
       id: "ai-discovery",
@@ -33,7 +42,7 @@ const REPORT = {
   ],
   pagesScanned: [
     { url: "https://example.com/", pageType: "home" },
-    { url: "https://example.com/p/1", pageType: "product" },
+    { url: "https://example.com/p/1", pageType: PageType.Product },
   ],
   durationMs: 4200,
   scannedAt: "2026-08-23T10:00:00.000Z",
@@ -178,8 +187,8 @@ describe("v7 scope preview", () => {
           url: "https://x.test/story",
           classification: {
             type: "article",
-            source: "detected",
-            confidence: "hint",
+            source: PageTypeSource.Detected,
+            confidence: ClassificationConfidence.Hint,
             signals: ["URL hint"],
           },
         },
@@ -187,9 +196,9 @@ describe("v7 scope preview", () => {
       pageAttempts: [
         {
           url: "https://x.test/missing",
-          pageType: "article",
-          source: "declared",
-          outcome: "unread",
+          pageType: PageType.Article,
+          source: PageTypeSource.Declared,
+          outcome: AttemptOutcome.Unread,
           status: 503,
         },
       ],
@@ -200,19 +209,19 @@ describe("v7 scope preview", () => {
           checks: [
             {
               id: "author",
-              status: "pass",
+              status: CheckStatus.Pass,
               coverage: {
-                provenance: "declared",
+                provenance: CoverageProvenance.Declared,
                 selectedUrls: ["https://x.test/missing"],
                 inputUrls: [],
                 unreadUrls: ["https://x.test/missing"],
               },
               advisoryResults: [
                 {
-                  status: "fail",
+                  status: CheckStatus.Fail,
                   explanation: "Missing author",
                   coverage: {
-                    provenance: "detected",
+                    provenance: CoverageProvenance.Detected,
                     selectedUrls: ["https://x.test/story"],
                     inputUrls: ["https://x.test/story"],
                     unreadUrls: [],

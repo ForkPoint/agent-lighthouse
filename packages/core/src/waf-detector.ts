@@ -1,18 +1,23 @@
 import type { FetchResult } from "./fetcher";
 
+export const WafProvider = {
+  Akamai: "akamai",
+  Cloudflare: "cloudflare",
+  Datadome: "datadome",
+  Perimeterx: "perimeterx",
+  Imperva: "imperva",
+  Kasada: "kasada",
+  AwsWaf: "aws-waf",
+  GenericWaf: "generic-waf",
+  ConnectionDrop: "connection-drop",
+  RateLimited: "rate-limited",
+} as const;
+
+export type WafProvider = (typeof WafProvider)[keyof typeof WafProvider];
+
 export interface WafProtection {
   isBlocked: boolean;
-  provider?:
-    | "akamai"
-    | "cloudflare"
-    | "datadome"
-    | "perimeterx"
-    | "imperva"
-    | "kasada"
-    | "aws-waf"
-    | "generic-waf"
-    | "connection-drop"
-    | "rate-limited";
+  provider?: WafProvider;
   name: string;
   reason: string;
   statusCode?: number;
@@ -33,7 +38,7 @@ function rateLimited(statusCode: number): WafProtection {
   return {
     isBlocked: true,
     isRateLimit: true,
-    provider: "rate-limited",
+    provider: WafProvider.RateLimited,
     name: "Rate limit (HTTP 429)",
     reason:
       "The site answered HTTP 429 — too many requests. The scan asked for pages faster than this origin allows, so it saw no content. This says nothing about whether AI agents are welcome; re-run the scan after a pause.",
@@ -87,7 +92,7 @@ export function detectWafProtection(
     ) {
       return {
         isBlocked: true,
-        provider: "cloudflare",
+        provider: WafProvider.Cloudflare,
         name: "Cloudflare Turnstile / Managed Challenge",
         reason:
           status === 403 || status === 503
@@ -107,7 +112,7 @@ export function detectWafProtection(
     ) {
       return {
         isBlocked: true,
-        provider: "datadome",
+        provider: WafProvider.Datadome,
         name: "DataDome Bot Protection",
         reason: "DataDome anti-bot challenge detected",
         statusCode: status,
@@ -129,7 +134,7 @@ export function detectWafProtection(
     ) {
       return {
         isBlocked: true,
-        provider: "perimeterx",
+        provider: WafProvider.Perimeterx,
         name: "HUMAN / PerimeterX Bot Defense",
         reason: "PerimeterX challenge detected",
         statusCode: status,
@@ -145,7 +150,7 @@ export function detectWafProtection(
     ) {
       return {
         isBlocked: true,
-        provider: "imperva",
+        provider: WafProvider.Imperva,
         name: "Imperva Incapsula WAF",
         reason: "Imperva anti-bot block detected",
         statusCode: status,
@@ -160,7 +165,7 @@ export function detectWafProtection(
     ) {
       return {
         isBlocked: true,
-        provider: "kasada",
+        provider: WafProvider.Kasada,
         name: "Kasada Bot Defense",
         reason: "Kasada challenge detected",
         statusCode: status,
@@ -186,7 +191,7 @@ export function detectWafProtection(
       if (status === 403 || scannedPagesCount === 0 || isSoftBlock) {
         return {
           isBlocked: true,
-          provider: "akamai",
+          provider: WafProvider.Akamai,
           name: "Akamai Bot Manager",
           reason:
             status === 403
@@ -210,7 +215,7 @@ export function detectWafProtection(
     if (server.includes("akamaighost") || targetUrl.includes("gucci.com")) {
       return {
         isBlocked: true,
-        provider: "akamai",
+        provider: WafProvider.Akamai,
         name: "Akamai Bot Manager",
         reason: "Akamai dropped crawler TCP/HTTP2 connections or timed out",
         statusCode: homepageResult.status || 0,
@@ -220,7 +225,7 @@ export function detectWafProtection(
     if (homepageResult.status === 403) {
       return {
         isBlocked: true,
-        provider: "generic-waf",
+        provider: WafProvider.GenericWaf,
         name: "WAF / Access Firewall",
         reason: `Target server rejected crawler with HTTP ${homepageResult.status}`,
         statusCode: homepageResult.status,
@@ -235,7 +240,7 @@ export function detectWafProtection(
     ) {
       return {
         isBlocked: true,
-        provider: "connection-drop",
+        provider: WafProvider.ConnectionDrop,
         name: "Bot Wall / Aggressive Connection Drop",
         reason:
           "Connection dropped or timed out repeatedly on crawler requests",

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { LlmsTxtStructureAudit } from "./llms-txt-structure";
 import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 describe("LlmsTxtStructureAudit", () => {
   const audit = new LlmsTxtStructureAudit();
@@ -14,7 +15,7 @@ describe("LlmsTxtStructureAudit", () => {
         "# My Site\n\n> A concise summary of the site.\n\n## Docs\n- item\n\n## Company\n- item",
       ),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("blockquote");
     expect(result.message).toContain("2 H2 section");
   });
@@ -24,7 +25,7 @@ describe("LlmsTxtStructureAudit", () => {
     const result = audit.audit(
       ctxWith("# My Site\n\nSome intro text.\n\n## Docs\n- item"),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("no blockquote summary");
   });
 
@@ -33,7 +34,7 @@ describe("LlmsTxtStructureAudit", () => {
     const result = audit.audit(
       ctxWith("# Site\n\n> Summary\n\n- [Home](https://example.com/)"),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("no H2 sections");
   });
 
@@ -41,7 +42,7 @@ describe("LlmsTxtStructureAudit", () => {
     const result = audit.audit(
       ctxWith("# Site\n\n- [Home](https://example.com/)"),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("no blockquote summary");
     expect(result.message).toContain("no H2 sections");
   });
@@ -50,7 +51,7 @@ describe("LlmsTxtStructureAudit", () => {
   // malformed llms.txt where there is none. That is llms-txt-exists's signal.
   it("is not applicable when llms.txt is missing", () => {
     const result = audit.audit(mockCheckContext([], {}));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("llms.txt not found");
   });
 
@@ -60,7 +61,7 @@ describe("LlmsTxtStructureAudit", () => {
         "<!doctype html><html><body><h1>Page not found</h1></body></html>",
       ),
     );
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("no markdown heading");
   });
 
@@ -70,7 +71,7 @@ describe("LlmsTxtStructureAudit", () => {
     const result = audit.audit(
       ctxWith("# Site\n\n>Summary\n\n## Docs\n- item"),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // Review finding (1.2): audit 1.1 accepts a bare '#Site' H1 while 1.2 required
@@ -79,7 +80,7 @@ describe("LlmsTxtStructureAudit", () => {
     const result = audit.audit(
       ctxWith("#Site\n\n> Summary\n\n## Docs\n- item"),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // Review finding (1.2): the blockquote search scanned the whole remainder of
@@ -88,7 +89,7 @@ describe("LlmsTxtStructureAudit", () => {
     const body =
       "# Site\n\n## Docs\n- item\n\nlots of text\n\nmore text\n\n> footnote at the bottom";
     const result = audit.audit(ctxWith(body));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("no blockquote summary");
   });
 
@@ -98,7 +99,7 @@ describe("LlmsTxtStructureAudit", () => {
     const body =
       "# Site\n\n> Summary\n\n```\n## Not a section\n```\n\n- [Home](/)";
     const result = audit.audit(ctxWith(body));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("no H2 sections");
   });
 
@@ -107,7 +108,7 @@ describe("LlmsTxtStructureAudit", () => {
     const result = audit.audit(
       ctxWith("# Site\n\n> Summary\n\n### Subsection\n- item"),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("no H2 sections");
   });
 

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { OpenApiDescriptionQualityAudit } from "./openapi-description-quality";
 import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
+import { CheckPriority, CheckStatus } from "../../types";
 
 const LONG_OP_DESC =
   "Searches the product catalog by keyword and returns matches.";
@@ -18,7 +19,7 @@ describe("OpenApiDescriptionQualityAudit", () => {
   it("is na when there is no spec", () => {
     const ctx = mockCheckContext([], {});
     const result = audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.score).toBe(0);
   });
 
@@ -26,13 +27,13 @@ describe("OpenApiDescriptionQualityAudit", () => {
     const ctx = mockCheckContext([], {
       "/openapi.json": mockFetchResult("invalid json {{{", 200),
     });
-    expect(audit.audit(ctx).status).toBe("na");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.NotApplicable);
   });
 
   it("is na when the spec has no operations or parameters", () => {
     const ctx = mockCheckContext([], specWith({ openapi: "3.0.3", paths: {} }));
     const result = audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("no operations or parameters");
   });
 
@@ -66,7 +67,7 @@ describe("OpenApiDescriptionQualityAudit", () => {
       }),
     );
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.score).toBe(1.0);
     expect(result.found).toBe("4/4 described (100%)");
   });
@@ -92,7 +93,7 @@ describe("OpenApiDescriptionQualityAudit", () => {
       }),
     );
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.score).toBe(0.5);
     expect(result.found).toContain("2/3");
     expect(result.details?.missingDescriptions).toEqual([
@@ -120,9 +121,9 @@ describe("OpenApiDescriptionQualityAudit", () => {
       }),
     );
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.score).toBe(0);
-    expect(result.priority).toBe("high");
+    expect(result.priority).toBe(CheckPriority.High);
     expect(result.details?.missingDescriptions).toHaveLength(3);
   });
 
@@ -139,7 +140,7 @@ describe("OpenApiDescriptionQualityAudit", () => {
       }),
     );
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.details?.missingDescriptions).toHaveLength(10);
     expect(result.message).toContain("and 3 more");
   });

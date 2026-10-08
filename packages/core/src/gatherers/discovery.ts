@@ -2,6 +2,7 @@ import { cacheOwner } from "./cache-owner";
 import type { CheckContext } from "../check-context";
 import type { FetchResult } from "../fetcher";
 import { isSafeUrl } from "../fetcher";
+import { HttpMethod } from "../types";
 
 export interface DiscoveryContext {
   fetch: CheckContext["fetch"];
@@ -19,7 +20,7 @@ export function sharedProbeUrl(
   ctx: DiscoveryContext,
   url: string,
   options: {
-    method?: "GET" | "HEAD" | "OPTIONS";
+    method?: HttpMethod;
     followRedirects?: boolean;
     headers?: Record<string, string>;
   } = {},
@@ -37,7 +38,7 @@ export function sharedProbeUrl(
       try {
         return await ctx.fetch({
           url,
-          method: options.method ?? "GET",
+          method: options.method ?? HttpMethod.Get,
           followRedirects: options.followRedirects ?? false,
           ...(options.headers ? { headers: options.headers } : {}),
         });
@@ -55,9 +56,9 @@ export async function checkEndpointStatus(
   url: string,
 ): Promise<{ url: string; status: number }> {
   if (!(await isSafeUrl(url))) return { url, status: 0 };
-  let result = await sharedProbeUrl(ctx, url, { method: "HEAD" });
+  let result = await sharedProbeUrl(ctx, url, { method: HttpMethod.Head });
   if (!result || result.status >= 400) {
-    result = await sharedProbeUrl(ctx, url, { method: "GET" });
+    result = await sharedProbeUrl(ctx, url, { method: HttpMethod.Get });
   }
   if (
     !result ||
@@ -66,7 +67,7 @@ export async function checkEndpointStatus(
     try {
       result = await ctx.fetch({
         url,
-        method: "POST",
+        method: HttpMethod.Post,
         body: JSON.stringify({
           jsonrpc: "2.0",
           id: 1,

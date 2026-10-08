@@ -9,6 +9,7 @@ import {
   shellSiteContext,
   unreachedSiteContext,
 } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 describe("LanguageAttributeAudit", () => {
   const audit = new LanguageAttributeAudit();
@@ -21,7 +22,7 @@ describe("LanguageAttributeAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain('lang="en"');
   });
 
@@ -33,13 +34,13 @@ describe("LanguageAttributeAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No lang attribute");
   });
 
   it("declines when there are no pages", () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("passes pages with different declared languages", () => {
@@ -54,7 +55,7 @@ describe("LanguageAttributeAudit", () => {
       ),
     ];
     const forward = audit.audit(mockCheckContext(pages));
-    expect(forward.status).toBe("pass");
+    expect(forward.status).toBe(CheckStatus.Pass);
     expect(forward.found).toContain("2/2");
     expect(audit.audit(mockCheckContext([...pages].reverse()))).toEqual(
       forward,
@@ -86,9 +87,9 @@ describe("LanguageAttributeAudit", () => {
       return result;
     });
     expect(results.map((result) => result.status)).toEqual([
-      "fail",
-      "fail",
-      "fail",
+      CheckStatus.Fail,
+      CheckStatus.Fail,
+      CheckStatus.Fail,
     ]);
     expect(results[1]).toEqual(results[0]);
     expect(results[2]).toEqual(results[0]);
@@ -106,7 +107,9 @@ describe("LanguageAttributeAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new LanguageAttributeAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext(pages, rootFiles),
@@ -118,13 +121,13 @@ describe("LanguageAttributeAudit", () => {
     expect(
       plan.skipped.find((stub) => stub.id === LanguageAttributeAudit.meta.id)
         ?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 
   // `requires` deliberately omits `rendered-body`: `<html lang>` is served
   // before any body renders.
   it("still judges a page that served no readable text", async () => {
     const result = await new LanguageAttributeAudit().audit(shellSiteContext());
-    expect(result.status).not.toBe("na");
+    expect(result.status).not.toBe(CheckStatus.NotApplicable);
   });
 });

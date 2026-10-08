@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { Audit } from "../audit";
-import { runAudits } from "../audit-runner";
+import { runAudits, scopeAudit } from "../audit-runner";
+import { gatedMassShare } from "../scorer";
 import { buildScanEvidence } from "../scan-evidence";
 import { mockCheckContext, mockPageContext } from "../__tests__/test-utils";
 import type { AuditMeta } from "../types";
@@ -8,16 +9,12 @@ import type { CheckContext, PageContext } from "../check-context";
 import type { ScanConfig } from "../audit-config";
 import { CheckResultSchema } from "../schemas";
 
-const page = (
-  name: string,
-  source: "declared" | "detected",
-  readable = true,
-) => {
+const page = (name: string, source: PageTypeSource, readable = true) => {
   const p = mockPageContext(
     `https://example.com/${name}`,
     readable ? `<main>${"Readable text. ".repeat(60)}</main>` : "<div></div>",
   );
-  p.pageType = "article";
+  p.pageType = PageType.Article;
   p.pageTypeSource = source;
   return p;
 };
@@ -40,13 +37,13 @@ class ScopedAudit extends Audit {
     title: "Scope",
     failureTitle: "Scope failed",
     description: "Scope fixture",
-    applicablePageTypes: ["article"],
-    requires: ["rendered-body", "sample-adequate"],
+    applicablePageTypes: [PageType.Article],
+    requires: [EvidenceKey.RenderedBody, EvidenceKey.SampleAdequate],
     weight: 1,
-    evidenceGrade: "A",
-    tier: "scored",
-    scoreDisplayMode: "binary",
-    defaultPriority: "medium",
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
+    scoreDisplayMode: ScoreDisplayMode.Binary,
+    defaultPriority: CheckPriority.Medium,
   };
   audit(ctx: CheckContext) {
     calls.push(ctx.pages.map((p) => p.url));
@@ -71,7 +68,10 @@ describe("selected page evidence", () => {
     const event = vi.fn();
     const trace = vi.fn();
     const result = await runAudits(
-      context([page("good", "declared"), page("bad", "detected")]),
+      context([
+        page("good", PageTypeSource.Declared),
+        page("bad", PageTypeSource.Detected),
+      ]),
       config,
       event,
       undefined,
@@ -79,10 +79,10 @@ describe("selected page evidence", () => {
     );
     const check = result.checks[0];
     expect(result.checks).toHaveLength(1);
-    expect(check.status).toBe("pass");
+    expect(check.status).toBe(CheckStatus.Pass);
     expect(check.advisoryResults?.[0]).toMatchObject({
-      status: "fail",
-      scoreDisplayMode: "informative",
+      status: CheckStatus.Fail,
+      scoreDisplayMode: ScoreDisplayMode.Informative,
       pageUrl: "https://example.com/bad",
     });
     expect(result.categories[0].assessedMass).toBe(1);
@@ -94,12 +94,15 @@ describe("selected page evidence", () => {
   it("never borrows readability from a detected page for an unread declared page", async () => {
     calls.length = 0;
     const result = await runAudits(
-      context([page("empty", "declared", false), page("bad", "detected")]),
+      context([
+        page("empty", PageTypeSource.Declared, false),
+        page("bad", PageTypeSource.Detected),
+      ]),
       config,
     );
-    expect(result.checks[0].status).toBe("na");
+    expect(result.checks[0].status).toBe(CheckStatus.NotApplicable);
     expect(result.checks[0].tags).toContain("skipped:no-evidence");
-    expect(result.checks[0].advisoryResults?.[0].status).toBe("fail");
+    expect(result.checks[0].advisoryResults?.[0].status).toBe(CheckStatus.Fail);
     expect(calls).toEqual([["https://example.com/bad"]]);
     expect(result.categories[0].assessedMass).toBe(0);
   });
@@ -107,12 +110,15 @@ describe("selected page evidence", () => {
   it("keeps unread pages in coverage but out of content verdicts", async () => {
     calls.length = 0;
     const result = await runAudits(
-      context([page("good", "declared"), page("empty", "declared", false)]),
+      context([
+        page("good", PageTypeSource.Declared),
+        page("empty", PageTypeSource.Declared, false),
+      ]),
       config,
     );
     expect(calls).toEqual([["https://example.com/good"]]);
     expect(result.checks[0].coverage).toEqual({
-      provenance: "declared",
+      provenance: CoverageProvenance.Declared,
       selectedUrls: ["https://example.com/empty", "https://example.com/good"],
       inputUrls: ["https://example.com/good"],
       unreadUrls: ["https://example.com/empty"],
@@ -121,9 +127,9 @@ describe("selected page evidence", () => {
 
   it("makes the same page set independent of input order", async () => {
     const pages = [
-      page("bad-z", "declared"),
-      page("bad-a", "declared"),
-      page("bad-detected", "detected"),
+      page("bad-z", PageTypeSource.Declared),
+      page("bad-a", PageTypeSource.Declared),
+      page("bad-detected", PageTypeSource.Detected),
     ];
     const first = await runAudits(context(pages), config);
     const second = await runAudits(context([...pages].reverse()), config);
@@ -133,6 +139,18 @@ describe("selected page evidence", () => {
 
 import { sharedFeed, discoverFeedHeadUrls } from "../gatherers/feeds";
 import { OpenApiServersAudit } from "../audits/agent-interfaces/openapi-servers";
+import {
+  AttemptOutcome,
+  AuditTier,
+  CheckPriority,
+  CheckStatus,
+  CoverageProvenance,
+  EvidenceGrade,
+  EvidenceKey,
+  PageType,
+  PageTypeSource,
+  ScoreDisplayMode,
+} from "../types";
 vi.mock("../fetcher", async (load) => ({
   ...(await load<typeof import("../fetcher")>()),
   isSafeUrl: async () => true,
@@ -145,34 +163,34 @@ const one = (meta: AuditMeta, create: () => Audit): ScanConfig => ({
 
 describe("scope failure and cache boundaries", () => {
   it("retains failed declared attempts while a detected page is readable", async () => {
-    const ctx = context([page("bad", "detected")]);
+    const ctx = context([page("bad", PageTypeSource.Detected)]);
     ctx.pageAttempts = [
       {
         url: "https://example.com/missing",
-        pageType: "article",
-        source: "declared",
-        outcome: "unread",
+        pageType: PageType.Article,
+        source: PageTypeSource.Declared,
+        outcome: AttemptOutcome.Unread,
         status: 503,
       },
     ];
     const result = await runAudits(ctx, config);
-    expect(result.checks[0].status).toBe("na");
+    expect(result.checks[0].status).toBe(CheckStatus.NotApplicable);
     expect(result.checks[0].coverage?.selectedUrls).toEqual([
       "https://example.com/missing",
     ]);
     expect(result.checks[0].coverage?.unreadUrls).toEqual([
       "https://example.com/missing",
     ]);
-    expect(result.checks[0].advisoryResults?.[0].status).toBe("fail");
+    expect(result.checks[0].advisoryResults?.[0].status).toBe(CheckStatus.Fail);
     expect(result.categories[0].assessedMass).toBe(0);
   });
 
   it("leaves absent optional artifacts to their gatherer", async () => {
     const result = await runAudits(
-      context([page("good", "declared")]),
+      context([page("good", PageTypeSource.Declared)]),
       one(OpenApiServersAudit.meta, () => new OpenApiServersAudit()),
     );
-    expect(result.checks[0].status).toBe("na");
+    expect(result.checks[0].status).toBe(CheckStatus.NotApplicable);
     expect(result.checks[0].tags ?? []).not.toContain("skipped:no-evidence");
     expect(result.checks[0].tags ?? []).not.toContain("scan-error");
   });
@@ -181,7 +199,7 @@ describe("scope failure and cache boundaries", () => {
     class Broken extends ScopedAudit {
       override audit(ctx: CheckContext) {
         const result = super.audit(ctx);
-        return ctx.pages[0]?.pageTypeSource === "detected"
+        return ctx.pages[0]?.pageTypeSource === PageTypeSource.Detected
           ? { ...result, details: { invalid: [{ nested: "object" }] } }
           : result;
       }
@@ -189,13 +207,16 @@ describe("scope failure and cache boundaries", () => {
     const event = vi.fn();
     const trace = vi.fn();
     const result = await runAudits(
-      context([page("good", "declared"), page("bad", "detected")]),
+      context([
+        page("good", PageTypeSource.Declared),
+        page("bad", PageTypeSource.Detected),
+      ]),
       one(Broken.meta, () => new Broken()),
       event,
       undefined,
       trace,
     );
-    expect(result.checks[0].status).toBe("pass");
+    expect(result.checks[0].status).toBe(CheckStatus.Pass);
     expect(result.checks[0].advisoryResults?.[0].tags).toContain("scan-error");
     expect(result.checks[0].advisoryResults?.[0].scoreDisplayMode).toBe(
       "informative",
@@ -212,21 +233,24 @@ describe("scope failure and cache boundaries", () => {
     const budget = new AbortController();
     class Slow extends ScopedAudit {
       override audit(ctx: CheckContext) {
-        if (ctx.pages[0]?.pageTypeSource === "detected")
+        if (ctx.pages[0]?.pageTypeSource === PageTypeSource.Detected)
           budget.abort(new Error("Test budget"));
         return super.audit(ctx);
       }
     }
     const events = vi.fn();
     const result = await runAudits(
-      context([page("good", "declared"), page("bad", "detected")]),
+      context([
+        page("good", PageTypeSource.Declared),
+        page("bad", PageTypeSource.Detected),
+      ]),
       one(Slow.meta, () => new Slow()),
       events,
       undefined,
       undefined,
       budget.signal,
     );
-    expect(result.checks[0].status).toBe("pass");
+    expect(result.checks[0].status).toBe(CheckStatus.Pass);
     expect(result.checks[0].advisoryResults?.[0].tags).toContain(
       "skipped:scan-budget",
     );
@@ -246,8 +270,8 @@ describe("scope failure and cache boundaries", () => {
         return this.pass("Feed checked", "Feed", "Feed");
       }
     }
-    const a = page("a", "declared"),
-      b = page("b", "detected");
+    const a = page("a", PageTypeSource.Declared),
+      b = page("b", PageTypeSource.Detected);
     a.headLinks = [
       {
         rel: "alternate",
@@ -300,14 +324,17 @@ describe("scope failure and cache boundaries", () => {
   });
 
   it("does not attribute old reports coverage they did not record", async () => {
-    const check = (await runAudits(context([page("good", "declared")]), config))
-      .checks[0];
+    const check = (
+      await runAudits(context([page("good", PageTypeSource.Declared)]), config)
+    ).checks[0];
     const { coverage: _coverage, advisoryResults: _advisory, ...old } = check;
     expect(CheckResultSchema.parse(old).coverage).toBeUndefined();
     expect(
       CheckResultSchema.safeParse({
         ...check,
-        advisoryResults: [{ ...old, scoreDisplayMode: "binary" }],
+        advisoryResults: [
+          { ...old, scoreDisplayMode: ScoreDisplayMode.Binary },
+        ],
       }).success,
     ).toBe(false);
   });
@@ -319,41 +346,96 @@ describe("evidence views", () => {
     class Guard extends Audit {
       static override meta: AuditMeta = {
         ...ScopedAudit.meta,
-        requires: ["origin-reachable"],
+        requires: [EvidenceKey.OriginReachable],
       };
       audit(ctx: CheckContext) {
         observed.push({
           urls: Object.keys(ctx.evidence.renderedByPage),
-          readable: ctx.evidence.met["rendered-body"],
+          readable: ctx.evidence.met[EvidenceKey.RenderedBody],
         });
-        return ctx.evidence.met["rendered-body"]
+        return ctx.evidence.met[EvidenceKey.RenderedBody]
           ? this.pass("Read", "Text", "Text")
           : this.notApplicable("Unread", "Text", "No text");
       }
     }
     const meta = Guard.meta;
     const result = await runAudits(
-      context([page("shell", "declared", false), page("readable", "detected")]),
+      context([
+        page("shell", PageTypeSource.Declared, false),
+        page("readable", PageTypeSource.Detected),
+      ]),
       one(meta, () => new Guard()),
     );
     expect(observed).toEqual([
       { urls: ["https://example.com/shell"], readable: false },
       { urls: ["https://example.com/readable"], readable: true },
     ]);
-    expect(result.checks[0].status).toBe("na");
-    expect(result.checks[0].advisoryResults?.[0].status).toBe("pass");
+    expect(result.checks[0].status).toBe(CheckStatus.NotApplicable);
+    expect(result.checks[0].advisoryResults?.[0].status).toBe(CheckStatus.Pass);
   });
 
   it("keeps simultaneous scoring modes separate without mutating static metadata", async () => {
     const before = JSON.stringify(ScopedAudit.meta);
     const [declared, detected] = await Promise.all([
-      runAudits(context([page("good", "declared")]), config),
-      runAudits(context([page("bad", "detected")]), config),
+      runAudits(context([page("good", PageTypeSource.Declared)]), config),
+      runAudits(context([page("bad", PageTypeSource.Detected)]), config),
     ]);
-    expect(declared.checks[0].scoreDisplayMode).toBe("binary");
+    expect(declared.checks[0].scoreDisplayMode).toBe(ScoreDisplayMode.Binary);
     expect(declared.categories[0].assessedMass).toBe(1);
-    expect(detected.checks[0].scoreDisplayMode).toBe("informative");
+    expect(detected.checks[0].scoreDisplayMode).toBe(
+      ScoreDisplayMode.Informative,
+    );
     expect(detected.categories[0].assessedMass).toBe(0);
     expect(JSON.stringify(ScopedAudit.meta)).toBe(before);
+  });
+});
+
+describe("page order and failed declared populations", () => {
+  const universal: AuditMeta = {
+    ...ScopedAudit.meta,
+    applicablePageTypes: undefined,
+    requires: undefined,
+  };
+
+  it("puts the scan target first and sorts the rest by code point", () => {
+    const urls = ["ab", "a-b", "Z", "target"];
+    const forward = mockCheckContext(
+      urls.map((u) => page(u, PageTypeSource.Detected)),
+    );
+    const reverse = mockCheckContext(
+      [...urls].reverse().map((u) => page(u, PageTypeSource.Detected)),
+    );
+    const expected = ["target", "Z", "a-b", "ab"].map(
+      (u) => `https://example.com/${u}`,
+    );
+    for (const ctx of [forward, reverse]) {
+      ctx.targetUrl = "https://example.com/target";
+      expect(scopeAudit(ctx, universal)?.pages.map((p) => p.url)).toEqual(
+        expected,
+      );
+    }
+  });
+
+  it("does not count a failed declared fetch toward the gated mass", async () => {
+    const other = page("other", PageTypeSource.Declared);
+    other.pageType = PageType.Product;
+    const ctx = context([other]);
+    ctx.pageAttempts = [
+      {
+        url: "https://example.com/missing",
+        pageType: PageType.Article,
+        source: PageTypeSource.Declared,
+        outcome: AttemptOutcome.Unread,
+        status: 404,
+      },
+    ];
+    const meta = { ...ScopedAudit.meta, requires: undefined };
+    const result = await runAudits(
+      ctx,
+      one(meta, () => new ScopedAudit()),
+    );
+    expect(result.checks[0].status).toBe(CheckStatus.NotApplicable);
+    expect(result.checks[0].tags).toEqual(["skipped:page-type"]);
+    expect(gatedMassShare(result.checks)).toBe(0);
   });
 });

@@ -11,6 +11,14 @@ import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
 import type { CheckContext, PageContext } from "../../check-context";
 import { scanReadPageText, unreadPageTextReason } from "../../scan-evidence";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** Two-label public suffixes common enough to matter, in place of a bundled PSL. */
 const MULTI_SUFFIX = new Set([
@@ -181,8 +189,12 @@ function survey(ctx: CheckContext): Survey {
   return result;
 }
 
+const BLAST_RADIUS_TIERS = ["0", "1-3", "4-9", "10+"] as const;
+
+type BlastRadiusTier = (typeof BLAST_RADIUS_TIERS)[number];
+
 /** The count band the sketch scores on. */
-function tierFor(count: number): "0" | "1-3" | "4-9" | "10+" {
+function tierFor(count: number): BlastRadiusTier {
   if (count === 0) return "0";
   if (count <= 3) return "1-3";
   if (count <= 9) return "4-9";
@@ -207,23 +219,23 @@ export class ThirdPartyDomWriteBlastRadiusAudit extends Audit {
     failureTitle: "Third-party DOM-write blast radius",
     description:
       "Counts how many separate companies can write text into the DOM an agent reads: every registrable domain shipping a script or stylesheet into the page, judged against whether the Content-Security-Policy actually constrains what may run, and whether each resource is pinned with an `integrity` hash. Cross-origin frames with no `sandbox` are reported alongside. The origin list is the deliverable.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/operability-safety/third-party-dom-write-blast-radius.md",
     // Gate exemption: every origin the served HTML names is counted whether or not the
     // body renders, so a page that ships a vendor script statically is still reported.
     // The empty census is the case a shell cannot support, and `audit()` declines it.
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "high",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         'An agent reads the DOM as one document with one level of trust. It has no way to tell text the site wrote from text a vendor script injected after load, so every third-party origin that can write to the page can write instructions the agent will read as the site\'s own. The count is the risk: eleven uncontrolled origins is eleven independent companies — and their own supply chains — with the same authority over what an agent believes about the site. A Content-Security-Policy with a nonce, a hash or `strict-dynamic` is what turns that list from "whoever" into "these, and only these". A policy whose sources include `https:` or `*` is present in the response and constrains nothing.',
       fix: 'Publish a `script-src` built on a per-response nonce, or on hashes, with `strict-dynamic` if a tag loader needs to bring its own dependencies — and drop `unsafe-inline`, `https:` and `*`, which allow every host that speaks the scheme. Add an `integrity` hash and `crossorigin="anonymous"` to every third-party script and stylesheet you cannot host yourself. Cut the origin list itself: each vendor is a separate supply chain with write access to what agents read. Give every cross-origin frame a `sandbox` attribute with only the capabilities it needs.',
       code: SAMPLE,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/third-party-dom-write-blast-radius/",
       tags: ["injection-safety", "csp", "supply-chain"],
@@ -232,7 +244,7 @@ export class ThirdPartyDomWriteBlastRadiusAudit extends Audit {
 
   private recommendation() {
     return {
-      priority: "high" as const,
+      priority: CheckPriority.High,
       description: ThirdPartyDomWriteBlastRadiusAudit.meta.description,
       code: SAMPLE,
     };

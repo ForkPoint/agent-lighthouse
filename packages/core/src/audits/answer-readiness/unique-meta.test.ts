@@ -8,6 +8,7 @@ import {
   mockPageContext,
   unreachedSiteContext,
 } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 const doc = (title: string, desc: string) =>
   `<html lang="en"><head><title>${title}</title><meta name="description" content="${desc}"></head><body></body></html>`;
@@ -29,7 +30,7 @@ describe("UniqueMetaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("unique");
   });
 
@@ -47,7 +48,7 @@ describe("UniqueMetaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("Duplicate");
   });
 
@@ -59,13 +60,13 @@ describe("UniqueMetaAudit", () => {
       mockPageContext("https://example.com/a", doc("A", "a")),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("not applicable");
   });
 
   it("is not applicable when there are no pages", () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it('uses meta[name="title"] as the title source when no <title> element exists', () => {
@@ -76,7 +77,7 @@ describe("UniqueMetaAudit", () => {
       mockPageContext("https://example.com/b", pageB, 1),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("unique");
   });
 
@@ -88,7 +89,7 @@ describe("UniqueMetaAudit", () => {
       mockPageContext("https://example.com/b", pageB, 1),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("fails when pages share the same title and both lack descriptions", () => {
@@ -98,7 +99,7 @@ describe("UniqueMetaAudit", () => {
       mockPageContext("https://example.com/b", page, 1),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("Duplicate");
   });
 
@@ -118,7 +119,9 @@ describe("UniqueMetaAudit", () => {
     const reached = await instance.audit(
       mockCheckContext([...pages, second], rootFiles),
     );
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext([...pages, second], rootFiles),
@@ -129,6 +132,6 @@ describe("UniqueMetaAudit", () => {
     );
     expect(
       plan.skipped.find((stub) => stub.id === UniqueMetaAudit.meta.id)?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 });

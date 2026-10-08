@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { NativeControlSubstitutionAudit } from "./native-control-substitution";
 import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
 import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
+import { CheckStatus } from "../../types";
 
 const page = (body: string) => `<html><body>${body}</body></html>`;
 
@@ -29,14 +30,16 @@ describe("NativeControlSubstitutionAudit", () => {
   });
 
   it("is notApplicable on a page with no form and no substituted control", () => {
-    expect(run("<main><p>Just prose.</p></main>").status).toBe("na");
+    expect(run("<main><p>Just prose.</p></main>").status).toBe(
+      CheckStatus.NotApplicable,
+    );
   });
 
   it("classifies a native select as native and reports no substitution", () => {
     const result = run(
       `<form><select name="c"><option>NL</option></select></form>`,
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("0 substituted");
   });
 
@@ -46,7 +49,7 @@ describe("NativeControlSubstitutionAudit", () => {
         <input type="date" name="when">
         <input type="file" name="doc">
       </form>`);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // A clickable div carrying the value in a hidden input is the classic
@@ -57,13 +60,13 @@ describe("NativeControlSubstitutionAudit", () => {
         <div class="dropdown" tabindex="0">Country</div>
         <input type="hidden" name="country">
       </form>`);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("1 substituted");
   });
 
   it("warns rather than fails when a substituted control satisfies the APG contract", () => {
     const result = run(COMPLETE_COMBOBOX);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
   });
 
   // A dangling aria-controls is worse than no contract: the markup claims a
@@ -72,7 +75,7 @@ describe("NativeControlSubstitutionAudit", () => {
     const result = run(
       COMPLETE_COMBOBOX.replace('aria-controls="opts"', 'aria-controls="gone"'),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("gone");
   });
 
@@ -80,14 +83,14 @@ describe("NativeControlSubstitutionAudit", () => {
     const result = run(
       COMPLETE_COMBOBOX.replace('role="listbox"', 'role="presentation"'),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("fails when the popup carries no option roles", () => {
     const result = run(
       COMPLETE_COMBOBOX.replace('role="option"', 'class="option"'),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("fails when aria-activedescendant does not resolve", () => {
@@ -97,19 +100,19 @@ describe("NativeControlSubstitutionAudit", () => {
         'aria-activedescendant="opt-9"',
       ),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("fails when the substituted control declares no aria-expanded", () => {
     const result = run(COMPLETE_COMBOBOX.replace(' aria-expanded="false"', ""));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("fails a drop zone with no sibling file input", () => {
     const result = run(
       `<form><div class="file-drop">Drop a file here</div></form>`,
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("file");
   });
 
@@ -118,7 +121,7 @@ describe("NativeControlSubstitutionAudit", () => {
       <form>
         <div class="file-drop">Drop a file here<input type="file" name="doc"></div>
       </form>`);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // The same defect costs more on a path a conversion depends on, so the
@@ -157,7 +160,7 @@ describe("NativeControlSubstitutionAudit", () => {
         <div class="dropdown" tabindex="0">Country</div>
         <select name="country"><option>NL</option></select>
       </form>`);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("reports the page the first substituted control is on", () => {
@@ -172,6 +175,6 @@ describe("NativeControlSubstitutionAudit", () => {
   // the fix the audit threw on the selector and reported nothing at all.
   it("resolves an aria-controls id the CSS grammar rejects", () => {
     const result = run(COMPLETE_COMBOBOX.replace(/"opts"/g, '":r0:-tab-0"'));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
   });
 });

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { WebmcpDeclarativeFormsAudit } from "./webmcp-declarative-forms";
 import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import { CheckPriority, CheckStatus } from "../../types";
 
 const page = (body: string, url = "https://example.com/", index = 0) =>
   mockPageContext(url, `<html><body>${body}</body></html>`, index);
@@ -20,7 +21,7 @@ describe("WebmcpDeclarativeFormsAudit", () => {
       `),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("search_products");
     expect(result.message).toContain("add_to_cart");
   });
@@ -34,7 +35,7 @@ describe("WebmcpDeclarativeFormsAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("toolname");
   });
 
@@ -46,7 +47,7 @@ describe("WebmcpDeclarativeFormsAudit", () => {
       `),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("1/2");
   });
 
@@ -56,7 +57,7 @@ describe("WebmcpDeclarativeFormsAudit", () => {
         '<form toolname="" tooldescription="Search" action="/search"><input name="q" /></form>',
       ),
     ]);
-    expect(audit.audit(ctx).status).toBe("fail");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.Fail);
   });
 
   it("warns when a named tool has no tooldescription for an agent to select on", () => {
@@ -66,7 +67,7 @@ describe("WebmcpDeclarativeFormsAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("tooldescription");
   });
 
@@ -78,7 +79,7 @@ describe("WebmcpDeclarativeFormsAudit", () => {
       `),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("1/2");
   });
 
@@ -92,7 +93,7 @@ describe("WebmcpDeclarativeFormsAudit", () => {
       `),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.found).toContain("0/2");
   });
 
@@ -104,7 +105,7 @@ describe("WebmcpDeclarativeFormsAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("toolname");
   });
 
@@ -112,7 +113,7 @@ describe("WebmcpDeclarativeFormsAudit", () => {
     const ctx = mockCheckContext([
       page('<form action="/search" toolautosubmit><input name="q" /></form>'),
     ]);
-    expect(audit.audit(ctx).status).toBe("fail");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.Fail);
   });
 
   // ── a page with no forms has nothing to annotate ──
@@ -120,7 +121,7 @@ describe("WebmcpDeclarativeFormsAudit", () => {
   it("is not applicable when no page has a form", () => {
     const ctx = mockCheckContext([page("<p>No forms here</p>")]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("counts forms across every crawled page", () => {
@@ -135,7 +136,7 @@ describe("WebmcpDeclarativeFormsAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("1/2");
   });
 
@@ -148,7 +149,7 @@ describe("WebmcpDeclarativeFormsAudit", () => {
       `),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("toolparamdescription");
   });
 
@@ -162,7 +163,9 @@ describe("WebmcpDeclarativeFormsAudit", () => {
   });
 
   it('does not default to high priority given Baseline "limited" status', () => {
-    expect(WebmcpDeclarativeFormsAudit.meta.defaultPriority).not.toBe("high");
+    expect(WebmcpDeclarativeFormsAudit.meta.defaultPriority).not.toBe(
+      CheckPriority.High,
+    );
   });
 
   it("names the four spec attributes in its guidance", () => {

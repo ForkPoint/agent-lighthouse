@@ -23,6 +23,14 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
 import type { CheckContext } from "../../check-context";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** The runtime API surface. Nothing else in the platform carries this name. */
 const API_RE = /navigator\s*\.\s*modelContext/;
@@ -139,30 +147,30 @@ export class WebmcpRegisteredToolsAudit extends Audit {
     failureTitle: "WebMCP registered tools",
     description:
       'WebMCP lets a page register agent-callable tools at runtime through navigator.modelContext, which is what Chrome exposes to an in-browser agent and what Lighthouse reports as "Registered WebMCP tools". This scanner has no JavaScript runtime, so it reports the registrations visible in the served document and treats silence as unknown rather than as absence — which is why it is experimental and never scores.',
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("B", "experimental"),
-    evidenceGrade: "B",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Experimental),
+    evidenceGrade: EvidenceGrade.B,
     // The mechanism is real and shipped in a Google product, but this scanner
     // can only observe it partially: no JS runtime means a tool registered from
     // an external bundle is invisible. `experimental` is the honest tier for a
     // detector that cannot distinguish "no tools" from "cannot see the tools".
-    tier: "experimental",
+    tier: AuditTier.Experimental,
     dossier: "docs/evidence/audits/agent-interfaces/webmcp-registered-tools.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     // Was `high` on an admittedly non-standard convention, so it outranked
     // genuinely actionable items in the recommendation list.
-    defaultPriority: "low",
+    defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
         "A page with no registered tools gives an in-browser agent nothing structured to call, so it falls back to reading the DOM and clicking — slower, and wrong more often on anything past a single text input. Note that this is upside rather than a deficiency: the API is an origin trial, and no site is penalised here for not having adopted it.",
       fix: "Register your tools from the page with navigator.modelContext.registerTool(), giving each a name, a description an agent can select on, and an inputSchema. For tools that map onto a form, the declarative toolname/tooldescription attributes are simpler and are covered by the agent-interfaces/webmcp-declarative-forms audit.",
       code: SAMPLE,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl: "https://developer.chrome.com/docs/ai/webmcp",
       tags: ["webmcp", "agent-protocol", "runtime-tools", "experimental"],
     },
@@ -186,7 +194,7 @@ export class WebmcpRegisteredToolsAudit extends Audit {
         "A script references navigator.modelContext but no tool name is observable in the served document, so it cannot be confirmed that any tool is registered.",
         EXPECTED,
         "navigator.modelContext referenced, no tool name observable",
-        "low",
+        CheckPriority.Low,
         found.pageUrl,
       );
     }

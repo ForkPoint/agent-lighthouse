@@ -8,6 +8,7 @@
  */
 import * as fs from "node:fs";
 import { CATEGORY_MASS } from "../../packages/core/src/index";
+import { CheckStatus } from "../../packages/core/src/types";
 
 interface Trace {
   id: string;
@@ -34,7 +35,9 @@ const READS_PAGES = new Set(
 
 /** `calculateCategoryScore`, restated over traces. Weight-0 audits cancel out. */
 function categoryScore(traces: Trace[]): number | null {
-  const scored = traces.filter((t) => t.status !== "na" && t.weight > 0);
+  const scored = traces.filter(
+    (t) => t.status !== CheckStatus.NotApplicable && t.weight > 0,
+  );
   const total = scored.reduce((s, t) => s + t.weight, 0);
   if (total === 0) return null;
   return Math.round(
@@ -84,7 +87,9 @@ function main() {
     if (!s.traces) continue;
     const before = overall(s.traces);
     const after = overall(
-      s.traces.map((t) => (READS_PAGES.has(t.id) ? { ...t, status: "na" } : t)),
+      s.traces.map((t) =>
+        READS_PAGES.has(t.id) ? { ...t, status: CheckStatus.NotApplicable } : t,
+      ),
     );
     const delta = after.score - before.score;
     console.log(

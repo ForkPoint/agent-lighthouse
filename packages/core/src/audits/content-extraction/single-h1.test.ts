@@ -8,6 +8,7 @@ import {
   mockPageContext,
   unreachedSiteContext,
 } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 describe("SingleH1Audit", () => {
   const audit = new SingleH1Audit();
@@ -18,7 +19,7 @@ describe("SingleH1Audit", () => {
       "<html><body><h1>Primary Title</h1><h2>Section</h2></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("1/1 pages with exactly one <h1>");
   });
 
@@ -28,7 +29,7 @@ describe("SingleH1Audit", () => {
       "<html><body><h1>One</h1><h1>Two</h1></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("2 <h1> element(s)");
   });
 
@@ -38,13 +39,13 @@ describe("SingleH1Audit", () => {
       "<html><body><h2>No h1</h2></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("0 <h1>");
   });
 
   it("declines when there are no pages to evaluate", () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("No pages available");
   });
 
@@ -64,7 +65,7 @@ describe("SingleH1Audit", () => {
       const before = [...pages];
       const result = audit.audit(mockCheckContext(pages));
       expect(pages).toEqual(before);
-      expect(result.status).toBe("fail");
+      expect(result.status).toBe(CheckStatus.Fail);
       expect(result.found).toContain("1/3 pages with exactly one <h1>");
       expect(result.found).toContain(`${missing.url}: 0 <h1>`);
       expect(result.found).toContain(`${multiple.url}: 2 <h1>`);
@@ -84,7 +85,9 @@ describe("SingleH1Audit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new SingleH1Audit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext(pages, rootFiles),
@@ -95,6 +98,6 @@ describe("SingleH1Audit", () => {
     );
     expect(
       plan.skipped.find((stub) => stub.id === SingleH1Audit.meta.id)?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 });

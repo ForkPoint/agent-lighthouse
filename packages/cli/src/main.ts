@@ -12,6 +12,8 @@ import {
   CATEGORY_IDS,
   type ScanEvent,
   type AuditTrace,
+  CheckStatus,
+  LogLevel,
 } from "@forkpoint/agent-lighthouse-core";
 import { createProgressRenderer } from "./progress-renderer";
 import {
@@ -23,6 +25,7 @@ import {
   selectDebugChecks,
   openCommand,
   PAGE_TYPE_IDS,
+  CliCommand,
 } from "./options";
 import { tierMarker } from "./tier-marker";
 import {
@@ -138,7 +141,7 @@ async function audit(targetUrl?: string) {
     tracePath,
   } = opts;
   // Keep the NDJSON stream clean: scanner logs also go to stderr.
-  if (progressJson) logger.level = "silent";
+  if (progressJson) logger.level = LogLevel.Silent;
 
   const presetName = opts.presetName;
   const preset = getPreset(presetName);
@@ -360,16 +363,16 @@ async function audit(targetUrl?: string) {
 
       for (const check of targetChecks) {
         const statusBadge =
-          check.status === "pass"
+          check.status === CheckStatus.Pass
             ? "\x1b[32m[PASS]\x1b[0m"
-            : check.status === "warn"
+            : check.status === CheckStatus.Warn
               ? "\x1b[33m[WARN]\x1b[0m"
-              : check.status === "fail"
+              : check.status === CheckStatus.Fail
                 ? "\x1b[31m[FAIL]\x1b[0m"
                 : "\x1b[90m[N/A]\x1b[0m";
 
         console.log(
-          `\n${statusBadge} \x1b[1m[${check.id}] ${check.title}\x1b[0m (${isInformative(check) ? "Advisory — not scored" : check.status === "na" ? "Not assessed" : `Score: ${check.score}`})${tierMarker(check.tier)}`,
+          `\n${statusBadge} \x1b[1m[${check.id}] ${check.title}\x1b[0m (${isInformative(check) ? "Advisory — not scored" : check.status === CheckStatus.NotApplicable ? "Not assessed" : `Score: ${check.score}`})${tierMarker(check.tier)}`,
         );
         const scope = view.pageScope?.audits.find((a) => a.id === check.id);
         if (scope) console.log(formatAuditScope(scope));
@@ -478,7 +481,7 @@ async function audit(targetUrl?: string) {
 
 async function main() {
   const resolved = resolveCommand(args);
-  if (resolved.action === "help") usage();
+  if (resolved.action === CliCommand.Help) usage();
   await audit(resolved.url);
 }
 

@@ -3,12 +3,13 @@ import * as cheerio from "cheerio";
 import type { FetchOptions, FetchResult } from "../fetcher";
 import { isSafeUrl } from "../fetcher";
 import { parseRobotsFile } from "./robots";
+import { PageType } from "../types";
 
 /** A homepage directory provides a sitemap scope; a content page does not. */
 export function sitemapSiteRoot(
   page: { url: string; pageType: string } | undefined,
 ): string | undefined {
-  if (page?.pageType !== "homepage") return undefined;
+  if (page?.pageType !== PageType.Homepage) return undefined;
   const url = new URL(page.url);
   url.pathname = url.pathname.replace(/\/index\.html?$/i, "/");
   if (url.pathname === "/" || !url.pathname.endsWith("/")) return undefined;
@@ -91,14 +92,26 @@ function sameHost(candidate: string, reference: string): boolean {
   }
 }
 
+const SitemapKind = {
+  Urlset: "urlset",
+  Sitemapindex: "sitemapindex",
+  None: "none",
+} as const;
+
+type SitemapKind = (typeof SitemapKind)[keyof typeof SitemapKind];
+
 interface ParsedSitemap {
-  kind: "urlset" | "sitemapindex" | "none";
+  kind: SitemapKind;
   entries: SitemapEntry[];
   children: string[];
 }
 
 function parseSitemap(result: FetchResult | undefined): ParsedSitemap {
-  const empty: ParsedSitemap = { kind: "none", entries: [], children: [] };
+  const empty: ParsedSitemap = {
+    kind: SitemapKind.None,
+    entries: [],
+    children: [],
+  };
   if (!result || result.status !== 200 || !result.body.trim()) return empty;
 
   const $ = cheerio.load(result.body, { xmlMode: true });
@@ -108,7 +121,7 @@ function parseSitemap(result: FetchResult | undefined): ParsedSitemap {
       const loc = $(el).text().trim();
       if (loc) children.push(loc);
     });
-    return { kind: "sitemapindex", entries: [], children };
+    return { kind: SitemapKind.Sitemapindex, entries: [], children };
   }
   if ($("urlset").length > 0) {
     const entries: SitemapEntry[] = [];
@@ -118,7 +131,7 @@ function parseSitemap(result: FetchResult | undefined): ParsedSitemap {
       const lastmod = $(el).find("lastmod").first().text().trim();
       entries.push(lastmod ? { loc, lastmod } : { loc });
     });
-    return { kind: "urlset", entries, children: [] };
+    return { kind: SitemapKind.Urlset, entries, children: [] };
   }
   return empty;
 }
@@ -217,13 +230,13 @@ export async function collectSitemapEntries(
     }
     const result = await fetch({ url, signal: opts.signal });
     const parsed = parseSitemap(result);
-    if (parsed.kind === "none") unread.add(url);
+    if (parsed.kind === SitemapKind.None) unread.add(url);
     parsed.entries = parsed.entries.filter((entry) => keepEntry(entry, url));
     const relevant = inScope(url) || parsed.entries.length > 0;
     // A file that answered 200 with a body and still did not parse is
     // present and broken. That is a finding, not an absence, so it is kept
     // apart from a 404 for `readSitemap` to name.
-    if (relevant && parsed.kind !== "none") readableFiles.push(url);
+    if (relevant && parsed.kind !== SitemapKind.None) readableFiles.push(url);
     else if (relevant && result.status === 200 && result.body.trim()) {
       malformedFiles.push(url);
     }
@@ -233,7 +246,7 @@ export async function collectSitemapEntries(
   /** Read one root and its children. True when they cover the site. */
   const walkRoot = async (root: string): Promise<boolean> => {
     const parsed = await load(root);
-    if (!parsed || parsed.kind === "none") return false;
+    if (!parsed || parsed.kind === SitemapKind.None) return false;
 
     take(parsed.entries);
     let relevant = parsed.relevant;
@@ -254,7 +267,8 @@ export async function collectSitemapEntries(
       // This applies to ordinary origin indexes as well as shared mounts.
       // A failed, unsafe, malformed or unexpanded child cannot prove that a
       // scanned URL is absent from the index. Keep the readable entries.
-      if (!childParsed || childParsed.kind !== "urlset") scopeIncomplete = true;
+      if (!childParsed || childParsed.kind !== SitemapKind.Urlset)
+        scopeIncomplete = true;
       if (!childParsed) continue;
       childrenRead += 1;
       if (childParsed.relevant) {

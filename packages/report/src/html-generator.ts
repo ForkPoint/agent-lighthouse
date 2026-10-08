@@ -1,4 +1,8 @@
-import { isInformative } from "@forkpoint/agent-lighthouse-core";
+import {
+  isInformative,
+  AuditTier,
+  CheckStatus,
+} from "@forkpoint/agent-lighthouse-core";
 import { formatPageScope, formatAuditScope } from "./page-scope";
 import type { ScanReport } from "@forkpoint/agent-lighthouse-core";
 import { buildReportView } from "./view-model";
@@ -94,20 +98,20 @@ export function generateHtmlReport(report: ScanReport): string {
                     <summary class="flex items-start justify-between gap-3 list-none select-none">
                       <div class="flex items-start gap-3">
                         <span class="mt-0.5 w-5 h-5 flex items-center justify-center rounded-full text-xs font-bold shrink-0 ${
-                          c.status === "pass"
+                          c.status === CheckStatus.Pass
                             ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800"
-                            : c.status === "warn"
+                            : c.status === CheckStatus.Warn
                               ? "bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-800"
                               : "bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400 border border-red-300 dark:border-red-800"
                         }">
-                          ${c.status === "pass" ? "✓" : c.status === "warn" ? "!" : "✗"}
+                          ${c.status === CheckStatus.Pass ? "✓" : c.status === CheckStatus.Warn ? "!" : "✗"}
                         </span>
                         <div>
                           <div class="font-semibold text-slate-800 dark:text-slate-200 text-sm flex items-center gap-2">
                             <span>${escapeHtml(c.title)}</span>
                             <span class="text-[10px] uppercase tracking-wider font-mono text-slate-400">[${escapeHtml(c.id)}]</span>
                             ${c.deprecated ? '<span class="text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400">Deprecated</span>' : ""}
-                            ${isInformative(c) || (c.tier && c.tier !== "scored") ? `<span class="text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300" title="${c.tier === "experimental" ? "Experimental check — excluded from scoring while it is validated." : "Advisory check — reported, never scored."}">${c.tier === "experimental" ? "Experimental" : "Advisory"} — not scored</span>` : ""}
+                            ${isInformative(c) || (c.tier && c.tier !== AuditTier.Scored) ? `<span class="text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300" title="${c.tier === AuditTier.Experimental ? "Experimental check — excluded from scoring while it is validated." : "Advisory check — reported, never scored."}">${c.tier === AuditTier.Experimental ? "Experimental" : "Advisory"} — not scored</span>` : ""}
                           </div>
                           ${c.displayValue ? `<div class="text-xs font-mono text-slate-500 dark:text-slate-400 mt-0.5 whitespace-pre-line">${escapeHtml(c.displayValue)}</div>` : ""}
                         </div>

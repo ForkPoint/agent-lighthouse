@@ -4,6 +4,14 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** Embedded content that carries meaning without any text. */
 const MEDIA = "img, picture, video, audio, iframe, svg, canvas, object, embed";
@@ -27,24 +35,24 @@ export class SectionHeadingsAudit extends Audit {
     failureTitle: "<section> elements have headings or labels",
     description:
       "AI agents use section headings to build a topic map of your page for retrieval-augmented generation (RAG). Unlabeled sections are opaque to AI systems that chunk content by semantic boundaries, reducing the quality of retrieved context for answer generation.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/content-extraction/section-headings.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "medium",
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "AI agents use section headings to build a topic map of your page for retrieval-augmented generation. Unlabeled <section> elements are opaque to AI chunking systems, preventing them from indexing and retrieving your content by topic, which reduces your visibility in AI-generated answers.",
       fix: "Add a heading (h2-h6) as the first child of every <section> element, or use aria-label/aria-labelledby if a visible heading is not appropriate for the design. Every section should have a clear, descriptive label.",
       code: '<section>\n  <h2>Pricing Plans</h2>\n  <p>Choose the plan that fits your needs...</p>\n</section>\n\n<!-- Or with aria-label for visually hidden labels: -->\n<section aria-label="Customer testimonials">\n  <!-- Content without a visible heading -->\n</section>',
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl:
         "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/section",
       tags: ["sections", "headings", "structure", "semantic", "html"],
@@ -110,7 +118,7 @@ export class SectionHeadingsAudit extends Audit {
         "All <section> elements have a heading child or aria-label/aria-labelledby",
         found,
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "AI agents use section headings to build a topic map of your page for retrieval-augmented generation (RAG). Unlabeled sections are opaque to AI systems that chunk content by semantic boundaries, reducing the quality of retrieved context for answer generation.",
           code: '<section aria-label="Pricing details">\n  <h2>Pricing</h2>\n  <p>Content...</p>\n</section>',
@@ -123,7 +131,7 @@ export class SectionHeadingsAudit extends Audit {
       "All <section> elements have a heading child or aria-label/aria-labelledby",
       found,
       {
-        priority: "medium",
+        priority: CheckPriority.Medium,
         description:
           "AI agents use section headings to build a topic map of your page for retrieval-augmented generation (RAG). Unlabeled sections are opaque to AI systems that chunk content by semantic boundaries, reducing the quality of retrieved context for answer generation.",
         code: '<section aria-label="Pricing details">\n  <h2>Pricing</h2>\n  <p>Content...</p>\n</section>',

@@ -1,8 +1,9 @@
 import * as cheerio from "cheerio";
 import type { CheerioAPI } from "cheerio";
 import type { AnyNode, Element } from "domhandler";
-import type { PageType, PageClassification } from "./types";
+import type { PageClassification } from "./types";
 import { hiddenFromReaders } from "./dom-visibility";
+import { ClassificationConfidence, PageType, PageTypeSource } from "./types";
 
 export function parseHtml(html: string): CheerioAPI {
   return cheerio.load(html);
@@ -622,9 +623,12 @@ export function detectPageType(
 /** Resolve a precise operator declaration without interpreting legacy content as article. */
 export function declaredPageClassification(type: PageType): PageClassification {
   return {
-    type: type === "content" ? "unknown" : type,
-    source: "declared",
-    confidence: type === "content" || type === "unknown" ? "unknown" : "strong",
+    type: type === PageType.Content ? PageType.Unknown : type,
+    source: PageTypeSource.Declared,
+    confidence:
+      type === PageType.Content || type === PageType.Unknown
+        ? ClassificationConfidence.Unknown
+        : ClassificationConfidence.Strong,
     signals: [`declared:${type}`],
   };
 }
@@ -643,13 +647,18 @@ export function classifyPage(
     signals: string[],
   ): PageClassification => ({
     type,
-    source: "detected",
+    source: PageTypeSource.Detected,
     confidence,
     signals: [...new Set(signals)].sort(),
   });
-  if (pathname === "/") return result("homepage", "strong", ["root-path"]);
+  if (pathname === "/")
+    return result(PageType.Homepage, ClassificationConfidence.Strong, [
+      "root-path",
+    ]);
   if (isSubpathHome(url, $))
-    return result("homepage", "strong", ["mounted-home-links"]);
+    return result(PageType.Homepage, ClassificationConfidence.Strong, [
+      "mounted-home-links",
+    ]);
 
   const product = productSignals(pathname, $, structuredData, meta);
   const category = categorySignals(pathname, $, structuredData);
@@ -683,22 +692,26 @@ export function classifyPage(
   );
   const strongArticle = article.some((s) => s !== "article-schema-hint");
   if (strongProduct && strongArticle)
-    return result("unknown", "unknown", [
+    return result(PageType.Unknown, ClassificationConfidence.Unknown, [
       ...product,
       ...category,
       ...article,
       "conflicting-purpose",
     ]);
-  if (strongArticle) return result("article", "strong", article);
+  if (strongArticle)
+    return result(PageType.Article, ClassificationConfidence.Strong, article);
   if (strongProduct && !category.includes("product-grid"))
-    return result("product", "strong", product);
+    return result(PageType.Product, ClassificationConfidence.Strong, product);
   // A grid is listing evidence even when each card has price/buy controls.
   if (category.includes("product-grid"))
-    return result("category", "hint", category);
-  if (product.length > 0) return result("product", "hint", product);
-  if (category.length > 0) return result("category", "hint", category);
-  if (article.length > 0) return result("article", "hint", article);
-  return result("unknown", "unknown", []);
+    return result(PageType.Category, ClassificationConfidence.Hint, category);
+  if (product.length > 0)
+    return result(PageType.Product, ClassificationConfidence.Hint, product);
+  if (category.length > 0)
+    return result(PageType.Category, ClassificationConfidence.Hint, category);
+  if (article.length > 0)
+    return result(PageType.Article, ClassificationConfidence.Hint, article);
+  return result(PageType.Unknown, ClassificationConfidence.Unknown, []);
 }
 
 /** A same-origin path with a trailing `index.html` folded into its directory. */

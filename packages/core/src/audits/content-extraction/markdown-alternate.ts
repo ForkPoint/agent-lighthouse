@@ -7,6 +7,14 @@ import { probeAuthorUrl } from "../../gatherers/author";
 import { weightForGrade } from "../../scorer";
 import { countTokens } from "../../gatherers/tokens";
 import { shingles, jaccard } from "../../gatherers/text-metrics";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** Read-only GETs this audit may spend looking for an alternate. */
 const MAX_PROBES = 3;
@@ -144,17 +152,17 @@ export class MarkdownAlternateAudit extends Audit {
     failureTitle: "The markdown alternate this site serves is not usable",
     description:
       'Where a site serves a markdown alternate of a page — by a declared `alternate` link, by `url + ".md"`, or by `Accept: text/markdown` — checks that it resolves as `text/markdown`, still carries the page\'s headings and prose, and costs fewer tokens than the HTML. A site that serves no markdown alternate at all is reported as not applicable: the documented consumers are interactive coding agents, and no cited source measures a cost to a site that serves none.',
-    scoreDisplayMode: "ternary",
-    tier: "scored",
-    evidenceGrade: "A",
-    weight: weightForGrade("A", "scored"),
-    defaultPriority: "medium",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    tier: AuditTier.Scored,
+    evidenceGrade: EvidenceGrade.A,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    defaultPriority: CheckPriority.Medium,
     dossier: "docs/evidence/audits/content-extraction/markdown-alternate.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     guidance: {
       impact:
@@ -163,7 +171,7 @@ export class MarkdownAlternateAudit extends Audit {
       code: `<link rel="alternate" type="text/markdown" href="/kettles.md">
 
 # Content-Type: text/markdown; charset=utf-8`,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/content-extraction/markdown-alternate/",
       tags: ["markdown", "tokens", "content", "llms-txt"],

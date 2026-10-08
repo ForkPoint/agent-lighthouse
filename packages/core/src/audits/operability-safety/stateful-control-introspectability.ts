@@ -19,6 +19,14 @@ import {
   hasClickSignal,
   isElement,
 } from "./_agent-affordances";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** Below this share of introspectable controls the page fails. */
 const RATIO_FLOOR = 0.9;
@@ -255,25 +263,25 @@ export class StatefulControlIntrospectabilityAudit extends Audit {
     failureTitle: "Stateful controls: current state readable by an agent",
     description:
       "Checks that every control whose purpose is to hold a state — toggles, switches, checkboxes, radio groups, tabs, accordions, disclosure triggers, sort direction, filter chips — exposes that state through a machine-readable attribute rather than a CSS class alone. Reports the count of state-bearing controls whose current value an agent cannot read, each with the class that carries the state instead.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/operability-safety/stateful-control-introspectability.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "high",
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         'An agent works as observe, act, verify. If a toggle\'s only "on" signal is `class="is-active"` and a colour change, the accessibility snapshot is byte-identical before and after the click, so the agent cannot verify the post-condition: it either clicks again and flips the state back, or reports success with no evidence. The accessibility linters cannot catch this, because `aria-required-attr` fires only once the element already declares `role="switch"` or `role="checkbox"` — the common class-only toggle declares no role and passes silently. Benchmarks put the cost high: WebSuite measures switch, accordion and dropdown primitives among the worst-performing interactions for web agents, and Operator\'s confirmation design assumes the agent can observe a state transition before acting on it.',
       fix: 'Publish the state where a snapshot can read it. Give a toggle `role="switch"` with `aria-checked`, a tab `role="tab"` with `aria-selected`, a filter chip `aria-pressed`, a disclosure trigger `aria-expanded` alongside its `aria-controls`, and a sortable column header `aria-sort="ascending"`, `"descending"` or `"none"`. Keep the class for styling and update the attribute in the same handler that updates the class. Where the markup allows it, use `<details>`/`<summary>` or a native checkbox and let the DOM carry the state for free.',
       code: SAMPLE,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/stateful-control-introspectability/",
       tags: ["agent-operability", "accessibility-tree", "state"],
@@ -282,7 +290,7 @@ export class StatefulControlIntrospectabilityAudit extends Audit {
 
   private recommendation() {
     return {
-      priority: "high" as const,
+      priority: CheckPriority.High,
       description: StatefulControlIntrospectabilityAudit.meta.description,
       code: SAMPLE,
     };

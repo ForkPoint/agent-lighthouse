@@ -5,24 +5,25 @@
  * ./_shared.ts.
  */
 import { base, defineA11yAudit, graded } from "./_shared";
+import { CheckPriority, EvidenceGrade, FixEffort } from "../../types";
 
 export const AutocompleteAudit = defineA11yAudit({
   rules: ["autocomplete-valid"],
   meta: {
     ...base,
-    ...graded("A", "autocomplete"),
+    ...graded(EvidenceGrade.A, "autocomplete"),
     id: "operability-safety/autocomplete",
     title: "Form fields use valid autocomplete tokens",
     failureTitle: "Invalid autocomplete tokens on form fields",
     description:
       "Form-filling agents map fields to known data (name, email, address, payment) via autocomplete tokens. Invalid tokens break that mapping.",
-    defaultPriority: "high",
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "Without valid autocomplete, an agent must guess each field’s meaning, so automated checkout/sign-up flows fail or misfill.",
       fix: "Use valid HTML autocomplete tokens on inputs (e.g. email, given-name, postal-code, cc-number).",
       code: '<input name="email" autocomplete="email">',
-      effort: "easy",
+      effort: FixEffort.Easy,
       tags: ["forms", "autocomplete", "agent"],
     },
   },

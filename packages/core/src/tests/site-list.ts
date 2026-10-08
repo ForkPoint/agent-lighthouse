@@ -1,3 +1,11 @@
+export const SiteSource = {
+  Tranco: "tranco",
+  Crux: "crux",
+  Seed: "seed",
+} as const;
+
+export type SiteSource = (typeof SiteSource)[keyof typeof SiteSource];
+
 /**
  * The pure half of the site-list generator.
  *
@@ -15,7 +23,7 @@ export interface SiteEntry {
    * but in neither source's rank cut, so it carries no measured rank — a
    * consumer picking "real top-traffic sites" must exclude it.
    */
-  source: "tranco" | "crux" | "seed";
+  source: SiteSource;
   category: string;
   /**
    * Position in the ranked `unknown` slice, rounded down to a multiple of
@@ -174,7 +182,7 @@ export function tenantSuffixOf(domain: string): string | undefined {
 export function buildSiteList(
   ranked: ReadonlyArray<{
     domains: readonly string[];
-    source: "tranco" | "crux";
+    source: Exclude<SiteSource, typeof SiteSource.Seed>;
   }>,
   seeds: Seeds,
   options: {
@@ -233,7 +241,7 @@ export function buildSiteList(
     if (byDomain.has(domain)) continue;
     const entry: SiteEntry = {
       domain,
-      source: "seed",
+      source: SiteSource.Seed,
       category,
       // One bucket past the worst RANKED index, which is `limit - 1` — not
       // `bucketOf(limit)`, which collides with the last ranked bucket at any

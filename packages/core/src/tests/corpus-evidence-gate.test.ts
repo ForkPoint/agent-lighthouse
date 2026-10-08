@@ -28,6 +28,7 @@ import {
 import type { CheckContext, PageContext } from "../check-context";
 import type { FetchResult } from "../fetcher";
 import { mockFetchResult } from "../__tests__/test-utils";
+import { CheckStatus, EvidenceKey, PageTypeSource } from "../types";
 
 /**
  * Proves that the evidence gate (`buildScanEvidence` + `planAudits`) correctly
@@ -82,7 +83,7 @@ function buildCorpusPageContext(
   return {
     url: provenance.url,
     pageType: detectPageType(provenance.url, $, structuredData, meta, true),
-    pageTypeSource: "declared",
+    pageTypeSource: PageTypeSource.Declared,
     fetchResult,
     $,
     jsonLd,
@@ -118,7 +119,7 @@ describe("corpus evidence gating", () => {
 
       if (!evidence.judgeable) {
         walls.push(name);
-      } else if (!evidence.met["rendered-body"]) {
+      } else if (!evidence.met[EvidenceKey.RenderedBody]) {
         shells.push(name);
       } else {
         content.push(name);
@@ -165,15 +166,16 @@ describe("corpus evidence gating", () => {
 
         // Every skipped audit must provide an explanatory explanation
         for (const skipped of plan.skipped) {
-          expect(skipped.status).toBe("na");
+          expect(skipped.status).toBe(CheckStatus.NotApplicable);
           expect(skipped.explanation).toMatch(/^Not assessed: /);
         }
       } else if (SHELL_FIXTURES.has(name)) {
         // Shell fixtures are judgeable but do not clear rendered-body
         expect(evidence.judgeable, `${name} must be judgeable`).toBe(true);
-        expect(evidence.met["rendered-body"], `${name} rendered-body`).toBe(
-          false,
-        );
+        expect(
+          evidence.met[EvidenceKey.RenderedBody],
+          `${name} rendered-body`,
+        ).toBe(false);
 
         // Audits requiring rendered-body must be skipped as na
         const skippedIds = new Set(plan.skipped.map((s) => s.id));
@@ -182,11 +184,12 @@ describe("corpus evidence gating", () => {
       } else {
         // Readable content pages clear all basic gates and schedule runnable audits
         expect(evidence.judgeable, `${name} must be judgeable`).toBe(true);
-        expect(evidence.met["rendered-body"], `${name} rendered-body`).toBe(
-          true,
-        );
-        expect(evidence.met["origin-reachable"]).toBe(true);
-        expect(evidence.met["unblocked-fetches"]).toBe(true);
+        expect(
+          evidence.met[EvidenceKey.RenderedBody],
+          `${name} rendered-body`,
+        ).toBe(true);
+        expect(evidence.met[EvidenceKey.OriginReachable]).toBe(true);
+        expect(evidence.met[EvidenceKey.UnblockedFetches]).toBe(true);
         expect(plan.runnable.length).toBeGreaterThan(0);
       }
     });

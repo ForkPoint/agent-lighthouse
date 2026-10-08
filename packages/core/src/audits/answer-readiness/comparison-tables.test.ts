@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { ComparisonTablesAudit } from "./comparison-tables";
 import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 describe("ComparisonTablesAudit", () => {
   const audit = new ComparisonTablesAudit();
@@ -14,7 +15,7 @@ describe("ComparisonTablesAudit", () => {
       </main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("1 table");
   });
 
@@ -24,13 +25,13 @@ describe("ComparisonTablesAudit", () => {
       "<html><body><main><p>No tables here.</p></main></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No comparison tables");
   });
 
   it("fails when no pages were scanned", () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No pages scanned");
   });
 
@@ -48,7 +49,7 @@ describe("ComparisonTablesAudit", () => {
       </main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page1, page2]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("2 table");
   });
 });

@@ -7,6 +7,14 @@ import {
 } from "../../__tests__/test-utils";
 import type { CheckContext } from "../../check-context";
 import type { FetchOptions, FetchResult } from "../../fetcher";
+import {
+  AuditTier,
+  CheckPriority,
+  CheckStatus,
+  EvidenceGrade,
+  ScoreDisplayMode,
+  HttpMethod,
+} from "../../types";
 
 vi.mock("../../fetcher", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../fetcher")>();
@@ -91,14 +99,16 @@ describe("MarkdownAlternateAudit", () => {
   it("reports na when the site serves no markdown alternate", async () => {
     const { ctx } = site(null);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("interactive coding agents");
     expect(result.details?.["route"]).toBe("none");
     expect(result.details?.["declared"]).toBeUndefined();
   });
 
   it("reports na when no page was fetched", async () => {
-    expect((await audit.audit(mockCheckContext([]))).status).toBe("na");
+    expect((await audit.audit(mockCheckContext([]))).status).toBe(
+      CheckStatus.NotApplicable,
+    );
   });
 
   it("ignores a 200 response that carries no markdown", async () => {
@@ -107,7 +117,7 @@ describe("MarkdownAlternateAudit", () => {
     ]);
     ctx.fetch = async () => mockFetchResult("Not Found", 200, "text/plain");
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.details?.["route"]).toBe("none");
   });
 
@@ -116,7 +126,7 @@ describe("MarkdownAlternateAudit", () => {
       mockPageContext("https://example.com/kettles", HTML, 1),
     ]);
     ctx.fetch = async () => mockFetchResult(HTML, 200, "text/markdown");
-    expect((await audit.audit(ctx)).status).toBe("na");
+    expect((await audit.audit(ctx)).status).toBe(CheckStatus.NotApplicable);
   });
 
   it("passes on a declared link whose document resolves as markdown", async () => {
@@ -124,28 +134,28 @@ describe("MarkdownAlternateAudit", () => {
       head: '<link rel="alternate" type="text/markdown" href="/kettles.md">',
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("declared link");
   });
 
   it("passes a faithful alternate served as text/markdown", async () => {
     const { ctx } = site(FAITHFUL_MD);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("accepts a charset parameter on the content type", async () => {
     const { ctx } = site(FAITHFUL_MD, {
       contentType: "text/markdown; charset=utf-8",
     });
-    expect((await audit.audit(ctx)).status).toBe("pass");
+    expect((await audit.audit(ctx)).status).toBe(CheckStatus.Pass);
   });
 
   it("fails an alternate served as text/plain or text/html", async () => {
     for (const contentType of ["text/plain", "text/html"]) {
       const { ctx } = site(FAITHFUL_MD, { contentType });
       const result = await audit.audit(ctx);
-      expect(result.status, contentType).toBe("fail");
+      expect(result.status, contentType).toBe(CheckStatus.Fail);
       expect(result.found).toContain("text/markdown");
     }
   });
@@ -153,7 +163,7 @@ describe("MarkdownAlternateAudit", () => {
   it("fails an alternate that is missing half the headings, and names them", async () => {
     const { ctx } = site(`# Kettles\n\n## Boiling time\n\n${SECTIONS[0][1]}\n`);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("Descaling");
   });
 
@@ -169,7 +179,7 @@ describe("MarkdownAlternateAudit", () => {
   it("reports MDX component tags separately without breaking fidelity", async () => {
     const { ctx } = site(`${FAITHFUL_MD}\n<KettleCard sku="A1" />\n`);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.score).toBe(0.5);
     expect(result.found).toContain("KettleCard");
   });
@@ -182,7 +192,7 @@ describe("MarkdownAlternateAudit", () => {
       `${FAITHFUL_MD}\nUse \`<KettleCard />\` here.\n\n\`\`\`jsx\n<Boiler sku="A1" />\n\`\`\`\n`,
     );
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).not.toContain("KettleCard");
     expect(result.found).not.toContain("Boiler");
   });
@@ -191,7 +201,7 @@ describe("MarkdownAlternateAudit", () => {
     const { ctx, calls } = site(FAITHFUL_MD, {
       head: '<link rel="alternate" type="text/markdown" href="/kettles.md">',
     });
-    expect((await audit.audit(ctx)).status).toBe("pass");
+    expect((await audit.audit(ctx)).status).toBe(CheckStatus.Pass);
     expect(calls()[0]?.url).toBe("https://example.com/kettles.md");
   });
 
@@ -199,7 +209,7 @@ describe("MarkdownAlternateAudit", () => {
     const { ctx } = site(FAITHFUL_MD, {
       headers: { link: '</kettles.md>; rel="alternate"; type="text/markdown"' },
     });
-    expect((await audit.audit(ctx)).status).toBe("pass");
+    expect((await audit.audit(ctx)).status).toBe(CheckStatus.Pass);
   });
 
   it("sends at most three probes, all GET and all same-origin", async () => {
@@ -207,7 +217,7 @@ describe("MarkdownAlternateAudit", () => {
     await audit.audit(ctx);
     expect(calls().length).toBeLessThanOrEqual(3);
     for (const call of calls()) {
-      expect(call.method ?? "GET").toBe("GET");
+      expect(call.method ?? HttpMethod.Get).toBe("GET");
       expect(new URL(call.url).origin).toBe("https://example.com");
     }
   });
@@ -217,11 +227,11 @@ describe("MarkdownAlternateAudit", () => {
   // covers. The ternary display mode carries the unresolved-component warn band.
   it("keeps the grade-A registration of the audit it extended", () => {
     const { meta } = MarkdownAlternateAudit;
-    expect(meta.evidenceGrade).toBe("A");
-    expect(meta.tier).toBe("scored");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.A);
+    expect(meta.tier).toBe(AuditTier.Scored);
     expect(meta.weight).toBeCloseTo(1);
-    expect(meta.scoreDisplayMode).toBe("ternary");
-    expect(meta.defaultPriority).toBe("medium");
+    expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Ternary);
+    expect(meta.defaultPriority).toBe(CheckPriority.Medium);
   });
   // The link relation is a grade-C signal with one single-sourced consumer, so
   // it may never decide a scored outcome on its own — in either direction.
@@ -238,7 +248,7 @@ describe("MarkdownAlternateAudit", () => {
     ]);
     ctx.fetch = async () => mockFetchResult("", 404);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.found).toContain("404");
     expect(result.details?.["declared"]).toBe("https://example.com/kettles.md");
     expect(result.details?.["verified"]).toBe(false);
@@ -257,7 +267,7 @@ describe("MarkdownAlternateAudit", () => {
     ]);
     ctx.fetch = async () => mockFetchResult("", 200, "text/html");
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.details?.["route"]).toBe("none");
     expect(result.details?.["verified"]).toBe(false);
   });
@@ -292,7 +302,7 @@ describe("MarkdownAlternateAudit", () => {
       return mockFetchResult("", 404);
     };
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.details?.["route"]).toBe('url + ".md"');
     expect(calls.map((call) => call.url)).toContain(
       "https://example.com/docs/index.md",
@@ -318,7 +328,7 @@ describe("MarkdownAlternateAudit", () => {
         ? mockFetchResult(FAITHFUL_MD, 200, "text/markdown")
         : mockFetchResult("", 404);
     };
-    expect((await audit.audit(ctx)).status).toBe("pass");
+    expect((await audit.audit(ctx)).status).toBe(CheckStatus.Pass);
     expect(calls[0]?.url).toBe("https://example.com/kettles.md");
   });
 
@@ -339,7 +349,7 @@ describe("MarkdownAlternateAudit", () => {
   it("passes an alternate that is served but not declared", async () => {
     const { ctx } = site(FAITHFUL_MD);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.details?.["route"]).toBe('url + ".md"');
   });
 });

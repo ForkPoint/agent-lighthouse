@@ -5,6 +5,14 @@ import { weightForGrade } from "../../scorer";
 import { isSafeUrl } from "../../url-utils";
 import { extractMarkdownLinks } from "../../parser";
 import { checkEndpointStatus } from "../../gatherers/discovery";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 export class NoBrokenAiEndpointsAudit extends Audit {
   static override meta: AuditMeta = {
@@ -14,24 +22,24 @@ export class NoBrokenAiEndpointsAudit extends Audit {
     failureTitle: "No broken AI endpoints",
     description:
       "AI agents follow URLs in your ai-catalog.json, llms.txt, and navigation.json to build a map of your site's AI-consumable resources. Broken links cause agents to lose trust in your manifest files entirely, potentially ignoring all listed endpoints. Fix or remove broken URLs.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/machine-discovery/no-broken-ai-endpoints.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "high",
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "Broken URLs in your AI manifest files (ai-catalog.json, llms.txt, navigation.json) cause agents to lose trust in your entire manifest. After encountering broken links, AI systems may stop following any of your listed endpoints, effectively making all your AI-facing resources undiscoverable.",
       fix: "Audit all URLs referenced in your ai-catalog.json, llms.txt, and navigation.json files. Fix or remove any that return 404, 500, or connection errors. Set up monitoring to catch broken endpoints before AI agents do.",
       code: "# Verify your AI endpoint URLs:\ncurl -sI https://yoursite.com/llms.txt | head -1\ncurl -sI https://yoursite.com/.well-known/ai-catalog.json | head -1\ncurl -sI https://yoursite.com/openapi.json | head -1",
-      effort: "easy",
+      effort: FixEffort.Easy,
       tags: ["ai-files", "reliability", "endpoints"],
     },
   };
@@ -183,7 +191,7 @@ export class NoBrokenAiEndpointsAudit extends Audit {
         "All URLs from AI-related files return 200",
         `Broken: ${broken.length}; Valid: ${valid.length}`,
         {
-          priority: "high",
+          priority: CheckPriority.High,
           description:
             "AI agents follow URLs in your ai-catalog.json, llms.txt, and navigation.json to build a map of your site's AI-consumable resources. Broken links cause agents to lose trust in your manifest files entirely, potentially ignoring all listed endpoints. Fix or remove broken URLs.",
           code: "# Verify all URLs in your AI files:\ncurl -I https://yoursite.com/llms.txt\ncurl -I https://yoursite.com/.well-known/ai-catalog.json",
@@ -197,7 +205,7 @@ export class NoBrokenAiEndpointsAudit extends Audit {
       "All URLs from AI-related files return 200",
       `Broken: ${broken.length}; Valid: ${valid.length}`,
       {
-        priority: "high",
+        priority: CheckPriority.High,
         description:
           "AI agents follow URLs in your ai-catalog.json, llms.txt, and navigation.json to build a map of your site's AI-consumable resources. Broken links cause agents to lose trust in your manifest files entirely, potentially ignoring all listed endpoints. Fix or remove broken URLs.",
         code: "# Verify all URLs in your AI files:\ncurl -I https://yoursite.com/llms.txt\ncurl -I https://yoursite.com/.well-known/ai-catalog.json",

@@ -2,6 +2,14 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
 import type { CheckContext } from "../../check-context";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 export class UniqueMetaAudit extends Audit {
   static override meta: AuditMeta = {
@@ -11,24 +19,24 @@ export class UniqueMetaAudit extends Audit {
     failureTitle: "Unique meta per page",
     description:
       "AI crawlers use title and description pairs to distinguish between pages. Duplicate meta across pages causes agents to merge or skip content, meaning some of your pages will be invisible in AI-generated answers. Give each page a unique title and description.",
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "informative"),
-    evidenceGrade: "C",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/answer-readiness/unique-meta.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "high",
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "AI crawlers use title and description pairs to distinguish between pages. Duplicate meta across pages causes agents to merge or skip content, meaning some pages become invisible in AI-generated answers.",
       fix: 'Give each page a unique <title> and <meta name="description"> that specifically describes that page\'s content. Avoid template descriptions that repeat across pages.',
       code: '<title>Unique Page Title - Your Site</title>\n<meta name="description" content="Unique description for this specific page.">',
-      effort: "easy",
+      effort: FixEffort.Easy,
       tags: ["meta-tags", "seo", "deduplication"],
     },
   };
@@ -95,7 +103,7 @@ export class UniqueMetaAudit extends Audit {
       "Each page has a unique title + description combination",
       duplicates.join("; "),
       {
-        priority: "high",
+        priority: CheckPriority.High,
         description:
           "AI crawlers use title and description pairs to distinguish between pages. Duplicate meta across pages causes agents to merge or skip content, meaning some of your pages will be invisible in AI-generated answers. Give each page a unique title and description.",
         code: '<title>Unique Page Title</title>\n<meta name="description" content="Unique description for this specific page.">',

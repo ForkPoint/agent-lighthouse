@@ -3,6 +3,14 @@ import { Audit } from "../../audit";
 import type { CheckContext } from "../../check-context";
 import { extractHeadings } from "../../parser";
 import { weightForGrade } from "../../scorer";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 export class SequentialHeadingsAudit extends Audit {
   static override meta: AuditMeta = {
@@ -12,24 +20,24 @@ export class SequentialHeadingsAudit extends Audit {
     failureTitle: "Sequential heading hierarchy",
     description:
       "AI systems build content outlines from headings to understand document structure. Skipped levels (e.g., h1 to h3 without h2) break the hierarchy, causing agents to misinterpret section nesting and produce inaccurate content summaries. Fix heading levels to follow a sequential order.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/content-extraction/sequential-headings.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "high",
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "AI systems build content outlines from heading levels to understand document hierarchy. Skipped levels (e.g., h1 directly to h3) break this hierarchy, causing agents to misinterpret section nesting and produce inaccurate content summaries with wrong parent-child relationships.",
       fix: "Ensure headings follow a sequential order without skipping levels. After an h1, use h2 for major sections, h3 for subsections within h2, and so on. Never jump from h1 to h3 or h2 to h4 without the intermediate level.",
       code: "<h1>Page Title</h1>\n  <h2>Major Section</h2>\n    <h3>Subsection</h3>\n    <h3>Another Subsection</h3>\n  <h2>Another Major Section</h2>",
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl:
         "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Heading_Elements",
       tags: ["headings", "hierarchy", "structure", "semantic"],
@@ -69,7 +77,7 @@ export class SequentialHeadingsAudit extends Audit {
         "No heading level skips (e.g. h1 -> h3 without h2)",
         "Insufficient headings to evaluate",
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "AI systems build content outlines from headings to understand document structure. Pages need at least two headings to form a hierarchy that can be evaluated for proper sequencing.",
           code: "<h1>Page Title</h1>\n<h2>Section</h2>\n<h3>Subsection</h3>",
@@ -94,7 +102,7 @@ export class SequentialHeadingsAudit extends Audit {
         "No heading level skips (e.g. h1 -> h3 without h2)",
         skipDetails.slice(0, 3).join("; "),
         {
-          priority: "high",
+          priority: CheckPriority.High,
           description:
             "AI systems build content outlines from headings to understand document structure. Skipped levels (e.g., h1 to h3 without h2) break the hierarchy, causing agents to misinterpret section nesting and produce inaccurate content summaries. Fix heading levels to follow a sequential order.",
           code: "<h1>Page Title</h1>\n<h2>Section</h2>\n<h3>Subsection</h3>",
@@ -107,7 +115,7 @@ export class SequentialHeadingsAudit extends Audit {
       "No heading level skips (e.g. h1 -> h3 without h2)",
       skipDetails.slice(0, 3).join("; "),
       {
-        priority: "high",
+        priority: CheckPriority.High,
         description:
           "AI systems build content outlines from headings to understand document structure. Skipped levels (e.g., h1 to h3 without h2) break the hierarchy, causing agents to misinterpret section nesting and produce inaccurate content summaries. Fix heading levels to follow a sequential order.",
         code: "<h1>Page Title</h1>\n<h2>Section</h2>\n<h3>Subsection</h3>",

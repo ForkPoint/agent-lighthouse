@@ -10,6 +10,14 @@ import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
 import type { CheckContext } from "../../check-context";
 import { discoverMcpEndpoint, listTools, isObject } from "../../gatherers/mcp";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** How many `nextCursor` pages are followed. */
 const MAX_PAGES = 4;
@@ -123,20 +131,20 @@ export class McpToolContractValidityAudit extends Audit {
     failureTitle: "Tool Contract Validity and Silent-Drop Risk",
     description:
       "Static validation of every tool definition returned by tools/list against the MUST/SHOULD-level structural rules in the 2026-07-28 tools spec — with special weight on x-mcp-header violations, which oblige conforming clients to silently remove the offending tool from the list they show the model.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/agent-interfaces/mcp-tool-contract-validity.md",
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "critical",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.Critical,
     guidance: {
       impact:
         "The spec gives clients an explicit deletion instruction: 'Clients using the Streamable HTTP transport MUST reject tool definitions where any x-mcp-header value violates these constraints. Rejection means the client MUST exclude the invalid tool from the result of tools/list.' This makes malformed tool metadata a silent-invisibility bug rather than an error: the server returns the tool, logs a successful tools/list, and the model never sees it. The constraint set is fully machine-checkable with no network calls beyond the one list fetch — token syntax, no CR/LF, case-insensitive uniqueness, primitive types only with `number` explicitly excluded, and static reachability through a chain consisting solely of `properties` keys. Alongside it, `inputSchema` MUST be a valid JSON Schema object and not null; a null or scalar inputSchema breaks argument construction in every SDK.",
       fix: 'Give every tool an `inputSchema` that is a real JSON Schema object with `"type": "object"`, and make sure every string in `required` is a key of `properties` — a dangling entry fails validation in the client before the call is ever made. Keep names inside `/^[A-Za-z0-9_.\\-]+$/`, at most 128 characters, unique within the server, and inside printable ASCII, so no client has to fall back to the `=?base64?…?=` sentinel encoding of the Mcp-Name header. For `x-mcp-header`: use a non-empty RFC 9110 token with no space, colon or CR/LF; keep the values unique case-insensitively inside one schema; annotate only properties of type string, integer or boolean — `number` is not allowed; and put the annotated property directly under `properties`, never behind `items`, `oneOf`, `allOf` or a `$ref`. If you publish `outputSchema`, it must be a JSON Schema object too, and your results must conform to it.',
       code: SAMPLE,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/agent-interfaces/mcp-tool-contract-validity/",
       tags: ["mcp", "tools", "json-schema", "x-mcp-header", "agent-protocol"],
@@ -314,7 +322,7 @@ export class McpToolContractValidityAudit extends Audit {
         `${lead}${list(musts)}. ${clean} of ${tools.length} tool(s) pass every MUST.`,
         EXPECTED,
         found,
-        "critical",
+        CheckPriority.Critical,
       );
     }
 
@@ -323,7 +331,7 @@ export class McpToolContractValidityAudit extends Audit {
         `Every tool passes the MUST-level rules, with naming findings: ${list(shoulds)}.`,
         EXPECTED,
         found,
-        "medium",
+        CheckPriority.Medium,
       );
     }
 

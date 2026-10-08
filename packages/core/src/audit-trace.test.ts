@@ -6,6 +6,13 @@ import {
   TAG_SKIPPED_SCAN_BUDGET,
 } from "./constants";
 import type { CheckResult } from "./types";
+import {
+  AuditTier,
+  CheckPriority,
+  CheckStatus,
+  EvidenceGrade,
+  ScoreDisplayMode,
+} from "./types";
 
 /**
  * The trace record.
@@ -21,11 +28,11 @@ function check(over: Partial<CheckResult> = {}): CheckResult {
     category: "structured-data",
     title: "JSON-LD present",
     description: "d",
-    status: "pass",
+    status: CheckStatus.Pass,
     score: 1,
     weight: 1,
-    scoreDisplayMode: "binary",
-    priority: "medium",
+    scoreDisplayMode: ScoreDisplayMode.Binary,
+    priority: CheckPriority.Medium,
     impact: "",
     fix: "",
     ...over,
@@ -38,41 +45,53 @@ describe("outcomeOf", () => {
   });
 
   it("reads a scan-error stub as an error", () => {
-    expect(outcomeOf(check({ status: "na", tags: [TAG_SCAN_ERROR] }))).toBe(
-      "error",
-    );
+    expect(
+      outcomeOf(
+        check({ status: CheckStatus.NotApplicable, tags: [TAG_SCAN_ERROR] }),
+      ),
+    ).toBe("error");
   });
 
   it("reads a page-type stub as skipped", () => {
     expect(
-      outcomeOf(check({ status: "na", tags: [TAG_SKIPPED_PAGE_TYPE] })),
+      outcomeOf(
+        check({
+          status: CheckStatus.NotApplicable,
+          tags: [TAG_SKIPPED_PAGE_TYPE],
+        }),
+      ),
     ).toBe("skipped");
   });
 
   it("reads a scan-budget stub as budget", () => {
     expect(
-      outcomeOf(check({ status: "na", tags: [TAG_SKIPPED_SCAN_BUDGET] })),
+      outcomeOf(
+        check({
+          status: CheckStatus.NotApplicable,
+          tags: [TAG_SKIPPED_SCAN_BUDGET],
+        }),
+      ),
     ).toBe("budget");
   });
 
   // An audit that ran and concluded "nothing to assess" is not the same as one
   // that never ran, and a trace that conflated them would hide the second.
   it("reads a plain not-applicable as ran, not skipped", () => {
-    expect(outcomeOf(check({ status: "na" }))).toBe("ran");
+    expect(outcomeOf(check({ status: CheckStatus.NotApplicable }))).toBe("ran");
   });
 });
 
 describe("traceFromCheck", () => {
   it("carries the verdict and what it contributed", () => {
     const trace = traceFromCheck(
-      check({ status: "fail", score: 0, weight: 0.6 }),
+      check({ status: CheckStatus.Fail, score: 0, weight: 0.6 }),
       12,
     );
     expect(trace).toMatchObject({
       id: "structured-data/json-ld-present",
       category: "structured-data",
       outcome: "ran",
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       weight: 0.6,
       durationMs: 12,
@@ -100,16 +119,16 @@ describe("traceFromCheck", () => {
         explanation: "Three JSON-LD blocks parsed.",
         pageUrl: "https://shop.test/",
         details: { expected: "at least one", found: "3" },
-        tier: "scored",
-        evidenceGrade: "A",
+        tier: AuditTier.Scored,
+        evidenceGrade: EvidenceGrade.A,
       }),
       7,
     );
     expect(trace).toMatchObject({
       displayValue: "3 schema block(s)",
       pageUrl: "https://shop.test/",
-      tier: "scored",
-      evidenceGrade: "A",
+      tier: AuditTier.Scored,
+      evidenceGrade: EvidenceGrade.A,
       details: { expected: "at least one", found: "3" },
     });
   });
@@ -124,7 +143,7 @@ describe("traceFromCheck", () => {
 describe("formatTrace", () => {
   it("names the audit, the outcome and the verdict", () => {
     const line = formatTrace(
-      traceFromCheck(check({ status: "fail", score: 0 }), 12),
+      traceFromCheck(check({ status: CheckStatus.Fail, score: 0 }), 12),
     );
     expect(line).toContain("structured-data/json-ld-present");
     expect(line).toContain("ran/fail");
@@ -135,7 +154,13 @@ describe("formatTrace", () => {
   // put 214 fictional "0ms" timings in the log.
   it("leaves the timing off an audit that never ran", () => {
     const line = formatTrace(
-      traceFromCheck(check({ status: "na", tags: [TAG_SKIPPED_PAGE_TYPE] }), 0),
+      traceFromCheck(
+        check({
+          status: CheckStatus.NotApplicable,
+          tags: [TAG_SKIPPED_PAGE_TYPE],
+        }),
+        0,
+      ),
     );
     expect(line).toContain("skipped/na");
     expect(line).not.toContain("0ms");

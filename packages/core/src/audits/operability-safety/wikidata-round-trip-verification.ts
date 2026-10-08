@@ -6,6 +6,14 @@ import { isSafeUrl } from "../../url-utils";
 import { probeSecurityUrl } from "../../gatherers/security";
 import { allJsonLdNodes } from "../../parser";
 import { registrableOf, registrableDomain } from "../../gatherers/domains";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** Q-ids resolved per scan. Each is a request to Wikidata. */
 const MAX_ENTITIES = 2;
@@ -93,24 +101,24 @@ export class WikidataRoundTripVerificationAudit extends Audit {
     failureTitle: "This site’s Wikidata identity claim is not reciprocated",
     description:
       "Takes the Wikidata Q-id the site claims in its Organization or Person `sameAs`, asks Wikidata what that entity gives as its official website (P856), and compares registrable domains. A `sameAs` is self-asserted and any site can claim any entity; only the round trip is evidence.",
-    scoreDisplayMode: "ternary",
-    tier: "scored",
-    evidenceGrade: "B",
-    weight: weightForGrade("B", "scored"),
-    defaultPriority: "medium",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    tier: AuditTier.Scored,
+    evidenceGrade: EvidenceGrade.B,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    defaultPriority: CheckPriority.Medium,
     dossier:
       "docs/evidence/audits/operability-safety/wikidata-round-trip-verification.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     guidance: {
       impact:
         "A knowledge-graph consumer that grounds a brand to an entity needs corroboration from the authority side, because `sameAs` carries no reciprocity requirement — Google documents it as a link to a page with more information, nothing more. Wikidata publishes that corroboration for free as P856. A claim whose entity points at an unrelated domain is either the wrong entity or an unbacked identity claim, and an answer engine that resolves it grounds the brand to somebody else.",
       fix: "Claim the entity that really is your organization, and make sure the Wikidata item carries your domain as its official website (P856). If the item has no P856 at all, add one: until it does, the claim cannot be corroborated by anyone.",
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/wikidata-round-trip-verification/",
       tags: ["identity", "wikidata", "knowledge-graph", "sameas"],

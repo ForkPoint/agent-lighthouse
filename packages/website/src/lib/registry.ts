@@ -1,6 +1,10 @@
 import {
   defaultConfig,
   CATEGORY_NAMES,
+  type PageType,
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
 } from "@forkpoint/agent-lighthouse-core";
 
 export interface AuditRecord {
@@ -30,7 +34,7 @@ export interface AuditDataRecord extends AuditRecord {
   scoreDisplayMode: string;
   /** Repo-relative path to the dossier that proves the audit. */
   dossier: string;
-  applicablePageTypes?: string[];
+  applicablePageTypes?: PageType[];
   guidance?: {
     impact: string;
     fix: string;
@@ -70,10 +74,10 @@ export function auditList(): AuditRecord[] {
         categoryTitle: CATEGORY_NAMES[meta.category] ?? meta.category,
         title: meta.title,
         description: meta.description,
-        evidenceGrade: meta.evidenceGrade ?? "D",
-        tier: meta.tier ?? "scored",
+        evidenceGrade: meta.evidenceGrade ?? EvidenceGrade.D,
+        tier: meta.tier ?? AuditTier.Scored,
         weight: meta.weight,
-        priority: meta.defaultPriority ?? "medium",
+        priority: meta.defaultPriority ?? CheckPriority.Medium,
         tags: meta.guidance?.tags ?? [],
       });
     }

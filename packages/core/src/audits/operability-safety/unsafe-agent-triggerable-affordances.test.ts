@@ -12,6 +12,13 @@ import {
 } from "../../__tests__/test-utils";
 import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
 import type { CheckContext } from "../../check-context";
+import {
+  AuditTier,
+  CheckPriority,
+  CheckStatus,
+  EvidenceGrade,
+  ScoreDisplayMode,
+} from "../../types";
 
 function page(body: string, robots?: string): CheckContext {
   return mockCheckContext(
@@ -34,14 +41,14 @@ describe("UnsafeAgentTriggerableAffordancesAudit", () => {
 
   it("passes a page with no state-verb link", async () => {
     const result = await audit.audit(page('<a href="/products">Products</a>'));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("fails a GET link that deletes something", async () => {
     const result = await audit.audit(
       page('<a href="/?action=delete&id=7">Delete</a>'),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("action=delete");
   });
 
@@ -51,7 +58,7 @@ describe("UnsafeAgentTriggerableAffordancesAudit", () => {
         '<a href="/?action=delete&id=7" data-turbo-confirm="Are you sure?">Delete</a>',
       ),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // rel=nofollow is the documented minimum mitigation for this exact case.
@@ -59,7 +66,7 @@ describe("UnsafeAgentTriggerableAffordancesAudit", () => {
     const result = await audit.audit(
       page('<a href="/?action=delete&id=7" rel="nofollow">Delete</a>'),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("accepts the same URL when it is submitted by a POST form", async () => {
@@ -68,19 +75,19 @@ describe("UnsafeAgentTriggerableAffordancesAudit", () => {
         '<form method="post" action="/?action=delete&id=7"><button>Delete</button></form>',
       ),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("fails a bare /logout link on the path-pattern arm", async () => {
     const result = await audit.audit(page('<a href="/logout">Sign out</a>'));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("fails an add-to-cart GET link", async () => {
     const result = await audit.audit(
       page('<a href="/add-to-cart?sku=1">Add to cart</a>'),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   // A GET form is replayable from the query string, but it is at least a form.
@@ -90,7 +97,7 @@ describe("UnsafeAgentTriggerableAffordancesAudit", () => {
         '<form method="get" action="/unsubscribe"><button>Unsubscribe</button></form>',
       ),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
   });
 
   it("still reports a disallowed path and says the mitigation is partial", async () => {
@@ -100,7 +107,7 @@ describe("UnsafeAgentTriggerableAffordancesAudit", () => {
         "User-agent: *\nDisallow: /logout\n",
       ),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("robots.txt");
     expect(result.details?.["disallowedPaths"]).toBe(1);
   });
@@ -116,10 +123,10 @@ describe("UnsafeAgentTriggerableAffordancesAudit", () => {
 
   it("registers as a scored grade-B audit with critical priority", () => {
     const { meta } = UnsafeAgentTriggerableAffordancesAudit;
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
-    expect(meta.defaultPriority).toBe("critical");
-    expect(meta.scoreDisplayMode).toBe("ternary");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
+    expect(meta.defaultPriority).toBe(CheckPriority.Critical);
+    expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Ternary);
   });
 
   // The scan may hold a readable page that is not this site's — a broker's
@@ -129,7 +136,9 @@ describe("UnsafeAgentTriggerableAffordancesAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new UnsafeAgentTriggerableAffordancesAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext(pages, rootFiles),
@@ -142,7 +151,7 @@ describe("UnsafeAgentTriggerableAffordancesAudit", () => {
       plan.skipped.find(
         (stub) => stub.id === UnsafeAgentTriggerableAffordancesAudit.meta.id,
       )?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 
   // Links and GET forms live in the body. A shell exposes none, so "nothing here
@@ -151,9 +160,11 @@ describe("UnsafeAgentTriggerableAffordancesAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new UnsafeAgentTriggerableAffordancesAudit();
     const rendered = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(rendered.status, "the same input rendered is judged").not.toBe("na");
+    expect(rendered.status, "the same input rendered is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const shell = await instance.audit(shellSiteContext());
-    expect(shell.status).toBe("na");
+    expect(shell.status).toBe(CheckStatus.NotApplicable);
   });
 });

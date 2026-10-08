@@ -3,6 +3,15 @@ import { Audit } from "../../audit";
 import type { CheckContext, PageContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
 import { allJsonLdNodes } from "../../parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** Class-name shapes that mark one repeated review/testimonial component. */
 const REVIEW_COMPONENT_CLASS =
@@ -177,19 +186,19 @@ export class ReviewSchemaAudit extends Audit {
     failureTitle: "Review/AggregateRating schema",
     description:
       'AI agents use Review/AggregateRating schema as social proof when comparing options. When a user asks "what is the best X?", agents surface structured ratings from schema rather than parsing unstructured testimonial text. Add this schema to make your reviews machine-readable.',
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/structured-data/review-schema.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: ["homepage", "product"],
-    defaultPriority: "medium",
+    applicablePageTypes: [PageType.Homepage, PageType.Product],
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         'When users ask AI agents "what is the best X?", agents surface structured ratings from Review/AggregateRating schema rather than parsing unstructured testimonial text. Google requires ratingValue plus a ratingCount or reviewCount to render a review snippet, and on a shop the rating has to sit on the Product itself — a site-wide badge does not make any single product eligible.',
@@ -210,7 +219,7 @@ export class ReviewSchemaAudit extends Audit {
     "reviewBody": "Excellent product, highly recommend."
   }
 }`,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://developers.google.com/search/docs/appearance/structured-data/review-snippet",
       tags: [
@@ -262,7 +271,7 @@ export class ReviewSchemaAudit extends Audit {
         EXPECTED,
         `${total} usable rating/review record(s), 0 on a Product`,
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "A site-wide or Organization-level rating does not make a product eligible for a rating snippet, and Google explicitly excludes self-controlled reviews on Organization/LocalBusiness. Attach aggregateRating to the Product on each product page.",
           code: `{
@@ -291,7 +300,7 @@ export class ReviewSchemaAudit extends Audit {
       EXPECTED,
       "None",
       {
-        priority: "medium",
+        priority: CheckPriority.Medium,
         description:
           "AI agents and search surfaces read ratingValue plus reviewCount from Review/AggregateRating markup. An empty aggregateRating object, a zero review count or an empty review array is not a rating — publish the real numbers.",
         code: `"aggregateRating": {

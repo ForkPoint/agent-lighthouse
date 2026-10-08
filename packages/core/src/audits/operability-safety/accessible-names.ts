@@ -9,24 +9,25 @@
  * covered by these rules).
  */
 import { base, defineA11yAudit, graded } from "./_shared";
+import { CheckPriority, EvidenceGrade, FixEffort } from "../../types";
 
 export const AccessibleNamesAudit = defineA11yAudit({
   rules: ["button-name", "link-name"],
   meta: {
     ...base,
-    ...graded("A", "accessible-names"),
+    ...graded(EvidenceGrade.A, "accessible-names"),
     id: "operability-safety/accessible-names",
     title: "Buttons and links have accessible names",
     failureTitle: "Buttons or links without accessible names",
     description:
       "AI browser agents identify clickable elements by their accessible name in the accessibility tree. Buttons and links (including icon-only controls) without text, aria-label, or aria-labelledby are invisible to agents, so they cannot navigate the site or trigger actions.",
-    defaultPriority: "high",
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "An unnamed button or link is an unidentifiable action target, causing failed or wrong interactions in agentic workflows.",
       fix: "Give every <button> and <a> text content, aria-label, or aria-labelledby. For icon-only controls, use aria-label to describe the action.",
       code: '<a href="/pricing" aria-label="Go to pricing page">...</a>\n<button aria-label="Close menu">X</button>',
-      effort: "easy",
+      effort: FixEffort.Easy,
       tags: ["aria", "interactive", "agent"],
     },
   },

@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { OpenApiSchemasAudit } from "./openapi-schemas";
 import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
 import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
+import { CheckStatus } from "../../types";
 
 const responseWithSchema = {
   "200": {
@@ -36,7 +37,7 @@ describe("OpenApiSchemasAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("response schemas");
   });
 
@@ -56,7 +57,7 @@ describe("OpenApiSchemasAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("Partial schema coverage");
   });
 
@@ -81,7 +82,7 @@ describe("OpenApiSchemasAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("Low schema coverage");
   });
 
@@ -90,7 +91,7 @@ describe("OpenApiSchemasAudit", () => {
   // above are unchanged — they are what carries the grade B.
   it("declines when there is no spec", () => {
     const result = audit.audit(mockCheckContext([], {}));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.found).toBe("No readable OpenAPI document");
   });
 
@@ -103,7 +104,7 @@ describe("OpenApiSchemasAudit", () => {
       "/openapi.json": mockFetchResult(JSON.stringify({ paths: {} }), 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("no operations");
   });
 
@@ -111,7 +112,7 @@ describe("OpenApiSchemasAudit", () => {
     const ctx = mockCheckContext([], {
       "/openapi.json": mockFetchResult("invalid json {{{", 200),
     });
-    expect(audit.audit(ctx).status).toBe("na");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.NotApplicable);
   });
 
   it("fails when a POST endpoint has no requestBody schema but has a response schema", () => {
@@ -134,7 +135,7 @@ describe("OpenApiSchemasAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("request schemas");
   });
 
@@ -163,7 +164,7 @@ describe("OpenApiSchemasAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("Low schema coverage");
   });
 
@@ -198,7 +199,7 @@ describe("OpenApiSchemasAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).not.toContain("write operation");
   });
 
@@ -210,7 +211,7 @@ describe("OpenApiSchemasAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("paths object is malformed");
     expect(result.found).toBe(
       'paths entry "/null-path" is null, not a path item object',
@@ -239,7 +240,7 @@ describe("OpenApiSchemasAudit", () => {
     });
     const result = audit.audit(ctx);
     // Has response schema but requestBody has no content → request schema not counted
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("request schemas");
   });
 
@@ -254,7 +255,7 @@ describe("OpenApiSchemasAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("Low schema coverage");
   });
 
@@ -264,7 +265,7 @@ describe("OpenApiSchemasAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("no operations");
   });
 
@@ -293,7 +294,7 @@ describe("OpenApiSchemasAudit", () => {
     });
     const result = audit.audit(ctx);
     // Has response schema but requestBody media type has no schema → request not counted
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("request schemas");
   });
 
@@ -325,7 +326,7 @@ describe("OpenApiSchemasAudit", () => {
     });
     const result = audit.audit(ctx);
     // Has request schemas but no response schemas → low coverage
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("Low schema coverage");
   });
 
@@ -335,7 +336,7 @@ describe("OpenApiSchemasAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toBe("paths is an array, not an object");
   });
 
@@ -345,7 +346,7 @@ describe("OpenApiSchemasAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toBe(
       'paths entry "/products" is a string, not a path item object',
     );
@@ -357,7 +358,7 @@ describe("OpenApiSchemasAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toBe(
       'paths entry "/products" is an array, not a path item object',
     );
@@ -389,7 +390,7 @@ describe("OpenApiSchemasAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("Skipped 1 unreadable entry");
     expect(result.found).toContain("2/2 response schemas");
     expect(result.found).toContain("1 unreadable");
@@ -401,7 +402,7 @@ describe("OpenApiSchemasAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toBe(
       'paths entry "/x" declares get as a string, not an operation object',
     );
@@ -414,7 +415,7 @@ describe("OpenApiSchemasAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.found).toBe("0 operations");
   });
 });

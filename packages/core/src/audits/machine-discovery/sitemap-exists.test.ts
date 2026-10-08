@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { SitemapExistsAudit } from "./sitemap-exists";
 import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 describe("SitemapExistsAudit", () => {
   const audit = new SitemapExistsAudit();
@@ -12,7 +13,7 @@ describe("SitemapExistsAudit", () => {
       "/sitemap.xml": mockFetchResult(body, 200, "application/xml"),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("valid structure");
   });
 
@@ -25,14 +26,14 @@ describe("SitemapExistsAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("does not contain valid");
   });
 
   it("fails when no sitemap is found", async () => {
     const ctx = mockCheckContext([]);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No XML sitemap found");
   });
 
@@ -46,7 +47,7 @@ describe("SitemapExistsAudit", () => {
       "/sitemap-index.xml": mockFetchResult(body, 200, "application/xml"),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("passes with a <sitemapindex> root element (covers <sitemapindex> found branch)", async () => {
@@ -60,7 +61,7 @@ describe("SitemapExistsAudit", () => {
       "/sitemap.xml": mockFetchResult(body, 200, "application/xml"),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("sitemapindex");
   });
 });
@@ -92,7 +93,9 @@ it("does not fail absence when the sitemap walk stopped before proving it", asyn
       );
     return mockFetchResult("", 404);
   };
-  expect((await new SitemapExistsAudit().audit(ctx)).status).toBe("na");
+  expect((await new SitemapExistsAudit().audit(ctx)).status).toBe(
+    CheckStatus.NotApplicable,
+  );
 });
 
 it("does not report missing sitemap coverage when a shared index has unreadable children", async () => {
@@ -109,5 +112,7 @@ it("does not report missing sitemap coverage when a shared index has unreadable 
       return mockFetchResult("compressed bytes", 200, "application/gzip");
     return mockFetchResult("", 404);
   };
-  expect((await new SitemapExistsAudit().audit(ctx)).status).toBe("na");
+  expect((await new SitemapExistsAudit().audit(ctx)).status).toBe(
+    CheckStatus.NotApplicable,
+  );
 });

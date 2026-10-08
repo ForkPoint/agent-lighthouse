@@ -3,6 +3,14 @@ import { Audit } from "../../audit";
 import type { CheckContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
 import { readSitemap, NO_SITEMAP } from "../../gatherers/sitemap";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 export class SitemapLastmodAudit extends Audit {
   static override meta: AuditMeta = {
@@ -12,19 +20,19 @@ export class SitemapLastmodAudit extends Audit {
     failureTitle: "Sitemap has lastmod dates",
     description:
       "AI crawlers use <lastmod> to decide which pages to re-index and which to skip. Without these dates, crawlers must re-fetch every page on every visit.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/machine-discovery/sitemap-lastmod.md",
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "medium",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "Without <lastmod> dates, AI crawlers must re-fetch every page on every visit because they cannot tell which pages have changed. This wastes crawl budget and delays indexing of your freshest content.",
       fix: "Add accurate <lastmod> dates to every <url> entry in your sitemap.xml. Update the date whenever the page content actually changes. Use ISO 8601 format (YYYY-MM-DD or full datetime).",
       code: "<url>\n  <loc>https://yoursite.com/page</loc>\n  <lastmod>2026-01-15</lastmod>\n</url>",
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl: "https://www.sitemaps.org/protocol.html",
       tags: ["sitemap", "seo", "discoverability"],
     },
@@ -71,7 +79,7 @@ export class SitemapLastmodAudit extends Audit {
         "At least 80% of <url> entries have <lastmod>",
         `${withLastmod}/${total} (${Math.round(ratio * 100)}%)`,
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "AI crawlers use <lastmod> to decide which pages to re-index and which to skip. Without these dates, crawlers must re-fetch every page on every visit, wasting bandwidth and slowing indexing.",
           code: `<url>\n  <loc>https://yoursite.com/page</loc>\n  <lastmod>2026-01-15</lastmod>\n</url>`,

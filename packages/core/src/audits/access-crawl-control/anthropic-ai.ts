@@ -9,6 +9,15 @@ import {
   matchesUserAgent,
 } from "../../gatherers/robots";
 import { weightForGrade } from "../../scorer";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
+import { CrawlerPurpose } from "./_robots-txt-helpers";
 
 /** The token this audit scores, spelled as Anthropic documents it. */
 const TOKEN = "ClaudeBot";
@@ -30,20 +39,20 @@ export class AnthropicAudit extends CrawlerBotAudit {
     failureTitle: "ClaudeBot disallowed by robots.txt",
     description:
       "ClaudeBot collects web content that may contribute to Anthropic's model training, and Anthropic states its bots honour robots.txt. This check reads the robots.txt rules that actually apply to ClaudeBot — its own group if it has one, otherwise the catch-all — and reports whether they let it fetch the site root. A named group is not required: under RFC 9309 §2.2.1 an open catch-all grants the same access. The legacy `anthropic-ai` and `Claude-Web` tokens are reported when present but never scored, because Anthropic's current crawler documentation names neither.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/access-crawl-control/anthropic-ai.md",
     // Gate exemption: being refused is what this category reports.
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "medium",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "Disallowing ClaudeBot keeps the site out of the web content Anthropic collects for potential model training. It is an effective, documented control, so it is only a problem where the block was not intended. It buys back very little traffic either way: Cloudflare Radar measures Anthropic's crawl-to-refer ratio at roughly 50,000:1, so the allow-side case is about corpus inclusion rather than referral visibility.",
       fix: "If the block was not intended, remove the Disallow rule that applies to ClaudeBot, or add a named `User-agent: ClaudeBot` group with `Allow: /` — under RFC 9309 §2.2.1 a named group overrides the catch-all for that crawler. A `User-agent: anthropic-ai` group is not a substitute: Anthropic documents only ClaudeBot, Claude-User and Claude-SearchBot.",
       code: FIX_SNIPPET,
-      effort: "trivial",
+      effort: FixEffort.Trivial,
       tags: ["robots-txt", "anthropic", "crawler-permissions"],
     },
   };
@@ -51,7 +60,7 @@ export class AnthropicAudit extends CrawlerBotAudit {
   protected bot: CrawlerBot = {
     botName: TOKEN,
     displayName: TOKEN,
-    category: "training",
+    category: CrawlerPurpose.Training,
   };
 
   /**
@@ -158,7 +167,7 @@ export class AnthropicAudit extends CrawlerBotAudit {
         `${TOKEN} is disallowed at the site root. Anthropic states its bots honour robots.txt, so the block takes effect: the site is excluded from the web content Anthropic collects for potential model training.`,
         expected,
         `${found}${legacyNote}`,
-        { priority: "medium" },
+        { priority: CheckPriority.Medium },
       ),
       details: { ...details, code: FIX_SNIPPET },
     };

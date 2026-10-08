@@ -5,6 +5,7 @@ import {
   mockPageContext,
   mockFetchResult,
 } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 describe("AuthorPageAudit", () => {
   const audit = new AuthorPageAudit();
@@ -21,7 +22,7 @@ describe("AuthorPageAudit", () => {
     const ctx = mockCheckContext([page]);
     ctx.fetch = async () => mockFetchResult("bio", 200, "text/html");
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("returns 200");
   });
 
@@ -31,7 +32,7 @@ describe("AuthorPageAudit", () => {
       `<html><body><p>No author links here.</p></body></html>`,
     );
     const result = await audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No author page links found");
   });
 
@@ -47,13 +48,13 @@ describe("AuthorPageAudit", () => {
     const ctx = mockCheckContext([page]);
     ctx.fetch = async () => mockFetchResult("", 404);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("HTTP 404");
   });
 
   it("fails when no pages scanned", async () => {
     const result = await audit.audit(mockCheckContext([]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No pages scanned");
   });
 
@@ -68,7 +69,7 @@ describe("AuthorPageAudit", () => {
     const ctx = mockCheckContext([page]);
     ctx.fetch = async () => mockFetchResult("bio page", 200, "text/html");
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it('finds author URL via class*="author" link', async () => {
@@ -82,7 +83,7 @@ describe("AuthorPageAudit", () => {
     const ctx = mockCheckContext([page]);
     ctx.fetch = async () => mockFetchResult("bio page", 200, "text/html");
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("fails when fetching the author page throws a network error", async () => {
@@ -99,7 +100,7 @@ describe("AuthorPageAudit", () => {
       throw new Error("Network error");
     };
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("Failed to fetch");
   });
 
@@ -115,7 +116,7 @@ describe("AuthorPageAudit", () => {
     const ctx = mockCheckContext([page]);
     ctx.fetch = async () => mockFetchResult("bio page", 200, "text/html");
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("finds author URL when JSON-LD is a top-level array", async () => {
@@ -130,7 +131,7 @@ describe("AuthorPageAudit", () => {
     const ctx = mockCheckContext([page]);
     ctx.fetch = async () => mockFetchResult("bio page", 200, "text/html");
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("finds author URL when author is an array of person objects", async () => {
@@ -145,7 +146,7 @@ describe("AuthorPageAudit", () => {
     const ctx = mockCheckContext([page]);
     ctx.fetch = async () => mockFetchResult("bio page", 200, "text/html");
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("handles @type as array with non-string element (covers lines 25-27 Array.isArray + typeof false)", async () => {
@@ -160,7 +161,7 @@ describe("AuthorPageAudit", () => {
     const ctx = mockCheckContext([page]);
     ctx.fetch = async () => mockFetchResult("bio page", 200, "text/html");
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("handles null in @graph (covers line 14 walk null check)", async () => {
@@ -175,7 +176,7 @@ describe("AuthorPageAudit", () => {
     const ctx = mockCheckContext([page]);
     ctx.fetch = async () => mockFetchResult("bio page", 200, "text/html");
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("skips Article with no author property (covers line 97 continue)", async () => {
@@ -189,7 +190,7 @@ describe("AuthorPageAudit", () => {
       </body></html>`,
     );
     const result = await audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No author page links found");
   });
 
@@ -205,7 +206,7 @@ describe("AuthorPageAudit", () => {
     const ctx = mockCheckContext([page]);
     ctx.fetch = async () => mockFetchResult("bio page", 200, "text/html");
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("ignores HTML author anchor with no href attribute (covers line 113 if(href) false branch)", async () => {
@@ -217,7 +218,7 @@ describe("AuthorPageAudit", () => {
       </body></html>`,
     );
     const result = await audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No author page links found");
   });
 
@@ -230,7 +231,7 @@ describe("AuthorPageAudit", () => {
     );
     page.url = ":::not-a-valid-url:::";
     const result = await audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No author page links found");
   });
 });

@@ -3,6 +3,15 @@ import { Audit } from "../../audit";
 import type { CheckContext } from "../../check-context";
 import { flattenJsonLd } from "../../parser";
 import { weightForGrade } from "../../scorer";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "../../types";
 
 function matchesAnyType(
   schema: Record<string, unknown>,
@@ -24,19 +33,19 @@ export class OfferSchemaAudit extends Audit {
     failureTitle: "Offer schema on pricing pages",
     description:
       "AI agents use Offer schema to answer pricing queries with exact numbers. Without price and priceCurrency in structured data, agents must scrape and guess pricing from page text, which often produces inaccurate or outdated results in AI-generated comparisons.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/agentic-commerce/offer-schema.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: ["product"],
-    defaultPriority: "medium",
+    applicablePageTypes: [PageType.Product],
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         'Without Offer schema on pricing pages, AI agents cannot answer "how much does X cost?" with exact numbers. Agents must scrape and guess pricing from page text, which frequently produces inaccurate or outdated results in AI-generated price comparisons.',
@@ -50,7 +59,7 @@ export class OfferSchemaAudit extends Audit {
   "availability": "https://schema.org/InStock",
   "priceValidUntil": "2026-12-31"
 }`,
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl: "https://schema.org/Offer",
       tags: ["json-ld", "schema", "pricing", "ecommerce"],
     },
@@ -126,7 +135,7 @@ export class OfferSchemaAudit extends Audit {
         "Offer schema with price and priceCurrency on product pages.",
         `${pagesWithOffer.length}/${productPages.length} product pages with Offer schema`,
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "AI agents use Offer schema to answer pricing queries with exact numbers. Without price and priceCurrency in structured data, agents must scrape and guess pricing from page text, which often produces inaccurate or outdated results in AI-generated comparisons.",
           code: `{
@@ -145,7 +154,7 @@ export class OfferSchemaAudit extends Audit {
       "Offer schema with price and priceCurrency on product pages.",
       `${pagesWithOffer.length}/${productPages.length} product pages with Offer schema`,
       {
-        priority: "medium",
+        priority: CheckPriority.Medium,
         description:
           "AI agents use Offer schema to answer pricing queries with exact numbers. Without price and priceCurrency in structured data, agents must scrape and guess pricing from page text, which often produces inaccurate or outdated results in AI-generated comparisons.",
         code: `{

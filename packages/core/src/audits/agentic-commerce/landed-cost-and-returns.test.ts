@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { LandedCostAndReturnsAudit } from "./landed-cost-and-returns";
 import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
 import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
+import { CheckStatus } from "../../types";
 
 const ld = (obj: unknown) =>
   `<script type="application/ld+json">${JSON.stringify(obj)}</script>`;
@@ -77,7 +78,7 @@ describe("LandedCostAndReturnsAudit", () => {
 
   it("is notApplicable when no product page was scanned", () => {
     const result = audit.audit(mockCheckContext([homePage()]));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("passes when both legs are fully machine-readable", () => {
@@ -85,7 +86,7 @@ describe("LandedCostAndReturnsAudit", () => {
       shippingDetails: FULL_SHIPPING,
       hasMerchantReturnPolicy: FULL_RETURNS,
     });
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // The exact strings the merchant pastes into the feed.
@@ -125,7 +126,7 @@ describe("LandedCostAndReturnsAudit", () => {
       shippingDetails: misplaced,
       hasMerchantReturnPolicy: FULL_RETURNS,
     });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("deliveryTime");
   });
 
@@ -134,7 +135,7 @@ describe("LandedCostAndReturnsAudit", () => {
       shippingDetails: { "@type": "OfferShippingDetails", doesNotShip: true },
       hasMerchantReturnPolicy: FULL_RETURNS,
     });
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("fails the returns leg when a finite window carries no merchantReturnDays", () => {
@@ -143,7 +144,7 @@ describe("LandedCostAndReturnsAudit", () => {
       shippingDetails: FULL_SHIPPING,
       hasMerchantReturnPolicy: noDays,
     });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("merchantReturnDays");
   });
 
@@ -156,7 +157,7 @@ describe("LandedCostAndReturnsAudit", () => {
         merchantReturnLink: "https://example.com/returns",
       },
     });
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("merchantReturnLink");
   });
 
@@ -174,12 +175,12 @@ describe("LandedCostAndReturnsAudit", () => {
         productPage(ld(product({ shippingDetails: FULL_SHIPPING }))),
       ]),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("fails an Offer that carries neither leg", () => {
     const result = run({});
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("reports the product page the offer is on", () => {

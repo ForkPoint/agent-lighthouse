@@ -13,6 +13,7 @@ import { defaultConfig } from "../audit-config";
 import type { CheckContext, PageContext } from "../check-context";
 import type { FetchResult } from "../fetcher";
 import { allEvidenceMet } from "../scan-evidence";
+import { CheckStatus, PageType, PageTypeSource } from "../types";
 
 function loadFixture(filename: string): string {
   return readFileSync(
@@ -42,7 +43,7 @@ function createMockFetch(
 function buildPageContext(
   url: string,
   html: string,
-  pageType: PageContext["pageType"] = "product",
+  pageType: PageContext["pageType"] = PageType.Product,
 ): PageContext {
   const $ = parseHtml(html);
   const jsonLdBlocks = extractJsonLd($);
@@ -53,7 +54,7 @@ function buildPageContext(
   return {
     url,
     pageType,
-    pageTypeSource: "declared",
+    pageTypeSource: PageTypeSource.Declared,
     fetchResult: createMockFetch(200, html),
     $,
     jsonLd,
@@ -112,7 +113,7 @@ describe("Golden Corpus Conformance Tests (False-Positive Elimination)", () => {
     const page = buildPageContext(
       "https://acme-outfitters.com/products/alpine-windbreaker",
       html,
-      "product",
+      PageType.Product,
     );
     const ctx = buildTestContext("https://acme-outfitters.com", [page]);
 
@@ -121,35 +122,41 @@ describe("Golden Corpus Conformance Tests (False-Positive Elimination)", () => {
 
     // JSON-LD Present (3.1)
     expect(checkMap.get("structured-data/json-ld-present")?.status).toBe(
-      "pass",
+      CheckStatus.Pass,
     );
 
     // Schema Validation (3.2)
     expect(checkMap.get("structured-data/schema-validation")?.status).toBe(
-      "pass",
+      CheckStatus.Pass,
     );
 
     // Product Identifiers (SKU/GTIN) (3.21)
     expect(checkMap.get("agentic-commerce/product-identifiers")?.status).toBe(
-      "pass",
+      CheckStatus.Pass,
     );
 
     // Product Details (3.22)
     expect(
       checkMap.get("structured-data/advanced-product-details")?.status,
-    ).toBe("pass");
+    ).toBe(CheckStatus.Pass);
 
     // Open Graph Title, Image & Alt (4.6, 4.9)
     expect(checkMap.get("answer-readiness/core-open-graph")?.status).toBe(
-      "pass",
+      CheckStatus.Pass,
     );
-    expect(checkMap.get("answer-readiness/og-image-alt")?.status).toBe("pass");
+    expect(checkMap.get("answer-readiness/og-image-alt")?.status).toBe(
+      CheckStatus.Pass,
+    );
 
     // Semantic Tables (6.9)
-    expect(checkMap.get("content-extraction/data-tables")?.status).toBe("pass");
+    expect(checkMap.get("content-extraction/data-tables")?.status).toBe(
+      CheckStatus.Pass,
+    );
 
     // Form No-JS / Actionable Form (operability-safety)
-    expect(checkMap.get("operability-safety/forms-no-js")?.status).toBe("pass");
+    expect(checkMap.get("operability-safety/forms-no-js")?.status).toBe(
+      CheckStatus.Pass,
+    );
   });
 
   it("correctly evaluates SaaS / Documentation fixtures with OpenAPI & Code blocks", async () => {
@@ -157,7 +164,7 @@ describe("Golden Corpus Conformance Tests (False-Positive Elimination)", () => {
     const page = buildPageContext(
       "https://docs.cloudstack.dev/api/authentication",
       html,
-      "content",
+      PageType.Unknown,
     );
 
     const ctx = buildTestContext("https://docs.cloudstack.dev", [page], {
@@ -189,12 +196,12 @@ describe("Golden Corpus Conformance Tests (False-Positive Elimination)", () => {
 
     // llms.txt exists (1.1)
     expect(checkMap.get("machine-discovery/llms-txt-exists")?.status).toBe(
-      "pass",
+      CheckStatus.Pass,
     );
 
     // OpenAPI exists (5.1)
     expect(checkMap.get("agent-interfaces/openapi-exists")?.status).toBe(
-      "pass",
+      CheckStatus.Pass,
     );
 
     // Markdown Alternate Link (4.15) — warn, not pass: the fixture's own prose
@@ -202,18 +209,22 @@ describe("Golden Corpus Conformance Tests (False-Positive Elimination)", () => {
     // unresolved component tag. The scored path is what matters here; before
     // the alternate was served this check reported `na`.
     expect(checkMap.get("content-extraction/markdown-alternate")?.status).toBe(
-      "warn",
+      CheckStatus.Warn,
     );
 
     // Code Language Specified (6.10)
     expect(checkMap.get("content-extraction/code-language")?.status).toBe(
-      "pass",
+      CheckStatus.Pass,
     );
   });
 
   it("accurately identifies Client-Side SPAs vs Server-Rendered pages", async () => {
     const html = loadFixture("spa-edge-case.html");
-    const page = buildPageContext("https://spa-example.com", html, "homepage");
+    const page = buildPageContext(
+      "https://spa-example.com",
+      html,
+      PageType.Homepage,
+    );
     const ctx = buildTestContext("https://spa-example.com", [page]);
 
     const { checks } = await runAudits(ctx, defaultConfig);
@@ -221,7 +232,7 @@ describe("Golden Corpus Conformance Tests (False-Positive Elimination)", () => {
 
     // Server-Rendered Audit (8.13) must fail for empty CSR div
     expect(checkMap.get("content-extraction/server-rendered")?.status).toBe(
-      "fail",
+      CheckStatus.Fail,
     );
   });
 });

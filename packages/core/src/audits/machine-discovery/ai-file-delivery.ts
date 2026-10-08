@@ -3,6 +3,14 @@ import { Audit } from "../../audit";
 import type { CheckContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
 import type { FetchResult } from "../../fetcher";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 interface Expectation {
   path: string;
@@ -49,6 +57,14 @@ function isHtmlShell(file: FetchResult): boolean {
   return /^\s*(<!doctype html|<html)/i.test(file.body);
 }
 
+const CachingState = {
+  Cacheable: "cacheable",
+  Validator: "validator",
+  None: "none",
+} as const;
+
+type CachingState = (typeof CachingState)[keyof typeof CachingState];
+
 /**
  * Does this response let a client avoid re-downloading the file?
  *
@@ -57,7 +73,7 @@ function isHtmlShell(file: FetchResult): boolean {
  * it warned about), and an `ETag`/`Last-Modified` validator counts, since
  * conditional requests are the mechanism that actually saves the transfer.
  */
-function cachingState(file: FetchResult): "cacheable" | "validator" | "none" {
+function cachingState(file: FetchResult): CachingState {
   const cacheControl = (file.headers["cache-control"] ?? "").toLowerCase();
   if (cacheControl) {
     const directives = cacheControl.split(",").map((d) => d.trim());
@@ -66,17 +82,18 @@ function cachingState(file: FetchResult): "cacheable" | "validator" | "none" {
     );
     // A validator saves the transfer only when the client may keep the copy.
     // `no-store` forbids that outright, so an ETag beside it stores nothing.
-    if (blocked) return "none";
+    if (blocked) return CachingState.None;
     const maxAge = directives
       .map(
         (d) => /^s?-?max-age=(\d+)$/.exec(d) ?? /^(?:s-)?maxage=(\d+)$/.exec(d),
       )
       .find((m) => m !== null);
     const seconds = maxAge ? Number(maxAge[1]) : 0;
-    if (seconds > 0) return "cacheable";
+    if (seconds > 0) return CachingState.Cacheable;
   }
-  if (file.headers["etag"] || file.headers["last-modified"]) return "validator";
-  return "none";
+  if (file.headers["etag"] || file.headers["last-modified"])
+    return CachingState.Validator;
+  return CachingState.None;
 }
 
 /** nosniff removes a client's ability to recover from a wrong Content-Type. */
@@ -95,24 +112,24 @@ export class AiFileDeliveryAudit extends Audit {
     failureTitle: "AI files are delivered correctly",
     description:
       "AI agents use the Content-Type header to decide how to parse a file, and caching headers to avoid re-downloading one that has not changed. This audit reports both for every AI file the scan fetched.",
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("B", "informative"),
-    evidenceGrade: "B",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/machine-discovery/ai-file-delivery.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "medium",
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "Incorrect Content-Type headers cause AI agents to misparse your files: JSON served as text/html breaks structured-data extraction, an XML sitemap served as text/plain hides it from crawl discovery, and llms.txt served as application/octet-stream triggers a download instead of a read. Missing caching headers make every agent re-download the full file on each visit rather than revalidating it.",
       fix: "Serve each AI file with its own MIME type (application/json for JSON, application/xml for XML sitemaps, text/plain or text/markdown for llms.txt) and add either a Cache-Control with a non-zero max-age or an ETag / Last-Modified validator.",
       code: 'llms.txt:        Content-Type: text/plain\nopenapi.json:    Content-Type: application/json\nai-catalog.json: Content-Type: application/json\nsitemap.xml:     Content-Type: application/xml\n\nCache-Control: public, max-age=3600\nETag: "a1b2c3"',
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl:
         "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type",
       tags: ["headers", "ai-files", "caching", "configuration"],
@@ -152,7 +169,7 @@ export class AiFileDeliveryAudit extends Audit {
         });
       }
 
-      if (cachingState(file) === "none") uncached.push(label);
+      if (cachingState(file) === CachingState.None) uncached.push(label);
     }
 
     if (correct.length + incorrect.length === 0) {
@@ -182,7 +199,7 @@ export class AiFileDeliveryAudit extends Audit {
         expected,
         `Incorrect: ${details}; ${cachingNote}`,
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "AI agents use Content-Type headers to determine how to parse your files. Incorrect MIME types cause JSON files to be treated as plain text (breaking schema parsing) or XML to be treated as HTML (breaking sitemap crawling). Fix Content-Type headers to match each file format.",
           code: incorrect
@@ -199,7 +216,7 @@ export class AiFileDeliveryAudit extends Audit {
         expected,
         `Correct: ${correct.join(", ")}; ${cachingNote}`,
         {
-          priority: "low",
+          priority: CheckPriority.Low,
           description:
             "Without a cache-control max-age or an ETag / Last-Modified validator, every agent request re-downloads the whole file instead of revalidating it. Google documents honouring both conditional-request mechanisms.",
           code: 'Cache-Control: public, max-age=3600\nETag: "a1b2c3"',

@@ -4,6 +4,14 @@ import type { CheckContext } from "../../check-context";
 import { extractImages } from "../../parser";
 import { weightForGrade } from "../../scorer";
 import { scanReadPageText, unreadPageTextReason } from "../../scan-evidence";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 export class FigureFigcaptionAudit extends Audit {
   static override meta: AuditMeta = {
@@ -13,24 +21,24 @@ export class FigureFigcaptionAudit extends Audit {
     failureTitle: "<figure> + <figcaption> usage",
     description:
       "AI agents use <figcaption> to understand the purpose and context of figures beyond what alt text provides. Without captions, agents treat figures as opaque image containers with no semantic meaning, missing opportunities to cite your visual data in AI-generated answers.",
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "informative"),
-    evidenceGrade: "C",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/content-extraction/figure-figcaption.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "medium",
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "AI agents use <figcaption> to understand the purpose and context of visual content beyond what alt text provides. Without captions, figures are treated as opaque image containers, and your charts, diagrams, and illustrations cannot be meaningfully cited in AI-generated answers.",
       fix: "Wrap images, charts, diagrams, and code examples in <figure> elements. Add a descriptive <figcaption> that explains the significance of the visual content -- not just what it shows, but why it matters in context.",
       code: '<figure>\n  <img src="sales-chart.png" alt="Bar chart showing quarterly sales">\n  <figcaption>Figure 1: Sales increased 40% year-over-year in Q4 2024, driven by the new product launch.</figcaption>\n</figure>',
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl:
         "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/figure",
       tags: ["images", "figures", "captions", "semantic", "html"],
@@ -64,7 +72,7 @@ export class FigureFigcaptionAudit extends Audit {
           "Images with context wrapped in <figure> with <figcaption>",
           "No <figure> elements",
           {
-            priority: "low",
+            priority: CheckPriority.Low,
             description:
               "AI agents use <figcaption> to understand the context and purpose of images beyond what alt text provides. Wrapping images in <figure> with <figcaption> gives agents a richer description that can be cited in AI-generated explanations.",
             code: '<figure>\n  <img src="chart.png" alt="Sales growth chart">\n  <figcaption>Figure 1: Sales grew 40% year-over-year in Q4 2024.</figcaption>\n</figure>',
@@ -106,7 +114,7 @@ export class FigureFigcaptionAudit extends Audit {
         "All <figure> elements have a <figcaption>",
         `${figuresWithCaption}/${totalFigures} figures with captions`,
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "AI agents use <figcaption> to understand the purpose and context of figures beyond what alt text provides. Without captions, agents treat figures as opaque image containers with no semantic meaning, missing opportunities to cite your visual data in AI-generated answers.",
           code: '<figure>\n  <img src="diagram.png" alt="Architecture diagram">\n  <figcaption>System architecture showing the three main components.</figcaption>\n</figure>',
@@ -119,7 +127,7 @@ export class FigureFigcaptionAudit extends Audit {
       "All <figure> elements have a <figcaption>",
       `${figuresWithCaption}/${totalFigures} figures with captions`,
       {
-        priority: "medium",
+        priority: CheckPriority.Medium,
         description:
           "AI agents use <figcaption> to understand the purpose and context of figures beyond what alt text provides. Without captions, agents treat figures as opaque image containers with no semantic meaning, missing opportunities to cite your visual data in AI-generated answers.",
         code: '<figure>\n  <img src="diagram.png" alt="Architecture diagram">\n  <figcaption>System architecture showing the three main components.</figcaption>\n</figure>',

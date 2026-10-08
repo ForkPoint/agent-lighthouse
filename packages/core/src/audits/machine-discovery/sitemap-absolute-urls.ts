@@ -3,6 +3,14 @@ import { Audit } from "../../audit";
 import type { CheckContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
 import { readSitemap, NO_SITEMAP } from "../../gatherers/sitemap";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 export class SitemapAbsoluteUrlsAudit extends Audit {
   static override meta: AuditMeta = {
@@ -12,19 +20,19 @@ export class SitemapAbsoluteUrlsAudit extends Audit {
     failureTitle: "Sitemap uses absolute URLs",
     description:
       "Sitemap URLs must be absolute (starting with https://) so AI crawlers can resolve them without ambiguity.",
-    scoreDisplayMode: "binary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Binary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/machine-discovery/sitemap-absolute-urls.md",
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "high",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "Relative URLs in your sitemap cannot be resolved by AI crawlers, causing them to silently skip those pages. Any page listed with a relative URL is effectively invisible to AI search engines.",
       fix: "Ensure every <loc> value in your sitemap.xml starts with the full protocol and domain (e.g., https://yoursite.com/page). Update your sitemap generator configuration to output absolute URLs.",
       code: "<!-- Correct: absolute URL -->\n<url>\n  <loc>https://yoursite.com/page</loc>\n</url>\n\n<!-- Wrong: relative URL -->\n<url>\n  <loc>/page</loc>\n</url>",
-      effort: "trivial",
+      effort: FixEffort.Trivial,
       docsUrl: "https://www.sitemaps.org/protocol.html",
       tags: ["sitemap", "seo", "discoverability"],
     },
@@ -69,7 +77,7 @@ export class SitemapAbsoluteUrlsAudit extends Audit {
         "All <loc> values are absolute URLs (https://...)",
         `Relative: ${relative.slice(0, 5).join(", ")}${relative.length > 5 ? ` (+${relative.length - 5} more)` : ""}`,
         {
-          priority: "high",
+          priority: CheckPriority.High,
           description:
             "Sitemap URLs must be absolute (starting with http:// or https://) per the sitemaps.org protocol. Relative URLs cannot be resolved by AI crawlers and will be ignored.",
           code: `<!-- Use absolute URLs -->\n<url>\n  <loc>https://yoursite.com/page</loc>\n</url>\n\n<!-- NOT relative URLs -->\n<url>\n  <loc>/page</loc> <!-- WRONG -->\n</url>`,

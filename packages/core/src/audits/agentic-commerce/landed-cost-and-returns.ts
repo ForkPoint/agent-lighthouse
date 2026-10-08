@@ -9,6 +9,15 @@ import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
 import type { CheckContext, PageContext } from "../../check-context";
 import { flattenJsonLd } from "../../parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** The three values schema.org allows for returnPolicyCategory. */
 const RETURN_CATEGORIES = new Set([
@@ -270,25 +279,25 @@ export class LandedCostAndReturnsAudit extends Audit {
     failureTitle: "Landed-cost and returns machine readability",
     description:
       "Requires structured, agent-parsable shipping cost, handling and transit times, and a return window expressed as an integer — the exact inputs an agent needs to rank offers and the exact fields the ACP checkout session must compute.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/agentic-commerce/landed-cost-and-returns.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: ["product"],
-    defaultPriority: "high",
+    applicablePageTypes: [PageType.Product],
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "Falsifiable claim: ACP makes `fulfillment_options` and `totals` REQUIRED on every CheckoutSession, and the seller — not the agent — is responsible for 'calculating all amounts (item prices, discounts, taxes, shipping)'; totals must break down into typed entries including `fulfillment` and `tax` before status can reach `ready_for_payment`. Upstream of that, the OpenAI feed `shipping` field is a rigid positional string country:region:service_class:price:handling_days:transit_days, and the returns fields are accepts_returns, return_deadline_in_days (positive integer) and return_policy URL. Agents rank competing offers on landed cost and delivery date, both of which are numbers. A merchant that publishes shipping and returns only as prose on a /shipping page supplies no number, so it either loses the comparison or forces a headless-browser fallback. Disproof condition: agents consistently ranking offers correctly from prose-only shipping pages.",
       fix: "Add OfferShippingDetails to every offer: shippingRate as a MonetaryAmount with a numeric value and a currency, shippingDestination.addressCountry, and handlingTime plus transitTime as QuantitativeValue nested under deliveryTime — not directly on OfferShippingDetails, which is the common mistake. Add hasMerchantReturnPolicy with applicableCountry and returnPolicyCategory, and for a finite window a positive integer merchantReturnDays. Where you genuinely do not ship, say so with doesNotShip: true; an explicit answer is an answer. A merchantReturnLink alone is not enough: an agent cannot compare a URL.",
       code: SAMPLE,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/agentic-commerce/landed-cost-and-returns/",
       tags: ["acp", "shipping", "returns", "feed", "commerce"],
@@ -297,7 +306,7 @@ export class LandedCostAndReturnsAudit extends Audit {
 
   private recommendation() {
     return {
-      priority: "high" as const,
+      priority: CheckPriority.High,
       description: LandedCostAndReturnsAudit.meta.description,
       code: SAMPLE,
     };

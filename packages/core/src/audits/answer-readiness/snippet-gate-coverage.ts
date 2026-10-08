@@ -10,6 +10,14 @@ import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
 import type { CheckContext, PageContext } from "../../check-context";
 import { allJsonLdNodes } from "../../parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** Above this share of main-content characters, suppression is structural. */
 const COVERAGE_FLOOR = 0.2;
@@ -283,24 +291,24 @@ export class SnippetGateCoverageAudit extends Audit {
     failureTitle: "Snippet-gate coverage analysis",
     description:
       "Computes the site's effective snippet permissions per crawler — merging <meta name=\"robots\">, per-bot meta tags, and X-Robots-Tag response headers — then measures those permissions against the page's actual answer content: is max-snippet numerically smaller than the primary answer span, and does data-nosnippet coverage overlap the answer span, the FAQ answers, or the main-content tables. Reports the specific suppressed text, not just the directive.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/answer-readiness/snippet-gate-coverage.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "high",
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "Google states the eligibility gate directly: to appear as a supporting link a page 'must be indexed and eligible to be shown in Google Search with a snippet', and names nosnippet, data-nosnippet, max-snippet and noindex as the controls that limit what AI Overviews and AI Mode can show. This makes the causal chain fully documented rather than inferred: a max-snippet value shorter than the answer sentence truncates the answer below usefulness, and data-nosnippet wrapping the answer removes it from AI surfaces entirely while leaving it visible to humans — an invisible failure that page-level SEO reports do not surface because the directive itself is technically 'valid'.",
       fix: "Drop nosnippet and noindex from any page you want quoted, and set max-snippet:-1 rather than a short numeric budget. Keep data-nosnippet for material that must not be reused — trade pricing, licensed quotations — and off the sentence that answers a heading, the FAQ answers and the main-content tables. Where a per-bot X-Robots-Tag header contradicts the page meta, remove one of them: the most restrictive value wins, so the header silently overrides the markup.",
       code: SAMPLE,
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/answer-readiness/snippet-gate-coverage/",
       tags: ["snippet", "robots", "ai-overviews", "answer-selection"],
@@ -309,7 +317,7 @@ export class SnippetGateCoverageAudit extends Audit {
 
   private recommendation() {
     return {
-      priority: "high" as const,
+      priority: CheckPriority.High,
       description: SnippetGateCoverageAudit.meta.description,
       code: SAMPLE,
     };

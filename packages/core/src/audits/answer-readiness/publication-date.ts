@@ -3,6 +3,15 @@ import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
 import type { CheckContext, PageContext } from "../../check-context";
 import { getMainContentText, flattenJsonLd } from "../../parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "../../types";
 
 // Kept identical to dates-on-content / last-updated. See the comment there.
 const DATE_PATTERN =
@@ -79,25 +88,25 @@ export class PublicationDateAudit extends Audit {
     failureTitle: "Publication date visible",
     description:
       "AI engines use visible dates to assess content freshness. Undated content is deprioritized for recency-weighted queries.",
-    scoreDisplayMode: "binary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Binary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/answer-readiness/publication-date.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: ["article"],
-    defaultPriority: "medium",
+    applicablePageTypes: [PageType.Article],
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "AI generative engines use visible publication dates as a freshness signal when ranking content sources. Undated content is deprioritized because agents cannot determine whether the information is current, especially for topics where recency matters.",
       fix: "Add a visible publication date using the <time> element with a machine-readable datetime attribute. Place it prominently near the article title.",
       code: '<p>Published: <time datetime="2025-01-15">January 15, 2025</time></p>',
-      effort: "trivial",
+      effort: FixEffort.Trivial,
       tags: ["freshness", "html", "generative-engine"],
     },
   };
@@ -140,7 +149,7 @@ export class PublicationDateAudit extends Audit {
       "<time> element or visible date on content pages",
       "Not found",
       {
-        priority: "medium",
+        priority: CheckPriority.Medium,
         description:
           "AI generative engines use visible publication dates as a freshness signal when ranking content sources. Undated content is deprioritized because agents cannot determine whether the information is current, especially for topics where recency matters like technology, regulations, or market data.",
         code: '<p>Published: <time datetime="2025-01-15">January 15, 2025</time></p>',

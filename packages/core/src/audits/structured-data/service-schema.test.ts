@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { ServiceSchemaAudit } from "./service-schema";
 import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
+import { CheckStatus, PageType } from "../../types";
 
 const ld = (obj: unknown) =>
   `<script type="application/ld+json">${JSON.stringify(obj)}</script>`;
@@ -37,7 +38,7 @@ describe("ServiceSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No Service schema found");
   });
 
@@ -53,7 +54,7 @@ describe("ServiceSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("detects a Service nested inside @graph", () => {
@@ -72,7 +73,7 @@ describe("ServiceSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("detects a Service in a top-level `[{...}]` array (Shopify-style)", () => {
@@ -89,7 +90,7 @@ describe("ServiceSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("accepts ProfessionalService, the other in-scope type", () => {
@@ -104,7 +105,7 @@ describe("ServiceSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("detects a Service with array @type (Array.isArray branch in matchesAnyType)", () => {
@@ -119,7 +120,7 @@ describe("ServiceSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("warns when the Service is missing provider", () => {
@@ -133,7 +134,7 @@ describe("ServiceSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("missing: provider");
   });
 
@@ -157,7 +158,7 @@ describe("ServiceSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No Service schema found");
   });
 
@@ -170,13 +171,12 @@ describe("ServiceSchemaAudit", () => {
   describe("scoping: runs where Service markup is plausible, na elsewhere", () => {
     it("declares the page types a service business actually publishes on", () => {
       expect(ServiceSchemaAudit.meta.applicablePageTypes).toEqual([
-        "homepage",
-        "content",
-        "unknown",
-        "article",
+        PageType.Homepage,
+        PageType.Unknown,
+        PageType.Article,
       ]);
       expect(ServiceSchemaAudit.meta.applicablePageTypes).not.toContain(
-        "product",
+        PageType.Product,
       );
     });
 
@@ -191,7 +191,7 @@ describe("ServiceSchemaAudit", () => {
           }),
         ),
       ]);
-      expect(audit.audit(ctx).status).toBe("pass");
+      expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
     });
 
     it("is na — not fail — on a product store with no service intent", () => {
@@ -210,7 +210,7 @@ describe("ServiceSchemaAudit", () => {
         ),
       ]);
       const result = audit.audit(ctx);
-      expect(result.status).toBe("na");
+      expect(result.status).toBe(CheckStatus.NotApplicable);
       expect(result.message).toContain("No service offering detected");
     });
 
@@ -224,7 +224,7 @@ describe("ServiceSchemaAudit", () => {
           }),
         ),
       ]);
-      expect(audit.audit(ctx).status).toBe("na");
+      expect(audit.audit(ctx).status).toBe(CheckStatus.NotApplicable);
     });
 
     // The audit must still be able to fail: a site that clearly sells services
@@ -241,7 +241,7 @@ describe("ServiceSchemaAudit", () => {
         ),
       ]);
       const result = audit.audit(ctx);
-      expect(result.status).toBe("fail");
+      expect(result.status).toBe(CheckStatus.Fail);
       expect(result.message).toContain("No Service schema found");
     });
 
@@ -256,7 +256,7 @@ describe("ServiceSchemaAudit", () => {
           '<nav><a href="/p/9f2c">What we do</a></nav>',
         ),
       ]);
-      expect(audit.audit(ctx).status).toBe("fail");
+      expect(audit.audit(ctx).status).toBe(CheckStatus.Fail);
     });
 
     // Service markup anywhere in the scan puts the site in scope regardless of
@@ -272,7 +272,7 @@ describe("ServiceSchemaAudit", () => {
           }),
         ),
       ]);
-      expect(audit.audit(ctx).status).toBe("pass");
+      expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
     });
 
     // A store's "Customer Service" / "Terms of Service" chrome must not drag
@@ -289,7 +289,7 @@ describe("ServiceSchemaAudit", () => {
             '<a href="/help/contact">Customer service</a></footer>',
         ),
       ]);
-      expect(audit.audit(ctx).status).toBe("na");
+      expect(audit.audit(ctx).status).toBe(CheckStatus.NotApplicable);
     });
   });
 
@@ -307,7 +307,7 @@ describe("ServiceSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).not.toContain("description");
   });
 
@@ -333,7 +333,7 @@ describe("ServiceSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("warns naming every missing property when no node covers any of them", () => {
@@ -341,7 +341,7 @@ describe("ServiceSchemaAudit", () => {
       page(ld({ "@context": "https://schema.org", "@type": "Service" })),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("missing: name, provider");
   });
 
@@ -365,7 +365,7 @@ describe("ServiceSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("2");
   });
 });

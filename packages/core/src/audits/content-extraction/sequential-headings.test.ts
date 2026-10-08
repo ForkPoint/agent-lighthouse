@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { SequentialHeadingsAudit } from "./sequential-headings";
 import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 describe("SequentialHeadingsAudit", () => {
   const audit = new SequentialHeadingsAudit();
@@ -11,7 +12,7 @@ describe("SequentialHeadingsAudit", () => {
       "<html><body><h1>Title</h1><h2>Section</h2><h3>Subsection</h3></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("No heading skips");
   });
 
@@ -21,7 +22,7 @@ describe("SequentialHeadingsAudit", () => {
       "<html><body><h1>Only one</h1></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("fewer than 2 headings");
   });
 
@@ -31,7 +32,7 @@ describe("SequentialHeadingsAudit", () => {
       "<html><body><h1>Title</h1><h3>Skipped to h3</h3></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("heading level skips");
     expect(result.found).toContain("h1 -> h3");
   });
@@ -46,7 +47,7 @@ describe("SequentialHeadingsAudit", () => {
       "<html><body><h1>Title</h1><h3>Skip</h3></body></html>",
     );
     const result = audit.audit(mockCheckContext([good, bad]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("1/2");
   });
 });

@@ -10,6 +10,7 @@ import {
   unreachedSiteContext,
   walledSiteContext,
 } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 describe("NoBlockingCaptchaAudit", () => {
   const audit = new NoBlockingCaptchaAudit();
@@ -23,7 +24,7 @@ describe("NoBlockingCaptchaAudit", () => {
     );
     const ctx = mockCheckContext([page]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("No blocking CAPTCHA");
   });
 
@@ -37,7 +38,7 @@ describe("NoBlockingCaptchaAudit", () => {
     );
     const ctx = mockCheckContext([page]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("recaptcha");
   });
 
@@ -50,7 +51,7 @@ describe("NoBlockingCaptchaAudit", () => {
     );
     const ctx = mockCheckContext([page]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("turnstile");
   });
 
@@ -65,7 +66,7 @@ describe("NoBlockingCaptchaAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // True positive: a Turnstile widget mounted on a form, with no script tag in
@@ -81,7 +82,7 @@ describe("NoBlockingCaptchaAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("turnstile");
   });
 });
@@ -102,7 +103,7 @@ describe("NoBlockingCaptchaAudit — the wall the scanner met", () => {
     };
     const result = audit.audit(ctx);
 
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("bot wall");
     expect(result.message).toContain("Cloudflare");
   });
@@ -119,11 +120,13 @@ describe("NoBlockingCaptchaAudit — the wall the scanner met", () => {
         isRateLimit: true,
       },
     };
-    expect(audit.audit(ctx).status).toBe("na");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.NotApplicable);
   });
 
   it("is notApplicable when no page was fetched", () => {
-    expect(audit.audit(mockCheckContext([])).status).toBe("na");
+    expect(audit.audit(mockCheckContext([])).status).toBe(
+      CheckStatus.NotApplicable,
+    );
   });
 
   // The scan may hold a readable page that is not this site's — a broker's
@@ -133,7 +136,9 @@ describe("NoBlockingCaptchaAudit — the wall the scanner met", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new NoBlockingCaptchaAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext(pages, rootFiles),
@@ -145,13 +150,13 @@ describe("NoBlockingCaptchaAudit — the wall the scanner met", () => {
     expect(
       plan.skipped.find((stub) => stub.id === NoBlockingCaptchaAudit.meta.id)
         ?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
   // This direct call pins the audit's local WAF branch. The runner does not
   // publish this finding from an unread scan; it emits an `na` stub instead.
   it("reports the wall when its local WAF branch is called directly", () => {
     const result = new NoBlockingCaptchaAudit().audit(walledSiteContext());
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("bot wall");
     expect(result.message).toContain("Cloudflare");
   });
@@ -162,7 +167,7 @@ describe("NoBlockingCaptchaAudit — the wall the scanner met", () => {
   // is empty so the gate does not decline this, and the audit has to.
   it("declines a page that served no readable text", () => {
     const result = new NoBlockingCaptchaAudit().audit(shellSiteContext());
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("no readable text");
   });
 
@@ -174,7 +179,7 @@ describe("NoBlockingCaptchaAudit — the wall the scanner met", () => {
       '<script src="https://www.google.com/recaptcha/api.js"></script></head>' +
       '<body><div id="root"></div></body></html>';
     const result = new NoBlockingCaptchaAudit().audit(shellSiteContext(html));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("recaptcha");
   });
 });

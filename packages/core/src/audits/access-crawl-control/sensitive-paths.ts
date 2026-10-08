@@ -4,6 +4,14 @@ import type { CheckContext } from "../../check-context";
 import { parseRobotsTxt, isPathAllowed } from "./_robots-txt-helpers";
 import { weightForGrade } from "../../scorer";
 import { siteSitemapTree } from "../../gatherers/sitemap";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /**
  * AI crawler product tokens whose vendors document path-level `Disallow`.
@@ -201,24 +209,24 @@ export class SensitivePathsAudit extends Audit {
     failureTitle: "Low-value URLs excluded from AI crawls",
     description:
       "AI crawlers honour path-level Disallow rules (RFC 9309), so robots.txt is the lever for keeping low-value URL spaces — carts, checkouts, site-search results, login and account pages — out of AI crawls and out of the answers built from them. This is crawl hygiene, not access control.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/access-crawl-control/sensitive-paths.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "low",
+    defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
         'Cart, checkout, site-search, login and account URLs carry nothing an answer engine can cite, but they are crawled and can surface in AI answers as dead, session-bearing links. Apple documents Applebot and Applebot-Extended honouring "Disallow: /private/", and Meta documents the same for meta-externalagent, so a path-level rule keeps that noise out of AI crawls. Two limits matter: RFC 9309 states the protocol "is not a substitute for valid content security measures" and that listed paths become publicly discoverable, so never use robots.txt to protect anything; and user-initiated fetchers are documented not to obey it — OpenAI says of ChatGPT-User "Because these actions are initiated by a user, robots.txt rules may not apply", and Perplexity says Perplexity-User "generally ignores robots.txt rules".',
       fix: "Add Disallow rules for the low-value URL families your site actually has — cart, checkout, site search, login and account areas. Leave API paths crawlable: agents need them. Never list a private directory here expecting it to be protected; use HTTP authentication for that.",
       code: "User-agent: *\nAllow: /\nDisallow: /cart\nDisallow: /checkout\nDisallow: /search\nDisallow: /account\n\n# API paths are deliberately left crawlable — agents need them.",
-      effort: "trivial",
+      effort: FixEffort.Trivial,
       docsUrl: "https://www.rfc-editor.org/rfc/rfc9309.html",
       tags: ["robots-txt", "crawl-hygiene", "crawler-permissions"],
     },
@@ -299,7 +307,7 @@ export class SensitivePathsAudit extends Audit {
         EXPECTED,
         `Excluded: ${label(excluded)}; still crawlable: ${label(crawled)}${suffix}`,
         {
-          priority: "low",
+          priority: CheckPriority.Low,
           description: `${why}. Extend the robots.txt rules to cover the remaining families so AI crawlers spend their budget on citable pages instead. Leave API paths crawlable.`,
         },
       );
@@ -311,7 +319,7 @@ export class SensitivePathsAudit extends Audit {
       EXPECTED,
       `Still crawlable: ${label(crawled)}${suffix}`,
       {
-        priority: "low",
+        priority: CheckPriority.Low,
         description: `${why}. Add path-level Disallow rules so AI crawlers spend their budget on citable pages instead of session-bearing and non-canonical URLs. Leave API paths crawlable — agents need them — and remember robots.txt is not an access control.`,
       },
     );

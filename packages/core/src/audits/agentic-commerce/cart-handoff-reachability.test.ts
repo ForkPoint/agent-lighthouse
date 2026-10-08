@@ -12,6 +12,7 @@ import {
 import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
 import type { FetchOptions, FetchResult } from "../../fetcher";
 import type { AuditResult } from "../../types";
+import { CheckStatus } from "../../types";
 
 vi.mock("../../fetcher", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../fetcher")>();
@@ -92,13 +93,13 @@ describe("CartHandoffReachabilityAudit", () => {
 
   it("is notApplicable with no fingerprint and no cart path answering", async () => {
     const { result } = run();
-    expect((await result).status).toBe("na");
+    expect((await result).status).toBe(CheckStatus.NotApplicable);
   });
 
   it("fails a fingerprinted storefront whose cart path 404s", async () => {
     const { result } = run({ markup: SHOPIFY });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures")[0]).toContain("no discoverable cart surface");
   });
 
@@ -108,7 +109,7 @@ describe("CartHandoffReachabilityAudit", () => {
       paths: { "/cart": {} },
     });
     const r = await result;
-    expect(r.status).toBe("pass");
+    expect(r.status).toBe(CheckStatus.Pass);
     expect(r.details?.["platform"]).toBe("shopify");
     // One path, two user agents, no more.
     expect(requests).toHaveLength(2);
@@ -125,7 +126,7 @@ describe("CartHandoffReachabilityAudit", () => {
       },
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures")[0]).toContain("account wall");
   });
 
@@ -142,7 +143,7 @@ describe("CartHandoffReachabilityAudit", () => {
       },
     });
     const r = await result;
-    expect(r.status).toBe("pass");
+    expect(r.status).toBe(CheckStatus.Pass);
     expect(strings(r, "failures")).toEqual([]);
   });
 
@@ -158,7 +159,7 @@ describe("CartHandoffReachabilityAudit", () => {
       },
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures")[0]).toContain("Cloudflare Turnstile");
   });
 
@@ -174,7 +175,7 @@ describe("CartHandoffReachabilityAudit", () => {
       },
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures")[0]).toContain("Managed Challenge");
   });
 
@@ -185,7 +186,7 @@ describe("CartHandoffReachabilityAudit", () => {
       agentPaths: { "/cart": { status: 403, body: "" } },
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures")[0]).toContain("ChatGPT-User");
     expect(strings(r, "failures")[0]).toContain("403");
   });
@@ -208,7 +209,7 @@ describe("CartHandoffReachabilityAudit", () => {
       },
     });
     const r = await result;
-    expect(r.status).toBe("warn");
+    expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "warnings")[0]).toContain("without JavaScript");
   });
 
@@ -221,7 +222,7 @@ describe("CartHandoffReachabilityAudit", () => {
     const r = await result;
     expect(strings(r, "disallowedByRobots")).toEqual(["/cart"]);
     expect(requests).toHaveLength(0);
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
   });
 
   it("names each challenge widget it knows", () => {

@@ -9,6 +9,7 @@ import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
 import type { CheckContext } from "../../check-context";
 import type { FetchResult } from "../../fetcher";
 import type { AuditResult } from "../../types";
+import { AuditTier, CheckStatus, EvidenceGrade } from "../../types";
 
 /** A string-array detail, defaulted so the assertion reads the value not the optionality. */
 const strings = (result: AuditResult, key: string): string[] =>
@@ -80,7 +81,7 @@ describe("RslLicensingTermsConformanceAudit", () => {
 
   it("is notApplicable when no channel advertises a licence and no path carries one", async () => {
     const { ctx } = site({ robots: "User-agent: *\nAllow: /\n" });
-    expect((await audit.audit(ctx)).status).toBe("na");
+    expect((await audit.audit(ctx)).status).toBe(CheckStatus.NotApplicable);
   });
 
   it("collects candidates from all four channels", async () => {
@@ -108,7 +109,7 @@ describe("RslLicensingTermsConformanceAudit", () => {
   it("reports a relative License: value rather than resolving it", async () => {
     const { ctx, fetched } = site({ robots: "License: /license.xml\n" });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.found).toContain("not an absolute URI");
     // The only requests are the conventional-path probes, which run because
     // nothing valid was advertised. The relative value itself is never resolved.
@@ -124,7 +125,7 @@ describe("RslLicensingTermsConformanceAudit", () => {
       files: { "https://example.com/license.xml": rslFile() },
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(strings(result, "notes")[0]).toContain("no crawler is obliged");
   });
 
@@ -152,7 +153,7 @@ describe("RslLicensingTermsConformanceAudit", () => {
       },
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.details?.["conformanceErrors"]).toBeUndefined();
   });
 
@@ -167,7 +168,7 @@ describe("RslLicensingTermsConformanceAudit", () => {
         ),
       },
     });
-    expect((await audit.audit(ctx)).status).toBe("na");
+    expect((await audit.audit(ctx)).status).toBe(CheckStatus.NotApplicable);
   });
 
   // True positive: a guessed path that redirects to a real RSL document is
@@ -180,7 +181,7 @@ describe("RslLicensingTermsConformanceAudit", () => {
       files: { "https://example.com/license.xml": moved },
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(strings(result, "notes")[0]).toContain("no crawler is obliged");
   });
 
@@ -198,7 +199,7 @@ describe("RslLicensingTermsConformanceAudit", () => {
       },
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     const errors = strings(result, "conformanceErrors").join(" ");
     expect(errors).toContain("root element is not <rsl>");
     expect(errors).toContain("application/rsl+xml");
@@ -214,7 +215,7 @@ describe("RslLicensingTermsConformanceAudit", () => {
       },
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(strings(result, "conformanceErrors").join(" ")).toContain("xmlns");
   });
 
@@ -229,7 +230,7 @@ describe("RslLicensingTermsConformanceAudit", () => {
       },
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(strings(result, "conformanceErrors").join(" ")).toContain(
       "/articles/one",
     );
@@ -278,14 +279,14 @@ describe("RslLicensingTermsConformanceAudit", () => {
       files: { "https://example.com/a.xml": rslFile() },
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.details?.["validDocuments"]).toBe(1);
   });
 
   it("is a scored grade B audit with an id inside the cap", () => {
     const { meta } = RslLicensingTermsConformanceAudit;
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
     expect(meta.weight).toBeCloseTo(0.6);
     expect(meta.id.length).toBeLessThanOrEqual(64);
   });

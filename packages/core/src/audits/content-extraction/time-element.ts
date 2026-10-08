@@ -2,6 +2,15 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "../../types";
 
 export class TimeElementAudit extends Audit {
   static override meta: AuditMeta = {
@@ -11,25 +20,25 @@ export class TimeElementAudit extends Audit {
     failureTitle: '<time datetime=""> used for dates',
     description:
       'AI agents use <time datetime> elements to reliably parse dates for freshness scoring and temporal reasoning. Without machine-readable dates, agents must regex-parse human-readable date formats, which frequently fails across locales and ambiguous formats like "01/02/2025".',
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "informative"),
-    evidenceGrade: "C",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/content-extraction/time-element.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: ["content", "unknown", "article"],
-    defaultPriority: "medium",
+    applicablePageTypes: [PageType.Unknown, PageType.Article],
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         'AI agents use <time datetime> elements to reliably parse dates for freshness scoring and temporal reasoning. Without machine-readable dates, agents must regex-parse human-readable formats, which frequently fails across locales and ambiguous formats like "01/02/2025" (Jan 2 vs. Feb 1).',
       fix: "Wrap all dates and times in <time> elements with a datetime attribute in ISO 8601 format (YYYY-MM-DD or YYYY-MM-DDThh:mm:ss). Include publication dates, event dates, and last-modified dates.",
       code: '<p>Published on <time datetime="2025-01-15">January 15, 2025</time></p>\n<p>Event starts <time datetime="2025-03-20T09:00:00-05:00">March 20 at 9 AM EST</time></p>',
-      effort: "trivial",
+      effort: FixEffort.Trivial,
       docsUrl: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/time",
       tags: ["dates", "time", "semantic", "html"],
     },
@@ -57,7 +66,7 @@ export class TimeElementAudit extends Audit {
       '<time datetime=""> elements used for dates',
       'No <time datetime=""> elements',
       {
-        priority: "medium",
+        priority: CheckPriority.Medium,
         description:
           'AI agents use <time datetime> elements to reliably parse dates for freshness scoring and temporal reasoning. Without machine-readable dates, agents must regex-parse human-readable date formats, which frequently fails across locales and ambiguous formats like "01/02/2025".',
         code: '<time datetime="2025-01-15">January 15, 2025</time>',

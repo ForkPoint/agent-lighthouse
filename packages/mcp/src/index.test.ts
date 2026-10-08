@@ -1,6 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { ScanReport } from "@forkpoint/agent-lighthouse-core";
-import { CATEGORY_MASS } from "@forkpoint/agent-lighthouse-core";
+import {
+  CATEGORY_MASS,
+  CheckPriority,
+  CheckStatus,
+  PageType,
+  ScoreDisplayMode,
+  ScoreTier,
+} from "@forkpoint/agent-lighthouse-core";
 import { auditWebsite } from "./index";
 
 /**
@@ -23,7 +30,7 @@ function report(over: Partial<ScanReport> = {}): ScanReport {
     url: "https://shop.test/",
     domain: "shop.test",
     overallScore: 42,
-    scoreTier: "needs-work",
+    scoreTier: ScoreTier.NeedsWork,
     categories: [
       {
         id: "agent-interfaces",
@@ -39,10 +46,10 @@ function report(over: Partial<ScanReport> = {}): ScanReport {
             category: "agent-interfaces",
             title: "WebMCP endpoint",
             description: "desc",
-            status: "pass",
+            status: CheckStatus.Pass,
             score: 1,
-            scoreDisplayMode: "binary",
-            priority: "medium",
+            scoreDisplayMode: ScoreDisplayMode.Binary,
+            priority: CheckPriority.Medium,
             impact: "",
             fix: "",
           },
@@ -52,7 +59,7 @@ function report(over: Partial<ScanReport> = {}): ScanReport {
     topPasses: [],
     topFails: [],
     recommendations: [],
-    pagesScanned: [{ url: "https://shop.test/", pageType: "homepage" }],
+    pagesScanned: [{ url: "https://shop.test/", pageType: PageType.Homepage }],
     scannedAt: "2026-01-01T00:00:00.000Z",
     durationMs: 12_340,
     ...over,
@@ -74,7 +81,7 @@ describe("auditWebsite", () => {
     runScan.mockResolvedValue(report());
     const result = await auditWebsite("https://shop.test/");
     expect(result.url).toBe("https://shop.test/");
-    expect(result.scoreTier).toBe("needs-work");
+    expect(result.scoreTier).toBe(ScoreTier.NeedsWork);
     expect(typeof result.overallScore).toBe("number");
   });
 
@@ -100,10 +107,10 @@ describe("auditWebsite", () => {
       category: "agent-interfaces",
       title: `Fail ${i}`,
       description: "",
-      status: "fail" as const,
+      status: CheckStatus.Fail,
       score: 0,
-      scoreDisplayMode: "binary" as const,
-      priority: "high" as const,
+      scoreDisplayMode: ScoreDisplayMode.Binary,
+      priority: CheckPriority.High,
       impact: "impact",
       fix: "fix",
     }));

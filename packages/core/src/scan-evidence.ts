@@ -11,19 +11,15 @@
  */
 import type { FetchResult } from "./fetcher";
 import type { PageContext } from "./check-context";
-import type { EvidenceKey, PageType } from "./types";
+import { PAGE_TYPES, EvidenceKey } from "./types";
+import type { PageType } from "./types";
 import type { WafProtection } from "./waf-detector";
 import { getRenderedText } from "./parser";
 import { registrableOf } from "./gatherers/domains";
 
 export type { EvidenceKey };
 
-export const EVIDENCE_KEYS: readonly EvidenceKey[] = [
-  "origin-reachable",
-  "unblocked-fetches",
-  "rendered-body",
-  "sample-adequate",
-];
+export const EVIDENCE_KEYS: readonly EvidenceKey[] = Object.values(EvidenceKey);
 
 export interface ScanEvidence {
   met: Record<EvidenceKey, boolean>;
@@ -43,15 +39,6 @@ export interface ScanEvidenceInput {
   rootFiles: Record<string, FetchResult>;
   wafProtection: WafProtection | null;
 }
-
-const ALL_PAGE_TYPES: readonly PageType[] = [
-  "homepage",
-  "category",
-  "product",
-  "content",
-  "article",
-  "unknown",
-];
 
 /** Content types that parse into a DOM a content audit can read. */
 const HTML_TYPES = ["text/html", "application/xhtml+xml"];
@@ -217,23 +204,24 @@ export function buildScanEvidence(input: ScanEvidenceInput): ScanEvidence {
 
   const renderedCount = Object.values(renderedByPage).filter(Boolean).length;
   const met: Record<EvidenceKey, boolean> = {
-    "origin-reachable": origin.met,
-    "unblocked-fetches": unblocked.met,
-    "rendered-body": renderedCount > 0,
-    "sample-adequate": usablePageTypes.size > 0,
+    [EvidenceKey.OriginReachable]: origin.met,
+    [EvidenceKey.UnblockedFetches]: unblocked.met,
+    [EvidenceKey.RenderedBody]: renderedCount > 0,
+    [EvidenceKey.SampleAdequate]: usablePageTypes.size > 0,
   };
 
   const reasons: Partial<Record<EvidenceKey, string>> = {};
-  if (origin.reason) reasons["origin-reachable"] = origin.reason;
-  if (unblocked.reason) reasons["unblocked-fetches"] = unblocked.reason;
-  if (!met["rendered-body"]) {
-    reasons["rendered-body"] =
+  if (origin.reason) reasons[EvidenceKey.OriginReachable] = origin.reason;
+  if (unblocked.reason)
+    reasons[EvidenceKey.UnblockedFetches] = unblocked.reason;
+  if (!met[EvidenceKey.RenderedBody]) {
+    reasons[EvidenceKey.RenderedBody] =
       input.pages.length === 0
         ? "The scan fetched no pages."
         : `None of the ${input.pages.length} fetched page(s) served readable text.`;
   }
-  if (!met["sample-adequate"]) {
-    reasons["sample-adequate"] =
+  if (!met[EvidenceKey.SampleAdequate]) {
+    reasons[EvidenceKey.SampleAdequate] =
       input.pages.length === 0
         ? "The scan fetched no pages."
         : "No fetched page of any type served readable text.";
@@ -246,7 +234,8 @@ export function buildScanEvidence(input: ScanEvidenceInput): ScanEvidence {
     usablePageTypes,
     // A shell site was seen. What it serves is a finding about it, so
     // `rendered-body` and `sample-adequate` do not clear `judgeable`.
-    judgeable: met["origin-reachable"] && met["unblocked-fetches"],
+    judgeable:
+      met[EvidenceKey.OriginReachable] && met[EvidenceKey.UnblockedFetches],
   };
 }
 
@@ -304,8 +293,8 @@ export function unjudgeableReason(
 /** Why the scan holds nothing it can attribute to the site. */
 export function unreadSiteReason(evidence: ScanEvidence): string {
   return (
-    evidence.reasons["origin-reachable"] ??
-    evidence.reasons["unblocked-fetches"] ??
+    evidence.reasons[EvidenceKey.OriginReachable] ??
+    evidence.reasons[EvidenceKey.UnblockedFetches] ??
     "The scan obtained no response it could attribute to this site."
   );
 }
@@ -326,13 +315,13 @@ export function unreadSiteReason(evidence: ScanEvidence): string {
  * on a shell and must be reported before this guard is reached.
  */
 export function scanReadPageText(evidence: ScanEvidence): boolean {
-  return evidence.met["rendered-body"];
+  return evidence.met[EvidenceKey.RenderedBody];
 }
 
 /** Why no fetched page served text to read. */
 export function unreadPageTextReason(evidence: ScanEvidence): string {
   return (
-    evidence.reasons["rendered-body"] ??
+    evidence.reasons[EvidenceKey.RenderedBody] ??
     "No fetched page served text a non-JS consumer can read."
   );
 }
@@ -341,14 +330,14 @@ export function unreadPageTextReason(evidence: ScanEvidence): string {
 export function allEvidenceMet(): ScanEvidence {
   return {
     met: {
-      "origin-reachable": true,
-      "unblocked-fetches": true,
-      "rendered-body": true,
-      "sample-adequate": true,
+      [EvidenceKey.OriginReachable]: true,
+      [EvidenceKey.UnblockedFetches]: true,
+      [EvidenceKey.RenderedBody]: true,
+      [EvidenceKey.SampleAdequate]: true,
     },
     reasons: {},
     renderedByPage: {},
-    usablePageTypes: new Set<PageType>(ALL_PAGE_TYPES),
+    usablePageTypes: new Set<PageType>(PAGE_TYPES),
     judgeable: true,
   };
 }
@@ -364,7 +353,8 @@ export function hasPageText(
   // allEvidenceMet() and legacy diagnostic contexts supply global evidence only.
   // Production buildScanEvidence always records every parsed page by URL.
   return (
-    evidence.met["rendered-body"] && evidence.usablePageTypes.has(page.pageType)
+    evidence.met[EvidenceKey.RenderedBody] &&
+    evidence.usablePageTypes.has(page.pageType)
   );
 }
 
@@ -376,11 +366,14 @@ export function evidenceForPages(
   const readable = pages.filter((page) => hasPageText(evidence, page));
   const met = {
     ...evidence.met,
-    "rendered-body": readable.length > 0,
-    "sample-adequate": readable.length > 0,
+    [EvidenceKey.RenderedBody]: readable.length > 0,
+    [EvidenceKey.SampleAdequate]: readable.length > 0,
   };
   const reasons = { ...evidence.reasons };
-  for (const key of ["rendered-body", "sample-adequate"] as const) {
+  for (const key of [
+    EvidenceKey.RenderedBody,
+    EvidenceKey.SampleAdequate,
+  ] as const) {
     if (met[key]) delete reasons[key];
     else reasons[key] = "No selected page served readable text.";
   }

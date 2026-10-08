@@ -3,6 +3,14 @@ import { Audit } from "../../audit";
 import type { CheckContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
 import { countTokens } from "../../gatherers/tokens";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /**
  * Base64 payloads inlined into the document, wherever they sit.
@@ -84,24 +92,24 @@ export class SvgBloatAudit extends Audit {
     failureTitle: "Large inline SVGs bloating agent context",
     description:
       'When an LLM converts your HTML to Markdown or reads raw markup, every inline SVG is inlined as thousands of path-data tokens, and every base64 data URI is inlined verbatim. Decorative icon sprites, charts, and complex illustrations can silently consume tens of thousands of tokens of agent context per page — "SVG context poisoning" — crowding out the actual content the agent should read. SVGs marked aria-hidden="true" or role="presentation" are stripped by most accessibility-tree extractors and do not count. Keep visible SVGs small, move decorative ones behind aria-hidden, and prefer raster images or CSS for complex graphics. Inlined base64 assets are priced in real `o200k_base` tokens and reported separately, because their fix differs: move the asset to a real URL with descriptive alt text.',
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/content-extraction/svg-bloat.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "medium",
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "Large inline SVGs are inlined verbatim as path-data tokens when an LLM converts your page to Markdown. A single 10KB icon or chart can consume thousands of tokens of agent context per page load, inflating agent cost and pushing real content out of the context window — reducing the quality of what agents extract and say about your site.",
       fix: 'Mark decorative SVGs with aria-hidden="true" so agent pipelines strip them. For visible graphics, simplify path data with SVGO, extract complex SVGs to external files referenced via <img>, or replace them with raster images when they exceed a few kilobytes.',
       code: '<svg aria-hidden="true" focusable="false" ...>...</svg>',
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl: "https://github.com/svg/svgo",
       tags: ["svg", "context-window", "tokens", "performance"],
     },
@@ -181,7 +189,7 @@ export class SvgBloatAudit extends Audit {
           "No inlined base64 asset large enough to displace page content.",
           summary,
           {
-            priority: "medium",
+            priority: CheckPriority.Medium,
             description:
               "Base64 data URIs are inlined verbatim into whatever an agent reads, and base64 tokenizes far worse per byte than prose. Move the asset to a real URL and give it descriptive alt text: a URL plus alt costs about 15 tokens and tells a model strictly more than 4,000 tokens of base64 ever will.",
           },
@@ -230,7 +238,7 @@ export class SvgBloatAudit extends Audit {
           expected,
           found,
           {
-            priority: "medium",
+            priority: CheckPriority.Medium,
             description:
               'Large unhidden inline SVGs are inlined as path-data tokens when an LLM reads your page, consuming thousands of tokens of agent context. Mark decorative SVGs aria-hidden="true", simplify paths with SVGO, or move complex graphics to external files.',
             code: '<svg aria-hidden="true" focusable="false" ...>...</svg>',
@@ -247,7 +255,7 @@ export class SvgBloatAudit extends Audit {
         : `unhidden SVGs total ${formatBytes(unhiddenBytes)}, bloating agent context.`;
     return {
       ...this.warn(`${summary} ${warnReason}`, expected, found, {
-        priority: "medium",
+        priority: CheckPriority.Medium,
         description:
           'Unhidden inline SVGs over 2KB add meaningful token overhead when an LLM converts your page to Markdown. Mark decorative SVGs aria-hidden="true" or optimize them with SVGO to keep agent context focused on real content.',
         code: '<svg aria-hidden="true" focusable="false" ...>...</svg>',

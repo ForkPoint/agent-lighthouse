@@ -8,6 +8,14 @@ import { siteSitemapTree, sampleEntries } from "../../gatherers/sitemap";
 import { linksWithRel } from "../../gatherers/structured-fields";
 import { directiveLines } from "../../gatherers/robots";
 import { isIso4217 } from "../../gatherers/currency";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** Sitemap URLs added to the probe set. Matches the edge-parity audit, so the cache is shared. */
 const MAX_SITEMAP_PROBES = 3;
@@ -112,25 +120,25 @@ export class MachineActionable402PaidAccessAudit extends Audit {
       "This site charges crawlers but does not say how to pay in a form they can read",
     description:
       "Looks at every 402 the crawler-UA probes and the browser baseline received, and asks whether any machine-readable payment mechanism came with it: a `crawler-price` header, an x402 `PAYMENT-REQUIRED` challenge, or an RSL licence with a crawl payment covering the path. A 402 carrying only an HTML page is a price tag no crawler can read.",
-    scoreDisplayMode: "ternary",
-    tier: "scored",
-    evidenceGrade: "B",
-    weight: weightForGrade("B", "scored"),
-    defaultPriority: "medium",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    tier: AuditTier.Scored,
+    evidenceGrade: EvidenceGrade.B,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    defaultPriority: CheckPriority.Medium,
     dossier:
       "docs/evidence/audits/access-crawl-control/machine-actionable-402-paid-access.md",
     // Gate exemption: being refused is what this category reports.
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     guidance: {
       impact:
         "Charging for crawler access is a legitimate choice, and 402 is the status code for it. But a crawler is a program: it can pay only what it can parse. A 402 whose body is an HTML page explaining your licensing terms reads, to the client, as an unexplained refusal — the same outcome as a 403, after you built a paywall meant to earn revenue. A 402 that a shared cache is allowed to store is worse: the next crawler gets a stored refusal even after paying.",
       fix: 'Send one of the machine-readable forms with the 402: Cloudflare’s `crawler-price: USD 0.01`, an x402 `PAYMENT-REQUIRED` challenge listing what you accept, or a `Link: rel=license` pointing at an RSL document whose `<payment type="crawl">` covers the path. Mark the response `Cache-Control: no-store` so a proxy cannot hand your 402 to a crawler that already paid.',
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/access-crawl-control/machine-actionable-402-paid-access/",
       tags: ["402", "pay-per-crawl", "x402", "rsl", "crawlers"],

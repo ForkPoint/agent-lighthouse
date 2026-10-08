@@ -2,6 +2,15 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
 import type { CheckContext } from "../../check-context";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "../../types";
 
 /**
  * Walk all JSON-LD blocks (including @graph arrays) and return every
@@ -52,25 +61,25 @@ export class AuthorSameAsAudit extends Audit {
     failureTitle: "Author schema with sameAs",
     description:
       "AI RAG systems cross-reference author identity across platforms via sameAs URLs. Without external profile links, agents cannot verify author expertise.",
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "informative"),
-    evidenceGrade: "C",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/answer-readiness/author-same-as.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: ["article"],
-    defaultPriority: "medium",
+    applicablePageTypes: [PageType.Article],
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "AI RAG systems cross-reference author identity across platforms via sameAs URLs to build an expertise graph. Without external profile links, agents cannot verify that your author is the same expert they see on LinkedIn, Twitter, or GitHub, reducing trust weight.",
       fix: "Add a sameAs array to your JSON-LD author object with URLs to the author's LinkedIn, Twitter/X, GitHub, or other professional profiles.",
       code: '"author": {\n  "@type": "Person",\n  "name": "Jane Smith",\n  "sameAs": [\n    "https://linkedin.com/in/janesmith",\n    "https://twitter.com/janesmith",\n    "https://github.com/janesmith"\n  ]\n}',
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl: "https://schema.org/sameAs",
       tags: ["trust", "e-e-a-t", "json-ld", "generative-engine"],
     },
@@ -84,7 +93,7 @@ export class AuthorSameAsAudit extends Audit {
         "JSON-LD author has sameAs array with external profile URLs",
         "No pages scanned",
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "AI RAG systems cross-reference author identity across platforms via sameAs URLs. Without external profile links, agents cannot verify author expertise.",
           code: '"author": { "@type": "Person", "name": "Jane Smith", "sameAs": ["https://linkedin.com/in/janesmith"] }',
@@ -152,7 +161,7 @@ export class AuthorSameAsAudit extends Audit {
       "JSON-LD author has sameAs array with external profile URLs",
       "Not found",
       {
-        priority: "medium",
+        priority: CheckPriority.Medium,
         description:
           'AI RAG systems cross-reference author identity across platforms via sameAs URLs to build an expertise graph. Without external profile links (LinkedIn, Twitter, GitHub), agents cannot verify that "Jane Smith" on your site is the same expert they see on other platforms, reducing the trust weight of your content.',
         code: '"author": {\n  "@type": "Person",\n  "name": "Jane Smith",\n  "sameAs": [\n    "https://linkedin.com/in/janesmith",\n    "https://twitter.com/janesmith",\n    "https://github.com/janesmith"\n  ]\n}',

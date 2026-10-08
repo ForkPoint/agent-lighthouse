@@ -16,8 +16,16 @@ import {
   AI_CRAWLER_UAS,
   sharedUaProbes,
   type UaProbe,
-  type BlockClass,
+  BlockClass,
 } from "../../gatherers/ua-parity";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** How many sitemap URLs join the probe set, beyond `/` and `/llms.txt`. */
 const MAX_SITEMAP_PROBES = 2;
@@ -92,7 +100,7 @@ function lines(
 }
 
 function isBlocked(probe: UaProbe): boolean {
-  if (probe.blockClass !== "ok") return true;
+  if (probe.blockClass !== BlockClass.Ok) return true;
   return probe.probeStatus < 200 || probe.probeStatus >= 300;
 }
 
@@ -115,26 +123,26 @@ export class AiCrawlerEdgeParityAudit extends Audit {
     failureTitle: "The edge blocks AI crawlers that robots.txt admits",
     description:
       "Fetches the homepage, sampled content URLs and /llms.txt once as a browser and once per published AI crawler User-Agent, then classifies every difference: Cloudflare challenge, pay-per-crawl 402, proof-of-work wall, rate limit, opaque 403, or a 200 carrying a fraction of the text. Reports per crawler and per URL, and scores a block only where robots.txt said the crawler was welcome.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/access-crawl-control/ai-crawler-edge-parity.md",
     // Gate exemption: being refused is what this category reports.
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "critical",
+    defaultPriority: CheckPriority.Critical,
     guidance: {
       impact:
         'robots.txt (RFC 9309) is advisory metadata parsed by the crawler; the edge access decision is enforced independently by the WAF. A site can therefore publish "User-agent: PerplexityBot / Allow: /" and return a non-200 to every request carrying that user agent, and the operator — who reads their own robots.txt — believes they are open while the crawler never sees a byte. Falsifiable: fetch URL U with a browser UA and with crawler UA C; if robots.txt permits C for U and the C request is not 2xx while the browser request is 200, the two policy layers contradict each other. Cloudflare makes one branch deterministic — a challenge always carries cf-mitigated: challenge — and a 200 whose main-content text is under 40% of the baseline is a block wearing a 200.',
       fix: "Decide the policy once, and make the edge say what robots.txt says. On Cloudflare, add the AI crawlers you admit to the verified-bot allowance (Security > Bots) or a WAF skip rule so managed challenges, bot fight mode and rate limiting do not apply to them; on other CDNs, allowlist the published crawler IP ranges. Then verify from outside with curl -A using each published User-Agent, because the dashboard shows the rule, not the answer. Where you mean to block a crawler, say so in robots.txt too — a consistent no is a legitimate posture, and this audit scores it as one.",
       code: SAMPLE,
-      effort: "complex",
+      effort: FixEffort.Complex,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/access-crawl-control/ai-crawler-edge-parity/",
       tags: ["robots", "waf", "cloudflare", "crawlers", "edge"],
@@ -212,7 +220,7 @@ export class AiCrawlerEdgeParityAudit extends Audit {
       const describe = HARD[probe.blockClass];
       if (describe) {
         group(hardGroups, probe.url, describe(probe), label);
-      } else if (probe.blockClass === "ok") {
+      } else if (probe.blockClass === BlockClass.Ok) {
         group(
           hardGroups,
           probe.url,
@@ -252,7 +260,7 @@ export class AiCrawlerEdgeParityAudit extends Audit {
         `robots.txt admits these crawlers and the edge does not: ${shown}${more}.${note}`,
         EXPECTED,
         found,
-        "critical",
+        CheckPriority.Critical,
       );
     }
 
@@ -261,7 +269,7 @@ export class AiCrawlerEdgeParityAudit extends Audit {
         `${ambiguous.slice(0, MAX_SHOWN).join("; ")}. ${AMBIGUITY}`,
         EXPECTED,
         found,
-        "medium",
+        CheckPriority.Medium,
       );
     }
 

@@ -9,6 +9,7 @@ import {
   shellSiteContext,
   unreachedSiteContext,
 } from "../../__tests__/test-utils";
+import { CheckPriority, CheckStatus } from "../../types";
 
 const doc = (head: string) =>
   `<html lang="en"><head>${head}</head><body>Hi</body></html>`;
@@ -25,7 +26,7 @@ describe("MetaRobotsNotBlockingAudit", () => {
       mockPageContext("https://example.com/about", doc(""), 1),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("2 page(s)");
   });
 
@@ -37,8 +38,8 @@ describe("MetaRobotsNotBlockingAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
-    expect(result.priority).toBe("critical");
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.priority).toBe(CheckPriority.Critical);
     expect(result.found).toContain("https://example.com/");
   });
 
@@ -52,8 +53,8 @@ describe("MetaRobotsNotBlockingAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
-    expect(result.priority).toBe("high");
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.priority).toBe(CheckPriority.High);
     expect(result.found).toContain("https://example.com/blog");
   });
 
@@ -65,7 +66,7 @@ describe("MetaRobotsNotBlockingAudit", () => {
         doc('<meta name="robots" content="none">'),
       ),
     ]);
-    expect(audit.audit(ctx).status).toBe("fail");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.Fail);
   });
 
   // Token matching, not substring: `noindexifembedded` is a much narrower directive.
@@ -76,14 +77,14 @@ describe("MetaRobotsNotBlockingAudit", () => {
         doc('<meta name="robots" content="noindexifembedded">'),
       ),
     ]);
-    expect(audit.audit(ctx).status).toBe("pass");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
   });
 
   it("fails when noindex arrives only via the X-Robots-Tag header (absorbed 1.13)", () => {
     const page = mockPageContext("https://example.com/", doc(""));
     page.fetchResult.headers["x-robots-tag"] = "noindex";
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("X-Robots-Tag");
   });
 
@@ -91,7 +92,7 @@ describe("MetaRobotsNotBlockingAudit", () => {
     const page = mockPageContext("https://example.com/", doc(""));
     page.fetchResult.headers["x-robots-tag"] = "googlebot: noindex";
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("googlebot");
   });
 
@@ -100,14 +101,14 @@ describe("MetaRobotsNotBlockingAudit", () => {
   it("ignores an X-Robots-Tag scoped to a bot outside the allowlist", () => {
     const page = mockPageContext("https://example.com/", doc(""));
     page.fetchResult.headers["x-robots-tag"] = "yandexbot: noindex";
-    expect(audit.audit(mockCheckContext([page])).status).toBe("pass");
+    expect(audit.audit(mockCheckContext([page])).status).toBe(CheckStatus.Pass);
   });
 
   it("still counts an X-Robots-Tag scoped to an AI crawler", () => {
     const page = mockPageContext("https://example.com/", doc(""));
     page.fetchResult.headers["x-robots-tag"] = "gptbot: noindex";
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("gptbot");
   });
 
@@ -119,7 +120,7 @@ describe("MetaRobotsNotBlockingAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect((result.found ?? "").toLowerCase()).toContain("gptbot");
   });
 
@@ -133,7 +134,7 @@ describe("MetaRobotsNotBlockingAudit", () => {
         ),
       ),
     ]);
-    expect(audit.audit(ctx).status).toBe("fail");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.Fail);
   });
 
   it("handles whitespace and case variants", () => {
@@ -143,7 +144,7 @@ describe("MetaRobotsNotBlockingAudit", () => {
         doc('<meta name="robots" content=" NoIndex , NoFollow ">'),
       ),
     ]);
-    expect(audit.audit(ctx).status).toBe("fail");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.Fail);
   });
 
   // 2.25 failed the whole site at high priority when a cart or login page was
@@ -163,7 +164,7 @@ describe("MetaRobotsNotBlockingAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("utility");
   });
 
@@ -175,7 +176,7 @@ describe("MetaRobotsNotBlockingAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("nosnippet");
   });
 
@@ -186,7 +187,7 @@ describe("MetaRobotsNotBlockingAudit", () => {
         doc('<meta name="robots" content="max-snippet:0">'),
       ),
     ]);
-    expect(audit.audit(ctx).status).toBe("warn");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.Warn);
   });
 
   it("does not warn on a permissive max-snippet", () => {
@@ -196,13 +197,13 @@ describe("MetaRobotsNotBlockingAudit", () => {
         doc('<meta name="robots" content="max-snippet:-1">'),
       ),
     ]);
-    expect(audit.audit(ctx).status).toBe("pass");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
   });
 
   // 4.20 reported a critical-priority PASS when every fetch had failed.
   it("is not-applicable when no pages were scanned", () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   // The scan may hold a readable page that is not this site's — a broker's
@@ -212,7 +213,9 @@ describe("MetaRobotsNotBlockingAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new MetaRobotsNotBlockingAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext(pages, rootFiles),
@@ -225,7 +228,7 @@ describe("MetaRobotsNotBlockingAudit", () => {
       plan.skipped.find(
         (stub) => stub.id === MetaRobotsNotBlockingAudit.meta.id,
       )?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 
   // `requires` deliberately omits `rendered-body`: robots directives live in the
@@ -234,6 +237,6 @@ describe("MetaRobotsNotBlockingAudit", () => {
     const result = await new MetaRobotsNotBlockingAudit().audit(
       shellSiteContext(),
     );
-    expect(result.status).not.toBe("na");
+    expect(result.status).not.toBe(CheckStatus.NotApplicable);
   });
 });

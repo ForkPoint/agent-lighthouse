@@ -11,6 +11,7 @@ import {
 import { planAudits, scopeAudit } from "../audit-runner";
 import { ArticleSchemaAudit } from "../audits/structured-data/article-schema";
 import { mockCheckContext, mockPageContext } from "../__tests__/test-utils";
+import { ClassificationConfidence, PageType, PageTypeSource } from "../types";
 
 const prose =
   "This guide explains how to maintain a reusable widget and check each part before use. ".repeat(
@@ -99,8 +100,8 @@ describe("page purpose", () => {
       "https://example.com/privacy",
       "<h1>Privacy</h1>",
     );
-    page.pageType = "content";
-    page.pageTypeSource = "declared";
+    page.pageType = PageType.Content;
+    page.pageTypeSource = PageTypeSource.Declared;
     expect(
       scopeAudit(mockCheckContext([page]), ArticleSchemaAudit.meta),
     ).toBeNull();
@@ -112,8 +113,8 @@ describe("audit type aliases", () => {
     mockPageContext("https://example.com/", "<h1>Page</h1>"),
   ]);
   it.each([
-    { pageTypes: [], applicablePageTypes: ["product"] },
-    { pageTypes: ["content"], applicablePageTypes: ["product"] },
+    { pageTypes: [], applicablePageTypes: [PageType.Product] },
+    { pageTypes: [PageType.Content], applicablePageTypes: [PageType.Product] },
   ])("rejects conflicting aliases: %j", (aliases) => {
     expect(() =>
       scopeAudit(ctx, {
@@ -137,8 +138,8 @@ describe("classification evidence", () => {
   it("records URL-only matches as hints", () => {
     expect(evidence("/products/widget", "<h1>Widget</h1>")).toEqual({
       type: "product",
-      source: "detected",
-      confidence: "hint",
+      source: PageTypeSource.Detected,
+      confidence: ClassificationConfidence.Hint,
       signals: ["product-url-hint"],
     });
   });
@@ -150,8 +151,8 @@ describe("classification evidence", () => {
       ),
     ).toEqual({
       type: "product",
-      source: "detected",
-      confidence: "strong",
+      source: PageTypeSource.Detected,
+      confidence: ClassificationConfidence.Strong,
       signals: ["purchase-controls"],
     });
   });
@@ -171,8 +172,8 @@ describe("classification evidence", () => {
       ),
     ).toEqual({
       type: "homepage",
-      source: "detected",
-      confidence: "strong",
+      source: PageTypeSource.Detected,
+      confidence: ClassificationConfidence.Strong,
       signals: ["root-path"],
     });
   });
@@ -188,7 +189,10 @@ describe("classification evidence", () => {
         "/privacy",
         `<script type="application/ld+json">${json}</script>`,
       ),
-    ).toMatchObject({ type: "unknown", confidence: "unknown" });
+    ).toMatchObject({
+      type: "unknown",
+      confidence: ClassificationConfidence.Unknown,
+    });
   });
   it("records top-level Article schema as a hint, including array wrappers", () => {
     expect(
@@ -198,8 +202,8 @@ describe("classification evidence", () => {
       ),
     ).toEqual({
       type: "article",
-      source: "detected",
-      confidence: "hint",
+      source: PageTypeSource.Detected,
+      confidence: ClassificationConfidence.Hint,
       signals: ["article-schema-hint"],
     });
   });
@@ -223,16 +227,16 @@ describe("classification evidence", () => {
     ).toBe("unknown");
   });
   it("keeps legacy declarations general, with provenance", () => {
-    expect(declaredPageClassification("content")).toEqual({
+    expect(declaredPageClassification(PageType.Content)).toEqual({
       type: "unknown",
-      source: "declared",
-      confidence: "unknown",
+      source: PageTypeSource.Declared,
+      confidence: ClassificationConfidence.Unknown,
       signals: ["declared:content"],
     });
-    expect(declaredPageClassification("article")).toEqual({
+    expect(declaredPageClassification(PageType.Article)).toEqual({
       type: "article",
-      source: "declared",
-      confidence: "strong",
+      source: PageTypeSource.Declared,
+      confidence: ClassificationConfidence.Strong,
       signals: ["declared:article"],
     });
   });
@@ -243,8 +247,8 @@ describe("canonical metadata at the runner boundary", () => {
     "https://example.com/story",
     "<main><h1>Story</h1><p>Readable words</p></main>",
   );
-  page.pageType = "article";
-  page.pageTypeSource = "declared";
+  page.pageType = PageType.Article;
+  page.pageTypeSource = PageTypeSource.Declared;
   const ctx = mockCheckContext([page]);
   const configFor = (aliases: Partial<typeof ArticleSchemaAudit.meta>) => ({
     categories: [{ id: "structured-data", name: "Structured data", weight: 1 }],
@@ -262,11 +266,11 @@ describe("canonical metadata at the runner boundary", () => {
     },
   });
   it.each([
-    { pageTypes: ["article"] },
-    { applicablePageTypes: ["article"] },
+    { pageTypes: [PageType.Article] },
+    { applicablePageTypes: [PageType.Article] },
     {
-      pageTypes: ["product", "article", "article"],
-      applicablePageTypes: ["article", "product"],
+      pageTypes: [PageType.Product, PageType.Article, PageType.Article],
+      applicablePageTypes: [PageType.Article, PageType.Product],
     },
   ] as Partial<typeof ArticleSchemaAudit.meta>[])(
     "accepts either spelling and equal sets without mutating config: %j",
@@ -277,7 +281,7 @@ describe("canonical metadata at the runner boundary", () => {
       expect(plan.runnable).toHaveLength(1);
       expect(plan.runnable[0].reg.meta.pageTypes).toBeUndefined();
       expect(plan.runnable[0].reg.meta.applicablePageTypes).toContain(
-        "article",
+        PageType.Article,
       );
       expect(JSON.stringify(config)).toBe(before);
     },
@@ -288,28 +292,32 @@ describe("canonical metadata at the runner boundary", () => {
         .runnable,
     ).toHaveLength(1);
   });
-  it("rejects conflict even when the scan is unread", () => {
+  it("rejects conflict even when the scan is unread, without aborting the plan", () => {
     const unread = mockCheckContext([]);
-    expect(() =>
-      planAudits(
-        unread,
-        configFor({ pageTypes: [], applicablePageTypes: ["article"] }),
-      ),
-    ).toThrow(/Conflicting page types/);
+    const plan = planAudits(
+      unread,
+      configFor({ pageTypes: [], applicablePageTypes: [PageType.Article] }),
+    );
+    expect(plan.runnable).toHaveLength(0);
+    expect(plan.skipped).toHaveLength(1);
+    expect(plan.skipped[0]?.tags).toEqual(["scan-error"]);
+    expect(plan.skipped[0]?.explanation).toMatch(/Conflicting page types/);
   });
 });
 
 describe("saved page-type conditions", () => {
   it("reads old conditions without inventing classification evidence", () => {
     const schema = ScanConditionsSchema.shape.pageType;
-    expect(schema.parse({ type: "content", source: "detected" })).toEqual({
+    expect(
+      schema.parse({ type: "content", source: PageTypeSource.Detected }),
+    ).toEqual({
       type: "content",
-      source: "detected",
+      source: PageTypeSource.Detected,
     });
     const current = {
       type: "article",
-      source: "detected",
-      confidence: "strong",
+      source: PageTypeSource.Detected,
+      confidence: ClassificationConfidence.Strong,
       signals: ["primary-article-prose"],
     };
     expect(schema.parse(current)).toEqual(current);

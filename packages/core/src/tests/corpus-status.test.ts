@@ -7,16 +7,18 @@ import {
   stateOf,
   type CorpusStatus,
   type RunnerOutcome,
+  CorpusState,
 } from "./corpus-status";
+import { EvidenceKey } from "../types";
 
 const scored: RunnerOutcome = {
   domain: "ok.test",
   score: 61,
   evidence: {
-    "origin-reachable": true,
-    "unblocked-fetches": true,
-    "rendered-body": true,
-    "sample-adequate": true,
+    [EvidenceKey.OriginReachable]: true,
+    [EvidenceKey.UnblockedFetches]: true,
+    [EvidenceKey.RenderedBody]: true,
+    [EvidenceKey.SampleAdequate]: true,
   },
 };
 
@@ -24,10 +26,10 @@ const noHomepage: RunnerOutcome = {
   domain: "dead.test",
   score: null,
   evidence: {
-    "origin-reachable": false,
-    "unblocked-fetches": true,
-    "rendered-body": false,
-    "sample-adequate": false,
+    [EvidenceKey.OriginReachable]: false,
+    [EvidenceKey.UnblockedFetches]: true,
+    [EvidenceKey.RenderedBody]: false,
+    [EvidenceKey.SampleAdequate]: false,
   },
   unscoredReason:
     "The homepage could not be fetched: getaddrinfo ENOTFOUND dead.test.",
@@ -37,10 +39,10 @@ const walled: RunnerOutcome = {
   domain: "wall.test",
   score: null,
   evidence: {
-    "origin-reachable": false,
-    "unblocked-fetches": false,
-    "rendered-body": false,
-    "sample-adequate": false,
+    [EvidenceKey.OriginReachable]: false,
+    [EvidenceKey.UnblockedFetches]: false,
+    [EvidenceKey.RenderedBody]: false,
+    [EvidenceKey.SampleAdequate]: false,
   },
   unscoredReason: "Cloudflare Turnstile refused the scan: challenge page.",
 };
@@ -116,7 +118,7 @@ describe("mergeStatus", () => {
     const dead: CorpusStatus = {
       updatedAt: "2026-09-01T00:00:00.000Z",
       domains: {
-        "dead.test": { state: "dead", seenAt: "2026-09-01", runs: 2 },
+        "dead.test": { state: CorpusState.Dead, seenAt: "2026-09-01", runs: 2 },
       },
     };
     const revived = mergeStatus(
@@ -156,7 +158,7 @@ describe("excludedDomains", () => {
     ...status,
     domains: {
       ...status.domains,
-      "dead.test": { state: "dead", seenAt: "2026-09-03", runs: 2 },
+      "dead.test": { state: CorpusState.Dead, seenAt: "2026-09-03", runs: 2 },
     },
   };
 
@@ -191,24 +193,24 @@ describe("formatReport", () => {
       updatedAt: "2026-09-03T00:00:00.000Z",
       domains: {
         "a.test": {
-          state: "dead",
+          state: CorpusState.Dead,
           reason: "The homepage could not be fetched: ENOTFOUND.",
           seenAt: "2026-09-03",
           runs: 2,
         },
         "b.test": {
-          state: "dead",
+          state: CorpusState.Dead,
           reason: "The homepage could not be fetched: ENOTFOUND.",
           seenAt: "2026-09-03",
           runs: 2,
         },
         "c.test": {
-          state: "blocked",
+          state: CorpusState.Blocked,
           reason: "robots-disallow",
           seenAt: "2026-09-02",
           runs: 1,
         },
-        "d.test": { state: "ok", seenAt: "2026-09-03", runs: 3 },
+        "d.test": { state: CorpusState.Ok, seenAt: "2026-09-03", runs: 3 },
       },
     };
     const text = formatReport(status);

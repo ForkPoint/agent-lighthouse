@@ -10,6 +10,7 @@ import {
 } from "../../__tests__/test-utils";
 import { AuditResultSchema } from "../../schemas";
 import type { PageContext } from "../../check-context";
+import { CheckPriority, CheckStatus } from "../../types";
 
 /** A page whose served body carries `words` readable words. */
 function wordyPage(url: string, words: number): PageContext {
@@ -28,7 +29,7 @@ describe("ServerRenderedAudit", () => {
     );
     const ctx = mockCheckContext([page]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain(
       "serve their content in the HTML response",
     );
@@ -41,14 +42,14 @@ describe("ServerRenderedAudit", () => {
     );
     const ctx = mockCheckContext([page]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("serve readable content");
   });
 
   it("is notApplicable when the scan fetched no page", () => {
     const ctx = mockCheckContext([]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("no page");
   });
 });
@@ -64,7 +65,7 @@ describe("ServerRenderedAudit — body-text metric", () => {
     const page = mockPageContext("https://example.com", html);
     const result = audit.audit(mockCheckContext([page]));
 
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("1 of 1");
   });
 
@@ -80,7 +81,7 @@ describe("ServerRenderedAudit — body-text metric", () => {
     const page = mockPageContext("https://example.com", html);
     const result = audit.audit(mockCheckContext([page]));
 
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("1 of 1");
   });
 
@@ -90,9 +91,9 @@ describe("ServerRenderedAudit — body-text metric", () => {
     const page = mockPageContext("https://example.com", html);
     const result = audit.audit(mockCheckContext([page]));
 
-    expect(result.status).toBe("fail");
-    expect(result.priority).toBe("critical");
-    expect(AuditResultSchema.parse(result).status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.priority).toBe(CheckPriority.Critical);
+    expect(AuditResultSchema.parse(result).status).toBe(CheckStatus.Fail);
   });
 
   it("passes a CJK page on the character branch alone", () => {
@@ -105,7 +106,7 @@ describe("ServerRenderedAudit — body-text metric", () => {
 
     // 6 whitespace-delimited words, 401 characters: only the character
     // branch of the threshold can carry this page.
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 });
 
@@ -119,7 +120,7 @@ describe("ServerRenderedAudit — every page, not just the first", () => {
     ]);
     const result = audit.audit(ctx);
 
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("2 of 2");
   });
 
@@ -130,7 +131,7 @@ describe("ServerRenderedAudit — every page, not just the first", () => {
     ]);
     const result = audit.audit(ctx);
 
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("1 of 2");
     expect(AuditResultSchema.parse(result).details?.emptyPages).toContain(
       "https://example.com/shop",
@@ -144,8 +145,8 @@ describe("ServerRenderedAudit — every page, not just the first", () => {
     ]);
     const result = audit.audit(ctx);
 
-    expect(result.status).toBe("fail");
-    expect(result.priority).toBe("critical");
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.priority).toBe(CheckPriority.Critical);
     expect(result.found).toContain("0 of 2");
   });
 
@@ -163,7 +164,7 @@ describe("ServerRenderedAudit — every page, not just the first", () => {
     };
     const result = audit.audit(ctx);
 
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("1 of 2");
   });
 
@@ -174,7 +175,9 @@ describe("ServerRenderedAudit — every page, not just the first", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new ServerRenderedAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext(pages, rootFiles),
@@ -186,6 +189,6 @@ describe("ServerRenderedAudit — every page, not just the first", () => {
     expect(
       plan.skipped.find((stub) => stub.id === ServerRenderedAudit.meta.id)
         ?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 });

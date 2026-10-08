@@ -9,6 +9,7 @@ import {
   mockPageContext,
   unreachedSiteContext,
 } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 describe("DataTablesAudit", () => {
   const audit = new DataTablesAudit();
@@ -19,7 +20,7 @@ describe("DataTablesAudit", () => {
       "<html><body><p>No tables</p></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("No data tables found");
   });
 
@@ -32,7 +33,7 @@ describe("DataTablesAudit", () => {
       </table></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("1/1");
   });
 
@@ -46,7 +47,7 @@ describe("DataTablesAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("2/3");
   });
 
@@ -56,7 +57,7 @@ describe("DataTablesAudit", () => {
       "<html><body><table><tbody><tr><td>plain</td></tr></tbody></table></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("0/1");
   });
 
@@ -67,7 +68,9 @@ describe("DataTablesAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new DataTablesAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext(pages, rootFiles),
@@ -78,7 +81,7 @@ describe("DataTablesAudit", () => {
     );
     expect(
       plan.skipped.find((stub) => stub.id === DataTablesAudit.meta.id)?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 
   // A JS shell serves a head and an empty body. No table arrived, so "no data
@@ -87,9 +90,11 @@ describe("DataTablesAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new DataTablesAudit();
     const rendered = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(rendered.status, "the same input rendered is judged").not.toBe("na");
+    expect(rendered.status, "the same input rendered is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const shell = await instance.audit(shellSiteContext());
-    expect(shell.status).toBe("na");
+    expect(shell.status).toBe(CheckStatus.NotApplicable);
   });
 });

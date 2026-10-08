@@ -18,6 +18,14 @@ import {
   isObject,
   MCP_PROTOCOL_VERSION,
 } from "../../gatherers/mcp";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** A revision no server can support, so the rejection path is unambiguous. */
 const IMPOSSIBLE = "1900-01-01";
@@ -98,19 +106,19 @@ export class McpVersionDowngradeAudit extends Audit {
     failureTitle: "Version Downgrade Recoverability",
     description:
       "Negative-path probe that verifies the server fails correctly when handed a protocol version it does not support, and when the MCP-Protocol-Version header disagrees with the body's _meta. Both are MUST-level behaviors whose absence strands otherwise-compatible clients.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/agent-interfaces/mcp-version-downgrade.md",
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "medium",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "With the handshake removed, the ONLY mechanism by which a client discovers a mutually supported version mid-flight is the `UnsupportedProtocolVersionError`: the spec requires code -32022 with `data.supported[]` listing the server's versions, and instructs clients to select from that list and retry. A server that instead returns a 500, a generic -32600/-32602, or a 400 with no `supported` array gives the client nothing to downgrade to — so a client whose preferred version is one revision ahead of the server's fails permanently even though a mutually supported version exists on both sides. Separately, the spec requires the header and the `_meta` value to agree, with a 400 + -32020 HeaderMismatch on divergence; a server that silently ignores the mismatch is trusting whichever source of truth its proxy layer did not, which is the exact split-brain the header-validation rules exist to prevent.",
       fix: `Reject an unsupported protocol version with HTTP 400 and JSON-RPC error -32022, and put \`data.supported\` — every revision you accept, as \`YYYY-MM-DD\` strings — and \`data.requested\` in the error, so the client can pick a common revision and retry instead of failing permanently. Keep that list identical to the \`supportedVersions\` your \`server/discover\` result advertises. Validate the \`MCP-Protocol-Version\` header against \`params._meta\` on every request and reject a disagreement with -32020, rather than silently trusting one of them. When the header is absent, treat the request as ${HEADERLESS_DEFAULT} as the spec says, or reject it — do not answer it as if it were the current revision.`,
       code: SAMPLE,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/agent-interfaces/mcp-version-downgrade/",
       tags: [
@@ -278,18 +286,23 @@ export class McpVersionDowngradeAudit extends Audit {
         `The downgrade path is broken: ${critical.join("; ")}.${high.length > 0 ? ` Additionally, ${high.join("; ")}.` : ""}${tail}`,
         EXPECTED,
         found,
-        "critical",
+        CheckPriority.Critical,
       );
     }
     if (high.length > 0) {
-      return this.fail(`${high.join("; ")}.${tail}`, EXPECTED, found, "high");
+      return this.fail(
+        `${high.join("; ")}.${tail}`,
+        EXPECTED,
+        found,
+        CheckPriority.High,
+      );
     }
     if (reviews.length > 0) {
       return this.warn(
         `The server rejects an unsupported revision recoverably, with review items: ${reviews.join("; ")}.${tail}`,
         EXPECTED,
         found,
-        "medium",
+        CheckPriority.Medium,
       );
     }
     return this.pass(

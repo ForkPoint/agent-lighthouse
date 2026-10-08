@@ -3,6 +3,14 @@ import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
 import type { CheckContext } from "../../check-context";
 import { getMainContentText } from "../../parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 // A "specific data point" must carry a unit, a percent/currency symbol, a
 // grouped thousands separator, or be a small word-bounded range like "3-5
@@ -41,24 +49,24 @@ export class SpecificNumbersAudit extends Audit {
     failureTitle: "Specific numbers and data points",
     description:
       "AI engines prefer answers with concrete data points over vague statements. Include specific numbers, percentages, and metrics in your content.",
-    scoreDisplayMode: "binary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Binary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/answer-readiness/specific-numbers.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "medium",
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "AI answer engines strongly prefer content with concrete data points over vague claims. Pages with specific numbers, percentages, and metrics are ranked higher for data-driven queries because agents can cite exact figures in generated answers.",
       fix: 'Add specific numbers, percentages, dollar amounts, and measurable metrics throughout your content. Replace vague claims ("significant improvement") with concrete data ("65% improvement").',
       code: "<p>Our platform processes 50,000 requests per second with 99.9% uptime, reducing average response time by 65% compared to alternatives.</p>",
-      effort: "easy",
+      effort: FixEffort.Easy,
       tags: ["content-quality", "copywriting", "answer-engine"],
     },
   };
@@ -71,7 +79,7 @@ export class SpecificNumbersAudit extends Audit {
         "Content contains digits, percentages, or dollar amounts",
         "No pages scanned",
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description: SpecificNumbersAudit.meta.description,
           code: "<p>Our platform reduces deployment time by 40%, serving 10,000+ daily requests at $0.01 per API call.</p>",
         },
@@ -106,7 +114,7 @@ export class SpecificNumbersAudit extends Audit {
       "Content contains digits, percentages, or dollar amounts",
       "Not found",
       {
-        priority: "medium",
+        priority: CheckPriority.Medium,
         description:
           "AI answer engines strongly prefer content with concrete data points over vague claims. Pages with specific numbers, percentages, and metrics are ranked higher for data-driven queries because agents can cite exact figures in generated answers rather than paraphrasing vague language.",
         code: "<p>Our platform processes 50,000 requests per second with 99.9% uptime, reducing average response time by 65% compared to alternatives.</p>",

@@ -1,8 +1,17 @@
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
-import type { CheckContext, PageContext } from "../../check-context";
+import type { CheckContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
 import { flattenJsonLd } from "../../parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "../../types";
 
 const ARTICLE_TYPES = ["Article", "NewsArticle", "BlogPosting"];
 
@@ -18,11 +27,6 @@ function matchesAnyType(
   });
 }
 
-/** The runner has already selected pages with article-purpose evidence. */
-function isArticlePage(_page: PageContext): boolean {
-  return true;
-}
-
 function hasProps(obj: Record<string, unknown>, keys: string[]): string[] {
   return keys.filter((k) => !obj[k]);
 }
@@ -35,19 +39,19 @@ export class ArticleSchemaAudit extends Audit {
     failureTitle: "Article schema",
     description:
       "AI agents extract Article schema to identify content freshness (datePublished/dateModified), authorship, and topic (headline). Without it, your blog content is treated as generic text with no provenance, reducing its chances of being cited in AI-generated answers.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/structured-data/article-schema.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: ["article"],
-    defaultPriority: "high",
+    applicablePageTypes: [PageType.Article],
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "Without Article schema, AI answer engines treat your blog content as generic text with no provenance. You lose content freshness signals (datePublished/dateModified), authorship attribution, and headline extraction -- all of which reduce your chances of being cited in AI-generated answers.",
@@ -63,14 +67,15 @@ export class ArticleSchemaAudit extends Audit {
     "name": "Author Name"
   }
 }`,
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl: "https://schema.org/Article",
       tags: ["json-ld", "schema", "content", "article", "blog"],
     },
   };
 
   audit(ctx: CheckContext): AuditResult {
-    const blogPages = ctx.pages.filter((p) => isArticlePage(p));
+    // The runner has already selected pages with article-purpose evidence.
+    const blogPages = ctx.pages;
 
     if (blogPages.length === 0) {
       return this.notApplicable(
@@ -123,7 +128,7 @@ export class ArticleSchemaAudit extends Audit {
         "Article schema with headline, datePublished, dateModified, author on blog pages.",
         `${completeCount} complete, ${partialCount} partial, out of ${blogPages.length} blog page(s)`,
         {
-          priority: "high",
+          priority: CheckPriority.High,
           description:
             "AI agents extract Article schema to identify content freshness (datePublished/dateModified), authorship, and topic (headline). Without it, your blog content is treated as generic text with no provenance, reducing its chances of being cited in AI-generated answers.",
           code: `{
@@ -143,7 +148,7 @@ export class ArticleSchemaAudit extends Audit {
       "Article schema with headline, datePublished, dateModified, author on blog pages.",
       `${completeCount} complete, ${partialCount} partial, out of ${blogPages.length} blog page(s)`,
       {
-        priority: "high",
+        priority: CheckPriority.High,
         description:
           "AI agents extract Article schema to identify content freshness (datePublished/dateModified), authorship, and topic (headline). Without it, your blog content is treated as generic text with no provenance, reducing its chances of being cited in AI-generated answers.",
         code: `{

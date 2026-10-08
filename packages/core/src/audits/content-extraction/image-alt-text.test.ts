@@ -1,6 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { ImageAltTextAudit } from "./image-alt-text";
 import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import {
+  AuditTier,
+  CheckStatus,
+  EvidenceGrade,
+  ScoreDisplayMode,
+} from "../../types";
 
 describe("ImageAltTextAudit", () => {
   const audit = new ImageAltTextAudit();
@@ -14,7 +20,7 @@ describe("ImageAltTextAudit", () => {
       '<html><body><img src="bg.png" alt="" role="presentation"></body></html>',
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("No images that need a text alternative");
   });
 
@@ -23,7 +29,9 @@ describe("ImageAltTextAudit", () => {
       "https://example.com",
       "<html><body><p>Text</p></body></html>",
     );
-    expect(audit.audit(mockCheckContext([page])).status).toBe("na");
+    expect(audit.audit(mockCheckContext([page])).status).toBe(
+      CheckStatus.NotApplicable,
+    );
   });
 
   it("passes when 100% of non-decorative images have alt text", () => {
@@ -32,7 +40,7 @@ describe("ImageAltTextAudit", () => {
       '<html><body><img src="a.jpg" alt="A blue shoe"><img src="b.jpg" alt="A red hat"></body></html>',
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("2/2");
   });
 
@@ -47,7 +55,7 @@ describe("ImageAltTextAudit", () => {
       `<html><body>${imgs}</body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("4/5");
   });
 
@@ -58,7 +66,7 @@ describe("ImageAltTextAudit", () => {
       '<html><body><img src="a.jpg"><img src="b.jpg"></body></html>',
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("0/2");
   });
 
@@ -74,7 +82,7 @@ describe("ImageAltTextAudit", () => {
         "</body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("1/1");
   });
 
@@ -84,7 +92,7 @@ describe("ImageAltTextAudit", () => {
       '<html><body><img src="d1.png" alt=""><img src="d2.png" alt=""></body></html>',
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("No images that need a text alternative");
   });
 
@@ -97,7 +105,7 @@ describe("ImageAltTextAudit", () => {
       '<html><body><img src="a.jpg" aria-label="A blue shoe"></body></html>',
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("1/1");
   });
 
@@ -106,7 +114,7 @@ describe("ImageAltTextAudit", () => {
       "https://example.com",
       '<html><body><p id="cap">A blue shoe</p><img src="a.jpg" aria-labelledby="cap"></body></html>',
     );
-    expect(audit.audit(mockCheckContext([page])).status).toBe("pass");
+    expect(audit.audit(mockCheckContext([page])).status).toBe(CheckStatus.Pass);
   });
 
   it("does not count an aria-labelledby whose ids resolve to nothing", () => {
@@ -115,7 +123,7 @@ describe("ImageAltTextAudit", () => {
       '<html><body><img src="a.jpg" aria-labelledby="missing"></body></html>',
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("0/1");
   });
 
@@ -124,7 +132,7 @@ describe("ImageAltTextAudit", () => {
       "https://example.com",
       '<html><body><img src="a.jpg" title="A blue shoe"></body></html>',
     );
-    expect(audit.audit(mockCheckContext([page])).status).toBe("pass");
+    expect(audit.audit(mockCheckContext([page])).status).toBe(CheckStatus.Pass);
   });
 
   // Not in the accessibility tree, so no snapshot consumer can see it. The
@@ -135,7 +143,7 @@ describe("ImageAltTextAudit", () => {
       '<html><body><img src="icon.svg" aria-hidden="true"><img src="a.jpg" alt="A blue shoe"></body></html>',
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("1/1");
   });
 
@@ -147,7 +155,7 @@ describe("ImageAltTextAudit", () => {
       '<html><body><img src="chart.png" alt="" aria-label="Sales by quarter"></body></html>',
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("1/1");
   });
 
@@ -158,7 +166,9 @@ describe("ImageAltTextAudit", () => {
       "https://example.com",
       '<html><body><img src="bg.png" alt="" title="Background"></body></html>',
     );
-    expect(audit.audit(mockCheckContext([page])).status).toBe("na");
+    expect(audit.audit(mockCheckContext([page])).status).toBe(
+      CheckStatus.NotApplicable,
+    );
   });
 
   it("names the worst offending pages in found", () => {
@@ -172,7 +182,7 @@ describe("ImageAltTextAudit", () => {
       1,
     );
     const result = audit.audit(mockCheckContext([clean, bad]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("https://example.com/gallery (0/2)");
     expect(result.found).not.toContain("/good");
     expect(result.pageUrl).toBe("https://example.com/gallery");
@@ -180,10 +190,10 @@ describe("ImageAltTextAudit", () => {
 
   it("keeps the grade-A scored registration", () => {
     const { meta } = ImageAltTextAudit;
-    expect(meta.evidenceGrade).toBe("A");
-    expect(meta.tier).toBe("scored");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.A);
+    expect(meta.tier).toBe(AuditTier.Scored);
     expect(meta.weight).toBeCloseTo(1);
-    expect(meta.scoreDisplayMode).toBe("ternary");
+    expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Ternary);
   });
 
   it('still counts images with a missing alt attribute alongside decorative alt=""', () => {
@@ -193,7 +203,7 @@ describe("ImageAltTextAudit", () => {
       '<html><body><img src="dec.png" alt=""><img src="broken.jpg"></body></html>',
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("0/1");
   });
 });

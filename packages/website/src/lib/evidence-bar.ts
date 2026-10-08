@@ -1,3 +1,4 @@
+import { AuditTier } from "@forkpoint/agent-lighthouse-core";
 /**
  * The bar an audit must clear before its page ships as scored.
  *
@@ -97,7 +98,7 @@ export function barViolations(
   }
   if (!has("Evidence")) problems.push('publishes no "Evidence" section');
 
-  if (subject.tier !== "scored") return problems;
+  if (subject.tier !== AuditTier.Scored) return problems;
 
   // Rules 4-6 are the price of taking weight off a site's score.
   if (!URL_LINK.test(page.markdown)) {

@@ -3,6 +3,15 @@ import { Audit } from "../../audit";
 import type { CheckContext } from "../../check-context";
 import { flattenJsonLd } from "../../parser";
 import { weightForGrade } from "../../scorer";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "../../types";
 
 function matchesAnyType(
   schema: Record<string, unknown>,
@@ -47,20 +56,20 @@ export class ProductTransactionCertaintyAudit extends Audit {
     failureTitle: "Product transactional certainty",
     description:
       "AI shopping assistants need more than a product name and price to make an authoritative recommendation: they must know whether the item is in stock, how long the quoted price is valid, and what the return policy is before they commit a user to a purchase. A Product schema that only carries name and price forces agents to guess at availability, quote potentially stale prices, and stay silent on returns — all of which erode transactional certainty in agentic commerce flows. Complete your Offer with availability, priceValidUntil, and a valid price + priceCurrency pair, and attach hasMerchantReturnPolicy to the Product or Offer.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/agentic-commerce/product-transaction-certainty.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: ["product"],
-    defaultPriority: "high",
+    applicablePageTypes: [PageType.Product],
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "Without availability, priceValidUntil, a valid price/currency pair, and a return policy in your Product schema, AI shopping assistants cannot make an authoritative recommendation. Agents either skip your product or answer with guessed availability, stale prices, and unknown return terms — costing you conversions in agent-driven purchases.",
@@ -83,7 +92,7 @@ export class ProductTransactionCertaintyAudit extends Audit {
     }
   }
 }`,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl: "https://schema.org/Offer",
       tags: ["json-ld", "schema", "product", "ecommerce", "agentic-commerce"],
     },
@@ -145,7 +154,7 @@ export class ProductTransactionCertaintyAudit extends Audit {
         expected,
         "0/4 certainty signals (no offers)",
         {
-          priority: "high",
+          priority: CheckPriority.High,
           description:
             "AI shopping assistants cannot quote a price, check stock, or state return terms without an Offer block. Add offers with price, priceCurrency, availability, priceValidUntil, and hasMerchantReturnPolicy.",
         },
@@ -170,7 +179,7 @@ export class ProductTransactionCertaintyAudit extends Audit {
         expected,
         `${best.count}/4 certainty signals (missing: ${missing.join(", ")})`,
         {
-          priority: "high",
+          priority: CheckPriority.High,
           description: `AI shopping assistants are missing ${missing.join(", ")} and cannot give an authoritative recommendation for this product. Complete the Offer block so agents can quote stock, price validity, and return terms with certainty.`,
         },
       );
@@ -181,7 +190,7 @@ export class ProductTransactionCertaintyAudit extends Audit {
       expected,
       `${best.count}/4 certainty signals (missing: ${missing.join(", ")})`,
       {
-        priority: "high",
+        priority: CheckPriority.High,
         description: `AI shopping assistants are missing ${missing.join(", ")} and cannot give an authoritative recommendation for this product. Complete the Offer block so agents can quote stock, price validity, and return terms with certainty.`,
       },
     );

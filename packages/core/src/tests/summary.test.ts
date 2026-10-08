@@ -1,13 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { generateScanSummary } from "../summary";
 import type { ScanReport } from "../types";
+import { CheckPriority, ScoreTier } from "../types";
 
 describe("generateScanSummary", () => {
   it("should generate a summary for an agent-ready site with no issues", () => {
     const report: Partial<ScanReport> = {
       domain: "example.com",
       overallScore: 95,
-      scoreTier: "agent-ready",
+      scoreTier: ScoreTier.AgentReady,
       categories: [
         {
           id: "cat1",
@@ -33,7 +34,7 @@ describe("generateScanSummary", () => {
     const report: Partial<ScanReport> = {
       domain: "badsite.com",
       overallScore: 45,
-      scoreTier: "not-ready",
+      scoreTier: ScoreTier.NotReady,
       readinessVitals: {
         commerce: 30,
         content: 40,
@@ -65,8 +66,11 @@ describe("generateScanSummary", () => {
         },
       ],
       recommendations: [
-        { priority: "critical", description: "Critical fix" },
-        { priority: "critical", description: "Another critical fix" },
+        { priority: CheckPriority.Critical, description: "Critical fix" },
+        {
+          priority: CheckPriority.Critical,
+          description: "Another critical fix",
+        },
       ],
       topPasses: [],
       topFails: [],
@@ -91,8 +95,10 @@ describe("generateScanSummary", () => {
     const report: Partial<ScanReport> = {
       domain: "midsite.com",
       overallScore: 75,
-      scoreTier: "partially-ready",
-      recommendations: [{ priority: "high", description: "High fix" }],
+      scoreTier: ScoreTier.PartiallyReady,
+      recommendations: [
+        { priority: CheckPriority.High, description: "High fix" },
+      ],
     };
 
     const summary = generateScanSummary(report);

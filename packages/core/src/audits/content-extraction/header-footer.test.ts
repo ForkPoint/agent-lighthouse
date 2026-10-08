@@ -8,6 +8,7 @@ import {
   mockPageContext,
   unreachedSiteContext,
 } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 describe("HeaderFooterAudit", () => {
   const audit = new HeaderFooterAudit();
@@ -18,7 +19,7 @@ describe("HeaderFooterAudit", () => {
       "<html><body><header>Nav</header><main>x</main><footer>Legal</footer></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("1/1");
   });
 
@@ -32,7 +33,7 @@ describe("HeaderFooterAudit", () => {
       "<html><body><header>H only</header></body></html>",
     );
     const result = audit.audit(mockCheckContext([home, other]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("footer on 1/2");
   });
 
@@ -42,12 +43,14 @@ describe("HeaderFooterAudit", () => {
       "<html><body><div>Nothing</div></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("Header found on 0/1");
   });
 
   it("declines an empty sample", () => {
-    expect(audit.audit(mockCheckContext([])).status).toBe("na");
+    expect(audit.audit(mockCheckContext([])).status).toBe(
+      CheckStatus.NotApplicable,
+    );
   });
 
   it("reports each missing landmark with stable evidence in every page order", () => {
@@ -79,9 +82,9 @@ describe("HeaderFooterAudit", () => {
       return result;
     });
     expect(results.map((result) => result.status)).toEqual([
-      "warn",
-      "warn",
-      "warn",
+      CheckStatus.Warn,
+      CheckStatus.Warn,
+      CheckStatus.Warn,
     ]);
     expect(results[1]).toEqual(results[0]);
     expect(results[2]).toEqual(results[0]);
@@ -106,7 +109,7 @@ describe("HeaderFooterAudit", () => {
     );
     const forward = audit.audit(mockCheckContext([header, footer]));
     const reverse = audit.audit(mockCheckContext([footer, header]));
-    expect(forward.status).toBe("fail");
+    expect(forward.status).toBe(CheckStatus.Fail);
     expect(forward.found).toContain("0/2 pages with both landmarks");
     expect(forward.found).toContain(header.url);
     expect(forward.found).toContain(footer.url);
@@ -120,7 +123,9 @@ describe("HeaderFooterAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new HeaderFooterAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext(pages, rootFiles),
@@ -132,6 +137,6 @@ describe("HeaderFooterAudit", () => {
     expect(
       plan.skipped.find((stub) => stub.id === HeaderFooterAudit.meta.id)
         ?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 });

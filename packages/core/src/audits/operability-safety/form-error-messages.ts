@@ -17,6 +17,14 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
 import type { CheckContext, PageContext } from "../../check-context";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** Controls that are never user-entered data, so never carry a message. */
 const NON_DATA_TYPES = new Set([
@@ -36,7 +44,12 @@ const NON_DATA_TYPES = new Set([
  * submit, so on a plain GET the observable question is whether the fields that
  * *can* fail are pre-wired to a description element.
  */
-type Population = "invalid" | "required";
+const Population = {
+  Invalid: "invalid",
+  Required: "required",
+} as const;
+
+type Population = (typeof Population)[keyof typeof Population];
 
 interface Field {
   linked: boolean;
@@ -128,24 +141,24 @@ export class FormErrorMessagesAudit extends Audit {
     failureTitle: "Form fields wired to their validation messages",
     description:
       "An agent filling a form reads the accessibility tree, where a message is attached to a field by aria-errormessage or aria-describedby. Fields the server rendered as aria-invalid are checked directly; where a page carries no invalid state — the normal case on a GET, since error markup is injected after a failed submit — the required fields are checked instead, because those are the ones that can fail.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/operability-safety/form-error-messages.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "medium",
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "A field with no aria-errormessage or aria-describedby reference has no message attached to it in the accessibility tree, so an agent that submits a form and gets it back rejected cannot tell which field was wrong or why. It retries the same values or abandons the form.",
       fix: 'Give each required field an aria-errormessage (ARIA 1.2) or aria-describedby pointing at the element that holds its message, and set aria-invalid="true" on the field when validation fails. Keep the referenced element in the DOM so the reference always resolves.',
       code: SAMPLE,
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl: "https://www.w3.org/TR/wai-aria-1.2/#aria-errormessage",
       tags: ["a11y", "forms", "aria", "accessibility"],
     },
@@ -153,7 +166,7 @@ export class FormErrorMessagesAudit extends Audit {
 
   private recommendation() {
     return {
-      priority: "medium" as const,
+      priority: CheckPriority.Medium,
       description: FormErrorMessagesAudit.meta.description,
       code: SAMPLE,
     };
@@ -166,7 +179,8 @@ export class FormErrorMessagesAudit extends Audit {
     // whenever the site rendered one. Falling back to `required` only when no
     // invalid state exists keeps the two from being averaged into a ratio that
     // means neither thing.
-    const population: Population = invalid.length > 0 ? "invalid" : "required";
+    const population: Population =
+      invalid.length > 0 ? Population.Invalid : Population.Required;
     const fields = invalid.length > 0 ? invalid : required;
 
     if (fields.length === 0) {
@@ -178,7 +192,9 @@ export class FormErrorMessagesAudit extends Audit {
     }
 
     const label =
-      population === "invalid" ? "invalid-state field(s)" : "required field(s)";
+      population === Population.Invalid
+        ? "invalid-state field(s)"
+        : "required field(s)";
     const linked = fields.filter((f) => f.linked).length;
     const found = `${linked} of ${fields.length} ${label} reference a message element`;
     const firstUnlinked = fields.find((f) => !f.linked)?.pageUrl;

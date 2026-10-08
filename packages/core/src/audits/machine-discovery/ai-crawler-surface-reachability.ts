@@ -18,8 +18,17 @@ import {
   isPathAllowed,
   decidingRule,
   type RobotsGroup,
+  RobotsRuleType,
 } from "../../gatherers/robots";
 import { siteSitemapTree, sampleEntries } from "../../gatherers/sitemap";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /**
  * The crawler panel, in the spelling each operator documents.
@@ -172,25 +181,25 @@ export class AiCrawlerSurfaceReachabilityAudit extends Audit {
       "AI crawlers are blocked from discovery surfaces the site advertises",
     description:
       "Evaluates robots.txt per named AI user-agent against the exact URLs the site advertises for indexing — the Sitemap: targets, the autodiscovered RSS/Atom/JSON feeds, and a sample of the URLs listed inside the sitemap tree — and flags the self-contradiction of advertising a discovery surface the same file forbids.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/machine-discovery/ai-crawler-surface-reachability.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "high",
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "The Sitemap: directive is host-global and user-agent independent (RFC 9309 §2.2.3), but the sitemap file, the feed files and every URL they list obey per-crawler rules — and under §2.2.1 a crawler with a named group ignores the '*' group entirely. OpenAI documents the consequence at the extreme: 'Sites that are opted out of OAI-SearchBot will not be shown in ChatGPT search answers.' So for any crawler whose named group disallows the advertised sitemap or feed path, or a majority of the URLs the sitemap lists, the site's whole pull-indexing surface is unreachable to that agent no matter how good the sitemap is. The common trigger is a bot-blocking plugin adding a broad pattern (Disallow: /*.xml$, Disallow: /feed/, Disallow: /) to an AI-bot group while the site keeps advertising those exact paths.",
       fix: "Read robots.txt as each named AI crawler reads it. For every group that names an AI crawler, add an explicit Allow for the sitemap and feed paths you advertise, and keep the group's Disallow patterns off the content the sitemap lists — narrow /*.xml$ and /feed/ style patterns to the paths you actually mean to protect. A named group replaces the '*' group rather than adding to it, so anything the wildcard allowed has to be restated inside the named group. If you intend to block a crawler entirely, keep Disallow: / as the whole group: a deliberate opt-out is a policy, and this audit reports it as one.",
       code: SAMPLE,
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/machine-discovery/ai-crawler-surface-reachability/",
       tags: ["robots", "sitemap", "feeds", "crawlers", "discovery"],
@@ -242,14 +251,14 @@ export class AiCrawlerSurfaceReachabilityAudit extends Audit {
       for (const sitemapUrl of declared) {
         const path = pathOf(sitemapUrl);
         const rule = path ? decidingRule(groups, bot, path) : undefined;
-        if (rule?.type === "disallow")
+        if (rule?.type === RobotsRuleType.Disallow)
           record(sitemapBlocks, sitemapUrl, rule.path, bot);
       }
 
       for (const feedUrl of feeds) {
         const path = pathOf(feedUrl);
         const rule = path ? decidingRule(groups, bot, path) : undefined;
-        if (rule?.type === "disallow")
+        if (rule?.type === RobotsRuleType.Disallow)
           record(feedBlocks, feedUrl, rule.path, bot);
       }
 
@@ -297,7 +306,7 @@ export class AiCrawlerSurfaceReachabilityAudit extends Audit {
         `${problems.join("; ")}.${optOutNote}`,
         EXPECTED,
         found,
-        "high",
+        CheckPriority.High,
       );
     }
 
@@ -306,7 +315,7 @@ export class AiCrawlerSurfaceReachabilityAudit extends Audit {
         `Every advertised discovery surface is reachable by the crawlers that are allowed to fetch it.${optOutNote}`,
         EXPECTED,
         found,
-        "low",
+        CheckPriority.Low,
       );
     }
 

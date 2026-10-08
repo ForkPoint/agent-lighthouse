@@ -10,6 +10,13 @@ import {
 } from "../../__tests__/test-utils";
 import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
 import type { PageContext } from "../../check-context";
+import {
+  AuditTier,
+  CheckPriority,
+  CheckStatus,
+  EvidenceGrade,
+  ScoreDisplayMode,
+} from "../../types";
 
 const page = (head: string, url = "https://example.com/"): PageContext =>
   mockPageContext(
@@ -37,8 +44,8 @@ describe("AiContentDeclarationAudit", () => {
       const result = audit.audit(
         mockCheckContext([page("<title>Plain</title>")]),
       );
-      expect(result.status).toBe("na");
-      expect(result.status).not.toBe("fail");
+      expect(result.status).toBe(CheckStatus.NotApplicable);
+      expect(result.status).not.toBe(CheckStatus.Fail);
     });
 
     it("never returns fail for any input", () => {
@@ -48,7 +55,7 @@ describe("AiContentDeclarationAudit", () => {
         '<meta name="ai-content-declaration" content="x">',
       ]) {
         expect(audit.audit(mockCheckContext([page(html)])).status).not.toBe(
-          "fail",
+          CheckStatus.Fail,
         );
       }
     });
@@ -59,7 +66,7 @@ describe("AiContentDeclarationAudit", () => {
       const result = audit.audit(
         mockCheckContext([withHeader(page(""), "content-usage", "ai-train=n")]),
       );
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.found).toContain("Content-Usage");
       expect(result.found).toContain("ai-train=n");
     });
@@ -74,7 +81,7 @@ describe("AiContentDeclarationAudit", () => {
           ),
         }),
       );
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.found).toContain("robots.txt");
     });
 
@@ -84,7 +91,7 @@ describe("AiContentDeclarationAudit", () => {
           withHeader(page('<meta name="noai">'), "content-usage", "ai-train=n"),
         ]),
       );
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
     });
   });
 
@@ -93,7 +100,7 @@ describe("AiContentDeclarationAudit", () => {
       const result = audit.audit(
         mockCheckContext([page('<meta name="noai">')]),
       );
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.found).toContain("noai");
     });
 
@@ -103,7 +110,7 @@ describe("AiContentDeclarationAudit", () => {
           page('<meta name="robots" content="index, noai, noimageai">'),
         ]),
       );
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.found).toContain("noai");
       expect(result.found).toContain("noimageai");
     });
@@ -114,7 +121,7 @@ describe("AiContentDeclarationAudit", () => {
           page('<meta name="robots" content="noarchive, nosnippet">'),
         ]),
       );
-      expect(result.status).toBe("na");
+      expect(result.status).toBe(CheckStatus.NotApplicable);
     });
 
     it("says plainly that no AI vendor documents honoring these names", () => {
@@ -134,7 +141,7 @@ describe("AiContentDeclarationAudit", () => {
           page('<meta name="noai">', "https://example.com/blog"),
         ]),
       );
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.pageUrl).toBe("https://example.com/blog");
     });
   });
@@ -148,7 +155,7 @@ describe("AiContentDeclarationAudit", () => {
           ),
         ]),
       );
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.message).toContain("ai-content-declaration");
       expect(result.message).toContain("no specification");
     });
@@ -160,7 +167,7 @@ describe("AiContentDeclarationAudit", () => {
       const result = audit.audit(
         mockCheckContext([page('<meta name="ai-content-declaration">')]),
       );
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.message).toContain("no specification");
     });
 
@@ -190,7 +197,7 @@ describe("AiContentDeclarationAudit", () => {
       const result = audit.audit(
         mockCheckContext([page('<meta name="tdm-reservation" content="1">')]),
       );
-      expect(result.status).toBe("na");
+      expect(result.status).toBe(CheckStatus.NotApplicable);
     });
   });
 
@@ -199,10 +206,10 @@ describe("AiContentDeclarationAudit", () => {
 
     it("is grade D, experimental, weight 0, informative", () => {
       expect(meta.id).toBe("access-crawl-control/ai-content-declaration");
-      expect(meta.evidenceGrade).toBe("D");
-      expect(meta.tier).toBe("experimental");
+      expect(meta.evidenceGrade).toBe(EvidenceGrade.D);
+      expect(meta.tier).toBe(AuditTier.Experimental);
       expect(meta.weight).toBe(0);
-      expect(meta.scoreDisplayMode).toBe("informative");
+      expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Informative);
     });
 
     // The misinformation the code review called out: the shipped copy told
@@ -214,7 +221,7 @@ describe("AiContentDeclarationAudit", () => {
     });
 
     it("drops the priority to low", () => {
-      expect(meta.defaultPriority).toBe("low");
+      expect(meta.defaultPriority).toBe(CheckPriority.Low);
     });
   });
 
@@ -229,7 +236,7 @@ describe("AiContentDeclarationAudit", () => {
     expect(
       audit.audit(mockCheckContext(pages)).status,
       "the same header reached is judged",
-    ).toBe("pass");
+    ).toBe(CheckStatus.Pass);
     const plan = planAudits(challengedSiteContext(pages), defaultConfig);
     expect(plan.runnable.map((entry) => entry.reg.meta.id)).not.toContain(
       AiContentDeclarationAudit.meta.id,
@@ -237,6 +244,6 @@ describe("AiContentDeclarationAudit", () => {
     expect(
       plan.skipped.find((stub) => stub.id === AiContentDeclarationAudit.meta.id)
         ?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 });

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { InContentLinksAudit } from "./in-content-links";
 import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 /** A page whose only internal links live in the global nav and footer. */
 const CHROME_ONLY = `<html><body>
@@ -32,7 +33,7 @@ describe("InContentLinksAudit", () => {
       page("https://example.com/", TWO_IN_CONTENT),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("in-content");
   });
 
@@ -41,7 +42,7 @@ describe("InContentLinksAudit", () => {
   it("does not count nav, header, footer or aside links", () => {
     const ctx = mockCheckContext([page("https://example.com/", CHROME_ONLY)]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("no in-content internal links");
   });
 
@@ -52,7 +53,7 @@ describe("InContentLinksAudit", () => {
       <p>No contextual links.</p>
     </main></body></html>`;
     const ctx = mockCheckContext([page("https://example.com/", html)]);
-    expect(audit.audit(ctx).status).toBe("fail");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.Fail);
   });
 
   it("warns when a page has fewer than two in-content links", () => {
@@ -61,7 +62,7 @@ describe("InContentLinksAudit", () => {
       page("https://example.com/thin", ONE_IN_CONTENT, 1),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("thin");
   });
 
@@ -71,7 +72,7 @@ describe("InContentLinksAudit", () => {
     const html =
       '<html><body><main><a href="#main">Skip to content</a><a href="#section-2">Jump</a><p>x</p></main></body></html>';
     const ctx = mockCheckContext([page("https://example.com/", html)]);
-    expect(audit.audit(ctx).status).toBe("fail");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.Fail);
   });
 
   // Review finding (10.11): the site logo linking to / counted as a cross-link
@@ -81,7 +82,7 @@ describe("InContentLinksAudit", () => {
       '<html><body><main><a href="/">Home</a><a href="/guide">Guide</a><a href="/guide/">Same page</a><p>x</p></main></body></html>';
     const ctx = mockCheckContext([page("https://example.com/guide", html)]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("no in-content internal links");
   });
 
@@ -94,7 +95,7 @@ describe("InContentLinksAudit", () => {
     const ctx = mockCheckContext([page("https://example.com/", html)]);
     const result = audit.audit(ctx);
     // One destination, not three: below the bar, so thin rather than linkless.
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("1 distinct");
   });
 
@@ -102,7 +103,7 @@ describe("InContentLinksAudit", () => {
     const html =
       '<html><body><main><a href="/blog/page/2">Next</a><a href="/blog/page/3">3</a><p>x</p></main></body></html>';
     const ctx = mockCheckContext([page("https://example.com/blog", html)]);
-    expect(audit.audit(ctx).status).toBe("fail");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.Fail);
   });
 
   // Review finding (1.15): scanning https://www.example.com while the markup
@@ -115,7 +116,7 @@ describe("InContentLinksAudit", () => {
       ...mockCheckContext([page("https://www.example.com/", html)]),
       domain: "www.example.com",
     };
-    expect(audit.audit(ctx).status).toBe("pass");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
   });
 
   it("ignores mailto, tel and javascript hrefs", () => {
@@ -123,14 +124,14 @@ describe("InContentLinksAudit", () => {
       <a href="mailto:a@example.com">Mail</a><a href="tel:+1">Call</a><a href="javascript:void(0)">JS</a>
       <p>x</p></main></body></html>`;
     const ctx = mockCheckContext([page("https://example.com/", html)]);
-    expect(audit.audit(ctx).status).toBe("fail");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.Fail);
   });
 
   it("falls back to the body when a page has no main or article element", () => {
     const html =
       '<html><body><p>See <a href="/guide">the guide</a> and <a href="/api">the API</a>.</p></body></html>';
     const ctx = mockCheckContext([page("https://example.com/", html)]);
-    expect(audit.audit(ctx).status).toBe("pass");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
   });
 
   it('lists at most five thin pages with a "+N more" suffix', () => {
@@ -141,12 +142,12 @@ describe("InContentLinksAudit", () => {
       ),
     ];
     const result = audit.audit(mockCheckContext(pages));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("+1 more");
   });
 
   it("is not applicable when no pages were scanned", () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 });

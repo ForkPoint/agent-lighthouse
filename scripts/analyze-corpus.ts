@@ -44,7 +44,9 @@ import {
   listFixtures,
   readFixture,
   type FixtureProvenance,
+  FixtureKind,
 } from "../packages/core/src/tests/fixture-io";
+import { CheckStatus, PageTypeSource } from "../packages/core/src/types";
 
 function fixtureFetchResult(
   html: string,
@@ -77,7 +79,7 @@ function fixturePageContext(
   return {
     url: provenance.url,
     pageType: detectPageType(provenance.url, $, structuredData, meta, true),
-    pageTypeSource: "detected",
+    pageTypeSource: PageTypeSource.Detected,
     fetchResult: fixtureFetchResult(html, provenance),
     $,
     jsonLd,
@@ -186,7 +188,7 @@ async function main() {
         fixtureSummary.errors.push(errItem);
       }
 
-      if (t.status === "fail") {
+      if (t.status === CheckStatus.Fail) {
         if (t.weight > 0) totalStats.scoredFails++;
         else totalStats.informativeFails++;
 
@@ -201,7 +203,11 @@ async function main() {
         };
         fixtureSummary.fails.push(failItem);
 
-        if (provenance.kind === "wall" && t.weight > 0 && t.status === "fail") {
+        if (
+          provenance.kind === FixtureKind.Wall &&
+          t.weight > 0 &&
+          t.status === CheckStatus.Fail
+        ) {
           totalStats.falsePositives.push({
             fixture: name,
             kind: provenance.kind,
@@ -214,7 +220,7 @@ async function main() {
         if (
           t.explanation?.toLowerCase().includes("no ") &&
           t.explanation?.toLowerCase().includes("found") &&
-          t.status === "fail" &&
+          t.status === CheckStatus.Fail &&
           t.weight > 0
         ) {
           totalStats.falsePositives.push({

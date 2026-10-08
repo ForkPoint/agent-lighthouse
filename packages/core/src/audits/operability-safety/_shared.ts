@@ -17,18 +17,18 @@
  *   - else any rule PASSES                               → pass
  *   - else every rule was INAPPLICABLE / unseen          → na (nothing to assess)
  */
-import type {
-  AuditMeta,
-  AuditResult,
+import type { AuditMeta, AuditResult } from "../../types";
+import { Audit } from "../../audit";
+import type { CheckContext } from "../../check-context";
+import { weightForGrade } from "../../scorer";
+import type { A11yStatus } from "./runner";
+import {
   AuditTier,
   EvidenceGrade,
   EvidenceKey,
   ScoreDisplayMode,
 } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
-import type { A11yStatus } from "./runner";
+import { RuleStatus } from "./engine/rules";
 
 export interface A11yAuditSpec {
   meta: AuditMeta;
@@ -56,15 +56,15 @@ export abstract class A11yBackedAudit extends Audit {
       for (const ruleId of this.rules) {
         const r = results[ruleId];
         if (!r) continue;
-        if (r.status === ("fail" as A11yStatus)) {
+        if (r.status === (RuleStatus.Fail as A11yStatus)) {
           sawFail = true;
           failPage ??= p.url;
           for (const n of r.nodes) {
             if (failings.length < 5) failings.push(n.target);
           }
-        } else if (r.status === ("incomplete" as A11yStatus)) {
+        } else if (r.status === (RuleStatus.Incomplete as A11yStatus)) {
           sawIncomplete = true;
-        } else if (r.status === ("pass" as A11yStatus)) {
+        } else if (r.status === (RuleStatus.Pass as A11yStatus)) {
           sawPass = true;
         }
       }
@@ -137,10 +137,10 @@ export const base = {
    * spreads `base`.
    */
   requires: [
-    "origin-reachable",
-    "unblocked-fetches",
-    "rendered-body",
-    "sample-adequate",
+    EvidenceKey.OriginReachable,
+    EvidenceKey.UnblockedFetches,
+    EvidenceKey.RenderedBody,
+    EvidenceKey.SampleAdequate,
   ] as EvidenceKey[],
 };
 
@@ -152,11 +152,14 @@ export const base = {
  */
 export function graded(grade: EvidenceGrade, slug: string) {
   const tier: AuditTier =
-    grade === "A" || grade === "B" ? "scored" : "informative";
+    grade === EvidenceGrade.A || grade === EvidenceGrade.B
+      ? AuditTier.Scored
+      : AuditTier.Informative;
   return {
-    scoreDisplayMode: (tier === "scored"
-      ? "binary"
-      : "informative") as ScoreDisplayMode,
+    scoreDisplayMode:
+      tier === AuditTier.Scored
+        ? ScoreDisplayMode.Binary
+        : ScoreDisplayMode.Informative,
     weight: weightForGrade(grade, tier),
     evidenceGrade: grade,
     tier,

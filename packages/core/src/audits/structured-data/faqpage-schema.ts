@@ -3,6 +3,14 @@ import { Audit } from "../../audit";
 import type { CheckContext, PageContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
 import { flattenJsonLd } from "../../parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 function matchesType(schema: Record<string, unknown>, type: string): boolean {
   const t = schema["@type"];
@@ -32,18 +40,18 @@ export class FaqPageSchemaAudit extends Audit {
     failureTitle: "FAQPage schema",
     description:
       "AI answer engines like Perplexity and Google SGE extract FAQ-structured content with higher confidence for direct answers. FAQPage schema makes your Q&A content machine-readable, giving it priority in AI-generated responses over unstructured text.",
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "informative"),
-    evidenceGrade: "C",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/structured-data/faqpage-schema.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "medium",
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "AI answer engines like Perplexity and Google SGE give priority to FAQ-structured content for direct answers. Without FAQPage schema, your Q&A content is treated as unstructured text and is less likely to be surfaced as a featured answer in AI-generated responses.",
@@ -62,7 +70,7 @@ export class FaqPageSchemaAudit extends Audit {
     }
   ]
 }`,
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl: "https://schema.org/FAQPage",
       tags: ["json-ld", "schema", "faq", "content"],
     },
@@ -77,7 +85,7 @@ export class FaqPageSchemaAudit extends Audit {
         "FAQPage schema on pages with question-patterned headings.",
         "No question-patterned headings found.",
         {
-          priority: "low",
+          priority: CheckPriority.Low,
           description:
             "AI answer engines like Perplexity and Google SGE extract FAQ-structured content with high confidence for direct answers. Consider adding FAQ sections with question-formatted headings and FAQPage schema to your content pages.",
           code: `{
@@ -117,7 +125,7 @@ export class FaqPageSchemaAudit extends Audit {
         "FAQPage schema on pages with question-patterned headings.",
         `${pagesWithFaq.length}/${pagesWithQuestions.length} pages with FAQPage schema`,
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "AI answer engines like Perplexity and Google SGE extract FAQ-structured content with higher confidence for direct answers. FAQPage schema makes your Q&A content machine-readable, giving it priority in AI-generated responses over unstructured text.",
           code: `{
@@ -138,7 +146,7 @@ export class FaqPageSchemaAudit extends Audit {
       "FAQPage schema on pages with question-patterned headings.",
       `${pagesWithFaq.length}/${pagesWithQuestions.length} pages with FAQPage schema`,
       {
-        priority: "medium",
+        priority: CheckPriority.Medium,
         description:
           "AI answer engines like Perplexity and Google SGE extract FAQ-structured content with higher confidence for direct answers. FAQPage schema makes your Q&A content machine-readable, giving it priority in AI-generated responses over unstructured text.",
         code: `{

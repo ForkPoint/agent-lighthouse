@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { SpecificNumbersAudit } from "./specific-numbers";
 import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 describe("SpecificNumbersAudit", () => {
   const audit = new SpecificNumbersAudit();
@@ -13,7 +14,7 @@ describe("SpecificNumbersAudit", () => {
       </main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("Specific data points found");
     expect(result.found).toMatch(/99\.9%|50,000/);
   });
@@ -26,7 +27,7 @@ describe("SpecificNumbersAudit", () => {
       </main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No specific numbers");
   });
 
@@ -36,12 +37,12 @@ describe("SpecificNumbersAudit", () => {
       "<html><body><main><p>Our platform is fast and reliable.</p></main></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("fails when no pages were scanned", () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No pages scanned");
   });
 
@@ -54,7 +55,7 @@ describe("SpecificNumbersAudit", () => {
     const page1 = mockPageContext("https://example.com/page1", richHtml);
     const page2 = mockPageContext("https://example.com/page2", richHtml);
     const result = audit.audit(mockCheckContext([page1, page2]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("2 page");
   });
 });

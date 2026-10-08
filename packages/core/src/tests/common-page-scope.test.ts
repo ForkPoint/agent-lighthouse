@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { runAudits } from "../audit-runner";
 import type { ScanConfig } from "../audit-config";
-import type { PageType } from "../types";
+import {
+  PAGE_TYPES,
+  type PageType,
+  CheckStatus,
+  ScoreDisplayMode,
+} from "../types";
 import { AuditResultSchema } from "../schemas";
 import { buildScanEvidence } from "../scan-evidence";
 import { mockCheckContext, mockPageContext } from "../__tests__/test-utils";
@@ -32,14 +37,7 @@ const config: ScanConfig = {
   },
 };
 
-const pageTypes: PageType[] = [
-  "homepage",
-  "product",
-  "category",
-  "content",
-  "article",
-  "unknown",
-];
+const pageTypes: readonly PageType[] = PAGE_TYPES;
 const text =
   "This page contains readable information about the shop and its products. ".repeat(
     40,
@@ -47,8 +45,8 @@ const text =
 
 describe("common page scope", () => {
   it.each([
-    { declaration: 'lang="en"', status: "pass" },
-    { declaration: "", status: "fail" },
+    { declaration: 'lang="en"', status: CheckStatus.Pass },
+    { declaration: "", status: CheckStatus.Fail },
   ])(
     "judges language on an empty-body page: $status",
     async ({ declaration, status }) => {
@@ -71,7 +69,7 @@ describe("common page scope", () => {
       )!;
       expect(check.status).toBe(status);
       expect(check.weight).toBe(LanguageAttributeAudit.meta.weight);
-      expect(check.scoreDisplayMode).toBe("binary");
+      expect(check.scoreDisplayMode).toBe(ScoreDisplayMode.Binary);
       expect(check.pageUrl).toBe(page.url);
     },
   );
@@ -87,11 +85,11 @@ describe("common page scope", () => {
       );
       const instance = new AuditClass();
       const result = instance.audit(mockCheckContext(pages));
-      expect(result.status).toBe("fail");
+      expect(result.status).toBe(CheckStatus.Fail);
       expect(result.found).toContain("0/150");
       expect(result.found).toContain("(truncated)");
       expect(AuditResultSchema.safeParse(result).success).toBe(true);
-      expect(instance.toCheckResult(result).status).toBe("fail");
+      expect(instance.toCheckResult(result).status).toBe(CheckStatus.Fail);
     },
   );
 
@@ -135,7 +133,9 @@ describe("common page scope", () => {
               (entry) => entry.id === AuditClass.meta.id,
             )!;
             expect(check.status).toBe(
-              AuditClass.meta.scoreDisplayMode === "binary" ? "fail" : "warn",
+              AuditClass.meta.scoreDisplayMode === ScoreDisplayMode.Binary
+                ? CheckStatus.Fail
+                : CheckStatus.Warn,
             );
             expect(check.scoreDisplayMode).toBe(
               AuditClass.meta.scoreDisplayMode,

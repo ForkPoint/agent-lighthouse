@@ -3,6 +3,14 @@ import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
 import type { CheckContext } from "../../check-context";
 import { extractHeadings } from "../../parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 export class QuestionHeadingsAudit extends Audit {
   static override meta: AuditMeta = {
@@ -12,24 +20,24 @@ export class QuestionHeadingsAudit extends Audit {
     failureTitle: "Question-formatted headings",
     description:
       'AI answer engines directly match user questions to heading text. Question-formatted headings (ending with "?") are the primary signal AI systems use to identify which section answers a specific query.',
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "informative"),
-    evidenceGrade: "C",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/answer-readiness/question-headings.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "medium",
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "AI answer engines directly match user questions to heading text. Question-formatted headings are the primary signal for identifying which section answers a specific query. Without them, agents must guess which section is relevant, reducing your content's match rate.",
       fix: 'Reformat H2/H3 headings as questions that end with "?" to match the natural language patterns users ask AI agents. Follow each question heading immediately with a direct answer paragraph.',
       code: "<h2>What is unified content preparation?</h2>\n<p>Unified content preparation is the process of structuring your site content for consumption by both humans and AI agents.</p>",
-      effort: "easy",
+      effort: FixEffort.Easy,
       tags: ["content-structure", "copywriting", "answer-engine"],
     },
   };
@@ -42,7 +50,7 @@ export class QuestionHeadingsAudit extends Audit {
         'H2/H3 headings ending with "?"',
         "No pages scanned",
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description: QuestionHeadingsAudit.meta.description,
           code: "<h2>What is unified content preparation?</h2>\n<p>Unified content preparation is...</p>",
         },
@@ -83,7 +91,7 @@ export class QuestionHeadingsAudit extends Audit {
         'H2/H3 headings ending with "?"',
         examples.join("; "),
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             'Adding more question-formatted H2/H3 headings increases the number of user queries your content can match, boosting your visibility in AI-generated answers and "People Also Ask" results.',
           code: "<h2>How does your product compare to alternatives?</h2>\n<h2>What are the system requirements?</h2>",
@@ -97,7 +105,7 @@ export class QuestionHeadingsAudit extends Audit {
       'H2/H3 headings ending with "?"',
       "Not found",
       {
-        priority: "medium",
+        priority: CheckPriority.Medium,
         description:
           'Question-formatted headings ("What is X?", "How does Y work?") are the primary signal for identifying which section answers a query. Each question heading should be followed immediately by a direct answer paragraph.',
         code: "<h2>What is unified content preparation?</h2>\n<p>Unified content preparation is the process of structuring your site content for consumption by both humans and AI agents.</p>",

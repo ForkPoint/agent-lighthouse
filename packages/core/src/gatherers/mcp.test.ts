@@ -12,6 +12,7 @@ import {
 import { mockCheckContext, mockFetchResult } from "../__tests__/test-utils";
 import type { CheckContext } from "../check-context";
 import type { FetchOptions, FetchResult } from "../fetcher";
+import { HttpMethod } from "../types";
 
 // isSafeUrl performs a real DNS lookup before the client POSTs to a URL it read
 // out of a site-controlled root file. Stub it with an offline stand-in that
@@ -298,7 +299,7 @@ describe("mcpFetch and the shared probe cache", () => {
     res.headers["www-authenticate"] = "Bearer";
     const r = recorder2(res);
     const out = await mcpFetch(r.ctx, "https://a.test/mcp", {
-      method: "POST",
+      method: HttpMethod.Post,
       body: "{}",
     });
     expect(out?.status).toBe(400);
@@ -307,7 +308,7 @@ describe("mcpFetch and the shared probe cache", () => {
 
   it("sends a GET with no JSON content type", async () => {
     const r = recorder2(mockFetchResult("", 405));
-    await mcpFetch(r.ctx, "https://a.test/mcp", { method: "GET" });
+    await mcpFetch(r.ctx, "https://a.test/mcp", { method: HttpMethod.Get });
     expect(r.seen[0]).toMatchObject({
       method: "GET",
       acceptHeader: MCP_ACCEPT,

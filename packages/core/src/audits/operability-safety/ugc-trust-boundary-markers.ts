@@ -6,6 +6,14 @@ import type { CheckContext, PageContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
 import { INSTRUCTION_LEXICON } from "./invisible-instruction-scan";
 import { allJsonLdNodes } from "../../parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /**
  * DOM anchors for visitor-contributed regions.
@@ -268,18 +276,18 @@ export class UgcTrustBoundaryMarkersAudit extends Audit {
     failureTitle: "Visitor-written regions carry no boundary an agent can see",
     description:
       'Locates visitor-contributed regions — comments, reviews, Q&A, forum posts, submission forms — and checks whether any machine-readable boundary separates them from editorial copy: `data-nosnippet` containment on a span, div or section, `rel="ugc"` on their outbound links, and whether raw markup survives the sanitizer inside them.',
-    scoreDisplayMode: "ternary",
-    tier: "scored",
-    evidenceGrade: "B",
-    weight: weightForGrade("B", "scored"),
-    defaultPriority: "high",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    tier: AuditTier.Scored,
+    evidenceGrade: EvidenceGrade.B,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    defaultPriority: CheckPriority.High,
     dossier:
       "docs/evidence/audits/operability-safety/ugc-trust-boundary-markers.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     guidance: {
       impact:
@@ -296,7 +304,7 @@ export class UgcTrustBoundaryMarkersAudit extends Audit {
     <div class="comment">Great mug. <a rel="ugc nofollow" href="https://spam.test/">More</a></div>
   </section>
 </div>`,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/ugc-trust-boundary-markers/",
       tags: ["injection-safety", "security", "agent-trust"],

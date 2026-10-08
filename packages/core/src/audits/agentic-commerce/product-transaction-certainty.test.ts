@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { ProductTransactionCertaintyAudit } from "./product-transaction-certainty";
 import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 const ld = (obj: unknown) =>
   `<script type="application/ld+json">${JSON.stringify(obj)}</script>`;
@@ -18,7 +19,7 @@ describe("ProductTransactionCertaintyAudit", () => {
       mockPageContext("https://example.com/", html, 0),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("fails when Product relies on name and price alone", () => {
@@ -36,7 +37,7 @@ describe("ProductTransactionCertaintyAudit", () => {
       mockPageContext("https://example.com/products/shoe", html, 1),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("1/4");
     expect(result.message).toContain("offers.availability");
   });
@@ -51,7 +52,7 @@ describe("ProductTransactionCertaintyAudit", () => {
       mockPageContext("https://example.com/products/shoe", html, 1),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("no Offer block");
   });
 
@@ -71,7 +72,7 @@ describe("ProductTransactionCertaintyAudit", () => {
       mockPageContext("https://example.com/products/shoe", html, 1),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("2/4");
     expect(result.found).toContain("priceValidUntil");
   });
@@ -98,7 +99,7 @@ describe("ProductTransactionCertaintyAudit", () => {
       mockPageContext("https://example.com/products/shoe", html, 1),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("4/4");
   });
 
@@ -127,6 +128,6 @@ describe("ProductTransactionCertaintyAudit", () => {
       mockPageContext("https://example.com/products/shoe", html, 1),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 });

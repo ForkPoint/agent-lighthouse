@@ -10,6 +10,7 @@ import {
 } from "../../__tests__/test-utils";
 import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
 import type { CheckContext } from "../../check-context";
+import { AuditTier, CheckStatus, EvidenceGrade } from "../../types";
 
 interface SiteSpec {
   robots?: string;
@@ -62,7 +63,7 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
     expect(channels).toContain("robots.txt Disallow");
     expect(channels).toContain("robots.txt Content-Signal");
     expect(channels).toContain("Content-Usage response header");
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("fails when two channels disagree, naming both and their source lines", async () => {
@@ -72,7 +73,7 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
         headers: { "tdm-reservation": "1" },
       }),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     const contradictions = result.details?.["contradictions"] as string[];
     expect(contradictions[0]).toContain("robots.txt Content-Usage");
     expect(contradictions[0]).toContain("tdm-reservation response header");
@@ -86,14 +87,14 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
         robots: "User-agent: *\nContent-Usage: train-ai=n\n",
       }),
     );
-    expect(denied.status).toBe("pass");
+    expect(denied.status).toBe(CheckStatus.Pass);
     const contradicted = await audit.audit(
       site({
         head: '<meta name="tdm-reservation" content="0">',
         robots: "User-agent: *\nContent-Usage: train-ai=n\n",
       }),
     );
-    expect(contradicted.status).toBe("fail");
+    expect(contradicted.status).toBe(CheckStatus.Fail);
   });
 
   // A Content-Signal line written inside a named group is that group's, which
@@ -105,7 +106,7 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
         headers: { "content-usage": "train-ai=y" },
       }),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     const other = await audit.audit(
       site({
         robots:
@@ -114,7 +115,7 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
     );
     // GPTBot's signal and CCBot's block are about different agents, so they do
     // not contradict each other.
-    expect(other.status).toBe("pass");
+    expect(other.status).toBe(CheckStatus.Pass);
   });
 
   it("reports a prepended Content-Signal block as an edge override, not an ordinary contradiction", async () => {
@@ -124,7 +125,7 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
           "User-Agent: *\nContent-Signal: search=yes, ai-train=no\nAllow: /\n\nUser-agent: *\nContent-Usage: train-ai=y\nAllow: /\n",
       }),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     const overrides = result.details?.["edgeOverrides"] as string[];
     expect(overrides).toHaveLength(1);
     expect(overrides[0]).toContain("Content-Signal");
@@ -142,7 +143,7 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
         tdmrep: '{"tdm-reservation": 1}',
       }),
     );
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.score).toBe(0);
     expect(result.details?.["signals"]).toBe(0);
     expect((result.details!["notes"] as string[])[0]).toContain(
@@ -158,7 +159,7 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
         headers: { "content-usage": "train-ai=y" },
       }),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     const contradictions = result.details?.["contradictions"] as string[];
     expect(contradictions[0]).toContain("robots.txt Disallow");
     expect(contradictions[0]).toContain("Content-Usage response header");
@@ -168,7 +169,7 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
     const result = await audit.audit(
       site({ robots: "User-agent: *\nContent-Usage: train-ai=n\n" }),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("reads an inline RSL document without fetching anything", async () => {
@@ -178,7 +179,7 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
         headers: { "content-usage": "ai-input=y" },
       }),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.details?.["channels"] as string[]).toContain(
       "inline RSL document",
     );
@@ -191,7 +192,7 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
         robots: "User-agent: *\nContent-Usage: train-ai=y\n",
       }),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect((result.details!["notes"] as string[])[0]).toContain(
       "array of rules",
     );
@@ -206,7 +207,7 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
     expect(
       (await audit.audit(reached)).status,
       "the same header reached is judged",
-    ).toBe("pass");
+    ).toBe(CheckStatus.Pass);
 
     const challenged = challengedSiteContext(reached.pages, reached.rootFiles);
     const plan = planAudits(challenged, defaultConfig);
@@ -217,13 +218,13 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
       plan.skipped.find(
         (stub) => stub.id === AiUsageSignalCoherenceAcrossChannelsAudit.meta.id,
       )?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 
   it("is a scored grade B audit", () => {
     const { meta } = AiUsageSignalCoherenceAcrossChannelsAudit;
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
     expect(meta.weight).toBeCloseTo(0.6);
     expect(meta.id.length).toBeLessThanOrEqual(64);
   });

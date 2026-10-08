@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { AboutCredentialsAudit } from "./about-credentials";
 import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 describe("AboutCredentialsAudit", () => {
   const audit = new AboutCredentialsAudit();
@@ -14,7 +15,7 @@ describe("AboutCredentialsAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("credential signals");
   });
 
@@ -23,7 +24,7 @@ describe("AboutCredentialsAudit", () => {
       "/about/": mockFetchResult("Meet our team.", 200, "text/html"),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("limited credential signals");
   });
 
@@ -36,13 +37,13 @@ describe("AboutCredentialsAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("lacks credential keywords");
   });
 
   it("fails when no about page is found", async () => {
     const result = await audit.audit(mockCheckContext([], {}));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No about page found");
   });
 
@@ -59,7 +60,7 @@ describe("AboutCredentialsAudit", () => {
       return mockFetchResult("", 404);
     };
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("credential signals");
   });
 
@@ -77,7 +78,7 @@ describe("AboutCredentialsAudit", () => {
       return mockFetchResult("", 404);
     };
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("uses /about-us/ from rootFiles when /about/ is absent", async () => {
@@ -89,6 +90,6 @@ describe("AboutCredentialsAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 });

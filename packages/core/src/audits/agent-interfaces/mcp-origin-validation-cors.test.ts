@@ -8,6 +8,13 @@ import {
 import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
 import type { FetchOptions, FetchResult } from "../../fetcher";
 import type { AuditResult } from "../../types";
+import {
+  AuditTier,
+  CheckPriority,
+  CheckStatus,
+  EvidenceGrade,
+  HttpMethod,
+} from "../../types";
 
 vi.mock("../../fetcher", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../fetcher")>();
@@ -75,7 +82,7 @@ function run(server: Server = {}) {
     if (server.accelBuffering !== undefined)
       cors["x-accel-buffering"] = server.accelBuffering;
 
-    if (o.method === "OPTIONS") {
+    if (o.method === HttpMethod.Options) {
       const result = mockFetchResult("", 204, "text/plain");
       Object.assign(result.headers, cors);
       return result;
@@ -112,7 +119,7 @@ describe("McpOriginValidationCorsAudit", () => {
 
   it("is notApplicable when the site declares no MCP endpoint", async () => {
     const { result, requests } = run({ undeclared: true });
-    expect((await result).status).toBe("na");
+    expect((await result).status).toBe(CheckStatus.NotApplicable);
     expect(requests).toHaveLength(0);
   });
 
@@ -125,7 +132,7 @@ describe("McpOriginValidationCorsAudit", () => {
       challenges: true,
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "findings").join(" ")).toContain(
       "reflects an arbitrary Origin",
     );
@@ -139,7 +146,7 @@ describe("McpOriginValidationCorsAudit", () => {
       challenges: true,
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "findings").join(" ")).toContain(
       "Access-Control-Allow-Origin: *",
     );
@@ -151,14 +158,14 @@ describe("McpOriginValidationCorsAudit", () => {
       allowHeaders: "content-type, authorization",
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(r.details?.["credentialAccepting"]).toBe(true);
   });
 
   it("warns when a credential-accepting endpoint answers identically with and without an Origin", async () => {
     const { result } = run({ allowHeaders: "content-type, authorization" });
     const r = await result;
-    expect(r.status).toBe("warn");
+    expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "findings").join(" ")).toContain(
       "applies no Origin policy",
     );
@@ -168,7 +175,7 @@ describe("McpOriginValidationCorsAudit", () => {
   it("reports permissive CORS on an endpoint with no auth surface without scoring it", async () => {
     const { result } = run({ allowOrigin: "*" });
     const r = await result;
-    expect(r.status).toBe("pass");
+    expect(r.status).toBe(CheckStatus.Pass);
     expect(strings(r, "notes").join(" ")).toContain("Reported, not scored");
   });
 
@@ -178,7 +185,7 @@ describe("McpOriginValidationCorsAudit", () => {
       allowHeaders: "content-type, authorization",
     });
     const r = await result;
-    expect(r.status).toBe("pass");
+    expect(r.status).toBe(CheckStatus.Pass);
     expect(r.details?.["originDifferentiates"]).toBe(true);
   });
 
@@ -197,16 +204,18 @@ describe("McpOriginValidationCorsAudit", () => {
     expect(origins.length).toBeGreaterThan(0);
     for (const origin of origins)
       expect(origin).toMatch(/^https:\/\/al-probe-[0-9a-f]{12}\.example$/);
-    expect(requests.filter((o) => o.method === "OPTIONS")).toHaveLength(1);
+    expect(
+      requests.filter((o) => o.method === HttpMethod.Options),
+    ).toHaveLength(1);
     expect(requests.length).toBeLessThanOrEqual(3);
   });
 
   it("registers as a scored grade-B audit", () => {
     const { meta } = McpOriginValidationCorsAudit;
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
     expect(meta.weight).toBeCloseTo(0.6);
-    expect(meta.defaultPriority).toBe("high");
+    expect(meta.defaultPriority).toBe(CheckPriority.High);
     expect(meta.id.length).toBeLessThanOrEqual(64);
   });
 });

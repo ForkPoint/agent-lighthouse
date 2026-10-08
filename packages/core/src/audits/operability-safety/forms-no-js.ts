@@ -3,6 +3,14 @@ import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
 import type { CheckContext } from "../../check-context";
 import { extractForms } from "../../parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 export class FormsNoJsAudit extends Audit {
   static override meta: AuditMeta = {
@@ -12,18 +20,18 @@ export class FormsNoJsAudit extends Audit {
     failureTitle: "Forms work without JavaScript",
     description:
       "Many AI agents do not execute JavaScript, so forms that rely on JS for submission are invisible to them. Adding standard HTML action and method attributes ensures forms work via simple HTTP requests, making them accessible to all AI agents.",
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "informative"),
-    evidenceGrade: "C",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/operability-safety/forms-no-js.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "medium",
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "Most AI agents do not execute JavaScript. If your forms rely on JS for submission (e.g., React/Vue event handlers with no HTML action), agents cannot submit them at all. This blocks lead capture, contact requests, and any form-based interaction.",
@@ -35,7 +43,7 @@ export class FormsNoJsAudit extends Audit {
   <textarea name="message" required></textarea>
   <button type="submit">Send</button>
 </form>`,
-      effort: "easy",
+      effort: FixEffort.Easy,
       tags: ["forms", "html", "accessibility", "no-js"],
     },
   };
@@ -81,7 +89,7 @@ export class FormsNoJsAudit extends Audit {
     }
 
     const recommendation = {
-      priority: "medium" as const,
+      priority: CheckPriority.Medium,
       description: FormsNoJsAudit.meta.description,
       code: `<!-- Use standard HTML form attributes -->\n<form action="/api/contact" method="POST">\n  <input type="text" name="name" required />\n  <input type="email" name="email" required />\n  <textarea name="message" required></textarea>\n  <button type="submit">Send</button>\n</form>`,
     };

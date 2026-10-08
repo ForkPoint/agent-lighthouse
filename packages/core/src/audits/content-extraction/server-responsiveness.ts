@@ -2,6 +2,14 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /**
  * Bands, not a cliff. 800ms is the widely used "good TTFB" target; 2500ms is
@@ -33,21 +41,21 @@ export class ServerResponsivenessAudit extends Audit {
     failureTitle: "Server responsiveness",
     description:
       "AI crawlers fetch fewer pages per session from a slow origin, and a user-triggered agent fetch that outlasts the client budget is abandoned before bytes arrive. This measures the median time to first byte across the crawled pages, not a single cold sample.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/content-extraction/server-responsiveness.md",
     // Gate exemption: TTFB is measured from the response, and a shell answers as fast
     // or as slow as anything else the origin serves.
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "medium",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         'Google documents that crawl capacity falls when a host slows down ("if the site slows down… the limit goes down and Google crawls less"), and slow origins are where logged HTTP 499 client-closed-request clusters from AI fetchers appear. A slow origin therefore gets less of its content into the indexes AI answers are drawn from.',
       fix: "Reduce time to first byte: cache at the origin (Redis, Varnish, nginx microcaching), serve through a CDN with edge caching, cut database work on the critical path, and pre-render or statically generate content pages. Note that the figure below is measured from the scanner and includes DNS, TCP and TLS setup.",
       code: "# Nginx microcaching example:\nproxy_cache_path /tmp/cache levels=1:2 keys_zone=ai:10m max_size=1g;\nproxy_cache_valid 200 1m;\nadd_header X-Cache-Status $upstream_cache_status;",
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl: "https://web.dev/articles/ttfb",
       tags: ["performance", "crawl-budget", "discoverability", "speed"],
     },
@@ -106,7 +114,7 @@ export class ServerResponsivenessAudit extends Audit {
         EXPECTED,
         found,
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "A median above the 800ms target leaves less of the site inside a crawler session and closer to the point where a user-triggered agent fetch is abandoned. Note the figure includes connection setup from the scanner, so part of it may be distance rather than server work.",
           code: "# Potential optimizations:\n# - Enable server-side caching (Redis, Varnish, nginx microcaching)\n# - Serve through a CDN with edge caching\n# - Optimize database queries on the critical path",
@@ -119,7 +127,7 @@ export class ServerResponsivenessAudit extends Audit {
       EXPECTED,
       found,
       {
-        priority: "high",
+        priority: CheckPriority.High,
         description:
           "A median TTFB in seconds means most pages sit inside the window where AI fetchers are observed to close the connection before bytes arrive, and Google documents crawl capacity falling as host latency rises. This is a whole-site figure, not one unlucky sample.",
         code: "# Potential optimizations:\n# - Enable server-side caching (Redis, Varnish, nginx microcaching)\n# - Serve through a CDN with edge caching\n# - Pre-render or statically generate content pages\n# - Enable HTTP/2 or HTTP/3",

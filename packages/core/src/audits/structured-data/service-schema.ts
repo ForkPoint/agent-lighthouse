@@ -8,6 +8,15 @@ import { Audit } from "../../audit";
 import type { CheckContext, PageContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
 import { flattenJsonLd } from "../../parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** The two in-scope service shapes. Product types belong to 3.22 now. */
 const SERVICE_TYPES = ["Service", "ProfessionalService"];
@@ -98,24 +107,28 @@ export class ServiceSchemaAudit extends Audit {
     failureTitle: "Service schema",
     description:
       "AI agents use Service schema to understand what you offer and who provides it. Without it, agents must infer your offerings from unstructured text, which leads to inaccurate or incomplete descriptions in AI-generated recommendations.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/structured-data/service-schema.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     // Where a service business publishes its offerings. NOT ['product'] —
     // that was inherited from the pre-split audit and inverted this check:
     // it skipped every service site (no product page in the scan) and ran only
     // on stores, which do not emit Service markup. The runtime guard below
     // carries the real precondition.
-    applicablePageTypes: ["homepage", "content", "unknown", "article"],
-    defaultPriority: "medium",
+    applicablePageTypes: [
+      PageType.Homepage,
+      PageType.Unknown,
+      PageType.Article,
+    ],
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "Without Service schema, AI agents must infer your offerings from unstructured text. This leads to inaccurate or incomplete descriptions in AI-generated recommendations, and your services may be entirely overlooked when agents compare options for users.",
@@ -130,7 +143,7 @@ export class ServiceSchemaAudit extends Audit {
     "name": "Your Company"
   }
 }`,
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl: "https://schema.org/Service",
       tags: ["json-ld", "schema", "service"],
     },
@@ -155,7 +168,7 @@ export class ServiceSchemaAudit extends Audit {
         "Service schema with name and provider.",
         "None",
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description: ServiceSchemaAudit.meta.description,
           code: `{
   "@context": "https://schema.org",
@@ -187,7 +200,7 @@ export class ServiceSchemaAudit extends Audit {
       "Service schema with name and provider.",
       `Service schema missing ${best.join(", ")} (${services.length} total)`,
       {
-        priority: "medium",
+        priority: CheckPriority.Medium,
         description: `AI agents use Service schema properties to accurately describe your offerings to users. Missing properties (${best.join(", ")}) mean agents cannot fully represent your service in AI-generated recommendations. Add them to your existing schema.`,
         code: `{
   "@type": "Service",

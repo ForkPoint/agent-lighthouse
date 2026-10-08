@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { NamedAuthorAudit } from "./named-author";
 import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 describe("NamedAuthorAudit", () => {
   const audit = new NamedAuthorAudit();
@@ -16,7 +17,7 @@ describe("NamedAuthorAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("Named author found in JSON-LD");
     expect(result.message).toContain("Jane Smith");
   });
@@ -27,7 +28,7 @@ describe("NamedAuthorAudit", () => {
       `<html><head><meta name="author" content="John Doe"></head><body><p>Content</p></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("meta tag");
     expect(result.message).toContain("John Doe");
   });
@@ -38,7 +39,7 @@ describe("NamedAuthorAudit", () => {
       `<html><body><span class="author">Alice Brown</span><p>Content</p></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("visible byline");
   });
 
@@ -48,7 +49,7 @@ describe("NamedAuthorAudit", () => {
       `<html><body><span class="author">Staff</span><p>Content</p></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No named author attribution found");
   });
 
@@ -58,13 +59,13 @@ describe("NamedAuthorAudit", () => {
       `<html><body><article><p>Just content with no author.</p></article></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No named author attribution found");
   });
 
   it("fails when no pages scanned", () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No pages scanned");
   });
 
@@ -79,7 +80,7 @@ describe("NamedAuthorAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("Jane Smith");
   });
 
@@ -94,7 +95,7 @@ describe("NamedAuthorAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("Alice Johnson");
   });
 
@@ -109,7 +110,7 @@ describe("NamedAuthorAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("Dana White");
   });
 
@@ -124,7 +125,7 @@ describe("NamedAuthorAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("Bob Martin");
   });
 
@@ -139,7 +140,7 @@ describe("NamedAuthorAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("Grace Lee");
   });
 
@@ -154,7 +155,7 @@ describe("NamedAuthorAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("visible byline");
     expect(result.message).toContain("Hank Evans");
   });
@@ -170,7 +171,7 @@ describe("NamedAuthorAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("visible byline");
   });
 
@@ -180,7 +181,7 @@ describe("NamedAuthorAudit", () => {
       `<html><body><a rel="author">Carol White</a><p>Content</p></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("visible byline");
   });
 
@@ -195,7 +196,7 @@ describe("NamedAuthorAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No named author attribution found");
   });
 
@@ -209,7 +210,7 @@ describe("NamedAuthorAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("Valid Author");
   });
 });

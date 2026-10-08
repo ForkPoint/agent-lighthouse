@@ -3,6 +3,10 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { PresetName } from "./presets";
 
+export const OUTPUT_FORMATS = ["terminal", "html", "json", "md"] as const;
+
+export type OutputFormat = (typeof OUTPUT_FORMATS)[number];
+
 export interface AgentLighthouseConfig {
   /** Target URL (if not supplied via CLI) */
   url?: string;
@@ -19,7 +23,7 @@ export interface AgentLighthouseConfig {
   /** Per-category minimum score assertions */
   assertCategories?: Record<string, number>;
   /** Output report formats (terminal, html, json, md) */
-  output?: Array<"terminal" | "html" | "json" | "md">;
+  output?: Array<OutputFormat>;
   /** Output directory for reports */
   outputDir?: string;
   /** Maximum number of pages to discover & scan */

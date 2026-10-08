@@ -1,3 +1,4 @@
+import { EvidenceKey } from "../types";
 /**
  * What each corpus domain did the last time a runner saw it.
  *
@@ -6,7 +7,14 @@
  * test can exercise every rule without a fetch or a file.
  */
 
-export type CorpusState = "ok" | "unscored" | "blocked" | "dead";
+export const CorpusState = {
+  Ok: "ok",
+  Unscored: "unscored",
+  Blocked: "blocked",
+  Dead: "dead",
+} as const;
+
+export type CorpusState = (typeof CorpusState)[keyof typeof CorpusState];
 
 export interface CorpusObservation {
   state: CorpusState;
@@ -47,14 +55,15 @@ export function stateOf(outcome: RunnerOutcome): {
   state: CorpusState;
   reason?: string;
 } {
-  if (outcome.skipped) return { state: "blocked", reason: outcome.skipped };
-  if (typeof outcome.score === "number") return { state: "ok" };
-  const reachable = outcome.evidence?.["origin-reachable"];
-  const unblocked = outcome.evidence?.["unblocked-fetches"];
+  if (outcome.skipped)
+    return { state: CorpusState.Blocked, reason: outcome.skipped };
+  if (typeof outcome.score === "number") return { state: CorpusState.Ok };
+  const reachable = outcome.evidence?.[EvidenceKey.OriginReachable];
+  const unblocked = outcome.evidence?.[EvidenceKey.UnblockedFetches];
   const reason = outcome.unscoredReason;
   if (reachable === false && unblocked !== false)
-    return { state: "dead", reason };
-  return { state: "unscored", reason };
+    return { state: CorpusState.Dead, reason };
+  return { state: CorpusState.Unscored, reason };
 }
 
 /**
@@ -77,14 +86,17 @@ export function mergeStatus(
     const prior = domains[outcome.domain];
     const next = stateOf(outcome);
     let state = next.state;
-    if (state === "dead") {
+    if (state === CorpusState.Dead) {
       const priorArguedDead =
         prior !== undefined &&
-        (prior.state === "dead" ||
+        (prior.state === CorpusState.Dead ||
           (prior.state === "unscored" && prior.reason === next.reason));
       const earlierDay = prior !== undefined && prior.seenAt < date;
-      if (!(priorArguedDead && earlierDay) && prior?.state !== "dead") {
-        state = "unscored";
+      if (
+        !(priorArguedDead && earlierDay) &&
+        prior?.state !== CorpusState.Dead
+      ) {
+        state = CorpusState.Unscored;
       }
     }
     const observation: CorpusObservation = {
@@ -109,17 +121,19 @@ export function excludedDomains(
   const out = new Set<string>();
   if (!status) return out;
   for (const [domain, observation] of Object.entries(status.domains)) {
-    if (observation.state === "dead" && !include.dead) out.add(domain);
-    if (observation.state === "blocked" && !include.blocked) out.add(domain);
+    if (observation.state === CorpusState.Dead && !include.dead)
+      out.add(domain);
+    if (observation.state === CorpusState.Blocked && !include.blocked)
+      out.add(domain);
   }
   return out;
 }
 
 const STATE_ORDER: readonly CorpusState[] = [
-  "dead",
-  "blocked",
-  "unscored",
-  "ok",
+  CorpusState.Dead,
+  CorpusState.Blocked,
+  CorpusState.Unscored,
+  CorpusState.Ok,
 ];
 
 /** The text a person reads before editing `seeds.json`. */

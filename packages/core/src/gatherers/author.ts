@@ -2,6 +2,7 @@ import { cacheOwner } from "./cache-owner";
 import type { CheckContext } from "../check-context";
 import type { FetchResult } from "../fetcher";
 import { isSafeUrl } from "../fetcher";
+import { HttpMethod } from "../types";
 
 const authorProbeCache = new WeakMap<
   object,
@@ -12,7 +13,7 @@ export function probeAuthorUrl(
   ctx: { fetch: CheckContext["fetch"] },
   url: string,
   options: {
-    method?: "GET" | "HEAD";
+    method?: HttpMethod;
     followRedirects?: boolean;
     headers?: Record<string, string>;
   } = {},
@@ -30,7 +31,7 @@ export function probeAuthorUrl(
       try {
         return await ctx.fetch({
           url,
-          method: options.method ?? "GET",
+          method: options.method ?? HttpMethod.Get,
           followRedirects: options.followRedirects ?? false,
           ...(options.headers ? { headers: options.headers } : {}),
         });

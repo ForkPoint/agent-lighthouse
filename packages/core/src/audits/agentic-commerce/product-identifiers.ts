@@ -3,6 +3,15 @@ import { Audit } from "../../audit";
 import type { CheckContext } from "../../check-context";
 import { flattenJsonLd } from "../../parser";
 import { weightForGrade } from "../../scorer";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "../../types";
 
 function matchesAnyType(
   schema: Record<string, unknown>,
@@ -24,19 +33,19 @@ export class ProductIdentifiersAudit extends Audit {
     failureTitle: "Product identifiers (GTIN/UPC/MPN)",
     description:
       "AI agents use unique identifiers like GTIN, UPC, or MPN to de-duplicate products across different sources and confirm they are looking at the exact item the user wants. Without them, agents may confuse similar products or fail to find specific pricing.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/agentic-commerce/product-identifiers.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: ["product"],
-    defaultPriority: "high",
+    applicablePageTypes: [PageType.Product],
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "Without unique identifiers (GTIN, UPC, MPN, or SKU), AI agents cannot de-duplicate your products across different sources or confirm they are looking at the exact item the user wants. This leads to product confusion, missed price-comparison opportunities, and lower visibility in AI shopping assistants.",
@@ -49,7 +58,7 @@ export class ProductIdentifiersAudit extends Audit {
   "gtin13": "1234567890123",
   "mpn": "MPN-7890"
 }`,
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl: "https://schema.org/Product",
       tags: ["json-ld", "schema", "product", "ecommerce", "identifiers"],
     },
@@ -73,7 +82,7 @@ export class ProductIdentifiersAudit extends Audit {
         "Product schema with GTIN/UPC/MPN or SKU.",
         "None",
         {
-          priority: "high",
+          priority: CheckPriority.High,
           description:
             "AI agents require unique product identifiers to reliably identify and compare products.",
           code: `{
@@ -131,7 +140,7 @@ export class ProductIdentifiersAudit extends Audit {
       "Product schema with GTIN/UPC/MPN or SKU.",
       "None",
       {
-        priority: "high",
+        priority: CheckPriority.High,
         description:
           'Unique identifiers are critical for AI agents to precisely match products in global catalogs. Add "sku", "gtin13", or "mpn" to your Product schema.',
         code: `{

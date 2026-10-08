@@ -7,6 +7,15 @@ import {
   probeOpenApiServer,
   readOpenApiSpec,
 } from "../../gatherers/openapi";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+  HttpMethod,
+} from "../../types";
 
 function isObject(val: unknown): val is Record<string, unknown> {
   return typeof val === "object" && val !== null && !Array.isArray(val);
@@ -20,13 +29,13 @@ export class OpenApiServersAudit extends Audit {
     failureTitle: "OpenAPI servers array valid",
     description:
       "Without a servers array, AI agents do not know the base URL for your API. They cannot construct valid request URLs, rendering the entire spec unusable. Add at least your production server URL.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/agent-interfaces/openapi-servers.md",
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "high",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "Without a servers array, AI agents cannot determine the base URL for your API. Even if your endpoints are perfectly documented, agents cannot construct valid request URLs, rendering the entire OpenAPI spec unusable.",
@@ -37,7 +46,7 @@ export class OpenApiServersAudit extends Audit {
     "description": "Production server"
   }
 ]`,
-      effort: "trivial",
+      effort: FixEffort.Trivial,
       docsUrl: "https://swagger.io/specification/#server-object",
       tags: ["openapi", "servers", "api"],
     },
@@ -64,7 +73,7 @@ export class OpenApiServersAudit extends Audit {
         "servers array has at least one entry with a reachable url",
         "No servers array",
         {
-          priority: "high",
+          priority: CheckPriority.High,
           description: OpenApiServersAudit.meta.description,
           code: `"servers": [\n  {\n    "url": "https://yoursite.com/api",\n    "description": "Production server"\n  }\n]`,
         },
@@ -80,7 +89,7 @@ export class OpenApiServersAudit extends Audit {
         "servers array has at least one entry with a reachable url",
         "No url in servers entries",
         {
-          priority: "high",
+          priority: CheckPriority.High,
           description: OpenApiServersAudit.meta.description,
           code: `"servers": [\n  {\n    "url": "https://yoursite.com/api",\n    "description": "Production server"\n  }\n]`,
         },
@@ -90,7 +99,9 @@ export class OpenApiServersAudit extends Audit {
     const serverUrl = (firstWithUrl as Record<string, unknown>)[
       "url"
     ] as string;
-    const result = await probeOpenApiServer(ctx, serverUrl, { method: "GET" });
+    const result = await probeOpenApiServer(ctx, serverUrl, {
+      method: HttpMethod.Get,
+    });
     if (result && result.status >= 200 && result.status < 400) {
       return this.pass(
         `Server URL ${serverUrl} is reachable (HTTP ${result.status}).`,
@@ -104,7 +115,7 @@ export class OpenApiServersAudit extends Audit {
         "servers array has at least one entry with a reachable url",
         `${serverUrl} -> HTTP ${result.status}`,
         {
-          priority: "high",
+          priority: CheckPriority.High,
           description: OpenApiServersAudit.meta.description,
           code: `"servers": [\n  {\n    "url": "https://yoursite.com/api",\n    "description": "Production server"\n  }\n]`,
         },
@@ -115,7 +126,7 @@ export class OpenApiServersAudit extends Audit {
       "servers array has at least one entry with a reachable url",
       `${serverUrl} -> unreachable`,
       {
-        priority: "high",
+        priority: CheckPriority.High,
         description: OpenApiServersAudit.meta.description,
         code: `"servers": [\n  {\n    "url": "https://yoursite.com/api",\n    "description": "Production server"\n  }\n]`,
       },

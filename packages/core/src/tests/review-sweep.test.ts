@@ -9,6 +9,7 @@ import {
   // where TypeScript reports the missing declaration for the .mjs script.
   // @ts-expect-error - testing the .mjs script exports
 } from "../../../../scripts/sweep-audit-reviews.mjs";
+import { EvidenceGrade } from "../types";
 
 describe("Phase 6: Audit Review Sweep (Law 10: Warrant Expires)", () => {
   it("sweeps the live audit dossiers directory and returns structured metrics", () => {
@@ -176,7 +177,7 @@ Content
           file: "docs/evidence/audits/access-crawl-control/robots-txt-exists.md",
           auditId: "access-crawl-control/robots-txt-exists",
           category: "access-crawl-control",
-          evidenceGrade: "A",
+          evidenceGrade: EvidenceGrade.A,
           reviewed: "2025-01-01",
           daysOld: 600,
           isOverdue: true,
@@ -185,7 +186,7 @@ Content
           file: "docs/evidence/audits/machine-discovery/llms-txt-exists.md",
           auditId: "machine-discovery/llms-txt-exists",
           category: "machine-discovery",
-          evidenceGrade: "A",
+          evidenceGrade: EvidenceGrade.A,
           reviewed: "2025-02-01",
           daysOld: 570,
           isOverdue: true,

@@ -3,6 +3,14 @@ import { Audit } from "../../audit";
 import type { CheckContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
 import type { FetchResult } from "../../fetcher";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 function isOk(result: FetchResult): boolean {
   return result.status === 200;
@@ -16,19 +24,19 @@ export class LlmsFullTxtAudit extends Audit {
     failureTitle: "llms-full.txt present",
     description:
       "llms-full.txt provides the complete content of your site in a single file, allowing AI agents to ingest everything in one request instead of crawling page by page.",
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "informative"),
-    evidenceGrade: "C",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/machine-discovery/llms-full-txt.md",
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "high",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "Without llms-full.txt, AI agents must crawl your site page by page, which is slow and often incomplete. This means AI assistants give shallow or outdated answers about your products and services.",
       fix: "Create a /llms-full.txt file at your site root containing the full text content of all important pages in markdown format. Include headings, descriptions, and key details for each page.",
       code: "# Your Site Name\n\n> Full content version for AI agents.\n\n## Home\nYour homepage content here...\n\n## About\nYour about page content here...\n\n## Documentation\nYour documentation content here...",
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl: "https://llmstxt.org/",
       tags: ["llms-txt", "discoverability"],
     },
@@ -43,7 +51,7 @@ export class LlmsFullTxtAudit extends Audit {
         "GET /llms-full.txt returns 200",
         result ? `HTTP ${result.status}` : "No response",
         {
-          priority: "high",
+          priority: CheckPriority.High,
           description:
             "llms-full.txt provides the complete content of your site in a single file, allowing AI agents to ingest everything in one request instead of crawling page by page. This dramatically improves response quality when users ask about your site.",
           code: `# Your Site Name\n\n> Full content version for AI agents.\n\n## Home\nYour homepage content here...\n\n## About\nYour about page content here...\n\n## Documentation\nYour documentation content here...`,

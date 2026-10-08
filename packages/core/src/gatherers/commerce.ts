@@ -68,8 +68,15 @@ export interface OfferInfo {
   aggregateRange?: { low?: number; high?: number };
 }
 
+export const CommercePlatform = {
+  Shopify: "shopify",
+  Woocommerce: "woocommerce",
+  Bigcommerce: "bigcommerce",
+  Magento: "magento",
+} as const;
+
 export type CommercePlatform =
-  "shopify" | "woocommerce" | "bigcommerce" | "magento";
+  (typeof CommercePlatform)[keyof typeof CommercePlatform];
 
 /** Collapse whitespace, including the non-breaking space a price often carries. */
 function flatten(text: string): string {
@@ -260,20 +267,20 @@ export function platformFingerprint(
     headers["x-shopid"] !== undefined ||
     headers["x-shopify-stage"] !== undefined
   )
-    return "shopify";
+    return CommercePlatform.Shopify;
 
   const html = page.fetchResult.body;
   if (/cdn\.shopify\.com|Shopify\.theme|window\.ShopifyAnalytics/.test(html))
-    return "shopify";
+    return CommercePlatform.Shopify;
   if (
     /wp-content\/plugins\/woocommerce|woocommerce-page|variations_form/.test(
       html,
     )
   )
-    return "woocommerce";
+    return CommercePlatform.Woocommerce;
   if (/cdn11\.bigcommerce\.com|bigcommerce\.com\/s-/.test(html))
-    return "bigcommerce";
+    return CommercePlatform.Bigcommerce;
   if (/\/static\/version\d+|Magento_|mage\/cookies/.test(html))
-    return "magento";
+    return CommercePlatform.Magento;
   return undefined;
 }

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { LastModifiedSchemaAudit } from "./last-modified-schema";
 import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 describe("LastModifiedSchemaAudit", () => {
   const audit = new LastModifiedSchemaAudit();
@@ -15,7 +16,7 @@ describe("LastModifiedSchemaAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("differs from datePublished");
   });
 
@@ -29,7 +30,7 @@ describe("LastModifiedSchemaAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("equals datePublished");
   });
 
@@ -43,13 +44,13 @@ describe("LastModifiedSchemaAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No dateModified found");
   });
 
   it("fails when no pages scanned", () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No pages scanned");
   });
 
@@ -63,7 +64,7 @@ describe("LastModifiedSchemaAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("no datePublished");
   });
 
@@ -77,7 +78,7 @@ describe("LastModifiedSchemaAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("finds dateModified in a top-level JSON-LD array", () => {
@@ -90,7 +91,7 @@ describe("LastModifiedSchemaAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("handles null item in @graph gracefully (covers line 14 walk null check)", () => {
@@ -103,7 +104,7 @@ describe("LastModifiedSchemaAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("differs from datePublished");
   });
 
@@ -117,7 +118,7 @@ describe("LastModifiedSchemaAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("differs from datePublished");
   });
 
@@ -131,7 +132,7 @@ describe("LastModifiedSchemaAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("equals datePublished");
     // datePublished is numeric → coerced to '' in the found detail.
     expect(result.found).toContain("datePublished: ");

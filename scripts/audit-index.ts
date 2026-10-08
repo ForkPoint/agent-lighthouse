@@ -1,6 +1,7 @@
 /** Fields for the central audit index. Runtime facts and historical review stay separate. */
 import type { AuditMeta } from "../packages/core/src/types";
 import { auditPageTypes } from "../packages/core/src/audit-applicability";
+import { AuditTier } from "../packages/core/src/types";
 
 export const REVIEW_PATH = "docs/architecture/v7-audit-applicability-ledger.md";
 
@@ -77,7 +78,7 @@ export function auditIndexFields(
     purpose: meta.description,
     features: [...new Set(meta.guidance?.tags ?? [])].sort(),
     priority: meta.defaultPriority,
-    enabledByDefault: meta.tier !== "experimental",
+    enabledByDefault: meta.tier !== AuditTier.Experimental,
     applicability: {
       pageTypeGate: pageTypes.length
         ? ("restricted" as const)

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { AriaLandmarksAudit } from "./aria-landmarks";
 import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 describe("AriaLandmarksAudit", () => {
   const audit = new AriaLandmarksAudit();
@@ -16,7 +17,7 @@ describe("AriaLandmarksAudit", () => {
       mockPageContext("https://example.com/", html),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("Present");
   });
 
@@ -30,7 +31,7 @@ describe("AriaLandmarksAudit", () => {
     const ctx = mockCheckContext([
       mockPageContext("https://example.com/", html),
     ]);
-    expect(audit.audit(ctx).status).toBe("pass");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
   });
 
   it("warns when exactly one landmark is missing", () => {
@@ -43,7 +44,7 @@ describe("AriaLandmarksAudit", () => {
       mockPageContext("https://example.com/", html),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("Missing: contentinfo/footer");
   });
 
@@ -53,7 +54,7 @@ describe("AriaLandmarksAudit", () => {
       mockPageContext("https://example.com/", html),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("Missing ARIA landmarks");
   });
 
@@ -67,7 +68,7 @@ describe("AriaLandmarksAudit", () => {
       mockPageContext("https://example.com/", html),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("Missing: banner/header");
   });
 
@@ -81,7 +82,7 @@ describe("AriaLandmarksAudit", () => {
       mockPageContext("https://example.com/", html),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("Missing: main");
   });
 
@@ -95,13 +96,13 @@ describe("AriaLandmarksAudit", () => {
       mockPageContext("https://example.com/", html),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("Missing: navigation");
   });
 
   it("warns when no pages were scanned", () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("No pages scanned");
   });
 });

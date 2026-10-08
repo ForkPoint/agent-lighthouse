@@ -23,6 +23,15 @@ import { Audit } from "../../audit";
 import type { CheckContext, PageContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
 import { flattenJsonLd } from "../../parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** Every `@type` token on a node, as a flat list of strings. */
 function typeNames(schema: Record<string, unknown>): string[] {
@@ -80,18 +89,6 @@ function hasValidSpeakable(schema: Record<string, unknown>): boolean {
   return specs.some(isUsableSpec);
 }
 
-/**
- * A page is news/article content if the crawler classified it as a content
- * page or it directly carries Article/NewsArticle/BlogPosting markup — the
- * same precondition `article-schema` uses. Everything else (storefronts,
- * category listings, marketing homepages) is out of scope: Google's speakable
- * doc scopes the feature to news content, so a shop that omits speakable is
- * not failing anything.
- */
-function isArticlePage(_page: PageContext): boolean {
-  return true;
-}
-
 function pageHasSpeakable(page: PageContext): boolean {
   return flattenJsonLd(page.structuredData ?? page.jsonLd).some((s) =>
     hasValidSpeakable(s as Record<string, unknown>),
@@ -119,29 +116,29 @@ export class SpeakableSchemaAudit extends Audit {
     failureTitle: "Speakable schema",
     description:
       "Google Assistant uses the speakable property to pick which sentences of a news article it reads aloud on Assistant-enabled devices. Without it, the assistant has to guess, and often vocalizes navigation or boilerplate instead of your headline and summary. Mark the headline and summary with cssSelector on your Article or WebPage node.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/structured-data/speakable-schema.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     // News and article publishing is the whole documented scope of the
     // feature, so a scan with no content page never runs this audit at all.
     // The runtime guard below repeats the precondition for the pages that
     // were scanned, so an Article-carrying homepage is still assessed.
-    applicablePageTypes: ["article"],
-    defaultPriority: "low",
+    applicablePageTypes: [PageType.Article],
+    defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
         "Google Assistant returns news articles for spoken queries and uses speakable to select the sections it reads aloud with TTS. Without it, the assistant picks its own excerpt from the page — often navigation text or boilerplate rather than your headline and summary. The feature is in beta and limited to English-language news publishers and U.S. Google Home users, so treat it as an upside for news content rather than a general requirement.",
       fix: "Add a speakable property with a SpeakableSpecification to the Article (or WebPage) node of each news article. Point cssSelector — or xpath — at the headline and a short summary; both a single selector and an array of selectors are valid.",
       code: FIX_CODE,
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl:
         "https://developers.google.com/search/docs/appearance/structured-data/speakable",
       tags: ["json-ld", "schema", "voice", "news", "speakable"],
@@ -149,7 +146,9 @@ export class SpeakableSchemaAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    const articlePages = ctx.pages.filter(isArticlePage);
+    // `applicablePageTypes` limits the runner's input to article pages, which
+    // matches Google's scope of speakable to news content.
+    const articlePages = ctx.pages;
 
     if (articlePages.length === 0) {
       return this.notApplicable(
@@ -176,7 +175,7 @@ export class SpeakableSchemaAudit extends Audit {
         EXPECTED,
         found,
         {
-          priority: "low",
+          priority: CheckPriority.Low,
           description: SpeakableSchemaAudit.meta.description,
           code: FIX_CODE,
         },
@@ -188,7 +187,7 @@ export class SpeakableSchemaAudit extends Audit {
       EXPECTED,
       found,
       {
-        priority: "low",
+        priority: CheckPriority.Low,
         description: SpeakableSchemaAudit.meta.description,
         code: FIX_CODE,
       },

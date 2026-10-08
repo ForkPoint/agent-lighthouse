@@ -15,7 +15,16 @@ import {
   hasNamedGroup,
   isPathAllowed,
   type RobotsGroup,
+  RobotsRuleType,
 } from "../../gatherers/robots";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** AI product tokens whose named group, if present, voids the wildcard. */
 const AI_TOKENS: readonly string[] = [
@@ -97,7 +106,9 @@ function analyse(groups: RobotsGroup[], ctx: CheckContext): Divergence[] {
     if (named.every((group) => group.rules.length === 0)) {
       if (
         wildcard.some((group) =>
-          group.rules.some((rule) => rule.type === "disallow" && rule.path),
+          group.rules.some(
+            (rule) => rule.type === RobotsRuleType.Disallow && rule.path,
+          ),
         )
       ) {
         out.push({ kind: "empty-group", token, declared });
@@ -145,23 +156,23 @@ export class RobotsAiGroupShadowingAudit extends Audit {
     failureTitle: "robots.txt AI group shadowing",
     description:
       "Detects the RFC 9309 group-precedence trap: adding ANY named group for an AI product token silently voids every rule in the `User-agent: *` group for that bot. Evaluates each AI token twice — under its own merged group and under the wildcard group — with longest-match-wins and Allow-wins-on-tie, and reports three failure classes: a wildcard-protected path reopened for the bot, a named group with no rules at all, and a named group that blocks a bot the wildcard allowed.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/access-crawl-control/robots-ai-group-shadowing.md",
     // Gate exemption: being refused is what this category reports.
     // Gate exemption: the verdict comes from robots.txt. The scanned pages only widen
     // the probe path set, so a shell narrows the probe and changes nothing judged.
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "high",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "RFC 9309 §2.2.1 states the wildcard group is consulted only 'if no matching group exists'. Therefore, for any site with a named AI-bot group, the wildcard group's Disallow rules provably do not apply to that bot, and the operator's stated intent (expressed once in `*`) diverges from the enforced policy by exactly the symmetric difference of the two rule sets. Falsifiable by construction: given robots.txt R and token T, the set of paths where R_T and R_star disagree is computable and either empty or not.",
       fix: "Repeat every wildcard rule inside each named AI-bot group. A named group replaces the wildcard group for that crawler — it does not extend it — so a group holding only Crawl-delay opens the entire site to that bot, and a group missing one Disallow reopens exactly that path. If you meant to block the bot outright, keep the group but know the wildcard rules no longer apply to it.",
       code: SAMPLE,
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/access-crawl-control/robots-ai-group-shadowing/",
       tags: ["robots", "rfc9309", "ai-crawlers", "access-control"],
@@ -170,7 +181,7 @@ export class RobotsAiGroupShadowingAudit extends Audit {
 
   private recommendation() {
     return {
-      priority: "high" as const,
+      priority: CheckPriority.High,
       description: RobotsAiGroupShadowingAudit.meta.description,
       code: SAMPLE,
     };

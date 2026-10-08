@@ -9,6 +9,14 @@ import {
   normalizeText,
 } from "../../gatherers/text-metrics";
 import { allJsonLdNodes } from "../../parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** Openers that point at something outside the chunk they start. */
 const ANAPHORA =
@@ -132,18 +140,18 @@ export class ChunkBoundaryReferentIntegrityAudit extends Audit {
     failureTitle: "Sections stop making sense once retrieved on their own",
     description:
       'Splits the page into heading-led chunks, the way a retriever does, and checks each one for the three ways a chunk loses its meaning when it arrives alone: opening on a demonstrative with no referent, never naming the page\'s subject, and pointing at a position in the document ("as described above") that a retrieved chunk no longer has.',
-    scoreDisplayMode: "ternary",
-    tier: "scored",
-    evidenceGrade: "B",
-    weight: weightForGrade("B", "scored"),
-    defaultPriority: "high",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    tier: AuditTier.Scored,
+    evidenceGrade: EvidenceGrade.B,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    defaultPriority: CheckPriority.High,
     dossier:
       "docs/evidence/audits/answer-readiness/chunk-boundary-referent-integrity.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     guidance: {
       impact:
@@ -156,7 +164,7 @@ export class ChunkBoundaryReferentIntegrityAudit extends Audit {
 <!-- Survives retrieval -->
 <h2>Descaling the copper kettle</h2>
 <p>Descale the copper kettle monthly with equal parts water and white vinegar.</p>`,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/answer-readiness/chunk-boundary-referent-integrity/",
       tags: ["retrieval", "chunking", "content", "answer-engines"],

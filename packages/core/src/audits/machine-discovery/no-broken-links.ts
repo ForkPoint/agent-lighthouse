@@ -3,6 +3,14 @@ import { Audit } from "../../audit";
 import type { CheckContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
 import { sharedProbeUrl } from "../../gatherers/discovery";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 export class NoBrokenLinksAudit extends Audit {
   static override meta: AuditMeta = {
@@ -12,24 +20,24 @@ export class NoBrokenLinksAudit extends Audit {
     failureTitle: "No broken internal links",
     description:
       "Broken internal links create dead ends for AI crawlers and waste their limited crawl budget.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/machine-discovery/no-broken-links.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "high",
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "Broken internal links waste AI crawlers' limited crawl budget by sending them to dead ends. This means fewer of your pages get indexed, and users asking AI about your site may encounter errors or missing information.",
       fix: "Audit all internal links and fix or remove any that return non-200 status codes. Update href values to point to the correct URLs, and set up redirects for pages that have moved.",
       code: '<!-- Fix broken links by updating the href -->\n<a href="/correct-path">Page title</a>\n\n<!-- Or set up a redirect for moved pages -->\n<!-- In next.config.js -->\nredirects: [{ source: "/old-path", destination: "/new-path", permanent: true }]',
-      effort: "easy",
+      effort: FixEffort.Easy,
       tags: ["broken-links", "crawl-budget", "discoverability"],
     },
   };
@@ -41,7 +49,7 @@ export class NoBrokenLinksAudit extends Audit {
         "All internal links return HTTP 200",
         "No pages scanned",
         {
-          priority: "high",
+          priority: CheckPriority.High,
           description: NoBrokenLinksAudit.meta.description,
         },
       );
@@ -77,7 +85,7 @@ export class NoBrokenLinksAudit extends Audit {
         "All internal links return HTTP 200",
         "No internal links found",
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "No internal links were found on the scanned pages. Add internal links between related pages to help AI crawlers discover your content.",
           code: `<a href="/related-page">Related content</a>`,
@@ -108,7 +116,7 @@ export class NoBrokenLinksAudit extends Audit {
           "All internal links return HTTP 200",
           `Broken: ${found}`,
           {
-            priority: "high",
+            priority: CheckPriority.High,
             description:
               "Many internal links are broken, creating dead ends for AI crawlers. Fix or remove these links to ensure crawlers can navigate your site effectively.",
             code: `<!-- Fix broken links -->\n<a href="/correct-path">Page title</a>`,
@@ -122,7 +130,7 @@ export class NoBrokenLinksAudit extends Audit {
         "All internal links return HTTP 200",
         `Broken: ${found}`,
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "Some internal links are broken. Fix them to prevent AI crawlers from encountering dead ends.",
           code: `<!-- Fix broken links -->\n<a href="/correct-path">Page title</a>`,

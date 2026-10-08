@@ -1,13 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { FirstParagraphAnswersAudit } from "./first-paragraph-answers";
 import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 describe("FirstParagraphAnswersAudit", () => {
   const audit = new FirstParagraphAnswersAudit();
 
   it("is not-applicable when no article content page is scanned", () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("No article content pages");
   });
 
@@ -19,7 +20,7 @@ describe("FirstParagraphAnswersAudit", () => {
       </main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("direct, declarative answer");
   });
 
@@ -31,7 +32,7 @@ describe("FirstParagraphAnswersAudit", () => {
       </main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("weak opener");
   });
 
@@ -44,7 +45,7 @@ describe("FirstParagraphAnswersAudit", () => {
       </main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No substantive opening paragraph");
   });
 
@@ -57,7 +58,7 @@ describe("FirstParagraphAnswersAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("includes the full text in found when the first paragraph is 120 chars or fewer", () => {
@@ -69,7 +70,7 @@ describe("FirstParagraphAnswersAudit", () => {
       </main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).not.toContain("...");
   });
 
@@ -82,7 +83,7 @@ describe("FirstParagraphAnswersAudit", () => {
       `<html><body><main><p>${longPara}</p></main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("...");
   });
 
@@ -95,7 +96,7 @@ describe("FirstParagraphAnswersAudit", () => {
       `<html><body><main><p>${longPara}</p></main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("...");
   });
 });

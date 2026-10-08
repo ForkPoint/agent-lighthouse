@@ -32,6 +32,8 @@ import {
   excludedDomains,
   type CorpusStatus,
 } from "../packages/core/src/tests/corpus-status";
+import { SkipReason } from "./lib/scan-outcomes";
+import { SiteSource } from "../packages/core/src/tests/site-list";
 
 const SITES_PATH = path.resolve(
   process.cwd(),
@@ -202,8 +204,6 @@ Examples:
 `);
 }
 
-type SkipReason = "robots-disallow" | "robots-refused" | "crawl-delay";
-
 interface TestSiteOutcome {
   domain: string;
   category: string;
@@ -298,7 +298,7 @@ async function main(): Promise<void> {
         if (!targetSites.some((s) => s.domain === d)) {
           targetSites.push({
             domain: d,
-            source: "seed",
+            source: SiteSource.Seed,
             category: "custom",
             rankBucket: 0,
           });
@@ -388,7 +388,7 @@ async function main(): Promise<void> {
           result.status === 403 ||
           result.status === 429
         ) {
-          return { scan: false, reason: "robots-refused" };
+          return { scan: false, reason: SkipReason.RobotsRefused };
         }
 
         if (result.error || result.status !== 200 || !result.body) {
@@ -399,10 +399,10 @@ async function main(): Promise<void> {
         for (const token of PROBED_TOKENS) {
           const groups = groupsForBot(parsed, token);
           if (isBlanketBlocked(groups, token)) {
-            return { scan: false, reason: "robots-disallow" };
+            return { scan: false, reason: SkipReason.RobotsDisallow };
           }
           if (groups.some((g) => (g.crawlDelay ?? 0) > 0)) {
-            return { scan: false, reason: "crawl-delay" };
+            return { scan: false, reason: SkipReason.CrawlDelay };
           }
         }
 

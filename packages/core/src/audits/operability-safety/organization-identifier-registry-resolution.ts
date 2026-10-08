@@ -5,6 +5,14 @@ import { weightForGrade } from "../../scorer";
 import { isSafeUrl } from "../../url-utils";
 import { probeSecurityUrl } from "../../gatherers/security";
 import { allJsonLdNodes } from "../../parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** The shape an LEI has before any registry is asked about it. */
 const LEI_SHAPE = /^[A-Z0-9]{18}[0-9]{2}$/;
@@ -138,24 +146,24 @@ export class OrganizationIdentifierRegistryResolutionAudit extends Audit {
       "This site’s organization identifier does not resolve, or names a different organization",
     description:
       "Reads `leiCode` / `iso6523Code` off the Organization markup, checks the identifier’s shape and ISO/IEC 7064 check digits locally, then resolves it against GLEIF’s public registry: exactly one record, an active entity, an issued registration, and a registered legal name that agrees with the name in the markup.",
-    scoreDisplayMode: "ternary",
-    tier: "scored",
-    evidenceGrade: "B",
-    weight: weightForGrade("B", "scored"),
-    defaultPriority: "medium",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    tier: AuditTier.Scored,
+    evidenceGrade: EvidenceGrade.B,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    defaultPriority: CheckPriority.Medium,
     dossier:
       "docs/evidence/audits/operability-safety/organization-identifier-registry-resolution.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     guidance: {
       impact:
         "A shopping or payment agent transacting with an unfamiliar merchant needs one thing no amount of markup can self-assert: a legal identity it can check against an authority. The LEI is the only schema.org organization identifier backed by a free, queryable, authoritative registry, which makes it the only one whose truth an outside party can establish. An identifier that resolves to nothing, or to a lapsed registration, or to a different legal name, is worse than none: it looks like verification and is not.",
       fix: 'Publish the LEI as `iso6523Code: "0199:<LEI>"` — Google documents a preference for the prefixed form over bare `leiCode` — keep the GLEIF registration renewed so its status stays ISSUED, and make sure the `legalName` in your markup is the name GLEIF has on record, not the trading name.',
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/organization-identifier-registry-resolution/",
       tags: ["identity", "lei", "gleif", "organization"],

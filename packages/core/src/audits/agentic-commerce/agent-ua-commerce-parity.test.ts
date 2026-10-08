@@ -8,6 +8,7 @@ import {
 import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
 import { BASELINE_UA } from "../../gatherers/ua-parity";
 import type { FetchOptions, FetchResult } from "../../fetcher";
+import { CheckStatus } from "../../types";
 
 vi.mock("../../fetcher", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../fetcher")>();
@@ -93,11 +94,11 @@ describe("AgentUaCommerceParityAudit", () => {
 
   it("is notApplicable with no product page and no cart", async () => {
     const result = await run({ product: false, cart: false });
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("passes when the agent UAs get what a browser gets", async () => {
-    expect((await run({ robots: ALLOW_ALL })).status).toBe("pass");
+    expect((await run({ robots: ALLOW_ALL })).status).toBe(CheckStatus.Pass);
   });
 
   it("fails when a commerce path answers the agent UA with 403 and the browser with 200", async () => {
@@ -105,7 +106,7 @@ describe("AgentUaCommerceParityAudit", () => {
       robots: ALLOW_ALL,
       probe: (url) => (url === PDP_URL ? mockFetchResult("", 403) : undefined),
     });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("403");
   });
 
@@ -119,7 +120,7 @@ describe("AgentUaCommerceParityAudit", () => {
           "text/html",
         ),
     });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("Just a moment...");
   });
 
@@ -130,7 +131,7 @@ describe("AgentUaCommerceParityAudit", () => {
       probe: (url) =>
         url === PDP_URL ? mockFetchResult(THIN, 200, "text/html") : undefined,
     });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("%");
   });
 
@@ -139,7 +140,7 @@ describe("AgentUaCommerceParityAudit", () => {
     const result = await run({
       robots: "User-agent: *\nAllow: /\n\nUser-agent: GPTBot\nDisallow: /\n",
     });
-    expect(result.status).not.toBe("fail");
+    expect(result.status).not.toBe(CheckStatus.Fail);
     expect(result.message).toContain("GPTBot");
   });
 
@@ -148,7 +149,7 @@ describe("AgentUaCommerceParityAudit", () => {
       robots:
         "User-agent: *\nAllow: /\n\nUser-agent: OAI-SearchBot\nDisallow: /products\n",
     });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("OAI-SearchBot");
   });
 
@@ -167,7 +168,7 @@ describe("AgentUaCommerceParityAudit", () => {
       probe: (url) =>
         url.endsWith("/terms") ? mockFetchResult("", 403) : undefined,
     });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("/terms");
   });
 

@@ -4,6 +4,18 @@ import { buildReportView } from "./view-model";
 import { generateHtmlReport } from "./html-generator";
 import { generateMarkdownSummary } from "./markdown-generator";
 import { hydrateReport } from "./hydrate";
+import {
+  AttemptOutcome,
+  AuditTier,
+  CheckPriority,
+  CheckStatus,
+  ClassificationConfidence,
+  CoverageProvenance,
+  PageType,
+  PageTypeSource,
+  ScoreDisplayMode,
+  ScoreTier,
+} from "@forkpoint/agent-lighthouse-core";
 
 const declared = "https://x.test/declared";
 const detected = "https://x.test/detected";
@@ -13,16 +25,16 @@ const check: CheckResult = {
   category: "answer-readiness",
   title: "Named author",
   description: "An author",
-  priority: "medium",
+  priority: CheckPriority.Medium,
   impact: "",
   fix: "",
-  status: "pass",
+  status: CheckStatus.Pass,
   score: 1,
-  scoreDisplayMode: "binary",
-  tier: "scored",
+  scoreDisplayMode: ScoreDisplayMode.Binary,
+  tier: AuditTier.Scored,
   weight: 1,
   coverage: {
-    provenance: "declared",
+    provenance: CoverageProvenance.Declared,
     selectedUrls: [declared, unread],
     inputUrls: [declared],
     unreadUrls: [unread],
@@ -33,17 +45,17 @@ const check: CheckResult = {
       category: "answer-readiness",
       title: "Named author",
       description: "An author",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       impact: "",
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
-      scoreDisplayMode: "informative",
-      tier: "scored",
+      scoreDisplayMode: ScoreDisplayMode.Informative,
+      tier: AuditTier.Scored,
       weight: 1,
       explanation: "Detected article lacks an author.",
       fix: "Name the author.",
       coverage: {
-        provenance: "detected",
+        provenance: CoverageProvenance.Detected,
         selectedUrls: [detected],
         inputUrls: [detected],
         unreadUrls: [],
@@ -57,7 +69,7 @@ function report(): ScanReport {
     url: declared,
     domain: "x.test",
     overallScore: 100,
-    scoreTier: "agent-ready",
+    scoreTier: ScoreTier.AgentReady,
     categories: [
       {
         id: "answer-readiness",
@@ -78,11 +90,11 @@ function report(): ScanReport {
     pagesScanned: [
       {
         url: detected,
-        pageType: "article",
+        pageType: PageType.Article,
         classification: {
-          type: "article",
-          source: "detected",
-          confidence: "hint",
+          type: PageType.Article,
+          source: PageTypeSource.Detected,
+          confidence: ClassificationConfidence.Hint,
           signals: ["Article URL hint"],
         },
       },
@@ -90,9 +102,9 @@ function report(): ScanReport {
     pageAttempts: [
       {
         url: unread,
-        pageType: "article",
-        source: "declared",
-        outcome: "unread",
+        pageType: PageType.Article,
+        source: PageTypeSource.Declared,
+        outcome: AttemptOutcome.Unread,
         status: 503,
       },
     ],
@@ -105,7 +117,7 @@ describe("page scope reports", () => {
     expect(view.pageScope?.audits[0]?.assessments).toHaveLength(2);
     expect(view.pageScope?.audits[0]?.assessments[1]).toMatchObject({
       advisory: true,
-      status: "fail",
+      status: CheckStatus.Fail,
       coverage: check.advisoryResults![0]!.coverage,
     });
     expect(view.categories[0]?.counts).toMatchObject({
@@ -137,8 +149,8 @@ describe("page scope reports", () => {
   it("keeps advisory errors visible when the primary result is not assessed", () => {
     const r = report();
     const c = r.categories[0]!.checks[0]!;
-    c.status = "na";
-    c.advisoryResults![0]!.status = "na";
+    c.status = CheckStatus.NotApplicable;
+    c.advisoryResults![0]!.status = CheckStatus.NotApplicable;
     c.advisoryResults![0]!.explanation = "Audit failed to run: schema error";
     expect(generateHtmlReport(r)).toContain(
       "Audit failed to run: schema error",
@@ -202,7 +214,7 @@ it("public page schemas round-trip new data and preserve old saved pages", async
     r.pageAttempts![0],
   );
   expect(CheckResultSchema.parse(check)).toEqual(check);
-  const old = { url: declared, pageType: "content" };
+  const old = { url: declared, pageType: PageType.Content };
   expect(ScannedPageSchema.parse(old)).toEqual(old);
 });
 
@@ -214,4 +226,30 @@ it("keeps the existing missing-pages fallback for old report readers", () => {
   const view = buildReportView(r);
   expect(view.pagesScanned).toEqual([]);
   expect(view.pageScope).toBeUndefined();
+});
+
+it("lists only audits whose population differs from a full-sample pass", () => {
+  const r = report();
+  const plain: CheckResult = {
+    ...check,
+    id: "content-extraction/plain-pass",
+    advisoryResults: undefined,
+    coverage: {
+      provenance: CoverageProvenance.All,
+      selectedUrls: [declared],
+      inputUrls: [declared],
+      unreadUrls: [],
+    },
+  };
+  const failing: CheckResult = {
+    ...plain,
+    id: "content-extraction/plain-fail",
+    status: CheckStatus.Fail,
+    score: 0,
+  };
+  r.categories[0]!.checks.push(plain, failing);
+  const ids = buildReportView(r).pageScope?.audits.map((a) => a.id);
+  expect(ids).toContain(check.id);
+  expect(ids).toContain(failing.id);
+  expect(ids).not.toContain(plain.id);
 });

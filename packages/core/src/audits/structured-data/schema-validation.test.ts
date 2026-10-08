@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { SchemaValidationAudit } from "./schema-validation";
 import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 const ld = (obj: unknown) =>
   `<script type="application/ld+json">${JSON.stringify(obj)}</script>`;
@@ -13,7 +14,7 @@ describe("SchemaValidationAudit", () => {
   it("fails when there are no JSON-LD blocks", () => {
     const ctx = mockCheckContext([page("")]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No JSON-LD blocks to validate");
   });
 
@@ -28,7 +29,7 @@ describe("SchemaValidationAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("valid @context and @type");
   });
 
@@ -45,7 +46,7 @@ describe("SchemaValidationAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toBe("2/2 valid");
   });
 
@@ -54,7 +55,7 @@ describe("SchemaValidationAudit", () => {
       page(ld({ "@context": "https://schema.org", name: "No type here" })),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("missing @context or @type");
   });
 
@@ -74,7 +75,7 @@ describe("SchemaValidationAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("missing @context or @type");
     // The reason must identify which block, by type, and where.
     expect(result.message).toContain("(untyped) on /bikes");
@@ -94,7 +95,7 @@ describe("SchemaValidationAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("valid @context and @type");
   });
 });

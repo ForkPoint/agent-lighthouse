@@ -2,6 +2,7 @@ import { cacheOwner } from "./cache-owner";
 import type { CheckContext } from "../check-context";
 import type { FetchResult } from "../fetcher";
 import { isSafeUrl } from "../fetcher";
+import { HttpMethod } from "../types";
 
 /** An OpenAPI document as served: an untyped object, walked key by key. */
 export type OpenApiSpec = Record<string, unknown>;
@@ -263,7 +264,7 @@ export function probeOpenApiServer(
   ctx: { fetch: CheckContext["fetch"] },
   url: string,
   options: {
-    method?: "GET" | "OPTIONS";
+    method?: HttpMethod;
     headers?: Record<string, string>;
   } = {},
 ): Promise<FetchResult | undefined> {
@@ -280,7 +281,7 @@ export function probeOpenApiServer(
       try {
         return await ctx.fetch({
           url,
-          method: options.method ?? "OPTIONS",
+          method: options.method ?? HttpMethod.Options,
           ...(options.headers ? { headers: options.headers } : {}),
         });
       } catch {

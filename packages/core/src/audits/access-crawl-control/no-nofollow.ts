@@ -2,6 +2,14 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 export class NoNofollowAudit extends Audit {
   static override meta: AuditMeta = {
@@ -11,21 +19,21 @@ export class NoNofollowAudit extends Audit {
     failureTitle: "Page-level nofollow directives",
     description:
       "Checks for page-level nofollow in robots metadata and X-Robots-Tag headers across the scanned pages. This check does not inspect individual links.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/access-crawl-control/no-nofollow.md",
     // Gate exemption: being refused is what this category reports, and the meta tag and
     // header this audit reads are served by a page whose body renders nothing.
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "high",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "Applebot documents that page-level nofollow prevents it from following links on that page. This does not prove that the linked pages are undiscoverable through other sources or that every AI crawler honors the directive.",
       fix: "Review whether each affected page should allow link traversal. If so, remove nofollow from its robots meta tag or X-Robots-Tag header. Keep intentional restrictions.",
       code: '<!-- Allow crawlers to follow links -->\n<meta name="robots" content="index, follow" />',
-      effort: "trivial",
+      effort: FixEffort.Trivial,
       docsUrl:
         "https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag",
       tags: ["robots", "seo", "discoverability"],
@@ -69,7 +77,7 @@ export class NoNofollowAudit extends Audit {
           "No page-level nofollow directives on pages intended for link traversal",
           found,
           {
-            priority: "high",
+            priority: CheckPriority.High,
             description: NoNofollowAudit.meta.guidance!.fix,
             code: `<!-- Allow crawlers to follow links -->\n<meta name="robots" content="index, follow" />`,
           },
@@ -85,7 +93,7 @@ export class NoNofollowAudit extends Audit {
           "No page-level nofollow directives on pages intended for link traversal",
           found,
           {
-            priority: "medium",
+            priority: CheckPriority.Medium,
             description: NoNofollowAudit.meta.guidance!.fix,
             code: `<!-- Allow crawlers to follow links -->\n<meta name="robots" content="index, follow" />`,
           },

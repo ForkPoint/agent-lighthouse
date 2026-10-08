@@ -4,6 +4,14 @@ import type { CheckContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
 import { countTokens } from "../../gatherers/tokens";
 import { readabilityArticle, semanticText } from "../../gatherers/extraction";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** Below this the page has no main content to locate, so nothing is measured. */
 const MIN_CONTENT_CHARS = 200;
@@ -130,17 +138,17 @@ export class PreambleTaxTokensBeforeTheFirstContentTokenAudit extends Audit {
     failureTitle: "The answer sits behind thousands of tokens of preamble",
     description:
       "Measures how many `o200k_base` tokens an agent must stream past before the first sentence of the main content appears, by locating the extracted content inside the raw response body. Reports the offset in tokens and as a share of the document, and names the single heaviest block sitting in front of the content.",
-    scoreDisplayMode: "ternary",
-    tier: "scored",
-    evidenceGrade: "B",
-    weight: weightForGrade("B", "scored"),
-    defaultPriority: "medium",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    tier: AuditTier.Scored,
+    evidenceGrade: EvidenceGrade.B,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    defaultPriority: CheckPriority.Medium,
     dossier: "docs/evidence/audits/content-extraction/preamble-tax.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     guidance: {
       impact:
@@ -157,7 +165,7 @@ export class PreambleTaxTokensBeforeTheFirstContentTokenAudit extends Audit {
 <body><main><h1>How to descale a kettle</h1><p>Fill it with...</p></main>
   <script src="/state.js" defer></script>
 </body>`,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/content-extraction/preamble-tax/",
       tags: ["tokens", "context-window", "content", "truncation"],

@@ -7,6 +7,7 @@ import {
   mockCheckContext,
   mockPageContext,
 } from "../../__tests__/test-utils";
+import { CheckPriority, CheckStatus } from "../../types";
 
 const page = (url: string, head: string, index = 0) =>
   mockPageContext(
@@ -27,7 +28,7 @@ describe("CanonicalLinksAudit", () => {
       self("https://example.com/about", 1),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // The failure mode the graded mechanism actually warns about: v1 scored it 1.0.
@@ -46,8 +47,8 @@ describe("CanonicalLinksAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
-    expect(result.priority).toBe("high");
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.priority).toBe(CheckPriority.High);
     expect(result.message).toContain("homepage");
   });
 
@@ -63,7 +64,7 @@ describe("CanonicalLinksAudit", () => {
         1,
       ),
     ]);
-    expect(audit.audit(ctx).status).toBe("pass");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
   });
 
   // Lower boundary of the homepage-collapse threshold. Drop it to 1 and this
@@ -77,7 +78,7 @@ describe("CanonicalLinksAudit", () => {
         1,
       ),
     ]);
-    expect(audit.audit(ctx).status).toBe("pass");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
   });
 
   // The majority half of the non-root rule: 2 of 5 declaring pages is a pair of
@@ -98,7 +99,7 @@ describe("CanonicalLinksAudit", () => {
       self("https://example.com/c", 3),
       self("https://example.com/d", 4),
     ]);
-    expect(audit.audit(ctx).status).toBe("pass");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
   });
 
   it("warns when most pages collapse onto one non-root URL", () => {
@@ -121,7 +122,7 @@ describe("CanonicalLinksAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("collapse");
   });
 
@@ -137,7 +138,7 @@ describe("CanonicalLinksAudit", () => {
         1,
       ),
     ]);
-    expect(audit.audit(ctx).status).toBe("pass");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
   });
 
   // v1 warned on a relative canonical; resolving it against the page URL makes
@@ -146,7 +147,7 @@ describe("CanonicalLinksAudit", () => {
     const ctx = mockCheckContext([
       page("https://example.com/page", '<link rel="canonical" href="/page">'),
     ]);
-    expect(audit.audit(ctx).status).toBe("pass");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
   });
 
   it("normalizes trailing slash and case when comparing to the page URL", () => {
@@ -156,7 +157,7 @@ describe("CanonicalLinksAudit", () => {
         '<link rel="canonical" href="https://www.example.com/Page">',
       ),
     ]);
-    expect(audit.audit(ctx).status).toBe("pass");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
   });
 
   it("fails on a canonical that is not an http(s) URL", () => {
@@ -167,7 +168,7 @@ describe("CanonicalLinksAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("not a valid http");
   });
 
@@ -181,7 +182,7 @@ describe("CanonicalLinksAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("another domain");
   });
 
@@ -193,7 +194,7 @@ describe("CanonicalLinksAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("conflicting");
   });
 
@@ -206,7 +207,7 @@ describe("CanonicalLinksAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("outside <head>");
   });
 
@@ -215,8 +216,8 @@ describe("CanonicalLinksAudit", () => {
   it("warns rather than fails when no page has a canonical", () => {
     const ctx = mockCheckContext([page("https://example.com/", "")]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
-    expect(result.priority).toBe("medium");
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.priority).toBe(CheckPriority.Medium);
   });
 
   it("warns at low priority when only some pages are missing a canonical", () => {
@@ -225,12 +226,14 @@ describe("CanonicalLinksAudit", () => {
       page("https://example.com/a", "", 1),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
-    expect(result.priority).toBe("low");
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.priority).toBe(CheckPriority.Low);
   });
 
   it("is not-applicable when no pages were scanned", () => {
-    expect(audit.audit(mockCheckContext([])).status).toBe("na");
+    expect(audit.audit(mockCheckContext([])).status).toBe(
+      CheckStatus.NotApplicable,
+    );
   });
 
   // Finding 1 of the pre-merge review: a bot wall served at HTTP 200 through the
@@ -242,7 +245,7 @@ describe("CanonicalLinksAudit", () => {
     expect(
       audit.audit(mockCheckContext(pages)).status,
       "the same page reached is judged",
-    ).toBe("pass");
+    ).toBe(CheckStatus.Pass);
     const plan = planAudits(challengedSiteContext(pages), defaultConfig);
     expect(plan.runnable.map((entry) => entry.reg.meta.id)).not.toContain(
       CanonicalLinksAudit.meta.id,
@@ -250,6 +253,6 @@ describe("CanonicalLinksAudit", () => {
     expect(
       plan.skipped.find((stub) => stub.id === CanonicalLinksAudit.meta.id)
         ?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 });

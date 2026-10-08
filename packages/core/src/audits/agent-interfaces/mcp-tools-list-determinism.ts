@@ -18,6 +18,14 @@ import {
   isObject,
   MCP_PROTOCOL_VERSION,
 } from "../../gatherers/mcp";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** How many identical tools/list calls the audit compares. */
 const CALLS = 3;
@@ -157,20 +165,20 @@ export class McpToolsListDeterminismAudit extends Audit {
     failureTitle: "tools/list Determinism and Cache-Hint Compliance",
     description:
       "Repeatedly fetches tools/list and asserts three things the spec ties directly to agent cost and latency: caching hints are present and well-formed (ttlMs >= 0, cacheScope in {public, private}), tool ordering is stable across calls, and the tool set does not vary per connection.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/agent-interfaces/mcp-tools-list-determinism.md",
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "medium",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "The spec states its own causal rationale verbatim: deterministic ordering 'enables clients to reliably cache the tool list and improves LLM prompt cache hit rates when tools are included in model context.' Tool definitions sit near the front of the model's prompt; if their serialized bytes change between turns, the provider-side prefix cache misses and the full tool block is re-billed at uncached rates on every single turn. Separately, servers MUST include caching hints on complete results, and when ttlMs is absent clients SHOULD assume 0 — immediately stale — so an omitted hint converts one cheap cached read into a network round-trip on every access. Both defects are invisible in functional testing and both are measurable with three identical requests.",
       fix: 'Return `ttlMs` and `cacheScope` on every complete tools/list result, on every page of a paginated one, with the same `cacheScope` across all pages of a request. Set `ttlMs` to a real refetch cadence — zero, or omitting it, tells clients the list is stale on arrival. Use `cacheScope: "private"` whenever the tool list depends on who is asking; `"public"` allows the result to be shared across access tokens. Then make the serialization deterministic: build the array in a fixed order rather than from a map or a database scan without ORDER BY, keep object key order stable, and keep timestamps, request ids and counters out of tool definitions.',
       code: SAMPLE,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/agent-interfaces/mcp-tools-list-determinism/",
       tags: [
@@ -310,11 +318,16 @@ export class McpToolsListDeterminismAudit extends Audit {
         `${musts.join("; ")}.${shoulds.length > 0 ? ` Also: ${shoulds.join("; ")}.` : ""}`,
         EXPECTED,
         found,
-        "high",
+        CheckPriority.High,
       );
     }
     if (shoulds.length > 0) {
-      return this.warn(`${shoulds.join("; ")}.`, EXPECTED, found, "medium");
+      return this.warn(
+        `${shoulds.join("; ")}.`,
+        EXPECTED,
+        found,
+        CheckPriority.Medium,
+      );
     }
     return this.pass(
       `${CALLS} identical tools/list calls returned the same ${first.names.length} tool(s), in the same order, byte-identical, with ttlMs ${ttls[0]} and cacheScope ${[...scopes][0]}.`,

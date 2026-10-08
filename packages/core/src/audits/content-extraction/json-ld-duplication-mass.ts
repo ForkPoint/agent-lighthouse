@@ -5,6 +5,14 @@ import { weightForGrade } from "../../scorer";
 import { countTokens } from "../../gatherers/tokens";
 import { shingles } from "../../gatherers/text-metrics";
 import { allJsonLdNodes } from "../../parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** Strings shorter than this are labels, not bodies of text. */
 const BODY_STRING_CHARS = 500;
@@ -78,24 +86,24 @@ export class JsonLdDuplicationMassAudit extends Audit {
     failureTitle: "Structured data repeats text the page already carries",
     description:
       "Counts what the page's JSON-LD costs in `o200k_base` tokens, finds nodes declared twice across blocks, and measures how much of any long prose property — `articleBody`, `description`, `reviewBody` — repeats text already present in the DOM. Reported, not scored: duplication is a cost an operator may have chosen, and no consumer path proves it changes an answer.",
-    scoreDisplayMode: "informative",
-    tier: "informative",
-    evidenceGrade: "C",
-    weight: weightForGrade("C", "informative"),
-    defaultPriority: "low",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    tier: AuditTier.Informative,
+    evidenceGrade: EvidenceGrade.C,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    defaultPriority: CheckPriority.Low,
     dossier:
       "docs/evidence/audits/content-extraction/json-ld-duplication-mass.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     guidance: {
       impact:
         "A non-rendering agent tokenizes the whole document, JSON-LD included. Where a block repeats the article body the DOM already carries, the page ships that text twice and the agent pays for both copies out of one context window. The same holds for a node declared identically in two blocks: the second copy adds tokens and no facts.",
       fix: "Keep JSON-LD to the facts a parser needs — identifiers, prices, dates, relationships — and let the prose live in the DOM. Where a schema property genuinely needs body text, a summary is usually enough. Merge blocks that declare the same `@id` into one.",
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/content-extraction/json-ld-duplication-mass/",
       tags: ["structured-data", "tokens", "content"],

@@ -8,6 +8,7 @@ import {
 import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
 import type { FetchOptions, FetchResult } from "../../fetcher";
 import type { AuditResult } from "../../types";
+import { AuditTier, CheckStatus, EvidenceGrade } from "../../types";
 
 vi.mock("../../fetcher", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../fetcher")>();
@@ -108,7 +109,7 @@ describe("FeedEntryIdentityAndCanonicalIntegrityAudit", () => {
       ),
     ]);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("passes a feed whose entries carry unique ids and canonical links", async () => {
@@ -118,7 +119,7 @@ describe("FeedEntryIdentityAndCanonicalIntegrityAudit", () => {
       items: CLEAN_ITEMS,
     });
     const r = await result;
-    expect(r.status).toBe("pass");
+    expect(r.status).toBe(CheckStatus.Pass);
     expect(r.details?.["entriesChecked"]).toBe(2);
     expect(strings(r, "failures")).toHaveLength(0);
   });
@@ -133,7 +134,7 @@ describe("FeedEntryIdentityAndCanonicalIntegrityAudit", () => {
       items: CLEAN_ITEMS,
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures").join(" ")).toContain("no atom:id");
   });
 
@@ -148,7 +149,7 @@ describe("FeedEntryIdentityAndCanonicalIntegrityAudit", () => {
       items: CLEAN_ITEMS,
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures").join(" ")).toContain("appears on 2 entries");
   });
 
@@ -163,7 +164,7 @@ describe("FeedEntryIdentityAndCanonicalIntegrityAudit", () => {
       items: CLEAN_ITEMS,
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures").join(" ")).toContain("atom:updated");
   });
 
@@ -177,7 +178,7 @@ describe("FeedEntryIdentityAndCanonicalIntegrityAudit", () => {
       items: CLEAN_ITEMS,
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures").join(" ")).toContain("atom:summary");
   });
 
@@ -191,7 +192,7 @@ describe("FeedEntryIdentityAndCanonicalIntegrityAudit", () => {
       items: CLEAN_ITEMS,
     });
     const r = await result;
-    expect(r.status).toBe("pass");
+    expect(r.status).toBe(CheckStatus.Pass);
   });
 
   it("fails an RSS guid that is a permalink by default but not a URL", async () => {
@@ -200,7 +201,7 @@ describe("FeedEntryIdentityAndCanonicalIntegrityAudit", () => {
     );
     const { result } = run({ feed, items: CLEAN_ITEMS });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures").join(" ")).toContain('isPermaLink="false"');
   });
 
@@ -210,7 +211,7 @@ describe("FeedEntryIdentityAndCanonicalIntegrityAudit", () => {
     );
     const { result } = run({ feed, items: CLEAN_ITEMS });
     const r = await result;
-    expect(r.status).toBe("pass");
+    expect(r.status).toBe(CheckStatus.Pass);
   });
 
   it("fails an item link that redirects somewhere else", async () => {
@@ -223,7 +224,7 @@ describe("FeedEntryIdentityAndCanonicalIntegrityAudit", () => {
       redirects: { "https://example.com/old": "https://example.com/a" },
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures").join(" ")).toContain(
       "redirects to https://example.com/a",
     );
@@ -242,7 +243,7 @@ describe("FeedEntryIdentityAndCanonicalIntegrityAudit", () => {
       },
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     const text = strings(r, "failures").join(" ");
     expect(text).toContain("names https://example.com/a as canonical");
     expect(text).toContain("utm_source");
@@ -257,7 +258,7 @@ describe("FeedEntryIdentityAndCanonicalIntegrityAudit", () => {
       items: { "http://example.com/a": itemPage("http://example.com/a") },
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures").join(" ")).toContain("not absolute HTTPS");
   });
 
@@ -272,7 +273,7 @@ describe("FeedEntryIdentityAndCanonicalIntegrityAudit", () => {
         items: CLEAN_ITEMS,
       });
       const r = await result;
-      expect(r.status).toBe("pass");
+      expect(r.status).toBe(CheckStatus.Pass);
       expect(strings(r, "warnings").join(" ")).toContain(feedType);
     },
   );
@@ -284,7 +285,7 @@ describe("FeedEntryIdentityAndCanonicalIntegrityAudit", () => {
       items: CLEAN_ITEMS,
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures").join(" ")).toContain("not a atom media type");
   });
 
@@ -295,7 +296,7 @@ describe("FeedEntryIdentityAndCanonicalIntegrityAudit", () => {
       items: CLEAN_ITEMS,
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures").join(" ")).toContain("byte-order mark");
   });
 
@@ -317,7 +318,7 @@ describe("FeedEntryIdentityAndCanonicalIntegrityAudit", () => {
       items,
     });
     const r = await result;
-    expect(r.status).toBe("pass");
+    expect(r.status).toBe(CheckStatus.Pass);
     expect(r.details?.["entriesChecked"]).toBe(8);
     expect(strings(r, "canonicalChecks")).toHaveLength(5);
     // Feed discovery aside, exactly five item pages are fetched.
@@ -328,8 +329,8 @@ describe("FeedEntryIdentityAndCanonicalIntegrityAudit", () => {
 
   it("declares grade B, scored, and an id inside the schema cap", () => {
     const { meta } = FeedEntryIdentityAndCanonicalIntegrityAudit;
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
     expect(meta.weight).toBeCloseTo(0.6);
     expect(meta.id.length).toBeLessThanOrEqual(64);
   });

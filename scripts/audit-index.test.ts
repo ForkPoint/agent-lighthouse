@@ -76,6 +76,7 @@ describe("central audit index", () => {
 
 import { auditIndexFields, parseAuditReviews } from "./audit-index";
 import { ArticleSchemaAudit } from "../packages/core/src/audits/structured-data/article-schema";
+import { AuditTier, PageType } from "../packages/core/src/types";
 
 const reviewText = `# Review\n\n### example/check\n\n- **Scope / read:** Reads a\n  visible feature.\n- **Current aggregation / absence:** Absent is NA.\n- **Disposition:** Keep the feature guard.\n- **Tests:** Check missing input.\n`;
 
@@ -128,7 +129,7 @@ describe("audit index generation boundaries", () => {
   it("uses the runner's alias rules and rejects conflicting metadata", () => {
     const meta = {
       ...ArticleSchemaAudit.meta,
-      pageTypes: ["article"] as const,
+      pageTypes: [PageType.Article] as const,
     };
     const entry = auditIndexFields(
       {
@@ -164,7 +165,7 @@ describe("audit index generation boundaries", () => {
       const entry = index.audits.find((a: { id: string }) => a.id === meta.id);
       expect(entry.purpose, meta.id).toBe(meta.description);
       expect(entry.enabledByDefault, meta.id).toBe(
-        meta.tier !== "experimental",
+        meta.tier !== AuditTier.Experimental,
       );
       expect(entry.applicability.pageTypes, meta.id).toEqual(
         [...(meta.applicablePageTypes ?? meta.pageTypes ?? [])].sort(),

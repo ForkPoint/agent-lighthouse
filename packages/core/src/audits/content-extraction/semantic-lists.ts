@@ -3,6 +3,14 @@ import { Audit } from "../../audit";
 import type { CheckContext, PageContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
 import { hiddenFromReaders } from "../../dom-visibility";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** Regions whose lists are chrome, not content. */
 const CHROME_REGION =
@@ -183,24 +191,24 @@ export class SemanticListsAudit extends Audit {
     failureTitle: "Semantic list usage",
     description:
       "AI agents recognize <ul>, <ol>, and <dl> as structured data lists and extract them as bullet points, numbered steps and term/definition pairs in generated answers. Content formatted as styled divs or manually numbered paragraphs is invisible to list-extraction algorithms, so your feature lists, how-to steps and glossary entries will not be surfaced as structured answers.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/content-extraction/semantic-lists.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "medium",
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         'AI agents recognize <ul>, <ol>, and <dl> as structured lists and extract them as bullet points, numbered steps or term/definition pairs. Content formatted as styled <div> elements — or as paragraphs that start with "1.", "2." — collapses into undelimited prose when the page is converted to markdown or an accessibility tree, so the agent has to re-infer where each item begins.',
       fix: "Replace styled <div> stacks and manually numbered paragraph sequences with <ul> (unordered), <ol> (sequential steps, one <li> per step) or <dl> with paired <dt>/<dd> (terms and definitions). Navigation, breadcrumb and pagination lists do not count — this is about content.",
       code: "<ul>\n  <li>Feature one: description</li>\n  <li>Feature two: description</li>\n</ul>\n\n<ol>\n  <li>Create an account</li>\n  <li>Configure your API key</li>\n  <li>Make your first call</li>\n</ol>\n\n<dl>\n  <dt><dfn>API rate limit</dfn></dt>\n  <dd>The maximum number of requests allowed per time period.</dd>\n</dl>",
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/ul",
       tags: ["lists", "structure", "semantic", "html", "definitions", "steps"],
     },
@@ -243,7 +251,7 @@ export class SemanticListsAudit extends Audit {
     }
 
     const recommendation = {
-      priority: "medium" as const,
+      priority: CheckPriority.Medium,
       description:
         "Lists built from styled divs, broken <dl> markup or manually numbered paragraphs lose their item boundaries when a page is converted to markdown or serialized into an accessibility tree, which is how extraction pipelines and browsing agents read it.",
       code: "<ul>\n  <li>Feature one</li>\n  <li>Feature two</li>\n  <li>Feature three</li>\n</ul>",

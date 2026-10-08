@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { logger, type LogLevel } from "./logger";
+import { logger, LogLevel } from "./logger";
 
 const originalLevel = logger.level;
 afterEach(() => {
@@ -9,11 +9,11 @@ afterEach(() => {
 
 describe("logger", () => {
   it.each([
-    ["silent", []],
-    ["error", ["error"]],
-    ["warn", ["warn", "error"]],
-    ["info", ["info", "warn", "error"]],
-    ["debug", ["debug", "info", "warn", "error"]],
+    [LogLevel.Silent, []],
+    [LogLevel.Error, ["error"]],
+    [LogLevel.Warn, ["warn", "error"]],
+    [LogLevel.Info, ["info", "warn", "error"]],
+    [LogLevel.Debug, ["debug", "info", "warn", "error"]],
   ] as const)("filters messages at level %s", (level, expected) => {
     logger.level = level;
     for (const method of ["debug", "info", "warn", "error"] as const) {
@@ -33,7 +33,7 @@ describe("logger", () => {
   it.each(["debug", "info", "warn", "error"] as const)(
     "preserves structured %s messages and extra arguments",
     (method) => {
-      logger.level = "debug";
+      logger.level = LogLevel.Debug;
       const spy = vi.spyOn(console, method).mockImplementation(() => {});
       const message = { scanId: "s1", status: "failed" };
       const error = new Error("connection refused");
@@ -49,7 +49,7 @@ describe("logger", () => {
       vi.stubEnv("LOG_LEVEL", level);
       try {
         const fresh = await import("./logger.js");
-        expect(fresh.logger.level).toBe((level ?? "info") as LogLevel);
+        expect(fresh.logger.level).toBe((level ?? LogLevel.Info) as LogLevel);
         expect(fresh.default).toBe(fresh.logger);
       } finally {
         vi.unstubAllEnvs();

@@ -9,6 +9,8 @@ import type { CheckContext, PageContext } from "../check-context";
 import type { FetchResult } from "../fetcher";
 import { allEvidenceMet, buildScanEvidence } from "../scan-evidence";
 import { SHELL_HTML } from "../tests/hostile-states";
+import { EvidenceKey, PageTypeSource } from "../types";
+import { WafProvider } from "../waf-detector";
 
 export function mockPageContext(
   url: string,
@@ -25,7 +27,7 @@ export function mockPageContext(
   return {
     url,
     pageType: detectPageType(url, $, jsonLd, meta, index === 0),
-    pageTypeSource: "declared",
+    pageTypeSource: PageTypeSource.Declared,
     fetchResult,
     $,
     jsonLd,
@@ -138,9 +140,9 @@ export function unreachedSiteContext(
     ...ctx,
     evidence: {
       ...ctx.evidence,
-      met: { ...ctx.evidence.met, "origin-reachable": false },
+      met: { ...ctx.evidence.met, [EvidenceKey.OriginReachable]: false },
       reasons: {
-        "origin-reachable":
+        [EvidenceKey.OriginReachable]:
           "The requested host redirected to parking.brandsale.test, a different site, " +
           "without a permanent redirect.",
       },
@@ -166,18 +168,18 @@ export function walledSiteContext(
     ...ctx,
     wafProtection: {
       isBlocked: true,
-      provider: "cloudflare",
+      provider: WafProvider.Cloudflare,
       name: "Cloudflare",
       reason: "HTTP 403 with a cf-ray header",
       statusCode: 403,
     },
     evidence: {
       ...ctx.evidence,
-      met: { ...ctx.evidence.met, "unblocked-fetches": false },
+      met: { ...ctx.evidence.met, [EvidenceKey.UnblockedFetches]: false },
       reasons: {
         ...ctx.evidence.reasons,
-        "origin-reachable": "The homepage answered HTTP 403.",
-        "unblocked-fetches":
+        [EvidenceKey.OriginReachable]: "The homepage answered HTTP 403.",
+        [EvidenceKey.UnblockedFetches]:
           "Cloudflare refused the scan: HTTP 403 with a cf-ray header.",
       },
     },
@@ -207,17 +209,17 @@ export function challengedSiteContext(
     ...ctx,
     wafProtection: {
       isBlocked: true,
-      provider: "cloudflare",
+      provider: WafProvider.Cloudflare,
       name: "Cloudflare",
       reason: "HTTP 200 with cf-mitigated: challenge",
       statusCode: 200,
     },
     evidence: {
       ...ctx.evidence,
-      met: { ...ctx.evidence.met, "unblocked-fetches": false },
+      met: { ...ctx.evidence.met, [EvidenceKey.UnblockedFetches]: false },
       reasons: {
         ...ctx.evidence.reasons,
-        "unblocked-fetches":
+        [EvidenceKey.UnblockedFetches]:
           "Cloudflare refused the scan: HTTP 200 with cf-mitigated: challenge.",
       },
       judgeable: false,

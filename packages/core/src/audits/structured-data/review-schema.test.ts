@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { ReviewSchemaAudit } from "./review-schema";
 import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 const ld = (obj: unknown) =>
   `<script type="application/ld+json">${JSON.stringify(obj)}</script>`;
@@ -52,14 +53,14 @@ describe("ReviewSchemaAudit", () => {
         ),
       ]);
       const result = audit.audit(ctx);
-      expect(result.status).toBe("na");
+      expect(result.status).toBe(CheckStatus.NotApplicable);
     });
 
     it("is not applicable on a page with no review content at all", () => {
       const ctx = mockCheckContext([
         contentPage("<h1>Welcome to our shop</h1>"),
       ]);
-      expect(audit.audit(ctx).status).toBe("na");
+      expect(audit.audit(ctx).status).toBe(CheckStatus.NotApplicable);
     });
 
     it("fires on a non-English page with repeated review components", () => {
@@ -74,7 +75,7 @@ describe("ReviewSchemaAudit", () => {
           }),
         ),
       ]);
-      expect(audit.audit(ctx).status).toBe("pass");
+      expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
     });
 
     it("fires on a rendered star-rating widget with no schema at all", () => {
@@ -82,7 +83,7 @@ describe("ReviewSchemaAudit", () => {
         contentPage('<div class="star-rating" aria-label="4.5 von 5"></div>'),
       ]);
       const result = audit.audit(ctx);
-      expect(result.status).toBe("fail");
+      expect(result.status).toBe(CheckStatus.Fail);
     });
   });
 
@@ -100,8 +101,8 @@ describe("ReviewSchemaAudit", () => {
         ),
       ]);
       const result = audit.audit(ctx);
-      expect(result.status).not.toBe("pass");
-      expect(result.status).toBe("fail");
+      expect(result.status).not.toBe(CheckStatus.Pass);
+      expect(result.status).toBe(CheckStatus.Fail);
     });
 
     it('fails on an empty "aggregateRating": {}', () => {
@@ -116,7 +117,7 @@ describe("ReviewSchemaAudit", () => {
           }),
         ),
       ]);
-      expect(audit.audit(ctx).status).toBe("fail");
+      expect(audit.audit(ctx).status).toBe(CheckStatus.Fail);
     });
 
     it("fails when reviewCount is 0", () => {
@@ -135,7 +136,7 @@ describe("ReviewSchemaAudit", () => {
           }),
         ),
       ]);
-      expect(audit.audit(ctx).status).toBe("fail");
+      expect(audit.audit(ctx).status).toBe(CheckStatus.Fail);
     });
 
     it("passes on ratingValue plus a non-zero reviewCount", () => {
@@ -151,7 +152,7 @@ describe("ReviewSchemaAudit", () => {
         ),
       ]);
       const result = audit.audit(ctx);
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.message).toContain("Review");
     });
 
@@ -174,7 +175,7 @@ describe("ReviewSchemaAudit", () => {
           }),
         ),
       ]);
-      expect(audit.audit(ctx).status).toBe("pass");
+      expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
     });
 
     it("detects a standalone AggregateRating nested inside @graph", () => {
@@ -193,7 +194,7 @@ describe("ReviewSchemaAudit", () => {
           }),
         ),
       ]);
-      expect(audit.audit(ctx).status).toBe("pass");
+      expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
     });
 
     it("detects a standalone Review with an array @type", () => {
@@ -208,7 +209,7 @@ describe("ReviewSchemaAudit", () => {
           }),
         ),
       ]);
-      expect(audit.audit(ctx).status).toBe("pass");
+      expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
     });
 
     it("fails when review content exists but no review schema does", () => {
@@ -223,7 +224,7 @@ describe("ReviewSchemaAudit", () => {
         ),
       ]);
       const result = audit.audit(ctx);
-      expect(result.status).toBe("fail");
+      expect(result.status).toBe(CheckStatus.Fail);
       expect(result.message).toContain("no Review or AggregateRating");
     });
   });
@@ -253,7 +254,7 @@ describe("ReviewSchemaAudit", () => {
         ),
       ]);
       const result = audit.audit(ctx);
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.message).toContain("product");
     });
 
@@ -269,7 +270,7 @@ describe("ReviewSchemaAudit", () => {
           }),
         ),
       ]);
-      expect(audit.audit(ctx).status).toBe("pass");
+      expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
     });
 
     it("detects a Product rating in a top-level [{…}] array (Shopify-style)", () => {
@@ -290,7 +291,7 @@ describe("ReviewSchemaAudit", () => {
           ]),
         ),
       ]);
-      expect(audit.audit(ctx).status).toBe("pass");
+      expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
     });
 
     it("fails a product page whose Product rating is empty", () => {
@@ -305,7 +306,7 @@ describe("ReviewSchemaAudit", () => {
           }),
         ),
       ]);
-      expect(audit.audit(ctx).status).toBe("fail");
+      expect(audit.audit(ctx).status).toBe(CheckStatus.Fail);
     });
   });
 });

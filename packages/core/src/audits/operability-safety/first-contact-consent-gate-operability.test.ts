@@ -3,6 +3,12 @@ import { FirstContactConsentGateOperabilityAudit } from "./first-contact-consent
 import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
 import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
 import type { CheckContext } from "../../check-context";
+import {
+  AuditTier,
+  CheckStatus,
+  EvidenceGrade,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** The OneTrust loader, one of the CMP signatures the audit looks for. */
 const CMP =
@@ -38,12 +44,12 @@ describe("FirstContactConsentGateOperabilityAudit", () => {
 
   it("is notApplicable when no consent manager is detected", async () => {
     const result = await audit.audit(page(ARTICLE, ""));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("reports an action cost when the content is behind a well-built gate", async () => {
     const result = await audit.audit(page(`${DIALOG}${ARTICLE}`));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.details?.["actionCost"]).toBe(1);
     expect(result.found).toContain("OneTrust");
   });
@@ -92,9 +98,9 @@ describe("FirstContactConsentGateOperabilityAudit", () => {
   // weight law ties a non-scored tier to weight 0.
   it("is registered as informative with weight 0", () => {
     const { meta } = FirstContactConsentGateOperabilityAudit;
-    expect(meta.evidenceGrade).toBe("C");
-    expect(meta.tier).toBe("informative");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.C);
+    expect(meta.tier).toBe(AuditTier.Informative);
     expect(meta.weight).toBe(0);
-    expect(meta.scoreDisplayMode).toBe("informative");
+    expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Informative);
   });
 });

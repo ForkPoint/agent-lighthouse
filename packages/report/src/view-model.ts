@@ -12,6 +12,9 @@ import {
   categoryAssessedMass,
   isCategoryAssessed,
   isInformative,
+  AuditTier,
+  CheckPriority,
+  CheckStatus,
 } from "@forkpoint/agent-lighthouse-core";
 import {
   CATEGORY_ORDER,
@@ -126,16 +129,18 @@ export interface BuildReportViewOptions {
   /** Limit for topFixes / topPasses (default 10). */
   topN?: number;
   /** Filter all checks to a single priority (used by the MCP tool). */
-  priority?: "critical" | "high" | "medium" | "low";
+  priority?: CheckPriority;
 }
 
 // ── Derivation ──────────────────────────────────────────────────
 
 function countChecks(checks: CheckResult[]): CheckCounts {
-  const pass = checks.filter((c) => c.status === "pass").length;
-  const warn = checks.filter((c) => c.status === "warn").length;
-  const fail = checks.filter((c) => c.status === "fail").length;
-  const na = checks.filter((c) => c.status === "na").length;
+  const pass = checks.filter((c) => c.status === CheckStatus.Pass).length;
+  const warn = checks.filter((c) => c.status === CheckStatus.Warn).length;
+  const fail = checks.filter((c) => c.status === CheckStatus.Fail).length;
+  const na = checks.filter(
+    (c) => c.status === CheckStatus.NotApplicable,
+  ).length;
   // Tier is not a status: an advisory check passes or fails like any other, it
   // just never moves a score. Counting it separately is what stops a deliberate
   // advisory from reading as a defect. A scored-tier check the scan ran as
@@ -143,8 +148,9 @@ function countChecks(checks: CheckResult[]): CheckCounts {
   // moves no score either, so it counts here too.
   const advisory = checks.filter(
     (c) =>
-      c.status !== "na" &&
-      ((c.tier !== undefined && c.tier !== "scored") || isInformative(c)),
+      c.status !== CheckStatus.NotApplicable &&
+      ((c.tier !== undefined && c.tier !== AuditTier.Scored) ||
+        isInformative(c)),
   ).length;
   return { pass, warn, fail, na, advisory, total: pass + warn + fail };
 }
@@ -153,8 +159,12 @@ function toCategoryView(
   cat: CategoryResult,
   original: CategoryResult = cat,
 ): CategoryView {
-  const assessed = cat.checks.filter((c) => c.status !== "na");
-  const notApplicable = cat.checks.filter((c) => c.status === "na");
+  const assessed = cat.checks.filter(
+    (c) => c.status !== CheckStatus.NotApplicable,
+  );
+  const notApplicable = cat.checks.filter(
+    (c) => c.status === CheckStatus.NotApplicable,
+  );
   return {
     id: cat.id,
     name: cat.name,
@@ -234,7 +244,9 @@ export function buildReportView(
 
   // Coverage — bucket every check, attributing na checks by their tag.
   const allChecks = categories.flatMap((c) => c.checks);
-  const naChecks = allChecks.filter((c) => c.status === "na");
+  const naChecks = allChecks.filter(
+    (c) => c.status === CheckStatus.NotApplicable,
+  );
   const erroredChecks = naChecks.filter((c) => hasTag(c, TAG_SCAN_ERROR));
   const skippedChecks = naChecks.filter((c) =>
     hasTag(c, TAG_SKIPPED_PAGE_TYPE),
@@ -243,7 +255,7 @@ export function buildReportView(
     hasTag(c, TAG_SKIPPED_NO_EVIDENCE),
   );
   const coverage: CoverageView = {
-    ran: allChecks.filter((c) => c.status !== "na").length,
+    ran: allChecks.filter((c) => c.status !== CheckStatus.NotApplicable).length,
     skippedByPageType: skippedChecks.length,
     skippedNoEvidence: gatedChecks.length,
     noEvidenceReasons: Object.values(report.scanValidity?.reasons ?? {}).filter(
@@ -268,7 +280,9 @@ export function buildReportView(
   };
   const topFixes = allChecks
     .filter(
-      (c) => (c.status === "fail" || c.status === "warn") && !isInformative(c),
+      (c) =>
+        (c.status === CheckStatus.Fail || c.status === CheckStatus.Warn) &&
+        !isInformative(c),
     )
     .slice()
     .sort((a, b) => (order[a.priority] ?? 3) - (order[b.priority] ?? 3))
@@ -276,7 +290,7 @@ export function buildReportView(
 
   // Top passes: highest category-weight passing checks.
   const topPasses = allChecks
-    .filter((c) => c.status === "pass" && !isInformative(c))
+    .filter((c) => c.status === CheckStatus.Pass && !isInformative(c))
     .slice()
     .sort(
       (a, b) =>

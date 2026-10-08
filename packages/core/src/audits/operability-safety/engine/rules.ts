@@ -33,6 +33,7 @@ import { getElementSpec, getAriaRolesByType } from "./stdhelpers";
 import { sanitize, accessibleTextVirtual } from "./text";
 import { isDataTable, toArray } from "./table";
 import { checks, setDocument, CheckBuilder, type CheckDef } from "./checks";
+import { CheckStatus } from "../../../types";
 
 // Wire role-based matchers into the core `matches()` used by getElementSpec.
 registerMatchers({
@@ -42,7 +43,14 @@ registerMatchers({
   accessibleTextVirtual: (v) => accessibleTextVirtual(v),
 });
 
-export type RuleStatus = "pass" | "fail" | "incomplete" | "inapplicable";
+export const RuleStatus = {
+  Pass: "pass",
+  Fail: "fail",
+  Incomplete: "incomplete",
+  Inapplicable: "inapplicable",
+} as const;
+
+export type RuleStatus = (typeof RuleStatus)[keyof typeof RuleStatus];
 
 // ── matches predicates ───────────────────────────────────────────
 
@@ -548,7 +556,7 @@ function runCheck(
   };
 }
 
-type GroupStatus = "pass" | "fail" | "incomplete";
+type GroupStatus = Exclude<RuleStatus, typeof RuleStatus.Inapplicable>;
 
 function allStatus(results: (boolean | undefined)[]): GroupStatus {
   if (results.some((r) => r === false)) return "fail";
@@ -620,7 +628,7 @@ export function runRule(rule: RuleDef, doc: Document): RuleResult {
   });
 
   if (candidates.length === 0) {
-    return { status: "inapplicable", nodes: [] };
+    return { status: RuleStatus.Inapplicable, nodes: [] };
   }
 
   // Evaluate every check for every candidate up-front (needed for `after`).
@@ -677,10 +685,10 @@ export function runRule(rule: RuleDef, doc: Document): RuleResult {
       noneStatus(noneRes),
     );
 
-    if (status === "fail" && rule.reviewOnFail) {
+    if (status === CheckStatus.Fail && rule.reviewOnFail) {
       // These violations are converted to "needs review".
       sawIncomplete = true;
-    } else if (status === "fail") {
+    } else if (status === CheckStatus.Fail) {
       sawFail = true;
       if (failNodes.length < 5) {
         failNodes.push({ target: getSelector(p.node), summary: "" });
@@ -692,10 +700,10 @@ export function runRule(rule: RuleDef, doc: Document): RuleResult {
     }
   }
 
-  if (sawFail) return { status: "fail", nodes: failNodes };
-  if (sawIncomplete) return { status: "incomplete", nodes: [] };
-  if (sawPass) return { status: "pass", nodes: [] };
-  return { status: "inapplicable", nodes: [] };
+  if (sawFail) return { status: CheckStatus.Fail, nodes: failNodes };
+  if (sawIncomplete) return { status: RuleStatus.Incomplete, nodes: [] };
+  if (sawPass) return { status: CheckStatus.Pass, nodes: [] };
+  return { status: RuleStatus.Inapplicable, nodes: [] };
 }
 
 /** Run the given rule ids against a document. */

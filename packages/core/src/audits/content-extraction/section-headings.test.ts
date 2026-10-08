@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { SectionHeadingsAudit } from "./section-headings";
 import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 describe("SectionHeadingsAudit", () => {
   const audit = new SectionHeadingsAudit();
@@ -14,7 +15,7 @@ describe("SectionHeadingsAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("2/2");
   });
 
@@ -25,7 +26,7 @@ describe("SectionHeadingsAudit", () => {
       "<html><body><div>No sections</div></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("No <section> elements found");
   });
 
@@ -39,7 +40,7 @@ describe("SectionHeadingsAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("2/3");
   });
 
@@ -52,7 +53,7 @@ describe("SectionHeadingsAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("1/2");
   });
 
@@ -69,7 +70,7 @@ describe("SectionHeadingsAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("1/1");
     expect(result.found).toContain("3 empty section(s) skipped");
   });
@@ -80,7 +81,7 @@ describe("SectionHeadingsAudit", () => {
       "<html><body><section> </section><section>&nbsp;</section></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("empty layout slots");
   });
 
@@ -94,7 +95,7 @@ describe("SectionHeadingsAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("1/2");
   });
 });

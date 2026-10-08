@@ -11,6 +11,15 @@ import {
   isObject,
   MCP_PROTOCOL_VERSION as PROTOCOL_VERSION,
 } from "../../gatherers/mcp";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+  HttpMethod,
+} from "../../types";
 
 const CAPABILITY_KEYS = ["tools", "resources", "prompts"];
 
@@ -45,19 +54,19 @@ export class McpEndpointAudit extends Audit {
     failureTitle: "MCP endpoint functional",
     description:
       "One MCP endpoint audit: it finds the endpoint your site declares, speaks a spec-compliant JSON-RPC 2.0 initialize handshake to it, reports the capabilities the server negotiates on the wire, and checks that the tools it lists carry safety annotations.",
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "informative"),
-    evidenceGrade: "C",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/agent-interfaces/mcp-endpoint.md",
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "high",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "If your MCP endpoint does not answer an initialize handshake, AI assistants cannot connect at all. Capabilities and tool annotations come off the same connection: without them an agent cannot tell whether your server offers tools, or which of them are destructive enough to need user confirmation.",
       fix: "Declare your MCP endpoint somewhere machine-readable, make it answer a JSON-RPC 2.0 initialize request over Streamable HTTP, return your real capabilities in the initialize result, and give every tool returned by tools/list a boolean readOnlyHint annotation.",
       code: SAMPLE,
-      effort: "complex",
+      effort: FixEffort.Complex,
       docsUrl:
         "https://modelcontextprotocol.io/specification/2026-07-28/server/discover",
       tags: [
@@ -73,7 +82,7 @@ export class McpEndpointAudit extends Audit {
 
   private recommendation() {
     return {
-      priority: "high" as const,
+      priority: CheckPriority.High,
       description: McpEndpointAudit.meta.description,
       code: SAMPLE,
     };
@@ -122,7 +131,7 @@ export class McpEndpointAudit extends Audit {
     let response;
     try {
       response = await mcpFetch(ctx, url, {
-        method: "POST",
+        method: HttpMethod.Post,
         headers: { "Content-Type": "application/json" },
         body: rpcRequest(1, "initialize", {
           protocolVersion: PROTOCOL_VERSION,
@@ -212,7 +221,7 @@ export class McpEndpointAudit extends Audit {
     let tools: unknown[] | undefined;
     try {
       const listed = await mcpFetch(ctx, url, {
-        method: "POST",
+        method: HttpMethod.Post,
         headers: { "Content-Type": "application/json" },
         body: rpcRequest(2, "tools/list"),
       });

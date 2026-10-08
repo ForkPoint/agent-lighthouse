@@ -2,6 +2,7 @@ import { cacheOwner } from "./cache-owner";
 import type { CheckContext } from "../check-context";
 import type { FetchResult } from "../fetcher";
 import { isSafeUrl } from "../fetcher";
+import { HttpMethod } from "../types";
 
 const securityProbeCache = new WeakMap<
   object,
@@ -12,7 +13,7 @@ export function probeSecurityUrl(
   ctx: { fetch: CheckContext["fetch"] },
   url: string,
   options: {
-    method?: "GET" | "POST" | "HEAD" | "OPTIONS";
+    method?: HttpMethod;
     followRedirects?: boolean;
     userAgent?: string;
     headers?: Record<string, string>;
@@ -32,7 +33,7 @@ export function probeSecurityUrl(
       try {
         return await ctx.fetch({
           url,
-          method: options.method ?? "GET",
+          method: options.method ?? HttpMethod.Get,
           followRedirects: options.followRedirects ?? false,
           ...(options.userAgent ? { userAgent: options.userAgent } : {}),
           ...(options.headers ? { headers: options.headers } : {}),

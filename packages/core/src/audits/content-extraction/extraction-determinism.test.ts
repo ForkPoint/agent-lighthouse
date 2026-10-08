@@ -10,6 +10,12 @@ import {
 } from "../../__tests__/test-utils";
 import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
 import type { CheckContext } from "../../check-context";
+import {
+  AuditTier,
+  CheckPriority,
+  CheckStatus,
+  EvidenceGrade,
+} from "../../types";
 
 const prose = (seed: string, n = 25) =>
   Array.from(
@@ -37,7 +43,7 @@ describe("ExtractionDeterminismAudit", () => {
   it("is notApplicable on a page with no prose at all", async () => {
     expect(
       (await audit.audit(page('<div><img src="/a.png"></div>'))).status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 
   it("passes when all three extractors agree", async () => {
@@ -46,7 +52,7 @@ describe("ExtractionDeterminismAudit", () => {
         `<main><article><h1>Kettles</h1><p>${prose("copper")}</p></article></main>`,
       ),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(
       Number(result.details?.["worstPairSimilarity"]),
     ).toBeGreaterThanOrEqual(0.8);
@@ -58,7 +64,7 @@ describe("ExtractionDeterminismAudit", () => {
         `<main><p>${prose("copper", 2)}</p></main><div class="feature"><p>${prose("ceramic", 40)}</p></div>`,
       ),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("ceramic");
   });
 
@@ -70,7 +76,7 @@ describe("ExtractionDeterminismAudit", () => {
         `<option>Kettle option number ${i} in this long list of choices</option>`,
     ).join("");
     const result = await audit.audit(page(`<select>${options}</select>`));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("declined");
   });
 
@@ -82,7 +88,7 @@ describe("ExtractionDeterminismAudit", () => {
     const result = await audit.audit(
       page(`<nav>${nav}</nav><main><p>A short line about kettles.</p></main>`),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("500");
   });
 
@@ -98,9 +104,9 @@ describe("ExtractionDeterminismAudit", () => {
 
   it("registers as a scored grade-B audit with high priority", () => {
     const { meta } = ExtractionDeterminismAudit;
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
-    expect(meta.defaultPriority).toBe("high");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
+    expect(meta.defaultPriority).toBe(CheckPriority.High);
   });
 
   // The scan may hold a readable page that is not this site's — a broker's
@@ -110,7 +116,9 @@ describe("ExtractionDeterminismAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new ExtractionDeterminismAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext(pages, rootFiles),
@@ -123,7 +131,7 @@ describe("ExtractionDeterminismAudit", () => {
       plan.skipped.find(
         (stub) => stub.id === ExtractionDeterminismAudit.meta.id,
       )?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 
   // A promo strip marked up as the first <article> is not the page's article.
@@ -133,7 +141,7 @@ describe("ExtractionDeterminismAudit", () => {
         `<article class="ticker"><p>New hoodies have just arrived. Shop now.</p></article><article><h1>Kettles</h1><p>${prose("copper")}</p></article>`,
       ),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).not.toContain("hoodies");
   });
 
@@ -143,7 +151,7 @@ describe("ExtractionDeterminismAudit", () => {
         `<article class="ticker"><p>New hoodies have just arrived. Shop now.</p></article><div class="copy"><h1>Kettles</h1><p>${prose("copper")}</p></div>`,
       ),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // True positive: an article that is a real share of the page and disagrees
@@ -154,7 +162,7 @@ describe("ExtractionDeterminismAudit", () => {
         `<article><h1>Kettles</h1><p>${prose("copper", 10)}</p></article><div class="feature"><p>${prose("ceramic", 30)}</p></div>`,
       ),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.details?.["worstPair"]).toBe("semantic vs density");
   });
 });

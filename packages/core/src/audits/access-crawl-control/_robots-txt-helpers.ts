@@ -104,12 +104,20 @@ export function checkSensitivePaths(
   return { protected: protectedPaths, unprotected: unprotectedPaths };
 }
 
+export const CrawlerPurpose = {
+  Training: "training",
+  Realtime: "realtime",
+} as const;
+
+export type CrawlerPurpose =
+  (typeof CrawlerPurpose)[keyof typeof CrawlerPurpose];
+
 // ── Crawler bot definitions ───────────────────────────────────
 
 export interface CrawlerBot {
   botName: string;
   displayName: string;
-  category: "training" | "realtime";
+  category: CrawlerPurpose;
   /** Optional alias bot names to also check (e.g. ClaudeBot for anthropic-ai) */
   aliases?: string[];
   /**
@@ -120,74 +128,110 @@ export interface CrawlerBot {
 }
 
 export const TRAINING_CRAWLERS: CrawlerBot[] = [
-  { botName: "GPTBot", displayName: "GPTBot", category: "training" },
+  {
+    botName: "GPTBot",
+    displayName: "GPTBot",
+    category: CrawlerPurpose.Training,
+  },
   {
     botName: "Google-Extended",
     displayName: "Google-Extended",
-    category: "training",
+    category: CrawlerPurpose.Training,
   },
   {
     botName: "anthropic-ai",
     displayName: "anthropic-ai / ClaudeBot",
-    category: "training",
+    category: CrawlerPurpose.Training,
     aliases: ["ClaudeBot"],
   },
   {
     botName: "PerplexityBot",
     displayName: "PerplexityBot",
-    category: "training",
+    category: CrawlerPurpose.Training,
   },
   {
     botName: "Applebot-Extended",
     displayName: "Applebot-Extended",
-    category: "training",
+    category: CrawlerPurpose.Training,
   },
-  { botName: "CCBot", displayName: "CCBot", category: "training" },
+  { botName: "CCBot", displayName: "CCBot", category: CrawlerPurpose.Training },
   {
     botName: "Meta-ExternalAgent",
     displayName: "Meta-ExternalAgent",
-    category: "training",
+    category: CrawlerPurpose.Training,
   },
-  { botName: "Amazonbot", displayName: "Amazonbot", category: "training" },
-  { botName: "Bytespider", displayName: "Bytespider", category: "training" },
-  { botName: "cohere-ai", displayName: "cohere-ai", category: "training" },
-  { botName: "YouBot", displayName: "YouBot", category: "training" },
-  { botName: "Diffbot", displayName: "Diffbot", category: "training" },
-  { botName: "AI2Bot", displayName: "AI2Bot", category: "training" },
+  {
+    botName: "Amazonbot",
+    displayName: "Amazonbot",
+    category: CrawlerPurpose.Training,
+  },
+  {
+    botName: "Bytespider",
+    displayName: "Bytespider",
+    category: CrawlerPurpose.Training,
+  },
+  {
+    botName: "cohere-ai",
+    displayName: "cohere-ai",
+    category: CrawlerPurpose.Training,
+  },
+  {
+    botName: "YouBot",
+    displayName: "YouBot",
+    category: CrawlerPurpose.Training,
+  },
+  {
+    botName: "Diffbot",
+    displayName: "Diffbot",
+    category: CrawlerPurpose.Training,
+  },
+  {
+    botName: "AI2Bot",
+    displayName: "AI2Bot",
+    category: CrawlerPurpose.Training,
+  },
 ];
 
 export const REALTIME_CRAWLERS: CrawlerBot[] = [
   {
     botName: "ChatGPT-User",
     displayName: "ChatGPT-User",
-    category: "realtime",
+    category: CrawlerPurpose.Realtime,
   },
-  { botName: "Claude-User", displayName: "Claude-User", category: "realtime" },
+  {
+    botName: "Claude-User",
+    displayName: "Claude-User",
+    category: CrawlerPurpose.Realtime,
+  },
   {
     botName: "OAI-SearchBot",
     displayName: "OAI-SearchBot",
-    category: "realtime",
+    category: CrawlerPurpose.Realtime,
   },
   {
     botName: "Meta-ExternalFetcher",
     displayName: "Meta-ExternalFetcher",
-    category: "realtime",
+    category: CrawlerPurpose.Realtime,
   },
-  { botName: "Bravebot", displayName: "Bravebot", category: "realtime" },
+  {
+    botName: "Bravebot",
+    displayName: "Bravebot",
+    category: CrawlerPurpose.Realtime,
+  },
   {
     botName: "DuckAssistBot",
     displayName: "DuckAssistBot",
-    category: "realtime",
+    category: CrawlerPurpose.Realtime,
   },
   {
     botName: "MistralAI-User",
     displayName: "MistralAI-User",
-    category: "realtime",
+    category: CrawlerPurpose.Realtime,
   },
   {
     botName: "Claude-SearchBot",
     displayName: "Claude-SearchBot",
-    category: "realtime",
+    category: CrawlerPurpose.Realtime,
   },
 ];
 

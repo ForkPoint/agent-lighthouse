@@ -3,6 +3,15 @@ import { Audit } from "../../audit";
 import type { CheckContext, PageContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
 import { flattenJsonLd } from "../../parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "../../types";
 
 function matchesAnyType(
   schema: Record<string, unknown>,
@@ -74,19 +83,19 @@ export class LocalBusinessSchemaAudit extends Audit {
     failureTitle: "LocalBusiness/ProfessionalService schema",
     description:
       'AI agents use LocalBusiness schema to answer location-based queries like "find a [service] near me." Without it, your business is invisible to location-aware AI systems. Add address, telephone, and openingHours to help agents provide accurate local recommendations.',
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/structured-data/local-business-schema.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: ["homepage"],
-    defaultPriority: "medium",
+    applicablePageTypes: [PageType.Homepage],
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         'Without LocalBusiness schema, your business is invisible to location-aware AI systems. AI agents cannot answer "find a [service] near me" queries with your business, and your address, phone number, and hours will not appear in AI-generated local recommendations.',
@@ -105,7 +114,7 @@ export class LocalBusinessSchemaAudit extends Audit {
   "telephone": "+1-555-555-5555",
   "openingHours": "Mo-Fr 09:00-17:00"
 }`,
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl: "https://schema.org/LocalBusiness",
       tags: ["json-ld", "schema", "local-business", "location"],
     },
@@ -147,7 +156,7 @@ export class LocalBusinessSchemaAudit extends Audit {
       "LocalBusiness or ProfessionalService schema if site has physical location indicators.",
       "None",
       {
-        priority: "medium",
+        priority: CheckPriority.Medium,
         description:
           'AI agents use LocalBusiness schema to answer location-based queries like "find a [service] near me." Without it, your business is invisible to location-aware AI systems. Add address, telephone, and openingHours to help agents provide accurate local recommendations.',
         code: `{

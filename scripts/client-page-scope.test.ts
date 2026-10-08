@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { FetchResult, ScanReport } from "@forkpoint/agent-lighthouse-core";
 import { runScan, defaultOriginCache } from "@forkpoint/agent-lighthouse-core";
+import { PageType } from "../packages/core/src/types";
 
 const h = vi.hoisted(() => ({
   map: new Map<string, FetchResult>(),
@@ -66,9 +67,9 @@ describe("v7 client page scope parity", () => {
     set(url, html);
     set(other, html);
     const declarations = {
-      pageType: "article" as const,
+      pageType: PageType.Article,
       pages: [
-        { url: "https://example.com/unread", pageType: "article" as const },
+        { url: "https://example.com/unread", pageType: PageType.Article },
       ],
     };
     const cliFlag = parseCliOptions(["--page-type", "article"], url, {
@@ -121,7 +122,7 @@ describe("v7 client page scope parity", () => {
     for (const options of [
       { pageType: "author" },
       { pages: [{ url: "https://example.com/", pageType: "typo" }] },
-      { pages: [{ url: "not a url", pageType: "article" }] },
+      { pages: [{ url: "not a url", pageType: PageType.Article }] },
     ]) {
       await expect(
         runScan("https://example.com/unread", options as never),

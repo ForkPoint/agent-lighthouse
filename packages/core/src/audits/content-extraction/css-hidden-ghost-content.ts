@@ -15,7 +15,16 @@ import {
   declaredValue,
   styleHidesFromReaders,
   type Declaration,
+  HidingProperty,
 } from "../../dom-visibility";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** The repo-wide rough token estimator; no tokenizer dependency is carried. */
 const CHARS_PER_TOKEN = 4;
@@ -156,7 +165,7 @@ function hidingRules(rules: CssRule[]): HidingSelector[] {
     { selector: string; reported: string; decl: Declaration }
   >();
   for (const rule of live) {
-    const decl = declaredValue(rule.declarations, "display");
+    const decl = declaredValue(rule.declarations, HidingProperty.Display);
     if (!decl) continue;
     for (const selector of splitSelectorList(rule.selector)) {
       const key = `${rule.atRule ?? ""}\u0000${selector}`;
@@ -297,25 +306,25 @@ export class CssHiddenGhostContentAudit extends Audit {
     failureTitle: "Ghost content: CSS-hidden text ingested as visible",
     description:
       "Find text that is hidden from human readers by an external stylesheet class but is invisible-as-hidden to every extractor an agent uses, and size it in tokens. Fail if class-hidden text exceeds 15% of the page's total text tokens or 1,000 tokens absolute; separately fail on near-duplicate hidden blocks (a mobile nav or tab-panel set duplicating visible content). Report contradiction risk when hidden text contains prices, availability, or dated claims.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/content-extraction/css-hidden-ghost-content.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "medium",
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "This is provable from source, not inferred. Readability's visibility test consults only node.style.display, node.style.visibility, the hidden attribute and aria-hidden — it explicitly does not evaluate class-based CSS rules from stylesheets. AI crawlers do not render, so no cascade is ever computed. Therefore any subtree hidden by `.mobile-only{display:none}`, `.tab-panel:not(.active){display:none}` or `[data-state=closed]{display:none}` reaches the model as ordinary body text with full weight. Consequence is not just cost: the agent sees three parallel copies of a nav, both the collapsed and expanded FAQ answers, and often stale price text from a hidden variant block, and irrelevant/contradictory context measurably degrades answers.",
       fix: "Stop shipping parallel copies of the same content behind a hiding class. Render one copy and let CSS reposition or restyle it, or load the alternate view on demand. Where a hidden block must stay in the markup — a collapsed tab panel, an off-canvas menu — add the `hidden` attribute or an inline `display:none` alongside the class, because those are the markers a non-rendering extractor does honour. Keep the visually-hidden idiom for short assistive strings only.",
       code: SAMPLE,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/content-extraction/css-hidden-ghost-content/",
       tags: ["token-economics", "extraction", "ghost-content", "duplication"],
@@ -324,7 +333,7 @@ export class CssHiddenGhostContentAudit extends Audit {
 
   private recommendation() {
     return {
-      priority: "medium" as const,
+      priority: CheckPriority.Medium,
       description: CssHiddenGhostContentAudit.meta.description,
       code: SAMPLE,
     };

@@ -27,6 +27,11 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import {
+  AttemptOutcome,
+  PageType,
+  PageTypeSource,
+} from "@forkpoint/agent-lighthouse-core";
 beforeAll(async () => {
   await import("./server.js");
 });
@@ -41,9 +46,9 @@ describe("MCP handler page declarations", () => {
     const pageAttempts = [
       {
         url: "https://x.test",
-        pageType: "unknown",
-        source: "detected",
-        outcome: "unread",
+        pageType: PageType.Unknown,
+        source: PageTypeSource.Detected,
+        outcome: AttemptOutcome.Unread,
         status: 503,
       },
     ];
@@ -62,8 +67,8 @@ describe("MCP handler page declarations", () => {
     });
     const args = {
       url: "https://x.test",
-      pageType: "article",
-      pages: [{ url: "https://x.test/other", pageType: "product" }],
+      pageType: PageType.Article,
+      pages: [{ url: "https://x.test/other", pageType: PageType.Product }],
     };
     const result = await state.handlers.get(CallToolRequestSchema)!({
       params: { name: "audit_website", arguments: args },

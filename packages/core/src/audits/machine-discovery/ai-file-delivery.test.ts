@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { AiFileDeliveryAudit } from "./ai-file-delivery";
 import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
 import type { FetchResult } from "../../fetcher";
+import { CheckStatus } from "../../types";
 
 /** A 200 response with the given content type and extra headers. */
 const file = (
@@ -26,7 +27,7 @@ describe("AiFileDeliveryAudit", () => {
       "/sitemap.xml": file("<urlset/>", "application/xml", cached),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("Content-Type");
   });
 
@@ -34,7 +35,7 @@ describe("AiFileDeliveryAudit", () => {
     const ctx = mockCheckContext([], {
       "/openapi.json": file("{}", "application/json; charset=utf-8", cached),
     });
-    expect(audit.audit(ctx).status).toBe("pass");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
   });
 
   it("fails when a file has an incorrect Content-Type", () => {
@@ -42,7 +43,7 @@ describe("AiFileDeliveryAudit", () => {
       "/openapi.json": file('{"openapi":"3.1.0"}', "text/html", cached),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("expected application/json");
     expect(result.message).toContain("got text/html");
   });
@@ -58,20 +59,20 @@ describe("AiFileDeliveryAudit", () => {
       ),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   // Review findings (8.10 + 8.11): `checked === 0` scored a warn, so a site with
   // no AI files lost points three times over for having nothing to check.
   it("is not applicable when no AI files were served", () => {
     const result = audit.audit(mockCheckContext([], {}));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.found).toContain("No applicable files found");
   });
 
   it("ignores files with a non-200 status", () => {
     const ctx = mockCheckContext([], { "/llms.txt": mockFetchResult("", 404) });
-    expect(audit.audit(ctx).status).toBe("na");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.NotApplicable);
   });
 
   describe("delivery headers (absorbed from cache-headers, v1 8.11)", () => {
@@ -80,7 +81,7 @@ describe("AiFileDeliveryAudit", () => {
         "/llms.txt": file("# Site", "text/plain"),
       });
       const result = audit.audit(ctx);
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.message).toContain("no caching headers");
     });
 
@@ -92,7 +93,7 @@ describe("AiFileDeliveryAudit", () => {
           "/llms.txt": file("# Site", "text/plain", { "cache-control": value }),
         });
         const result = audit.audit(ctx);
-        expect(result.status, value).toBe("warn");
+        expect(result.status, value).toBe(CheckStatus.Warn);
         expect(result.message, value).toContain("no caching headers");
       }
     });
@@ -108,7 +109,9 @@ describe("AiFileDeliveryAudit", () => {
         const ctx = mockCheckContext([], {
           "/llms.txt": file("# Site", "text/plain", headers),
         });
-        expect(audit.audit(ctx).status, JSON.stringify(headers)).toBe("pass");
+        expect(audit.audit(ctx).status, JSON.stringify(headers)).toBe(
+          CheckStatus.Pass,
+        );
       }
     });
 
@@ -123,7 +126,7 @@ describe("AiFileDeliveryAudit", () => {
           }),
         });
         const result = audit.audit(ctx);
-        expect(result.status, value).toBe("warn");
+        expect(result.status, value).toBe(CheckStatus.Warn);
         expect(result.message, value).toContain("no caching headers");
         expect(result.message, value).toContain("llms.txt");
       }
@@ -135,7 +138,7 @@ describe("AiFileDeliveryAudit", () => {
         "/sitemap.xml": file("<urlset/>", "application/xml"),
       });
       const result = audit.audit(ctx);
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.found).toContain("sitemap.xml");
       expect(result.found).not.toContain("llms.txt: no caching");
     });
@@ -145,7 +148,7 @@ describe("AiFileDeliveryAudit", () => {
       const ctx = mockCheckContext([], {
         "/llms.txt": file("# Site", "application/octet-stream", cached),
       });
-      expect(audit.audit(ctx).status).toBe("fail");
+      expect(audit.audit(ctx).status).toBe(CheckStatus.Fail);
     });
 
     // nosniff removes a client's ability to recover from a wrong Content-Type
@@ -158,7 +161,7 @@ describe("AiFileDeliveryAudit", () => {
         }),
       });
       const result = audit.audit(ctx);
-      expect(result.status).toBe("fail");
+      expect(result.status).toBe(CheckStatus.Fail);
       expect(result.message).toContain("nosniff");
     });
   });

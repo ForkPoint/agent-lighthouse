@@ -9,6 +9,7 @@ import {
 } from "../packages/core/src/gatherers/robots";
 import { SCANNER_USER_AGENT } from "../packages/core/src/constants";
 import { AI_CRAWLER_UAS } from "../packages/core/src/gatherers/ua-parity";
+import { EvidenceKey } from "../packages/core/src/types";
 
 /**
  * Fetch each candidate once and say whether it can join the corpus.
@@ -112,10 +113,10 @@ async function probe(domain: string, category: string): Promise<Outcome> {
     html &&
     (finalHost === domain || finalHost.endsWith(`.${domain}`));
   const evidence = {
-    "origin-reachable": reachable,
-    "unblocked-fetches": home.status !== 403 && home.status !== 429,
-    "rendered-body": reachable && home.body.length > 0,
-    "sample-adequate": reachable,
+    [EvidenceKey.OriginReachable]: reachable,
+    [EvidenceKey.UnblockedFetches]: home.status !== 403 && home.status !== 429,
+    [EvidenceKey.RenderedBody]: reachable && home.body.length > 0,
+    [EvidenceKey.SampleAdequate]: reachable,
   };
   const outcome: Outcome = {
     domain,

@@ -3,6 +3,14 @@ import { Audit } from "../../audit";
 import type { CheckContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
 import { judgePages } from "../../gatherers/pages";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 export class LanguageAttributeAudit extends Audit {
   static override meta: AuditMeta = {
@@ -12,20 +20,20 @@ export class LanguageAttributeAudit extends Audit {
     failureTitle: "Language attribute",
     description:
       "Checks that every scanned page declares its language with a non-empty lang attribute on <html>. Screen readers use the declared language to select pronunciation rules. This check measures presence, not language-tag validity or agreement with the page text.",
-    scoreDisplayMode: "binary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Binary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/content-extraction/language-attribute.md",
     // Gate exemption: `<html lang>` is served before any body renders.
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "high",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "Screen readers use the declared page language to select pronunciation rules. A missing declaration leaves the page's language unspecified for these consumers.",
       fix: 'Add a lang attribute to the <html> element with the appropriate BCP 47 language code (e.g., "en", "fr", "de", "ja").',
       code: '<html lang="en">',
-      effort: "trivial",
+      effort: FixEffort.Trivial,
       docsUrl:
         "https://www.w3.org/International/questions/qa-html-language-declarations",
       tags: ["meta-tags", "i18n", "html"],
@@ -69,7 +77,7 @@ export class LanguageAttributeAudit extends Audit {
         expected,
         `${coverage}. Missing or blank declarations: ${missingUrls.join(", ")}`,
         {
-          priority: "high",
+          priority: CheckPriority.High,
           description: LanguageAttributeAudit.meta.guidance!.impact,
           code: '<html lang="en">',
         },

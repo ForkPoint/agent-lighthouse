@@ -4,6 +4,7 @@ import type { AnyNode } from "domhandler";
 import type { FetchOptions, FetchResult } from "../fetcher";
 import { isSafeUrl } from "../fetcher";
 import { linksWithRel } from "./structured-fields";
+import { HttpMethod } from "../types";
 
 /**
  * Feed discovery and parsing, once per scan.
@@ -55,13 +56,22 @@ export interface FeedEntry {
   updatedCount: number;
 }
 
+export const FeedFormat = {
+  Rss: "rss",
+  Atom: "atom",
+  Json: "json",
+  Unknown: "unknown",
+} as const;
+
+export type FeedFormat = (typeof FeedFormat)[keyof typeof FeedFormat];
+
 export interface FeedDocument {
   url: string;
   body?: string;
   /** Response `Content-Type`, parameters included. */
   contentType: string;
   /** What the document actually is, decided by its root element. */
-  declaredType: "rss" | "atom" | "json" | "unknown";
+  declaredType: FeedFormat;
   status: number;
   /** A byte-order mark or whitespace before the first element. Both break strict parsers. */
   bomOrLeadingSpace: boolean;
@@ -334,7 +344,7 @@ export function parseFeed(url: string, result: FetchResult): FeedDocument {
     url,
     body,
     contentType: result.headers["content-type"] ?? result.contentType ?? "",
-    declaredType: "unknown",
+    declaredType: FeedFormat.Unknown,
     status: result.status,
     bomOrLeadingSpace,
     parsed: false,
@@ -354,7 +364,7 @@ export function parseFeed(url: string, result: FetchResult): FeedDocument {
     const entries = parseJsonFeed(url, result);
     return {
       ...base,
-      declaredType: "json",
+      declaredType: FeedFormat.Json,
       parsed: entries.length > 0,
       entries,
     };
@@ -412,7 +422,7 @@ export function parseFeed(url: string, result: FetchResult): FeedDocument {
       });
     return {
       ...base,
-      declaredType: "atom",
+      declaredType: FeedFormat.Atom,
       parsed: true,
       lastBuild: parseFeedDate($("feed > updated").first().text()),
       entries,
@@ -445,7 +455,7 @@ export function parseFeed(url: string, result: FetchResult): FeedDocument {
 
   return {
     ...base,
-    declaredType: "rss",
+    declaredType: FeedFormat.Rss,
     parsed: true,
     lastBuild: parseFeedDate(
       $("channel > lastBuildDate").first().text() ||
@@ -543,7 +553,11 @@ export function probeHubHead(
     hit = (async () => {
       if (!(await isSafeUrl(url))) return undefined;
       try {
-        return await ctx.fetch({ url, method: "HEAD", followRedirects: true });
+        return await ctx.fetch({
+          url,
+          method: HttpMethod.Head,
+          followRedirects: true,
+        });
       } catch {
         return undefined;
       }

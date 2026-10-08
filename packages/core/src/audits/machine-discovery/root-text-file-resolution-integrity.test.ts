@@ -8,6 +8,7 @@ import {
 import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
 import type { FetchOptions, FetchResult } from "../../fetcher";
 import type { AuditResult } from "../../types";
+import { AuditTier, CheckStatus, EvidenceGrade } from "../../types";
 
 vi.mock("../../fetcher", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../fetcher")>();
@@ -84,7 +85,7 @@ describe("RootTextFileResolutionIntegrityAudit", () => {
   it("passes when both random probes 404 and robots.txt is text/plain", async () => {
     const { result } = run();
     const r = await result;
-    expect(r.status).toBe("pass");
+    expect(r.status).toBe(CheckStatus.Pass);
     expect(r.details?.["discoveryProbeReliable"]).toBe(true);
   });
 
@@ -115,7 +116,7 @@ describe("RootTextFileResolutionIntegrityAudit", () => {
         ),
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures").join(" ")).toContain("SPA or HTML catch-all");
     expect(r.details?.["discoveryProbeReliable"]).toBe(false);
   });
@@ -140,7 +141,7 @@ describe("RootTextFileResolutionIntegrityAudit", () => {
   it("reads a probe redirected to another path as absent", async () => {
     const { result } = run({ probe: (url) => toHomepage(url) });
     const r = await result;
-    expect(r.status).toBe("pass");
+    expect(r.status).toBe(CheckStatus.Pass);
     expect(r.details?.["discoveryProbeReliable"]).toBe(true);
     expect(r.found).toContain("redirected away");
   });
@@ -161,7 +162,7 @@ describe("RootTextFileResolutionIntegrityAudit", () => {
       },
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures").join(" ")).toContain("SPA or HTML catch-all");
   });
 
@@ -183,7 +184,7 @@ describe("RootTextFileResolutionIntegrityAudit", () => {
         return r;
       },
     });
-    expect((await result).status).toBe("fail");
+    expect((await result).status).toBe(CheckStatus.Fail);
   });
 
   it("classifies a text body served as text/html as a wrong content type", async () => {
@@ -192,7 +193,7 @@ describe("RootTextFileResolutionIntegrityAudit", () => {
         mockFetchResult(`plain body ${index}`, 200, "text/html"),
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures").join(" ")).toContain("wrong content type");
   });
 
@@ -201,7 +202,7 @@ describe("RootTextFileResolutionIntegrityAudit", () => {
       probe: () => mockFetchResult("fallback", 200, "text/plain"),
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures").join(" ")).toContain("static catch-all");
   });
 
@@ -210,7 +211,7 @@ describe("RootTextFileResolutionIntegrityAudit", () => {
       probe: () => mockFetchResult("", 403, "text/plain"),
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures").join(" ")).toContain("403");
     expect(r.details?.["discoveryProbeReliable"]).toBe(false);
   });
@@ -220,13 +221,13 @@ describe("RootTextFileResolutionIntegrityAudit", () => {
       probe: () => mockFetchResult("", 410, "text/plain"),
     });
     const r = await result;
-    expect(r.status).toBe("pass");
+    expect(r.status).toBe(CheckStatus.Pass);
   });
 
   it("fails a robots.txt served as application/octet-stream", async () => {
     const { result } = run({ robotsType: "application/octet-stream" });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures").join(" ")).toContain("text/plain");
     expect(r.details?.["discoveryProbeReliable"]).toBe(false);
   });
@@ -236,7 +237,7 @@ describe("RootTextFileResolutionIntegrityAudit", () => {
   it("warns rather than fails when robots.txt is missing", async () => {
     const { result } = run({ robotsStatus: 404, robotsType: "" });
     const r = await result;
-    expect(r.status).toBe("warn");
+    expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "warnings").join(" ")).toContain(
       "positive control did not run",
     );
@@ -247,8 +248,8 @@ describe("RootTextFileResolutionIntegrityAudit", () => {
     const { meta } = RootTextFileResolutionIntegrityAudit;
     expect(meta.guidance?.impact).toContain("llms.txt");
     expect(meta.guidance?.impact).toContain("IndexNow");
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
     expect(meta.weight).toBeCloseTo(0.6);
     expect(meta.id.length).toBeLessThanOrEqual(64);
   });

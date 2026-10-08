@@ -5,6 +5,15 @@ import type { CheckContext, PageContext } from "../../check-context";
 import type { FetchResult } from "../../fetcher";
 import { probeOpenApiServer } from "../../gatherers/openapi";
 import { isSafeUrl } from "../../url-utils";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+  HttpMethod,
+} from "../../types";
 
 function tryParseJson(body: string): unknown {
   try {
@@ -137,24 +146,24 @@ export class OpenApiExistsAudit extends Audit {
     failureTitle: "API description discoverable",
     description:
       'One discovery audit over the mechanisms that actually exist: the RFC 9727 /.well-known/api-catalog linkset, an OpenAPI document at a probed root path, and a <link rel="service-desc"> advertising one. A site with no API surface is not applicable rather than failing.',
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("B", "informative"),
-    evidenceGrade: "B",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/agent-interfaces/openapi-exists.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "medium",
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "An agent that cannot find your API description cannot call it. Note that every documented consumer today (GPT Actions, Microsoft 365 Copilot API plugins) receives the document from a developer rather than fetching it from your site, so this check is informative and unscored.",
       fix: 'Publish an RFC 9727 linkset at /.well-known/api-catalog with a Content-Type of application/linkset+json — the only ratified, IANA-registered domain-level API discovery mechanism. Serve the OpenAPI document itself at /openapi.json or /openapi.yaml, and advertise it with <link rel="service-desc">. Never answer a well-known path with an HTML 200.',
       code: SAMPLE,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl: "https://www.rfc-editor.org/rfc/rfc9727.html",
       tags: ["openapi", "api", "discovery", "rfc9727", "well-known"],
     },
@@ -189,7 +198,7 @@ export class OpenApiExistsAudit extends Audit {
         EXPECTED,
         "/openapi.json -> 200, not an OpenAPI document",
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description: OpenApiExistsAudit.meta.description,
           code: SAMPLE,
         },
@@ -220,14 +229,16 @@ export class OpenApiExistsAudit extends Audit {
           EXPECTED,
           `<link> -> ${url} -> refused`,
           {
-            priority: "medium",
+            priority: CheckPriority.Medium,
             description: OpenApiExistsAudit.meta.description,
             code: SAMPLE,
           },
           link.pageUrl,
         );
       }
-      const result = await probeOpenApiServer(ctx, url, { method: "GET" });
+      const result = await probeOpenApiServer(ctx, url, {
+        method: HttpMethod.Get,
+      });
       if (result) {
         const valid =
           servedAsData(result) &&
@@ -247,7 +258,7 @@ export class OpenApiExistsAudit extends Audit {
         EXPECTED,
         `<link> -> ${url} -> no valid OpenAPI document`,
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description: OpenApiExistsAudit.meta.description,
           code: SAMPLE,
         },
@@ -262,7 +273,7 @@ export class OpenApiExistsAudit extends Audit {
         EXPECTED,
         `Blocked by ${ctx.wafProtection.name}`,
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description: OpenApiExistsAudit.meta.description,
           code: SAMPLE,
         },

@@ -3,7 +3,19 @@ import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
 import type { CheckContext, PageContext } from "../../check-context";
 import { allJsonLdNodes } from "../../parser";
-import { platformFingerprint } from "../../gatherers/commerce";
+import {
+  platformFingerprint,
+  CommercePlatform,
+} from "../../gatherers/commerce";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** Select elements whose name says they choose between variants. */
 const VARIANT_NAME = /(size|colour|color|variant|option|style|width|length)/i;
@@ -20,10 +32,18 @@ const MAX_PAGES = 3;
 /** How many missing-field findings a message names. */
 const MAX_SHOWN = 5;
 
+export const VariantSource = {
+  Select: "select",
+  DataAttribute: "data-attribute",
+  PlatformJson: "platform-json",
+} as const;
+
+export type VariantSource = (typeof VariantSource)[keyof typeof VariantSource];
+
 /** How the variants on a page were established, and how many there are. */
 export interface VariantEvidence {
   count: number;
-  source: "select" | "data-attribute" | "platform-json";
+  source: VariantSource;
   detail: string;
 }
 
@@ -106,7 +126,7 @@ export function detectVariants(page: PageContext): VariantEvidence | undefined {
     if (options.length >= 2) {
       found.push({
         count: options.length,
-        source: "select",
+        source: VariantSource.Select,
         detail: `<select ${name.trim()}>`,
       });
     }
@@ -115,12 +135,16 @@ export function detectVariants(page: PageContext): VariantEvidence | undefined {
   for (const attribute of VARIANT_ATTRIBUTES) {
     const count = $(`[${attribute}]`).length;
     if (count >= 2)
-      found.push({ count, source: "data-attribute", detail: attribute });
+      found.push({
+        count,
+        source: VariantSource.DataAttribute,
+        detail: attribute,
+      });
   }
 
   const platform = platformFingerprint(page);
   const html = page.fetchResult.body;
-  if (platform === "shopify") {
+  if (platform === CommercePlatform.Shopify) {
     const match = /"variants"\s*:\s*\[(.*?)\]/s.exec(html);
     // Counting `"id"` occurrences rather than parsing: the block is a fragment
     // of a larger script, so it is not JSON on its own.
@@ -128,17 +152,17 @@ export function detectVariants(page: PageContext): VariantEvidence | undefined {
     if (ids >= 2)
       found.push({
         count: ids,
-        source: "platform-json",
+        source: VariantSource.PlatformJson,
         detail: "Shopify variants[]",
       });
   }
-  if (platform === "woocommerce") {
+  if (platform === CommercePlatform.Woocommerce) {
     const match = /data-product_variations=("|')(.*?)\1/s.exec(html);
     const ids = match ? (match[2]!.match(/variation_id/g) ?? []).length : 0;
     if (ids >= 2) {
       found.push({
         count: ids,
-        source: "platform-json",
+        source: VariantSource.PlatformJson,
         detail: "WooCommerce variations_form",
       });
     }
@@ -161,20 +185,20 @@ export class BuyableVariantResolutionAudit extends Audit {
     failureTitle: "Buyable Variant Resolution",
     description:
       'Finds product pages that offer a shopper a size or colour choice but publish no per-variant purchasable identifier with its own price and availability, so an agent cannot turn "the blue one in medium" into a line item. Variants are established from the rendered HTML, then the structured data is required to resolve them.',
-    scoreDisplayMode: "ternary",
-    tier: "scored",
-    evidenceGrade: "B",
-    weight: weightForGrade("B", "scored"),
-    defaultPriority: "high",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    tier: AuditTier.Scored,
+    evidenceGrade: EvidenceGrade.B,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    defaultPriority: CheckPriority.High,
     dossier:
       "docs/evidence/audits/agentic-commerce/buyable-variant-resolution.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: ["product"],
+    applicablePageTypes: [PageType.Product],
     guidance: {
       impact:
         "The agentic-commerce feed models a catalogue variant-first: every sellable thing is a variant with its own id, price and availability. A page that shows five sizes and three colours but publishes one Offer — or an AggregateOffer with only lowPrice and highPrice — gives an agent no purchasable unit to name and no single price to quote. The row is dropped at feed validation, or the checkout session comes back with `invalid` on the line item.",
@@ -200,7 +224,7 @@ export class BuyableVariantResolutionAudit extends Audit {
     }
   ]
 }`,
-      effort: "complex",
+      effort: FixEffort.Complex,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/agentic-commerce/buyable-variant-resolution/",
       tags: ["product", "variants", "json-ld", "acp", "ecommerce"],

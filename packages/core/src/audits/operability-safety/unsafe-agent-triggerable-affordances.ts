@@ -15,6 +15,14 @@ import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
 import type { CheckContext, PageContext } from "../../check-context";
 import { scanReadPageText, unreadPageTextReason } from "../../scan-evidence";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "../../types";
 
 /** URL shapes that change state on the server when they are merely fetched. */
 const STATE_VERBS: ReadonlyArray<{ pattern: RegExp; label: string }> = [
@@ -43,12 +51,19 @@ const CONFIRM_ATTRS = [
   "data-remote",
 ];
 
+const AffordanceKind = {
+  Link: "link",
+  GetForm: "get-form",
+} as const;
+
+type AffordanceKind = (typeof AffordanceKind)[keyof typeof AffordanceKind];
+
 interface Finding {
   pageUrl: string;
   href: string;
   label: string;
   /** A GET form is replayable, but it is at least a form. */
-  kind: "link" | "get-form";
+  kind: AffordanceKind;
   disallowed: boolean;
 }
 
@@ -93,7 +108,7 @@ function survey(ctx: CheckContext): Finding[] {
       if (!href || /^(mailto:|tel:|javascript:|#)/i.test(href)) return;
       const verb = STATE_VERBS.find(({ pattern }) => pattern.test(href));
       if (!verb) return;
-      if (kind === "link" && guarded(page, node)) return;
+      if (kind === AffordanceKind.Link && guarded(page, node)) return;
       let pathname = href;
       try {
         pathname = new URL(href, page.url).pathname;
@@ -112,12 +127,12 @@ function survey(ctx: CheckContext): Finding[] {
     };
 
     $("a[href]").each((_i, node) =>
-      consider($(node as never).attr("href") ?? "", node, "link"),
+      consider($(node as never).attr("href") ?? "", node, AffordanceKind.Link),
     );
     $("form").each((_i, node) => {
       const $n = $(node as never);
       if (($n.attr("method") ?? "get").toLowerCase() !== "get") return;
-      consider($n.attr("action") ?? "", node, "get-form");
+      consider($n.attr("action") ?? "", node, AffordanceKind.GetForm);
     });
   }
 
@@ -143,25 +158,25 @@ export class UnsafeAgentTriggerableAffordancesAudit extends Audit {
     failureTitle: "State-changing links an agent can trigger by fetching them",
     description:
       'Finds links and GET forms whose URL changes state on the server — delete, cancel, revoke, unsubscribe, logout, add-to-cart, confirm — with no POST, no confirmation affordance and no `rel="nofollow"` in the way. Markup analysis only: a flagged URL is reported, never fetched.',
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/operability-safety/unsafe-agent-triggerable-affordances.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "critical",
+    defaultPriority: CheckPriority.Critical,
     guidance: {
       impact:
         "An agent exploring a site follows links, and a link that changes state changes it on the first fetch — no click, no intent, no confirmation. The same property makes the site a target for indirect prompt injection: text on a page can name the URL, and an agent that reads it as an instruction performs the action with the user's own session. Disallowing the path in robots.txt is only a partial mitigation, because a user-initiated fetch is documented as not necessarily bound by robots.txt. The underlying rule is older than agents: a GET is a safe method, meaning it must not have side effects, and everything here is a violation of that rule that agents simply make expensive.",
       fix: 'Move every state change to a POST. Where the markup cannot change immediately, put a confirmation affordance on the link — `data-turbo-confirm`, `data-confirm`, or an `onclick` that calls `confirm()` — and add `rel="nofollow"` so crawlers and agents leave it alone. Do not rely on robots.txt: it constrains well-behaved crawling, not a user-initiated fetch. A GET form whose action mutates is the same defect in a different shape, and it is replayable straight from the query string.',
       code: SAMPLE,
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/unsafe-agent-triggerable-affordances/",
       tags: ["injection-safety", "http-semantics", "prompt-injection"],
@@ -170,7 +185,7 @@ export class UnsafeAgentTriggerableAffordancesAudit extends Audit {
 
   private recommendation() {
     return {
-      priority: "critical" as const,
+      priority: CheckPriority.Critical,
       description: UnsafeAgentTriggerableAffordancesAudit.meta.description,
       code: SAMPLE,
     };
@@ -186,8 +201,8 @@ export class UnsafeAgentTriggerableAffordancesAudit extends Audit {
     }
 
     const findings = survey(ctx);
-    const links = findings.filter((f) => f.kind === "link");
-    const forms = findings.filter((f) => f.kind === "get-form");
+    const links = findings.filter((f) => f.kind === AffordanceKind.Link);
+    const forms = findings.filter((f) => f.kind === AffordanceKind.GetForm);
     const disallowed = findings.filter((f) => f.disallowed);
     const details = {
       unguardedLinks: links.length,

@@ -6,6 +6,15 @@ import type { FetchResult } from "../../fetcher";
 import { probeSecurityUrl } from "../../gatherers/security";
 import { parseHtml, extractJsonLd, allJsonLdNodes } from "../../parser";
 import { weightForGrade } from "../../scorer";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+  HttpMethod,
+} from "../../types";
 
 /**
  * The probe budget, as a hard cap rather than an average.
@@ -26,15 +35,22 @@ const ESCAPED_MARKER = `&lt;${BRACKET_MARKER}&gt;`;
 const RAW_MARKER = `<${BRACKET_MARKER}>`;
 
 /** Where a reflection was found, in the order an answer engine trusts them. */
-type Sink =
-  "title" | "meta description" | "canonical link" | "JSON-LD" | "rendered text";
+const Sink = {
+  Title: "title",
+  MetaDescription: "meta description",
+  CanonicalLink: "canonical link",
+  JsonLd: "JSON-LD",
+  RenderedText: "rendered text",
+} as const;
+
+type Sink = (typeof Sink)[keyof typeof Sink];
 
 /** The four sinks lifted verbatim into an AI answer. Reflection there fails. */
 const HIGH_TRUST: readonly Sink[] = [
-  "title",
-  "meta description",
-  "canonical link",
-  "JSON-LD",
+  Sink.Title,
+  Sink.MetaDescription,
+  Sink.CanonicalLink,
+  Sink.JsonLd,
 ];
 
 /**
@@ -81,7 +97,7 @@ function sinksFor(html: string, canary: string): Sink[] {
   const $ = parseHtml(html);
   const found: Sink[] = [];
 
-  if ($("title").text().includes(canary)) found.push("title");
+  if ($("title").text().includes(canary)) found.push(Sink.Title);
 
   const metaDescription = $(
     'meta[name="description"], meta[property="og:description"]',
@@ -89,19 +105,19 @@ function sinksFor(html: string, canary: string): Sink[] {
     .toArray()
     .map((el) => el.attribs?.["content"] ?? "")
     .join(" ");
-  if (metaDescription.includes(canary)) found.push("meta description");
+  if (metaDescription.includes(canary)) found.push(Sink.MetaDescription);
 
   if (($('link[rel="canonical"]').attr("href") ?? "").includes(canary)) {
-    found.push("canonical link");
+    found.push(Sink.CanonicalLink);
   }
 
   if (jsonLdStrings(html).some((value) => value.includes(canary)))
-    found.push("JSON-LD");
+    found.push(Sink.JsonLd);
 
   // Script and style hold code, not prose an agent reads back as content.
   const body = $("body").clone();
   body.find("script, style, noscript, title").remove();
-  if (body.text().includes(canary)) found.push("rendered text");
+  if (body.text().includes(canary)) found.push(Sink.RenderedText);
 
   return found;
 }
@@ -115,18 +131,18 @@ export class ReflectedParameterInjectionCanaryAudit extends Audit {
       "URL input is reflected into fields agents read as the page speaking",
     description:
       "Sends at most five read-only GET probes carrying a random per-scan token, then reports whether the site echoes that token back into its title, meta description, canonical link, JSON-LD, or rendered text — the fields an answer engine lifts verbatim, which would let any third party mint a URL on this domain that shows a visiting agent arbitrary text.",
-    scoreDisplayMode: "ternary",
-    tier: "scored",
-    evidenceGrade: "B",
-    weight: weightForGrade("B", "scored"),
-    defaultPriority: "critical",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    tier: AuditTier.Scored,
+    evidenceGrade: EvidenceGrade.B,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    defaultPriority: CheckPriority.Critical,
     dossier:
       "docs/evidence/audits/operability-safety/reflected-parameter-injection-canary.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     guidance: {
       impact:
@@ -141,7 +157,7 @@ export class ReflectedParameterInjectionCanaryAudit extends Audit {
 <link rel="canonical" href="/search">
 <meta name="robots" content="noindex">
 <p>Results for <span>{{ query | escape }}</span></p>`,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/reflected-parameter-injection-canary/",
       tags: ["injection-safety", "security", "agent-trust"],
@@ -189,7 +205,9 @@ export class ReflectedParameterInjectionCanaryAudit extends Audit {
 
     for (const url of probes) {
       // Read-only GET, same origin, SSRF-gated like every other outbound fetch.
-      const result = await probeSecurityUrl(ctx, url, { method: "GET" });
+      const result = await probeSecurityUrl(ctx, url, {
+        method: HttpMethod.Get,
+      });
       if (!result || result.status < 200) continue;
       reachable += 1;
 

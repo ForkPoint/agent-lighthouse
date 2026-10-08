@@ -7,6 +7,7 @@ import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
 import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
 import type { AuditResult } from "../../types";
 import type { PageContext } from "../../check-context";
+import { CheckStatus } from "../../types";
 
 const strings = (result: AuditResult, key: string): string[] =>
   (result.details?.[key] ?? []) as string[];
@@ -67,7 +68,9 @@ describe("BuyableVariantResolutionAudit", () => {
     const ctx = mockCheckContext([
       mockPageContext("https://example.com/", "<html></html>"),
     ]);
-    expect(new BuyableVariantResolutionAudit().audit(ctx).status).toBe("na");
+    expect(new BuyableVariantResolutionAudit().audit(ctx).status).toBe(
+      CheckStatus.NotApplicable,
+    );
   });
 
   it("is notApplicable when the product page offers no variant choice", () => {
@@ -78,7 +81,7 @@ describe("BuyableVariantResolutionAudit", () => {
         offers: { "@type": "Offer", price: "79" },
       }),
     );
-    expect(r.status).toBe("na");
+    expect(r.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("passes a ProductGroup that resolves every variant it shows", () => {
@@ -86,7 +89,7 @@ describe("BuyableVariantResolutionAudit", () => {
       SIZE_SELECT +
         ld(GROUP([variant("MC-100-M", "79.00"), variant("MC-100-L", "79.00")])),
     );
-    expect(r.status).toBe("pass");
+    expect(r.status).toBe(CheckStatus.Pass);
     expect(strings(r, "resolved")[0]).toContain("2 variant(s) resolved");
   });
 
@@ -95,7 +98,7 @@ describe("BuyableVariantResolutionAudit", () => {
       SIZE_SELECT +
         ld([variant("MC-100-M", "79.00"), variant("MC-100-L", "89.00")]),
     );
-    expect(r.status).toBe("pass");
+    expect(r.status).toBe(CheckStatus.Pass);
     expect(strings(r, "resolved")[0]).toContain("per-variant Product nodes");
   });
 
@@ -113,14 +116,14 @@ describe("BuyableVariantResolutionAudit", () => {
           },
         }),
     );
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures")[0]).toContain("AggregateOffer");
     expect(strings(r, "failures")[0]).toContain("49–79");
   });
 
   it("fails a variant page that publishes exactly one Offer", () => {
     const r = run(SIZE_SELECT + ld(variant("MC-100", "79.00")));
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures")[0]).toContain("exactly one Offer");
   });
 
@@ -134,7 +137,7 @@ describe("BuyableVariantResolutionAudit", () => {
       SIZE_SELECT +
         ld(GROUP([incomplete, { "@type": "Product", color: "Blue" }])),
     );
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     const message = strings(r, "failures")[0] ?? "";
     expect(message).toContain("offers.priceCurrency");
     expect(message).toContain("sku or gtin");
@@ -151,7 +154,7 @@ describe("BuyableVariantResolutionAudit", () => {
       three +
         ld(GROUP([variant("MC-100-M", "79.00"), variant("MC-100-L", "79.00")])),
     );
-    expect(r.status).toBe("warn");
+    expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "warnings")[0]).toContain("partially generated");
   });
 

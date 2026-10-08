@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { LlmsTxtLinksValidAudit } from "./llms-txt-links-valid";
 import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 // isSafeUrl performs a real DNS lookup; stub it so link resolution is
 // deterministic and offline-safe. ctx.fetch is stubbed per-test below.
@@ -31,7 +32,7 @@ describe("LlmsTxtLinksValidAudit", () => {
     });
     ctx.fetch = fetchStub({});
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("return HTTP 200");
   });
 
@@ -45,7 +46,7 @@ describe("LlmsTxtLinksValidAudit", () => {
     });
     ctx.fetch = fetchStub({ "https://example.com/gone": 404 });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("404");
   });
 
@@ -55,7 +56,7 @@ describe("LlmsTxtLinksValidAudit", () => {
     });
     ctx.fetch = fetchStub({});
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("No links found");
   });
 
@@ -65,7 +66,7 @@ describe("LlmsTxtLinksValidAudit", () => {
   it("is not applicable when llms.txt is missing", async () => {
     const ctx = mockCheckContext([], {});
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("no links to validate");
   });
 
@@ -81,7 +82,7 @@ describe("LlmsTxtLinksValidAudit", () => {
     ctx.fetch = fetchStub({});
     const result = await audit.audit(ctx);
     // Malformed URL skipped; valid link fetched and returns 200
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("return HTTP 200");
   });
 });

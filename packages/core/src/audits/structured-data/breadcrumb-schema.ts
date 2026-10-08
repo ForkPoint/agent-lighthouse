@@ -3,6 +3,15 @@ import { Audit } from "../../audit";
 import type { CheckContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
 import { flattenJsonLd } from "../../parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "../../types";
 
 function matchesType(schema: Record<string, unknown>, type: string): boolean {
   const t = schema["@type"];
@@ -28,25 +37,24 @@ export class BreadcrumbSchemaAudit extends Audit {
     failureTitle: "BreadcrumbList schema",
     description:
       "AI agents use BreadcrumbList to understand your site hierarchy and navigate between parent/child pages. Without breadcrumbs, agents cannot infer where a page sits in your content tree, making it harder to provide contextual answers that reference related pages.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/structured-data/breadcrumb-schema.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     applicablePageTypes: [
-      "category",
-      "product",
-      "content",
-      "unknown",
-      "article",
+      PageType.Category,
+      PageType.Product,
+      PageType.Unknown,
+      PageType.Article,
     ],
-    defaultPriority: "medium",
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "Without BreadcrumbList schema, AI agents cannot infer where a page sits in your site hierarchy. This prevents agents from navigating between parent and child pages and from providing contextual answers that reference related pages in your content tree.",
@@ -60,7 +68,7 @@ export class BreadcrumbSchemaAudit extends Audit {
     { "@type": "ListItem", "position": 3, "name": "Current Page", "item": "https://yoursite.com/category/page/" }
   ]
 }`,
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl: "https://schema.org/BreadcrumbList",
       tags: ["json-ld", "schema", "navigation", "site-structure"],
     },
@@ -75,7 +83,7 @@ export class BreadcrumbSchemaAudit extends Audit {
         "BreadcrumbList schema on pages with URL depth > 1.",
         "No deep pages detected.",
         {
-          priority: "low",
+          priority: CheckPriority.Low,
           description:
             "AI agents use BreadcrumbList to understand site hierarchy and navigate between related pages. If your site has pages nested beyond the root level, add BreadcrumbList JSON-LD to help agents map your content structure.",
           code: `{
@@ -114,7 +122,7 @@ export class BreadcrumbSchemaAudit extends Audit {
         "BreadcrumbList schema on pages with URL depth > 1.",
         `${pagesWithBreadcrumb.length}/${deepPages.length} deep pages have BreadcrumbList`,
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "AI agents use BreadcrumbList to understand your site hierarchy and navigate between parent/child pages. Without breadcrumbs, agents cannot infer where a page sits in your content tree, making it harder to provide contextual answers that reference related pages.",
           code: `{
@@ -134,7 +142,7 @@ export class BreadcrumbSchemaAudit extends Audit {
       "BreadcrumbList schema on pages with URL depth > 1.",
       `${pagesWithBreadcrumb.length}/${deepPages.length} deep pages have BreadcrumbList`,
       {
-        priority: "medium",
+        priority: CheckPriority.Medium,
         description:
           "AI agents use BreadcrumbList to understand your site hierarchy and navigate between parent/child pages. Without breadcrumbs, agents cannot infer where a page sits in your content tree, making it harder to provide contextual answers that reference related pages.",
         code: `{

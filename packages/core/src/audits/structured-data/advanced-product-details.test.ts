@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { ProductDetailsAudit } from "./advanced-product-details";
 import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
+import { CheckStatus } from "../../types";
 
 const ld = (obj: unknown) =>
   `<script type="application/ld+json">${JSON.stringify(obj)}</script>`;
@@ -25,7 +26,7 @@ describe("ProductDetailsAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No Product schema found");
   });
 
@@ -46,7 +47,7 @@ describe("ProductDetailsAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("Found brand, category, and availability");
   });
 
@@ -69,7 +70,7 @@ describe("ProductDetailsAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("warns when some details are missing (only brand present)", () => {
@@ -84,7 +85,7 @@ describe("ProductDetailsAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("category, availability");
   });
 
@@ -99,7 +100,7 @@ describe("ProductDetailsAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("Missing critical product details");
   });
 
@@ -117,7 +118,7 @@ describe("ProductDetailsAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("handles a typeless schema alongside a Product (return false branch)", () => {
@@ -139,7 +140,7 @@ describe("ProductDetailsAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // Ported from 3.8 (service-product-schema) in the 2026-08-22 split: the
@@ -164,7 +165,7 @@ describe("ProductDetailsAudit", () => {
         ),
       ]);
       const result = audit.audit(ctx);
-      expect(result.status).toBe("fail");
+      expect(result.status).toBe(CheckStatus.Fail);
       expect(result.message).toContain("name");
     });
 
@@ -179,7 +180,7 @@ describe("ProductDetailsAudit", () => {
         ),
       ]);
       const result = audit.audit(ctx);
-      expect(result.status).toBe("fail");
+      expect(result.status).toBe(CheckStatus.Fail);
       expect(result.message).toContain("name");
       expect(result.found).toContain("name");
     });
@@ -199,7 +200,7 @@ describe("ProductDetailsAudit", () => {
           }),
         ),
       ]);
-      expect(audit.audit(ctx).status).toBe("fail");
+      expect(audit.audit(ctx).status).toBe(CheckStatus.Fail);
     });
 
     // 3.8 required `description` too. Its own review recorded that as an
@@ -222,7 +223,7 @@ describe("ProductDetailsAudit", () => {
         ),
       ]);
       const result = audit.audit(ctx);
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.message).not.toContain("description");
     });
 
@@ -244,7 +245,7 @@ describe("ProductDetailsAudit", () => {
         ),
       ]);
       const result = audit.audit(ctx);
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.message).toContain("brand");
     });
   });
@@ -267,6 +268,6 @@ describe("ProductDetailsAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 });

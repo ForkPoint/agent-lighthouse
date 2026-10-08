@@ -10,6 +10,12 @@ import {
 } from "../../__tests__/test-utils";
 import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
 import type { CheckContext } from "../../check-context";
+import {
+  AuditTier,
+  CheckStatus,
+  EvidenceGrade,
+  ScoreDisplayMode,
+} from "../../types";
 
 const prose = (n: number) =>
   Array.from(
@@ -41,7 +47,7 @@ describe("PreambleTaxTokensBeforeTheFirstContentTokenAudit", () => {
         `<main><h1>Mugs</h1><p>${prose(30)}</p></main>`,
       ),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("fails when the content sits behind a huge inline style block", async () => {
@@ -55,7 +61,7 @@ describe("PreambleTaxTokensBeforeTheFirstContentTokenAudit", () => {
         `<main><h1>Mugs</h1><p>${prose(30)}</p></main>`,
       ),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("style");
   });
 
@@ -79,7 +85,7 @@ describe("PreambleTaxTokensBeforeTheFirstContentTokenAudit", () => {
         `<main><h1>Mugs</h1><p>${prose(30)}</p></main>`,
       ),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(Number(result.details?.["preambleTokens"])).toBeGreaterThan(2000);
     expect(Number(result.details?.["preambleTokens"])).toBeLessThan(10000);
   });
@@ -100,22 +106,22 @@ describe("PreambleTaxTokensBeforeTheFirstContentTokenAudit", () => {
     ctx.pages[0]!.fetchResult.body =
       "<html><body><p>Different document entirely.</p></body></html>";
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("is notApplicable when no main content can be extracted", async () => {
     const result = await audit.audit(
       page("", '<nav><a href="/">Home</a></nav>'),
     );
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("registers as a scored grade-B audit", () => {
     const { meta } = PreambleTaxTokensBeforeTheFirstContentTokenAudit;
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
     expect(meta.weight).toBeCloseTo(0.6);
-    expect(meta.scoreDisplayMode).toBe("ternary");
+    expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Ternary);
   });
 
   // The scan may hold a readable page that is not this site's — a broker's
@@ -125,7 +131,9 @@ describe("PreambleTaxTokensBeforeTheFirstContentTokenAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new PreambleTaxTokensBeforeTheFirstContentTokenAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext(pages, rootFiles),
@@ -139,6 +147,6 @@ describe("PreambleTaxTokensBeforeTheFirstContentTokenAudit", () => {
         (stub) =>
           stub.id === PreambleTaxTokensBeforeTheFirstContentTokenAudit.meta.id,
       )?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 });

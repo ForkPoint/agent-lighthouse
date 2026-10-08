@@ -10,6 +10,7 @@ import {
   CATEGORY_MASS,
   CATEGORY_NAMES,
   isInformative,
+  CheckStatus,
 } from "@forkpoint/agent-lighthouse-core";
 import { CATEGORY_ORDER } from "./sections";
 import { generateScanSummary } from "./summary";
@@ -71,9 +72,9 @@ export function hydrateReport(row: PersistedScanRow): ScanReport {
       weight: CATEGORY_MASS[id] ?? 0,
       score: categoryScores[id] ?? 0,
       checks,
-      passCount: countBy(checks, "pass"),
-      warnCount: countBy(checks, "warn"),
-      failCount: countBy(checks, "fail"),
+      passCount: countBy(checks, CheckStatus.Pass),
+      warnCount: countBy(checks, CheckStatus.Warn),
+      failCount: countBy(checks, CheckStatus.Fail),
     };
   });
 
@@ -87,13 +88,15 @@ export function hydrateReport(row: PersistedScanRow): ScanReport {
   // Informative checks are advisory-only: they never rank as a top fail or pass.
   const topFails = checkResults
     .filter(
-      (c) => (c.status === "fail" || c.status === "warn") && !isInformative(c),
+      (c) =>
+        (c.status === CheckStatus.Fail || c.status === CheckStatus.Warn) &&
+        !isInformative(c),
     )
     .slice()
     .sort((a, b) => (order[a.priority] ?? 3) - (order[b.priority] ?? 3))
     .slice(0, 10);
   const topPasses = checkResults
-    .filter((c) => c.status === "pass" && !isInformative(c))
+    .filter((c) => c.status === CheckStatus.Pass && !isInformative(c))
     .slice()
     .sort(
       (a, b) =>

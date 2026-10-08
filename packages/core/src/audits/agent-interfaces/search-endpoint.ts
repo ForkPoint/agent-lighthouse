@@ -9,6 +9,15 @@ import {
   probeOpenApiServer,
   type OpenApiSpec,
 } from "../../gatherers/openapi";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+  HttpMethod,
+} from "../../types";
 
 function tryParseJson(body: string): unknown {
   try {
@@ -194,24 +203,24 @@ export class SearchEndpointAudit extends Audit {
     failureTitle: "Site search reachable by agents",
     description:
       "A declared search endpoint lets an AI agent find specific content on your site without crawling every page. This audit covers both halves of that declaration: the Schema.org SearchAction URL template, and a GET search operation in your OpenAPI spec — and it probes the template rather than trusting it.",
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "informative"),
-    evidenceGrade: "C",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/agent-interfaces/search-endpoint.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "low",
+    defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
         'Without a declared search endpoint, an agent asked to "find pricing info on Example.com" has to crawl the site to answer. Note that no vendor documents an agent that reads SearchAction today — Google retired its only documented consumer in 2024 — so this check is informative and unscored.',
       fix: "Add a WebSite SearchAction to your homepage JSON-LD whose target URL template carries a {search_term_string} placeholder, or expose a GET search operation in your OpenAPI spec. Make sure the template actually returns results when the placeholder is substituted.",
       code: SAMPLE,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl: "https://schema.org/SearchAction",
       tags: ["search", "schema-org", "openapi", "api"],
     },
@@ -228,7 +237,9 @@ export class SearchEndpointAudit extends Audit {
       // Every placeholder is substituted; the first miss left a literal `{lang}`
       // in the URL and turned a working endpoint into a false warn.
       const testUrl = state.urlTemplate.replace(/\{[^}]*\}/g, "test");
-      const result = await probeOpenApiServer(ctx, testUrl, { method: "GET" });
+      const result = await probeOpenApiServer(ctx, testUrl, {
+        method: HttpMethod.Get,
+      });
       if (result) {
         if (result.status === 200) {
           if (carriesResults(result.body, result.contentType ?? "")) {
@@ -244,7 +255,7 @@ export class SearchEndpointAudit extends Audit {
             EXPECTED,
             `SearchAction template: ${state.urlTemplate} -> HTTP 200, empty payload`,
             {
-              priority: "low",
+              priority: CheckPriority.Low,
               description: SearchEndpointAudit.meta.description,
               code: SAMPLE,
             },
@@ -257,7 +268,7 @@ export class SearchEndpointAudit extends Audit {
             EXPECTED,
             `SearchAction template: ${state.urlTemplate} -> HTTP ${result.status} (gated)`,
             {
-              priority: "low",
+              priority: CheckPriority.Low,
               description: SearchEndpointAudit.meta.description,
               code: SAMPLE,
             },
@@ -269,7 +280,7 @@ export class SearchEndpointAudit extends Audit {
           EXPECTED,
           `SearchAction template: ${state.urlTemplate} -> HTTP ${result.status}`,
           {
-            priority: "low",
+            priority: CheckPriority.Low,
             description: SearchEndpointAudit.meta.description,
             code: SAMPLE,
           },
@@ -281,7 +292,7 @@ export class SearchEndpointAudit extends Audit {
         EXPECTED,
         `SearchAction template: ${state.urlTemplate} -> unreachable`,
         {
-          priority: "low",
+          priority: CheckPriority.Low,
           description: SearchEndpointAudit.meta.description,
           code: SAMPLE,
         },
@@ -305,7 +316,7 @@ export class SearchEndpointAudit extends Audit {
         EXPECTED,
         state.detail,
         {
-          priority: "low",
+          priority: CheckPriority.Low,
           description: SearchEndpointAudit.meta.description,
           code: SAMPLE,
         },
@@ -319,7 +330,7 @@ export class SearchEndpointAudit extends Audit {
         EXPECTED,
         "WebSite schema without a potentialAction SearchAction",
         {
-          priority: "low",
+          priority: CheckPriority.Low,
           description: SearchEndpointAudit.meta.description,
           code: SAMPLE,
         },
@@ -332,7 +343,7 @@ export class SearchEndpointAudit extends Audit {
       EXPECTED,
       "No search endpoint detected",
       {
-        priority: "low",
+        priority: CheckPriority.Low,
         description: SearchEndpointAudit.meta.description,
         code: SAMPLE,
       },

@@ -3,6 +3,15 @@ import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
 import type { CheckContext } from "../../check-context";
 import { isArticleContentPage } from "./dates-on-content";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "../../types";
 
 const WEAK_OPENERS = [
   /^in this (article|post|guide|page)/i,
@@ -20,25 +29,25 @@ export class FirstParagraphAnswersAudit extends Audit {
     failureTitle: "First paragraph answers primary question",
     description:
       'AI search engines score the first paragraph highest for extractive QA. Preamble text like "In this article" or "Welcome" wastes this prime position, causing agents to extract low-value content as your page\'s representative answer.',
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "informative"),
-    evidenceGrade: "C",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/answer-readiness/first-paragraph-answers.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: ["article"],
-    defaultPriority: "high",
+    applicablePageTypes: [PageType.Article],
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         'AI search engines score the first paragraph highest for extractive QA. Preamble text like "In this article" or "Welcome" wastes this prime position, causing agents to extract low-value filler as your page\'s representative answer.',
       fix: 'Rewrite the first paragraph in <main> as a direct, declarative answer to the page\'s primary question. Remove preamble phrases like "In this article", "Welcome", or rhetorical questions.',
       code: "<main>\n  <p>Unified content preparation optimizes your site for AI agents by structuring content with semantic HTML, JSON-LD, and machine-readable metadata.</p>\n</main>",
-      effort: "easy",
+      effort: FixEffort.Easy,
       tags: ["content-quality", "copywriting", "answer-engine"],
     },
   };
@@ -80,7 +89,7 @@ export class FirstParagraphAnswersAudit extends Audit {
         "First substantive <p> on a content page is a declarative answer, not a filler intro",
         "No substantive <p> found",
         {
-          priority: "high",
+          priority: CheckPriority.High,
           description:
             "Without a substantive first paragraph, agents have no candidate answer to extract from your page. Add a direct, declarative opening paragraph to your main content area.",
           code: "<main>\n  <p>Your direct answer to the page topic goes here as the first paragraph.</p>\n</main>",
@@ -105,7 +114,7 @@ export class FirstParagraphAnswersAudit extends Audit {
       "First substantive <p> on a content page is a declarative answer, not a filler intro",
       firstP.length > 120 ? firstP.slice(0, 120) + "..." : firstP,
       {
-        priority: "high",
+        priority: CheckPriority.High,
         description:
           "Rewrite the first paragraph as a direct, declarative answer to the page's primary question. Preamble text causes agents to extract low-value filler as your page's representative answer.",
         code: '<!-- Instead of "In this article, we explore..." use: -->\n<p>Content preparation for AI agents involves structuring your pages with semantic HTML, adding JSON-LD schema, and providing machine-readable metadata.</p>',

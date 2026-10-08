@@ -8,6 +8,7 @@ import {
 import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
 import type { FetchOptions, FetchResult } from "../../fetcher";
 import type { AuditResult } from "../../types";
+import { AuditTier, CheckStatus, EvidenceGrade } from "../../types";
 
 vi.mock("../../fetcher", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../fetcher")>();
@@ -143,7 +144,7 @@ describe("ThreeWayFreshnessLagAudit", () => {
   it("is notApplicable when only one surface carries a date", async () => {
     const { result } = run({ pageDate: iso(0) });
     const r = await result;
-    expect(r.status).toBe("na");
+    expect(r.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("passes when the sitemap and the feed keep up with the pages", async () => {
@@ -153,7 +154,7 @@ describe("ThreeWayFreshnessLagAudit", () => {
       itemDates: [rfc(0), rfc(2)],
     });
     const r = await result;
-    expect(r.status).toBe("pass");
+    expect(r.status).toBe(CheckStatus.Pass);
     expect(r.details?.["sitemapLagDays"]).toBe(1);
   });
 
@@ -164,7 +165,7 @@ describe("ThreeWayFreshnessLagAudit", () => {
       itemDates: [rfc(0)],
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures").join(" ")).toContain("11 days behind");
     expect(r.details?.["sitemapLagDays"]).toBe(11);
   });
@@ -176,7 +177,7 @@ describe("ThreeWayFreshnessLagAudit", () => {
       itemDates: [rfc(20)],
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures").join(" ")).toContain("feed's newest entry");
   });
 
@@ -190,7 +191,7 @@ describe("ThreeWayFreshnessLagAudit", () => {
       lastBuild: rfc(9),
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures").join(" ")).toContain("build timestamp");
   });
 
@@ -202,7 +203,7 @@ describe("ThreeWayFreshnessLagAudit", () => {
       lastBuild: rfc(1),
     });
     const r = await result;
-    expect(r.status).toBe("warn");
+    expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "warnings").join(" ")).toContain("newest-first");
   });
 
@@ -214,7 +215,7 @@ describe("ThreeWayFreshnessLagAudit", () => {
       lastmods: [iso(30)],
     });
     const r = await result;
-    expect(r.status).toBe("na");
+    expect(r.status).toBe(CheckStatus.NotApplicable);
     expect(r.found).toContain("no date");
   });
 
@@ -226,7 +227,7 @@ describe("ThreeWayFreshnessLagAudit", () => {
       urlStatus: { "https://example.com/post-0": 404 },
     });
     const r = await result;
-    expect(r.status).toBe("warn");
+    expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "deadSitemapUrls").join(" ")).toContain("HTTP 404");
   });
 
@@ -238,7 +239,7 @@ describe("ThreeWayFreshnessLagAudit", () => {
       noindex: ["https://example.com/post-0"],
     });
     const r = await result;
-    expect(r.status).toBe("warn");
+    expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "deadSitemapUrls").join(" ")).toContain("noindex");
   });
 
@@ -257,8 +258,8 @@ describe("ThreeWayFreshnessLagAudit", () => {
 
   it("registers as a scored grade-B audit", () => {
     const { meta } = ThreeWayFreshnessLagAudit;
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
     expect(meta.weight).toBeCloseTo(0.6);
     expect(meta.id.length).toBeLessThanOrEqual(64);
   });

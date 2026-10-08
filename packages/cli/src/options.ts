@@ -1,17 +1,18 @@
 import {
   CATEGORY_IDS,
-  PAGE_TYPE_LABELS,
+  PAGE_TYPES,
   PageScopeOptionsSchema,
   type PageOverride,
-  type PresetName,
+  PresetName,
   type PageType,
+  CheckStatus,
 } from "@forkpoint/agent-lighthouse-core";
 
 /** Every value `--page-type` accepts, in the order the help text lists them. */
-export const PAGE_TYPE_IDS = Object.keys(PAGE_TYPE_LABELS) as PageType[];
+export const PAGE_TYPE_IDS: readonly PageType[] = PAGE_TYPES;
 
 function isPageType(value: string): value is PageType {
-  return (PAGE_TYPE_IDS as string[]).includes(value);
+  return (PAGE_TYPE_IDS as readonly string[]).includes(value);
 }
 
 /**
@@ -184,7 +185,7 @@ export function parseCliOptions(
     configPath: getArgValue(args, "-c", "--config"),
     presetName: (getArgValue(args, "-p", "--preset") ||
       fileConfig.preset ||
-      "full") as PresetName,
+      PresetName.Full) as PresetName,
     minScore: minScoreArg ? Number(minScoreArg) : (fileConfig.minScore ?? 0),
     outputDir:
       getArgValue(args, "-d", "--output-dir") ||
@@ -231,6 +232,13 @@ export function parseCliOptions(
   };
 }
 
+export const CliCommand = {
+  Help: "help",
+  Audit: "audit",
+} as const;
+
+export type CliCommand = (typeof CliCommand)[keyof typeof CliCommand];
+
 /**
  * Which subcommand form was used.
  *
@@ -238,15 +246,16 @@ export function parseCliOptions(
  * same scan; anything starting with `-` is a flag, never a URL.
  */
 export function resolveCommand(args: string[]): {
-  action: "help" | "audit";
+  action: CliCommand;
   url?: string;
 } {
   const command = args[0];
   if (!command || command === "-h" || command === "--help")
-    return { action: "help" };
-  if (command === "audit") return { action: "audit", url: args[1] };
-  if (!command.startsWith("-")) return { action: "audit", url: command };
-  return { action: "audit" };
+    return { action: CliCommand.Help };
+  if (command === "audit") return { action: CliCommand.Audit, url: args[1] };
+  if (!command.startsWith("-"))
+    return { action: CliCommand.Audit, url: command };
+  return { action: CliCommand.Audit };
 }
 
 /**
@@ -357,10 +366,10 @@ export function selectDebugChecks<T extends DebuggableCheck>(
   if (debugAudit === "fails") {
     return checks.filter(
       (c) =>
-        c.status === "fail" ||
-        c.status === "warn" ||
+        c.status === CheckStatus.Fail ||
+        c.status === CheckStatus.Warn ||
         c.advisoryResults?.some(
-          (a) => a.status === "fail" || a.status === "warn",
+          (a) => a.status === CheckStatus.Fail || a.status === CheckStatus.Warn,
         ),
     );
   }
