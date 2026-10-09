@@ -37,7 +37,7 @@ const ALL_MISSING = {
 describe("extractProductFieldVerification — no product", () => {
   it("returns all-missing (no sourceUrl) when there are no product pages", () => {
     const result = extractProductFieldVerification([
-      makePage(PageType.Content, [{ "@type": "WebPage" }]),
+      makePage(PageType.General, [{ "@type": "WebPage" }]),
       makePage(PageType.Homepage, [{ "@type": "Organization" }]),
     ]);
     expect(result).toEqual(ALL_MISSING);

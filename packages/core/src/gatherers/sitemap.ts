@@ -5,13 +5,21 @@ import { isSafeUrl } from "#core/fetcher";
 import { parseRobotsFile } from "./robots";
 import { PageType } from "#core/types";
 
-/** A homepage directory provides a sitemap scope; a content page does not. */
+/**
+ * A homepage directory provides a sitemap scope; an interior page does not.
+ * A homepage served as `index.html` or as a `home` page (`/en/home/`) scopes
+ * to the directory that holds it (`/en/`): its sibling pages live there, not
+ * under `/en/home/`.
+ */
 export function sitemapSiteRoot(
   page: { url: string; pageType: string } | undefined,
 ): string | undefined {
   if (page?.pageType !== PageType.Homepage) return undefined;
   const url = new URL(page.url);
-  url.pathname = url.pathname.replace(/\/index\.html?$/i, "/");
+  url.pathname = url.pathname.replace(
+    /\/(?:index\.html?|home(?:\.html?|\/)?)$/i,
+    "/",
+  );
   if (url.pathname === "/" || !url.pathname.endsWith("/")) return undefined;
   url.search = "";
   url.hash = "";

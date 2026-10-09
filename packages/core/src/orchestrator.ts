@@ -538,7 +538,7 @@ async function scanWithinBudget(
         parsed?.classification ??
         (forcedType
           ? declaredPageClassification(forcedType)
-          : { type: PageType.Unknown, source: PageTypeSource.Detected });
+          : { type: PageType.General, source: PageTypeSource.Detected });
       return {
         url: pageUrl,
         pageType: classification.type,
@@ -774,7 +774,7 @@ async function scanWithinBudget(
     (declaredOverrideType
       ? declaredPageClassification(declaredOverrideType)
       : {
-          type: PageType.Unknown,
+          type: PageType.General,
           source: PageTypeSource.Detected,
           confidence: ClassificationConfidence.Unknown,
           signals: ["page-unread"],

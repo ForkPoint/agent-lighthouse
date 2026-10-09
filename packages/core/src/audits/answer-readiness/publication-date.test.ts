@@ -26,7 +26,7 @@ describe("PublicationDateAudit", () => {
     expect(result.message).toContain("Visible date found");
   });
 
-  it("fails when a content page has no date", () => {
+  it("fails when an article page has no date", () => {
     const page = mockPageContext(
       "https://example.com/blog/my-post",
       `<html><body><main><p>This article has no date at all.</p></main></body></html>`,
@@ -36,10 +36,10 @@ describe("PublicationDateAudit", () => {
     expect(result.message).toContain("No visible publication date found");
   });
 
-  it("is not-applicable when there are no article content pages", () => {
+  it("is not-applicable when there are no article pages", () => {
     const result = audit.audit(mockCheckContext([]));
     expect(result.status).toBe(CheckStatus.NotApplicable);
-    expect(result.message).toContain("No article content pages");
+    expect(result.message).toContain("No article pages");
   });
 
   it("passes when a <time> element without datetime attribute has readable text", () => {
@@ -91,7 +91,7 @@ describe("PublicationDateAudit", () => {
     expect(result.message).toContain("No visible publication date");
   });
 
-  it("treats content page with XML-like body as not applicable", () => {
+  it("treats article page with XML-like body as not applicable", () => {
     const page = mockPageContext(
       "https://example.com/blog/my-post",
       `<html><body><main><p>content</p></main></body></html>`,
@@ -102,7 +102,7 @@ describe("PublicationDateAudit", () => {
     expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
-  it("treats content page with .xml URL as not applicable", () => {
+  it("treats article page with .xml URL as not applicable", () => {
     const page = mockPageContext(
       "https://example.com/blog/my-post",
       `<html><body><main><p>content</p></main></body></html>`,

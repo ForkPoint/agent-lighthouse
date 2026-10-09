@@ -53,15 +53,15 @@ export class FirstParagraphAnswersAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    // Only meaningful on article/content pages: on a JS storefront homepage the
+    // Only meaningful on article pages: on a JS storefront homepage the
     // first <p> in source order is utility chrome ("Search", "Redirecting…"),
     // which used to false-pass this check.
     const page = ctx.pages.find(isArticleContentPage);
     if (!page) {
       return this.notApplicable(
-        "No article content pages were scanned, so the first-paragraph check does not apply.",
-        "First substantive <p> on a content page is a declarative answer, not a filler intro",
-        "No content pages",
+        "No article pages were scanned, so the first-paragraph check does not apply.",
+        "First substantive <p> on an article page is a declarative answer, not a filler intro",
+        "No article pages",
       );
     }
 
@@ -86,7 +86,7 @@ export class FirstParagraphAnswersAudit extends Audit {
     if (!firstP) {
       return this.fail(
         "No substantive opening paragraph found in the main content area.",
-        "First substantive <p> on a content page is a declarative answer, not a filler intro",
+        "First substantive <p> on an article page is a declarative answer, not a filler intro",
         "No substantive <p> found",
         {
           priority: CheckPriority.High,
@@ -103,7 +103,7 @@ export class FirstParagraphAnswersAudit extends Audit {
     if (!isWeak) {
       return this.pass(
         "First paragraph appears to be a direct, declarative answer.",
-        "First substantive <p> on a content page is a declarative answer, not a filler intro",
+        "First substantive <p> on an article page is a declarative answer, not a filler intro",
         firstP.length > 120 ? firstP.slice(0, 120) + "..." : firstP,
         page.url,
       );
@@ -111,7 +111,7 @@ export class FirstParagraphAnswersAudit extends Audit {
 
     return this.fail(
       "First paragraph starts with a weak opener instead of a direct answer.",
-      "First substantive <p> on a content page is a declarative answer, not a filler intro",
+      "First substantive <p> on an article page is a declarative answer, not a filler intro",
       firstP.length > 120 ? firstP.slice(0, 120) + "..." : firstP,
       {
         priority: CheckPriority.High,

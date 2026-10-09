@@ -1314,7 +1314,7 @@
       "category": "access-crawl-control",
       "slug": "robots-directives",
       "title": "Robots directives do not block AI indexing",
-      "purpose": "Robots directives — `<meta name=\"robots\">`, per-bot meta tags and the `X-Robots-Tag` header — decide whether a page can be indexed at all and whether it can be quoted in an AI answer. A `noindex` on a content page removes it from the index AI Overviews and AI Mode draw on; `nosnippet` and `max-snippet:0` leave it indexed but unquotable.",
+      "purpose": "Robots directives — `<meta name=\"robots\">`, per-bot meta tags and the `X-Robots-Tag` header — decide whether a page can be indexed at all and whether it can be quoted in an AI answer. A `noindex` on a non-utility page removes it from the index AI Overviews and AI Mode draw on; `nosnippet` and `max-snippet:0` leave it indexed but unquotable.",
       "features": [
         "crawler-permissions",
         "indexing",
@@ -3134,8 +3134,8 @@
         "pageTypes": [
           "article",
           "category",
-          "product",
-          "unknown"
+          "general",
+          "product"
         ]
       },
       "source": "packages/core/src/audits/answer-readiness/comparison-tables.ts",
@@ -3249,8 +3249,8 @@
       "id": "answer-readiness/dates-on-content",
       "category": "answer-readiness",
       "slug": "dates-on-content",
-      "title": "Dates on content pages",
-      "purpose": "Date extractors read the byline date off a content page from <time datetime>, JSON-LD datePublished/dateModified, article:*_time meta tags or a clearly labelled visible date; a page carrying none of them has no date any downstream consumer can attach to it. A modification date (or a visible \"last updated\" label with a date beside it) is the full signal; a publication date alone is a partial one.",
+      "title": "Dates on article pages",
+      "purpose": "Date extractors read the byline date off an article page from <time datetime>, JSON-LD datePublished/dateModified, article:*_time meta tags or a clearly labelled visible date; a page carrying none of them has no date any downstream consumer can attach to it. A modification date (or a visible \"last updated\" label with a date beside it) is the full signal; a publication date alone is a partial one.",
       "features": [
         "answer-engine",
         "freshness",
@@ -3345,7 +3345,7 @@
         "pageTypeGate": "restricted",
         "pageTypes": [
           "article",
-          "unknown"
+          "general"
         ]
       },
       "source": "packages/core/src/audits/answer-readiness/direct-definitions.ts",
@@ -3390,7 +3390,7 @@
         "pageTypeGate": "restricted",
         "pageTypes": [
           "article",
-          "unknown"
+          "general"
         ]
       },
       "source": "packages/core/src/audits/answer-readiness/external-citations.ts",
@@ -4227,7 +4227,7 @@
         "pageTypeGate": "restricted",
         "pageTypes": [
           "article",
-          "unknown"
+          "general"
         ]
       },
       "source": "packages/core/src/audits/answer-readiness/unique-data.ts",
@@ -4358,7 +4358,7 @@
         "pageTypeGate": "restricted",
         "pageTypes": [
           "article",
-          "unknown"
+          "general"
         ]
       },
       "source": "packages/core/src/audits/content-extraction/aside-element.ts",
@@ -4443,7 +4443,7 @@
         "pageTypeGate": "restricted",
         "pageTypes": [
           "article",
-          "unknown"
+          "general"
         ]
       },
       "source": "packages/core/src/audits/content-extraction/code-language.ts",
@@ -5359,7 +5359,7 @@
         "pageTypeGate": "restricted",
         "pageTypes": [
           "article",
-          "unknown"
+          "general"
         ]
       },
       "source": "packages/core/src/audits/content-extraction/time-element.ts",
@@ -8394,8 +8394,8 @@
         "pageTypes": [
           "article",
           "category",
-          "product",
-          "unknown"
+          "general",
+          "product"
         ]
       },
       "source": "packages/core/src/audits/structured-data/breadcrumb-schema.ts",
@@ -8524,7 +8524,7 @@
         "pageTypeGate": "restricted",
         "pageTypes": [
           "article",
-          "unknown"
+          "general"
         ]
       },
       "source": "packages/core/src/audits/structured-data/howto-schema.ts",
@@ -8787,8 +8787,8 @@
         "pageTypeGate": "restricted",
         "pageTypes": [
           "article",
-          "homepage",
-          "unknown"
+          "general",
+          "homepage"
         ]
       },
       "source": "packages/core/src/audits/structured-data/service-schema.ts",

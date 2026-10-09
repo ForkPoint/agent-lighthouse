@@ -59,8 +59,8 @@ export class ArticleElementAudit extends Audit {
 
     if (allPass) {
       return this.pass(
-        "All content pages use <article> elements.",
-        "<article> elements on content pages",
+        "All article pages use <article> elements.",
+        "<article> elements on article pages",
         `${pagesWithArticle}/${ctx.pages.length} pages with <article>`,
       );
     }
@@ -68,14 +68,14 @@ export class ArticleElementAudit extends Audit {
     if (majorityPass) {
       return this.warn(
         `${pagesWithArticle}/${ctx.pages.length} page(s) use <article> elements.`,
-        "<article> elements on content pages",
+        "<article> elements on article pages",
         `${pagesWithArticle}/${ctx.pages.length} pages with <article>`,
       );
     }
 
     return this.fail(
       `${pagesWithArticle}/${ctx.pages.length} page(s) use <article> elements.`,
-      "<article> elements on content pages",
+      "<article> elements on article pages",
       `${pagesWithArticle}/${ctx.pages.length} pages with <article>`,
       {
         priority: CheckPriority.Medium,

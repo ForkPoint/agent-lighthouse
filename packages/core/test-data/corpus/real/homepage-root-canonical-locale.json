@@ -1,0 +1,27 @@
+{
+  "url": "https://www.canyon.com/",
+  "capturedAt": "2026-10-09T17:48:33.512Z",
+  "sha256": "43ab2bd8a0fd9e8826ce660c6868ab6a8a8e79a2ab9b933e4174a7d6480a9212",
+  "status": 200,
+  "kind": "page",
+  "headers": {
+    "date": "Fri, 09 Oct 2026 17:48:33 GMT",
+    "content-type": "text/html;charset=UTF-8",
+    "server": "cloudflare",
+    "x-dw-request-base-id": "3l4Y7_EoyWoBAAB_",
+    "content-security-policy": "frame-ancestors 'self'",
+    "x-content-type-options": "nosniff",
+    "cross-origin-opener-policy": "same-origin-allow-popups",
+    "cache-control": "no-cache, no-store, must-revalidate",
+    "pragma": "no-cache",
+    "expires": "Thu, 01 Dec 1994 16:00:00 GMT",
+    "vary": "accept-encoding",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a47f3783f8d3264c-SOF",
+    "alt-svc": "h3=\":443\"; ma=86400"
+  },
+  "contentType": "text/html;charset=UTF-8",
+  "ttfbMs": 278,
+  "totalMs": 294,
+  "contentLength": 216213
+}

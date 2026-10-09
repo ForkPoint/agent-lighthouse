@@ -90,7 +90,7 @@ function findSupplementary(page: PageContext): PageFindings {
 }
 
 const EXPECTED =
-  'Every sidebar / promo / related-links block on a content page is wrapped in <aside> (or carries role="complementary")';
+  'Every sidebar / promo / related-links block on an article or general page is wrapped in <aside> (or carries role="complementary")';
 
 export class AsideElementAudit extends Audit {
   static override meta: AuditMeta = {
@@ -111,7 +111,7 @@ export class AsideElementAudit extends Audit {
       EvidenceKey.RenderedBody,
       EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: [PageType.Unknown, PageType.Article],
+    applicablePageTypes: [PageType.General, PageType.Article],
     defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
@@ -126,7 +126,7 @@ export class AsideElementAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    // The meta declares content pages, so only content pages are evaluated —
+    // The meta declares article and general pages, so only article and general pages are evaluated —
     // the v1 code looped every page and reported a denominator that mixed
     // page types.
     const pages = ctx.pages;
@@ -151,7 +151,7 @@ export class AsideElementAudit extends Audit {
     // stands. v1 warned at it, which asked authors to invent a sidebar.
     if (evaluated === 0) {
       return this.notApplicable(
-        "No content page carries a sidebar, promo or related-links block, so there is nothing to mark up as supplementary.",
+        "No article or general page carries a sidebar, promo or related-links block, so there is nothing to mark up as supplementary.",
         EXPECTED,
         "No supplementary content detected",
       );
@@ -161,7 +161,7 @@ export class AsideElementAudit extends Audit {
 
     if (unmarked.length === 0) {
       return this.pass(
-        `All ${marked} supplementary block(s) across ${evaluated} content page(s) are marked with <aside> or role="complementary".`,
+        `All ${marked} supplementary block(s) across ${evaluated} article or general page(s) are marked with <aside> or role="complementary".`,
         EXPECTED,
         `${marked} marked supplementary block(s), 0 unmarked`,
       );
@@ -189,7 +189,7 @@ export class AsideElementAudit extends Audit {
       {
         priority: CheckPriority.Low,
         description:
-          "Sidebar, promo and related-links containers on your content pages are plain <div>s. Readability and trafilatura cannot tell them from article body, so promos and tangential links are extracted into the text an LLM reads and summarises, and accessibility-tree agents see an undifferentiated generic node instead of a complementary landmark.",
+          "Sidebar, promo and related-links containers on your article and general pages are plain <div>s. Readability and trafilatura cannot tell them from article body, so promos and tangential links are extracted into the text an LLM reads and summarises, and accessibility-tree agents see an undifferentiated generic node instead of a complementary landmark.",
         code: '<article>\n  <p>Citable article body stays here.</p>\n</article>\n<aside class="sidebar">\n  <h3>Related Resources</h3>\n  <ul><li><a href="/related">Related page</a></li></ul>\n</aside>',
       },
       firstGapUrl,

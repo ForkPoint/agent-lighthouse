@@ -51,7 +51,7 @@ export class BreadcrumbSchemaAudit extends Audit {
     applicablePageTypes: [
       PageType.Category,
       PageType.Product,
-      PageType.Unknown,
+      PageType.General,
       PageType.Article,
     ],
     defaultPriority: CheckPriority.Medium,

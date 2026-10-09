@@ -8,20 +8,35 @@ export type { WafProtection };
  * object (`PageType.Product`); the values stay plain strings, so callers that
  * pass `"product"` through the SDK, CLI config or MCP still type-check.
  *
- * `Content` is a legacy general-content declaration, never an article claim.
- * A live scan never produces it: `declaredPageClassification` maps it to
- * `Unknown`.
+ * - `Article` is an editorial page: a blog post, news story or guide. It is
+ *   the only type that carries author and date obligations.
+ * - `General` is every other page that is not a homepage, listing or product:
+ *   about, FAQ, help, contact, policy. It is also what the classifier reports
+ *   when it cannot tell, with `ClassificationConfidence.Unknown`.
+ *
+ * `unknown` and `content` were page types before v7. Saved reports that carry
+ * them still read, as `general` (see `LEGACY_PAGE_TYPES`); new input does not
+ * accept them.
  */
 export const PageType = {
   Homepage: "homepage",
   Category: "category",
   Product: "product",
   Article: "article",
-  Unknown: "unknown",
-  Content: "content",
+  General: "general",
 } as const;
 
 export type PageType = (typeof PageType)[keyof typeof PageType];
+
+/**
+ * Page-type names retired in v7, each with the type that replaced it. Readers
+ * of saved reports map these; input parsers name the replacement in their
+ * error.
+ */
+export const LEGACY_PAGE_TYPES: Readonly<Record<string, PageType>> = {
+  unknown: PageType.General,
+  content: PageType.General,
+};
 
 /** Every page type value, in declaration order. */
 export const PAGE_TYPES = Object.values(PageType) as [PageType, ...PageType[]];
@@ -57,8 +72,7 @@ export const PAGE_TYPE_LABELS: Record<PageType, string> = {
   category: "Category Page",
   product: "Product Details Page",
   article: "Article",
-  unknown: "General / unknown purpose",
-  content: "General content (legacy)",
+  general: "General page",
 };
 
 /**

@@ -1,0 +1,29 @@
+{
+  "url": "https://www.macpac.co.nz/womens",
+  "capturedAt": "2026-10-09T17:48:54.481Z",
+  "sha256": "d6efe0448af12649548aab5a7df62bcb577fa9ac7144f021f356feb7d3f1f568",
+  "status": 200,
+  "kind": "page",
+  "headers": {
+    "date": "Fri, 09 Oct 2026 17:48:54 GMT",
+    "content-type": "text/html;charset=UTF-8",
+    "server": "cloudflare",
+    "strict-transport-security": "max-age=86400",
+    "cf-cache-status": "DYNAMIC",
+    "x-dw-request-base-id": "Ls6t1AUpyWoBAAB_",
+    "content-security-policy": "frame-ancestors 'self'",
+    "referrer-policy": "strict-origin-when-cross-origin",
+    "x-frame-options": "DENY",
+    "x-xss-protection": "1; mode=block",
+    "x-content-type-options": "nosniff",
+    "cache-control": "no-cache, no-store, must-revalidate",
+    "pragma": "no-cache",
+    "expires": "Thu, 01 Dec 1994 16:00:00 GMT",
+    "vary": "accept-encoding",
+    "cf-ray": "a47f37fcbcdd567b-SOF"
+  },
+  "contentType": "text/html;charset=UTF-8",
+  "ttfbMs": 1855,
+  "totalMs": 1897,
+  "contentLength": 392777
+}

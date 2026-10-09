@@ -99,7 +99,7 @@ void auditWebsite("https://example.com", { pageType: "author" });
     // Run the built exports as well as compiling their declarations. No network.
     const runtime = `
 const oldPage = { url: "https://example.com/", pageType: "content" };
-if (JSON.stringify(core.ScannedPageSchema.parse(oldPage)) !== JSON.stringify(oldPage)) throw new Error("Legacy page changed");
+if (core.ScannedPageSchema.parse(oldPage).pageType !== "general") throw new Error("Pre-v7 page type not read as general");
 if (core.PageScopeOptionsSchema.safeParse({ pageType: "author" }).success) throw new Error("Invalid purpose accepted");
 const scope = { pages: [{ url: oldPage.url, pageType: "article", classification: { type: "article", source: "detected", confidence: "hint", signals: ["article-url-hint"] } }], audits: [] };
 if (!report.formatPageScope(scope).includes("detected, hint")) throw new Error("Scope export lost evidence");

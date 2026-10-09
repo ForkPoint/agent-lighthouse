@@ -1,0 +1,30 @@
+{
+  "url": "https://www.disneystore.com/movies-shows/pixar/toy-story/",
+  "capturedAt": "2026-10-09T17:48:59.457Z",
+  "sha256": "b6d4272ec196d9a7bceaab4b8d6027c600be85dd46293b0c0f06a1200e6c7c9a",
+  "status": 200,
+  "kind": "page",
+  "headers": {
+    "content-type": "text/html;charset=UTF-8",
+    "server": "cloudflare",
+    "x-content-type-options": "nosniff",
+    "content-security-policy": "frame-ancestors 'self'",
+    "x-dw-request-base-id": "ul1oiRwdyWoBAAB_",
+    "cache-control": "no-cache, no-store, must-revalidate",
+    "pragma": "no-cache",
+    "expires": "Thu, 01 Dec 1994 16:00:00 GMT",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a47f3821fca118ad-EWR",
+    "x-akamai-transformed": "9 - 0 pmb=mRUM,2",
+    "date": "Fri, 09 Oct 2026 17:48:58 GMT",
+    "server-timing": "cdn-cache; desc=MISS, edge; dur=115, origin; dur=68, ak_p; desc=\"1791568138350_35086830_1183038798_18314_78708_30_37_15\";dur=1",
+    "alt-svc": "h3=\":443\"; ma=93600",
+    "x-disney-akamai-rule": "Set Path Cookie, Waiting Room",
+    "strict-transport-security": "max-age=31536000 ; includeSubDomains ; preload",
+    "x-queueit-connector": "akamai"
+  },
+  "contentType": "text/html;charset=UTF-8",
+  "ttfbMs": 468,
+  "totalMs": 1006,
+  "contentLength": 2071908
+}

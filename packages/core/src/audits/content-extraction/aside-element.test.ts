@@ -3,7 +3,7 @@ import { AsideElementAudit } from "./aside-element";
 import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
 import { CheckStatus } from "#core/types";
 
-/** A content page (index > 0 so it is never typed as the homepage). */
+/** An article or general page (index > 0 so it is never typed as the homepage). */
 function contentPage(body: string, slug = "post") {
   return mockPageContext(
     `https://example.com/blog/${slug}`,
@@ -68,7 +68,7 @@ describe("AsideElementAudit", () => {
     expect(result.status).toBe(CheckStatus.Pass);
   });
 
-  it("evaluates only content pages, not the homepage", () => {
+  it("evaluates only article and general pages, not the homepage", () => {
     const result = audit.audit(mockCheckContext([]));
     expect(result.status).toBe(CheckStatus.NotApplicable);
   });

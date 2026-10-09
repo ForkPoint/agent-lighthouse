@@ -62,7 +62,7 @@ export class HowToSchemaAudit extends Audit {
       EvidenceKey.RenderedBody,
       EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: [PageType.Unknown, PageType.Article],
+    applicablePageTypes: [PageType.General, PageType.Article],
     defaultPriority: CheckPriority.Low,
     guidance: {
       impact:

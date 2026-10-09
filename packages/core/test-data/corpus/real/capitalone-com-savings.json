@@ -23,8 +23,7 @@
     "pragma": "no-cache",
     "date": "Fri, 28 Aug 2026 12:18:42 GMT",
     "transfer-encoding": "chunked",
-    "connection": "keep-alive, Transfer-Encoding",
-    "set-cookie": "TLTUID=AA113B7FBA3B23D90DDF93138C892B74; expires=Wed, 27-Aug-2031 12:18:42 GMT; path=/; domain=.capitalone.com; secure\nTLTSID=0E083D2DB25AA5B5F7801D37A92F8921; expires=Fri, 28-Aug-2026 14:18:42 GMT; path=/; domain=.capitalone.com; secure"
+    "connection": "keep-alive, Transfer-Encoding"
   },
   "contentType": "text/html",
   "ttfbMs": 523,

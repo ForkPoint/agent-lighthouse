@@ -5,10 +5,15 @@
 "@forkpoint/agent-lighthouse-mcp": major
 ---
 
-Separate article purpose from general pages. Add `article` and `unknown` page types,
-classification source, signal strength, and signal names. Keep `content` accepted
-as a legacy general-page declaration and normalize it to `unknown`; use `article`
-to explicitly select article obligations. Detected typed findings remain informative.
+Separate article purpose from general pages. The page types are now `homepage`,
+`category`, `product`, `article` and `general`. `article` is an editorial page with
+author and date obligations. `general` is any other page, such as about, FAQ, help,
+contact or policy pages, and it is also what the classifier returns when it cannot
+tell, with confidence `unknown`. The `content` and `unknown` page types are removed:
+`--page-type`, config files and the MCP tool refuse them with an error that names
+`general`, and saved reports that carry them read back as `general`. Results add
+classification source, signal strength and signal names. Detected typed findings
+remain informative.
 
 Make page identity independent of crawl order. Restrict 12 article obligations to
 article-purpose pages and preserve the previous general-page population for 10

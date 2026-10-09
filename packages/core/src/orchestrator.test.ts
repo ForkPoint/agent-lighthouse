@@ -249,10 +249,10 @@ describe("runScan — page overrides", () => {
         url: "https://example.com/products/special",
         pageType: PageType.Product,
       },
-      { url: "https://example.com/", pageType: PageType.Content }, // homepage collision → skipped
+      { url: "https://example.com/", pageType: PageType.General }, // homepage collision → skipped
       {
         url: "https://example.com/products/special/",
-        pageType: PageType.Content,
+        pageType: PageType.General,
       }, // dup key → skipped
     ];
 
@@ -659,7 +659,12 @@ describe("runScan — conditions name the target", () => {
 });
 
 describe("runScan — non-root scan URL", () => {
-  it.each(["product", "category", "article", "unknown", "content"] as const)(
+  it.each([
+    PageType.Product,
+    PageType.Category,
+    PageType.Article,
+    PageType.General,
+  ])(
     "scores a readable %s target without a scanned homepage",
     async (pageType) => {
       const url = `https://example.com/${pageType}/item`;
@@ -672,14 +677,11 @@ describe("runScan — non-root scan URL", () => {
       expect(report.pagesScanned).toEqual([
         {
           url,
-          pageType: pageType === PageType.Content ? "unknown" : pageType,
+          pageType,
           classification: {
-            type: pageType === PageType.Content ? "unknown" : pageType,
+            type: pageType,
             source: PageTypeSource.Declared,
-            confidence:
-              pageType === PageType.Content || pageType === PageType.Unknown
-                ? "unknown"
-                : "strong",
+            confidence: ClassificationConfidence.Strong,
             signals: [`declared:${pageType}`],
           },
         },
@@ -727,10 +729,10 @@ describe("runScan — page overrides", () => {
     }
 
     const overrides: PageOverride[] = [
-      { url: "https://example.com/o1", pageType: PageType.Content },
-      { url: "https://example.com/o2", pageType: PageType.Content },
-      { url: "https://example.com/o3", pageType: PageType.Content },
-      { url: "https://example.com/o4", pageType: PageType.Content },
+      { url: "https://example.com/o1", pageType: PageType.General },
+      { url: "https://example.com/o2", pageType: PageType.General },
+      { url: "https://example.com/o3", pageType: PageType.General },
+      { url: "https://example.com/o4", pageType: PageType.General },
     ];
 
     const report = await runScan(url, { pages: overrides });
@@ -1499,7 +1501,7 @@ describe("runScan — v7 article scope", () => {
     "answer-readiness/first-paragraph-answers",
   ];
   const html = `<html lang="en"><body><main><h1>Guide</h1><p>${"Useful guide text. ".repeat(60)}</p></main></body></html>`;
-  it.each([undefined, "content", "unknown"] as const)(
+  it.each([undefined, PageType.General])(
     "keeps general pages outside article obligations for %s",
     async (pageType) => {
       const url = "https://example.com/privacy";
@@ -1519,7 +1521,9 @@ describe("runScan — v7 article scope", () => {
         checks.find((c) => c.id === "content-extraction/language-attribute")
           ?.status,
       ).toBe(CheckStatus.Pass);
-      expect(report.pagesScanned[0].classification?.type).toBe("unknown");
+      expect(report.pagesScanned[0].classification?.type).toBe(
+        PageType.General,
+      );
     },
   );
   it.each([false, true])(
@@ -1559,7 +1563,7 @@ describe("runScan — v7 article scope", () => {
   it("does not invent homepage purpose for an unread target", async () => {
     const report = await runScan("https://example.com/unread");
     expect(report.conditions?.pageType).toEqual({
-      type: "unknown",
+      type: PageType.General,
       source: PageTypeSource.Detected,
       confidence: ClassificationConfidence.Unknown,
       signals: ["page-unread"],

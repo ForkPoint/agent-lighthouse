@@ -759,7 +759,7 @@ describe("audit tracing", () => {
 // ---------------------------------------------------------------------------
 
 describe("planAudits — evidence gate", () => {
-  it.each(["product", "category", "content"] as const)(
+  it.each([PageType.Product, PageType.Category, PageType.General])(
     "runs universal audits on a readable %s page without a homepage",
     async (pageType) => {
       const page = mockPageContext(

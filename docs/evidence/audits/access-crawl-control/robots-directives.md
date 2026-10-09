@@ -27,17 +27,17 @@ Every robots directive that applies to a scanned page, from both transports and 
 
 Values are tokenized on commas and compared token-wise, so `none` is recognised as noindex+nofollow and `noindexifembedded` is not mistaken for a full block.
 
-| State                                                                 | Result                                                                |
-| :-------------------------------------------------------------------- | :-------------------------------------------------------------------- |
-| a **content** page carries `noindex`/`none`                           | `fail` — `critical` when the homepage is among them, otherwise `high` |
-| a content page carries `nosnippet`, `noarchive` or `max-snippet:0`    | `warn`, priority `medium` — indexed but unquotable                    |
-| only utility routes (cart, login, search, account, …) carry `noindex` | `pass`, naming them                                                   |
-| no directive blocks or suppresses                                     | `pass`                                                                |
-| no pages scanned                                                      | `na`                                                                  |
+| State                                                                  | Result                                                                |
+| :--------------------------------------------------------------------- | :-------------------------------------------------------------------- |
+| a **non-utility** page carries `noindex`/`none`                        | `fail` — `critical` when the homepage is among them, otherwise `high` |
+| a non-utility page carries `nosnippet`, `noarchive` or `max-snippet:0` | `warn`, priority `medium` — indexed but unquotable                    |
+| only utility routes (cart, login, search, account, …) carry `noindex`  | `pass`, naming them                                                   |
+| no directive blocks or suppresses                                      | `pass`                                                                |
+| no pages scanned                                                       | `na`                                                                  |
 
 ## Code review findings (2026-08-20, 11-agent pass)
 
-The underlying signal is real and important — `noindex` genuinely removes a page from AI-accessible indexes — but the implementation both misses the common ways sites apply it and fires on legitimate uses. It reads only `page.meta['robots']`, so `X-Robots-Tag: noindex` (the standard HTTP-header form, and how CDNs, staging environments and non-HTML assets apply it) is invisible: false PASS on genuinely deindexed sites. It also ignores `nosnippet` and `max-snippet:0`, which permit indexing but forbid quoting — the directives that most directly prevent a page being cited in AI Overviews or ChatGPT answers, exactly what this tool exists to measure. In the other direction, it fails the entire audit at high priority if ANY scanned page carries noindex, so a crawl that happens to include `/cart`, `/login`, `/search?q=` or a thank-you page — all correctly noindexed — yields 'blocking AI crawlers from indexing'. Its own `expected` string says 'No noindex directive on primary content pages', but the code never reads `page.pageType`; stated criterion and implementation disagree.
+The underlying signal is real and important — `noindex` genuinely removes a page from AI-accessible indexes — but the implementation both misses the common ways sites apply it and fires on legitimate uses. It reads only `page.meta['robots']`, so `X-Robots-Tag: noindex` (the standard HTTP-header form, and how CDNs, staging environments and non-HTML assets apply it) is invisible: false PASS on genuinely deindexed sites. It also ignores `nosnippet` and `max-snippet:0`, which permit indexing but forbid quoting — the directives that most directly prevent a page being cited in AI Overviews or ChatGPT answers, exactly what this tool exists to measure. In the other direction, it fails the entire audit at high priority if ANY scanned page carries noindex, so a crawl that happens to include `/cart`, `/login`, `/search?q=` or a thank-you page — all correctly noindexed — yields 'blocking AI crawlers from indexing'. Its own `expected` string says 'No noindex directive on primary non-utility pages', but the code never reads `page.pageType`; stated criterion and implementation disagree.
 
 **Required fix:** Read `page.fetchResult.headers['x-robots-tag']` in addition to the meta tag, and parse both for `noindex`, `nosnippet`, `noarchive` and `max-snippet:0`. Collect all robots meta tags per page rather than last-wins, and apply the most restrictive. Check bot-specific meta names (`googlebot`, `gptbot`) alongside `robots`. Scope the FAIL to pages whose `pageType` is primary content; report noindex on utility pages as informational. Tokenize on commas and trim rather than raw `includes`.
 
@@ -48,7 +48,7 @@ The underlying signal is real and important — `noindex` genuinely removes a pa
 - Bot-specific meta names are ignored: `<meta name="googlebot" content="noindex">` and `<meta name="GPTBot" content="noindex">` are stored under their own keys by `extractMetaTags` and never checked.
 - `extractMetaTags` does `meta[name.toLowerCase()] = content` — last tag wins. A page with `noindex` in the static head and a later hydrated/plugin-injected `index, follow` tag reports only the last; real crawlers apply the MOST RESTRICTIVE directive, so this is a false PASS on a genuinely noindexed page.
 - Any single noindexed utility page (cart, login, search results, paginated archive, thank-you) fails the whole audit at high priority with 'blocking AI crawlers' language.
-- `expected` promises 'primary content pages' but `ctx.pages` is iterated without consulting `page.pageType` — the audit cannot deliver what it claims to measure.
+- `expected` promises 'primary non-utility pages' but `ctx.pages` is iterated without consulting `page.pageType` — the audit cannot deliver what it claims to measure.
 - SSR/SPA divergence: the scanner sees the server HTML; a client-injected robots meta tag is neither detected nor excluded, so verdicts differ from what a JS-executing agent sees.
 
 **Test gaps:**
@@ -58,7 +58,7 @@ The underlying signal is real and important — `noindex` genuinely removes a pa
 - No `<meta name="googlebot" content="noindex">` bot-specific case.
 - No duplicate-robots-meta page (restrictive first, permissive last) exercising the last-wins bug.
 - No legitimate utility page (cart/login/search) verifying it does not fail the whole audit.
-- No `pageType`-aware assertion despite `expected` naming primary content pages.
+- No `pageType`-aware assertion despite `expected` naming primary non-utility pages.
 - No whitespace/case variants such as `content=" NoIndex , NoFollow "`.
 
 **Overlaps with:** _none_
@@ -85,7 +85,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 The v2 map collapses 2.25, 1.13 and 4.20 into one audit — all three read the same directive family, each through a different keyhole, and all three shipped the same class of false PASS:
 
-- **2.25 meta-robots-not-blocking** (the surviving row) read `page.meta['robots']` only, so `X-Robots-Tag: noindex` — the CDN/staging form — was invisible; and it failed the whole site at `high` when any scanned page carried noindex, so a crawl that included `/cart` reported "blocking AI crawlers from indexing". Its own `expected` string promised "primary content pages" while the code never consulted the page at all.
+- **2.25 meta-robots-not-blocking** (the surviving row) read `page.meta['robots']` only, so `X-Robots-Tag: noindex` — the CDN/staging form — was invisible; and it failed the whole site at `high` when any scanned page carried noindex, so a crawl that included `/cart` reported "blocking AI crawlers from indexing". Its own `expected` string promised "primary non-utility pages" while the code never consulted the page at all.
 - **1.13 no-noindex** read the homepage only (`ctx.pages[0]`), so a site that noindexed its entire `/docs` tree passed with "Homepage has no noindex directive".
 - **4.20 meta-robots** was `robots.includes('noindex')` on `ctx.pages[0]`: `content="none"` (noindex+nofollow) reported "no blocking directives" at `critical` priority, `noindexifembedded` reported a hard failure, and an empty page list — every fetch failed — reported a critical-priority PASS, a behaviour its test suite explicitly enshrined.
 

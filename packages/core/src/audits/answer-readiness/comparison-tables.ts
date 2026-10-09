@@ -34,7 +34,7 @@ export class ComparisonTablesAudit extends Audit {
     applicablePageTypes: [
       PageType.Category,
       PageType.Product,
-      PageType.Unknown,
+      PageType.General,
       PageType.Article,
     ],
     defaultPriority: CheckPriority.Low,

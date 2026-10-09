@@ -14,7 +14,6 @@
     "date": "Fri, 28 Aug 2026 09:01:59 GMT",
     "link": "<https://vercel.com/pricing>; rel=\"canonical\"",
     "server": "Vercel",
-    "set-cookie": "_v-consent=%7B%22essential%22%3Atrue%2C%22analytics%22%3Afalse%2C%22marketing%22%3Afalse%2C%22functional%22%3Afalse%2C%22version%22%3A1%7D; Path=/; Max-Age=31536000; SameSite=Lax; Secure; Domain=.vercel.com\n_v-anonymous-id=JhkCl7Bd2VOYwl3zXwl7P; Path=/; Max-Age=7776000; SameSite=Lax; Secure; Domain=.vercel.com\n_v-anonymous-id-renewed=1; Path=/; Max-Age=86400; SameSite=Lax; Secure; Domain=.vercel.com",
     "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
     "vary": "Accept",
     "x-matched-path": "/precomputed/[experimentCode]/pricing/md",

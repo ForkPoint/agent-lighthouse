@@ -46,7 +46,7 @@ describe("MCP handler page declarations", () => {
     const pageAttempts = [
       {
         url: "https://x.test",
-        pageType: PageType.Unknown,
+        pageType: PageType.General,
         source: PageTypeSource.Detected,
         outcome: AttemptOutcome.Unread,
         status: 503,

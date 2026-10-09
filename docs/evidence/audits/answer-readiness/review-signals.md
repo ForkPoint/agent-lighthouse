@@ -58,7 +58,7 @@ Genuinely valuable signal: Review/AggregateRating in structured data is consumed
 - No test for `"1234 reviews"` inside an inline `<script>` payload.
 - No test for a self-built or Tailwind star-rating component with no vendor class.
 - No test for an empty widget placeholder div.
-- No test where the blockquote is on a content page while the audit is nominally product/homepage-scoped.
+- No test where the blockquote is on an article or general page while the audit is nominally product/homepage-scoped.
 - No test for the `signals.length === 0` guard suppressing the fallback on later pages.
 
 **Overlaps with:** `10.14` (now absorbed here), `10.7`

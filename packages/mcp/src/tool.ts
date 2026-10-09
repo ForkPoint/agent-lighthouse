@@ -30,7 +30,7 @@ export const AUDIT_TOOL = {
         type: "string",
         enum: PageTypeSchema.options,
         description:
-          "Explicit target page purpose. Use article only for editorial articles; content is a legacy alias for unknown. Omit to detect (type-specific findings remain advisory).",
+          "Explicit target page purpose. Use article for editorial pages (blog posts, news, guides) and general for any other page that is not a homepage, category or product. Omit to detect (type-specific findings remain advisory).",
       },
       pages: {
         type: ["array", "null"],

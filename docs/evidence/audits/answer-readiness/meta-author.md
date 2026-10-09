@@ -19,7 +19,7 @@ sources:
 
 ## What it checks
 
-The v7 runner selects article-purpose pages for this check. A general or legacy `content` declaration does not establish article purpose. Detection can use Open Graph article metadata or primary article prose without author, date, or Article schema fields. Schema-only evidence remains a hint. Detected matches remain informative; a precise `article` declaration uses the existing audit tier.
+The v7 runner selects article-purpose pages for this check. A `general` declaration does not establish article purpose. Detection can use Open Graph article metadata or primary article prose without author, date, or Article schema fields. Schema-only evidence remains a hint. Detected matches remain informative; a precise `article` declaration uses the existing audit tier.
 
 AI agents use the meta author tag to attribute content to a specific person or organization for E-E-A-T scoring. Without it, your content appears authorless, which reduces trust signals in AI ranking systems that prioritize named expertise.
 
@@ -39,7 +39,7 @@ Borderline falsy, and wired to the wrong page. `applicablePageTypes: ['content']
 
 **Test gaps:**
 
-- No test where pages[0] is a homepage and a later page is the content page — precisely the production configuration the `applicablePageTypes` gate creates.
+- No test where pages[0] is a homepage and a later page is the article page — precisely the production configuration the `applicablePageTypes` gate creates.
 - No placeholder-value test ('admin', empty-ish, template token).
 - No JSON-LD-author-only page (the false-negative case).
 - No `article:author` / rel=author alternative-markup case.

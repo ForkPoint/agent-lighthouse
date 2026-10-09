@@ -87,7 +87,7 @@ export class FaqPageSchemaAudit extends Audit {
         {
           priority: CheckPriority.Low,
           description:
-            "AI answer engines like Perplexity and Google SGE extract FAQ-structured content with high confidence for direct answers. Consider adding FAQ sections with question-formatted headings and FAQPage schema to your content pages.",
+            "AI answer engines like Perplexity and Google SGE extract FAQ-structured content with high confidence for direct answers. Consider adding FAQ sections with question-formatted headings and FAQPage schema to your pages.",
           code: `{
   "@context": "https://schema.org",
   "@type": "FAQPage",

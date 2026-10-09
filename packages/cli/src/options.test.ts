@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   CATEGORY_IDS,
   CheckStatus,
+  LEGACY_PAGE_TYPES,
   PageType,
 } from "@forkpoint/agent-lighthouse-core";
 import {
@@ -511,14 +512,11 @@ describe("openCommand", () => {
 });
 
 describe("--page-type", () => {
-  it.each(["product", "article", "unknown", "content"])(
-    "passes %s through",
-    (type) => {
-      const o = parseCliOptions([`--page-type=${type}`], "https://example.com");
-      expect(o.pageType).toBe(type);
-      expect(o.invalidPageType).toBeUndefined();
-    },
-  );
+  it.each(["product", "article", "general"])("passes %s through", (type) => {
+    const o = parseCliOptions([`--page-type=${type}`], "https://example.com");
+    expect(o.pageType).toBe(type);
+    expect(o.invalidPageType).toBeUndefined();
+  });
 
   it("accepts the space-separated form", () => {
     const o = parseCliOptions(
@@ -540,9 +538,26 @@ describe("--page-type", () => {
       "category",
       "product",
       "article",
-      "unknown",
-      "content",
+      "general",
     ]);
+  });
+
+  it.each(["unknown", "content"])(
+    "refuses the pre-v7 page type %s",
+    (legacy) => {
+      const o = parseCliOptions(
+        [`--page-type=${legacy}`],
+        "https://example.com",
+      );
+      expect(o.pageType).toBeUndefined();
+      expect(o.invalidPageType).toBe(legacy);
+    },
+  );
+  it("keeps the old names for the error message", () => {
+    expect(LEGACY_PAGE_TYPES).toEqual({
+      unknown: "general",
+      content: "general",
+    });
   });
 });
 
@@ -629,8 +644,8 @@ describe("v7 manual page declarations", () => {
       config,
     );
     expect(
-      parseCliOptions(["--page-type=unknown"], "https://example.com", config),
-    ).toMatchObject({ pageType: PageType.Unknown, pages: config.pages });
+      parseCliOptions(["--page-type=general"], "https://example.com", config),
+    ).toMatchObject({ pageType: PageType.General, pages: config.pages });
     expect(config).toEqual(before);
   });
   it.each([

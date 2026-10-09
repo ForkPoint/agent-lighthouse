@@ -115,9 +115,9 @@ export class PublicationDateAudit extends Audit {
     const contentPages = ctx.pages.filter(isArticleContentPage);
     if (contentPages.length === 0) {
       return this.notApplicable(
-        "No article content pages were scanned, so publication dates do not apply.",
-        "<time> element or visible date on content pages",
-        "No content pages",
+        "No article pages were scanned, so publication dates do not apply.",
+        "<time> element or visible date on article pages",
+        "No article pages",
       );
     }
 
@@ -126,7 +126,7 @@ export class PublicationDateAudit extends Audit {
       if (structured) {
         return this.pass(
           `Found a structured date (${structured.source}).`,
-          "<time> element or visible date on content pages",
+          "<time> element or visible date on article pages",
           `${structured.source}: "${structured.value}"`,
           p.url,
         );
@@ -137,7 +137,7 @@ export class PublicationDateAudit extends Audit {
       if (dateMatch) {
         return this.pass(
           "Visible date found in content.",
-          "<time> element or visible date on content pages",
+          "<time> element or visible date on article pages",
           dateMatch[0],
           p.url,
         );
@@ -146,7 +146,7 @@ export class PublicationDateAudit extends Audit {
 
     return this.fail(
       "No visible publication date found on any scanned page.",
-      "<time> element or visible date on content pages",
+      "<time> element or visible date on article pages",
       "Not found",
       {
         priority: CheckPriority.Medium,

@@ -43,10 +43,10 @@ describe("UniqueDataAudit", () => {
     expect(result.message).toContain("No pages scanned");
   });
 
-  // Dossier required fix #6: the grade-B study measured content pages.
-  it("is scoped to content pages", () => {
+  // Dossier required fix #6: the grade-B study measured article and general pages.
+  it("is scoped to article and general pages", () => {
     expect(UniqueDataAudit.meta.applicablePageTypes).toEqual([
-      PageType.Unknown,
+      PageType.General,
       PageType.Article,
     ]);
 

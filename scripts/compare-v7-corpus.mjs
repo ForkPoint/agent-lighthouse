@@ -68,17 +68,19 @@ function page(engine, html, p, declaration) {
     ...engine.extractRdfa($),
   ];
   const meta = engine.extractMetaTags($);
+  // The scanner classifies the URL it requested, not where a redirect landed.
+  const requested = p.redirectChain?.[0]?.from ?? p.url;
   const classification = declaration
     ? (engine.declaredPageClassification?.(declaration) ?? {
         type: declaration,
         source: "declared",
       })
-    : (engine.classifyPage?.(p.url, $, structuredData, meta) ?? {
-        type: engine.detectPageType(p.url, $, structuredData, meta, true),
+    : (engine.classifyPage?.(requested, $, structuredData, meta) ?? {
+        type: engine.detectPageType(requested, $, structuredData, meta, true),
         source: "detected",
       });
   return {
-    url: p.url,
+    url: requested,
     pageType: classification.type,
     pageTypeSource: classification.source,
     classification,
@@ -233,7 +235,12 @@ for (const name of names) {
   // Fixed caller inputs plus an explicit migration from old content to article.
   const scenarios = [
     { name: "detected" },
-    { name: "legacy-declaration", old: legacyPurpose, next: legacyPurpose },
+    {
+      name: "legacy-declaration",
+      old: legacyPurpose,
+      // v7 refuses the retired names; declare what they read back as.
+      next: after.LEGACY_PAGE_TYPES[legacyPurpose] ?? legacyPurpose,
+    },
   ];
   if (currentPurpose === "article")
     scenarios.push({

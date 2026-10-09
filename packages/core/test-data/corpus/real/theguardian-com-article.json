@@ -16,7 +16,6 @@
     "accept-ranges": "bytes",
     "date": "Fri, 28 Aug 2026 12:16:56 GMT",
     "x-robots-tag": "bingbot: noarchive",
-    "set-cookie": "gu_client_ab_tests=; path=/; max-age=0\ngu_client_ab_tests=martech-admiral-adblock:variant,commercial-prebid-transaction-ids:variant,growth-auxia-banner:control,identity-and-trust-consent-rr-banner-us:variant-2; path=/; max-age=2592000; domain=.theguardian.com; Secure\ngu_v2_mvt_id=; path=/; max-age=0\ngu_v2_mvt_id=361; path=/; max-age=7776000; domain=.theguardian.com; Secure\nGU_mvt_id=937759; expires=Thu, 26 Nov 2026 12:16:56 GMT; path=/; domain=.theguardian.com; Secure\nGU_geo_country=BG; path=/; Secure",
     "x-timer": "S1787919416.079295,VS0,VE128",
     "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
     "x-frame-options": "SAMEORIGIN",

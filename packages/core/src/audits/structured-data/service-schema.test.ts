@@ -172,7 +172,7 @@ describe("ServiceSchemaAudit", () => {
     it("declares the page types a service business actually publishes on", () => {
       expect(ServiceSchemaAudit.meta.applicablePageTypes).toEqual([
         PageType.Homepage,
-        PageType.Unknown,
+        PageType.General,
         PageType.Article,
       ]);
       expect(ServiceSchemaAudit.meta.applicablePageTypes).not.toContain(

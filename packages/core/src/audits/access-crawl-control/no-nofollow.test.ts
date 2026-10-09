@@ -163,7 +163,7 @@ describe("no-nofollow page scope", () => {
       PageType.Homepage,
       PageType.Product,
       PageType.Category,
-      PageType.Content,
+      PageType.General,
     ])(
       `reads headers on empty-body %s pages with ${source} provenance`,
       async (pageType) => {

@@ -79,9 +79,9 @@ export class ArticleSchemaAudit extends Audit {
 
     if (blogPages.length === 0) {
       return this.notApplicable(
-        "No blog/content pages scanned to evaluate Article schema.",
+        "No article pages scanned to evaluate Article schema.",
         "Article schema with headline, datePublished, dateModified, author on blog pages.",
-        "No content pages or Article schema detected.",
+        "No article pages or Article schema detected.",
       );
     }
 

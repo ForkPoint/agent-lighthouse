@@ -20,7 +20,7 @@ sources:
 
 ## What it checks
 
-The v7 runner includes `article` and `unknown` alongside legacy `content` in this check's existing page population. This preserves coverage when the old catch-all classification becomes unknown. The audit body still owns its existing feature and artifact guards. This scope change does not establish a new consumer path.
+The v7 runner includes `article` and `general` pages in this check's existing page population. This preserves coverage when the old catch-all classification becomes unknown. The audit body still owns its existing feature and artifact guards. This scope change does not establish a new consumer path.
 
 Linking to authoritative sources signals expertise. AI RAG systems cross-reference your citations to validate claims and assess content quality.
 
@@ -35,7 +35,7 @@ Thin but real basis — the 2024 GEO study found citation-bearing content gained
 - Every external anchor counts, including footer social icons, 'Powered by Shopify', payment-provider badges, App Store links, and cookie-consent vendor links. Essentially every commercial homepage has ≥2 and PASSES 'External citations' with zero actual citations.
 - No `rel` filtering: `rel="nofollow sponsored ugc"` advertising and paid placements are counted as authoritative citations, so the audit can rank a spam page above a well-researched one.
 - Links are collected from the whole document (`$('a[href]')`), not the article body. `getMainContentText` exists in parser.ts and is used by 10.9/10.13 but not here, so a page whose nav/footer is external-link-heavy passes regardless of its content.
-- `pagesWithSufficientLinks > 0` means ONE qualifying page out of N passes the whole site, while the description promises 'per content page'. A 5-page scan where only the homepage has social icons reports PASS.
+- `pagesWithSufficientLinks > 0` means ONE qualifying page out of N passes the whole site, while the description promises 'per article or general page'. A 5-page scan where only the homepage has social icons reports PASS.
 - `applicablePageTypes: ['content']` doesn't filter the loop, so homepage/product/category pages contribute to a content-page audit.
 - A multi-brand operator's sibling domain, or the site's own asset host `cdn.example-assets.com`, is counted as an external citation.
 - No dedupe before thresholding — `externalLinks.push(url.hostname)` then `>= 2` means two links to the same external page count as two citations.
@@ -47,7 +47,7 @@ Thin but real basis — the 2024 GEO study found citation-bearing content gained
 - No test distinguishing in-content links from nav/footer links.
 - No test for duplicate links to the same URL counting twice.
 - No test for a sibling or CDN domain owned by the same operator.
-- No test where the qualifying page is the homepage and content pages have none — the 'any page passes' leniency is untested.
+- No test where the qualifying page is the homepage and article and general pages have none — the 'any page passes' leniency is untested.
 
 **Overlaps with:** _none_
 

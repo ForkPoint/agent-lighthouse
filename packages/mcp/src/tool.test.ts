@@ -247,8 +247,8 @@ describe("v7 tool declarations", () => {
   });
   it("keeps omission and legacy content explicit", () => {
     expect(pageOptions({ url: "https://x.test" })).toEqual({});
-    expect(pageOptions({ pageType: PageType.Content })).toEqual({
-      pageType: PageType.Content,
+    expect(pageOptions({ pageType: PageType.General })).toEqual({
+      pageType: PageType.General,
     });
     expect(() => pageOptions({ pageType: "author" })).toThrow();
   });
@@ -258,7 +258,7 @@ describe("v7 tool declarations", () => {
     r.pageAttempts = [
       {
         url: r.url,
-        pageType: PageType.Unknown,
+        pageType: PageType.General,
         source: PageTypeSource.Detected,
         outcome: AttemptOutcome.Unread,
         status: 503,

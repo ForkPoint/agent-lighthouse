@@ -53,7 +53,7 @@ export class ServerResponsivenessAudit extends Audit {
     guidance: {
       impact:
         'Google documents that crawl capacity falls when a host slows down ("if the site slows down… the limit goes down and Google crawls less"), and slow origins are where logged HTTP 499 client-closed-request clusters from AI fetchers appear. A slow origin therefore gets less of its content into the indexes AI answers are drawn from.',
-      fix: "Reduce time to first byte: cache at the origin (Redis, Varnish, nginx microcaching), serve through a CDN with edge caching, cut database work on the critical path, and pre-render or statically generate content pages. Note that the figure below is measured from the scanner and includes DNS, TCP and TLS setup.",
+      fix: "Reduce time to first byte: cache at the origin (Redis, Varnish, nginx microcaching), serve through a CDN with edge caching, cut database work on the critical path, and pre-render or statically generate pages. Note that the figure below is measured from the scanner and includes DNS, TCP and TLS setup.",
       code: "# Nginx microcaching example:\nproxy_cache_path /tmp/cache levels=1:2 keys_zone=ai:10m max_size=1g;\nproxy_cache_valid 200 1m;\nadd_header X-Cache-Status $upstream_cache_status;",
       effort: FixEffort.Moderate,
       docsUrl: "https://web.dev/articles/ttfb",
@@ -130,7 +130,7 @@ export class ServerResponsivenessAudit extends Audit {
         priority: CheckPriority.High,
         description:
           "A median TTFB in seconds means most pages sit inside the window where AI fetchers are observed to close the connection before bytes arrive, and Google documents crawl capacity falling as host latency rises. This is a whole-site figure, not one unlucky sample.",
-        code: "# Potential optimizations:\n# - Enable server-side caching (Redis, Varnish, nginx microcaching)\n# - Serve through a CDN with edge caching\n# - Pre-render or statically generate content pages\n# - Enable HTTP/2 or HTTP/3",
+        code: "# Potential optimizations:\n# - Enable server-side caching (Redis, Varnish, nginx microcaching)\n# - Serve through a CDN with edge caching\n# - Pre-render or statically generate pages\n# - Enable HTTP/2 or HTTP/3",
       },
       measured.find((p) => p.fetchResult.ttfbMs === slowest)?.url,
     );

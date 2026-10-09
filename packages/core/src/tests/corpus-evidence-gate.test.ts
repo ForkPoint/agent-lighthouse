@@ -37,11 +37,12 @@ import { CheckStatus, EvidenceKey, PageTypeSource } from "#core/types";
  * In `real-page-corpus.test.ts`, the harness held the evidence gate open
  * (`allEvidenceMet()`) to test audit DOM logic directly. This suite tests the
  * complementary path: taking real-world responses and proving that the gate
- * correctly classifies bot walls, JavaScript shells, and readable content pages.
+ * correctly classifies bot walls, JavaScript shells, and readable pages.
  */
 
 const WALL_FIXTURES = new Set([
   "ebay-com-category-wall",
+  "homepage-wall-403",
   "reuters-com",
   "stackoverflow-thread-wall",
   "tirerack-com-soft-block-200",
@@ -96,11 +97,11 @@ function buildCorpusPageContext(
 describe("corpus evidence gating", () => {
   const fixtures = listFixtures();
 
-  it("evaluates all 41 real-page fixtures", () => {
-    expect(fixtures).toHaveLength(41);
+  it("evaluates all 61 real-page fixtures", () => {
+    expect(fixtures).toHaveLength(61);
   });
 
-  it("correctly partitions the corpus into walls, shells, and content pages", () => {
+  it("correctly partitions the corpus into walls, shells, and readable pages", () => {
     const walls: string[] = [];
     const shells: string[] = [];
     const content: string[] = [];
@@ -128,7 +129,7 @@ describe("corpus evidence gating", () => {
 
     expect([...walls].sort()).toEqual([...WALL_FIXTURES].sort());
     expect([...shells].sort()).toEqual([...SHELL_FIXTURES].sort());
-    expect(content).toHaveLength(30);
+    expect(content).toHaveLength(49);
   });
 
   for (const name of fixtures) {
@@ -182,7 +183,7 @@ describe("corpus evidence gating", () => {
         expect(skippedIds.has("content-extraction/token-ratio")).toBe(true);
         expect(skippedIds.has("content-extraction/content-depth")).toBe(true);
       } else {
-        // Readable content pages clear all basic gates and schedule runnable audits
+        // Readable pages clear all basic gates and schedule runnable audits
         expect(evidence.judgeable, `${name} must be judgeable`).toBe(true);
         expect(
           evidence.met[EvidenceKey.RenderedBody],

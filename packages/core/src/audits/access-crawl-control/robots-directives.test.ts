@@ -168,7 +168,7 @@ describe("MetaRobotsNotBlockingAudit", () => {
     expect(result.message).toContain("utility");
   });
 
-  it("warns when a content page permits indexing but forbids quoting", () => {
+  it("warns when a non-utility page permits indexing but forbids quoting", () => {
     const ctx = mockCheckContext([
       mockPageContext(
         "https://example.com/",

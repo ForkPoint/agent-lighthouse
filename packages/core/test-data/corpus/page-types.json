@@ -1,0 +1,86 @@
+{
+  "readingGuide": "The page type a person reading each fixture would give it, decided from the page and not from the classifier. `page-type-corpus.test.ts` asserts the classifier agrees, using the URL the scan requested (the first redirect hop), as the orchestrator does. `live: true` fixtures are also fetched live by `page-type-live.test.ts`, which re-checks only the page type. `why` names the shape the fixture covers.",
+  "fixtures": {
+    "homepage-root-plain": {
+      "expected": "homepage",
+      "why": "A storefront served at `/` with no redirect."
+    },
+    "homepage-root-canonical-locale": {
+      "expected": "homepage",
+      "why": "Served at `/`, canonical pointing at a locale root, 110 hreflang alternates."
+    },
+    "homepage-redirect-locale-dir": {
+      "expected": "homepage",
+      "live": true,
+      "why": "`/` redirects to a locale directory (`/xx-yy/`)."
+    },
+    "homepage-redirect-locale-home": {
+      "expected": "homepage",
+      "why": "`/` redirects to a locale path ending in `home` (`/xx/home/`)."
+    },
+    "homepage-locale-root-hreflang": {
+      "expected": "homepage",
+      "why": "A locale root (`/xx/`) requested directly, with hreflang alternates naming its sibling roots."
+    },
+    "category-collection-listing-schema": {
+      "expected": "category",
+      "live": true,
+      "why": "A storefront collection with listing schema and a collection URL."
+    },
+    "category-grid-no-schema": {
+      "expected": "category",
+      "why": "A department page with a product grid, filters and pagination, and no listing schema."
+    },
+    "category-filter-only": {
+      "expected": "category",
+      "why": "A category whose only listing evidence is pagination beside filters."
+    },
+    "category-client-rendered": {
+      "expected": "category",
+      "why": "A category whose product grid is rendered by script; only the URL marks it."
+    },
+    "category-listing-schema-grid": {
+      "expected": "category",
+      "why": "A themed listing with ItemList schema and a product grid."
+    },
+    "product-productgroup-rail": {
+      "expected": "product",
+      "why": "A ProductGroup with two variants, an AggregateOffer on the group, and a recently-viewed carousel of product tiles."
+    },
+    "product-microdata": {
+      "expected": "product",
+      "why": "Product and Offer in microdata only; og:type is `website`."
+    },
+    "product-lowercase-type": {
+      "expected": "product",
+      "why": "JSON-LD declares `\"@type\": \"product\"` in lowercase under `https://www.schema.org`."
+    },
+    "product-open-graph-only": {
+      "expected": "product",
+      "why": "og:type `product` and buy controls, no Product schema."
+    },
+    "product-schema-no-open-graph": {
+      "expected": "product",
+      "why": "Product schema and buy controls, no og:type."
+    },
+    "product-open-graph-schema": {
+      "expected": "product",
+      "live": true,
+      "why": "og:type `product` plus Product schema, with dated offers."
+    },
+    "article-blog-post": {
+      "expected": "article",
+      "live": true,
+      "why": "A storefront blog post with og:type `article` and Article schema."
+    },
+    "general-about-page": {
+      "expected": "general",
+      "why": "An about-us page: neither listing, product nor article."
+    },
+    "general-faq": {
+      "expected": "general",
+      "live": true,
+      "why": "A help page carrying FAQPage schema."
+    }
+  }
+}

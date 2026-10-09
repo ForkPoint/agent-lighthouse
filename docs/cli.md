@@ -121,9 +121,9 @@ The valid ids are `access-crawl-control`, `content-extraction`, `machine-discove
 agent-lighthouse https://yourstore.com/product/widget --page-type product
 ```
 
-Declare the target page's type: `homepage`, `product`, `category`, `article`, `unknown`, or legacy `content`. Automatically detected types support advisory results for checks that depend on page type. An explicit type allows those checks to contribute to the score when their other requirements are met.
+Declare the target page's type: `homepage`, `product`, `category`, `article` or `general`. Automatically detected types support advisory results for checks that depend on page type. An explicit type allows those checks to contribute to the score when their other requirements are met.
 
-`content` now means general/unknown purpose. Use `article` only for editorial content. Privacy, contact, and general pages do not acquire article obligations. The flag overrides the config file's `pageType`; config `pages` supplies further URL/type declarations. A bare flag, unsupported type, or malformed override URL is an error.
+Use `article` for editorial pages: blog posts, news and guides. Use `general` for every other page — about, FAQ, help, contact, policy. General pages do not acquire article obligations. The pre-v7 names `unknown` and `content` are refused, with an error naming `general`. The flag overrides the config file's `pageType`; config `pages` supplies further URL/type declarations. A bare flag, unsupported type, or malformed override URL is an error.
 
 Mixed scans retain both declared and detected findings. Each audit contributes to the score at most once. The terminal shows classification signals and failed fetches. Use `--debug-audit <id>` to inspect selected, input, and unread URLs for every population. `--debug-audit fails` also selects audits whose primary result passes but whose advisory population fails. HTML and Markdown include expandable scope details. JSON and NDJSON traces retain the structured fields.
 

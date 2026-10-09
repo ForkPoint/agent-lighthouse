@@ -21,6 +21,7 @@ import {
   getWordCount,
   detectPageType,
 } from "./parser";
+import { PageType } from "#core/types";
 
 // ---------------------------------------------------------------------------
 // parseHtml
@@ -1301,7 +1302,7 @@ describe("detectPageType", () => {
     it("needs at least three same-origin links when there is no home link", () => {
       const $ = page(`<a href="/docs/a">A</a><a href="/docs/b">B</a>`);
       expect(detectPageType("https://x.com/docs/", $, [], {}, true)).toBe(
-        "unknown",
+        PageType.General,
       );
     });
 
@@ -1323,7 +1324,7 @@ describe("detectPageType", () => {
       const $ = parseHtml(`<html><head><base href="/"></head><body>
         <header><a href="./">Home</a></header><a href="/pricing">Pricing</a></body></html>`);
       expect(detectPageType("https://x.com/blog/", $, [], {}, true)).toBe(
-        "unknown",
+        PageType.General,
       );
     });
 
@@ -1332,7 +1333,7 @@ describe("detectPageType", () => {
         `<a href="/blog/post/#a">A</a><a href="/blog/post/#b">B</a><a href="/blog/post/#c">C</a>`,
       );
       expect(detectPageType("https://x.com/blog/post/", $, [], {}, true)).toBe(
-        "unknown",
+        PageType.General,
       );
     });
 
@@ -1341,7 +1342,7 @@ describe("detectPageType", () => {
         `<header><a href="#">Menu</a><a href="/">Home</a></header>`,
       );
       expect(detectPageType("https://x.com/blog/", $, [], {}, true)).toBe(
-        "unknown",
+        PageType.General,
       );
     });
 
@@ -1350,7 +1351,7 @@ describe("detectPageType", () => {
         `<a href="/docs/a">A</a><a href="/docs/a">A again</a><a href="/docs/b">B</a>`,
       );
       expect(detectPageType("https://x.com/docs/", $, [], {}, true)).toBe(
-        "unknown",
+        PageType.General,
       );
     });
 
@@ -1483,7 +1484,7 @@ describe("detectPageType", () => {
   it("falls back to unknown when nothing matches", () => {
     const $ = parseHtml("<html><body><p>just words</p></body></html>");
     expect(detectPageType("https://x.com/random-page", $, [], {}, false)).toBe(
-      "unknown",
+      PageType.General,
     );
   });
 
@@ -1529,7 +1530,7 @@ describe("detectPageType", () => {
         {},
         false,
       ),
-    ).toBe("unknown");
+    ).toBe(PageType.General);
   });
 });
 

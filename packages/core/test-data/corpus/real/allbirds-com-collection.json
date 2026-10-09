@@ -11,7 +11,6 @@
     "connection": "keep-alive",
     "x-download-options": "noopen",
     "cf-cache-status": "DYNAMIC",
-    "set-cookie": "localization=US; path=/; expires=Sat, 28 Aug 2027 12:20:55 GMT; SameSite=Lax\ncart_currency=USD; path=/; expires=Fri, 11 Sep 2026 12:20:55 GMT; SameSite=Lax\n_shopify_essential=:AaBIUOHoAAEAt7SdubpwlaCvTp_Eo1kxj3t9Zs_DQq6kJ5M9VEogOQj4k77NCXx85VV4x3ZXlh9Q7KtcEr4onsWQvbmG4m5e6o0nvLTpMxGgE5Nd_p62EitanfAdHZ-WwPIXVNpxXlTOCAR3ekTEv2iKYZQLlDYV_1Fm6h_hiS0tJpBIAhEMUoTplSe7Gyr1v-Aivp-8Re9GB0p9oEAH4pcEhEDO2uKuCwbirEOM7G2XiJZKW5jyNF0pQoGVoRlPM-3rMvay2AjqJPC_SyXH7l7BG_vakxITEyNugonmCDxaVzTzOdvkhDQgnbkTyUz5zyexiGRdGW87A2yg5O05bfyoG0AT7lGshrgveVBZeOcMOtVKPwdpVjU63H9TMgKMKO896Unq-mqE-Him2Sq3vC2kyHHTP52H_AeB-PPxnWViZTrli6l_Nsdx492gtmCksKGNlWbk1LJeo2bbAdDCNboJ84CtT7xH56NY4VzdHT3AZ4vLCP7jpEQ-FckuN-ugHB3UmplHeAh01v_yBmbsRCxbNU2XEyUyMEpmsaNybHzLpIhJveKI:; Max-Age=31536000; Path=/; HttpOnly; Secure; Priority=High; SameSite=Lax",
     "link": "<https://cdn.shopify.com>; rel=\"preconnect\", <https://cdn.shopify.com>; rel=\"preconnect\"; crossorigin, <//www.allbirds.com/cdn/shop/t/4159/assets/theme.css>; as=\"style\"; rel=\"preload\", <https://www.allbirds.com/cdn/shopifycloud/portable-wallets/latest/accelerated-checkout-backwards-compat.css>; as=\"style\"; rel=\"preload\"; crossorigin",
     "x-content-type-options": "nosniff",
     "x-request-id": "9501fd49-1a56-4885-8355-88eca369a9b2-1787919655",

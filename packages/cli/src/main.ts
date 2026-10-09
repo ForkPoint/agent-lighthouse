@@ -13,6 +13,7 @@ import {
   type ScanEvent,
   type AuditTrace,
   CheckStatus,
+  LEGACY_PAGE_TYPES,
   LogLevel,
 } from "@forkpoint/agent-lighthouse-core";
 import { createProgressRenderer } from "./progress-renderer";
@@ -82,8 +83,8 @@ Options:
                                content-extraction, machine-discovery, structured-data,
                                answer-readiness, agent-interfaces, agentic-commerce,
                                operability-safety
-  --page-type <type>           Declare the target: homepage, category, product, article,
-                               unknown, or content (legacy general). Overrides config.
+  --page-type <type>           Declare the target: homepage, category, product, article
+                               (editorial), or general (any other page). Overrides config.
                                Detected types yield advisory type-specific findings.
                                Use config "pages" for more URL/type declarations.
   --experimental               Also run experimental-tier audits (excluded by default;
@@ -164,7 +165,11 @@ async function audit(targetUrl?: string) {
   }
   if (invalidPageType !== undefined) {
     console.error(
-      `\x1b[31mUnknown page type: ${invalidPageType}\x1b[0m\nValid page types: ${PAGE_TYPE_IDS.join(", ")}`,
+      `\x1b[31mUnknown page type: ${invalidPageType}\x1b[0m` +
+        (Object.hasOwn(LEGACY_PAGE_TYPES, invalidPageType)
+          ? `\n"${invalidPageType}" was renamed to "${LEGACY_PAGE_TYPES[invalidPageType]}" in v7.`
+          : "") +
+        `\nValid page types: ${PAGE_TYPE_IDS.join(", ")}`,
     );
     process.exit(1);
   }

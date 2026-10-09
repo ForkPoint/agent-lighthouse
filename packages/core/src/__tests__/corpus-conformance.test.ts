@@ -164,7 +164,7 @@ describe("Golden Corpus Conformance Tests (False-Positive Elimination)", () => {
     const page = buildPageContext(
       "https://docs.cloudstack.dev/api/authentication",
       html,
-      PageType.Unknown,
+      PageType.General,
     );
 
     const ctx = buildTestContext("https://docs.cloudstack.dev", [page], {

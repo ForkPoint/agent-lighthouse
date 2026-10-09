@@ -214,7 +214,7 @@ it("public page schemas round-trip new data and preserve old saved pages", async
     r.pageAttempts![0],
   );
   expect(CheckResultSchema.parse(check)).toEqual(check);
-  const old = { url: declared, pageType: PageType.Content };
+  const old = { url: declared, pageType: PageType.General };
   expect(ScannedPageSchema.parse(old)).toEqual(old);
 });
 

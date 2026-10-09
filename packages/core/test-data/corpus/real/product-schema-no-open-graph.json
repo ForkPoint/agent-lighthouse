@@ -1,0 +1,25 @@
+{
+  "url": "https://www.rossignol.com/bg-en/mens-resort-softshell-jacket-RLPMJ39200.html",
+  "capturedAt": "2026-10-09T17:49:07.746Z",
+  "sha256": "9ad70f629711761561c876ff6f6757d3056d1abd54770aaf5fa671d0ce355ac1",
+  "status": 200,
+  "kind": "page",
+  "headers": {
+    "date": "Fri, 09 Oct 2026 17:49:07 GMT",
+    "content-type": "text/html;charset=UTF-8",
+    "server": "cloudflare",
+    "x-content-type-options": "nosniff",
+    "content-security-policy": "frame-ancestors 'self'",
+    "x-dw-request-base-id": "HEt6KG4oyWoBAAB_",
+    "cache-control": "no-cache, no-store, must-revalidate",
+    "pragma": "no-cache",
+    "expires": "Thu, 01 Dec 1994 16:00:00 GMT",
+    "vary": "accept-encoding",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a47f38578fead0d3-SOF"
+  },
+  "contentType": "text/html;charset=UTF-8",
+  "ttfbMs": 589,
+  "totalMs": 620,
+  "contentLength": 641605
+}

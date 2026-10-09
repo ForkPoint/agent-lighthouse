@@ -221,7 +221,7 @@ export class DirectDefinitionsAudit extends Audit {
       EvidenceKey.RenderedBody,
       EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: [PageType.Unknown, PageType.Article],
+    applicablePageTypes: [PageType.General, PageType.Article],
     // Never a defect, so never above the actionable items.
     defaultPriority: CheckPriority.Low,
     guidance: {

@@ -214,24 +214,33 @@ This resolves two unrelated-looking problems the same way.
 ### 5.1 Page type
 
 The v7 P3 classifier returns purpose evidence as `{ type, source, confidence,
-signals }`. Its general fallback is `unknown`. `article` is a distinct purpose.
+signals }`. Its fallback is `general`, with confidence `unknown` when nothing
+matched. `article` is a distinct purpose.
 A root or mounted homepage keeps the same identity regardless of crawl order.
 Open Graph article metadata or primary article prose can establish article purpose
 without requiring the author, dates, or Article schema that an audit will inspect.
 URL-only and schema-only matches remain hints. Conflicting strong product/article
-signals produce unknown purpose. Signal strength does not grant scoring authority.
+signals produce a `general` page. Signal strength does not grant scoring authority.
 
 The public `detectPageType` wrapper still returns a type and accepts its historical
-final argument. That argument no longer changes the result. The CLI and SDK accept
-`article` and `unknown`. Legacy `content` declarations normalize to `unknown` and
-never enable article obligations. Stored reports with `content` and no classification
-fields remain readable; no missing evidence is inferred for them.
+final argument. That argument no longer changes the result. The CLI, SDK and MCP
+accept `article` and `general`. The pre-v7 names `unknown` and `content` are refused
+as input; stored reports that carry them read as `general` (`LEGACY_PAGE_TYPES`,
+`StoredPageTypeSchema`), and no missing evidence is inferred for them.
+
+The five page types are `homepage`, `category`, `product`, `article` and
+`general`. `article` means an editorial page: a post, news story or guide that
+carries author and date obligations. `general` means every other page: about,
+FAQ, help, contact, policy and landing pages. Three other names use the word
+"content" and are not page types: the `content` scan preset, the `content`
+readiness vital, and the `content-extraction` audit category. Write "article
+page" or "general page" in audit copy and dossiers, never "content page".
 
 The runner canonicalizes `applicablePageTypes` on a metadata copy. It accepts the
 legacy `pageTypes` alias. If both aliases occur, their sets must match, including
 empty sets, or planning throws a configuration error. An absent or empty set means
 universal scope. Twelve article obligations now name `article`. Ten other checks
-retain general-page coverage across `content`, `unknown`, and `article` while their
+retain coverage across `general` and `article` pages while their
 feature-specific guards await the ledger's follow-up work.
 
 ### 5.1.1 Default scope and page-type restrictions
@@ -275,7 +284,7 @@ changeset rules for the final contract change.
 
 Before a scope change, verify these cases:
 
-- The relevant feature occurs on each current page type, including `unknown`.
+- The relevant feature occurs on each current page type, including `general`.
 - No relevant feature occurs; the audit returns `notApplicable`.
 - Required markup is missing despite independently established intent.
 - A mixed sample contains relevant, irrelevant, and unread pages; only relevant
@@ -295,16 +304,16 @@ follow-up review targets, not the recommended pattern for new audits.
 
 | Audit                                 | Current inclusion list              | Evidence condition to review before changing scope                                                                                 |
 | ------------------------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `answer-readiness/comparison-tables`  | category, product, unknown, article | Establish comparison intent independently of table markup. The current body counts tables without an intent guard.                 |
-| `structured-data/breadcrumb-schema`   | category, product, unknown, article | Review the existing URL-depth selection against the documented hierarchy obligation. Do not use the list only to exclude homepage. |
-| `answer-readiness/direct-definitions` | unknown, article                    | The body already selects definitional intent. Confirm its source-backed population and aggregation across other types.             |
-| `answer-readiness/external-citations` | unknown, article                    | Establish the claims or content for which citations are justified. The current body counts external links without an intent guard. |
-| `answer-readiness/unique-data`        | unknown, article                    | Establish when original data is an applicable obligation. Do not require numbers on every page.                                    |
-| `content-extraction/aside-element`    | unknown, article                    | The body already selects supplementary blocks. Confirm that selection and its denominator across other types.                      |
-| `content-extraction/code-language`    | unknown, article                    | Select present code blocks. Review the current warning on absent blocks against the absence rule.                                  |
-| `content-extraction/time-element`     | unknown, article                    | Detect date-bearing content independently of `<time>` markup. The current body fails when no `<time>` exists.                      |
-| `structured-data/howto-schema`        | unknown, article                    | Review the existing sequential-heading intent test and its absent-feature warning.                                                 |
-| `structured-data/service-schema`      | homepage, unknown, article          | The body already tests service intent. Confirm selection and aggregation across other types before removing the list.              |
+| `answer-readiness/comparison-tables`  | category, product, general, article | Establish comparison intent independently of table markup. The current body counts tables without an intent guard.                 |
+| `structured-data/breadcrumb-schema`   | category, product, general, article | Review the existing URL-depth selection against the documented hierarchy obligation. Do not use the list only to exclude homepage. |
+| `answer-readiness/direct-definitions` | general, article                    | The body already selects definitional intent. Confirm its source-backed population and aggregation across other types.             |
+| `answer-readiness/external-citations` | general, article                    | Establish the claims or content for which citations are justified. The current body counts external links without an intent guard. |
+| `answer-readiness/unique-data`        | general, article                    | Establish when original data is an applicable obligation. Do not require numbers on every page.                                    |
+| `content-extraction/aside-element`    | general, article                    | The body already selects supplementary blocks. Confirm that selection and its denominator across other types.                      |
+| `content-extraction/code-language`    | general, article                    | Select present code blocks. Review the current warning on absent blocks against the absence rule.                                  |
+| `content-extraction/time-element`     | general, article                    | Detect date-bearing content independently of `<time>` markup. The current body fails when no `<time>` exists.                      |
+| `structured-data/howto-schema`        | general, article                    | Review the existing sequential-heading intent test and its absent-feature warning.                                                 |
+| `structured-data/service-schema`      | homepage, general, article          | The body already tests service intent. Confirm selection and aggregation across other types before removing the list.              |
 
 This inspection changes documentation only. It does not remove lists, add
 exclusions, change verdicts, or complete the deferred feature-gate migration.
@@ -349,7 +358,7 @@ Each executed or gated population has `coverage`:
 
 `ScanReport.pageAttempts` preserves each requested page's URL, purpose provenance,
 HTTP status, and whether parsing produced a page context. A failed undeclared page
-has unknown purpose and remains in common coverage; it cannot be assigned to a
+is a `general` page with unknown confidence and remains in common coverage; it cannot be assigned to a
 specialist population without evidence. Older reports may omit both new fields.
 
 An `AuditPlan` still has `runnable` and `skipped` arrays. Each runnable entry now also

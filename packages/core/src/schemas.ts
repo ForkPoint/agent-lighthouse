@@ -9,6 +9,7 @@ import {
   EvidenceGrade,
   EvidenceKey,
   FixEffort,
+  LEGACY_PAGE_TYPES,
   PageType,
   PageTypeSource,
   ScoreDisplayMode,
@@ -88,7 +89,27 @@ export const AUDIT_ID_PATTERN = /^[a-z-]+\/[a-z0-9-]+$/;
 
 export const EvidenceKeySchema = z.enum(EvidenceKey);
 
-export const PageTypeSchema = z.enum(PageType);
+/** A retired page-type name is refused with an error that names its replacement. */
+export const PageTypeSchema = z.enum(PageType, {
+  error: (issue) =>
+    typeof issue.input === "string" &&
+    Object.hasOwn(LEGACY_PAGE_TYPES, issue.input)
+      ? `"${issue.input}" was renamed to "${LEGACY_PAGE_TYPES[issue.input]}" in v7`
+      : undefined,
+});
+
+/**
+ * A page type read from a saved report. Reports written before v7 carry
+ * `unknown` or `content`; both read as `general`, so an old report still
+ * parses. Input schemas use `PageTypeSchema`, which refuses the old names.
+ */
+export const StoredPageTypeSchema = z.preprocess(
+  (value) =>
+    typeof value === "string" && Object.hasOwn(LEGACY_PAGE_TYPES, value)
+      ? LEGACY_PAGE_TYPES[value]
+      : value,
+  PageTypeSchema,
+);
 
 export const AuditMetaSchema = z.object({
   id: z
@@ -190,7 +211,7 @@ export const CheckResultSchema = CheckAssessmentSchema.extend({
 });
 
 export const PageClassificationSchema = z.object({
-  type: PageTypeSchema,
+  type: StoredPageTypeSchema,
   source: z.enum(PageTypeSource),
   confidence: z.enum(ClassificationConfidence),
   signals: z.array(z.string()),
@@ -199,13 +220,13 @@ export const PageClassificationSchema = z.object({
 /** Old saved pages keep their recorded type without invented classification. */
 export const ScannedPageSchema = z.object({
   url: z.string(),
-  pageType: PageTypeSchema,
+  pageType: StoredPageTypeSchema,
   classification: PageClassificationSchema.optional(),
 });
 
 export const PageAttemptSchema = z.object({
   url: z.string(),
-  pageType: PageTypeSchema,
+  pageType: StoredPageTypeSchema,
   source: z.enum(PageTypeSource),
   outcome: z.enum(AttemptOutcome),
   status: z.number().int().nonnegative(),
@@ -228,7 +249,7 @@ export const PageScopeOptionsSchema = z.object({
 export const ScanConditionsSchema = z.object({
   url: z.string().url().max(2048),
   pageType: z.object({
-    type: PageTypeSchema,
+    type: StoredPageTypeSchema,
     source: z.enum(PageTypeSource),
     confidence: z.enum(ClassificationConfidence).optional(),
     signals: z.array(z.string()).optional(),

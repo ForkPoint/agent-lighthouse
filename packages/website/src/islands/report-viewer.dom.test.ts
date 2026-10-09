@@ -237,7 +237,7 @@ it("renders uploaded scope text as text, never markup", async () => {
         url: '<img src=x onerror="alert(1)">',
         outcome: AttemptOutcome.Unread,
         status: 503,
-        pageType: PageType.Unknown,
+        pageType: PageType.General,
         source: PageTypeSource.Detected,
       },
     ],

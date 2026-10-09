@@ -15,7 +15,6 @@
     "date": "Fri, 28 Aug 2026 12:21:38 GMT",
     "transfer-encoding": "chunked",
     "connection": "keep-alive, Transfer-Encoding",
-    "set-cookie": "Apache=22237137.65a1a7e7d8313; path=/; expires=Sat, 28-Aug-27 12:21:38 GMT",
     "vary": "User-Agent"
   },
   "contentType": "text/html; charset=UTF-8",

@@ -11,7 +11,7 @@ import {
   ScoreDisplayMode,
 } from "#core/types";
 
-/** One content page carrying `body`. Index 1 keeps it off the homepage path. */
+/** One interior page carrying `body`. Index 1 keeps it off the homepage path. */
 function page(body: string): CheckContext {
   return mockCheckContext([
     mockPageContext(

@@ -21,22 +21,22 @@ sources:
 
 ## What it checks
 
-The v7 runner selects article-purpose pages for this check. A general or legacy `content` declaration does not establish article purpose. Detection can use Open Graph article metadata or primary article prose without author, date, or Article schema fields. Schema-only evidence remains a hint. Detected matches remain informative; a precise `article` declaration uses the existing audit tier.
+The v7 runner selects article-purpose pages for this check. A `general` declaration does not establish article purpose. Detection can use Open Graph article metadata or primary article prose without author, date, or Article schema fields. Schema-only evidence remains a hint. Detected matches remain informative; a precise `article` declaration uses the existing audit tier.
 
-One freshness question per content page, scored once: **can a date extractor date this page, and can it tell how current it is?**
+One freshness question per article page, scored once: **can a date extractor date this page, and can it tell how current it is?**
 
 | State                                                                                                                                                                                                   | Result                       |
 | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :--------------------------- |
 | a modification date — JSON-LD `dateModified`, `article:modified_time` / `og:updated_time`, a `<time>` carrying an "updated/modified/revised" label, or that wording beside a parseable date in the text | `pass`                       |
 | a publication date only — `<time datetime>`, JSON-LD `datePublished`/`uploadDate`/`dateCreated`, `article:published_time`, a bare `<time>`, or a visible date pattern                                   | `warn` (0.5), priority `low` |
-| neither, on any scanned content page                                                                                                                                                                    | `fail`, priority `medium`    |
-| no article content page scanned                                                                                                                                                                         | `na`                         |
+| neither, on any scanned article page                                                                                                                                                                    | `fail`, priority `medium`    |
+| no article page scanned                                                                                                                                                                                 | `na`                         |
 
-The update signal wins wherever it is found: every content page is checked for one before the first publication-only date is reported.
+The update signal wins wherever it is found: every article page is checked for one before the first publication-only date is reported.
 
 ## Code review findings (2026-08-20, 11-agent pass)
 
-The strongest audit in the category: it prefers machine-readable sources (<time datetime>, JSON-LD datePublished/dateModified/uploadDate/dateCreated, article:published_time meta) before falling back to a body-text date regex, and it correctly returns `na` rather than a vacuous pass when no content page exists. Freshness is a real ranking input for recency-sensitive answers. What undermines it: it takes the FIRST <time> on the page as the publication date, it passes the whole site on the first dated page it finds, its text fallback knows only English month names, and it inherits the leaky 'content = fallback pageType' scoping.
+The strongest audit in the category: it prefers machine-readable sources (<time datetime>, JSON-LD datePublished/dateModified/uploadDate/dateCreated, article:published_time meta) before falling back to a body-text date regex, and it correctly returns `na` rather than a vacuous pass when no article page exists. Freshness is a real ranking input for recency-sensitive answers. What undermines it: it takes the FIRST <time> on the page as the publication date, it passes the whole site on the first dated page it finds, its text fallback knows only English month names, and it inherits the leaky 'content = fallback pageType' scoping.
 
 **Required fix:** Prefer a <time> that is inside <article> or adjacent to the H1/byline over the first in source order, and prefer the JSON-LD node whose @type is Article/BlogPosting/NewsArticle (or whose mainEntityOfPage matches the URL) over the first node with any date field. Require the numeric branch to parse to a plausible date (year 1990–current+1) before accepting it, which also removes the SKU match. Add locale month names driven by the page `lang`, returning `na` for unsupported languages. Report per-page coverage instead of short-circuiting on the first dated page. Tighten `isArticleContentPage` (shared by four audits) to require a real article signal. Consider surfacing the parsed age, since the guidance is about recency but the check only proves existence.
 
@@ -47,7 +47,7 @@ The strongest audit in the category: it prefers machine-readable sources (<time 
 - English-only text fallback: DATE_PATTERN lists only English month names, so German '15. Januar 2025', French '15 janvier 2025', Spanish '15 de enero de 2025' and Japanese '2025年1月15日' are invisible. A non-English blog without structured dates false-fails.
 - The numeric branch matches non-dates: `\d{1,2}[/-]\d{1,2}[/-]\d{2,4}` matches SKUs, model numbers and part codes like '12-34-5678', so the audit can PASS on a page with no date at all and print the SKU as its evidence.
 - Ambiguous DD/MM vs MM/DD is never resolved, and the matched string is surfaced verbatim as proof of freshness with no recency validation — a 2011 date passes exactly like a 2026 one, despite the guidance being entirely about recency.
-- Site-wide first-hit short-circuit: the loop returns pass on the first dated content page, so a site where only one article is dated reports the whole site as dated; undated pages are never listed.
+- Site-wide first-hit short-circuit: the loop returns pass on the first dated article page, so a site where only one article is dated reports the whole site as dated; undated pages are never listed.
 - Scoping: `isArticleContentPage` accepts every fallback-typed page, so /contact, /privacy-policy and /pricing are treated as content requiring publication dates, and the failure's pageUrl (`contentPages[0].url`) may point at one of them.
 - SPA/CSR: dates rendered client-side → false fail.
 
@@ -59,7 +59,7 @@ The strongest audit in the category: it prefers machine-readable sources (<time 
 - No JSON-LD @graph where the date belongs to a nested non-page entity.
 - No stale date (2011) — nothing asserts recency is or isn't evaluated.
 - No multi-page scan with one dated and several undated articles, showing the first-hit short-circuit.
-- No /contact- or /privacy-style page reaching the audit as an 'article content page'.
+- No /contact- or /privacy-style page reaching the audit as an 'article page'.
 - No empty-SPA-shell test.
 
 **Overlaps with:** `9.10` — now absorbed here, so the overlap is resolved.
@@ -74,7 +74,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Evidence (2026-08-21)
 
-**Mechanism claim:** A content page carrying a machine-readable date yields a byline date to Google's date extractor and to the htmldate and trafilatura extraction stack. That date can be a `<time datetime>` element, `datePublished` or `dateModified` in JSON-LD, an `article:published_time` meta tag, or a clearly labeled visible date. A page carrying none of these yields no date at all, so no downstream consumer can attach a publication time to the document.
+**Mechanism claim:** An article page carrying a machine-readable date yields a byline date to Google's date extractor and to the htmldate and trafilatura extraction stack. That date can be a `<time datetime>` element, `datePublished` or `dateModified` in JSON-LD, an `article:published_time` meta tag, or a clearly labeled visible date. A page carrying none of these yields no date at all, so no downstream consumer can attach a publication time to the document.
 
 **Grade: A** — a vendor doc states in so many words that Google reads exactly these signals off the page, and prescribes exactly the markup this audit checks. The same fields are what the open extraction stack that builds RAG and training corpora reads.
 
@@ -89,7 +89,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## The merge (Plan 4, Task 6, 2026-08-22)
 
-9.8 and 9.10 read the same pages through the same shared helper (`isArticleContentPage`), duplicated `DATE_PATTERN` character-for-character, and measured the same underlying thing — "is there a machine-readable date on this content page". A site fixed both with one `<time>` element and was scored twice for one omission.
+9.8 and 9.10 read the same pages through the same shared helper (`isArticleContentPage`), duplicated `DATE_PATTERN` character-for-character, and measured the same underlying thing — "is there a machine-readable date on this article page". A site fixed both with one `<time>` element and was scored twice for one omission.
 
 9.10's required fix is executed as written: _"Merge into 9.8 as a single graded freshness audit scored once: pass when a `dateModified` / 'last updated' + date is present; partial-pass (0.5) when only a publication date exists; fail when neither."_ That is exactly the three-state table above, and it also collapses the duplicated `DATE_PATTERN` to one definition in this file (`publication-date.ts` still carries its own copy — that third copy is out of scope here and remains a live hazard the reviews already record).
 

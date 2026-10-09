@@ -33,7 +33,7 @@ sources:
 
 ## What it checks
 
-The v7 runner selects article-purpose pages for this check. A general or legacy `content` declaration does not establish article purpose. Detection can use Open Graph article metadata or primary article prose without author, date, or Article schema fields. Schema-only evidence remains a hint. Detected matches remain informative; a precise `article` declaration uses the existing audit tier.
+The v7 runner selects article-purpose pages for this check. A `general` declaration does not establish article purpose. Detection can use Open Graph article metadata or primary article prose without author, date, or Article schema fields. Schema-only evidence remains a hint. Detected matches remain informative; a precise `article` declaration uses the existing audit tier.
 
 AI RAG systems cross-reference author identity across platforms via sameAs URLs. Without external profile links, agents cannot verify author expertise.
 
@@ -57,7 +57,7 @@ AI RAG systems cross-reference author identity across platforms via sameAs URLs.
 - No test for `"@type":["Person"]` array form on the Person node — a confirmed false-fail path.
 - No test for `@id`-reference indirection between Article.author and a separate Person node in `@graph`.
 - No test for self-referential sameAs pointing back at the audited domain.
-- No test where sameAs is found on a non-content page while content pages lack it.
+- No test where sameAs is found on a non-article page while article pages lack it.
 - No test for `mainEntity`-nested Article.
 - No test for a publisher Organization `sameAs` being mistaken for an author signal.
 

@@ -38,7 +38,7 @@ sources:
 
 ## What it checks
 
-The v7 runner includes `article` and `unknown` alongside legacy `content` in this check's existing page population. This preserves coverage when the old catch-all classification becomes unknown. The audit body still owns its existing feature and artifact guards. This scope change does not establish a new consumer path.
+The v7 runner includes `article` and `general` pages in this check's existing page population. This preserves coverage when the old catch-all classification becomes unknown. The audit body still owns its existing feature and artifact guards. This scope change does not establish a new consumer path.
 
 AI agents use <aside> to distinguish supplementary content (sidebars, callouts, related links) from primary content. Without it, sidebar content may be mixed into the main content extraction, diluting the primary message in AI-generated summaries.
 
@@ -69,7 +69,7 @@ The [redemption dossier](../../deletions/semantic-html/aside-element.md) is unus
 
 **Old pass condition:** `pagesWithAside > 0` — one `<aside>` anywhere in the crawl passed the whole site; anything else warned. The audit could not fail, could not tell "no sidebar" from "sidebar in a `<div>`" (its entire stated purpose), penalised pages that correctly have no supplementary content, and looped every page while declaring `applicablePageTypes: ['content']`.
 
-**New pass condition:** on content pages, every detected supplementary block — sidebar, promo, advert, related-links, newsletter, pull-quote container — is inside an `<aside>` or an element with `role="complementary"`. Pages carrying no supplementary block at all are not evaluated; if no content page has one, the audit is `notApplicable`.
+**New pass condition:** on article and general pages, every detected supplementary block — sidebar, promo, advert, related-links, newsletter, pull-quote container — is inside an `<aside>` or an element with `role="complementary"`. Pages carrying no supplementary block at all are not evaluated; if no article or general page has one, the audit is `notApplicable`.
 
 ### The check is now conditional, and it can fail
 
@@ -82,12 +82,12 @@ Those tokens are not invented: Readability's own `unlikelyCandidates` regex matc
 
 The four outcomes replace the old two:
 
-| Outcome | Condition                                     |
-| ------- | --------------------------------------------- |
-| `na`    | no content page carries a supplementary block |
-| `pass`  | every detected block is marked                |
-| `warn`  | some marked, some not                         |
-| `fail`  | blocks exist and none are marked              |
+| Outcome | Condition                                                |
+| ------- | -------------------------------------------------------- |
+| `na`    | no article or general page carries a supplementary block |
+| `pass`  | every detected block is marked                           |
+| `warn`  | some marked, some not                                    |
+| `fail`  | blocks exist and none are marked                         |
 
 `scoreDisplayMode` moves `binary` → `ternary` for the new middle state. The `fail` branch is precisely the failure mode the audit always claimed to catch and never could: a `<div class="sidebar">` on a page with no `<aside>` anywhere.
 

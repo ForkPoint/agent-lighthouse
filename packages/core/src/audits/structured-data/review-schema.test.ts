@@ -6,7 +6,7 @@ import { CheckStatus } from "#core/types";
 const ld = (obj: unknown) =>
   `<script type="application/ld+json">${JSON.stringify(obj)}</script>`;
 
-/** A content page (never detected as `product`) carrying arbitrary body/head markup. */
+/** A general page (never detected as `product`) carrying arbitrary body/head markup. */
 const contentPage = (body: string, head = "") =>
   mockPageContext(
     "https://example.com/about",

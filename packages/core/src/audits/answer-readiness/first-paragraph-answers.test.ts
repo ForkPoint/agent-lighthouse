@@ -6,10 +6,10 @@ import { CheckStatus } from "#core/types";
 describe("FirstParagraphAnswersAudit", () => {
   const audit = new FirstParagraphAnswersAudit();
 
-  it("is not-applicable when no article content page is scanned", () => {
+  it("is not-applicable when no article page is scanned", () => {
     const result = audit.audit(mockCheckContext([]));
     expect(result.status).toBe(CheckStatus.NotApplicable);
-    expect(result.message).toContain("No article content pages");
+    expect(result.message).toContain("No article pages");
   });
 
   it("passes when the first substantive paragraph is a declarative answer", () => {

@@ -620,15 +620,12 @@ export function detectPageType(
   return classifyPage(url, $, jsonLd, meta).type;
 }
 
-/** Resolve a precise operator declaration without interpreting legacy content as article. */
+/** An operator's declaration is a precise claim about the page's purpose. */
 export function declaredPageClassification(type: PageType): PageClassification {
   return {
-    type: type === PageType.Content ? PageType.Unknown : type,
+    type,
     source: PageTypeSource.Declared,
-    confidence:
-      type === PageType.Content || type === PageType.Unknown
-        ? ClassificationConfidence.Unknown
-        : ClassificationConfidence.Strong,
+    confidence: ClassificationConfidence.Strong,
     signals: [`declared:${type}`],
   };
 }
@@ -658,6 +655,10 @@ export function classifyPage(
   if (isSubpathHome(url, $))
     return result(PageType.Homepage, ClassificationConfidence.Strong, [
       "mounted-home-links",
+    ]);
+  if (isLocaleRoot(url, pathname, $))
+    return result(PageType.Homepage, ClassificationConfidence.Strong, [
+      "locale-root",
     ]);
 
   const product = productSignals(pathname, $, structuredData, meta);
@@ -695,7 +696,7 @@ export function classifyPage(
   );
   const strongArticle = article.some((s) => s !== "article-schema-hint");
   if (strongProduct && strongArticle)
-    return result(PageType.Unknown, ClassificationConfidence.Unknown, [
+    return result(PageType.General, ClassificationConfidence.Unknown, [
       ...product,
       ...category,
       ...article,
@@ -717,7 +718,63 @@ export function classifyPage(
     return result(PageType.Category, ClassificationConfidence.Hint, category);
   if (article.length > 0)
     return result(PageType.Article, ClassificationConfidence.Hint, article);
-  return result(PageType.Unknown, ClassificationConfidence.Unknown, []);
+  return result(PageType.General, ClassificationConfidence.Unknown, []);
+}
+
+/**
+ * A path made only of locale segments, optionally ending in `home` or
+ * `index`: `/us/`, `/us/en`, `/en-gb/`, `/de_de/`, `/en/home/`. A two-letter
+ * segment is also a plausible section name (`/tv/`, `/en/tv/`), and a
+ * multilingual store puts hreflang alternates on every page, so neither the
+ * path nor the presence of alternates decides. The hreflang codes do: every
+ * segment of a locale root names a language or region its alternates declare
+ * (`/us/en/` beside `en-US`), while a section adds a segment no code names
+ * (`tv` in `/en/tv/` beside `en` and `de`). Comparing segments between
+ * alternates cannot decide it: `/us/en/` beside `/ca/en/` has the same shape
+ * as `/en/tv/` beside `/de/tv/`.
+ */
+const LOCALE_ROOT =
+  /^(?:\/[a-z]{2}(?:[-_][a-z]{2,4})?)+(?:\/(?:home|index)(?:\.html?)?)?\/?$/;
+
+/** The language and region parts of a locale-root path: `/us/en-gb/home/` gives us, en, gb. */
+function localeParts(pathname: string): string[] {
+  return pathname
+    .replace(/\/(?:home|index)(?:\.html?)?\/?$/, "")
+    .split(/[/_-]/)
+    .filter(Boolean);
+}
+
+function isLocaleRoot(url: string, pathname: string, $: CheerioAPI): boolean {
+  if (!LOCALE_ROOT.test(pathname)) return false;
+  const page = new URL(url);
+  const declared = new Set<string>();
+  let siblings = 0;
+  for (const el of $('link[rel~="alternate"][hreflang]').toArray()) {
+    const code = ($(el).attr("hreflang") ?? "").trim().toLowerCase();
+    // `x-default` names no locale, and some sites point it at `/` everywhere.
+    if (code === "" || code === "x-default") continue;
+    const parts = code.split(/[-_]/);
+    for (const part of parts) declared.add(part);
+    let href: URL;
+    try {
+      href = new URL($(el).attr("href") ?? "", page);
+    } catch {
+      continue;
+    }
+    const path = href.pathname.toLowerCase();
+    // A same-origin `/` alternate is what a site with lazy hreflang emits on
+    // every page, so only another host's root counts as a sibling root.
+    if (path === "/") {
+      if (href.host !== page.host) siblings++;
+    } else if (
+      LOCALE_ROOT.test(path) &&
+      localeParts(path).every((part) => parts.includes(part))
+    )
+      siblings++;
+  }
+  return (
+    siblings >= 2 && localeParts(pathname).every((part) => declared.has(part))
+  );
 }
 
 /** A same-origin path with a trailing `index.html` folded into its directory. */
@@ -730,7 +787,7 @@ function directoryPath(pathname: string): string {
  *
  * A path of exactly `/` is not the only homepage. A GitHub project site lives
  * at `/<project>/`, a store at `/shop/`, a docs portal at `/docs/`, a locale
- * at `/en-us/`. Reading such a root as a content page runs article checks on a
+ * at `/en-us/`. Reading such a root as a general page runs article checks on a
  * homepage. The path alone cannot tell a mounted site's root from a section of
  * a larger site (`/blog/`), so the page's own links decide:
  *
@@ -987,6 +1044,7 @@ function hasJsonLdType(jsonLd: object[], types: string[]): boolean {
 
 /** Top-level entities and `@graph` members of the given types. */
 function countJsonLdType(jsonLd: object[], types: string[]): number {
+  const wanted = new Set(types.map((type) => type.toLowerCase()));
   // Only top-level entities and @graph members describe purpose. Do not visit
   // nested related entities, and do not mutate the parsed evidence.
   const count = (node: unknown): number => {
@@ -996,10 +1054,17 @@ function countJsonLdType(jsonLd: object[], types: string[]): number {
     const obj = node as Record<string, unknown>;
     const declared = obj["@type"];
     const names = Array.isArray(declared) ? declared : [declared];
+    // Case and a `www.` host are ignored: `"@type": "product"` under
+    // `https://www.schema.org` is invalid markup for a consumer, but it still
+    // says what the page is about. Audits that judge the markup stay strict.
     const own = names.some(
       (name) =>
         typeof name === "string" &&
-        types.includes(name.replace(/^https?:\/\/schema\.org\//, "")),
+        wanted.has(
+          name
+            .replace(/^https?:\/\/(?:www\.)?schema\.org\//i, "")
+            .toLowerCase(),
+        ),
     )
       ? 1
       : 0;

@@ -125,7 +125,7 @@ export class ServiceSchemaAudit extends Audit {
     // carries the real precondition.
     applicablePageTypes: [
       PageType.Homepage,
-      PageType.Unknown,
+      PageType.General,
       PageType.Article,
     ],
     defaultPriority: CheckPriority.Medium,

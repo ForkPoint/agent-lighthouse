@@ -262,7 +262,7 @@ export class MarkdownAlternateAudit extends Audit {
 
   async audit(ctx: CheckContext): Promise<AuditResult> {
     // A markdown alternate is per-page, and a marketing homepage almost never
-    // has one even on sites where every content page does. Prefer the page that
+    // has one even on sites where every interior page does. Prefer the page that
     // declares an alternate, then any non-homepage. Costs no fetch.
     const page =
       ctx.pages.find(

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { ScanConditionsSchema } from "#core/schemas";
+import {
+  PageScopeOptionsSchema,
+  ScanConditionsSchema,
+  ScannedPageSchema,
+} from "#core/schemas";
 import {
   classifyPage,
   declaredPageClassification,
@@ -42,7 +46,7 @@ describe("page purpose", () => {
         `https://example.com/${path}`,
         `<main><h1>Information</h1><p>${prose}</p></main>`,
       ),
-    ).toBe("unknown");
+    ).toBe(PageType.General);
   });
 
   it("recognizes an article without Article schema", () => {
@@ -69,7 +73,7 @@ describe("page purpose", () => {
         "https://example.com/news",
         `<main><h1>News</h1><article><h2>One</h2><p>Preview</p></article><article><h2>Two</h2><p>Preview</p></article></main>`,
       ),
-    ).toBe("unknown");
+    ).toBe(PageType.General);
   });
 
   it("does not mistake related Article schema for the page purpose", () => {
@@ -78,7 +82,7 @@ describe("page purpose", () => {
         "https://example.com/privacy",
         `<script type="application/ld+json">{"@type":"WebPage","subjectOf":{"@type":"Article"}}</script><main><h1>Privacy</h1><p>${prose}</p></main>`,
       ),
-    ).toBe("unknown");
+    ).toBe(PageType.General);
   });
 
   it("keeps conflicting primary article and product signals uncertain", () => {
@@ -87,7 +91,7 @@ describe("page purpose", () => {
         "https://example.com/guide",
         `<meta property="og:type" content="article"><button data-action="add-to-cart">Buy</button><span data-price="10">10</span><main><h1>Guide</h1><p>${prose}</p></main>`,
       ),
-    ).toBe("unknown");
+    ).toBe(PageType.General);
   });
 
   it.each(["https://example.com/", "https://example.com/docs/"])(
@@ -106,7 +110,7 @@ describe("page purpose", () => {
       "https://example.com/privacy",
       "<h1>Privacy</h1>",
     );
-    page.pageType = PageType.Content;
+    page.pageType = PageType.General;
     page.pageTypeSource = PageTypeSource.Declared;
     expect(
       scopeAudit(mockCheckContext([page]), ArticleSchemaAudit.meta),
@@ -120,7 +124,7 @@ describe("audit type aliases", () => {
   ]);
   it.each([
     { pageTypes: [], applicablePageTypes: [PageType.Product] },
-    { pageTypes: [PageType.Content], applicablePageTypes: [PageType.Product] },
+    { pageTypes: [PageType.General], applicablePageTypes: [PageType.Product] },
   ])("rejects conflicting aliases: %j", (aliases) => {
     expect(() =>
       scopeAudit(ctx, {
@@ -198,7 +202,7 @@ describe("classification evidence", () => {
     expect(
       evidence("/shirt", `<main>${tile("a")}${tile("b")}</main>`),
     ).toMatchObject({
-      type: "unknown",
+      type: PageType.General,
       signals: [],
     });
   });
@@ -304,13 +308,82 @@ describe("classification evidence", () => {
       ),
     ).toMatchObject({ type: "product", confidence: "strong" });
   });
+  it.each(["/us/", "/us/en", "/en-gb/", "/de_de/", "/en/home/"])(
+    "reads a locale root with hreflang alternates as the homepage: %s",
+    (path) => {
+      const alternates =
+        '<link rel="alternate" hreflang="en-us" href="https://example.com/us/"><link rel="alternate" hreflang="de-de" href="https://example.com/de/"><link rel="alternate" hreflang="en-gb" href="https://example.com/en-gb/">';
+      expect(evidence(path, `${alternates}<main><h1>Shop</h1></main>`)).toEqual(
+        {
+          type: "homepage",
+          source: PageTypeSource.Detected,
+          confidence: ClassificationConfidence.Strong,
+          signals: ["locale-root"],
+        },
+      );
+    },
+  );
+  it("does not read a locale-shaped path without hreflang alternates as the homepage", () => {
+    expect(evidence("/us/", "<main><h1>Shop</h1></main>").type).toBe(
+      PageType.General,
+    );
+  });
+  it.each(["/en/tv/", "/de/hi-fi/"])(
+    "does not read a locale-shaped section as the homepage: %s",
+    (path) => {
+      const section = path.split("/")[2];
+      const alternates = `<link rel="alternate" hreflang="en" href="https://example.com/en/${section}/"><link rel="alternate" hreflang="de" href="https://example.com/de/${section}/"><link rel="alternate" hreflang="x-default" href="https://example.com/">`;
+      expect(
+        evidence(path, `${alternates}<h1>Section</h1>`).signals,
+      ).not.toContain("locale-root");
+    },
+  );
+  it("reads a country-first locale root whose siblings share its language", () => {
+    const alternates = ["us", "ca", "gb"]
+      .map(
+        (region) =>
+          `<link rel="alternate" hreflang="en-${region}" href="https://example.com/${region}/en/">`,
+      )
+      .join("");
+    expect(evidence("/us/en/", `${alternates}<h1>Shop</h1>`).signals).toEqual([
+      "locale-root",
+    ]);
+  });
+  it.each(["/en/tv/", "/tv/"])(
+    "does not read a section as the homepage when hreflang points at /: %s",
+    (path) => {
+      const alternates =
+        '<link rel="alternate" hreflang="en" href="/"><link rel="alternate" hreflang="de" href="/de/"><link rel="alternate" hreflang="fr" href="/fr/">';
+      expect(evidence(path, `${alternates}<h1>TVs</h1>`).signals).not.toContain(
+        "locale-root",
+      );
+    },
+  );
+  it("does not read a deeper path under a locale as the homepage", () => {
+    const alternates =
+      '<link rel="alternate" hreflang="en-us" href="https://example.com/us/a"><link rel="alternate" hreflang="de-de" href="https://example.com/de/a">';
+    expect(evidence("/us/shirts/", `${alternates}<h1>Shirts</h1>`).type).toBe(
+      PageType.General,
+    );
+  });
+  it("reads a lowercase product type under www.schema.org as product evidence", () => {
+    expect(
+      evidence(
+        "/chair/1001.html",
+        '<script type="application/ld+json">{"@context":"https://www.schema.org","@type":"product","name":"Chair"}</script>',
+      ),
+    ).toMatchObject({
+      type: "product",
+      signals: ["product-schema-hint", "product-schema-primary"],
+    });
+  });
   it("does not read carousel dots as result pagination", () => {
     expect(
       evidence(
         "/shirt",
         '<div class="filter"></div><div class="swiper-pagination"></div>',
       ),
-    ).toMatchObject({ type: "unknown", signals: [] });
+    ).toMatchObject({ type: PageType.General, signals: [] });
     expect(
       evidence(
         "/shirts",
@@ -347,7 +420,7 @@ describe("classification evidence", () => {
         `<script type="application/ld+json">${json}</script>`,
       ),
     ).toMatchObject({
-      type: "unknown",
+      type: PageType.General,
       confidence: ClassificationConfidence.Unknown,
     });
   });
@@ -372,7 +445,7 @@ describe("classification evidence", () => {
           "/contact",
           `<main><article ${attr}><h1>Story</h1><p>${prose}</p><p>${prose}</p></article></main>`,
         ).type,
-      ).toBe("unknown");
+      ).toBe(PageType.General);
     },
   );
   it("does not use hidden paragraphs to establish primary article prose", () => {
@@ -381,14 +454,14 @@ describe("classification evidence", () => {
         "/contact",
         `<main><article><h1>Title</h1><p>One.</p><p>Two.</p><p hidden>${prose}</p></article></main>`,
       ).type,
-    ).toBe("unknown");
+    ).toBe(PageType.General);
   });
-  it("keeps legacy declarations general, with provenance", () => {
-    expect(declaredPageClassification(PageType.Content)).toEqual({
-      type: "unknown",
+  it("reads a declaration as a strong claim, with provenance", () => {
+    expect(declaredPageClassification(PageType.General)).toEqual({
+      type: PageType.General,
       source: PageTypeSource.Declared,
-      confidence: ClassificationConfidence.Unknown,
-      signals: ["declared:content"],
+      confidence: ClassificationConfidence.Strong,
+      signals: ["declared:general"],
     });
     expect(declaredPageClassification(PageType.Article)).toEqual({
       type: "article",
@@ -463,14 +536,46 @@ describe("canonical metadata at the runner boundary", () => {
 });
 
 describe("saved page-type conditions", () => {
-  it("reads old conditions without inventing classification evidence", () => {
+  it.each(["content", "unknown"])(
+    "reads a pre-v7 %s type as general, without inventing evidence",
+    (legacy) => {
+      const schema = ScanConditionsSchema.shape.pageType;
+      expect(
+        schema.parse({ type: legacy, source: PageTypeSource.Detected }),
+      ).toEqual({
+        type: PageType.General,
+        source: PageTypeSource.Detected,
+      });
+    },
+  );
+
+  it.each(["toString", "constructor", "__proto__"])(
+    "does not read the inherited key %s as a legacy type",
+    (key) => {
+      expect(
+        ScannedPageSchema.safeParse({
+          url: "https://example.com/",
+          pageType: key,
+        }).success,
+      ).toBe(false);
+    },
+  );
+
+  it.each(["content", "unknown"])(
+    "refuses a pre-v7 %s declaration with an error that names general",
+    (legacy) => {
+      const result = PageScopeOptionsSchema.safeParse({
+        pages: [{ url: "https://example.com/a", pageType: legacy }],
+      });
+      expect(result.success).toBe(false);
+      expect(result.error?.issues[0]?.message).toBe(
+        `"${legacy}" was renamed to "general" in v7`,
+      );
+    },
+  );
+
+  it("reads current conditions unchanged", () => {
     const schema = ScanConditionsSchema.shape.pageType;
-    expect(
-      schema.parse({ type: "content", source: PageTypeSource.Detected }),
-    ).toEqual({
-      type: "content",
-      source: PageTypeSource.Detected,
-    });
     const current = {
       type: "article",
       source: PageTypeSource.Detected,

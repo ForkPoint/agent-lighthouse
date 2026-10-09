@@ -156,14 +156,14 @@ describe("Phase 6: The score states its conditions", () => {
       pages: [
         {
           url: "https://example.com/",
-          pageType: PageType.Content,
+          pageType: PageType.General,
         },
       ],
     });
 
     expect(report.conditions).toBeDefined();
-    expect(report.conditions?.pageType.type).toBe("unknown");
-    expect(report.conditions?.pageType.signals).toEqual(["declared:content"]);
+    expect(report.conditions?.pageType.type).toBe(PageType.General);
+    expect(report.conditions?.pageType.signals).toEqual(["declared:general"]);
     expect(report.conditions?.pageType.source).toBe(PageTypeSource.Declared);
   });
 

@@ -65,7 +65,7 @@ function readableText(page: PageContext): string {
  * practical guidance ("replace hedging with evidence-backed claims"). Counted
  * as outbound citations to third-party sources, or explicit <cite> attribution.
  *
- * `answer-readiness/external-citations` is scoped to content pages, so this
+ * `answer-readiness/external-citations` is scoped to article and general pages, so this
  * homepage-scoped check does not double-count it.
  */
 function evidenceBackedClaims(page: PageContext): string[] {

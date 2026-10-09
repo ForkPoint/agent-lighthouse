@@ -19,7 +19,7 @@ sources:
 
 ## What it checks
 
-The v7 runner selects article-purpose pages for this check. A general or legacy `content` declaration does not establish article purpose. Detection can use Open Graph article metadata or primary article prose without author, date, or Article schema fields. Schema-only evidence remains a hint. Detected matches remain informative; a precise `article` declaration uses the existing audit tier.
+The v7 runner selects article-purpose pages for this check. A `general` declaration does not establish article purpose. Detection can use Open Graph article metadata or primary article prose without author, date, or Article schema fields. Schema-only evidence remains a hint. Detected matches remain informative; a precise `article` declaration uses the existing audit tier.
 
 AI systems assign higher confidence to content from named experts. Generic authors like "Staff" or "Admin" reduce trust scoring because agents cannot verify expertise.
 
@@ -46,7 +46,7 @@ Signal is real — schema.org `author` on a Person is genuinely consumed by sear
 - No test for multi-word generic names ("Staff Writer", "Editorial Team").
 - No test for non-English author names or non-English generic names.
 - No test for a Tailwind/CSS-Modules/styled-components byline with no `author` substring in the class.
-- No test where the author is found on a non-content page (homepage/product) — the applicablePageTypes leak is entirely untested.
+- No test where the author is found on a non-article page (homepage/product) — the applicablePageTypes leak is entirely untested.
 - No test for `mainEntity`/`isPartOf`-nested Article, which the shallow helper misses.
 - No test for `<meta name="author" content="WordPress">`-style CMS boilerplate.
 - No test for an Organization-typed author.

@@ -408,11 +408,11 @@ describe("allEvidenceMet", () => {
   it("treats every page type as usable, so a harness never self-gates", () => {
     const evidence = allEvidenceMet();
     for (const type of [
-      "homepage",
-      "category",
-      "product",
-      "content",
-    ] as const) {
+      PageType.Homepage,
+      PageType.Category,
+      PageType.Product,
+      PageType.General,
+    ]) {
       expect(evidence.usablePageTypes.has(type)).toBe(true);
     }
   });

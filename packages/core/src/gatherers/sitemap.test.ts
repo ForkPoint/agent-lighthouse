@@ -729,7 +729,7 @@ describe("sitemapSiteRoot", () => {
     expect(
       sitemapSiteRoot({
         url: "https://a.test/project/",
-        pageType: PageType.Content,
+        pageType: PageType.General,
       }),
     ).toBeUndefined();
     expect(
@@ -742,6 +742,27 @@ describe("sitemapSiteRoot", () => {
       }),
     ).toBeUndefined();
     expect(sitemapSiteRoot(undefined)).toBeUndefined();
+  });
+
+  it.each(["/en/home/", "/en/home", "/en/home.html"])(
+    "scopes a home page to the directory that holds it: %s",
+    (path) => {
+      expect(
+        sitemapSiteRoot({
+          url: `https://a.test${path}`,
+          pageType: PageType.Homepage,
+        }),
+      ).toBe("https://a.test/en/");
+    },
+  );
+
+  it("leaves a root home page unscoped", () => {
+    expect(
+      sitemapSiteRoot({
+        url: "https://a.test/home/",
+        pageType: PageType.Homepage,
+      }),
+    ).toBeUndefined();
   });
 });
 

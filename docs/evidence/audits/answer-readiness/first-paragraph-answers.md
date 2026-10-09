@@ -19,7 +19,7 @@ sources:
 
 ## What it checks
 
-The v7 runner selects article-purpose pages for this check. A general or legacy `content` declaration does not establish article purpose. Detection can use Open Graph article metadata or primary article prose without author, date, or Article schema fields. Schema-only evidence remains a hint. Detected matches remain informative; a precise `article` declaration uses the existing audit tier.
+The v7 runner selects article-purpose pages for this check. A `general` declaration does not establish article purpose. Detection can use Open Graph article metadata or primary article prose without author, date, or Article schema fields. Schema-only evidence remains a hint. Detected matches remain informative; a precise `article` declaration uses the existing audit tier.
 
 AI search engines score the first paragraph highest for extractive QA. Preamble text like "In this article" or "Welcome" wastes this prime position, causing agents to extract low-value content as the page's representative answer.
 
@@ -64,7 +64,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Evidence (2026-08-21)
 
-**Mechanism claim:** On a content page, the first substantive paragraph may be written as a direct declarative answer, rather than an "In this article…" preamble. The claim is that such a paragraph is more likely to be the passage an AI answer engine extracts and cites than a paragraph further down the page.
+**Mechanism claim:** On an article page, the first substantive paragraph may be written as a direct declarative answer, rather than an "In this article…" preamble. The claim is that such a paragraph is more likely to be the passage an AI answer engine extracts and cites than a paragraph further down the page.
 
 **Grade: C** — the positional half of the claim has real observational support. But the specific thing this audit measures — the absence of five English preamble phrases — has no documented consumer and no measured effect. The same dataset that supplies the positional evidence argues against first-sentence extraction.
 

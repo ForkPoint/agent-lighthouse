@@ -87,7 +87,7 @@ describe("SpeakableSchemaAudit", () => {
       expect(audit.audit(ctx).status).toBe(CheckStatus.NotApplicable);
     });
 
-    it("brings a non-content page into scope when it carries Article markup", () => {
+    it("brings a non-article page into scope when it carries Article markup", () => {
       const ctx = mockCheckContext([
         homepage(ld(newsArticle({ speakable: speakableSpec }))),
       ]);

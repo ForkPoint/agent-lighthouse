@@ -21,7 +21,7 @@ sources:
 
 ## What it checks
 
-The v7 runner selects article-purpose pages for this check. A general or legacy `content` declaration does not establish article purpose. Detection can use Open Graph article metadata or primary article prose without author, date, or Article schema fields. Schema-only evidence remains a hint. Detected matches remain informative; a precise `article` declaration uses the existing audit tier.
+The v7 runner selects article-purpose pages for this check. A `general` declaration does not establish article purpose. Detection can use Open Graph article metadata or primary article prose without author, date, or Article schema fields. Schema-only evidence remains a hint. Detected matches remain informative; a precise `article` declaration uses the existing audit tier.
 
 AI agents extract Article schema to identify content freshness (datePublished/dateModified), authorship, and topic (headline). Without it, your blog content is treated as generic text with no provenance, reducing its chances of being cited in AI-generated answers.
 
@@ -41,7 +41,7 @@ Article schema genuinely helps AI attribution, but the page-selection logic is w
 
 **Test gaps:**
 
-- No test for a non-article 'content' page (/about, /privacy) being wrongly required to carry Article schema — the dominant false fail
+- No test for a non-article `general` page (/about, /privacy) being wrongly required to carry Article schema — the dominant false fail
 - No test for a blog index page whose graph contains hoisted BlogPosting listing stubs
 - No test where a related-posts stub precedes the main Article on the same page
 - No test asserting `dateModified` absence should not block a pass

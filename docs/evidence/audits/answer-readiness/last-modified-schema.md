@@ -32,7 +32,7 @@ sources:
 
 ## What it checks
 
-The v7 runner selects article-purpose pages for this check. A general or legacy `content` declaration does not establish article purpose. Detection can use Open Graph article metadata or primary article prose without author, date, or Article schema fields. Schema-only evidence remains a hint. Detected matches remain informative; a precise `article` declaration uses the existing audit tier.
+The v7 runner selects article-purpose pages for this check. A `general` declaration does not establish article purpose. Detection can use Open Graph article metadata or primary article prose without author, date, or Article schema fields. Schema-only evidence remains a hint. Detected matches remain informative; a precise `article` declaration uses the existing audit tier.
 
 AI engines use dateModified in JSON-LD to determine content freshness. Content that shows recent updates is prioritized over stale content.
 
@@ -40,7 +40,7 @@ AI engines use dateModified in JSON-LD to determine content freshness. Content t
 
 `dateModified` is a real, consumed freshness signal so the audit deserves to exist, but its core rule is wrong: it WARNS when `dateModified` equals `datePublished`, which is the correct and honest markup for an article that has never been revised. The audit therefore tells users that accurate metadata is a problem and implicitly nudges them to falsify revision dates — actively harmful guidance. Combined with the unfiltered page loop, a homepage's `WebPage.dateModified` also passes the audit on behalf of an entire undated blog.
 
-**Required fix:** 1) Stop warning when `dateModified === datePublished`; that is valid markup. Pass when `dateModified` is present and parseable, and warn only when it is absent or older than a justifiable staleness threshold. 2) Compare with `Date.parse`, not string equality. 3) Filter to `p.pageType === 'content'` and either drop `WebPage` from the type list or rank Article/BlogPosting/NewsArticle ahead of it, so the homepage cannot answer for the blog. 4) Aggregate across content pages (n of m) instead of returning on the first hit. 5) Replace the local shallow walker with `flattenJsonLd`. 6) Since 10.9 already accepts `dateModified` as a date signal, make the two explicitly complementary: 10.9 = any date visible, 10.10 = machine-readable revision date specifically.
+**Required fix:** 1) Stop warning when `dateModified === datePublished`; that is valid markup. Pass when `dateModified` is present and parseable, and warn only when it is absent or older than a justifiable staleness threshold. 2) Compare with `Date.parse`, not string equality. 3) Filter to `p.pageType === 'content'` and either drop `WebPage` from the type list or rank Article/BlogPosting/NewsArticle ahead of it, so the homepage cannot answer for the blog. 4) Aggregate across article pages (n of m) instead of returning on the first hit. 5) Replace the local shallow walker with `flattenJsonLd`. 6) Since 10.9 already accepts `dateModified` as a date signal, make the two explicitly complementary: 10.9 = any date visible, 10.10 = machine-readable revision date specifically.
 
 **False-positive risks:**
 
@@ -48,7 +48,7 @@ AI engines use dateModified in JSON-LD to determine content freshness. Content t
 - String inequality, not date comparison. `"2025-01-01"` vs `"2025-01-01T00:00:00Z"` vs `"2025-01-01T00:00:00+00:00"` denote the same instant but compare unequal → false PASS ('dateModified differs from datePublished') on markup carrying no update information at all.
 - No recency check despite the guidance claiming freshness ranking: `"dateModified": "2011-04-02"` passes as long as it differs from datePublished, so a decade-stale page scores like one updated yesterday. Future-dated build timestamps also pass without comment.
 - `applicablePageTypes: ['content']` does not filter `ctx.pages`, and `WebPage` is in the type list. Nearly every homepage emits `{"@type":"WebPage","dateModified":…}` via Yoast/next-seo, so the audit passes on the homepage and never examines the blog posts that actually lack it — with `pageUrl` reporting the homepage.
-- Returns on the first node with `dateModified`, so 1 of 5 content pages having it yields an unqualified PASS.
+- Returns on the first node with `dateModified`, so 1 of 5 article pages having it yields an unqualified PASS.
 - The shallow local `findJsonLdByType` misses `mainEntity`/`isPartOf`-nested Article nodes → false FAIL on Yoast/next-seo's most common graph shape. The file reads `p.structuredData ?? p.jsonLd`, so Microdata/RDFa flow in, but the shallow walker then discards most of it.
 
 **Test gaps:**
@@ -56,7 +56,7 @@ AI engines use dateModified in JSON-LD to determine content freshness. Content t
 - No test asserting that an unrevised article with equal dates is acceptable — the tests codify the harmful warn as correct.
 - No test for equivalent-but-differently-formatted timestamps.
 - No test for a very old `dateModified` (staleness).
-- No test where the passing `dateModified` lives on the homepage while content pages have none.
+- No test where the passing `dateModified` lives on the homepage while article pages have none.
 - No test for `mainEntity`-nested Article.
 - No test exercising the `structuredData` branch with actual Microdata/RDFa.
 

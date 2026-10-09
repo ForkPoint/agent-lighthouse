@@ -6,10 +6,10 @@ import { CheckPriority, CheckStatus } from "#core/types";
 describe("DatesOnContentAudit", () => {
   const audit = new DatesOnContentAudit();
 
-  it("is not-applicable when no article content page is scanned", () => {
+  it("is not-applicable when no article page is scanned", () => {
     const result = audit.audit(mockCheckContext([]));
     expect(result.status).toBe(CheckStatus.NotApplicable);
-    expect(result.message).toContain("No article content pages");
+    expect(result.message).toContain("No article pages");
   });
 
   it("warns on a publication-only <time datetime> element", () => {
@@ -51,7 +51,7 @@ describe("DatesOnContentAudit", () => {
     expect(result.message).toContain("publication date");
   });
 
-  it("fails when a content page has no date at all", () => {
+  it("fails when an article page has no date at all", () => {
     const page = mockPageContext(
       "https://example.com/blog/post",
       "<html><body><main><p>An article with no date information present here.</p></main></body></html>",
@@ -190,7 +190,7 @@ describe("DatesOnContentAudit", () => {
     );
     page.url = "not-a-valid-url";
     const result = audit.audit(mockCheckContext([page]));
-    // Still treated as a content page (pathname='' does not end in .xml, body is
+    // Still treated as an article page (pathname='' does not end in .xml, body is
     // not XML), so the audit runs and finds the publication date → warn.
     expect(result.status).toBe(CheckStatus.Warn);
   });

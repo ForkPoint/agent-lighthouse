@@ -5,7 +5,7 @@ import { CheckStatus } from "#core/types";
 
 const ld = (obj: unknown) =>
   `<script type="application/ld+json">${JSON.stringify(obj)}</script>`;
-// A /blog/* URL (not the first page) is classified as a content page.
+// A /blog/* URL (not the first page) is classified as an article page.
 const contentPage = (head: string) =>
   mockPageContext(
     "https://example.com/blog/my-post",
@@ -29,10 +29,10 @@ describe("ArticleSchemaAudit", () => {
     const ctx = mockCheckContext([]);
     const result = audit.audit(ctx);
     expect(result.status).toBe(CheckStatus.NotApplicable);
-    expect(result.message).toContain("No blog/content pages");
+    expect(result.message).toContain("No article pages");
   });
 
-  it("passes when a content page has a complete Article schema", () => {
+  it("passes when an article page has a complete Article schema", () => {
     const ctx = mockCheckContext([contentPage(ld(completeArticle))]);
     const result = audit.audit(ctx);
     expect(result.status).toBe(CheckStatus.Pass);
@@ -72,7 +72,7 @@ describe("ArticleSchemaAudit", () => {
     expect(result.message).toContain("0 complete");
   });
 
-  it("fails when a content page has no Article schema", () => {
+  it("fails when an article page has no Article schema", () => {
     const ctx = mockCheckContext([
       contentPage(
         ld({

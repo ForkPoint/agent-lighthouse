@@ -137,7 +137,7 @@ const report = await runScan("https://yourstore.com", {
 console.log(report.overallScore, report.scoreTier);
 ```
 
-A `PageOverride` declares `{ url, pageType }`. Supported types are `homepage`, `category`, `product`, `article`, `unknown`, and the legacy `content` alias. `content` means general/unknown purpose; it never asserts that a page is an article. An article is editorial content, not every page with text.
+A `PageOverride` declares `{ url, pageType }`. Supported types are `homepage`, `category`, `product`, `article` and `general`. `article` is an editorial page: a blog post, news story or guide. `general` is any other page — about, FAQ, help, contact, policy — and never carries article obligations. The pre-v7 names `unknown` and `content` fail validation.
 
 The CLI config, SDK, and MCP tool accept the same `pageType` and `pages` fields. Invalid types or non-absolute override URLs fail validation before fetching. Older SDK versions silently skipped malformed override URLs; v7 reports the error.
 

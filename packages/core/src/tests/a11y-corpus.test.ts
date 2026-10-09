@@ -33,7 +33,7 @@ function buildFixturePage(
   const $ = parseHtml(html);
   return {
     url,
-    pageType: PageType.Content,
+    pageType: PageType.General,
     pageTypeSource: PageTypeSource.Declared,
     fetchResult: {
       url,

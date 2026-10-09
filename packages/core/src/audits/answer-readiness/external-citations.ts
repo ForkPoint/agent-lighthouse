@@ -31,12 +31,12 @@ export class ExternalCitationsAudit extends Audit {
       EvidenceKey.RenderedBody,
       EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: [PageType.Unknown, PageType.Article],
+    applicablePageTypes: [PageType.General, PageType.Article],
     defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "AI RAG systems cross-reference your outbound citations against their knowledge graph to validate claims. Pages without external references appear as unsourced opinion, receiving lower trust scores in AI-generated answers.",
-      fix: "Add at least 2 outbound links per content page to authoritative external sources that support your claims. Link to research papers, official documentation, or industry authorities.",
+      fix: "Add at least 2 outbound links per article or general page to authoritative external sources that support your claims. Link to research papers, official documentation, or industry authorities.",
       code: '<p>According to <a href="https://research.google/pubs/">Google Research</a>, this approach improves accuracy by 40%.\nSee also <a href="https://w3.org/standards">W3C standards</a>.</p>',
       effort: FixEffort.Easy,
       tags: ["trust", "e-e-a-t", "content-quality", "generative-engine"],
@@ -48,7 +48,7 @@ export class ExternalCitationsAudit extends Audit {
     if (!page) {
       return this.fail(
         "No pages scanned.",
-        "At least 2 <a> tags pointing to external domains per content page",
+        "At least 2 <a> tags pointing to external domains per article or general page",
         "No pages scanned",
         {
           priority: CheckPriority.Medium,
@@ -96,7 +96,7 @@ export class ExternalCitationsAudit extends Audit {
     if (pagesWithSufficientLinks > 0) {
       return this.pass(
         `Found ${totalExternalLinks} external link(s) across ${ctx.pages.length} page(s); ${pagesWithSufficientLinks} page(s) have 2+ external links.`,
-        "At least 2 <a> tags pointing to external domains per content page",
+        "At least 2 <a> tags pointing to external domains per article or general page",
         `External domains: ${[...new Set(examples)].join(", ")}`,
         page.url,
       );
@@ -105,7 +105,7 @@ export class ExternalCitationsAudit extends Audit {
     if (totalExternalLinks > 0) {
       return this.warn(
         `Found ${totalExternalLinks} external link(s) but no page has 2+ external citations.`,
-        "At least 2 <a> tags pointing to external domains per content page",
+        "At least 2 <a> tags pointing to external domains per article or general page",
         `External domains: ${[...new Set(examples)].join(", ")}`,
         {
           priority: CheckPriority.Medium,
@@ -119,7 +119,7 @@ export class ExternalCitationsAudit extends Audit {
 
     return this.fail(
       "No external links found on any scanned page.",
-      "At least 2 <a> tags pointing to external domains per content page",
+      "At least 2 <a> tags pointing to external domains per article or general page",
       "Not found",
       {
         priority: CheckPriority.Medium,
