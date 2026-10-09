@@ -7,7 +7,7 @@ import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
 import type { CheckContext } from "#core/check-context";
 import { weightForGrade } from "#core/scorer";
-import { flattenJsonLd } from "#core/parser";
+import { resolveProducts } from "#core/product-schema";
 import {
   AuditTier,
   CheckPriority,
@@ -17,18 +17,6 @@ import {
   PageType,
   ScoreDisplayMode,
 } from "#core/types";
-
-function matchesAnyType(
-  schema: Record<string, unknown>,
-  types: string[],
-): boolean {
-  return types.some((t) => {
-    const st = schema["@type"];
-    if (typeof st === "string") return st === t;
-    if (Array.isArray(st)) return st.includes(t);
-    return false;
-  });
-}
 
 export class ProductDetailsAudit extends Audit {
   static override meta: AuditMeta = {
@@ -76,15 +64,9 @@ export class ProductDetailsAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    const schemas = ctx.pages.flatMap((p) =>
-      flattenJsonLd(p.structuredData ?? p.jsonLd),
-    );
-    const products = schemas.filter((s) =>
-      matchesAnyType(s as Record<string, unknown>, [
-        "Product",
-        "IndividualProduct",
-        "ProductModel",
-      ]),
+    // A ProductGroup's variants carry its shared properties, such as brand.
+    const products = ctx.pages.flatMap((p) =>
+      resolveProducts(p.structuredData ?? p.jsonLd),
     );
 
     if (products.length === 0) {

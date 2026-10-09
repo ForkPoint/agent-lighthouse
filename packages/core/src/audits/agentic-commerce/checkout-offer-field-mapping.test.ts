@@ -171,4 +171,34 @@ describe("CheckoutOfferFieldMappingAudit", () => {
   it("reports the product page the offer is on", () => {
     expect(run().pageUrl).toBe(PRODUCT_URL);
   });
+
+  it("reads the first entry of an image list", () => {
+    const result = run({
+      image: [
+        "https://example.com/img/ark-001.jpg",
+        "https://example.com/img/ark-002.jpg",
+      ],
+    });
+    expect(result.status).toBe(CheckStatus.Pass);
+  });
+
+  it("reads a ProductGroup variant with the group's brand", () => {
+    const { brand, ...variant } = FULL;
+    const group = {
+      "@context": "https://schema.org",
+      "@type": "ProductGroup",
+      productGroupID: "ARK",
+      brand,
+      hasVariant: [variant],
+    };
+    const page = mockPageContext(
+      PRODUCT_URL,
+      `<html><head>${ld(group)}</head><body><main><p>Widget</p></main></body></html>`,
+      1,
+    );
+    const result = new CheckoutOfferFieldMappingAudit().audit(
+      mockCheckContext([page]),
+    );
+    expect(result.status).toBe(CheckStatus.Pass);
+  });
 });

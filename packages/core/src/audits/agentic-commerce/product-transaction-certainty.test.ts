@@ -6,6 +6,29 @@ import { CheckStatus } from "#core/types";
 const ld = (obj: unknown) =>
   `<script type="application/ld+json">${JSON.stringify(obj)}</script>`;
 
+// Google's variant layout: shared properties on the ProductGroup, the
+// varying ones and each variant's own Offer under hasVariant.
+const productGroup = (offers: Record<string, unknown> = {}) => ({
+  "@context": "https://schema.org",
+  "@type": "ProductGroup",
+  productGroupID: "SHIRT",
+  name: "Shirt",
+  brand: { "@type": "Brand", name: "Acme" },
+  category: "Shirts",
+  ...offers,
+  hasVariant: ["S", "M"].map((size) => ({
+    "@type": "Product",
+    sku: `SHIRT-${size}`,
+    size,
+    offers: {
+      "@type": "Offer",
+      price: 45,
+      priceCurrency: "EUR",
+      availability: "https://schema.org/InStock",
+    },
+  })),
+});
+
 describe("ProductTransactionCertaintyAudit", () => {
   const audit = new ProductTransactionCertaintyAudit();
 
@@ -129,5 +152,19 @@ describe("ProductTransactionCertaintyAudit", () => {
     ]);
     const result = audit.audit(ctx);
     expect(result.status).toBe(CheckStatus.Pass);
+  });
+
+  it("reads the offers of a ProductGroup's variants", () => {
+    const ctx = mockCheckContext([
+      mockPageContext(
+        "https://example.com/products/shirt",
+        `<html><head>${ld(productGroup())}</head><body></body></html>`,
+        1,
+      ),
+    ]);
+    const result = audit.audit(ctx);
+    // availability and price + currency; no priceValidUntil, no return policy.
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.found).toContain("2/4");
   });
 });

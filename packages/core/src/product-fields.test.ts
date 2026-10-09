@@ -327,3 +327,37 @@ describe("extractProductFieldVerification — flatten & sources", () => {
     expect(result.sourceUrl).toBe("https://shop.test/b");
   });
 });
+
+describe("extractProductFieldVerification — ProductGroup", () => {
+  it("reads a variant with the group's shared brand and category", () => {
+    const result = extractProductFieldVerification([
+      makePage(PageType.Product, [
+        {
+          "@type": "ProductGroup",
+          productGroupID: "SHIRT",
+          brand: { "@type": "Brand", name: "Acme" },
+          category: "Shirts",
+          hasVariant: [
+            {
+              "@type": "Product",
+              sku: "SHIRT-S",
+              offers: {
+                "@type": "Offer",
+                price: 45,
+                priceCurrency: "EUR",
+                availability: "https://schema.org/InStock",
+              },
+            },
+          ],
+        },
+      ]),
+    ]);
+    expect(result).toMatchObject({
+      sku: FieldStatus.Found,
+      brand: FieldStatus.Found,
+      category: FieldStatus.Found,
+      availability: FieldStatus.Found,
+      priceCurrency: FieldStatus.Found,
+    });
+  });
+});

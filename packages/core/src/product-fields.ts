@@ -1,32 +1,7 @@
 import type { ProductFieldVerification } from "./types";
 import type { PageContext } from "./check-context";
 import { FieldStatus, PageType } from "./types";
-
-const PRODUCT_TYPES = ["Product", "IndividualProduct", "ProductModel"];
-
-/** Flatten @graph wrappers so nested schema objects are inspectable. */
-function flatten(blocks: object[]): Record<string, unknown>[] {
-  const flat: Record<string, unknown>[] = [];
-  for (const block of blocks) {
-    const b = block as Record<string, unknown>;
-    if (Array.isArray(b["@graph"])) {
-      for (const item of b["@graph"]) {
-        if (item && typeof item === "object")
-          flat.push(item as Record<string, unknown>);
-      }
-    } else {
-      flat.push(b);
-    }
-  }
-  return flat;
-}
-
-function isType(s: Record<string, unknown>, types: string[]): boolean {
-  const t = s["@type"];
-  if (typeof t === "string") return types.includes(t);
-  if (Array.isArray(t)) return t.some((x) => types.includes(x as string));
-  return false;
-}
+import { resolveProducts } from "./product-schema";
 
 /** A field is present only if it carries a real value (not '', null, "null"). */
 function has(v: unknown): boolean {
@@ -69,9 +44,8 @@ export function extractProductFieldVerification(
   let product: Record<string, unknown> | undefined;
   let sourceUrl: string | undefined;
   for (const page of productPages) {
-    const found = flatten(page.structuredData ?? page.jsonLd).find((s) =>
-      isType(s, PRODUCT_TYPES),
-    );
+    // A ProductGroup's variants carry its shared properties, such as brand.
+    const [found] = resolveProducts(page.structuredData ?? page.jsonLd);
     if (found) {
       product = found;
       sourceUrl = page.url;

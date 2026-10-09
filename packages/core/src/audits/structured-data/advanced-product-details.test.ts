@@ -12,6 +12,29 @@ const productPage = (head: string) =>
     1,
   );
 
+// Google's variant layout: shared properties on the ProductGroup, the
+// varying ones and each variant's own Offer under hasVariant.
+const productGroup = (offers: Record<string, unknown> = {}) => ({
+  "@context": "https://schema.org",
+  "@type": "ProductGroup",
+  productGroupID: "SHIRT",
+  name: "Shirt",
+  brand: { "@type": "Brand", name: "Acme" },
+  category: "Shirts",
+  ...offers,
+  hasVariant: ["S", "M"].map((size) => ({
+    "@type": "Product",
+    sku: `SHIRT-${size}`,
+    size,
+    offers: {
+      "@type": "Offer",
+      price: 45,
+      priceCurrency: "EUR",
+      availability: "https://schema.org/InStock",
+    },
+  })),
+});
+
 describe("ProductDetailsAudit", () => {
   const audit = new ProductDetailsAudit();
 
@@ -268,6 +291,13 @@ describe("ProductDetailsAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Pass);
+  });
+
+  it("finds brand and category declared once on the ProductGroup", () => {
+    const result = audit.audit(
+      mockCheckContext([productPage(ld(productGroup()))]),
+    );
     expect(result.status).toBe(CheckStatus.Pass);
   });
 });

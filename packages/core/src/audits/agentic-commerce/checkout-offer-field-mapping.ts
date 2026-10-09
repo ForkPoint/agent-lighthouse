@@ -8,7 +8,7 @@ import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
 import { weightForGrade } from "#core/scorer";
 import type { CheckContext, PageContext } from "#core/check-context";
-import { flattenJsonLd } from "#core/parser";
+import { resolveProducts } from "#core/product-schema";
 import { extractProductFieldVerification } from "#core/product-fields";
 import {
   AuditTier,
@@ -40,7 +40,6 @@ const AVAILABILITY_MAP: Record<string, string> = {
 /** Feed enum values that require a date before the row is accepted. */
 const DATED_AVAILABILITY = new Set(["pre_order", "backorder"]);
 
-const PRODUCT_TYPES = ["Product", "IndividualProduct", "ProductModel"];
 const GTIN_KEYS = ["gtin", "gtin8", "gtin12", "gtin13", "gtin14"] as const;
 const GTIN_LENGTHS = new Set([8, 12, 13, 14]);
 
@@ -62,6 +61,14 @@ function first(value: unknown): Record<string, unknown> | undefined {
 }
 
 function text(value: unknown): string | undefined {
+  // `image: ["https://...", ...]` is a valid list; the first entry is the image.
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = text(item);
+      if (found) return found;
+    }
+    return undefined;
+  }
   if (typeof value === "string" && value.trim()) return value.trim();
   if (typeof value === "number") return String(value);
   const node = first(value);
@@ -289,14 +296,9 @@ function findProduct(
   ctx: CheckContext,
 ): { product: Record<string, unknown>; page: PageContext } | undefined {
   for (const page of ctx.pages) {
-    for (const node of flattenJsonLd(page.structuredData ?? page.jsonLd)) {
-      if (
-        isObject(node) &&
-        typesOf(node).some((t) => PRODUCT_TYPES.includes(t))
-      ) {
-        return { product: node, page };
-      }
-    }
+    // A ProductGroup's variants carry its shared properties, such as brand.
+    const [product] = resolveProducts(page.structuredData ?? page.jsonLd);
+    if (product) return { product, page };
   }
   return undefined;
 }

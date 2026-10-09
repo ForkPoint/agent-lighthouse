@@ -9,6 +9,7 @@ import { Audit } from "#core/audit";
 import { weightForGrade } from "#core/scorer";
 import type { CheckContext, PageContext } from "#core/check-context";
 import { flattenJsonLd } from "#core/parser";
+import { resolveProducts } from "#core/product-schema";
 import {
   AuditTier,
   CheckPriority,
@@ -224,7 +225,14 @@ function findOffer(
   ctx: CheckContext,
 ): { offer: Record<string, unknown>; page: PageContext } | undefined {
   for (const page of ctx.pages) {
-    for (const node of flattenJsonLd(page.jsonLd)) {
+    // JSON-LD, microdata and RDFa alike. The page's own products come first,
+    // so an Offer from a related-products block is not read as this page's.
+    const blocks = page.structuredData ?? page.jsonLd;
+    for (const product of resolveProducts(blocks)) {
+      const offer = first(product["offers"]);
+      if (offer) return { offer, page };
+    }
+    for (const node of flattenJsonLd(blocks)) {
       if (!isObject(node)) continue;
       if (typesOf(node).includes("Offer")) return { offer: node, page };
       const offer = first(node["offers"]);
@@ -239,7 +247,7 @@ function findReturnPolicy(ctx: CheckContext, offer: Record<string, unknown>) {
   const own = first(offer["hasMerchantReturnPolicy"]);
   if (own) return own;
   for (const page of ctx.pages) {
-    for (const node of flattenJsonLd(page.jsonLd)) {
+    for (const node of flattenJsonLd(page.structuredData ?? page.jsonLd)) {
       if (!isObject(node)) continue;
       const policy = first(node["hasMerchantReturnPolicy"]);
       if (policy) return policy;

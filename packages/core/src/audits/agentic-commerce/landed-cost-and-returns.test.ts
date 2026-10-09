@@ -190,4 +190,37 @@ describe("LandedCostAndReturnsAudit", () => {
     });
     expect(result.pageUrl).toBe("https://example.com/products/widget");
   });
+
+  it("reads a product marked up in microdata", () => {
+    // The scanner merges JSON-LD, microdata and RDFa into structuredData.
+    const page = productPage("");
+    page.structuredData = [
+      {
+        "@type": "Product",
+        name: "Widget",
+        offers: { "@type": "Offer", price: "16.00", priceCurrency: "GBP" },
+      },
+    ];
+    const result = audit.audit(mockCheckContext([page]));
+    expect(result.status).not.toBe(CheckStatus.NotApplicable);
+    expect(result.message).toMatch(/shipping/i);
+  });
+
+  it("reads the product's offer before an unrelated Offer node", () => {
+    const related = { "@type": "Offer", price: 1, priceCurrency: "USD" };
+    const own = {
+      "@type": "Product",
+      name: "Widget",
+      offers: {
+        "@type": "Offer",
+        price: 10,
+        priceCurrency: "USD",
+        shippingDetails: FULL_SHIPPING,
+      },
+    };
+    const result = audit.audit(
+      mockCheckContext([productPage(ld([related, own]))]),
+    );
+    expect(result.message).not.toMatch(/no shippingDetails/i);
+  });
 });
