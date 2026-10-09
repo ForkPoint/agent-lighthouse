@@ -1,7 +1,7 @@
 import { cacheOwner } from "./cache-owner";
 import { createHash } from "node:crypto";
-import type { FetchOptions, FetchResult } from "../fetcher";
-import { isSafeUrl } from "../fetcher";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import { isSafeUrl } from "#core/fetcher";
 
 /**
  * The conditional-request probe, once per URL per scan.

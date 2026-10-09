@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { ProductDetailsAudit } from "./advanced-product-details";
-import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
+import { mockPageContext, mockCheckContext } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 const ld = (obj: unknown) =>
   `<script type="application/ld+json">${JSON.stringify(obj)}</script>`;
@@ -10,6 +11,29 @@ const productPage = (head: string) =>
     `<html><head>${head}</head><body></body></html>`,
     1,
   );
+
+// Google's variant layout: shared properties on the ProductGroup, the
+// varying ones and each variant's own Offer under hasVariant.
+const productGroup = (offers: Record<string, unknown> = {}) => ({
+  "@context": "https://schema.org",
+  "@type": "ProductGroup",
+  productGroupID: "SHIRT",
+  name: "Shirt",
+  brand: { "@type": "Brand", name: "Acme" },
+  category: "Shirts",
+  ...offers,
+  hasVariant: ["S", "M"].map((size) => ({
+    "@type": "Product",
+    sku: `SHIRT-${size}`,
+    size,
+    offers: {
+      "@type": "Offer",
+      price: 45,
+      priceCurrency: "EUR",
+      availability: "https://schema.org/InStock",
+    },
+  })),
+});
 
 describe("ProductDetailsAudit", () => {
   const audit = new ProductDetailsAudit();
@@ -25,7 +49,7 @@ describe("ProductDetailsAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No Product schema found");
   });
 
@@ -46,7 +70,7 @@ describe("ProductDetailsAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("Found brand, category, and availability");
   });
 
@@ -69,7 +93,7 @@ describe("ProductDetailsAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("warns when some details are missing (only brand present)", () => {
@@ -84,7 +108,7 @@ describe("ProductDetailsAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("category, availability");
   });
 
@@ -99,7 +123,7 @@ describe("ProductDetailsAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("Missing critical product details");
   });
 
@@ -117,7 +141,7 @@ describe("ProductDetailsAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("handles a typeless schema alongside a Product (return false branch)", () => {
@@ -139,7 +163,7 @@ describe("ProductDetailsAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // Ported from 3.8 (service-product-schema) in the 2026-08-22 split: the
@@ -164,7 +188,7 @@ describe("ProductDetailsAudit", () => {
         ),
       ]);
       const result = audit.audit(ctx);
-      expect(result.status).toBe("fail");
+      expect(result.status).toBe(CheckStatus.Fail);
       expect(result.message).toContain("name");
     });
 
@@ -179,7 +203,7 @@ describe("ProductDetailsAudit", () => {
         ),
       ]);
       const result = audit.audit(ctx);
-      expect(result.status).toBe("fail");
+      expect(result.status).toBe(CheckStatus.Fail);
       expect(result.message).toContain("name");
       expect(result.found).toContain("name");
     });
@@ -199,7 +223,7 @@ describe("ProductDetailsAudit", () => {
           }),
         ),
       ]);
-      expect(audit.audit(ctx).status).toBe("fail");
+      expect(audit.audit(ctx).status).toBe(CheckStatus.Fail);
     });
 
     // 3.8 required `description` too. Its own review recorded that as an
@@ -222,7 +246,7 @@ describe("ProductDetailsAudit", () => {
         ),
       ]);
       const result = audit.audit(ctx);
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.message).not.toContain("description");
     });
 
@@ -244,7 +268,7 @@ describe("ProductDetailsAudit", () => {
         ),
       ]);
       const result = audit.audit(ctx);
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.message).toContain("brand");
     });
   });
@@ -267,6 +291,13 @@ describe("ProductDetailsAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
+  });
+
+  it("finds brand and category declared once on the ProductGroup", () => {
+    const result = audit.audit(
+      mockCheckContext([productPage(ld(productGroup()))]),
+    );
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 });

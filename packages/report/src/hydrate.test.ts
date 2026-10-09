@@ -3,6 +3,12 @@ import type { CheckResult } from "@forkpoint/agent-lighthouse-core";
 import {
   CATEGORY_MASS,
   CATEGORY_NAMES,
+  CheckPriority,
+  CheckStatus,
+  PageType,
+  PageTypeSource,
+  ScoreDisplayMode,
+  ScoreTier,
 } from "@forkpoint/agent-lighthouse-core";
 import { hydrateReport, type PersistedScanRow } from "./hydrate";
 
@@ -12,10 +18,10 @@ function check(
   return {
     title: "t",
     description: "d",
-    status: "pass",
+    status: CheckStatus.Pass,
     score: 1,
-    scoreDisplayMode: "binary",
-    priority: "medium",
+    scoreDisplayMode: ScoreDisplayMode.Binary,
+    priority: CheckPriority.Medium,
     impact: "",
     fix: "",
     ...over,
@@ -28,25 +34,29 @@ function row(over: Partial<PersistedScanRow> = {}): PersistedScanRow {
     url: "https://x.test/",
     domain: "x.test",
     overallScore: 70,
-    scoreTier: "needs-work",
+    scoreTier: ScoreTier.NeedsWork,
     categoryScores: { "agent-interfaces": 80, "answer-readiness": 100 },
     checkResults: [
-      check({ id: "a1", category: "agent-interfaces", status: "pass" }),
+      check({
+        id: "a1",
+        category: "agent-interfaces",
+        status: CheckStatus.Pass,
+      }),
       check({
         id: "a2",
         category: "agent-interfaces",
-        status: "fail",
-        priority: "critical",
+        status: CheckStatus.Fail,
+        priority: CheckPriority.Critical,
       }),
       check({
         id: "e1",
         category: "answer-readiness",
-        status: "warn",
-        priority: "high",
+        status: CheckStatus.Warn,
+        priority: CheckPriority.High,
       }),
     ],
     recommendations: [],
-    pagesData: [{ url: "https://x.test/", pageType: "homepage" }],
+    pagesData: [{ url: "https://x.test/", pageType: PageType.Homepage }],
     durationMs: 999,
     readinessScore: 65,
     readinessVitals: {
@@ -122,26 +132,26 @@ describe("hydrateReport", () => {
           check({
             id: "inf-fail",
             category: "agent-interfaces",
-            status: "fail",
-            priority: "critical",
-            scoreDisplayMode: "informative",
+            status: CheckStatus.Fail,
+            priority: CheckPriority.Critical,
+            scoreDisplayMode: ScoreDisplayMode.Informative,
           }),
           check({
             id: "norm-fail",
             category: "agent-interfaces",
-            status: "fail",
-            priority: "high",
+            status: CheckStatus.Fail,
+            priority: CheckPriority.High,
           }),
           check({
             id: "inf-pass",
             category: "agent-interfaces",
-            status: "pass",
-            scoreDisplayMode: "informative",
+            status: CheckStatus.Pass,
+            scoreDisplayMode: ScoreDisplayMode.Informative,
           }),
           check({
             id: "norm-pass",
             category: "agent-interfaces",
-            status: "pass",
+            status: CheckStatus.Pass,
           }),
         ],
       }),
@@ -208,7 +218,7 @@ describe("hydrateReport", () => {
     };
     const conditions = {
       url: "https://x.test/",
-      pageType: { type: "homepage" as const, source: "detected" as const },
+      pageType: { type: "homepage" as const, source: PageTypeSource.Detected },
       origin: originEvidence,
       coverage: {
         registryMass: 100,

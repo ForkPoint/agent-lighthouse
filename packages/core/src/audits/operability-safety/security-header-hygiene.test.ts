@@ -1,13 +1,20 @@
 import { describe, it, expect } from "vitest";
 import { SecurityHeaderHygieneAudit } from "./security-header-hygiene";
-import { weightForGrade } from "../../scorer";
+import { weightForGrade } from "#core/scorer";
 import {
   mockCheckContext,
   mockPageContext,
   mockFetchResult,
-} from "../../__tests__/test-utils";
-import type { CheckContext, PageContext } from "../../check-context";
-import type { FetchResult } from "../../fetcher";
+} from "#core/__tests__/test-utils";
+import type { CheckContext, PageContext } from "#core/check-context";
+import type { FetchResult } from "#core/fetcher";
+import {
+  AuditTier,
+  CheckPriority,
+  CheckStatus,
+  EvidenceGrade,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** A homepage with the given response headers (lower-cased keys, as the fetcher stores them). */
 function pageWith(
@@ -39,10 +46,12 @@ describe("SecurityHeaderHygieneAudit — meta", () => {
   });
 
   it("is informative at grade C and weight 0 — it can never move a score", () => {
-    expect(meta.tier).toBe("informative");
-    expect(meta.scoreDisplayMode).toBe("informative");
-    expect(meta.evidenceGrade).toBe("C");
-    expect(meta.weight).toBe(weightForGrade("C", "informative"));
+    expect(meta.tier).toBe(AuditTier.Informative);
+    expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Informative);
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.C);
+    expect(meta.weight).toBe(
+      weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    );
     expect(meta.weight).toBe(0);
   });
 
@@ -92,7 +101,7 @@ describe("SecurityHeaderHygieneAudit — never fails a site", () => {
   ];
 
   it.each(cases)("never returns fail for %s", (_label, ctx) => {
-    expect(audit.audit(ctx).status).not.toBe("fail");
+    expect(audit.audit(ctx).status).not.toBe(CheckStatus.Fail);
   });
 });
 
@@ -104,14 +113,14 @@ describe("SecurityHeaderHygieneAudit — when the audit stays silent", () => {
     const result = audit.audit(
       ctxWith({ "/.well-known/security.txt": mockFetchResult("", 404) }),
     );
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("does not publish");
     expect(result.message).toContain("RFC 9116");
   });
 
   it("distinguishes a location that was never fetched from one that returned 404", () => {
     const result = audit.audit(mockCheckContext([], {}));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("never fetched");
   });
 });
@@ -122,7 +131,7 @@ describe("SecurityHeaderHygieneAudit — RFC 9116 conformance", () => {
 
   it("accepts a file with Contact and a future Expires", () => {
     const result = withFile(mockFetchResult(VALID_SECURITY_TXT, 200));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.score).toBe(1);
     expect(result.found).toContain("/.well-known/security.txt");
   });
@@ -131,7 +140,7 @@ describe("SecurityHeaderHygieneAudit — RFC 9116 conformance", () => {
     const result = audit.audit(
       ctxWith({ "/security.txt": mockFetchResult(VALID_SECURITY_TXT, 200) }),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("legacy location");
   });
 
@@ -142,8 +151,8 @@ describe("SecurityHeaderHygieneAudit — RFC 9116 conformance", () => {
         200,
       ),
     );
-    expect(result.status).toBe("warn");
-    expect(result.priority).toBe("low");
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.priority).toBe(CheckPriority.Low);
     expect(result.found).toContain("expired");
   });
 
@@ -151,7 +160,7 @@ describe("SecurityHeaderHygieneAudit — RFC 9116 conformance", () => {
     const result = withFile(
       mockFetchResult("Expires: 2099-12-31T23:59:59.000Z\n", 200),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("no Contact");
   });
 
@@ -159,7 +168,7 @@ describe("SecurityHeaderHygieneAudit — RFC 9116 conformance", () => {
     const result = withFile(
       mockFetchResult("Contact: mailto:s@example.com\n", 200),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("no Expires");
   });
 
@@ -167,7 +176,7 @@ describe("SecurityHeaderHygieneAudit — RFC 9116 conformance", () => {
     const result = withFile(
       mockFetchResult("Contact: mailto:s@example.com\nExpires: soon\n", 200),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("unparseable");
   });
 
@@ -178,7 +187,7 @@ describe("SecurityHeaderHygieneAudit — RFC 9116 conformance", () => {
         200,
       ),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("HTML");
   });
 });
@@ -209,7 +218,7 @@ describe("SecurityHeaderHygieneAudit — the removed header signals", () => {
   it("passes a valid security.txt on a site with none of the three headers", () => {
     expect(
       audit.audit(mockCheckContext([pageWith({})], rootFiles)).status,
-    ).toBe("pass");
+    ).toBe(CheckStatus.Pass);
   });
 
   it("names none of the removed headers in its output", () => {

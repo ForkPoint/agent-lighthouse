@@ -6,11 +6,12 @@ import {
   formatPhaseDone,
   formatStatusLine,
 } from "./progress-renderer";
+import { PhaseId } from "@forkpoint/agent-lighthouse-core";
 
 describe("formatPhaseDone", () => {
   it("renders label, counts and duration with a green check", () => {
     const line = formatPhaseDone({
-      phase: "fetch-root",
+      phase: PhaseId.FetchRoot,
       completed: 34,
       total: 34,
       durationMs: 1234,
@@ -20,7 +21,7 @@ describe("formatPhaseDone", () => {
 
   it("appends a yellow errored suffix when failures > 0", () => {
     const line = formatPhaseDone({
-      phase: "audits",
+      phase: PhaseId.Audits,
       completed: 207,
       total: 207,
       durationMs: 5000,
@@ -32,7 +33,7 @@ describe("formatPhaseDone", () => {
 
   it("omits ANSI codes when color is disabled", () => {
     const line = formatPhaseDone({
-      phase: "report",
+      phase: PhaseId.Report,
       completed: 1,
       total: 1,
       durationMs: 100,
@@ -108,7 +109,7 @@ describe("createProgressRenderer", () => {
     over: Partial<Extract<ScanEvent, { type: "unit:done" }>> = {},
   ): ScanEvent => ({
     type: "unit:done",
-    phase: "audits",
+    phase: PhaseId.Audits,
     completed: 1,
     total: 207,
     fraction: 0.5,
@@ -124,14 +125,14 @@ describe("createProgressRenderer", () => {
     });
     handle({
       type: "phase:start",
-      phase: "fetch-root",
+      phase: PhaseId.FetchRoot,
       totalUnits: 34,
       fraction: 0,
       elapsedMs: 0,
     });
     handle(
       unitDone({
-        phase: "fetch-root",
+        phase: PhaseId.FetchRoot,
         completed: 34,
         total: 34,
         fraction: 0.35,
@@ -139,7 +140,7 @@ describe("createProgressRenderer", () => {
     );
     handle({
       type: "phase:done",
-      phase: "fetch-root",
+      phase: PhaseId.FetchRoot,
       durationMs: 2000,
       fraction: 0.35,
       elapsedMs: 2000,
@@ -159,7 +160,7 @@ describe("createProgressRenderer", () => {
     });
     handle({
       type: "phase:start",
-      phase: "audits",
+      phase: PhaseId.Audits,
       totalUnits: 207,
       fraction: 0.45,
       elapsedMs: 0,
@@ -174,7 +175,7 @@ describe("createProgressRenderer", () => {
 
     handle({
       type: "phase:done",
-      phase: "audits",
+      phase: PhaseId.Audits,
       durationMs: 100,
       fraction: 0.75,
       elapsedMs: 100,
@@ -202,7 +203,7 @@ describe("createProgressRenderer", () => {
     });
     handle({
       type: "phase:start",
-      phase: "audits",
+      phase: PhaseId.Audits,
       totalUnits: 2,
       fraction: 0.45,
       elapsedMs: 0,
@@ -210,7 +211,7 @@ describe("createProgressRenderer", () => {
     handle(unitDone({ completed: 1, total: 2 }));
     handle({
       type: "unit:fail",
-      phase: "audits",
+      phase: PhaseId.Audits,
       label: "3.1 JSON-LD present",
       error: "boom",
       fraction: 0.46,
@@ -218,7 +219,7 @@ describe("createProgressRenderer", () => {
     });
     handle({
       type: "phase:done",
-      phase: "audits",
+      phase: PhaseId.Audits,
       durationMs: 100,
       fraction: 0.75,
       elapsedMs: 100,

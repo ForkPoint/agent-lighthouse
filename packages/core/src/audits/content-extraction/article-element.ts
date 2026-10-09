@@ -1,7 +1,16 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "#core/types";
 
 export class ArticleElementAudit extends Audit {
   static override meta: AuditMeta = {
@@ -11,25 +20,25 @@ export class ArticleElementAudit extends Audit {
     failureTitle: "<article> used for content",
     description:
       "RAG systems chunk content by <article> boundaries for vector embedding, treating each article as an independent retrieval unit. Without <article> tags, AI chunking algorithms fall back to arbitrary text splitting, which fragments related content across multiple embeddings and reduces answer quality.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/content-extraction/article-element.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: ["content"],
-    defaultPriority: "medium",
+    applicablePageTypes: [PageType.Article],
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "RAG systems chunk content by <article> boundaries for vector embedding, treating each article as an independent retrieval unit. Without <article> tags, AI chunking algorithms fall back to arbitrary text splitting, which fragments related content across embeddings and reduces answer quality.",
       fix: "Wrap each self-contained content block (blog post, news story, product card, forum post) in an <article> element. Each <article> should make sense on its own and include a heading.",
       code: "<article>\n  <h2>Article Title</h2>\n  <p>Self-contained content block that makes sense independently...</p>\n</article>",
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl:
         "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/article",
       tags: ["article", "structure", "semantic", "html"],
@@ -69,7 +78,7 @@ export class ArticleElementAudit extends Audit {
       "<article> elements on content pages",
       `${pagesWithArticle}/${ctx.pages.length} pages with <article>`,
       {
-        priority: "medium",
+        priority: CheckPriority.Medium,
         description:
           "RAG systems chunk content by <article> boundaries for vector embedding, treating each article as an independent retrieval unit. Without <article> tags, AI chunking algorithms fall back to arbitrary text splitting, which fragments related content across multiple embeddings and reduces answer quality.",
         code: "<article>\n  <h2>Article Title</h2>\n  <p>Self-contained content block...</p>\n</article>",

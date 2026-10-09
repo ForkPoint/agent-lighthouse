@@ -4,9 +4,10 @@ import {
   duplicateConflicts,
   renderedCurrencies,
 } from "./offer-truth-consistency";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { AuditResult } from "../../types";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { AuditResult } from "#core/types";
+import { CheckStatus } from "#core/types";
 
 const strings = (result: AuditResult, key: string): string[] =>
   (result.details?.[key] ?? []) as string[];
@@ -61,18 +62,20 @@ describe("OfferTruthConsistencyAudit", () => {
 
   it("is notApplicable when no scanned page is a product page", () => {
     const ctx = mockCheckContext([]);
-    expect(new OfferTruthConsistencyAudit().audit(ctx).status).toBe("na");
+    expect(new OfferTruthConsistencyAudit().audit(ctx).status).toBe(
+      CheckStatus.NotApplicable,
+    );
   });
 
   it("passes a page whose markup matches what it renders", () => {
     const r = run(IN_STOCK + ld(offer({ priceValidUntil: "2099-12-31" })));
-    expect(r.status).toBe("pass");
+    expect(r.status).toBe(CheckStatus.Pass);
     expect(r.details?.["contradictions"]).toBe(0);
   });
 
   it("fails InStock markup on a page that says sold out", () => {
     const r = run(SOLD_OUT + ld(offer()));
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures")[0]).toContain("sold out");
   });
 
@@ -86,7 +89,7 @@ describe("OfferTruthConsistencyAudit", () => {
 
   it("fails an offer whose priceValidUntil has passed", () => {
     const r = run(IN_STOCK + ld(offer({ priceValidUntil: "2020-01-31" })));
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures")[0]).toContain("priceValidUntil 2020-01-31");
   });
 
@@ -94,7 +97,7 @@ describe("OfferTruthConsistencyAudit", () => {
     const body =
       '<h1>Merino Crew</h1><p class="price">£49.00</p><button>Add to cart</button>';
     const r = run(body + ld(offer({ priceValidUntil: "2099-12-31" })));
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures")[0]).toContain("declares 59");
   });
 
@@ -104,14 +107,14 @@ describe("OfferTruthConsistencyAudit", () => {
       '<h1>Merino Crew</h1><p class="price"><del>£79.00</del> <span>£59.00</span></p><button>Add to cart</button>';
     expect(
       run(body + ld(offer({ priceValidUntil: "2099-12-31" }))).status,
-    ).toBe("pass");
+    ).toBe(CheckStatus.Pass);
   });
 
   it("fails a rendered currency that cannot be the declared one", () => {
     const body =
       '<h1>Merino Crew</h1><p class="price">$59.00</p><button>Add to cart</button>';
     const r = run(body + ld(offer({ priceValidUntil: "2099-12-31" })));
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures").join(" ")).toContain("declares GBP");
   });
 
@@ -130,7 +133,7 @@ describe("OfferTruthConsistencyAudit", () => {
           offer({ price: "69.00", priceValidUntil: "2099-12-31" }),
         ]),
     );
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures").join(" ")).toContain("described twice");
   });
 
@@ -140,13 +143,13 @@ describe("OfferTruthConsistencyAudit", () => {
     const r = run(
       body + ld({ "@type": "Product", name: "Merino Crew", sku: "MC-100" }),
     );
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures")[0]).toContain("declares no offers.price");
   });
 
   it("warns, never fails, when neither the HTML nor the markup carries a price", () => {
     const r = run('<h1>Merino Crew</h1><div id="price-root"></div>');
-    expect(r.status).toBe("warn");
+    expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "warnings")[0]).toContain("injected client-side");
   });
 
@@ -157,7 +160,7 @@ describe("OfferTruthConsistencyAudit", () => {
     expect(
       run(body + carousel + ld(offer({ priceValidUntil: "2099-12-31" })))
         .status,
-    ).toBe("pass");
+    ).toBe(CheckStatus.Pass);
   });
 
   it("reads currency tokens rendered next to a number", () => {

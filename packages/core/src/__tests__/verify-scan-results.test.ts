@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import { createFetcher } from "../fetcher";
+import { createFetcher } from "#core/fetcher";
 import {
   parseHtml,
   extractJsonLd,
@@ -7,12 +7,13 @@ import {
   extractHeadLinks,
   detectPageType,
   getWordCount,
-} from "../parser";
-import { runAudits } from "../audit-runner";
-import { defaultConfig } from "../audit-config";
-import type { CheckContext, PageContext } from "../check-context";
-import type { FetchResult } from "../fetcher";
-import { allEvidenceMet } from "../scan-evidence";
+} from "#core/parser";
+import { runAudits } from "#core/audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import type { CheckContext, PageContext } from "#core/check-context";
+import type { FetchResult } from "#core/fetcher";
+import { allEvidenceMet } from "#core/scan-evidence";
+import { CheckStatus } from "#core/types";
 
 // Helper to build a real CheckContext from a URL
 async function buildRealContext(url: string): Promise<CheckContext> {
@@ -138,7 +139,7 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
         // is not-applicable rather than a failure.
         const result = allResults.get("machine-discovery/llms-txt-exists");
         expect(result).toBeDefined();
-        expect(result!.status).toBe("na");
+        expect(result!.status).toBe(CheckStatus.NotApplicable);
       });
 
       it("1.8: example.com should NOT have a sitemap", () => {
@@ -150,7 +151,7 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
         expect(result).toBeDefined();
         // With no index of any kind there is nothing to compare against: the
         // missing sitemap is sitemap-exists' failure, not a second one here.
-        expect(result!.status).toBe("warn");
+        expect(result!.status).toBe(CheckStatus.Warn);
       });
 
       // --- Meta Tags (IDs: '4.x') ---
@@ -162,9 +163,11 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
         const result = allResults.get("answer-readiness/meta-description");
         expect(result).toBeDefined();
         if (hasDescription) {
-          expect(result!.status).toBe("pass");
+          expect(result!.status).toBe(CheckStatus.Pass);
         } else {
-          expect(["fail", "warn"]).toContain(result!.status);
+          expect([CheckStatus.Fail, CheckStatus.Warn]).toContain(
+            result!.status,
+          );
         }
       });
 
@@ -174,9 +177,9 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
         const result = allResults.get("content-extraction/language-attribute");
         expect(result).toBeDefined();
         if (lang && lang.length > 0) {
-          expect(result!.status).toBe("pass");
+          expect(result!.status).toBe(CheckStatus.Pass);
         } else {
-          expect(result!.status).toBe("fail");
+          expect(result!.status).toBe(CheckStatus.Fail);
         }
       });
 
@@ -193,12 +196,14 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
         const result = allResults.get("answer-readiness/core-open-graph");
         expect(result).toBeDefined();
         if (missing.length === 0) {
-          expect(result!.status).toBe("pass");
+          expect(result!.status).toBe(CheckStatus.Pass);
         } else if (present.length > 0) {
           // Some present, some missing -> warn
-          expect(["fail", "warn"]).toContain(result!.status);
+          expect([CheckStatus.Fail, CheckStatus.Warn]).toContain(
+            result!.status,
+          );
         } else {
-          expect(result!.status).toBe("fail");
+          expect(result!.status).toBe(CheckStatus.Fail);
         }
       });
 
@@ -209,9 +214,9 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
         const result = allResults.get("structured-data/json-ld-present");
         expect(result).toBeDefined();
         if (jsonLd.length > 0) {
-          expect(result!.status).toBe("pass");
+          expect(result!.status).toBe(CheckStatus.Pass);
         } else {
-          expect(result!.status).toBe("fail");
+          expect(result!.status).toBe(CheckStatus.Fail);
         }
       });
 
@@ -223,9 +228,9 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
         const result = allResults.get("content-extraction/single-h1");
         expect(result).toBeDefined();
         if (h1Count === 1) {
-          expect(result!.status).toBe("pass");
+          expect(result!.status).toBe(CheckStatus.Pass);
         } else {
-          expect(result!.status).toBe("fail");
+          expect(result!.status).toBe(CheckStatus.Fail);
         }
       });
 
@@ -235,9 +240,13 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
         const result = allResults.get("content-extraction/main-element");
         expect(result).toBeDefined();
         if (hasMain) {
-          expect(["pass", "warn"]).toContain(result!.status);
+          expect([CheckStatus.Pass, CheckStatus.Warn]).toContain(
+            result!.status,
+          );
         } else {
-          expect(["fail", "warn"]).toContain(result!.status);
+          expect([CheckStatus.Fail, CheckStatus.Warn]).toContain(
+            result!.status,
+          );
         }
       });
 
@@ -246,9 +255,13 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
         const result = allResults.get("content-extraction/content-depth");
         expect(result).toBeDefined();
         if (wordCount > 300) {
-          expect(["pass", "warn"]).toContain(result!.status);
+          expect([CheckStatus.Pass, CheckStatus.Warn]).toContain(
+            result!.status,
+          );
         } else {
-          expect(["fail", "warn"]).toContain(result!.status);
+          expect([CheckStatus.Fail, CheckStatus.Warn]).toContain(
+            result!.status,
+          );
         }
       });
 
@@ -259,10 +272,12 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
         expect(result).toBeDefined();
         const page = ctx.pages[0];
         if (page && page.fetchResult.status === 200) {
-          expect(result!.status).toBe("pass");
+          expect(result!.status).toBe(CheckStatus.Pass);
         } else {
           // HTTPS but non-200 -> warn
-          expect(["pass", "warn"]).toContain(result!.status);
+          expect([CheckStatus.Pass, CheckStatus.Warn]).toContain(
+            result!.status,
+          );
         }
       });
 
@@ -275,13 +290,13 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
         expect(result).toBeDefined();
         if (fetchResult.error || fetchResult.status === 0) {
           // Nothing measurable — the audit reports na, not a performance defect.
-          expect(result!.status).toBe("na");
+          expect(result!.status).toBe(CheckStatus.NotApplicable);
         } else if (fetchResult.ttfbMs <= 800) {
-          expect(result!.status).toBe("pass");
+          expect(result!.status).toBe(CheckStatus.Pass);
         } else if (fetchResult.ttfbMs <= 2500) {
-          expect(result!.status).toBe("warn");
+          expect(result!.status).toBe(CheckStatus.Warn);
         } else {
-          expect(result!.status).toBe("fail");
+          expect(result!.status).toBe(CheckStatus.Fail);
         }
       });
 
@@ -293,9 +308,9 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
         const result = allResults.get("content-extraction/server-rendered");
         expect(result).toBeDefined();
         if (hasContent) {
-          expect(result!.status).toBe("pass");
+          expect(result!.status).toBe(CheckStatus.Pass);
         } else {
-          expect(result!.status).toBe("fail");
+          expect(result!.status).toBe(CheckStatus.Fail);
         }
       });
 
@@ -308,7 +323,7 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
         expect(ctx.rootFiles["/openapi.json"]!.status).not.toBe(200);
         const result = allResults.get("agent-interfaces/openapi-exists");
         expect(result).toBeDefined();
-        expect(result!.status).toBe("na");
+        expect(result!.status).toBe(CheckStatus.NotApplicable);
       });
 
       // --- Operability & Safety ---
@@ -323,9 +338,11 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
         const result = allResults.get("operability-safety/aria-landmarks");
         expect(result).toBeDefined();
         if (allPresent) {
-          expect(result!.status).toBe("pass");
+          expect(result!.status).toBe(CheckStatus.Pass);
         } else {
-          expect(["fail", "warn"]).toContain(result!.status);
+          expect([CheckStatus.Fail, CheckStatus.Warn]).toContain(
+            result!.status,
+          );
         }
       });
 
@@ -341,7 +358,7 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
           ]) {
             const result = allResults.get(id);
             if (result) {
-              expect(result.status).not.toBe("pass");
+              expect(result.status).not.toBe(CheckStatus.Pass);
             }
           }
         }
@@ -359,7 +376,7 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
           ]) {
             const result = allResults.get(id);
             if (result) {
-              expect(result.status).not.toBe("pass");
+              expect(result.status).not.toBe(CheckStatus.Pass);
             }
           }
         }
@@ -379,7 +396,7 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
           for (const id of openApiChildIds) {
             const result = allResults.get(id);
             if (result) {
-              expect(result.status).not.toBe("pass");
+              expect(result.status).not.toBe(CheckStatus.Pass);
             }
           }
         }
@@ -393,19 +410,19 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
           console.log("\n=== example.com FULL RESULTS ===");
           console.log(`Total checks: ${allResults.size}`);
           console.log(
-            `Pass: ${[...allResults.values()].filter((r) => r.status === "pass").length}`,
+            `Pass: ${[...allResults.values()].filter((r) => r.status === CheckStatus.Pass).length}`,
           );
           console.log(
-            `Warn: ${[...allResults.values()].filter((r) => r.status === "warn").length}`,
+            `Warn: ${[...allResults.values()].filter((r) => r.status === CheckStatus.Warn).length}`,
           );
           console.log(
-            `Fail: ${[...allResults.values()].filter((r) => r.status === "fail").length}`,
+            `Fail: ${[...allResults.values()].filter((r) => r.status === CheckStatus.Fail).length}`,
           );
 
           // Print suspicious results — passes that might be false positives
           console.log("\n--- PASSES (verify these are correct) ---");
           allResults.forEach((val, key) => {
-            if (val.status === "pass") {
+            if (val.status === CheckStatus.Pass) {
               console.log(`  ${key}: ${val.found}`);
             }
           });
@@ -436,9 +453,11 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
         const page = ctx.pages[0];
         // HTTPS is used; if homepage returns 200, expect pass; otherwise warn
         if (page && page.fetchResult.status === 200) {
-          expect(result!.status).toBe("pass");
+          expect(result!.status).toBe(CheckStatus.Pass);
         } else {
-          expect(["pass", "warn"]).toContain(result!.status);
+          expect([CheckStatus.Pass, CheckStatus.Warn]).toContain(
+            result!.status,
+          );
         }
       });
 
@@ -447,11 +466,11 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
         const result = allResults.get("answer-readiness/meta-description");
         expect(result).toBeDefined();
         if (meta["description"] && meta["description"].length >= 50) {
-          expect(result!.status).toBe("pass");
+          expect(result!.status).toBe(CheckStatus.Pass);
         }
         // If it does not have one, check agrees
         if (!meta["description"]) {
-          expect(result!.status).not.toBe("pass");
+          expect(result!.status).not.toBe(CheckStatus.Pass);
         }
       });
 
@@ -460,9 +479,9 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
         const result = allResults.get("content-extraction/language-attribute");
         expect(result).toBeDefined();
         if (lang) {
-          expect(result!.status).toBe("pass");
+          expect(result!.status).toBe(CheckStatus.Pass);
         } else {
-          expect(result!.status).toBe("fail");
+          expect(result!.status).toBe(CheckStatus.Fail);
         }
       });
 
@@ -471,9 +490,9 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
         const result = allResults.get("content-extraction/single-h1");
         expect(result).toBeDefined();
         if (h1Count === 1) {
-          expect(result!.status).toBe("pass");
+          expect(result!.status).toBe(CheckStatus.Pass);
         } else {
-          expect(result!.status).toBe("fail");
+          expect(result!.status).toBe(CheckStatus.Fail);
         }
       });
 
@@ -485,9 +504,11 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
           llmsTxt.status === 200 &&
           llmsTxt.body.trimStart().startsWith("#")
         ) {
-          expect(result!.status).toBe("pass");
+          expect(result!.status).toBe(CheckStatus.Pass);
         } else if (llmsTxt.status === 200) {
-          expect(["pass", "warn"]).toContain(result!.status);
+          expect([CheckStatus.Pass, CheckStatus.Warn]).toContain(
+            result!.status,
+          );
         } else if (
           ctx.pages[0]!.headLinks.some((link) => {
             const rels = link.rel.toLowerCase().trim().split(/\s+/);
@@ -505,9 +526,9 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
             }
           })
         ) {
-          expect(result!.status).toBe("warn");
+          expect(result!.status).toBe(CheckStatus.Warn);
         } else {
-          expect(result!.status).toBe("na");
+          expect(result!.status).toBe(CheckStatus.NotApplicable);
         }
       });
 
@@ -517,18 +538,18 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
           console.log("\n=== docs.anthropic.com FULL RESULTS ===");
           console.log(`Total checks: ${allResults.size}`);
           console.log(
-            `Pass: ${[...allResults.values()].filter((r) => r.status === "pass").length}`,
+            `Pass: ${[...allResults.values()].filter((r) => r.status === CheckStatus.Pass).length}`,
           );
           console.log(
-            `Warn: ${[...allResults.values()].filter((r) => r.status === "warn").length}`,
+            `Warn: ${[...allResults.values()].filter((r) => r.status === CheckStatus.Warn).length}`,
           );
           console.log(
-            `Fail: ${[...allResults.values()].filter((r) => r.status === "fail").length}`,
+            `Fail: ${[...allResults.values()].filter((r) => r.status === CheckStatus.Fail).length}`,
           );
 
           console.log("\n--- PASSES (verify these are correct) ---");
           allResults.forEach((val, key) => {
-            if (val.status === "pass") {
+            if (val.status === CheckStatus.Pass) {
               console.log(`  ${key}: ${val.found}`);
             }
           });
@@ -556,7 +577,7 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
       it("access-crawl-control/https-enabled: allbirds.com HTTPS check matches reality", () => {
         const result = allResults.get("access-crawl-control/https-enabled");
         expect(result).toBeDefined();
-        expect(result!.status).toBe("pass");
+        expect(result!.status).toBe(CheckStatus.Pass);
       });
 
       it("content-extraction/language-attribute: allbirds.com lang attribute check matches reality", () => {
@@ -564,16 +585,16 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
         const result = allResults.get("content-extraction/language-attribute");
         expect(result).toBeDefined();
         if (lang) {
-          expect(result!.status).toBe("pass");
+          expect(result!.status).toBe(CheckStatus.Pass);
         } else {
-          expect(result!.status).toBe("fail");
+          expect(result!.status).toBe(CheckStatus.Fail);
         }
       });
 
       it("answer-readiness/core-open-graph: allbirds.com Open Graph tags check matches reality", () => {
         const result = allResults.get("answer-readiness/core-open-graph");
         expect(result).toBeDefined();
-        expect(["pass", "warn"]).toContain(result!.status);
+        expect([CheckStatus.Pass, CheckStatus.Warn]).toContain(result!.status);
       });
 
       it("agentic-commerce/agent-ua-commerce-parity: allbirds.com agent UA parity matches reality", () => {
@@ -582,7 +603,12 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
         );
         expect(result).toBeDefined();
         // Live e-commerce stores frequently gate or differentiate AI crawler UAs on commerce paths
-        expect(["pass", "warn", "fail", "na"]).toContain(result!.status);
+        expect([
+          CheckStatus.Pass,
+          CheckStatus.Warn,
+          CheckStatus.Fail,
+          CheckStatus.NotApplicable,
+        ]).toContain(result!.status);
       });
 
       it("machine-discovery/sitemap-exists: allbirds.com sitemap discovery matches reality", () => {
@@ -592,9 +618,11 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
         const result = allResults.get("machine-discovery/sitemap-exists");
         expect(result).toBeDefined();
         if (hasSitemap) {
-          expect(result!.status).toBe("pass");
+          expect(result!.status).toBe(CheckStatus.Pass);
         } else {
-          expect(["fail", "warn"]).toContain(result!.status);
+          expect([CheckStatus.Fail, CheckStatus.Warn]).toContain(
+            result!.status,
+          );
         }
       });
 
@@ -604,13 +632,13 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
           console.log("\n=== allbirds.com FULL RESULTS ===");
           console.log(`Total checks: ${allResults.size}`);
           console.log(
-            `Pass: ${[...allResults.values()].filter((r) => r.status === "pass").length}`,
+            `Pass: ${[...allResults.values()].filter((r) => r.status === CheckStatus.Pass).length}`,
           );
           console.log(
-            `Warn: ${[...allResults.values()].filter((r) => r.status === "warn").length}`,
+            `Warn: ${[...allResults.values()].filter((r) => r.status === CheckStatus.Warn).length}`,
           );
           console.log(
-            `Fail: ${[...allResults.values()].filter((r) => r.status === "fail").length}`,
+            `Fail: ${[...allResults.values()].filter((r) => r.status === CheckStatus.Fail).length}`,
           );
           expect(true).toBe(true);
         },
@@ -635,7 +663,7 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
       it("access-crawl-control/https-enabled: theguardian.com HTTPS check matches reality", () => {
         const result = allResults.get("access-crawl-control/https-enabled");
         expect(result).toBeDefined();
-        expect(result!.status).toBe("pass");
+        expect(result!.status).toBe(CheckStatus.Pass);
       });
 
       it("content-extraction/language-attribute: theguardian.com lang attribute matches reality", () => {
@@ -643,9 +671,9 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
         const result = allResults.get("content-extraction/language-attribute");
         expect(result).toBeDefined();
         if (lang) {
-          expect(result!.status).toBe("pass");
+          expect(result!.status).toBe(CheckStatus.Pass);
         } else {
-          expect(result!.status).toBe("fail");
+          expect(result!.status).toBe(CheckStatus.Fail);
         }
       });
 
@@ -661,9 +689,11 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
         const result = allResults.get("answer-readiness/core-open-graph");
         expect(result).toBeDefined();
         if (missing.length === 0) {
-          expect(result!.status).toBe("pass");
+          expect(result!.status).toBe(CheckStatus.Pass);
         } else {
-          expect(["fail", "warn"]).toContain(result!.status);
+          expect([CheckStatus.Fail, CheckStatus.Warn]).toContain(
+            result!.status,
+          );
         }
       });
 
@@ -674,16 +704,20 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
         const result = allResults.get("machine-discovery/rss-feed");
         expect(result).toBeDefined();
         if (hasFeed) {
-          expect(result!.status).toBe("pass");
+          expect(result!.status).toBe(CheckStatus.Pass);
         } else {
-          expect(["fail", "warn", "na"]).toContain(result!.status);
+          expect([
+            CheckStatus.Fail,
+            CheckStatus.Warn,
+            CheckStatus.NotApplicable,
+          ]).toContain(result!.status);
         }
       });
 
       it("content-extraction/main-element: theguardian.com main element check matches reality", () => {
         const result = allResults.get("content-extraction/main-element");
         expect(result).toBeDefined();
-        expect(["pass", "warn"]).toContain(result!.status);
+        expect([CheckStatus.Pass, CheckStatus.Warn]).toContain(result!.status);
       });
 
       it.skipIf(!process.env["AL_VERIFY_VERBOSE"])(
@@ -692,13 +726,13 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
           console.log("\n=== theguardian.com FULL RESULTS ===");
           console.log(`Total checks: ${allResults.size}`);
           console.log(
-            `Pass: ${[...allResults.values()].filter((r) => r.status === "pass").length}`,
+            `Pass: ${[...allResults.values()].filter((r) => r.status === CheckStatus.Pass).length}`,
           );
           console.log(
-            `Warn: ${[...allResults.values()].filter((r) => r.status === "warn").length}`,
+            `Warn: ${[...allResults.values()].filter((r) => r.status === CheckStatus.Warn).length}`,
           );
           console.log(
-            `Fail: ${[...allResults.values()].filter((r) => r.status === "fail").length}`,
+            `Fail: ${[...allResults.values()].filter((r) => r.status === CheckStatus.Fail).length}`,
           );
           expect(true).toBe(true);
         },

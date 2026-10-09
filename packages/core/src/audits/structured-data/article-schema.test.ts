@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { ArticleSchemaAudit } from "./article-schema";
-import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
+import { mockPageContext, mockCheckContext } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 const ld = (obj: unknown) =>
   `<script type="application/ld+json">${JSON.stringify(obj)}</script>`;
@@ -27,20 +28,20 @@ describe("ArticleSchemaAudit", () => {
   it("is not applicable when there are no content/article pages", () => {
     const ctx = mockCheckContext([]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("No blog/content pages");
   });
 
   it("passes when a content page has a complete Article schema", () => {
     const ctx = mockCheckContext([contentPage(ld(completeArticle))]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("detects a complete Article wrapped in a top-level array", () => {
     const ctx = mockCheckContext([contentPage(ld([completeArticle]))]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("detects a complete Article nested inside @graph", () => {
@@ -50,7 +51,7 @@ describe("ArticleSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("warns when the Article is partial (missing dateModified)", () => {
@@ -66,7 +67,7 @@ describe("ArticleSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     // 0 complete + 1 partial: the page has an Article, but not all required props.
     expect(result.message).toContain("0 complete");
   });
@@ -82,7 +83,7 @@ describe("ArticleSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No Article schema found");
   });
 
@@ -101,7 +102,7 @@ describe("ArticleSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("detects an article page via Article schema on a non-content-typed page", () => {
@@ -116,6 +117,6 @@ describe("ArticleSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 });

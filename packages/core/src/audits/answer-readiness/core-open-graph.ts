@@ -1,7 +1,15 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** Scored: the four properties Meta's and Slack's crawlers document reading. */
 const OG_CORE = ["og:title", "og:description", "og:image", "og:url"] as const;
@@ -93,24 +101,24 @@ export class CoreOpenGraphAudit extends Audit {
     failureTitle: "Core Open Graph tags",
     description:
       "Link-preview crawlers — facebookexternalhit and Slack's unfurler are documented by name — read og:title, og:description, og:image and og:url to build the card shown when your page is shared, and Google names og:site_name as one input to the site name on a result. This audit scores those Open Graph properties; the Twitter Card tags it also reports are informational only, because every content-bearing twitter:* tag falls back to its og:* counterpart.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/answer-readiness/core-open-graph.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "high",
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "Link-preview crawlers use Open Graph tags to build the card shown wherever your page is shared, and Google uses og:title and og:site_name as inputs to the title link and site name on a result — the same labels that carry into AI Overviews source cards. Without them the crawler falls back to guessing.",
       fix: "Add all four core OG tags to every page: og:title, og:description, og:image (with an absolute URL), and og:url. Add og:site_name with your real brand name. Twitter Card tags are optional — twitter:title, twitter:description and twitter:image all fall back to their og:* counterparts.",
       code: '<meta property="og:title" content="Page Title">\n<meta property="og:description" content="Page description">\n<meta property="og:image" content="https://yoursite.com/image.png">\n<meta property="og:url" content="https://yoursite.com/page">\n<meta property="og:site_name" content="Your Brand">',
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl: "https://ogp.me/",
       tags: ["meta-tags", "open-graph", "social"],
     },
@@ -165,7 +173,7 @@ export class CoreOpenGraphAudit extends Audit {
         expected,
         found,
         {
-          priority: "low",
+          priority: CheckPriority.Low,
           description:
             "Google names og:site_name among the inputs to the site name shown on a result. It is a tiebreaker rather than a lever — the core OG tags on this page are complete.",
           code: '<meta property="og:site_name" content="Your Brand">',
@@ -184,7 +192,7 @@ export class CoreOpenGraphAudit extends Audit {
         `Missing OG tags: ${missing.join(", ")}.`,
         expected,
         found,
-        { priority: "high", description, code },
+        { priority: CheckPriority.High, description, code },
         page?.url,
       );
     }
@@ -193,7 +201,7 @@ export class CoreOpenGraphAudit extends Audit {
       `Missing OG tags: ${missing.join(", ")}.`,
       expected,
       found,
-      { priority: "high", description, code },
+      { priority: CheckPriority.High, description, code },
       page?.url,
     );
   }

@@ -4,13 +4,23 @@ import type {
   CheckResult,
   ScanReport,
 } from "@forkpoint/agent-lighthouse-core";
-import { CATEGORY_MASS } from "@forkpoint/agent-lighthouse-core";
+import {
+  CATEGORY_MASS,
+  AttemptOutcome,
+  CheckPriority,
+  CheckStatus,
+  PageType,
+  PageTypeSource,
+  ScoreDisplayMode,
+  ScoreTier,
+} from "@forkpoint/agent-lighthouse-core";
 import { buildReportView } from "@forkpoint/agent-lighthouse-report";
 import {
   AUDIT_TOOL,
   MAX_OPPORTUNITIES,
   buildAuditSummary,
   targetUrl,
+  pageOptions,
 } from "./tool";
 
 /**
@@ -31,10 +41,10 @@ function check(over: Partial<CheckResult> = {}): CheckResult {
     category: "agent-interfaces",
     title: "title",
     description: "desc",
-    status: "pass",
+    status: CheckStatus.Pass,
     score: 1,
-    scoreDisplayMode: "binary",
-    priority: "medium",
+    scoreDisplayMode: ScoreDisplayMode.Binary,
+    priority: CheckPriority.Medium,
     impact: "",
     fix: "",
     ...over,
@@ -60,15 +70,23 @@ function report(over: Partial<ScanReport> = {}): ScanReport {
     url: "https://shop.test/",
     domain: "shop.test",
     overallScore: 42,
-    scoreTier: "needs-work",
+    scoreTier: ScoreTier.NeedsWork,
     categories: [
       cat({
         id: "agent-interfaces",
         score: 80,
         checks: [
-          check({ id: "p1", status: "pass" }),
-          check({ id: "w1", status: "warn", priority: "high" }),
-          check({ id: "f1", status: "fail", priority: "critical" }),
+          check({ id: "p1", status: CheckStatus.Pass }),
+          check({
+            id: "w1",
+            status: CheckStatus.Warn,
+            priority: CheckPriority.High,
+          }),
+          check({
+            id: "f1",
+            status: CheckStatus.Fail,
+            priority: CheckPriority.Critical,
+          }),
         ],
         passCount: 1,
         warnCount: 1,
@@ -78,7 +96,7 @@ function report(over: Partial<ScanReport> = {}): ScanReport {
     topPasses: [],
     topFails: [],
     recommendations: [],
-    pagesScanned: [{ url: "https://shop.test/", pageType: "homepage" }],
+    pagesScanned: [{ url: "https://shop.test/", pageType: PageType.Homepage }],
     scannedAt: "2026-01-01T00:00:00.000Z",
     durationMs: 12_340,
     ...over,
@@ -138,7 +156,7 @@ describe("buildAuditSummary", () => {
   it("carries the headline numbers", () => {
     const s = summarise(report());
     expect(s.url).toBe("https://shop.test/");
-    expect(s.scoreTier).toBe("needs-work");
+    expect(s.scoreTier).toBe(ScoreTier.NeedsWork);
     expect(typeof s.overallScore).toBe("number");
   });
 
@@ -177,8 +195,8 @@ describe("buildAuditSummary", () => {
   it("lists the top fixes with the fields a model needs to act", () => {
     const fail = check({
       id: "agent-interfaces/webmcp",
-      status: "fail",
-      priority: "critical",
+      status: CheckStatus.Fail,
+      priority: CheckPriority.Critical,
       impact: "Agents cannot transact.",
       fix: "Declare a WebMCP endpoint.",
     });
@@ -187,7 +205,7 @@ describe("buildAuditSummary", () => {
       {
         id: "agent-interfaces/webmcp",
         title: "title",
-        priority: "critical",
+        priority: CheckPriority.Critical,
         impact: "Agents cannot transact.",
         fix: "Declare a WebMCP endpoint.",
       },
@@ -196,7 +214,7 @@ describe("buildAuditSummary", () => {
 
   it(`caps the fix list at ${MAX_OPPORTUNITIES}, so a model is not handed all 215`, () => {
     const fails = Array.from({ length: 25 }, (_, i) =>
-      check({ id: `f${i}`, status: "fail" }),
+      check({ id: `f${i}`, status: CheckStatus.Fail }),
     );
     const s = summarise(report({ topFails: fails }));
     expect(s.topOpportunities).toHaveLength(MAX_OPPORTUNITIES);
@@ -212,5 +230,40 @@ describe("buildAuditSummary", () => {
     const parsed = JSON.parse(text);
     expect(parsed.url).toBe("https://shop.test/");
     expect(Array.isArray(parsed.categories)).toBe(true);
+  });
+});
+
+describe("v7 tool declarations", () => {
+  it("advertises the same purpose enum for target and extra pages", () => {
+    expect(AUDIT_TOOL.inputSchema.properties.pageType.enum).toEqual(
+      AUDIT_TOOL.inputSchema.properties.pages.items.properties.pageType.enum,
+    );
+    expect(AUDIT_TOOL.inputSchema.properties.pageType.enum).toContain(
+      "article",
+    );
+    expect(AUDIT_TOOL.inputSchema.properties.pageType.enum).not.toContain(
+      "author",
+    );
+  });
+  it("keeps omission and legacy content explicit", () => {
+    expect(pageOptions({ url: "https://x.test" })).toEqual({});
+    expect(pageOptions({ pageType: PageType.Content })).toEqual({
+      pageType: PageType.Content,
+    });
+    expect(() => pageOptions({ pageType: "author" })).toThrow();
+  });
+  it("passes recorded page evidence to the summary, without adding it to legacy reports", () => {
+    const r = report();
+    expect(summarise(r)).not.toHaveProperty("pageScope");
+    r.pageAttempts = [
+      {
+        url: r.url,
+        pageType: PageType.Unknown,
+        source: PageTypeSource.Detected,
+        outcome: AttemptOutcome.Unread,
+        status: 503,
+      },
+    ];
+    expect(summarise(r).pageScope?.attempts).toEqual(r.pageAttempts);
   });
 });

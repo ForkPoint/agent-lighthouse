@@ -1,11 +1,19 @@
 import { randomBytes } from "node:crypto";
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import type { FetchResult } from "../../fetcher";
-import { weightForGrade } from "../../scorer";
-import { isSafeUrl } from "../../url-utils";
-import { sharedProbeUrl } from "../../gatherers/discovery";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import type { FetchResult } from "#core/fetcher";
+import { weightForGrade } from "#core/scorer";
+import { isSafeUrl } from "#core/url-utils";
+import { sharedProbeUrl } from "#core/gatherers/discovery";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** Statuses that prove the origin resolves a missing root .txt as missing. */
 const ABSENT = new Set([404, 410]);
@@ -45,24 +53,24 @@ export class RootTextFileResolutionIntegrityAudit extends Audit {
       "This origin answers 200 for root .txt paths that do not exist",
     description:
       "Fetches two root-level `.txt` files with random names that cannot exist. Both must answer 404 or 410. An origin that answers 200 instead has a catch-all, which makes every probe-based discovery file — `llms.txt`, `ai.txt`, `security.txt`, the IndexNow key file — impossible to tell apart from a soft 404. Also checks that `/robots.txt` is served as `text/plain`.",
-    scoreDisplayMode: "ternary",
-    tier: "scored",
-    evidenceGrade: "B",
-    weight: weightForGrade("B", "scored"),
-    defaultPriority: "medium",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    tier: AuditTier.Scored,
+    evidenceGrade: EvidenceGrade.B,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    defaultPriority: CheckPriority.Medium,
     dossier:
       "docs/evidence/audits/machine-discovery/root-text-file-resolution-integrity.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     guidance: {
       impact:
         "IndexNow proves ownership by fetching `https://host/{key}.txt` and byte-comparing the body to the key, and six engines discard the submission when that comparison fails. The same property decides whether any other root `.txt` file means anything: if an origin answers 200 for a path that does not exist, then a 200 for `/llms.txt` is not evidence the file is there. A catch-all rewrite ahead of static file serving turns every one of those signals into noise, with no visible symptom on the site itself.",
       fix: "Serve root-level `.txt` paths from static files and let a missing one answer 404. Order the static-file handler ahead of any SPA or catch-all rewrite, and make sure the rewrite does not cover `*.txt`. Serve `/robots.txt` as `text/plain`, not as `text/html` or `application/octet-stream`.",
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/machine-discovery/root-text-file-resolution-integrity/",
       tags: ["indexnow", "llms-txt", "discovery", "soft-404"],

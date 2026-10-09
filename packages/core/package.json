@@ -47,6 +47,13 @@
     },
     "./migration-map.json": "./migration-map.json"
   },
+  "imports": {
+    "#core/*": {
+      "agent-lighthouse-source": "./src/*.ts",
+      "types": "./dist/*.d.ts",
+      "default": "./src/*.ts"
+    }
+  },
   "files": [
     "dist",
     "migration-map.json"

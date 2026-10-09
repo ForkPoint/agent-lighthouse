@@ -9,7 +9,8 @@ import {
 import { mockPageContext, mockFetchResult } from "./__tests__/test-utils";
 import type { FetchResult } from "./fetcher";
 import type { PageContext } from "./check-context";
-import { detectWafProtection } from "./waf-detector";
+import { detectWafProtection, WafProvider } from "./waf-detector";
+import { EvidenceKey, PageType } from "./types";
 
 /** A homepage fetch result, overridable field by field. */
 function homepage(overrides: Partial<FetchResult> = {}): FetchResult {
@@ -48,8 +49,8 @@ function wordyPage(url: string, words: number): PageContext {
 describe("scan-evidence: origin-reachable", () => {
   it("is met for a 200 HTML response on the requested host", () => {
     const evidence = build({});
-    expect(evidence.met["origin-reachable"]).toBe(true);
-    expect(evidence.reasons["origin-reachable"]).toBeUndefined();
+    expect(evidence.met[EvidenceKey.OriginReachable]).toBe(true);
+    expect(evidence.reasons[EvidenceKey.OriginReachable]).toBeUndefined();
   });
 
   it("is met when the host only gained or lost a www. prefix", () => {
@@ -57,7 +58,7 @@ describe("scan-evidence: origin-reachable", () => {
       requestedUrl: "https://example.com",
       homepageResult: homepage({ finalUrl: "https://www.example.com/" }),
     });
-    expect(evidence.met["origin-reachable"]).toBe(true);
+    expect(evidence.met[EvidenceKey.OriginReachable]).toBe(true);
   });
 
   it("is met when http was upgraded to https", () => {
@@ -68,13 +69,13 @@ describe("scan-evidence: origin-reachable", () => {
         finalUrl: "https://example.com/",
       }),
     });
-    expect(evidence.met["origin-reachable"]).toBe(true);
+    expect(evidence.met[EvidenceKey.OriginReachable]).toBe(true);
   });
 
   it("is unmet on a non-2xx status", () => {
     const evidence = build({ homepageResult: homepage({ status: 403 }) });
-    expect(evidence.met["origin-reachable"]).toBe(false);
-    expect(evidence.reasons["origin-reachable"]).toContain("403");
+    expect(evidence.met[EvidenceKey.OriginReachable]).toBe(false);
+    expect(evidence.reasons[EvidenceKey.OriginReachable]).toContain("403");
   });
 
   it("is unmet when the fetch itself failed", () => {
@@ -86,23 +87,27 @@ describe("scan-evidence: origin-reachable", () => {
         contentType: "",
       }),
     });
-    expect(evidence.met["origin-reachable"]).toBe(false);
-    expect(evidence.reasons["origin-reachable"]).toContain("ENOTFOUND");
+    expect(evidence.met[EvidenceKey.OriginReachable]).toBe(false);
+    expect(evidence.reasons[EvidenceKey.OriginReachable]).toContain(
+      "ENOTFOUND",
+    );
   });
 
   it("is unmet when the origin serves something other than HTML", () => {
     const evidence = build({
       homepageResult: homepage({ contentType: "application/pdf" }),
     });
-    expect(evidence.met["origin-reachable"]).toBe(false);
-    expect(evidence.reasons["origin-reachable"]).toContain("application/pdf");
+    expect(evidence.met[EvidenceKey.OriginReachable]).toBe(false);
+    expect(evidence.reasons[EvidenceKey.OriginReachable]).toContain(
+      "application/pdf",
+    );
   });
 
   it("accepts application/xhtml+xml as HTML", () => {
     const evidence = build({
       homepageResult: homepage({ contentType: "application/xhtml+xml" }),
     });
-    expect(evidence.met["origin-reachable"]).toBe(true);
+    expect(evidence.met[EvidenceKey.OriginReachable]).toBe(true);
   });
 
   it("is met for a cross-host 301: a permanent move is still the site", () => {
@@ -120,7 +125,7 @@ describe("scan-evidence: origin-reachable", () => {
         ],
       }),
     });
-    expect(evidence.met["origin-reachable"]).toBe(true);
+    expect(evidence.met[EvidenceKey.OriginReachable]).toBe(true);
   });
 
   it("is met for a cross-host 308", () => {
@@ -138,7 +143,7 @@ describe("scan-evidence: origin-reachable", () => {
         ],
       }),
     });
-    expect(evidence.met["origin-reachable"]).toBe(true);
+    expect(evidence.met[EvidenceKey.OriginReachable]).toBe(true);
   });
 
   it("is met for a 302 that stays inside the registrable domain (a geo router)", () => {
@@ -156,7 +161,7 @@ describe("scan-evidence: origin-reachable", () => {
         ],
       }),
     });
-    expect(evidence.met["origin-reachable"]).toBe(true);
+    expect(evidence.met[EvidenceKey.OriginReachable]).toBe(true);
   });
 
   it("is met for a 302 inside a multi-label registrable domain", () => {
@@ -174,7 +179,7 @@ describe("scan-evidence: origin-reachable", () => {
         ],
       }),
     });
-    expect(evidence.met["origin-reachable"]).toBe(true);
+    expect(evidence.met[EvidenceKey.OriginReachable]).toBe(true);
   });
 
   it("is met for a geo 302 to the same name under a country suffix", () => {
@@ -193,7 +198,7 @@ describe("scan-evidence: origin-reachable", () => {
         ],
       }),
     });
-    expect(evidence.met["origin-reachable"]).toBe(true);
+    expect(evidence.met[EvidenceKey.OriginReachable]).toBe(true);
   });
 
   it("is unmet for a 302 to a different registrable domain", () => {
@@ -211,8 +216,8 @@ describe("scan-evidence: origin-reachable", () => {
         ],
       }),
     });
-    expect(evidence.met["origin-reachable"]).toBe(false);
-    expect(evidence.reasons["origin-reachable"]).toContain(
+    expect(evidence.met[EvidenceKey.OriginReachable]).toBe(false);
+    expect(evidence.reasons[EvidenceKey.OriginReachable]).toContain(
       "parking-service.net",
     );
   });
@@ -225,60 +230,62 @@ describe("scan-evidence: origin-reachable", () => {
         finalUrl: "https://other.net/",
       }),
     });
-    expect(evidence.met["origin-reachable"]).toBe(false);
+    expect(evidence.met[EvidenceKey.OriginReachable]).toBe(false);
   });
 });
 
 describe("scan-evidence: unblocked-fetches", () => {
   it("is met when no WAF answered and the homepage was not throttled", () => {
-    expect(build({}).met["unblocked-fetches"]).toBe(true);
+    expect(build({}).met[EvidenceKey.UnblockedFetches]).toBe(true);
   });
 
   it("is unmet when a WAF blocked the scan, and names the provider", () => {
     const evidence = build({
       wafProtection: {
         isBlocked: true,
-        provider: "cloudflare",
+        provider: WafProvider.Cloudflare,
         name: "Cloudflare",
         reason: "HTTP 403 with cf-ray",
         statusCode: 403,
       },
     });
-    expect(evidence.met["unblocked-fetches"]).toBe(false);
-    expect(evidence.reasons["unblocked-fetches"]).toContain("Cloudflare");
+    expect(evidence.met[EvidenceKey.UnblockedFetches]).toBe(false);
+    expect(evidence.reasons[EvidenceKey.UnblockedFetches]).toContain(
+      "Cloudflare",
+    );
   });
 
   it("keeps a self-inflicted throttle apart from a refusal", () => {
     const evidence = build({
       wafProtection: {
         isBlocked: true,
-        provider: "rate-limited",
+        provider: WafProvider.RateLimited,
         name: "Rate limit",
         reason: "HTTP 429",
         statusCode: 429,
         isRateLimit: true,
       },
     });
-    expect(evidence.met["unblocked-fetches"]).toBe(false);
-    expect(evidence.reasons["unblocked-fetches"]).toMatch(/throttl/i);
+    expect(evidence.met[EvidenceKey.UnblockedFetches]).toBe(false);
+    expect(evidence.reasons[EvidenceKey.UnblockedFetches]).toMatch(/throttl/i);
   });
 
   it("is unmet on a homepage 429 even when no WAF was identified", () => {
     const evidence = build({ homepageResult: homepage({ status: 429 }) });
-    expect(evidence.met["unblocked-fetches"]).toBe(false);
-    expect(evidence.reasons["unblocked-fetches"]).toMatch(/throttl/i);
+    expect(evidence.met[EvidenceKey.UnblockedFetches]).toBe(false);
+    expect(evidence.reasons[EvidenceKey.UnblockedFetches]).toMatch(/throttl/i);
   });
 
   it("stays met when a WAF was detected but did not block", () => {
     const evidence = build({
       wafProtection: {
         isBlocked: false,
-        provider: "cloudflare",
+        provider: WafProvider.Cloudflare,
         name: "Cloudflare",
         reason: "cf-ray header present",
       },
     });
-    expect(evidence.met["unblocked-fetches"]).toBe(true);
+    expect(evidence.met[EvidenceKey.UnblockedFetches]).toBe(true);
   });
 });
 
@@ -286,14 +293,14 @@ describe("scan-evidence: rendered-body", () => {
   it("counts a page over the word threshold as rendered", () => {
     const evidence = build({ pages: [wordyPage("https://example.com/", 60)] });
     expect(evidence.renderedByPage["https://example.com/"]).toBe(true);
-    expect(evidence.met["rendered-body"]).toBe(true);
+    expect(evidence.met[EvidenceKey.RenderedBody]).toBe(true);
   });
 
   it("counts a short page as not rendered", () => {
     const evidence = build({ pages: [wordyPage("https://example.com/", 10)] });
     expect(evidence.renderedByPage["https://example.com/"]).toBe(false);
-    expect(evidence.met["rendered-body"]).toBe(false);
-    expect(evidence.reasons["rendered-body"]).toBeDefined();
+    expect(evidence.met[EvidenceKey.RenderedBody]).toBe(false);
+    expect(evidence.reasons[EvidenceKey.RenderedBody]).toBeDefined();
   });
 
   it("reads the whole served body, not the first <main>", () => {
@@ -317,12 +324,12 @@ describe("scan-evidence: rendered-body", () => {
     );
     const evidence = build({ pages: [page] });
     expect(evidence.renderedByPage["https://example.com/"]).toBe(true);
-    expect(evidence.met["rendered-body"]).toBe(true);
+    expect(evidence.met[EvidenceKey.RenderedBody]).toBe(true);
   });
 
   it("is unmet when the scan fetched no pages at all", () => {
     const evidence = build({ pages: [] });
-    expect(evidence.met["rendered-body"]).toBe(false);
+    expect(evidence.met[EvidenceKey.RenderedBody]).toBe(false);
   });
 
   it("is met when any one fetched page carries readable text", () => {
@@ -332,7 +339,7 @@ describe("scan-evidence: rendered-body", () => {
         wordyPage("https://example.com/about", 80),
       ],
     });
-    expect(evidence.met["rendered-body"]).toBe(true);
+    expect(evidence.met[EvidenceKey.RenderedBody]).toBe(true);
     expect(evidence.renderedByPage["https://example.com/"]).toBe(false);
     expect(evidence.renderedByPage["https://example.com/about"]).toBe(true);
   });
@@ -346,15 +353,15 @@ describe("scan-evidence: sample-adequate", () => {
         wordyPage("https://example.com/blog/post", 80),
       ],
     });
-    expect(evidence.met["sample-adequate"]).toBe(true);
-    expect(evidence.usablePageTypes.has("homepage")).toBe(true);
+    expect(evidence.met[EvidenceKey.SampleAdequate]).toBe(true);
+    expect(evidence.usablePageTypes.has(PageType.Homepage)).toBe(true);
   });
 
   it("drops the page type of a page that fetched but rendered nothing", () => {
     const evidence = build({ pages: [wordyPage("https://example.com/", 3)] });
-    expect(evidence.met["sample-adequate"]).toBe(false);
+    expect(evidence.met[EvidenceKey.SampleAdequate]).toBe(false);
     expect(evidence.usablePageTypes.size).toBe(0);
-    expect(evidence.reasons["sample-adequate"]).toBeDefined();
+    expect(evidence.reasons[EvidenceKey.SampleAdequate]).toBeDefined();
   });
 });
 
@@ -367,7 +374,7 @@ describe("scan-evidence: judgeable", () => {
 
   it("survives a shell site: what it serves is a finding, not a blind spot", () => {
     const evidence = build({ pages: [wordyPage("https://example.com/", 2)] });
-    expect(evidence.met["rendered-body"]).toBe(false);
+    expect(evidence.met[EvidenceKey.RenderedBody]).toBe(false);
     expect(evidence.judgeable).toBe(true);
   });
 
@@ -381,7 +388,7 @@ describe("scan-evidence: judgeable", () => {
     const evidence = build({
       wafProtection: {
         isBlocked: true,
-        provider: "datadome",
+        provider: WafProvider.Datadome,
         name: "DataDome",
         reason: "HTTP 403",
       },
@@ -432,8 +439,8 @@ describe("scanReadTheSite", () => {
       wafProtection: detectWafProtection(response.url, response, {}, 1),
     });
 
-    expect(evidence.met["unblocked-fetches"]).toBe(true);
-    expect(evidence.met["rendered-body"]).toBe(true);
+    expect(evidence.met[EvidenceKey.UnblockedFetches]).toBe(true);
+    expect(evidence.met[EvidenceKey.RenderedBody]).toBe(true);
     expect(scanReadTheSite(evidence)).toBe(true);
   });
 
@@ -448,17 +455,18 @@ describe("scanReadTheSite", () => {
       }),
       wafProtection: {
         isBlocked: true,
-        provider: "cloudflare",
+        provider: WafProvider.Cloudflare,
         name: "Cloudflare Turnstile / Managed Challenge",
         reason: "Cloudflare bot challenge detected",
         statusCode: 200,
       },
     });
 
-    expect(evidence.met["origin-reachable"], "a 200 from the right host").toBe(
-      true,
-    );
-    expect(evidence.met["unblocked-fetches"]).toBe(false);
+    expect(
+      evidence.met[EvidenceKey.OriginReachable],
+      "a 200 from the right host",
+    ).toBe(true);
+    expect(evidence.met[EvidenceKey.UnblockedFetches]).toBe(false);
     expect(scanReadTheSite(evidence)).toBe(false);
     // The reason has to name the wall, not fall through to the generic line:
     // `origin-reachable` is met, so it carries no reason of its own.
@@ -493,9 +501,9 @@ describe("scan-evidence: unjudgeableReason", () => {
   it("says each reason once, in key order", () => {
     const reason = unjudgeableReason({
       reasons: {
-        "sample-adequate": "The scan fetched no pages.",
-        "rendered-body": "The scan fetched no pages.",
-        "origin-reachable": "The homepage answered HTTP 403.",
+        [EvidenceKey.SampleAdequate]: "The scan fetched no pages.",
+        [EvidenceKey.RenderedBody]: "The scan fetched no pages.",
+        [EvidenceKey.OriginReachable]: "The homepage answered HTTP 403.",
       },
     });
     expect(reason).toBe(

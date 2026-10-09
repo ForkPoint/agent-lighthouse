@@ -1,15 +1,21 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
 import { ExtractorSurvivalRecallAudit } from "./extractor-survival-recall";
 import {
   attributableFixture,
   mockCheckContext,
   mockPageContext,
   unreachedSiteContext,
-} from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { CheckContext } from "../../check-context";
+} from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { CheckContext } from "#core/check-context";
+import {
+  AuditTier,
+  CheckPriority,
+  CheckStatus,
+  EvidenceGrade,
+} from "#core/types";
 
 const PROSE =
   "The copper kettle reaches a rolling boil in about three minutes on a gas hob. " +
@@ -42,12 +48,12 @@ describe("ExtractorSurvivalRecallAudit", () => {
     expect(
       (await audit.audit(page("<div>Nothing structured here at all.</div>")))
         .status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 
   it("passes when every key span survives both extractors", async () => {
     const result = await audit.audit(page(article()));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(Number(result.details?.["recall"])).toBeGreaterThanOrEqual(0.9);
   });
 
@@ -76,7 +82,7 @@ describe("ExtractorSurvivalRecallAudit", () => {
         ),
       ),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found ?? "").not.toContain("Keyboard shortcuts");
   });
 
@@ -116,14 +122,14 @@ describe("ExtractorSurvivalRecallAudit", () => {
       name,
     })}</script>`;
     const result = await audit.audit(page(`${article()}<p>${name}</p>`, head));
-    expect(result.status).not.toBe("na");
+    expect(result.status).not.toBe(CheckStatus.NotApplicable);
     expect(result.details?.["spanKinds"]).toContain("json-ld");
   });
 
   it("fails when a spec table lives in an aside, and names the ancestor chain", async () => {
     const body = `${article()}<aside class="related-specs"><table><caption>Specifications table</caption><tr><th>Capacity</th><td>2 litres</td></tr><tr><th>Material</th><td>Copper</td></tr></table></aside>`;
     const result = await audit.audit(page(body));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("aside.related-specs");
   });
 
@@ -141,9 +147,9 @@ describe("ExtractorSurvivalRecallAudit", () => {
 
   it("registers as a scored grade-B audit with high priority", () => {
     const { meta } = ExtractorSurvivalRecallAudit;
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
-    expect(meta.defaultPriority).toBe("high");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
+    expect(meta.defaultPriority).toBe(CheckPriority.High);
   });
 
   // The scan may hold a readable page that is not this site's — a broker's
@@ -153,7 +159,9 @@ describe("ExtractorSurvivalRecallAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new ExtractorSurvivalRecallAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext(pages, rootFiles),
@@ -166,7 +174,7 @@ describe("ExtractorSurvivalRecallAudit", () => {
       plan.skipped.find(
         (stub) => stub.id === ExtractorSurvivalRecallAudit.meta.id,
       )?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 
   // A modifier class that mentions a blocklisted word is not that widget.
@@ -177,7 +185,7 @@ describe("ExtractorSurvivalRecallAudit", () => {
         `<div class="page-content page-content--banner-enabled">${article()}</div>`,
       ),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.details?.["aggressiveRecall"]).toBe(1);
   });
 
@@ -198,7 +206,7 @@ describe("ExtractorSurvivalRecallAudit", () => {
       potentialAction: { target: "https://example.com/search?q={query}" },
     })}</script>`;
     const result = await audit.audit(page(`${article()}${jsonLd}`));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.details?.["spanKinds"]).not.toContain("json-ld");
   });
 
@@ -218,7 +226,7 @@ describe("ExtractorSurvivalRecallAudit", () => {
     const result = await audit.audit(
       page(article(`<div class="promo">${SPECS}</div>`)),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.details?.["aggressiveRecall"]).toBe(0.5);
     expect(result.found).toContain("div.promo");
   });
@@ -227,7 +235,7 @@ describe("ExtractorSurvivalRecallAudit", () => {
     const result = await audit.audit(
       page(article(`<div id="sidebar">${SPECS}</div>`)),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.details?.["aggressiveRecall"]).toBe(0.5);
   });
 });

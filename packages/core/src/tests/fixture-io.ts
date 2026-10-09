@@ -1,11 +1,12 @@
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { gunzipSync } from "node:zlib";
 import { resolve } from "node:path";
-import type { FetchResult } from "../fetcher";
-import type { PageContext } from "../check-context";
-import { parseHtml } from "../parser";
-import { pageRendersText } from "../scan-evidence";
-import { detectWafProtection } from "../waf-detector";
+import type { FetchResult } from "#core/fetcher";
+import type { PageContext } from "#core/check-context";
+import { parseHtml } from "#core/parser";
+import { pageRendersText } from "#core/scan-evidence";
+import { detectWafProtection } from "#core/waf-detector";
+import { PageType } from "#core/types";
 
 /**
  * What a captured response turned out to be.
@@ -15,9 +16,19 @@ import { detectWafProtection } from "../waf-detector";
  * poisons the corpus silently, so the kind is part of the record and is
  * decided from the response, never from what the operator meant to capture.
  */
-export type FixtureKind = "page" | "wall" | "shell";
+export const FixtureKind = {
+  Page: "page",
+  Wall: "wall",
+  Shell: "shell",
+} as const;
 
-export const FIXTURE_KINDS: readonly FixtureKind[] = ["page", "wall", "shell"];
+export type FixtureKind = (typeof FixtureKind)[keyof typeof FixtureKind];
+
+export const FIXTURE_KINDS: readonly FixtureKind[] = [
+  FixtureKind.Page,
+  FixtureKind.Wall,
+  FixtureKind.Shell,
+];
 
 /**
  * Where a fixture came from and when. A fixture is a measurement of a page on
@@ -66,7 +77,7 @@ const DIR = resolve(__dirname, "../../test-data/corpus/real");
 function asPage(result: FetchResult): PageContext {
   return {
     url: result.finalUrl || result.url,
-    pageType: "homepage",
+    pageType: PageType.Homepage,
     fetchResult: result,
     $: parseHtml(result.body),
     jsonLd: [],
@@ -84,7 +95,7 @@ function asPage(result: FetchResult): PageContext {
  * admits.
  */
 export function classifyCapture(result: FetchResult): FixtureKind {
-  if (result.status < 200 || result.status >= 300) return "wall";
+  if (result.status < 200 || result.status >= 300) return FixtureKind.Wall;
   // The fourth argument is how many pages the scan obtained. Zero is the
   // sentinel for "it obtained nothing", and several provider branches widen
   // to match any marker header when they see it — a capture has a 2xx body in
@@ -98,8 +109,8 @@ export function classifyCapture(result: FetchResult): FixtureKind {
   if (
     detectWafProtection(result.finalUrl || result.url, result, {}, 1)?.isBlocked
   )
-    return "wall";
-  return pageRendersText(asPage(result)) ? "page" : "shell";
+    return FixtureKind.Wall;
+  return pageRendersText(asPage(result)) ? FixtureKind.Page : FixtureKind.Shell;
 }
 
 export function listFixtures(): string[] {

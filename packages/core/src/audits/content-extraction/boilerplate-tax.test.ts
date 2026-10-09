@@ -1,8 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { BoilerplateTaxAudit } from "./boilerplate-tax";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { CheckContext } from "../../check-context";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { CheckContext } from "#core/check-context";
+import { AuditTier, CheckStatus, EvidenceGrade } from "#core/types";
 
 /** Distinct prose, seeded so two pages never share a five-word window. */
 const body = (seed: string, n = 60) =>
@@ -44,7 +45,7 @@ describe("BoilerplateTaxAudit", () => {
       { url: "https://example.com/a", content: body("alpha") },
       { url: "https://example.com/b", content: body("bravo") },
     ]);
-    expect((await audit.audit(ctx)).status).toBe("na");
+    expect((await audit.audit(ctx)).status).toBe(CheckStatus.NotApplicable);
   });
 
   it("fails when every page repeats the same chrome around a thin body", async () => {
@@ -56,7 +57,7 @@ describe("BoilerplateTaxAudit", () => {
       { url: "https://example.com/e", content: body("echo", 2) },
     ]);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("distinct");
   });
 
@@ -67,7 +68,7 @@ describe("BoilerplateTaxAudit", () => {
       { url: "https://example.com/c", content: body("charlie"), chrome: false },
     ]);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // 4 of 5 pages is exactly 0.80, the boilerplate floor.
@@ -160,8 +161,8 @@ describe("BoilerplateTaxAudit", () => {
 
   it("registers as a scored grade-B audit", () => {
     const { meta } = BoilerplateTaxAudit;
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
     expect(meta.weight).toBeCloseTo(0.6);
   });
 });

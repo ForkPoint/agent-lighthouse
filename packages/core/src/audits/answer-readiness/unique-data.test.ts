@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { UniqueDataAudit } from "./unique-data";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
-import { scopeAudit } from "../../audit-runner";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { scopeAudit } from "#core/audit-runner";
+import { CheckStatus, PageType } from "#core/types";
 
 describe("UniqueDataAudit", () => {
   const audit = new UniqueDataAudit();
@@ -12,7 +13,7 @@ describe("UniqueDataAudit", () => {
       `<html><body><main><p>73% prefer it, it costs $2,500, and reaches 1,200 users.</p></main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("data points");
   });
 
@@ -22,7 +23,7 @@ describe("UniqueDataAudit", () => {
       `<html><body><main><p>Only 73% of users agreed.</p></main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("data point");
   });
 
@@ -32,19 +33,22 @@ describe("UniqueDataAudit", () => {
       `<html><body><main><p>Shoe size 9.5 and software version 2.0 are here.</p></main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No numbers, percentages, or data points");
   });
 
   it("fails when no pages scanned", () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No pages scanned");
   });
 
   // Dossier required fix #6: the grade-B study measured content pages.
   it("is scoped to content pages", () => {
-    expect(UniqueDataAudit.meta.applicablePageTypes).toEqual(["content"]);
+    expect(UniqueDataAudit.meta.applicablePageTypes).toEqual([
+      PageType.Unknown,
+      PageType.Article,
+    ]);
 
     const home = mockPageContext(
       "https://example.com/",
@@ -74,7 +78,7 @@ describe("UniqueDataAudit", () => {
       `<html><body><main><p>The kit costs 49,99 €, delivery is 4,50 € and the yearly plan is £29.99. Bulk orders start at 1.200,00 €.</p></main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("49,99 €");
     expect(result.found).toContain("£29.99");
   });
@@ -84,7 +88,7 @@ describe("UniqueDataAudit", () => {
       "https://example.com/blog/post",
       `<html><body><main><p>Le taux atteint 12,5 % cette année.</p></main></body></html>`,
     );
-    expect(audit.audit(mockCheckContext([page])).status).toBe("warn");
+    expect(audit.audit(mockCheckContext([page])).status).toBe(CheckStatus.Warn);
   });
 
   // True positive: a comma decimal without a currency or % is not a statistic.
@@ -94,6 +98,6 @@ describe("UniqueDataAudit", () => {
       `<html><body><main><p>Shoe size 42,5 and software version 2,0 are here.</p></main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 });

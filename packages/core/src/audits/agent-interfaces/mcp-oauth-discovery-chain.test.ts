@@ -1,14 +1,15 @@
 import { describe, it, expect, vi } from "vitest";
 import { McpOauthDiscoveryChainAudit } from "./mcp-oauth-discovery-chain";
-import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { CheckContext } from "../../check-context";
-import type { FetchOptions, FetchResult } from "../../fetcher";
+import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { CheckContext } from "#core/check-context";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import { CheckStatus, HttpMethod } from "#core/types";
 
 // isSafeUrl resolves DNS before any metadata URL read out of site-controlled
 // JSON is fetched. Offline stand-in, still blocking loopback and private ranges.
-vi.mock("../../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => {
@@ -79,7 +80,7 @@ function wire(discover: FetchResult, docs: Record<string, FetchResult>) {
   const ctx: CheckContext = mockCheckContext([], servers());
   ctx.fetch = async (o: FetchOptions) => {
     seen.push(o.url);
-    if (o.url === ENDPOINT && o.method === "POST") return discover;
+    if (o.url === ENDPOINT && o.method === HttpMethod.Post) return discover;
     return docs[o.url] ?? mockFetchResult("Not Found", 404, "text/plain");
   };
   return { ctx, seen };
@@ -107,14 +108,14 @@ describe("McpOauthDiscoveryChainAudit", () => {
   it("is notApplicable when the site declares no MCP endpoint", async () => {
     const ctx: CheckContext = mockCheckContext([]);
     const result = (await audit.audit(ctx)) as Result;
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("follows the chain from the URL the challenge advertises", async () => {
     const { result, seen } = await run(challenge(), HEALTHY);
     expect(seen).toContain(PRM_URL);
     expect(seen).toContain(AS_URL);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // Without resource_metadata a client falls back, and RFC 9728 §3 fixes the
@@ -127,7 +128,7 @@ describe("McpOauthDiscoveryChainAudit", () => {
     const probes = seen.filter((u) => u.includes("oauth-protected-resource"));
     expect(probes).toEqual([PRM_URL, PRM_ROOT]);
     expect(result.message).toContain("fall back");
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // The single highest-value assertion in the whole chain.
@@ -136,7 +137,7 @@ describe("McpOauthDiscoveryChainAudit", () => {
       [PRM_URL]: json({ ...PRM, resource: `${ENDPOINT}/` }),
       [AS_URL]: json(AS_META),
     });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("resource");
     expect(result.message).toContain("drift");
   });
@@ -144,7 +145,7 @@ describe("McpOauthDiscoveryChainAudit", () => {
   it("fails when authorization_servers is absent", async () => {
     const { authorization_servers: _drop, ...withoutAs } = PRM;
     const { result } = await run(challenge(), { [PRM_URL]: json(withoutAs) });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("authorization_servers");
   });
 
@@ -152,7 +153,7 @@ describe("McpOauthDiscoveryChainAudit", () => {
     const { result } = await run(challenge(), {
       [PRM_URL]: json({ ...PRM, authorization_servers: [] }),
     });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("authorization_servers");
   });
 
@@ -161,7 +162,7 @@ describe("McpOauthDiscoveryChainAudit", () => {
     const { result } = await run(challenge(), {
       [PRM_URL]: json({ ...PRM, authorization_servers: ["https://10.0.0.1"] }),
     });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("https://10.0.0.1");
     expect(result.message).toContain("private");
   });
@@ -174,7 +175,7 @@ describe("McpOauthDiscoveryChainAudit", () => {
       }),
       [AS_URL]: json(AS_META),
     });
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("offline_access");
   });
 
@@ -183,7 +184,7 @@ describe("McpOauthDiscoveryChainAudit", () => {
       [PRM_URL]: json({ ...PRM, scopes_supported: ["*"] }),
       [AS_URL]: json(AS_META),
     });
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("omnibus");
   });
 
@@ -192,7 +193,7 @@ describe("McpOauthDiscoveryChainAudit", () => {
       [PRM_URL]: json(PRM),
       [AS_URL]: json({ ...AS_META, issuer: "https://auth.example.com/" }),
     });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("issuer");
   });
 
@@ -204,19 +205,19 @@ describe("McpOauthDiscoveryChainAudit", () => {
         code_challenge_methods_supported: ["plain"],
       }),
     });
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("S256");
   });
 
   it("fails when no authorization server metadata answers", async () => {
     const { result } = await run(challenge(), { [PRM_URL]: json(PRM) });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("publishes no metadata");
   });
 
   it("fails a server that challenges but publishes no PRM anywhere", async () => {
     const { result } = await run(challenge(), {});
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("no Protected Resource Metadata");
   });
 
@@ -237,7 +238,7 @@ describe("McpOauthDiscoveryChainAudit", () => {
       [AS_URL]: json(AS_META),
     });
     expect(seen).toContain(PRM_URL);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("before consent");
   });
 
@@ -248,12 +249,12 @@ describe("McpOauthDiscoveryChainAudit", () => {
       "application/json",
     );
     const { result } = await run(ok, {});
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("fails a non-Bearer challenge scheme", async () => {
     const { result } = await run(challenge("", 'Basic realm="mcp"'), HEALTHY);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("Bearer");
   });
 });

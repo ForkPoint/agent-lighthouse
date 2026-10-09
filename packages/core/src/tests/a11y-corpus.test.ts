@@ -3,15 +3,16 @@ import { readFixture } from "./fixture-io";
 import {
   runA11yForHtml,
   type A11yPageResult,
-} from "../audits/operability-safety/runner";
+} from "#core/audits/operability-safety/runner";
 import {
   A11Y_RULES,
   OPERABILITY_SAFETY_AUDITS,
-} from "../audits/operability-safety";
-import { parseHtml } from "../parser";
-import { mockCheckContext } from "../__tests__/test-utils";
-import type { PageContext } from "../check-context";
-import { AuditResultSchema } from "../schemas";
+} from "#core/audits/operability-safety/index";
+import { parseHtml } from "#core/parser";
+import { mockCheckContext } from "#core/__tests__/test-utils";
+import type { PageContext } from "#core/check-context";
+import { AuditResultSchema } from "#core/schemas";
+import { CheckStatus, PageType, PageTypeSource } from "#core/types";
 
 /**
  * Exercise the 17 accessibility-tree audits over representative real-page DOMs.
@@ -32,8 +33,8 @@ function buildFixturePage(
   const $ = parseHtml(html);
   return {
     url,
-    pageType: "content",
-    pageTypeSource: "declared",
+    pageType: PageType.Content,
+    pageTypeSource: PageTypeSource.Declared,
     fetchResult: {
       url,
       finalUrl: url,
@@ -121,11 +122,11 @@ describe("accessibility audits on real-page corpus", () => {
       return new (cls as any)().audit(ctx);
     };
 
-    expect(findAudit("document-title").status).toBe("pass");
-    expect(findAudit("landmark-unique").status).toBe("pass");
-    expect(findAudit("aria-roles").status).toBe("pass");
-    expect(findAudit("aria-attributes").status).toBe("pass");
-    expect(findAudit("duplicate-id").status).toBe("pass");
+    expect(findAudit("document-title").status).toBe(CheckStatus.Pass);
+    expect(findAudit("landmark-unique").status).toBe(CheckStatus.Pass);
+    expect(findAudit("aria-roles").status).toBe(CheckStatus.Pass);
+    expect(findAudit("aria-attributes").status).toBe(CheckStatus.Pass);
+    expect(findAudit("duplicate-id").status).toBe(CheckStatus.Pass);
   });
 
   it("identifies node targets on failing real-world pages (cdc-gov-flu-about)", async () => {
@@ -143,11 +144,11 @@ describe("accessibility audits on real-page corpus", () => {
     };
 
     const landmarkRes = findAudit("landmark-unique");
-    expect(landmarkRes.status).toBe("fail");
+    expect(landmarkRes.status).toBe(CheckStatus.Fail);
     expect(landmarkRes.found).toContain("Failing element(s):");
 
     const attrRes = findAudit("aria-attributes");
-    expect(attrRes.status).toBe("fail");
+    expect(attrRes.status).toBe(CheckStatus.Fail);
     expect(attrRes.found).toContain("Failing element(s):");
   });
 });

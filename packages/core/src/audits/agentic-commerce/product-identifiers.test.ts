@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { ProductIdentifiersAudit } from "./product-identifiers";
-import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
+import { mockPageContext, mockCheckContext } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 const ld = (obj: unknown) =>
   `<script type="application/ld+json">${JSON.stringify(obj)}</script>`;
@@ -10,6 +11,29 @@ const productPage = (head: string) =>
     `<html><head>${head}</head><body></body></html>`,
     1,
   );
+
+// Google's variant layout: shared properties on the ProductGroup, the
+// varying ones and each variant's own Offer under hasVariant.
+const productGroup = (offers: Record<string, unknown> = {}) => ({
+  "@context": "https://schema.org",
+  "@type": "ProductGroup",
+  productGroupID: "SHIRT",
+  name: "Shirt",
+  brand: { "@type": "Brand", name: "Acme" },
+  category: "Shirts",
+  ...offers,
+  hasVariant: ["S", "M"].map((size) => ({
+    "@type": "Product",
+    sku: `SHIRT-${size}`,
+    size,
+    offers: {
+      "@type": "Offer",
+      price: 45,
+      priceCurrency: "EUR",
+      availability: "https://schema.org/InStock",
+    },
+  })),
+});
 
 describe("ProductIdentifiersAudit", () => {
   const audit = new ProductIdentifiersAudit();
@@ -25,7 +49,7 @@ describe("ProductIdentifiersAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No Product schema found");
   });
 
@@ -41,7 +65,7 @@ describe("ProductIdentifiersAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("sku");
   });
 
@@ -59,7 +83,7 @@ describe("ProductIdentifiersAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("detects identifiers on a Product nested inside @graph", () => {
@@ -72,7 +96,7 @@ describe("ProductIdentifiersAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("fails when a Product has no identifiers", () => {
@@ -86,7 +110,7 @@ describe("ProductIdentifiersAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No unique product identifiers");
   });
 
@@ -103,7 +127,15 @@ describe("ProductIdentifiersAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("sku");
+  });
+
+  it("reads identifiers from a ProductGroup's variants", () => {
+    const result = audit.audit(
+      mockCheckContext([productPage(ld(productGroup()))]),
+    );
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.found).toBe("sku");
   });
 });

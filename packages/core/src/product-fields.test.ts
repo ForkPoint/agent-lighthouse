@@ -1,6 +1,6 @@
-import type { PageType } from "./types";
 import type { PageContext } from "./check-context";
 import { extractProductFieldVerification } from "./product-fields";
+import { FieldStatus, PageType } from "./types";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -20,14 +20,14 @@ function makePage(
 }
 
 const ALL_MISSING = {
-  sku: "missing",
-  gtin: "missing",
-  brand: "missing",
-  category: "missing",
-  availability: "missing",
-  priceCurrency: "missing",
-  stockLevel: "missing",
-  reviewCount: "missing",
+  sku: FieldStatus.Missing,
+  gtin: FieldStatus.Missing,
+  brand: FieldStatus.Missing,
+  category: FieldStatus.Missing,
+  availability: FieldStatus.Missing,
+  priceCurrency: FieldStatus.Missing,
+  stockLevel: FieldStatus.Missing,
+  reviewCount: FieldStatus.Missing,
 };
 
 // ---------------------------------------------------------------------------
@@ -37,8 +37,8 @@ const ALL_MISSING = {
 describe("extractProductFieldVerification — no product", () => {
   it("returns all-missing (no sourceUrl) when there are no product pages", () => {
     const result = extractProductFieldVerification([
-      makePage("content", [{ "@type": "WebPage" }]),
-      makePage("homepage", [{ "@type": "Organization" }]),
+      makePage(PageType.Content, [{ "@type": "WebPage" }]),
+      makePage(PageType.Homepage, [{ "@type": "Organization" }]),
     ]);
     expect(result).toEqual(ALL_MISSING);
     expect(result.sourceUrl).toBeUndefined();
@@ -46,7 +46,7 @@ describe("extractProductFieldVerification — no product", () => {
 
   it("returns all-missing when a product page has no Product-typed schema", () => {
     const result = extractProductFieldVerification([
-      makePage("product", [
+      makePage(PageType.Product, [
         { "@type": "WebPage" },
         { "@type": 123 },
         { noType: true },
@@ -58,11 +58,13 @@ describe("extractProductFieldVerification — no product", () => {
   it("returns all-missing when the product offers value contains no object", () => {
     // first() must return undefined when the value has no object member.
     const result = extractProductFieldVerification([
-      makePage("product", [{ "@type": "Product", offers: "not-an-object" }]),
+      makePage(PageType.Product, [
+        { "@type": "Product", offers: "not-an-object" },
+      ]),
     ]);
-    expect(result.priceCurrency).toBe("missing");
-    expect(result.stockLevel).toBe("missing");
-    expect(result.sku).toBe("missing");
+    expect(result.priceCurrency).toBe(FieldStatus.Missing);
+    expect(result.stockLevel).toBe(FieldStatus.Missing);
+    expect(result.sku).toBe(FieldStatus.Missing);
   });
 });
 
@@ -74,7 +76,7 @@ describe("extractProductFieldVerification — fully populated", () => {
   it("marks every field found from a complete Product (offers array)", () => {
     const result = extractProductFieldVerification([
       makePage(
-        "product",
+        PageType.Product,
         [
           {
             "@type": "Product",
@@ -99,14 +101,14 @@ describe("extractProductFieldVerification — fully populated", () => {
       ),
     ]);
     expect(result).toEqual({
-      sku: "found",
-      gtin: "found",
-      brand: "found",
-      category: "found",
-      availability: "found",
-      priceCurrency: "found",
-      stockLevel: "found",
-      reviewCount: "found",
+      sku: FieldStatus.Found,
+      gtin: FieldStatus.Found,
+      brand: FieldStatus.Found,
+      category: FieldStatus.Found,
+      availability: FieldStatus.Found,
+      priceCurrency: FieldStatus.Found,
+      stockLevel: FieldStatus.Found,
+      reviewCount: FieldStatus.Found,
       sourceUrl: "https://shop.test/product/acme",
     });
   });
@@ -119,47 +121,47 @@ describe("extractProductFieldVerification — fully populated", () => {
 describe("extractProductFieldVerification — price/stock derivation", () => {
   it("reads price/availability from product level when there is no offer (partial)", () => {
     const result = extractProductFieldVerification([
-      makePage("product", [
+      makePage(PageType.Product, [
         { "@type": "Product", price: "5.00", availability: "InStock" },
       ]),
     ]);
     // price true, currency false -> partial; availability true, no inventory -> partial.
-    expect(result.priceCurrency).toBe("partial");
-    expect(result.availability).toBe("found");
-    expect(result.stockLevel).toBe("partial");
-    expect(result.sku).toBe("missing");
-    expect(result.gtin).toBe("missing");
+    expect(result.priceCurrency).toBe(FieldStatus.Partial);
+    expect(result.availability).toBe(FieldStatus.Found);
+    expect(result.stockLevel).toBe(FieldStatus.Partial);
+    expect(result.sku).toBe(FieldStatus.Missing);
+    expect(result.gtin).toBe(FieldStatus.Missing);
   });
 
   it("treats currency-only (no price) as partial", () => {
     const result = extractProductFieldVerification([
-      makePage("product", [
+      makePage(PageType.Product, [
         {
           "@type": "Product",
           offers: { "@type": "Offer", priceCurrency: "EUR" },
         },
       ]),
     ]);
-    expect(result.priceCurrency).toBe("partial");
-    expect(result.stockLevel).toBe("missing");
+    expect(result.priceCurrency).toBe(FieldStatus.Partial);
+    expect(result.stockLevel).toBe(FieldStatus.Missing);
   });
 
   it("treats no price and no currency as missing", () => {
     const result = extractProductFieldVerification([
-      makePage("product", [{ "@type": "Product", sku: "X" }]),
+      makePage(PageType.Product, [{ "@type": "Product", sku: "X" }]),
     ]);
-    expect(result.priceCurrency).toBe("missing");
-    expect(result.stockLevel).toBe("missing");
+    expect(result.priceCurrency).toBe(FieldStatus.Missing);
+    expect(result.stockLevel).toBe(FieldStatus.Missing);
   });
 
   it("marks stockLevel found from explicit inventoryLevel even without availability", () => {
     const result = extractProductFieldVerification([
-      makePage("product", [
+      makePage(PageType.Product, [
         { "@type": "Product", offers: { "@type": "Offer", inventoryLevel: 3 } },
       ]),
     ]);
-    expect(result.stockLevel).toBe("found");
-    expect(result.availability).toBe("missing");
+    expect(result.stockLevel).toBe(FieldStatus.Found);
+    expect(result.availability).toBe(FieldStatus.Missing);
   });
 });
 
@@ -170,7 +172,7 @@ describe("extractProductFieldVerification — price/stock derivation", () => {
 describe("extractProductFieldVerification — alternate field sources", () => {
   it("derives sku from productID and reviewCount from ratingCount (array @type)", () => {
     const result = extractProductFieldVerification([
-      makePage("product", [
+      makePage(PageType.Product, [
         {
           "@type": ["Thing", "Product"],
           productID: "PID-9",
@@ -178,14 +180,14 @@ describe("extractProductFieldVerification — alternate field sources", () => {
         },
       ]),
     ]);
-    expect(result.sku).toBe("found");
-    expect(result.gtin).toBe("missing");
-    expect(result.reviewCount).toBe("found");
+    expect(result.sku).toBe(FieldStatus.Found);
+    expect(result.gtin).toBe(FieldStatus.Missing);
+    expect(result.reviewCount).toBe(FieldStatus.Found);
   });
 
   it("derives sku from productSKU, reviewCount from product.reviewCount, offer (singular)", () => {
     const result = extractProductFieldVerification([
-      makePage("product", [
+      makePage(PageType.Product, [
         {
           "@type": "Product",
           productSKU: "SK-2",
@@ -194,39 +196,41 @@ describe("extractProductFieldVerification — alternate field sources", () => {
         },
       ]),
     ]);
-    expect(result.sku).toBe("found");
-    expect(result.reviewCount).toBe("found");
-    expect(result.priceCurrency).toBe("found");
+    expect(result.sku).toBe(FieldStatus.Found);
+    expect(result.reviewCount).toBe(FieldStatus.Found);
+    expect(result.priceCurrency).toBe(FieldStatus.Found);
   });
 
   it("derives sku purely from a GTIN (gtin12) and marks gtin found", () => {
     const result = extractProductFieldVerification([
-      makePage("product", [{ "@type": "Product", gtin12: "123456789012" }]),
+      makePage(PageType.Product, [
+        { "@type": "Product", gtin12: "123456789012" },
+      ]),
     ]);
-    expect(result.sku).toBe("found");
-    expect(result.gtin).toBe("found");
+    expect(result.sku).toBe(FieldStatus.Found);
+    expect(result.gtin).toBe(FieldStatus.Found);
   });
 
   it("derives sku from mpn and gtin from bare gtin", () => {
     const result = extractProductFieldVerification([
-      makePage("product", [
+      makePage(PageType.Product, [
         { "@type": "Product", mpn: "MPN-1", gtin: "0001112223334" },
       ]),
     ]);
-    expect(result.sku).toBe("found");
-    expect(result.gtin).toBe("found");
+    expect(result.sku).toBe(FieldStatus.Found);
+    expect(result.gtin).toBe(FieldStatus.Found);
   });
 
   it("derives reviewCount from aggregateRating.reviewCount", () => {
     const result = extractProductFieldVerification([
-      makePage("product", [
+      makePage(PageType.Product, [
         {
           "@type": "Product",
           aggregateRating: { "@type": "AggregateRating", reviewCount: 2 },
         },
       ]),
     ]);
-    expect(result.reviewCount).toBe("found");
+    expect(result.reviewCount).toBe(FieldStatus.Found);
   });
 });
 
@@ -237,7 +241,7 @@ describe("extractProductFieldVerification — alternate field sources", () => {
 describe("extractProductFieldVerification — has() value semantics", () => {
   it('treats blank / "null" / "n/a" string values as missing', () => {
     const result = extractProductFieldVerification([
-      makePage("product", [
+      makePage(PageType.Product, [
         {
           "@type": "Product",
           sku: "real",
@@ -247,21 +251,21 @@ describe("extractProductFieldVerification — has() value semantics", () => {
         },
       ]),
     ]);
-    expect(result.brand).toBe("missing");
-    expect(result.category).toBe("missing");
+    expect(result.brand).toBe(FieldStatus.Missing);
+    expect(result.category).toBe(FieldStatus.Missing);
   });
 
   it("treats an empty object / empty array as missing but a populated one as found", () => {
     const missing = extractProductFieldVerification([
-      makePage("product", [
+      makePage(PageType.Product, [
         { "@type": "Product", sku: "a", brand: {}, category: [""] },
       ]),
     ]);
-    expect(missing.brand).toBe("missing");
-    expect(missing.category).toBe("missing");
+    expect(missing.brand).toBe(FieldStatus.Missing);
+    expect(missing.category).toBe(FieldStatus.Missing);
 
     const found = extractProductFieldVerification([
-      makePage("product", [
+      makePage(PageType.Product, [
         {
           "@type": "Product",
           sku: "a",
@@ -270,8 +274,8 @@ describe("extractProductFieldVerification — has() value semantics", () => {
         },
       ]),
     ]);
-    expect(found.brand).toBe("found");
-    expect(found.category).toBe("found");
+    expect(found.brand).toBe(FieldStatus.Found);
+    expect(found.category).toBe(FieldStatus.Found);
   });
 });
 
@@ -282,7 +286,7 @@ describe("extractProductFieldVerification — has() value semantics", () => {
 describe("extractProductFieldVerification — flatten & sources", () => {
   it("flattens @graph wrappers and skips non-object graph members", () => {
     const result = extractProductFieldVerification([
-      makePage("product", [
+      makePage(PageType.Product, [
         {
           "@graph": [
             { "@type": "WebSite" },
@@ -292,27 +296,68 @@ describe("extractProductFieldVerification — flatten & sources", () => {
         },
       ]),
     ]);
-    expect(result.sku).toBe("found");
+    expect(result.sku).toBe(FieldStatus.Found);
   });
 
   it("falls back to jsonLd when structuredData is absent", () => {
     const result = extractProductFieldVerification([
-      makePage("product", undefined, [{ "@type": "Product", sku: "J-1" }]),
+      makePage(PageType.Product, undefined, [
+        { "@type": "Product", sku: "J-1" },
+      ]),
     ]);
-    expect(result.sku).toBe("found");
+    expect(result.sku).toBe(FieldStatus.Found);
   });
 
   it("uses the first product page that actually contains a Product", () => {
     const result = extractProductFieldVerification([
-      makePage("product", [{ "@type": "WebPage" }], [], "https://shop.test/a"),
       makePage(
-        "product",
+        PageType.Product,
+        [{ "@type": "WebPage" }],
+        [],
+        "https://shop.test/a",
+      ),
+      makePage(
+        PageType.Product,
         [{ "@type": "Product", sku: "B-1" }],
         [],
         "https://shop.test/b",
       ),
     ]);
-    expect(result.sku).toBe("found");
+    expect(result.sku).toBe(FieldStatus.Found);
     expect(result.sourceUrl).toBe("https://shop.test/b");
+  });
+});
+
+describe("extractProductFieldVerification — ProductGroup", () => {
+  it("reads a variant with the group's shared brand and category", () => {
+    const result = extractProductFieldVerification([
+      makePage(PageType.Product, [
+        {
+          "@type": "ProductGroup",
+          productGroupID: "SHIRT",
+          brand: { "@type": "Brand", name: "Acme" },
+          category: "Shirts",
+          hasVariant: [
+            {
+              "@type": "Product",
+              sku: "SHIRT-S",
+              offers: {
+                "@type": "Offer",
+                price: 45,
+                priceCurrency: "EUR",
+                availability: "https://schema.org/InStock",
+              },
+            },
+          ],
+        },
+      ]),
+    ]);
+    expect(result).toMatchObject({
+      sku: FieldStatus.Found,
+      brand: FieldStatus.Found,
+      category: FieldStatus.Found,
+      availability: FieldStatus.Found,
+      priceCurrency: FieldStatus.Found,
+    });
   });
 });

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { evidenceUrl } from "../audit";
-import { defaultConfig } from "../index";
+import { evidenceUrl } from "#core/audit";
+import { defaultConfig } from "#core/index";
+import { CheckStatus } from "#core/types";
 
 describe("evidenceUrl", () => {
   it("derives the published page from the audit id", () => {
@@ -77,7 +78,7 @@ describe("evidenceUrl", () => {
  * field on the produced CheckResult, so deleting the stamping line fails here.
  */
 describe("toCheckResult stamps the evidence URL", () => {
-  const PASS = { status: "pass", score: 1 } as const;
+  const PASS = { status: CheckStatus.Pass, score: 1 } as const;
 
   it("carries the evidence URL for a named audit", () => {
     const registration = Object.values(defaultConfig.audits)

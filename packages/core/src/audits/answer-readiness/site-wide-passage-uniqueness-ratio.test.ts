@@ -1,8 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { SiteWidePassageUniquenessRatioAudit } from "./site-wide-passage-uniqueness-ratio";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { CheckContext } from "../../check-context";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { CheckContext } from "#core/check-context";
+import { AuditTier, CheckStatus, EvidenceGrade } from "#core/types";
 
 /**
  * Sentences no other page shares, seeded so no five-word window repeats.
@@ -63,7 +64,7 @@ describe("SiteWidePassageUniquenessRatioAudit", () => {
       { url: "https://example.com/a", sentences: own("alpha") },
       { url: "https://example.com/b", sentences: own("bravo") },
     ]);
-    expect((await audit.audit(ctx)).status).toBe("na");
+    expect((await audit.audit(ctx)).status).toBe(CheckStatus.NotApplicable);
   });
 
   it("calls a sentence boilerplate on three pages but not on two", async () => {
@@ -125,7 +126,7 @@ describe("SiteWidePassageUniquenessRatioAudit", () => {
       },
     ]);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.details?.["lowUniquenessPages"]).toEqual([
       expect.stringContaining("https://example.com/thin"),
     ]);
@@ -146,7 +147,7 @@ describe("SiteWidePassageUniquenessRatioAudit", () => {
       { url: "https://example.com/z", sentences: own("zulu", 20) },
     ]);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.details?.["nearDuplicateClusters"]).toBe(1);
     expect(result.details?.["unresolvedClusters"]).toBe(1);
   });
@@ -166,7 +167,7 @@ describe("SiteWidePassageUniquenessRatioAudit", () => {
       { url: "https://example.com/z", sentences: own("zulu", 20) },
     ]);
     const result = await audit.audit(ctx);
-    expect(result.status).not.toBe("fail");
+    expect(result.status).not.toBe(CheckStatus.Fail);
     expect(result.details?.["nearDuplicateClusters"]).toBe(1);
     expect(result.details?.["unresolvedClusters"]).toBe(0);
   });
@@ -201,14 +202,14 @@ describe("SiteWidePassageUniquenessRatioAudit", () => {
       { url: "https://example.com/c", sentences: own("charlie", 20) },
     ]);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.details?.["nearDuplicateClusters"]).toBe(0);
   });
 
   it("is a scored grade B audit", () => {
     const { meta } = SiteWidePassageUniquenessRatioAudit;
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
     expect(meta.weight).toBeCloseTo(0.6);
   });
 });

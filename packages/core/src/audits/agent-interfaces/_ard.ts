@@ -23,7 +23,7 @@
  * docs/evidence/deletions/agent-tools/ai-catalog-exists.md.
  */
 
-import type { CheckContext } from "../../check-context";
+import type { CheckContext } from "#core/check-context";
 
 /** The only location a documented consumer (hf-discover) resolves. */
 export const AI_CATALOG_PATH = "/.well-known/ai-catalog.json";

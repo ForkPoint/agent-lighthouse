@@ -10,12 +10,20 @@
 // `form-error-messages` covers error wiring on constrained fields; the two
 // side findings here are narrower (asterisk-only required-ness, and an error
 // element sitting next to a field that points at nothing).
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
 import type { Cheerio, CheerioAPI } from "cheerio";
 import type { Element } from "domhandler";
-import type { CheckContext, PageContext } from "../../check-context";
+import type { CheckContext, PageContext } from "#core/check-context";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** Controls that hold no user identity data, so carry no autofill concept. */
 const NON_DATA_TYPES = new Set([
@@ -124,10 +132,19 @@ const LOCATION_TOKENS = new Set([
 /** "City or postcode", "Ville ou code postal": a choice, not one concept. */
 const ALTERNATIVES = /\s(?:or|ou)\s/;
 
+const TokenGap = {
+  NoToken: "no-token",
+  WrongToken: "wrong-token",
+  NoIdentifier: "no-identifier",
+  WrongType: "wrong-type",
+} as const;
+
+type TokenGap = (typeof TokenGap)[keyof typeof TokenGap];
+
 interface FieldFinding {
   pageUrl: string;
   expected: string;
-  reason: "no-token" | "wrong-token" | "no-identifier" | "wrong-type";
+  reason: TokenGap;
 }
 
 interface Survey {
@@ -344,12 +361,12 @@ function survey(ctx: CheckContext): Survey {
           return;
         }
         const reason: FieldFinding["reason"] = !declared
-          ? "no-token"
+          ? TokenGap.NoToken
           : declared !== expected
-            ? "wrong-token"
+            ? TokenGap.WrongToken
             : !hasIdentifier
-              ? "no-identifier"
-              : "wrong-type";
+              ? TokenGap.NoIdentifier
+              : TokenGap.WrongType;
         result.fieldFindings.push({ pageUrl: page.url, expected, reason });
         result.firstUncoveredPage ??= page.url;
       });
@@ -363,13 +380,13 @@ function survey(ctx: CheckContext): Survey {
 function describe(finding: FieldFinding): string {
   const token = `autocomplete="${finding.expected}"`;
   switch (finding.reason) {
-    case "no-token":
+    case TokenGap.NoToken:
       return `a field that should declare ${token} declares no autocomplete at all`;
-    case "wrong-token":
+    case TokenGap.WrongToken:
       return `a field that should declare ${token} declares a different token`;
-    case "no-identifier":
+    case TokenGap.NoIdentifier:
       return `a field declaring ${token} carries neither a name nor an id, so it has no stable handle`;
-    case "wrong-type":
+    case TokenGap.WrongType:
       return `a field declaring ${token} does not carry the matching type="${REQUIRED_TYPE[finding.expected]}"`;
   }
 }
@@ -395,25 +412,25 @@ export class FormAutofillTokenCoverageAudit extends Audit {
     failureTitle: "Form Autofill Token Coverage",
     description:
       "Per-form score for whether every field an agent must populate carries the machine-readable identity an agent needs: a stable name/id, a correct input type, a WHATWG autocomplete token when the field maps to a standard autofill concept, programmatic constraints, and error wiring via aria-invalid/aria-describedby. Scored as covered-fields / autofillable-fields per form.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/operability-safety/form-autofill-token-coverage.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "high",
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         'Falsifiable claim: an agent filling a checkout must map each field to a value from user profile data. When the field declares autocomplete="postal-code", that mapping is a table lookup against a ratified vocabulary; when it declares name="field_7" with a visual-only label, the mapping is an inference that fails on ambiguous cases (address-line2 vs address-level2, cc-exp vs bday, tel-national vs tel). WebSuite measures the consequence directly: complex form filling succeeds 12.5% and 0% for the two agents tested, against 85%/76% for simple operational clicks. Test: add correct autocomplete tokens to a failing form and re-run the same fill task.',
       fix: "Give every field that maps to a standard autofill concept its WHATWG token (email, tel, postal-code, address-level1/2, cc-number, one-time-code, new-password on signup, current-password on sign-in), plus a stable name or id and the matching input type. Express required-ness with the required attribute rather than an asterisk in the label, and point each field at its error element with aria-describedby or aria-errormessage.",
       code: SAMPLE,
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/form-autofill-token-coverage/",
       tags: [
@@ -428,7 +445,7 @@ export class FormAutofillTokenCoverageAudit extends Audit {
 
   private recommendation() {
     return {
-      priority: "high" as const,
+      priority: CheckPriority.High,
       description: FormAutofillTokenCoverageAudit.meta.description,
       code: SAMPLE,
     };

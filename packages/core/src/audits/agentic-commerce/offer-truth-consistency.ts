@@ -1,8 +1,8 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import { allJsonLdNodes } from "../../parser";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import { allJsonLdNodes } from "#core/parser";
 import {
   CURRENCY_SYMBOLS,
   OUT_OF_STOCK_PHRASES,
@@ -10,7 +10,16 @@ import {
   priceCandidates,
   productRegion,
   type PriceCandidate,
-} from "../../gatherers/commerce";
+} from "#core/gatherers/commerce";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** How many product pages are examined. */
 const MAX_PAGES = 3;
@@ -125,19 +134,19 @@ export class OfferTruthConsistencyAudit extends Audit {
     failureTitle: "Offer Truth Consistency",
     description:
       "Reconciles the Offer in a product page’s structured data against what the same page actually renders: the price, the currency, whether the item can be bought, whether the offer window has closed, and whether two Product nodes describing the same URL disagree. Every rule is a value comparison, not a presence check, and extraction is confined to the product region so a related-products carousel cannot fire it.",
-    scoreDisplayMode: "ternary",
-    tier: "scored",
-    evidenceGrade: "B",
-    weight: weightForGrade("B", "scored"),
-    defaultPriority: "high",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    tier: AuditTier.Scored,
+    evidenceGrade: EvidenceGrade.B,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    defaultPriority: CheckPriority.High,
     dossier: "docs/evidence/audits/agentic-commerce/offer-truth-consistency.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: ["product"],
+    applicablePageTypes: [PageType.Product],
     guidance: {
       impact:
         "An agent quotes from the structured data; the seller recomputes the real amount at checkout. When the two disagree the buyer has already committed, and the session comes back with `invalid` or `out_of_stock` — the most expensive moment at which a purchase can fail. Google says the same thing from the other side: structured data must be a true representation of the page content. Markup that is present and lying passes every syntax validator on the market.",
@@ -159,7 +168,7 @@ export class OfferTruthConsistencyAudit extends Audit {
 </script>
 <p class="price">£59.00</p>
 <button disabled>Sold out</button>`,
-      effort: "complex",
+      effort: FixEffort.Complex,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/agentic-commerce/offer-truth-consistency/",
       tags: ["commerce", "json-ld", "price", "availability", "acp"],

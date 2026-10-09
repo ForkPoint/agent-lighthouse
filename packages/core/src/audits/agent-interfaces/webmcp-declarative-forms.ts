@@ -1,7 +1,15 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 // Re-graded A -> B on 2026-08-24. Chrome's declarative-API page is live and
 // states that the browser reads an annotated form as a tool, but it carries an
@@ -131,28 +139,28 @@ export class WebmcpDeclarativeFormsAudit extends Audit {
     failureTitle: "WebMCP declarative form tools",
     description:
       "WebMCP's Declarative API turns an HTML <form> into an agent-callable tool: add toolname and tooldescription and the browser synthesizes a JSON Schema from the form's controls, which an in-browser agent can discover and invoke without any JavaScript. toolname is what registers the tool — a description on its own registers nothing.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/agent-interfaces/webmcp-declarative-forms.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     // Softened from 'high': the feature is Baseline "limited" (Chrome 149 /
     // Edge 150 origin trials, Brave Leo experimental) and Apple's WebKit
     // standards position is "oppose", so this is worth doing, not urgent.
-    defaultPriority: "medium",
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "Without the declarative attributes, an agent in a supporting browser has no structured tool for your form and falls back to heuristics or vision to work out which control is which — slower, and wrong more often on anything past a single text input.",
       fix: "Add toolname (a short snake_case verb phrase) and tooldescription to each form you want agents to be able to call, and put toolparamdescription on the individual controls so the synthesized JSON Schema explains each property. Add toolautosubmit only to read-only tools.",
       code: SAMPLE,
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl: "https://developer.chrome.com/docs/ai/webmcp/declarative-api",
       tags: ["webmcp", "declarative", "forms", "agent-protocol"],
     },
@@ -199,7 +207,7 @@ export class WebmcpDeclarativeFormsAudit extends Audit {
         `Found ${forms.total} form(s) but none carry a ${TOOL_NAME_ATTR}, so no form is exposed as a WebMCP tool.${namelessNote}`,
         EXPECTED,
         found,
-        "medium",
+        CheckPriority.Medium,
       );
     }
 
@@ -210,7 +218,7 @@ export class WebmcpDeclarativeFormsAudit extends Audit {
         `${forms.named.length}/${forms.total} form(s) are exposed as WebMCP tools${toolsLabel}.${namelessNote}`,
         EXPECTED,
         found,
-        "medium",
+        CheckPriority.Medium,
         forms.firstPageUrl,
       );
     }
@@ -221,7 +229,7 @@ export class WebmcpDeclarativeFormsAudit extends Audit {
         `All ${forms.total} form(s) are registered as WebMCP tools, but ${forms.undescribed.join(", ")} ${forms.undescribed.length === 1 ? "has" : "have"} no ${TOOL_DESCRIPTION_ATTR}, so an agent has nothing to select the tool on.`,
         EXPECTED,
         found,
-        "medium",
+        CheckPriority.Medium,
         forms.firstPageUrl,
       );
     }

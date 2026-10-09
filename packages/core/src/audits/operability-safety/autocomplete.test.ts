@@ -1,7 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { AutocompleteAudit } from "./autocomplete";
-import { mockCheckContext } from "../../__tests__/test-utils";
+import { mockCheckContext } from "#core/__tests__/test-utils";
 import { pageWithA11y, runA11yAudit } from "./_test-utils";
+import { AuditTier, CheckStatus, EvidenceGrade } from "#core/types";
+import { RuleStatus } from "./engine/rules";
 
 describe("AutocompleteAudit", () => {
   it("registers under the autocomplete id with its dossier and grade", () => {
@@ -9,14 +11,14 @@ describe("AutocompleteAudit", () => {
     expect(AutocompleteAudit.meta.dossier).toBe(
       "docs/evidence/audits/operability-safety/autocomplete.md",
     );
-    expect(AutocompleteAudit.meta.evidenceGrade).toBe("A");
-    expect(AutocompleteAudit.meta.tier).toBe("scored");
+    expect(AutocompleteAudit.meta.evidenceGrade).toBe(EvidenceGrade.A);
+    expect(AutocompleteAudit.meta.tier).toBe(AuditTier.Scored);
   });
 
   it("wires exactly its a11y rule(s)", () => {
     const ctx = mockCheckContext([
       pageWithA11y("https://example.com/", {
-        "autocomplete-valid": { status: "pass", nodes: [] },
+        "autocomplete-valid": { status: CheckStatus.Pass, nodes: [] },
       }),
     ]);
     const result = runA11yAudit(AutocompleteAudit, ctx);
@@ -29,31 +31,33 @@ describe("AutocompleteAudit", () => {
     const ctx = mockCheckContext([
       pageWithA11y("https://example.com/", {
         "autocomplete-valid": {
-          status: "fail",
+          status: CheckStatus.Fail,
           nodes: [{ target: "#offender", summary: "violation" }],
         },
       }),
     ]);
     const result = runA11yAudit(AutocompleteAudit, ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("#offender");
   });
 
   it("passes when every constituent rule passes", () => {
     const ctx = mockCheckContext([
       pageWithA11y("https://example.com/", {
-        "autocomplete-valid": { status: "pass", nodes: [] },
+        "autocomplete-valid": { status: CheckStatus.Pass, nodes: [] },
       }),
     ]);
-    expect(runA11yAudit(AutocompleteAudit, ctx).status).toBe("pass");
+    expect(runA11yAudit(AutocompleteAudit, ctx).status).toBe(CheckStatus.Pass);
   });
 
   it("is na when no constituent rule applies", () => {
     const ctx = mockCheckContext([
       pageWithA11y("https://example.com/", {
-        "autocomplete-valid": { status: "inapplicable", nodes: [] },
+        "autocomplete-valid": { status: RuleStatus.Inapplicable, nodes: [] },
       }),
     ]);
-    expect(runA11yAudit(AutocompleteAudit, ctx).status).toBe("na");
+    expect(runA11yAudit(AutocompleteAudit, ctx).status).toBe(
+      CheckStatus.NotApplicable,
+    );
   });
 });

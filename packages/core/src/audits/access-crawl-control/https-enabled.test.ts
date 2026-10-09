@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
 import { HttpsEnabledAudit } from "./https-enabled";
 import {
   attributableFixture,
@@ -8,7 +8,8 @@ import {
   mockPageContext,
   unreachedSiteContext,
   walledSiteContext,
-} from "../../__tests__/test-utils";
+} from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 describe("HttpsEnabledAudit", () => {
   const audit = new HttpsEnabledAudit();
@@ -20,7 +21,7 @@ describe("HttpsEnabledAudit", () => {
     );
     const ctx = mockCheckContext([page]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("HTTPS");
   });
 
@@ -44,7 +45,7 @@ describe("HttpsEnabledAudit", () => {
     const ctx = mockCheckContext([page]);
     ctx.baseUrl = "http://example.com";
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("not served over HTTPS");
   });
 
@@ -55,7 +56,7 @@ describe("HttpsEnabledAudit", () => {
   it("warns about a missing document, not a TLS fault, when no page survived", () => {
     const ctx = mockCheckContext([]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("carried no document");
     expect(result.message).not.toContain("TLS");
     expect(result.message).not.toContain("unknown");
@@ -77,7 +78,9 @@ describe("HttpsEnabledAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new HttpsEnabledAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext(pages, rootFiles),
@@ -89,14 +92,14 @@ describe("HttpsEnabledAudit", () => {
     expect(
       plan.skipped.find((stub) => stub.id === HttpsEnabledAudit.meta.id)
         ?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
   // This direct call pins the audit's local scheme branch. The runner does not
   // publish this finding from an unread scan; it emits an `na` stub instead.
   it("fails unread plain HTTP when its local scheme branch is called directly", () => {
     const ctx = walledSiteContext({ baseUrl: "http://example.com" });
     const result = new HttpsEnabledAudit().audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("not served over HTTPS");
   });
 
@@ -110,7 +113,7 @@ describe("HttpsEnabledAudit", () => {
     expect(plan.runnable.map((entry) => entry.reg.meta.id)).not.toContain(
       HttpsEnabledAudit.meta.id,
     );
-    expect(result?.status).toBe("na");
+    expect(result?.status).toBe(CheckStatus.NotApplicable);
     expect(result?.explanation).not.toContain("TLS or server error");
   });
 });

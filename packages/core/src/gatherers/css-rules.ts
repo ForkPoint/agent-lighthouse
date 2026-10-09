@@ -1,5 +1,5 @@
-import type { CheckContext, PageContext } from "../check-context";
-import { isSafeUrl } from "../fetcher";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { isSafeUrl } from "#core/fetcher";
 
 /** One `selector { declarations }` rule, with the at-rule it sits inside. */
 export interface CssRule {

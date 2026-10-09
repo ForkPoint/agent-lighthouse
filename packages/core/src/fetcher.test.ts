@@ -23,6 +23,7 @@ vi.mock("node:dns/promises", () => ({
 import { request } from "undici";
 import dns from "node:dns/promises";
 import { createFetcher, isSafeUrl, splitCredentials } from "./fetcher";
+import { HttpMethod } from "./types";
 
 const mockRequest = vi.mocked(request);
 const mockLookup = vi.mocked(dns.lookup);
@@ -330,7 +331,7 @@ describe("fetcher.fetch — HTTP methods", () => {
     const fetcher = createFetcher();
     await fetcher.fetch({
       url: "https://example.com/api",
-      method: "POST",
+      method: HttpMethod.Post,
       body: '{"key":"value"}',
       contentType: "application/json",
     });
@@ -354,7 +355,7 @@ describe("fetcher.fetch — HTTP methods", () => {
     const fetcher = createFetcher();
     const result = await fetcher.fetch({
       url: "https://example.com",
-      method: "OPTIONS",
+      method: HttpMethod.Options,
     });
 
     expect(resp.body.dump).toHaveBeenCalled();
@@ -511,7 +512,7 @@ describe("fetcher.fetch — body and headers edge cases", () => {
     const fetcher = createFetcher();
     await fetcher.fetch({
       url: "https://example.com/api",
-      method: "POST",
+      method: HttpMethod.Post,
       body: "raw",
     });
 
@@ -915,7 +916,7 @@ describe("createFetcher redirect handling", () => {
 
     await createFetcher().fetch({
       url: "https://example.com/submit",
-      method: "POST",
+      method: HttpMethod.Post,
       body: '{"a":1}',
       contentType: "application/json",
     });

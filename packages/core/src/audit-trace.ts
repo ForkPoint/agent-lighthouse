@@ -6,6 +6,16 @@ import {
   TAG_SKIPPED_PAGE_TYPE,
 } from "./constants";
 
+export const AuditOutcome = {
+  Ran: "ran",
+  Skipped: "skipped",
+  Gated: "gated",
+  Budget: "budget",
+  Error: "error",
+} as const;
+
+export type AuditOutcome = (typeof AuditOutcome)[keyof typeof AuditOutcome];
+
 /**
  * What one audit did, in a form that can be diffed.
  *
@@ -28,7 +38,7 @@ export interface AuditTrace {
    * `budget` — the scan's wall-clock budget ran out before it started.
    * `error` — it threw, or its result was rejected by the schema.
    */
-  outcome: "ran" | "skipped" | "gated" | "budget" | "error";
+  outcome: AuditOutcome;
   status: CheckStatus;
   score: number;
   weight: number;
@@ -41,16 +51,18 @@ export interface AuditTrace {
   pageUrl?: string;
   /** The structured evidence behind the verdict, as the report carries it. */
   details?: CheckResult["details"];
+  coverage?: CheckResult["coverage"];
+  advisoryResults?: CheckResult["advisoryResults"];
 }
 
 /** Which outcome a finished check represents. */
 export function outcomeOf(check: CheckResult): AuditTrace["outcome"] {
   const tags = check.tags ?? [];
-  if (tags.includes(TAG_SCAN_ERROR)) return "error";
-  if (tags.includes(TAG_SKIPPED_PAGE_TYPE)) return "skipped";
-  if (tags.includes(TAG_SKIPPED_NO_EVIDENCE)) return "gated";
-  if (tags.includes(TAG_SKIPPED_SCAN_BUDGET)) return "budget";
-  return "ran";
+  if (tags.includes(TAG_SCAN_ERROR)) return AuditOutcome.Error;
+  if (tags.includes(TAG_SKIPPED_PAGE_TYPE)) return AuditOutcome.Skipped;
+  if (tags.includes(TAG_SKIPPED_NO_EVIDENCE)) return AuditOutcome.Gated;
+  if (tags.includes(TAG_SKIPPED_SCAN_BUDGET)) return AuditOutcome.Budget;
+  return AuditOutcome.Ran;
 }
 
 /** Build a trace record from a finished check. */
@@ -72,12 +84,17 @@ export function traceFromCheck(
     ...(check.explanation ? { explanation: check.explanation } : {}),
     ...(check.pageUrl ? { pageUrl: check.pageUrl } : {}),
     ...(check.details ? { details: check.details } : {}),
+    ...(check.coverage ? { coverage: check.coverage } : {}),
+    ...(check.advisoryResults
+      ? { advisoryResults: check.advisoryResults }
+      : {}),
   };
 }
 
 /** One trace as a log line: the shape a human scans, not the full record. */
 export function formatTrace(trace: AuditTrace): string {
-  const timing = trace.outcome === "ran" ? ` ${trace.durationMs}ms` : "";
+  const timing =
+    trace.outcome === AuditOutcome.Ran ? ` ${trace.durationMs}ms` : "";
   const value = trace.displayValue ? ` — ${trace.displayValue}` : "";
   return `[audit] ${trace.id} ${trace.outcome}/${trace.status} score=${trace.score} weight=${trace.weight}${timing}${value}`;
 }

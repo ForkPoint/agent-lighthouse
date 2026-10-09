@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { CcbotAudit } from "./ccbot";
-import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
+import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 const robots = (body: string) =>
   mockCheckContext([], { "/robots.txt": mockFetchResult(body, 200) });
@@ -10,7 +11,7 @@ describe("CcbotAudit", () => {
 
   it("passes when CCBot has its own group that permits /", () => {
     const result = audit.audit(robots("User-agent: CCBot\nAllow: /"));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("its own robots.txt group");
   });
 
@@ -18,14 +19,14 @@ describe("CcbotAudit", () => {
   // an open catch-all grants the same access a named group would.
   it("passes when CCBot is allowed through the catch-all group", () => {
     const result = audit.audit(robots("User-agent: *\nAllow: /"));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.score).toBe(1);
     expect(result.message).toContain("catch-all group applies");
   });
 
   it("passes when no group applies to CCBot", () => {
     const result = audit.audit(robots("User-agent: SomeOtherBot\nDisallow: /"));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("No group in robots.txt applies");
   });
 
@@ -33,12 +34,12 @@ describe("CcbotAudit", () => {
     const result = audit.audit(
       robots("User-agent: CCBot\nAllow: /\n\nUser-agent: *\nDisallow: /"),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("fails when CCBot is blocked by its own group", () => {
     const result = audit.audit(robots("User-agent: CCBot\nDisallow: /"));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("blocked by robots.txt");
     expect(result.found).toContain("Its own group");
   });
@@ -47,12 +48,12 @@ describe("CcbotAudit", () => {
     const result = audit.audit(
       robots("User-agent: CCBot\nDisallow: /\n\nUser-agent: *\nAllow: /"),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("fails when a catch-all block reaches CCBot", () => {
     const result = audit.audit(robots("User-agent: *\nDisallow: /"));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("catch-all group disallows /");
   });
 
@@ -67,7 +68,7 @@ describe("CcbotAudit", () => {
 
   it("is not applicable when robots.txt is missing", () => {
     const result = audit.audit(mockCheckContext([], {}));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.found).toContain("No robots.txt found");
   });
 
@@ -75,12 +76,12 @@ describe("CcbotAudit", () => {
     const result = audit.audit(
       mockCheckContext([], { "/robots.txt": mockFetchResult("", 404) }),
     );
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.found).toContain("No robots.txt found");
   });
 
   it("is not applicable when /robots.txt serves an HTML error page", () => {
     const result = audit.audit(robots("<html><body>Not found</body></html>"));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 });

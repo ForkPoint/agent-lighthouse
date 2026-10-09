@@ -19,10 +19,18 @@
 // Scope note (non-double-counting): `tdm-reservation` and `tdm-policy` are
 // read by `access-crawl-control/tdm-rep`, which owns the TDM-Rep protocol
 // end to end. This audit ignores them.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext, PageContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /**
  * The AIPREF attachment header. draft-ietf-aipref-attach defines exactly two
@@ -126,28 +134,28 @@ export class AiContentDeclarationAudit extends Audit {
     failureTitle: "AI usage-preference declaration",
     description:
       "Where a site declares how AI systems may use its content. The IETF AIPREF work attaches that preference to a Content-Usage response header or a robots.txt rule, and explicitly leaves the HTML head out of scope; the head-level noai/noimageai convention has real adoption but no AI vendor documents honoring it. This audit reports what a site declares and where, and never treats declaring nothing as a defect.",
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("D", "experimental"),
-    evidenceGrade: "D",
-    tier: "experimental",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.D, AuditTier.Experimental),
+    evidenceGrade: EvidenceGrade.D,
+    tier: AuditTier.Experimental,
     dossier:
       "docs/evidence/audits/access-crawl-control/ai-content-declaration.md",
     // Gate exemption: being refused is what this category reports.
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     // Was `medium` on an invented directive; the whole class of signals is
     // pre-consumer, so nothing here should outrank an actionable item.
-    defaultPriority: "low",
+    defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
         "None of these declarations is documented as honored by any AI vendor today, so none of them protects content on its own. The reason to attach one is that the AIPREF form is where the standards work is heading, and a preference expressed there is the one an implementing crawler will look for. Access control that has to hold today belongs in robots.txt user-agent rules and in server-side enforcement.",
       fix: "Express the preference where AIPREF attaches it: a Content-Usage rule in robots.txt, or a Content-Usage response header. Keep any noai/noimageai tags you already ship — they cost nothing — but do not rely on them, and do not treat either as a substitute for robots.txt directives or for access control.",
       code: SAMPLE,
-      effort: "trivial",
+      effort: FixEffort.Trivial,
       docsUrl:
         "https://ietf-wg-aipref.github.io/drafts/draft-ietf-aipref-attach.html",
       tags: [
@@ -191,7 +199,7 @@ export class AiContentDeclarationAudit extends Audit {
         found.optOuts.length > 0
           ? `Head-level declarations only: ${found.optOuts.join(", ")}${found.invented ? `, ${INVENTED_NAME}` : ""}`
           : `Head-level declarations only: ${INVENTED_NAME}`,
-        "low",
+        CheckPriority.Low,
         found.pageUrl,
       );
     }

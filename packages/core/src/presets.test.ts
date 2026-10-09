@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getPreset, PRESETS } from "./presets";
+import { getPreset, PRESETS, PresetName } from "./presets";
 
 describe("getPreset", () => {
   it.each([undefined, null, "", "unknown"])(
@@ -11,13 +11,16 @@ describe("getPreset", () => {
     },
   );
 
-  it.each(["ecommerce", "saas", "content", "quick", "full"] as const)(
-    "accepts %s in mixed case",
-    (name) => {
-      expect(getPreset(name)).toBe(PRESETS[name]);
-      expect(getPreset(name.toUpperCase())).toBe(PRESETS[name]);
-    },
-  );
+  it.each([
+    PresetName.Ecommerce,
+    PresetName.Saas,
+    PresetName.Content,
+    PresetName.Quick,
+    PresetName.Full,
+  ] as const)("accepts %s in mixed case", (name) => {
+    expect(getPreset(name)).toBe(PRESETS[name]);
+    expect(getPreset(name.toUpperCase())).toBe(PRESETS[name]);
+  });
 
   it("limits only the quick preset to one page", () => {
     expect(getPreset("quick").maxPages).toBe(1);

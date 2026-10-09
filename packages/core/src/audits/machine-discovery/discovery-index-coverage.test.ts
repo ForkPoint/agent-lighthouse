@@ -4,15 +4,16 @@ import {
   mockCheckContext,
   mockPageContext,
   mockFetchResult,
-} from "../../__tests__/test-utils";
-import type { CheckContext } from "../../check-context";
+} from "#core/__tests__/test-utils";
+import type { CheckContext } from "#core/check-context";
+import { CheckStatus } from "#core/types";
 
 // isSafeUrl performs a real DNS lookup before the audit fetches a sub-sitemap
 // harvested from the scanned site's own sitemap index. Stub it with an offline
 // stand-in that still blocks loopback and private ranges, so the tripwire test
 // below proves the gate rather than the mock.
-vi.mock("../../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => {
@@ -64,7 +65,7 @@ it.each([true, false])(
       "/pages.xml": mockFetchResult("", 503),
     });
     expect((await new DiscoveryIndexCoverageAudit().audit(ctx)).status).toBe(
-      "na",
+      CheckStatus.NotApplicable,
     );
   },
 );
@@ -87,7 +88,7 @@ it("passes a listed page even when another child cannot be read", async () => {
     "/pages.xml": mockFetchResult("", 503),
   });
   expect((await new DiscoveryIndexCoverageAudit().audit(ctx)).status).toBe(
-    "pass",
+    CheckStatus.Pass,
   );
 });
 
@@ -107,7 +108,7 @@ describe("DiscoveryIndexCoverageAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("passes when all scanned pages are in the sitemap", async () => {
@@ -119,7 +120,7 @@ describe("DiscoveryIndexCoverageAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("covered by a discovery index");
   });
 
@@ -132,7 +133,7 @@ describe("DiscoveryIndexCoverageAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // Review finding (1.22): extractMarkdownLinks drops relative URLs, so the
@@ -145,7 +146,7 @@ describe("DiscoveryIndexCoverageAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("skips malformed llms.txt links", async () => {
@@ -155,7 +156,7 @@ describe("DiscoveryIndexCoverageAudit", () => {
       "/llms.txt": mockFetchResult(body, 200),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("fails when a majority of scanned pages are in no index", async () => {
@@ -167,7 +168,7 @@ describe("DiscoveryIndexCoverageAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("in no discovery index");
   });
 
@@ -186,7 +187,7 @@ describe("DiscoveryIndexCoverageAudit", () => {
       },
     );
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("in no discovery index");
   });
 
@@ -202,7 +203,7 @@ describe("DiscoveryIndexCoverageAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("+1 more");
   });
 
@@ -230,7 +231,7 @@ describe("DiscoveryIndexCoverageAudit", () => {
       }),
     };
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(ctx.fetch).toHaveBeenCalledTimes(2);
   });
 
@@ -251,7 +252,7 @@ describe("DiscoveryIndexCoverageAudit", () => {
         ),
     };
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("in no discovery index");
   });
 
@@ -291,7 +292,7 @@ describe("DiscoveryIndexCoverageAudit", () => {
     expect(fetch).toHaveBeenCalledWith({
       url: "https://cdn.example.com/post-sitemap.xml",
     });
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("caps sub-sitemap fetches at ten", async () => {
@@ -351,7 +352,7 @@ describe("DiscoveryIndexCoverageAudit", () => {
       fetch,
     };
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("read only part of the sitemap");
   });
 
@@ -364,7 +365,7 @@ describe("DiscoveryIndexCoverageAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   // Review finding (1.8 + 1.22): raw string equality over trailing-slash
@@ -382,7 +383,7 @@ describe("DiscoveryIndexCoverageAudit", () => {
       },
     );
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("falls back to sitemap-index.xml when sitemap.xml is absent", async () => {
@@ -394,7 +395,7 @@ describe("DiscoveryIndexCoverageAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // The absent-sitemap failure belongs to sitemap-exists (1.7); levying it here
@@ -402,7 +403,7 @@ describe("DiscoveryIndexCoverageAudit", () => {
   it("warns rather than fails when neither index exists", async () => {
     const ctx = mockCheckContext([page("https://example.com/")]);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("No sitemap URLs or llms.txt links");
   });
 
@@ -411,7 +412,7 @@ describe("DiscoveryIndexCoverageAudit", () => {
       "/sitemap.xml": mockFetchResult(sitemap([]), 200, "application/xml"),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("No sitemap URLs or llms.txt links");
   });
 
@@ -423,7 +424,7 @@ describe("DiscoveryIndexCoverageAudit", () => {
       "/sitemap.xml": mockFetchResult(body, 200, "application/xml"),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("reports no pages to check when the scan found none", async () => {
@@ -435,6 +436,6 @@ describe("DiscoveryIndexCoverageAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 });

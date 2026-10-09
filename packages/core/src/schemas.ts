@@ -1,12 +1,21 @@
 import { z } from "zod";
+import {
+  AttemptOutcome,
+  AuditTier,
+  CheckPriority,
+  CheckStatus,
+  ClassificationConfidence,
+  CoverageProvenance,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  PageTypeSource,
+  ScoreDisplayMode,
+} from "./types";
 
-export const CheckStatusSchema = z.enum(["pass", "warn", "fail", "na"]);
-export const CheckPrioritySchema = z.enum([
-  "critical",
-  "high",
-  "medium",
-  "low",
-]);
+export const CheckStatusSchema = z.enum(CheckStatus);
+export const CheckPrioritySchema = z.enum(CheckPriority);
 
 export const AuditResultSchema = z.object({
   status: CheckStatusSchema,
@@ -51,12 +60,7 @@ export const AuditResultSchema = z.object({
   code: z.string().max(10000).optional(),
 });
 
-export const FixEffortSchema = z.enum([
-  "trivial",
-  "easy",
-  "moderate",
-  "complex",
-]);
+export const FixEffortSchema = z.enum(FixEffort);
 
 export const AuditGuidanceSchema = z.object({
   impact: z.string().max(5000),
@@ -67,11 +71,7 @@ export const AuditGuidanceSchema = z.object({
   tags: z.array(z.string().max(50)).max(20).optional(),
 });
 
-export const ScoreDisplayModeSchema = z.enum([
-  "binary",
-  "ternary",
-  "informative",
-]);
+export const ScoreDisplayModeSchema = z.enum(ScoreDisplayMode);
 
 export const DeprecationNoticeSchema = z.object({
   notice: z.string().min(1).max(500),
@@ -79,23 +79,16 @@ export const DeprecationNoticeSchema = z.object({
 });
 
 /** Evidence strength from the audit's dossier (docs/evidence/policy.md). */
-export const EvidenceGradeSchema = z.enum(["A", "B", "C", "D"]);
+export const EvidenceGradeSchema = z.enum(EvidenceGrade);
 /** Scoring participation tier (spec §4). */
-export const AuditTierSchema = z.enum([
-  "scored",
-  "informative",
-  "experimental",
-]);
+export const AuditTierSchema = z.enum(AuditTier);
 
 /** v2 audit identity: `category/slug`, stable across releases (spec §6). */
 export const AUDIT_ID_PATTERN = /^[a-z-]+\/[a-z0-9-]+$/;
 
-export const EvidenceKeySchema = z.enum([
-  "origin-reachable",
-  "unblocked-fetches",
-  "rendered-body",
-  "sample-adequate",
-]);
+export const EvidenceKeySchema = z.enum(EvidenceKey);
+
+export const PageTypeSchema = z.enum(PageType);
 
 export const AuditMetaSchema = z.object({
   id: z
@@ -109,8 +102,8 @@ export const AuditMetaSchema = z.object({
   // 0 is legal: informative-tier and deprecated audits report evidence without
   // moving the score, so they carry weight 0 and stay out of the denominator.
   weight: z.number().nonnegative(),
-  pageTypes: z.array(z.string()).optional(),
-  applicablePageTypes: z.array(z.string()).optional(),
+  pageTypes: z.array(PageTypeSchema).optional(),
+  applicablePageTypes: z.array(PageTypeSchema).optional(),
   defaultPriority: CheckPrioritySchema,
   guidance: AuditGuidanceSchema.optional(),
   deprecated: DeprecationNoticeSchema.optional(),
@@ -124,7 +117,14 @@ export const AuditMetaSchema = z.object({
   requires: z.array(EvidenceKeySchema).optional(),
 });
 
-export const CheckResultSchema = z.object({
+export const AuditCoverageSchema = z.object({
+  provenance: z.enum(CoverageProvenance),
+  selectedUrls: z.array(z.string().max(2048)),
+  inputUrls: z.array(z.string().max(2048)),
+  unreadUrls: z.array(z.string().max(2048)),
+});
+
+const CheckAssessmentSchema = z.object({
   // v2 ids are `category/slug` paths, which outgrew the old 20-char cap.
   id: z.string().max(64),
   category: z.string().max(100),
@@ -156,6 +156,7 @@ export const CheckResultSchema = z.object({
       // the catchall does not make — that it parses as a URL, and that it fits
       // the same 2048 budget as docsUrl.
       evidenceUrl: z.string().max(2048).url().optional(),
+      effort: FixEffortSchema.optional(),
     })
     // Same rule as AuditResultSchema: structured evidence survives, nested
     // payloads do not.
@@ -174,20 +175,63 @@ export const CheckResultSchema = z.object({
   // evidence strength without reaching back into the registry.
   evidenceGrade: EvidenceGradeSchema.optional(),
   tier: AuditTierSchema.optional(),
+  weight: z.number().nonnegative().optional(),
+  coverage: AuditCoverageSchema.optional(),
 });
 
-export const PageTypeSchema = z.enum([
-  "homepage",
-  "category",
-  "product",
-  "content",
-]);
+export const CheckResultSchema = CheckAssessmentSchema.extend({
+  advisoryResults: z
+    .array(
+      CheckAssessmentSchema.extend({
+        scoreDisplayMode: z.literal(ScoreDisplayMode.Informative),
+      }),
+    )
+    .optional(),
+});
+
+export const PageClassificationSchema = z.object({
+  type: PageTypeSchema,
+  source: z.enum(PageTypeSource),
+  confidence: z.enum(ClassificationConfidence),
+  signals: z.array(z.string()),
+});
+
+/** Old saved pages keep their recorded type without invented classification. */
+export const ScannedPageSchema = z.object({
+  url: z.string(),
+  pageType: PageTypeSchema,
+  classification: PageClassificationSchema.optional(),
+});
+
+export const PageAttemptSchema = z.object({
+  url: z.string(),
+  pageType: PageTypeSchema,
+  source: z.enum(PageTypeSource),
+  outcome: z.enum(AttemptOutcome),
+  status: z.number().int().nonnegative(),
+});
+
+/** Shared manual page declarations for SDK, CLI config and MCP. */
+export const PageScopeOptionsSchema = z.object({
+  pageType: PageTypeSchema.optional(),
+  pages: z
+    .array(
+      z.object({
+        url: z.string().url(),
+        pageType: PageTypeSchema,
+      }),
+    )
+    .nullable()
+    .optional(),
+});
 
 export const ScanConditionsSchema = z.object({
   url: z.string().url().max(2048),
   pageType: z.object({
     type: PageTypeSchema,
-    source: z.enum(["declared", "detected"]),
+    source: z.enum(PageTypeSource),
+    confidence: z.enum(ClassificationConfidence).optional(),
+    signals: z.array(z.string()).optional(),
   }),
   origin: z.object({
     origin: z.string().max(2048),

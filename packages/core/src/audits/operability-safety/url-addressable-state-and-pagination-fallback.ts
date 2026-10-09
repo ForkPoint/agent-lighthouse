@@ -6,13 +6,22 @@
 // a listing holds can be reached at all by URL, which is a different question:
 // a listing whose items only appear after a scroll is fully covered by a
 // sitemap and still unreachable from the listing itself.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext, PageContext } from "../../check-context";
-import { pagesOfType } from "../../gatherers/pages";
-import { fetchSampledPage } from "../../gatherers/sampled-pages";
-import { allJsonLdNodes, parseHtml } from "../../parser";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { pagesOfType } from "#core/gatherers/pages";
+import { fetchSampledPage } from "#core/gatherers/sampled-pages";
+import { allJsonLdNodes, parseHtml } from "#core/parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** Selectors that identify a repeated item in a listing. */
 const ITEM_SELECTOR =
@@ -39,7 +48,15 @@ const MAX_FACET_PROBES = 2;
 /** A declared total this much larger than the rendered items is a gap. */
 const TOTAL_TOLERANCE = 1.5;
 
-type Affordance = "href" | "link-next" | "load-more" | "sentinel" | "none";
+const Affordance = {
+  Href: "href",
+  LinkNext: "link-next",
+  LoadMore: "load-more",
+  Sentinel: "sentinel",
+  None: "none",
+} as const;
+
+type Affordance = (typeof Affordance)[keyof typeof Affordance];
 
 interface Listing {
   pageUrl: string;
@@ -123,9 +140,9 @@ function affordanceOf(page: PageContext, pages: number[]): Affordance {
         }
         return false;
       });
-    if (hrefPaged) return "href";
+    if (hrefPaged) return Affordance.Href;
   }
-  if ($('link[rel="next"]').length > 0) return "link-next";
+  if ($('link[rel="next"]').length > 0) return Affordance.LinkNext;
 
   let loadMore = false;
   $('button, a[href], [role="button"]').each((_i, node) => {
@@ -133,15 +150,15 @@ function affordanceOf(page: PageContext, pages: number[]): Affordance {
     if (LOAD_MORE.test(`${$n.attr("class") ?? ""} ${$n.text()}`))
       loadMore = true;
   });
-  if (loadMore) return "load-more";
+  if (loadMore) return Affordance.LoadMore;
 
   let sentinel = false;
   $("[class]").each((_i, node) => {
     if (SENTINEL.test($(node as never).attr("class") ?? "")) sentinel = true;
   });
-  if (sentinel) return "sentinel";
+  if (sentinel) return Affordance.Sentinel;
 
-  return "none";
+  return Affordance.None;
 }
 
 /** Facet links whose parameter can be tested by fetching the URL. */
@@ -177,7 +194,7 @@ async function surveyListing(
   const pages = pageNumbers(page);
   const affordance = affordanceOf(page, pages);
   const deepest =
-    affordance === "href" && pages.length > 0
+    affordance === Affordance.Href && pages.length > 0
       ? items * Math.max(...pages)
       : items;
 
@@ -232,26 +249,26 @@ export class UrlAddressableStateAndPaginationFallbackAudit extends Audit {
     failureTitle: "Listings walkable by URL: pagination and facet fallback",
     description:
       'Checks that a listing exposes its later pages through real `href` pagination or a `rel="next"` link rather than infinite-scroll machinery alone, and that each facet changes what the server returns rather than only what the browser shows. Reports the deepest item index reachable by URL alone, and any facet that turns out to be client-only.',
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/operability-safety/url-addressable-state-and-pagination-fallback.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "high",
-    applicablePageTypes: ["category"],
+    defaultPriority: CheckPriority.High,
+    applicablePageTypes: [PageType.Category],
     guidance: {
       impact:
         'An agent reaches a listing by URL and reads what the server sent. Items that only arrive after an IntersectionObserver fires are not in that response, so a catalogue of 5,000 products presents as the 20 that were server-rendered — and the agent answers "we only carry 20" without ever knowing it was wrong. A "Load more" button is better because it is a discrete, verifiable action, but it still costs one click per page and gives the agent no way to jump. Real `href` pagination costs nothing to add beside the scroll, and it is also what a crawler needs to index the catalogue at all. The same holds for facets: a filter applied only in the browser has no URL, so the filtered view cannot be linked, cited, or returned to.',
       fix: 'Keep the infinite scroll and put real links underneath it. Render `<a href="?page=2">` for each page, or at minimum a `<link rel="next">` in the head, so the whole listing can be walked without running scripts. Make every facet a real query parameter the server honours, and have the server return the filtered set for that URL. Where a total is declared — `numberOfItems` or a "1,240 results" line — make sure that many items are actually reachable by following the links you rendered.',
       code: SAMPLE,
-      effort: "complex",
+      effort: FixEffort.Complex,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/url-addressable-state-and-pagination-fallback/",
       tags: ["agent-operability", "navigation", "pagination", "facets"],
@@ -260,7 +277,7 @@ export class UrlAddressableStateAndPaginationFallbackAudit extends Audit {
 
   private recommendation() {
     return {
-      priority: "high" as const,
+      priority: CheckPriority.High,
       description:
         UrlAddressableStateAndPaginationFallbackAudit.meta.description,
       code: SAMPLE,
@@ -268,7 +285,7 @@ export class UrlAddressableStateAndPaginationFallbackAudit extends Audit {
   }
 
   async audit(ctx: CheckContext): Promise<AuditResult> {
-    const pages = pagesOfType(ctx, "category");
+    const pages = pagesOfType(ctx, PageType.Category);
     if (pages.length === 0) {
       return {
         ...this.notApplicable(
@@ -288,11 +305,15 @@ export class UrlAddressableStateAndPaginationFallbackAudit extends Audit {
       (l) =>
         l.declaredTotal !== null &&
         l.declaredTotal > l.items * TOTAL_TOLERANCE &&
-        l.affordance !== "href" &&
+        l.affordance !== Affordance.Href &&
         l.affordance !== "link-next",
     );
-    const sentinelOnly = listings.filter((l) => l.affordance === "sentinel");
-    const buttonOnly = listings.filter((l) => l.affordance === "load-more");
+    const sentinelOnly = listings.filter(
+      (l) => l.affordance === Affordance.Sentinel,
+    );
+    const buttonOnly = listings.filter(
+      (l) => l.affordance === Affordance.LoadMore,
+    );
     const deepest = Math.max(...listings.map((l) => l.deepestIndex));
 
     const found = `${listings.length} listing(s); deepest item index reachable by URL: ${deepest}; ${sentinelOnly.length} scroll-only, ${buttonOnly.length} button-only, ${clientOnly.length} client-only facet(s)`;

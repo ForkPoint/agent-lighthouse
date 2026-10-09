@@ -1,6 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { MetaExternalAgentAudit } from "./meta-external-agent";
-import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
+import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
+import {
+  AuditTier,
+  CheckStatus,
+  EvidenceGrade,
+  ScoreDisplayMode,
+} from "#core/types";
 
 const robotsCtx = (body: string, status = 200) =>
   mockCheckContext([], { "/robots.txt": mockFetchResult(body, status) });
@@ -12,7 +18,7 @@ describe("MetaExternalAgentAudit", () => {
     const result = audit.audit(
       robotsCtx("User-agent: Meta-ExternalAgent\nAllow: /"),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.details?.["namedGroup"]).toBe(true);
   });
 
@@ -21,7 +27,7 @@ describe("MetaExternalAgentAudit", () => {
   // configuration the standard the audit cites treats as fully permissive.
   it("passes when only the catch-all group allows, with no group naming the token", () => {
     const result = audit.audit(robotsCtx("User-agent: *\nAllow: /"));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("RFC 9309");
     expect(result.details?.["namedGroup"]).toBe(false);
     expect(result.details?.["hasCatchAll"]).toBe(true);
@@ -31,7 +37,7 @@ describe("MetaExternalAgentAudit", () => {
     const result = audit.audit(
       robotsCtx("User-agent: Googlebot\nDisallow: /private"),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("No group applies");
   });
 
@@ -39,7 +45,7 @@ describe("MetaExternalAgentAudit", () => {
     const result = audit.audit(
       robotsCtx("Sitemap: https://example.com/sitemap.xml"),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.details?.["hasCatchAll"]).toBe(false);
   });
 
@@ -47,7 +53,7 @@ describe("MetaExternalAgentAudit", () => {
     const result = audit.audit(
       robotsCtx("User-agent: Meta-ExternalAgent/1.0\nDisallow: /"),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.details?.["namedGroup"]).toBe(true);
   });
 
@@ -55,13 +61,13 @@ describe("MetaExternalAgentAudit", () => {
     const result = audit.audit(
       robotsCtx("User-agent: Meta-ExternalAgent\nDisallow: /"),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("Its own group disallows");
   });
 
   it("fails when a blanket catch-all block carries onto the token", () => {
     const result = audit.audit(robotsCtx("User-agent: *\nDisallow: /"));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.details?.["namedGroup"]).toBe(false);
   });
 
@@ -71,7 +77,7 @@ describe("MetaExternalAgentAudit", () => {
         "User-agent: *\nDisallow: /\n\nUser-agent: Meta-ExternalAgent\nAllow: /",
       ),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // Meta documents meta-externalfetcher as a separate token that "may bypass
@@ -82,7 +88,7 @@ describe("MetaExternalAgentAudit", () => {
     const result = audit.audit(
       robotsCtx("User-agent: Meta-External\nDisallow: /"),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.details?.["namedGroup"]).toBe(false);
   });
 
@@ -90,32 +96,34 @@ describe("MetaExternalAgentAudit", () => {
     const result = audit.audit(
       robotsCtx("User-agent: Meta-ExternalFetcher\nDisallow: /"),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("reports na when robots.txt is missing", () => {
     const result = audit.audit(mockCheckContext([], {}));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.found).toContain("No robots.txt found");
   });
 
   it("reports na when robots.txt returns non-200", () => {
-    expect(audit.audit(robotsCtx("", 404)).status).toBe("na");
+    expect(audit.audit(robotsCtx("", 404)).status).toBe(
+      CheckStatus.NotApplicable,
+    );
   });
 
   it("reports na for an HTML soft 404 served at /robots.txt", () => {
     const result = audit.audit(
       robotsCtx("<!doctype html><html><body>Not found</body></html>"),
     );
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.found).toContain("no user-agent groups");
   });
 
   it("keeps the grade-A scored registration", () => {
     const { meta } = MetaExternalAgentAudit;
-    expect(meta.evidenceGrade).toBe("A");
-    expect(meta.tier).toBe("scored");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.A);
+    expect(meta.tier).toBe(AuditTier.Scored);
     expect(meta.weight).toBeCloseTo(1);
-    expect(meta.scoreDisplayMode).toBe("ternary");
+    expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Ternary);
   });
 });

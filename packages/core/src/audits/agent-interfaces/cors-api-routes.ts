@@ -18,13 +18,21 @@
 // class is browser-sandboxed agent code — an OpenAI Apps SDK widget in an
 // isolated iframe under a strict CSP — which is small today, growing, and the
 // only thing this audit now claims.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import type { FetchResult } from "../../fetcher";
-import { isSafeUrl } from "../../url-utils";
-import { probeOpenApiServer } from "../../gatherers/openapi";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import type { FetchResult } from "#core/fetcher";
+import { isSafeUrl } from "#core/url-utils";
+import { probeOpenApiServer } from "#core/gatherers/openapi";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** How many endpoints to probe. Two is enough to tell a policy from an accident. */
 const MAX_TARGETS = 2;
@@ -188,21 +196,21 @@ export class CorsApiRoutesAudit extends Audit {
     failureTitle: "CORS on declared API routes",
     description:
       "CORS matters for one class of AI consumer: agent code running inside a browser origin, such as an OpenAI Apps SDK widget in an isolated iframe under a strict CSP. Server-side crawlers and MCP clients are not browsers and are unaffected. This audit reads the endpoints out of your published OpenAPI document and probes those, and applies only to sites that publish one.",
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "informative"),
-    evidenceGrade: "C",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/agent-interfaces/cors-api-routes.md",
-    requires: ["origin-reachable", "unblocked-fetches"],
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
     // The affected consumer class is small; nothing here should outrank an
     // item that changes what a crawler or an MCP client can do.
-    defaultPriority: "low",
+    defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
         "A browser-sandboxed agent — an OpenAI Apps SDK widget, or in-page agent JavaScript — must pass a CORS preflight before it can call your API, and is blocked without an Access-Control-Allow-Origin that admits its origin. Nothing else in the AI consumer set is affected: GPTBot, ClaudeBot, PerplexityBot, every server-side agent backend and every MCP client are non-browser HTTP clients that do not implement the same-origin policy at all.",
       fix: "Answer OPTIONS and GET on the endpoints your OpenAPI document declares with Access-Control-Allow-Origin. Use * for a public read API; if you must name origins, note that a single named origin admits only that origin, so a browser-sandboxed agent elsewhere is still blocked. Never widen CORS on an authenticated endpoint without also getting the credentials rules right.",
       code: SAMPLE,
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl: "https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS",
       tags: ["cors", "api", "headers", "browser-agents"],
     },
@@ -210,7 +218,7 @@ export class CorsApiRoutesAudit extends Audit {
 
   private recommendation() {
     return {
-      priority: "low" as const,
+      priority: CheckPriority.Low,
       description: CorsApiRoutesAudit.meta.description,
       code: SAMPLE,
     };

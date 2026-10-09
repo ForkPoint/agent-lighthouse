@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { LocalBusinessSchemaAudit } from "./local-business-schema";
-import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
+import { mockPageContext, mockCheckContext } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 const ld = (obj: unknown) =>
   `<script type="application/ld+json">${JSON.stringify(obj)}</script>`;
@@ -40,7 +41,7 @@ describe("LocalBusinessSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("No physical store signals detected");
   });
 
@@ -49,7 +50,7 @@ describe("LocalBusinessSchemaAudit", () => {
     // a store-locator link -> physical signals present + matching schema.
     const ctx = mockCheckContext([page(locatorLink, ld(localBusiness))]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain(
       "LocalBusiness/ProfessionalService schema found",
     );
@@ -70,7 +71,7 @@ describe("LocalBusinessSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain(
       "no LocalBusiness or ProfessionalService schema",
     );
@@ -79,7 +80,7 @@ describe("LocalBusinessSchemaAudit", () => {
   it("is not applicable when a PostalAddress exists but there is no locator link", () => {
     const ctx = mockCheckContext([page("<h1>Contact</h1>", ld(localBusiness))]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("detects LocalBusiness with array @type (covers Array.isArray branch)", () => {
@@ -100,7 +101,7 @@ describe("LocalBusinessSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("handles a schema without @type alongside LocalBusiness (return false branch)", () => {
@@ -124,7 +125,7 @@ describe("LocalBusinessSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("takes the early-exit path when multiple store-locator links are present", () => {
@@ -136,7 +137,7 @@ describe("LocalBusinessSchemaAudit", () => {
     `;
     const ctx = mockCheckContext([page(twoLocatorLinks, ld(localBusiness))]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("detects a store locator via link text when href does not match", () => {
@@ -157,6 +158,6 @@ describe("LocalBusinessSchemaAudit", () => {
     const result = audit.audit(ctx);
     // PostalAddress block + text-matched locator link = physical signals found,
     // but no LocalBusiness schema → fail
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 });

@@ -3,13 +3,21 @@
 //
 // `resolvePolicyLinks` is exported so other audits can reuse the resolved
 // terms_of_use / privacy_policy targets rather than re-deriving them.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import { isSafeUrl } from "../../url-utils";
-import { probeSecurityUrl } from "../../gatherers/security";
-import { parseHtml } from "../../parser";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import { isSafeUrl } from "#core/url-utils";
+import { probeSecurityUrl } from "#core/gatherers/security";
+import { parseHtml } from "#core/parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** The ACP CheckoutSession `links` enum, in spec order. */
 export const ACP_LINK_TYPES = [
@@ -253,24 +261,24 @@ export class AcpPolicyLinkSurfaceAudit extends Audit {
     failureTitle: "ACP link-surface completeness",
     description:
       "Verifies the merchant can populate the `links` array that every ACP CheckoutSession response is required to carry, by resolving each of the 8 enum link types to a stable, HTTPS, no-JS-required, non-soft-404 URL, on any domain, as an HTML page or a PDF.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/agentic-commerce/acp-policy-link-surface.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "high",
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "Falsifiable claim: ACP spec 2026-04-17 makes `links` one of the 9 REQUIRED fields on every CheckoutSession response, with type enum {terms_of_use, privacy_policy, return_policy, shipping_policy, contact_us, about_us, faq, support}. Independently, the OpenAI product feed spec makes `seller_privacy_policy` and `seller_tos` HARD-REQUIRED whenever `is_eligible_checkout=true`. Therefore a merchant that cannot produce a resolvable HTTPS URL for terms_of_use and privacy_policy CANNOT set is_eligible_checkout=true and its catalogue is excluded from Instant Checkout no matter how good the feed is. Disproof condition: if a merchant with no reachable ToS URL is observed transacting via ACP Instant Checkout, the check is wrong.",
       fix: 'Publish all 8 policy pages over HTTPS, link them from the site footer with plain <a href> markup, and serve their text in the initial HTML rather than rendering it client-side. Keep each URL stable — one redirect is tolerable, a four-hop chain is not — and make sure a missing policy returns 404 rather than a 200 "page not found" shell. Then paste the resolved URLs straight into the `links` array of your CheckoutSession response.',
       code: SAMPLE,
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/agentic-commerce/acp-policy-link-surface/",
       tags: ["acp", "instant-checkout", "policy", "commerce"],
@@ -279,7 +287,7 @@ export class AcpPolicyLinkSurfaceAudit extends Audit {
 
   private recommendation() {
     return {
-      priority: "high" as const,
+      priority: CheckPriority.High,
       description: AcpPolicyLinkSurfaceAudit.meta.description,
       code: SAMPLE,
     };

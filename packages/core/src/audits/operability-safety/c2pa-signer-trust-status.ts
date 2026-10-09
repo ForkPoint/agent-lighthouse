@@ -1,14 +1,22 @@
 import { X509Certificate } from "node:crypto";
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
 import {
   imageCandidates,
   fetchImage,
   findC2paManifest,
   MAX_IMAGES,
-} from "../../gatherers/media";
+} from "#core/gatherers/media";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** Images sampled per page, before the per-scan cap applies. */
 const PER_PAGE = 3;
@@ -82,24 +90,24 @@ export class C2paSignerTrustStatusAudit extends Audit {
       "This site’s Content Credentials are signed by a certificate no validator accepts",
     description:
       "Reads the signing certificate out of each Content Credential and reports what the certificate itself says: self-signed or CA-issued, inside its validity window or outside it, and whether a timestamp token is present. A self-signed or expired signer surfaces as untrusted in every conforming validator, however well-formed the manifest is.",
-    scoreDisplayMode: "ternary",
-    tier: "scored",
-    evidenceGrade: "B",
-    weight: weightForGrade("B", "scored"),
-    defaultPriority: "medium",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    tier: AuditTier.Scored,
+    evidenceGrade: EvidenceGrade.B,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    defaultPriority: CheckPriority.Medium,
     dossier:
       "docs/evidence/audits/operability-safety/c2pa-signer-trust-status.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     guidance: {
       impact:
         "A manifest that exists is not a manifest that verifies. A conforming C2PA validator resolves the signing certificate against the published Trust List and shows the credential as untrusted when it cannot — which is what a self-signed certificate always produces, and what an expired one produces the day it lapses. The publisher sees Content Credentials on every asset; the consumer sees a warning, or nothing at all.",
       fix: "Sign with a certificate from a CA on the C2PA Trust List rather than a self-signed one, renew before it expires, and include an RFC 3161 timestamp so credentials stay valid past the certificate’s own expiry.",
-      effort: "complex",
+      effort: FixEffort.Complex,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/c2pa-signer-trust-status/",
       tags: ["c2pa", "provenance", "certificates", "content-credentials"],

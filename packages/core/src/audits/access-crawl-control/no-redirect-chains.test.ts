@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
 import { NoRedirectChainsAudit } from "./no-redirect-chains";
 import {
   attributableFixture,
@@ -8,7 +8,8 @@ import {
   mockPageContext,
   shellSiteContext,
   unreachedSiteContext,
-} from "../../__tests__/test-utils";
+} from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 describe("NoRedirectChainsAudit", () => {
   const audit = new NoRedirectChainsAudit();
@@ -25,7 +26,7 @@ describe("NoRedirectChainsAudit", () => {
       page("https://example.com/", "https://example.com/"),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("resolve without redirects");
   });
 
@@ -34,7 +35,7 @@ describe("NoRedirectChainsAudit", () => {
       page("https://example.com/old", "https://example.com/new"),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("involve redirects");
   });
 
@@ -45,14 +46,14 @@ describe("NoRedirectChainsAudit", () => {
       page("https://example.com/old", "https://example.com/new", 2),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("involve redirects");
   });
 
   it("fails when no pages were scanned", () => {
     const ctx = mockCheckContext([]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No pages scanned");
   });
 
@@ -63,7 +64,7 @@ describe("NoRedirectChainsAudit", () => {
     );
     const ctx = mockCheckContext(redirectedPages);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("+1 more");
   });
 
@@ -77,7 +78,7 @@ describe("NoRedirectChainsAudit", () => {
     );
     const ctx = mockCheckContext([...nonRedirected, ...redirectedPages]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("+1 more");
   });
 
@@ -88,7 +89,9 @@ describe("NoRedirectChainsAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new NoRedirectChainsAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext(pages, rootFiles),
@@ -100,7 +103,7 @@ describe("NoRedirectChainsAudit", () => {
     expect(
       plan.skipped.find((stub) => stub.id === NoRedirectChainsAudit.meta.id)
         ?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
   // This direct call pins the audit's local redirect branch. The runner does
   // not publish this finding from an unread scan; it emits an `na` stub instead.
@@ -112,7 +115,7 @@ describe("NoRedirectChainsAudit", () => {
     const result = new NoRedirectChainsAudit().audit(
       unreachedSiteContext([page]),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("1/1");
     expect(result.found).toContain("parking.brandsale.test");
   });
@@ -121,6 +124,6 @@ describe("NoRedirectChainsAudit", () => {
   // response, and a shell resolves in as many hops as anything else.
   it("still judges a page that served no readable text", async () => {
     const result = await new NoRedirectChainsAudit().audit(shellSiteContext());
-    expect(result.status).not.toBe("na");
+    expect(result.status).not.toBe(CheckStatus.NotApplicable);
   });
 });

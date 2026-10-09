@@ -1,15 +1,16 @@
 import { describe, it, expect, vi } from "vitest";
 import { McpModernEraReachabilityAudit } from "./mcp-modern-era-reachability";
-import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { CheckContext } from "../../check-context";
-import type { FetchOptions, FetchResult } from "../../fetcher";
+import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { CheckContext } from "#core/check-context";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import { CheckStatus, HttpMethod } from "#core/types";
 
 // isSafeUrl resolves DNS before the client POSTs to a URL read out of a
 // site-controlled root file. Offline stand-in, still blocking loopback and
 // private ranges.
-vi.mock("../../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => {
@@ -67,7 +68,7 @@ const DISCOVER_OK = {
 
 /** A modern server: discover succeeds, GET and DELETE are 405 as the spec says. */
 function modernWire(o: FetchOptions): FetchResult {
-  if (o.method === "POST") return json(DISCOVER_OK);
+  if (o.method === HttpMethod.Post) return json(DISCOVER_OK);
   return mockFetchResult("", 405);
 }
 
@@ -82,12 +83,12 @@ describe("McpModernEraReachabilityAudit", () => {
 
   it("is notApplicable when the site declares no MCP endpoint", async () => {
     const result = (await run(modernWire, {})) as Result;
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("passes a modern server and records capabilities, extensions, instructions and serverInfo", async () => {
     const result = (await run(modernWire)) as Result;
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("tools");
     expect(result.found).toContain("resources");
     expect(result.found).toContain("io.example/search");
@@ -98,11 +99,11 @@ describe("McpModernEraReachabilityAudit", () => {
   it("parses an SSE-framed success exactly like the JSON one", async () => {
     const sse = `event: message\ndata: {"jsonrpc":"2.0","id":"al-1","result":{"supportedVersions":["2026-07-28"],"capabilities":{"tools":{}},"serverInfo":{"name":"example-shop","version":"2.1.0"}}}\n\n`;
     const result = (await run((o) =>
-      o.method === "POST"
+      o.method === HttpMethod.Post
         ? mockFetchResult(sse, 200, "text/event-stream")
         : mockFetchResult("", 405),
     )) as Result;
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("example-shop");
   });
 
@@ -110,7 +111,7 @@ describe("McpModernEraReachabilityAudit", () => {
   // is a warn, and the message must name the newest revision the server takes.
   it("warns on a -32022 version rejection and names the newest supported revision", async () => {
     const result = (await run((o) =>
-      o.method === "POST"
+      o.method === HttpMethod.Post
         ? json(
             {
               jsonrpc: "2.0",
@@ -128,19 +129,19 @@ describe("McpModernEraReachabilityAudit", () => {
           )
         : mockFetchResult("", 405),
     )) as Result;
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("2025-11-25");
   });
 
   it("warns on a 401 challenge and hands off to the OAuth chain audit by name", async () => {
     const result = (await run((o) => {
-      if (o.method !== "POST") return mockFetchResult("", 405);
+      if (o.method !== HttpMethod.Post) return mockFetchResult("", 405);
       const res = mockFetchResult("", 401, "text/plain");
       res.headers["www-authenticate"] =
         'Bearer resource_metadata="https://api.example.com/.well-known/oauth-protected-resource"';
       return res;
     })) as Result;
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain(
       "agent-interfaces/mcp-oauth-discovery-chain",
     );
@@ -148,7 +149,7 @@ describe("McpModernEraReachabilityAudit", () => {
 
   it("fails a -32601 on server/discover as a MUST violation", async () => {
     const result = (await run((o) =>
-      o.method === "POST"
+      o.method === HttpMethod.Post
         ? json(
             {
               jsonrpc: "2.0",
@@ -159,13 +160,13 @@ describe("McpModernEraReachabilityAudit", () => {
           )
         : mockFetchResult("", 405),
     )) as Result;
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("MUST");
   });
 
   it("classifies a server that demands initialize and mints a session id as LEGACY-ONLY", async () => {
     const result = (await run((o) => {
-      if (o.method !== "POST") return mockFetchResult("", 405);
+      if (o.method !== HttpMethod.Post) return mockFetchResult("", 405);
       const body = o.body ?? "";
       if (body.includes('"initialize"')) {
         const res = json({
@@ -186,14 +187,14 @@ describe("McpModernEraReachabilityAudit", () => {
         "text/plain",
       );
     })) as Result;
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("LEGACY-ONLY");
     expect(result.message).toContain("Mcp-Session-Id");
   });
 
   it("fails a GET whose first SSE event is endpoint as the deprecated 2024-11-05 transport", async () => {
     const result = (await run((o) => {
-      if (o.method === "GET") {
+      if (o.method === HttpMethod.Get) {
         return mockFetchResult(
           "event: endpoint\ndata: /messages?sessionId=abc\n\n",
           200,
@@ -202,29 +203,29 @@ describe("McpModernEraReachabilityAudit", () => {
       }
       return mockFetchResult("Not Found", 404, "text/plain");
     })) as Result;
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("2024-11-05");
   });
 
   it("reports legacy residue when a modern server answers GET with something other than 405", async () => {
     const result = (await run((o) => {
-      if (o.method === "POST") return json(DISCOVER_OK);
+      if (o.method === HttpMethod.Post) return json(DISCOVER_OK);
       if (o.method === "GET")
         return mockFetchResult("", 200, "text/event-stream");
       return mockFetchResult("", 405);
     })) as Result;
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("GET");
     expect(result.message).toContain("405");
   });
 
   it("reports legacy residue when DELETE is not 405 either", async () => {
     const result = (await run((o) => {
-      if (o.method === "POST") return json(DISCOVER_OK);
+      if (o.method === HttpMethod.Post) return json(DISCOVER_OK);
       if (o.method === "DELETE") return mockFetchResult("", 204);
       return mockFetchResult("", 405);
     })) as Result;
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("DELETE");
   });
 
@@ -234,7 +235,7 @@ describe("McpModernEraReachabilityAudit", () => {
       throw new Error("socket hang up");
     };
     const result = (await audit.audit(ctx)) as Result;
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("did not answer");
   });
 
@@ -249,7 +250,7 @@ describe("McpModernEraReachabilityAudit", () => {
       return mockFetchResult("", 200);
     };
     const result = (await audit.audit(ctx)) as Result;
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(seen).toEqual([]);
   });
 });

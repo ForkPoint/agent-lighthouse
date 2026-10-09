@@ -1,7 +1,14 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 export class NoRedirectChainsAudit extends Audit {
   static override meta: AuditMeta = {
@@ -11,22 +18,22 @@ export class NoRedirectChainsAudit extends Audit {
     failureTitle: "No redirect chains",
     description:
       "Redirect chains waste AI crawler budget and slow down content discovery. Each page should resolve in a single redirect at most.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/access-crawl-control/no-redirect-chains.md",
     // Gate exemption: a hop that left the site is this audit's subject, and leaving the
     // site is exactly what denies `origin-reachable`. It reads request URL against final
     // URL, which every response carries, and reports "no pages scanned" itself.
     requires: [],
-    defaultPriority: "medium",
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "Redirect chains slow down AI crawlers and waste their limited crawl budget. Each extra redirect adds latency and increases the chance a crawler gives up before reaching the final page, leaving content unindexed.",
       fix: "Update all internal links and sitemap entries to point directly to the final destination URL. Eliminate intermediate redirects by configuring your server to redirect directly from the old URL to the final URL in a single hop.",
       code: '<!-- Update links to use final URLs directly -->\n<a href="https://yoursite.com/final-page">Page</a>\n\n<!-- In sitemap.xml, use the final URL -->\n<url>\n  <loc>https://yoursite.com/final-page</loc>\n</url>',
-      effort: "easy",
+      effort: FixEffort.Easy,
       tags: ["redirects", "performance", "discoverability"],
     },
   };
@@ -54,7 +61,7 @@ export class NoRedirectChainsAudit extends Audit {
           "No redirect chains (URL equals finalUrl or single redirect)",
           "No pages scanned",
           {
-            priority: "medium",
+            priority: CheckPriority.Medium,
             description: NoRedirectChainsAudit.meta.description,
           },
         );
@@ -78,7 +85,7 @@ export class NoRedirectChainsAudit extends Audit {
             ", ",
           )}${redirected.length > 5 ? ` (+${redirected.length - 5} more)` : ""}`,
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "Many pages involve redirects, which slow down AI crawler discovery and waste crawl budget. Update internal links and sitemap entries to point directly to the final URLs.",
           code: `<!-- Update links to use final URLs directly -->\n<a href="https://yoursite.com/final-page">Page</a>\n\n<!-- Update sitemap -->\n<url>\n  <loc>https://yoursite.com/final-page</loc>\n</url>`,
@@ -97,7 +104,7 @@ export class NoRedirectChainsAudit extends Audit {
           ", ",
         )}${redirected.length > 5 ? ` (+${redirected.length - 5} more)` : ""}`,
       {
-        priority: "low",
+        priority: CheckPriority.Low,
         description:
           "Some pages involve redirects. Update internal links and sitemap entries to point to the final URLs to avoid unnecessary redirects for AI crawlers.",
         code: `<!-- Point directly to the final URL -->\n<a href="https://yoursite.com/final-page">Page</a>`,

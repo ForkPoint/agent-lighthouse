@@ -5,24 +5,32 @@
 // is present. This asks whether it is true: Google uses lastmod only "if it's
 // consistently and verifiably ... accurate", so a value no page-level evidence
 // supports is a value the crawler discards.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext, PageContext } from "../../check-context";
-import type { FetchResult } from "../../fetcher";
-import { fetchSampledPage } from "../../gatherers/sampled-pages";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext, PageContext } from "#core/check-context";
+import type { FetchResult } from "#core/fetcher";
+import { fetchSampledPage } from "#core/gatherers/sampled-pages";
 import {
   parseHtml,
   extractJsonLd,
   extractMetaTags,
   topLevelJsonLd,
-} from "../../parser";
+} from "#core/parser";
 import {
   siteSitemapTree,
   sampleEntries,
   isW3CDateTime,
   type SitemapEntry,
-} from "../../gatherers/sitemap";
+} from "#core/gatherers/sitemap";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 const DAY_MS = 86_400_000;
 /** How many URLs to cross-validate. Each one that was not already scanned costs a request. */
@@ -194,25 +202,25 @@ export class SitemapLastmodVerifiabilityAudit extends Audit {
     failureTitle: "Sitemap lastmod values contradict the pages they describe",
     description:
       "Cross-validates sampled sitemap <lastmod> values against three independent page-level modification signals — the Last-Modified response header, JSON-LD dateModified/datePublished, and article:modified_time — and scores agreement rather than presence. Catches the two dominant failure modes when the page dates disagree: the build stamp (every URL updated on every deploy) and the frozen value (the CMS never updates it). A deploy-time Last-Modified header never vouches for a recent run of identical stamps.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/machine-discovery/sitemap-lastmod-verifiability.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "medium",
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         'Google states it uses <lastmod> "if it\'s consistently and verifiably (for example by comparing to the last modification of the page) accurate". lastmod is therefore a conditional signal an engine silently discards on divergence — and it is the only freshness hint a pull-based AI crawler gets from a sitemap. If sampled values disagree with every available page-level signal for a material share of URLs, the freshness channel is inert and re-crawl scheduling degrades to organic rediscovery. A recent cluster of lastmod values is consistent with a build stamp only when page dates also disagree. Clustered edits alone do not show a defect. A lastmod in the future relative to the scan is invalid.',
       fix: "Stamp lastmod from the content record, not from the build. Emit the timestamp of the last substantive edit to that document, and leave it alone when a deploy only rebuilds the page. Publish the same instant on the page — JSON-LD dateModified is the most widely read of the three signals — so the value is checkable; a lastmod nothing on the page supports is a lastmod the crawler drops. Never emit a future date, and use W3C Datetime (YYYY-MM-DD or a full RFC 3339 timestamp) for every value.",
       code: SAMPLE,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/machine-discovery/sitemap-lastmod-verifiability/",
       tags: ["sitemap", "lastmod", "freshness", "crawl-scheduling"],
@@ -374,12 +382,17 @@ export class SitemapLastmodVerifiabilityAudit extends Audit {
         [...problems, ...notes].join(". ") + ".",
         EXPECTED,
         found,
-        "medium",
+        CheckPriority.Medium,
       );
     }
 
     if (notes.length > 0) {
-      return this.warn(`${notes.join(". ")}.`, EXPECTED, found, "low");
+      return this.warn(
+        `${notes.join(". ")}.`,
+        EXPECTED,
+        found,
+        CheckPriority.Low,
+      );
     }
 
     return this.pass(

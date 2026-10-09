@@ -1,14 +1,15 @@
 import { describe, it, expect, vi } from "vitest";
 import { McpToolContractValidityAudit } from "./mcp-tool-contract-validity";
-import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { CheckContext } from "../../check-context";
-import type { FetchOptions, FetchResult } from "../../fetcher";
+import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { CheckContext } from "#core/check-context";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import { CheckStatus } from "#core/types";
 
 // isSafeUrl resolves DNS before the client POSTs to a URL read out of a
 // site-controlled root file. Offline stand-in, still blocking private ranges.
-vi.mock("../../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => {
@@ -99,34 +100,34 @@ describe("McpToolContractValidityAudit", () => {
   it("is notApplicable when the site declares no MCP endpoint", async () => {
     const ctx: CheckContext = mockCheckContext([]);
     const result = (await audit.audit(ctx)) as Result;
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("is notApplicable when the server lists no tools", async () => {
     const result = await run([]);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("passes a well-formed tool set", async () => {
     const result = await run([CLEAN]);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("fails a missing inputSchema", async () => {
     const result = await run([{ name: "probeTool" }]);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("inputSchema");
   });
 
   it("fails a null inputSchema", async () => {
     const result = await run([withSchema(null)]);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("null");
   });
 
   it('fails an inputSchema whose type is not "object"', async () => {
     const result = await run([withSchema({ type: "string" })]);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain('"object"');
   });
 
@@ -138,31 +139,31 @@ describe("McpToolContractValidityAudit", () => {
         required: ["q"],
       }),
     ]);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("`q`");
   });
 
   it("warns on a name outside the allowed character set", async () => {
     const result = await run([{ ...CLEAN, name: "search products!" }]);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("search products!");
   });
 
   it("warns on a name longer than 128 characters", async () => {
     const result = await run([{ ...CLEAN, name: "a".repeat(129) }]);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("129 characters");
   });
 
   it("warns on a name duplicated within one server", async () => {
     const result = await run([CLEAN, { ...CLEAN }]);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("defined 2 times");
   });
 
   it("warns on a name outside printable ASCII, naming the sentinel encoding", async () => {
     const result = await run([{ ...CLEAN, name: "búsqueda" }]);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("=?base64?");
   });
 
@@ -173,7 +174,7 @@ describe("McpToolContractValidityAudit", () => {
         properties: { a: { type: "string", "x-mcp-header": "" } },
       }),
     ]);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("non-empty string");
   });
 
@@ -184,7 +185,7 @@ describe("McpToolContractValidityAudit", () => {
         properties: { a: { type: "string", "x-mcp-header": "X Custom" } },
       }),
     ]);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("RFC 9110 token");
   });
 
@@ -197,7 +198,7 @@ describe("McpToolContractValidityAudit", () => {
         },
       }),
     ]);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("CR or LF");
   });
 
@@ -211,7 +212,7 @@ describe("McpToolContractValidityAudit", () => {
         },
       }),
     ]);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("repeats case-insensitively");
   });
 
@@ -223,7 +224,7 @@ describe("McpToolContractValidityAudit", () => {
         properties: { a: { type: "number", "x-mcp-header": "X-Limit" } },
       }),
     ]);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("only string, integer and boolean");
   });
 
@@ -239,7 +240,7 @@ describe("McpToolContractValidityAudit", () => {
         },
       }),
     ]);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("`items`");
   });
 
@@ -252,7 +253,7 @@ describe("McpToolContractValidityAudit", () => {
         },
       }),
     ]);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("`oneOf`");
   });
 
@@ -265,7 +266,7 @@ describe("McpToolContractValidityAudit", () => {
         },
       }),
     ]);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("$ref");
   });
 
@@ -283,14 +284,14 @@ describe("McpToolContractValidityAudit", () => {
       "brokenTool",
     );
     const result = await run([...clean, broken]);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("whatever the pass ratio");
     expect(result.found).toContain("9 pass every MUST");
   });
 
   it("fails an outputSchema that is not a JSON Schema object", async () => {
     const result = await run([{ ...CLEAN, outputSchema: "string" }]);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("outputSchema");
   });
 
@@ -300,7 +301,7 @@ describe("McpToolContractValidityAudit", () => {
       "page2Tool",
     );
     const result = await run([CLEAN], { "cursor-2": [broken] });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("page2Tool");
     expect(result.found).toContain("2 tool(s)");
   });

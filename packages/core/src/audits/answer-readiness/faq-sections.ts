@@ -1,8 +1,16 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext, PageContext } from "../../check-context";
-import { extractHeadings, flattenJsonLd } from "../../parser";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { extractHeadings, flattenJsonLd } from "#core/parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 // Matches FAQ section labels in headings/summaries: "Frequently Asked
 // Questions", "FAQ(s)", "Common Questions", "Questions & Answers", "Q&A".
@@ -31,24 +39,24 @@ export class FaqSectionsAudit extends Audit {
     failureTitle: "FAQ sections present",
     description:
       'AI answer engines like Perplexity extract FAQ-structured content with higher confidence for direct answers. FAQ sections with clear question headings are the top extraction target for "People Also Ask" results and conversational AI responses.',
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "informative"),
-    evidenceGrade: "C",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/answer-readiness/faq-sections.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "medium",
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         'FAQ sections with clear question headings are the highest-priority extraction target for AI-generated answers and "People Also Ask" results. Without them, your content misses the most direct path to appearing in AI answer snippets.',
       fix: 'Add a "Frequently Asked Questions" section with question-formatted H3 headings, each followed immediately by a concise answer paragraph.',
       code: "<h2>Frequently Asked Questions</h2>\n<h3>What is your return policy?</h3>\n<p>We offer a 30-day money-back guarantee on all products.</p>\n<h3>How long does shipping take?</h3>\n<p>Standard shipping takes 3-5 business days within the US.</p>",
-      effort: "easy",
+      effort: FixEffort.Easy,
       tags: ["content-structure", "faq", "answer-engine"],
     },
   };
@@ -61,7 +69,7 @@ export class FaqSectionsAudit extends Audit {
         'Headings containing "Frequently Asked Questions" or "FAQ"',
         "No pages scanned",
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description: FaqSectionsAudit.meta.description,
           code: "<h2>Frequently Asked Questions</h2>\n<h3>What is your return policy?</h3>\n<p>We offer a 30-day money-back guarantee on all products.</p>",
         },
@@ -128,7 +136,7 @@ export class FaqSectionsAudit extends Audit {
       "FAQ heading, FAQPage JSON-LD, or an accordion of questions",
       "Not found",
       {
-        priority: "medium",
+        priority: CheckPriority.Medium,
         description:
           "FAQ sections with clear question headings are the highest-priority extraction target for AI-generated answers. Structure each Q&A with a question heading followed by a direct answer paragraph.",
         code: "<h2>Frequently Asked Questions</h2>\n<h3>What is your return policy?</h3>\n<p>We offer a 30-day money-back guarantee on all products.</p>\n<h3>How long does shipping take?</h3>\n<p>Standard shipping takes 3-5 business days within the US.</p>",

@@ -12,15 +12,17 @@
  * the jsdom window, so there is no heavyweight runtime to load per page.
  */
 import { JSDOM } from "jsdom";
-import { logger } from "../../logger";
+import { logger } from "#core/logger";
 import { runRules } from "./engine/rules";
+import { RuleStatus } from "./engine/rules";
 
 export interface A11yNodeFinding {
   target: string;
   summary: string;
 }
 
-export type A11yStatus = "pass" | "fail" | "incomplete" | "inapplicable";
+/** One rule outcome, as the engine reports it. */
+export type A11yStatus = RuleStatus;
 
 export interface A11yRuleResult {
   status: A11yStatus;

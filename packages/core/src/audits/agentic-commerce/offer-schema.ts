@@ -1,19 +1,80 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { flattenJsonLd } from "../../parser";
-import { weightForGrade } from "../../scorer";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { allJsonLdNodes } from "#core/parser";
+import { PRODUCT_TYPES, resolveProducts, typesOf } from "#core/product-schema";
+import { weightForGrade } from "#core/scorer";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "#core/types";
 
-function matchesAnyType(
-  schema: Record<string, unknown>,
-  types: string[],
-): boolean {
-  return types.some((t) => {
-    const st = schema["@type"];
-    if (typeof st === "string") return st === t;
-    if (Array.isArray(st)) return st.includes(t);
-    return false;
-  });
+function isNode(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+function has(value: unknown): boolean {
+  return value !== undefined && value !== null && value !== "";
+}
+
+/**
+ * An offer states a price an agent can quote: an `Offer` with `price`, or an
+ * `AggregateOffer` with `lowPrice` (schema.org's form for a variant price
+ * range, which Google's product snippets accept), each with `priceCurrency`.
+ */
+function isPricedOffer(offer: unknown): boolean {
+  if (!isNode(offer) || !has(offer["priceCurrency"])) return false;
+  if (has(offer["price"])) return true;
+  return typesOf(offer).includes("AggregateOffer") && has(offer["lowPrice"]);
+}
+
+function offersOf(node: Record<string, unknown>): unknown[] {
+  const offers = node["offers"] ?? node["offer"];
+  return Array.isArray(offers) ? offers : [offers];
+}
+
+/**
+ * Whether any offer reachable from the page's products is priced. A
+ * ProductGroup's variants are read with the group's shared offer beneath
+ * their own, so a priced variant or a priced group both count. An offer may
+ * also point at its product through `itemOffered`. A page with no Product
+ * markup, such as a SaaS pricing page, is judged on its standalone Offer
+ * nodes instead.
+ */
+function pageHasPricedOffer(blocks: object[]): boolean {
+  const products = resolveProducts(blocks);
+  if (products.some((product) => offersOf(product).some(isPricedOffer)))
+    return true;
+  const offers = allJsonLdNodes(blocks).filter(
+    (node): node is Record<string, unknown> =>
+      isNode(node) &&
+      typesOf(node).some((t) => t === "Offer" || t === "AggregateOffer"),
+  );
+  if (products.length === 0) return offers.some(isPricedOffer);
+  // `itemOffered` may nest the product or name it by `@id`.
+  const productIds = new Set(
+    allJsonLdNodes(blocks)
+      .filter(isNode)
+      .filter((node) => isProductLike(node) && node["@id"] !== undefined)
+      .map((node) => node["@id"]),
+  );
+  const offersProduct = (item: unknown) =>
+    (typeof item === "string" && productIds.has(item)) ||
+    (isNode(item) && (isProductLike(item) || productIds.has(item["@id"])));
+  return offers.some(
+    (offer) => offersProduct(offer["itemOffered"]) && isPricedOffer(offer),
+  );
+}
+
+function isProductLike(node: Record<string, unknown>): boolean {
+  return typesOf(node).some(
+    (t) => PRODUCT_TYPES.includes(t) || t === "ProductGroup",
+  );
 }
 
 export class OfferSchemaAudit extends Audit {
@@ -24,19 +85,19 @@ export class OfferSchemaAudit extends Audit {
     failureTitle: "Offer schema on pricing pages",
     description:
       "AI agents use Offer schema to answer pricing queries with exact numbers. Without price and priceCurrency in structured data, agents must scrape and guess pricing from page text, which often produces inaccurate or outdated results in AI-generated comparisons.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/agentic-commerce/offer-schema.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: ["product"],
-    defaultPriority: "medium",
+    applicablePageTypes: [PageType.Product],
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         'Without Offer schema on pricing pages, AI agents cannot answer "how much does X cost?" with exact numbers. Agents must scrape and guess pricing from page text, which frequently produces inaccurate or outdated results in AI-generated price comparisons.',
@@ -50,7 +111,7 @@ export class OfferSchemaAudit extends Audit {
   "availability": "https://schema.org/InStock",
   "priceValidUntil": "2026-12-31"
 }`,
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl: "https://schema.org/Offer",
       tags: ["json-ld", "schema", "pricing", "ecommerce"],
     },
@@ -71,43 +132,9 @@ export class OfferSchemaAudit extends Audit {
       );
     }
 
-    const pagesWithOffer = productPages.filter((p) => {
-      const schemas = flattenJsonLd(p.structuredData ?? p.jsonLd);
-
-      // Check for standalone Offer schemas
-      const hasOfferSchema = schemas.some((s) =>
-        matchesAnyType(s as Record<string, unknown>, [
-          "Offer",
-          "AggregateOffer",
-        ]),
-      );
-
-      // Check for offer/offers property on other schemas
-      const hasOfferProp = schemas.some((s) => {
-        const obj = s as Record<string, unknown>;
-        const offer = obj["offers"] || obj["offer"];
-        if (!offer) return false;
-        const offers = Array.isArray(offer) ? offer : [offer];
-        return offers.some((o) => {
-          const offerObj = o as Record<string, unknown>;
-          return offerObj["price"] !== undefined && offerObj["priceCurrency"];
-        });
-      });
-
-      if (hasOfferSchema) {
-        const first = schemas.find((s) =>
-          matchesAnyType(s as Record<string, unknown>, [
-            "Offer",
-            "AggregateOffer",
-          ]),
-        ) as Record<string, unknown>;
-        return (
-          first && first["price"] !== undefined && !!first["priceCurrency"]
-        );
-      }
-
-      return hasOfferProp;
-    });
+    const pagesWithOffer = productPages.filter((p) =>
+      pageHasPricedOffer(p.structuredData ?? p.jsonLd),
+    );
 
     const allHave = pagesWithOffer.length === productPages.length;
     const someHave = pagesWithOffer.length > 0;
@@ -126,7 +153,7 @@ export class OfferSchemaAudit extends Audit {
         "Offer schema with price and priceCurrency on product pages.",
         `${pagesWithOffer.length}/${productPages.length} product pages with Offer schema`,
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "AI agents use Offer schema to answer pricing queries with exact numbers. Without price and priceCurrency in structured data, agents must scrape and guess pricing from page text, which often produces inaccurate or outdated results in AI-generated comparisons.",
           code: `{
@@ -145,7 +172,7 @@ export class OfferSchemaAudit extends Audit {
       "Offer schema with price and priceCurrency on product pages.",
       `${pagesWithOffer.length}/${productPages.length} product pages with Offer schema`,
       {
-        priority: "medium",
+        priority: CheckPriority.Medium,
         description:
           "AI agents use Offer schema to answer pricing queries with exact numbers. Without price and priceCurrency in structured data, agents must scrape and guess pricing from page text, which often produces inaccurate or outdated results in AI-generated comparisons.",
         code: `{

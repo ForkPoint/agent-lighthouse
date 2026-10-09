@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { OgTypeAudit } from "./og-type";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 const doc = (head: string) =>
   `<html lang="en"><head>${head}</head><body></body></html>`;
@@ -16,7 +17,7 @@ describe("OgTypeAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("website");
   });
 
@@ -28,7 +29,7 @@ describe("OgTypeAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("article");
   });
 
@@ -40,7 +41,7 @@ describe("OgTypeAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("fails when og:type is missing", () => {
@@ -48,12 +49,12 @@ describe("OgTypeAudit", () => {
       mockPageContext("https://example.com/", doc("")),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("missing");
   });
 
   it("fails when there are no pages", () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 });

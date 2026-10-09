@@ -1,8 +1,16 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { isSafeUrl } from "../../url-utils";
-import { sharedFeeds, probeHubHead } from "../../gatherers/feeds";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { isSafeUrl } from "#core/url-utils";
+import { sharedFeeds, probeHubHead } from "#core/gatherers/feeds";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** Feeds inspected. The same cap the other Wave C feed audits use. */
 const MAX_FEEDS = 2;
@@ -30,19 +38,19 @@ export class WebsubHubAdvertisementAudit extends Audit {
     failureTitle: "This site’s WebSub advertisement is incomplete",
     description:
       "Reads the WebSub discovery links on each feed — the `Link:` response headers first, as the specification requires, then the document — and checks the shape the W3C Recommendation asks for: exactly one absolute `rel=self` equal to the URL the feed was fetched from, and at least one `rel=hub` over HTTPS that answers a HEAD. Advisory only: no AI answer engine is documented as a WebSub subscriber, so this audit never affects the score.",
-    scoreDisplayMode: "informative",
-    tier: "informative",
-    evidenceGrade: "C",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    tier: AuditTier.Informative,
+    evidenceGrade: EvidenceGrade.C,
     weight: 0,
-    defaultPriority: "low",
+    defaultPriority: CheckPriority.Low,
     dossier:
       "docs/evidence/audits/machine-discovery/websub-hub-advertisement.md",
-    requires: ["origin-reachable", "unblocked-fetches"],
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
     guidance: {
       impact:
         "A hub subscription is verified against the feed’s own `rel=self`. When that link is missing, relative, or points at a different URL than the one the feed is served from, verification cannot complete, and the push path degrades to whatever polling cadence subscribers happen to use. The publisher sees a hub that looks configured and no error anywhere. The benefit side is unproven: WebSub is a W3C Recommendation, but no AI answer engine is documented as a subscriber, which is why this audit reports and does not score.",
       fix: "Advertise the hub and the canonical topic URL in the feed’s `Link:` response headers, which is where a subscriber looks first. Emit exactly one `rel=self` with an absolute URL identical to the address the feed is served from, and at least one `rel=hub` over HTTPS. If you run no hub, a hosted one (Google’s pubsubhubbub, Superfeedr, websub.rocks) needs only the two link relations.",
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/machine-discovery/websub-hub-advertisement/",
       tags: ["websub", "feeds", "push", "advisory"],

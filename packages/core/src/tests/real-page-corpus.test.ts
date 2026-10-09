@@ -7,10 +7,10 @@ vi.mock("node:dns/promises", () => ({
   },
 }));
 
-import { defaultConfig } from "../audit-config";
-import { mockCheckContext } from "../__tests__/test-utils";
-import type { CheckContext, PageContext } from "../check-context";
-import type { FetchResult } from "../fetcher";
+import { defaultConfig } from "#core/audit-config";
+import { mockCheckContext } from "#core/__tests__/test-utils";
+import type { CheckContext, PageContext } from "#core/check-context";
+import type { FetchResult } from "#core/fetcher";
 import {
   parseHtml,
   extractJsonLd,
@@ -19,8 +19,8 @@ import {
   extractMetaTags,
   extractHeadLinks,
   detectPageType,
-} from "../parser";
-import { detectWafProtection } from "../waf-detector";
+} from "#core/parser";
+import { detectWafProtection } from "#core/waf-detector";
 import {
   listFixtures,
   readFixture,

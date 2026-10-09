@@ -1,10 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { defaultConfig } from "../audit-config";
-import { AuditMetaSchema } from "../schemas";
-import { weightForGrade } from "../scorer";
-import { NEW_IN_V2, MIGRATED_COUNT } from "../tests/new-in-v2";
+import { defaultConfig } from "#core/audit-config";
+import { AuditMetaSchema } from "#core/schemas";
+import { weightForGrade } from "#core/scorer";
+import { NEW_IN_V2, MIGRATED_COUNT } from "#core/tests/new-in-v2";
+import { AuditTier, ScoreDisplayMode } from "#core/types";
 
 // The 26 v1 audits removed in this major release: the first 18 in the v1.0.0
 // sunset wave, plus the 8 added by the 2026-08-21 grading pass. Rationale and
@@ -103,7 +104,7 @@ describe("registry-wide meta invariants", () => {
   // of "does this count", so the biconditional is stated against it.
   it("keeps tier !== scored and weight === 0 in lockstep", () => {
     const divergent = allMetas
-      .filter((m) => (m.tier !== "scored") !== (m.weight === 0))
+      .filter((m) => (m.tier !== AuditTier.Scored) !== (m.weight === 0))
       .map((m) => `${m.id} (weight=${m.weight}, tier=${m.tier})`);
     expect(divergent).toEqual([]);
   });
@@ -114,7 +115,9 @@ describe("registry-wide meta invariants", () => {
   it("non-scored tiers always render as informative", () => {
     const divergent = allMetas
       .filter(
-        (m) => m.tier !== "scored" && m.scoreDisplayMode !== "informative",
+        (m) =>
+          m.tier !== AuditTier.Scored &&
+          m.scoreDisplayMode !== ScoreDisplayMode.Informative,
       )
       .map(
         (m) =>
@@ -143,7 +146,7 @@ describe("registry-wide meta invariants", () => {
         const recommended = /^recommended_tier:\s*"?([a-z]+)"?/m.exec(
           front,
         )?.[1];
-        const tier = m.tier ?? "scored";
+        const tier = m.tier ?? AuditTier.Scored;
         if (!recommended || recommended === tier) return [];
         if (/^tier_rationale:/m.test(front)) return [];
         return [`${m.id} (ships ${tier}, dossier recommends ${recommended})`];

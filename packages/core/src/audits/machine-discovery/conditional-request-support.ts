@@ -1,14 +1,22 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
-import { parseRobotsFile } from "../../gatherers/robots";
-import { siteSitemapTree } from "../../gatherers/sitemap";
-import { sharedFeeds } from "../../gatherers/feeds";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import { parseRobotsFile } from "#core/gatherers/robots";
+import { siteSitemapTree } from "#core/gatherers/sitemap";
+import { sharedFeeds } from "#core/gatherers/feeds";
 import {
   sharedRevalidation,
   type RevalidationResult,
-} from "../../gatherers/conditional";
+} from "#core/gatherers/conditional";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** Child sitemaps probed. The sketch's cap, kept because each costs four requests. */
 const MAX_CHILD_SITEMAPS = 3;
@@ -20,9 +28,17 @@ const MAX_FEEDS = 2;
 const MAX_SITEMAP_BYTES = 50 * 1024 * 1024;
 const MAX_SITEMAP_URLS = 50_000;
 
+const SurfaceKind = {
+  RobotsTxt: "robots.txt",
+  Sitemap: "sitemap",
+  Feed: "feed",
+} as const;
+
+type SurfaceKind = (typeof SurfaceKind)[keyof typeof SurfaceKind];
+
 interface Surface {
   url: string;
-  kind: "robots.txt" | "sitemap" | "feed";
+  kind: SurfaceKind;
   result: RevalidationResult;
 }
 
@@ -35,19 +51,19 @@ export class ConditionalRequestSupportAudit extends Audit {
       "Every poll of this site’s discovery files downloads the whole file again",
     description:
       "Fetches robots.txt, the sitemaps and the feeds twice identically, then once with `If-None-Match` and once with `If-Modified-Since`, and reports what came back. A surface with no validator cannot be revalidated at all; one whose `ETag` changes while its body does not is worse, because every poll looks like a change.",
-    scoreDisplayMode: "ternary",
-    tier: "scored",
-    evidenceGrade: "B",
-    weight: weightForGrade("B", "scored"),
-    defaultPriority: "medium",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    tier: AuditTier.Scored,
+    evidenceGrade: EvidenceGrade.B,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    defaultPriority: CheckPriority.Medium,
     dossier:
       "docs/evidence/audits/machine-discovery/conditional-request-support.md",
-    requires: ["origin-reachable", "unblocked-fetches"],
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
     guidance: {
       impact:
         'A crawler that wants to know what changed re-reads your sitemap and your feed on a schedule. If those responses carry no `ETag` and no `Last-Modified`, it cannot ask "has this changed?" — it can only download the file again, every time, forever. The cost is yours as much as theirs: bandwidth you serve for no new information, and a crawl budget spent re-reading a list instead of fetching the pages on it. A validator that changes on every build is the same cost wearing a correct-looking header.',
       fix: "Emit a strong `ETag` derived from the file’s content, not from the build, and a `Last-Modified` that moves only when the content does. Answer `If-None-Match` and `If-Modified-Since` with 304 and an empty body. Keep `no-store` and `private` off public discovery surfaces — they tell a crawler not to keep the copy it just paid for.",
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/machine-discovery/conditional-request-support/",
       tags: ["http", "caching", "sitemap", "feeds", "robots"],
@@ -59,7 +75,10 @@ export class ConditionalRequestSupportAudit extends Audit {
 
     const robots = ctx.rootFiles["/robots.txt"];
     if (robots?.status === 200)
-      urls.push({ url: `${ctx.baseUrl}/robots.txt`, kind: "robots.txt" });
+      urls.push({
+        url: `${ctx.baseUrl}/robots.txt`,
+        kind: SurfaceKind.RobotsTxt,
+      });
 
     const declared =
       robots?.status === 200 ? parseRobotsFile(robots.body).sitemaps : [];
@@ -71,11 +90,11 @@ export class ConditionalRequestSupportAudit extends Audit {
     ].slice(0, MAX_CHILD_SITEMAPS + 1);
     for (const url of sitemapUrls) {
       if (!urls.some((entry) => entry.url === url))
-        urls.push({ url, kind: "sitemap" });
+        urls.push({ url, kind: SurfaceKind.Sitemap });
     }
 
     for (const feed of await sharedFeeds(ctx, { max: MAX_FEEDS })) {
-      urls.push({ url: feed.url, kind: "feed" });
+      urls.push({ url: feed.url, kind: SurfaceKind.Feed });
     }
 
     const surfaces: Surface[] = [];
@@ -126,7 +145,7 @@ export class ConditionalRequestSupportAudit extends Audit {
           `${where}: Cache-Control: ${result.cacheControl} on a public discovery surface`,
         );
       }
-      if (surface.kind === "sitemap") {
+      if (surface.kind === SurfaceKind.Sitemap) {
         if (result.bytes > MAX_SITEMAP_BYTES) {
           warnings.push(
             `${where}: ${result.bytes} bytes, over the sitemap protocol's 50MB limit`,

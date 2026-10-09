@@ -7,7 +7,7 @@ import {
 import { runScan } from "@forkpoint/agent-lighthouse-core";
 import { buildReportView } from "@forkpoint/agent-lighthouse-report";
 import { createProgressNotifier } from "./progress";
-import { AUDIT_TOOL, buildAuditSummary, targetUrl } from "./tool";
+import { AUDIT_TOOL, buildAuditSummary, targetUrl, pageOptions } from "./tool";
 
 declare const __PACKAGE_VERSION__: string;
 
@@ -49,7 +49,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       },
     );
 
-    const report = await runScan(url, { onEvent });
+    const report = await runScan(url, {
+      ...pageOptions(request.params.arguments),
+      onEvent,
+    });
     const summary = buildAuditSummary(report, buildReportView(report));
 
     return {

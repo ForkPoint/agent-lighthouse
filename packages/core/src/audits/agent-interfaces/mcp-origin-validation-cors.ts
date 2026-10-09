@@ -1,9 +1,9 @@
 import { randomBytes } from "node:crypto";
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import { isSafeUrl } from "../../url-utils";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import { isSafeUrl } from "#core/url-utils";
 import {
   discoverMcpEndpoint,
   discoverProbe,
@@ -12,7 +12,16 @@ import {
   sharedProbe,
   discoverParams,
   MCP_PROTOCOL_VERSION,
-} from "../../gatherers/mcp";
+} from "#core/gatherers/mcp";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+  HttpMethod,
+} from "#core/types";
 
 /** A domain that cannot belong to anyone: `.example` is reserved by RFC 2606. */
 function throwawayOrigin(): string {
@@ -32,19 +41,19 @@ export class McpOriginValidationCorsAudit extends Audit {
       "This MCP endpoint’s CORS policy exposes it to any page the user visits",
     description:
       "Sends the discover call twice — once with a throwaway `Origin`, once without — and one CORS preflight, then compares. An endpoint that reflects an arbitrary Origin into `Access-Control-Allow-Origin` while also allowing credentials has authorized every page the user visits to call it on the user’s behalf. Permissive CORS on an endpoint with no auth surface is reported and not scored.",
-    scoreDisplayMode: "ternary",
-    tier: "scored",
-    evidenceGrade: "B",
-    weight: weightForGrade("B", "scored"),
-    defaultPriority: "high",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    tier: AuditTier.Scored,
+    evidenceGrade: EvidenceGrade.B,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    defaultPriority: CheckPriority.High,
     dossier:
       "docs/evidence/audits/agent-interfaces/mcp-origin-validation-cors.md",
-    requires: ["origin-reachable", "unblocked-fetches"],
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
     guidance: {
       impact:
         "The transport spec is unambiguous: servers MUST validate the Origin header on all incoming connections, and answer 403 when it is present and invalid, because a server that does not is reachable from any web page the user has open. The provable defect is the CORS pairing: an endpoint that reflects the requesting Origin into `Access-Control-Allow-Origin` and returns `Access-Control-Allow-Credentials: true` has authorized any page to enumerate its tool surface and invoke tools with the user’s session.",
       fix: "Validate `Origin` on every request and answer 403 when it is present and not one you allow. Never reflect an arbitrary Origin while allowing credentials: return a fixed allow-list, or drop `Access-Control-Allow-Credentials`. `Access-Control-Allow-Origin: *` is only safe on an endpoint that accepts no credentials at all.",
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/agent-interfaces/mcp-origin-validation-cors/",
       tags: ["mcp", "cors", "dns-rebinding", "security"],
@@ -84,7 +93,7 @@ export class McpOriginValidationCorsAudit extends Audit {
 
     const preflight = (await isSafeUrl(url))
       ? await mcpFetch(ctx, url, {
-          method: "OPTIONS",
+          method: HttpMethod.Options,
           headers: {
             Origin: origin,
             "Access-Control-Request-Method": "POST",

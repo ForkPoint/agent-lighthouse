@@ -6,13 +6,14 @@ import { AiBotDirectivesAudit } from "./ai-bot-directives";
 import { GptbotAudit } from "./gptbot";
 import { AnthropicAudit } from "./anthropic-ai";
 import { SensitivePathsAudit } from "./sensitive-paths";
-import type { Audit } from "../../audit";
-import type { AuditResult } from "../../types";
+import type { Audit } from "#core/audit";
+import type { AuditResult } from "#core/types";
 import {
   mockCheckContext,
   mockFetchResult,
   mockPageContext,
-} from "../../__tests__/test-utils";
+} from "#core/__tests__/test-utils";
+import { CheckPriority, CheckStatus } from "#core/types";
 
 /**
  * Differential harness for every audit that reads `/robots.txt`.
@@ -247,1289 +248,1289 @@ describe("robots.txt consumers — shared-gatherer differential", () => {
 const BASELINE: Record<string, Record<string, Row>> = {
   "no-blanket-block": {
     missing: {
-      status: "warn",
+      status: CheckStatus.Warn,
       score: 0.5,
       message: "No robots.txt found — cannot verify crawler permissions.",
       found: "No robots.txt found",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "non-200": {
-      status: "warn",
+      status: CheckStatus.Warn,
       score: 0.5,
       message: "No robots.txt found — cannot verify crawler permissions.",
       found: "No robots.txt found",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     empty: {
-      status: "warn",
+      status: CheckStatus.Warn,
       score: 0.5,
       message: "No robots.txt found — cannot verify crawler permissions.",
       found: "No robots.txt found",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "html-error-page": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "No blanket Disallow: / found for User-agent: *.",
       found: "Wildcard user-agent does not block all paths",
-      priority: "critical",
+      priority: CheckPriority.Critical,
       details: "{}",
     },
     "wildcard-allow": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "No blanket Disallow: / found for User-agent: *.",
       found: "Wildcard user-agent does not block all paths",
-      priority: "critical",
+      priority: CheckPriority.Critical,
       details: "{}",
     },
     "wildcard-blanket-block": {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       message:
         "User-agent: * has Disallow: / — this blocks all crawlers including AI agents.",
       found: "User-agent: * contains Disallow: /",
-      priority: "critical",
+      priority: CheckPriority.Critical,
       details: "{}",
     },
     "blanket-block-countered": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "No blanket Disallow: / found for User-agent: *.",
       found: "Wildcard user-agent does not block all paths",
-      priority: "critical",
+      priority: CheckPriority.Critical,
       details: "{}",
     },
     "wildcard-star-disallow": {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       message:
         "User-agent: * has Disallow: / — this blocks all crawlers including AI agents.",
       found: "User-agent: * contains Disallow: /",
-      priority: "critical",
+      priority: CheckPriority.Critical,
       details: "{}",
     },
     "both-categories": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "No blanket Disallow: / found for User-agent: *.",
       found: "Wildcard user-agent does not block all paths",
-      priority: "critical",
+      priority: CheckPriority.Critical,
       details: "{}",
     },
     "versioned-product-token": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "No blanket Disallow: / found for User-agent: *.",
       found: "Wildcard user-agent does not block all paths",
-      priority: "critical",
+      priority: CheckPriority.Critical,
       details: "{}",
     },
     "mixed-case-tokens": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "No blanket Disallow: / found for User-agent: *.",
       found: "Wildcard user-agent does not block all paths",
-      priority: "critical",
+      priority: CheckPriority.Critical,
       details: "{}",
     },
     "anthropic-alias-only": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "No blanket Disallow: / found for User-agent: *.",
       found: "Wildcard user-agent does not block all paths",
-      priority: "critical",
+      priority: CheckPriority.Critical,
       details: "{}",
     },
     "comments-and-crlf": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "No blanket Disallow: / found for User-agent: *.",
       found: "Wildcard user-agent does not block all paths",
-      priority: "critical",
+      priority: CheckPriority.Critical,
       details: "{}",
     },
     "bom-prefixed": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "No blanket Disallow: / found for User-agent: *.",
       found: "Wildcard user-agent does not block all paths",
-      priority: "critical",
+      priority: CheckPriority.Critical,
       details: "{}",
     },
     "crawl-delay-reasonable": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "No blanket Disallow: / found for User-agent: *.",
       found: "Wildcard user-agent does not block all paths",
-      priority: "critical",
+      priority: CheckPriority.Critical,
       details: "{}",
     },
     "crawl-delay-excessive": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "No blanket Disallow: / found for User-agent: *.",
       found: "Wildcard user-agent does not block all paths",
-      priority: "critical",
+      priority: CheckPriority.Critical,
       details: "{}",
     },
     "grouped-agents": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "No blanket Disallow: / found for User-agent: *.",
       found: "Wildcard user-agent does not block all paths",
-      priority: "critical",
+      priority: CheckPriority.Critical,
       details: "{}",
     },
     "sensitive-paths-disallowed": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "No blanket Disallow: / found for User-agent: *.",
       found: "Wildcard user-agent does not block all paths",
-      priority: "critical",
+      priority: CheckPriority.Critical,
       details: "{}",
     },
     "youbot-and-ai2bot-explicit": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "No blanket Disallow: / found for User-agent: *.",
       found: "Wildcard user-agent does not block all paths",
-      priority: "critical",
+      priority: CheckPriority.Critical,
       details: "{}",
     },
     "youbot-blocked": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "No blanket Disallow: / found for User-agent: *.",
       found: "Wildcard user-agent does not block all paths",
-      priority: "critical",
+      priority: CheckPriority.Critical,
       details: "{}",
     },
   },
   "agent-governance": {
     missing: {
-      status: "na",
+      status: CheckStatus.NotApplicable,
       score: 0,
       message:
         "No robots.txt found \u2014 agentic governance cannot be evaluated.",
       found: "No robots.txt found",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "non-200": {
-      status: "na",
+      status: CheckStatus.NotApplicable,
       score: 0,
       message:
         "No robots.txt found \u2014 agentic governance cannot be evaluated.",
       found: "No robots.txt found",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     empty: {
-      status: "na",
+      status: CheckStatus.NotApplicable,
       score: 0,
       message:
         "No robots.txt found \u2014 agentic governance cannot be evaluated.",
       found: "No robots.txt found",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "html-error-page": {
-      status: "na",
+      status: CheckStatus.NotApplicable,
       score: 0,
       message:
         "robots.txt names no AI agents and blocks nothing, so every agent is already allowed.",
       found: "No restrictions in robots.txt",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: '{"trainingAgents":[],"realtimeAgents":[],"hasCatchAll":false}',
     },
     "wildcard-allow": {
-      status: "na",
+      status: CheckStatus.NotApplicable,
       score: 0,
       message:
         "robots.txt grants every agent access through the catch-all group, so training crawlers and live agents already have the same policy and there is nothing to separate.",
       found: "Catch-all grants access",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: '{"trainingAgents":[],"realtimeAgents":[],"hasCatchAll":true}',
     },
     "wildcard-blanket-block": {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       message:
         "robots.txt blocks every agent through the catch-all group. Under the RFC 9309 fallback that block also applies to live conversational agents, so the site is closed to the agents that cite and link back to it, not only to dataset crawlers.",
       found: "Catch-all blocks all agents, no per-agent exceptions",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: '{"trainingAgents":[],"realtimeAgents":[],"hasCatchAll":true}',
     },
     "blanket-block-countered": {
-      status: "na",
+      status: CheckStatus.NotApplicable,
       score: 0,
       message:
         "robots.txt grants every agent access through the catch-all group, so training crawlers and live agents already have the same policy and there is nothing to separate.",
       found: "Catch-all grants access",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: '{"trainingAgents":[],"realtimeAgents":[],"hasCatchAll":true}',
     },
     "wildcard-star-disallow": {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       message:
         "robots.txt blocks every agent through the catch-all group. Under the RFC 9309 fallback that block also applies to live conversational agents, so the site is closed to the agents that cite and link back to it, not only to dataset crawlers.",
       found: "Catch-all blocks all agents, no per-agent exceptions",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: '{"trainingAgents":[],"realtimeAgents":[],"hasCatchAll":true}',
     },
     "both-categories": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "Granular agentic governance: 2 training crawler(s) and 2 live agent(s) explicitly named with different policies.",
       found: "Training: GPTBot, CCBot; Realtime: ChatGPT-User, Claude-User",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details:
         '{"trainingAgents":["GPTBot","CCBot"],"realtimeAgents":["ChatGPT-User","Claude-User"],"hasCatchAll":true}',
     },
     "versioned-product-token": {
-      status: "na",
+      status: CheckStatus.NotApplicable,
       score: 0,
       message:
         "robots.txt grants every agent access through the catch-all group, so training crawlers and live agents already have the same policy and there is nothing to separate.",
       found: "Catch-all grants access",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: '{"trainingAgents":[],"realtimeAgents":[],"hasCatchAll":true}',
     },
     "mixed-case-tokens": {
-      status: "warn",
+      status: CheckStatus.Warn,
       score: 0.5,
       message:
         "Only training crawlers are explicitly governed in robots.txt \u2014 no rules for live conversational agents.",
       found: "Training: GPTBot, anthropic-ai / ClaudeBot; Realtime: none",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details:
         '{"trainingAgents":["GPTBot","anthropic-ai / ClaudeBot"],"realtimeAgents":[],"hasCatchAll":false}',
     },
     "anthropic-alias-only": {
-      status: "warn",
+      status: CheckStatus.Warn,
       score: 0.5,
       message:
         "Only training crawlers are explicitly governed in robots.txt \u2014 no rules for live conversational agents.",
       found: "Training: anthropic-ai / ClaudeBot; Realtime: none",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details:
         '{"trainingAgents":["anthropic-ai / ClaudeBot"],"realtimeAgents":[],"hasCatchAll":true}',
     },
     "comments-and-crlf": {
-      status: "na",
+      status: CheckStatus.NotApplicable,
       score: 0,
       message:
         "robots.txt grants every agent access through the catch-all group, so training crawlers and live agents already have the same policy and there is nothing to separate.",
       found: "Catch-all grants access",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: '{"trainingAgents":[],"realtimeAgents":[],"hasCatchAll":true}',
     },
     "bom-prefixed": {
-      status: "na",
+      status: CheckStatus.NotApplicable,
       score: 0,
       message:
         "robots.txt grants every agent access through the catch-all group, so training crawlers and live agents already have the same policy and there is nothing to separate.",
       found: "Catch-all grants access",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: '{"trainingAgents":[],"realtimeAgents":[],"hasCatchAll":true}',
     },
     "crawl-delay-reasonable": {
-      status: "na",
+      status: CheckStatus.NotApplicable,
       score: 0,
       message:
         "robots.txt grants every agent access through the catch-all group, so training crawlers and live agents already have the same policy and there is nothing to separate.",
       found: "Catch-all grants access",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: '{"trainingAgents":[],"realtimeAgents":[],"hasCatchAll":true}',
     },
     "crawl-delay-excessive": {
-      status: "warn",
+      status: CheckStatus.Warn,
       score: 0.5,
       message:
         "Only training crawlers are explicitly governed in robots.txt \u2014 no rules for live conversational agents.",
       found: "Training: GPTBot; Realtime: none",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details:
         '{"trainingAgents":["GPTBot"],"realtimeAgents":[],"hasCatchAll":true}',
     },
     "grouped-agents": {
-      status: "warn",
+      status: CheckStatus.Warn,
       score: 0.5,
       message:
         "Only training crawlers are explicitly governed in robots.txt \u2014 no rules for live conversational agents.",
       found: "Training: GPTBot, CCBot; Realtime: none",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details:
         '{"trainingAgents":["GPTBot","CCBot"],"realtimeAgents":[],"hasCatchAll":true}',
     },
     "sensitive-paths-disallowed": {
-      status: "na",
+      status: CheckStatus.NotApplicable,
       score: 0,
       message:
         "robots.txt grants every agent access through the catch-all group, so training crawlers and live agents already have the same policy and there is nothing to separate.",
       found: "Catch-all grants access",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: '{"trainingAgents":[],"realtimeAgents":[],"hasCatchAll":true}',
     },
     "youbot-and-ai2bot-explicit": {
-      status: "warn",
+      status: CheckStatus.Warn,
       score: 0.5,
       message:
         "Only training crawlers are explicitly governed in robots.txt \u2014 no rules for live conversational agents.",
       found: "Training: YouBot, AI2Bot; Realtime: none",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details:
         '{"trainingAgents":["YouBot","AI2Bot"],"realtimeAgents":[],"hasCatchAll":true}',
     },
     "youbot-blocked": {
-      status: "warn",
+      status: CheckStatus.Warn,
       score: 0.5,
       message:
         "Only training crawlers are explicitly governed in robots.txt \u2014 no rules for live conversational agents.",
       found: "Training: YouBot, AI2Bot; Realtime: none",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details:
         '{"trainingAgents":["YouBot","AI2Bot"],"realtimeAgents":[],"hasCatchAll":false}',
     },
   },
   "crawl-delay": {
     missing: {
-      status: "warn",
+      status: CheckStatus.Warn,
       score: 0.5,
       message: "No robots.txt found — cannot verify crawler permissions.",
       found: "No robots.txt found",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "non-200": {
-      status: "warn",
+      status: CheckStatus.Warn,
       score: 0.5,
       message: "No robots.txt found — cannot verify crawler permissions.",
       found: "No robots.txt found",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     empty: {
-      status: "warn",
+      status: CheckStatus.Warn,
       score: 0.5,
       message: "No robots.txt found — cannot verify crawler permissions.",
       found: "No robots.txt found",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "html-error-page": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "No Crawl-delay directives found in robots.txt.",
       found: "No Crawl-delay directives present",
-      priority: "high",
+      priority: CheckPriority.High,
       details: "{}",
     },
     "wildcard-allow": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "No Crawl-delay directives found in robots.txt.",
       found: "No Crawl-delay directives present",
-      priority: "high",
+      priority: CheckPriority.High,
       details: "{}",
     },
     "wildcard-blanket-block": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "No Crawl-delay directives found in robots.txt.",
       found: "No Crawl-delay directives present",
-      priority: "high",
+      priority: CheckPriority.High,
       details: "{}",
     },
     "blanket-block-countered": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "No Crawl-delay directives found in robots.txt.",
       found: "No Crawl-delay directives present",
-      priority: "high",
+      priority: CheckPriority.High,
       details: "{}",
     },
     "wildcard-star-disallow": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "No Crawl-delay directives found in robots.txt.",
       found: "No Crawl-delay directives present",
-      priority: "high",
+      priority: CheckPriority.High,
       details: "{}",
     },
     "both-categories": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "No Crawl-delay directives found in robots.txt.",
       found: "No Crawl-delay directives present",
-      priority: "high",
+      priority: CheckPriority.High,
       details: "{}",
     },
     "versioned-product-token": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "No Crawl-delay directives found in robots.txt.",
       found: "No Crawl-delay directives present",
-      priority: "high",
+      priority: CheckPriority.High,
       details: "{}",
     },
     "mixed-case-tokens": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "No Crawl-delay directives found in robots.txt.",
       found: "No Crawl-delay directives present",
-      priority: "high",
+      priority: CheckPriority.High,
       details: "{}",
     },
     "anthropic-alias-only": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "No Crawl-delay directives found in robots.txt.",
       found: "No Crawl-delay directives present",
-      priority: "high",
+      priority: CheckPriority.High,
       details: "{}",
     },
     "comments-and-crlf": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "No Crawl-delay directives found in robots.txt.",
       found: "No Crawl-delay directives present",
-      priority: "high",
+      priority: CheckPriority.High,
       details: "{}",
     },
     "bom-prefixed": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "No Crawl-delay directives found in robots.txt.",
       found: "No Crawl-delay directives present",
-      priority: "high",
+      priority: CheckPriority.High,
       details: "{}",
     },
     "crawl-delay-reasonable": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "Crawl-delay values are reasonable: *: 5s",
       found: "Crawl-delays: *: 5s",
-      priority: "high",
+      priority: CheckPriority.High,
       details: "{}",
     },
     "crawl-delay-excessive": {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       message:
         "Excessive Crawl-delay values found: *: 30s. Values above 10 seconds significantly slow down AI crawlers.",
       found: "Excessive delays: *: 30s",
-      priority: "high",
+      priority: CheckPriority.High,
       details: "{}",
     },
     "grouped-agents": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "No Crawl-delay directives found in robots.txt.",
       found: "No Crawl-delay directives present",
-      priority: "high",
+      priority: CheckPriority.High,
       details: "{}",
     },
     "sensitive-paths-disallowed": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "No Crawl-delay directives found in robots.txt.",
       found: "No Crawl-delay directives present",
-      priority: "high",
+      priority: CheckPriority.High,
       details: "{}",
     },
     "youbot-and-ai2bot-explicit": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "No Crawl-delay directives found in robots.txt.",
       found: "No Crawl-delay directives present",
-      priority: "high",
+      priority: CheckPriority.High,
       details: "{}",
     },
     "youbot-blocked": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "No Crawl-delay directives found in robots.txt.",
       found: "No Crawl-delay directives present",
-      priority: "high",
+      priority: CheckPriority.High,
       details: "{}",
     },
   },
   "ai-bot-directives": {
     missing: {
-      status: "na",
+      status: CheckStatus.NotApplicable,
       score: 0,
       message:
         "No robots.txt to read, so there are no directives to evaluate for YouBot or AI2Bot.",
       found: "No robots.txt found",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "non-200": {
-      status: "na",
+      status: CheckStatus.NotApplicable,
       score: 0,
       message:
         "No robots.txt to read, so there are no directives to evaluate for YouBot or AI2Bot.",
       found: "No robots.txt found",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     empty: {
-      status: "na",
+      status: CheckStatus.NotApplicable,
       score: 0,
       message:
         "No robots.txt to read, so there are no directives to evaluate for YouBot or AI2Bot.",
       found: "No robots.txt found",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "html-error-page": {
-      status: "na",
+      status: CheckStatus.NotApplicable,
       score: 0,
       message:
         "The response at /robots.txt carries no crawl rules, so there is nothing to evaluate for YouBot or AI2Bot.",
       found: "robots.txt contains no user-agent groups and no directives",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "wildcard-allow": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
         "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "wildcard-blanket-block": {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       message:
         "YouBot, AI2Bot are blocked by robots.txt — the documented consumer path is closed.",
       found:
         "YouBot: blocked (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: blocked (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: blocked (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: blocked (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: blocked (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "blanket-block-countered": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
         "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "wildcard-star-disallow": {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       message:
         "YouBot, AI2Bot are blocked by robots.txt — the documented consumer path is closed.",
       found:
         "YouBot: blocked (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: blocked (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: blocked (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: blocked (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: blocked (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "both-categories": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
         "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "versioned-product-token": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
         "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "mixed-case-tokens": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group and robots.txt has no catch-all group, so nothing restricts them.",
       found:
         "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "anthropic-alias-only": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
         "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "comments-and-crlf": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
         "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "bom-prefixed": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
         "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "crawl-delay-reasonable": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
         "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "crawl-delay-excessive": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
         "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "grouped-agents": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
         "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "sensitive-paths-disallowed": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
         "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "youbot-and-ai2bot-explicit": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "YouBot and AI2Bot are allowed by their own robots.txt groups.",
       found:
         "YouBot: explicitly allowed (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: explicitly allowed (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "youbot-blocked": {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       message:
         "YouBot is blocked by robots.txt — the documented consumer path is closed.",
       found:
         "YouBot: blocked (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: explicitly allowed (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
   },
   gptbot: {
     missing: {
-      status: "na",
+      status: CheckStatus.NotApplicable,
       score: 0,
       message:
         "No robots.txt to read, so there are no crawl rules to evaluate for GPTBot.",
       found: "No robots.txt found",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "non-200": {
-      status: "na",
+      status: CheckStatus.NotApplicable,
       score: 0,
       message:
         "No robots.txt to read, so there are no crawl rules to evaluate for GPTBot.",
       found: "No robots.txt found",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     empty: {
-      status: "na",
+      status: CheckStatus.NotApplicable,
       score: 0,
       message:
         "No robots.txt to read, so there are no crawl rules to evaluate for GPTBot.",
       found: "No robots.txt found",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "html-error-page": {
-      status: "na",
+      status: CheckStatus.NotApplicable,
       score: 0,
       message:
         "The response at /robots.txt carries no crawl rules, so there is nothing to evaluate for GPTBot.",
       found: "robots.txt contains no user-agent groups and no directives",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "wildcard-allow": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "GPTBot is allowed. No group names it, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found: "Allowed through the catch-all group",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "wildcard-blanket-block": {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       message: "GPTBot is blocked by robots.txt.",
       found: "The catch-all group disallows / and no group names GPTBot",
-      priority: "high",
+      priority: CheckPriority.High,
       details: "{}",
     },
     "blanket-block-countered": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "GPTBot is allowed. No group names it, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found: "Allowed through the catch-all group",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "wildcard-star-disallow": {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       message: "GPTBot is blocked by robots.txt.",
       found: "The catch-all group disallows / and no group names GPTBot",
-      priority: "high",
+      priority: CheckPriority.High,
       details: "{}",
     },
     "both-categories": {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       message: "GPTBot is blocked by robots.txt.",
       found: "Its own group (User-agent: GPTBot) disallows /",
-      priority: "high",
+      priority: CheckPriority.High,
       details: "{}",
     },
     "versioned-product-token": {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       message: "GPTBot is blocked by robots.txt.",
       found: "Its own group (User-agent: GPTBot) disallows /",
-      priority: "high",
+      priority: CheckPriority.High,
       details: "{}",
     },
     "mixed-case-tokens": {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       message: "GPTBot is blocked by robots.txt.",
       found: "Its own group (User-agent: GPTBot) disallows /",
-      priority: "high",
+      priority: CheckPriority.High,
       details: "{}",
     },
     "anthropic-alias-only": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "GPTBot is allowed. No group names it, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found: "Allowed through the catch-all group",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "comments-and-crlf": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "GPTBot is allowed. No group names it, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found: "Allowed through the catch-all group",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "bom-prefixed": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "GPTBot is allowed. No group names it, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found: "Allowed through the catch-all group",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "crawl-delay-reasonable": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "GPTBot is allowed. No group names it, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found: "Allowed through the catch-all group",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "crawl-delay-excessive": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "GPTBot is allowed by its own robots.txt group.",
       found: "User-agent: GPTBot group permits /",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "grouped-agents": {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       message: "GPTBot is blocked by robots.txt.",
       found: "Its own group (User-agent: GPTBot) disallows /",
-      priority: "high",
+      priority: CheckPriority.High,
       details: "{}",
     },
     "sensitive-paths-disallowed": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "GPTBot is allowed. No group names it, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found: "Allowed through the catch-all group",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "youbot-and-ai2bot-explicit": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "GPTBot is allowed. No group names it, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found: "Allowed through the catch-all group",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "youbot-blocked": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "GPTBot is allowed. No group in robots.txt applies to it, so nothing restricts it.",
       found: "No group applies to GPTBot",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
   },
   "anthropic-ai": {
     missing: {
-      status: "na",
+      status: CheckStatus.NotApplicable,
       score: 0,
       message:
         "No robots.txt to read, so there are no crawl rules to evaluate for ClaudeBot.",
       found: "No robots.txt found",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "non-200": {
-      status: "na",
+      status: CheckStatus.NotApplicable,
       score: 0,
       message:
         "No robots.txt to read, so there are no crawl rules to evaluate for ClaudeBot.",
       found: "No robots.txt found",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     empty: {
-      status: "na",
+      status: CheckStatus.NotApplicable,
       score: 0,
       message:
         "No robots.txt to read, so there are no crawl rules to evaluate for ClaudeBot.",
       found: "No robots.txt found",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "html-error-page": {
-      status: "na",
+      status: CheckStatus.NotApplicable,
       score: 0,
       message:
         "The response at /robots.txt carries no crawl rules, so there is nothing to evaluate for ClaudeBot.",
       found: "robots.txt contains no user-agent groups and no directives",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details: "{}",
     },
     "wildcard-allow": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "ClaudeBot is allowed. No group names it, so under RFC 9309 §2.2.1 it obeys the catch-all group, which permits /.",
       found: "Allowed through the catch-all group",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details:
         '{"namedGroup":false,"hasCatchAll":true,"allowed":true,"legacyTokens":[]}',
     },
     "wildcard-blanket-block": {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       message:
         "ClaudeBot is disallowed at the site root. Anthropic states its bots honour robots.txt, so the block takes effect: the site is excluded from the web content Anthropic collects for potential model training.",
       found: "The catch-all group disallows / and no group names ClaudeBot",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details:
         '{"namedGroup":false,"hasCatchAll":true,"allowed":false,"legacyTokens":[]}',
     },
     "blanket-block-countered": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "ClaudeBot is allowed. No group names it, so under RFC 9309 §2.2.1 it obeys the catch-all group, which permits /.",
       found: "Allowed through the catch-all group",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details:
         '{"namedGroup":false,"hasCatchAll":true,"allowed":true,"legacyTokens":[]}',
     },
     "wildcard-star-disallow": {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       message:
         "ClaudeBot is disallowed at the site root. Anthropic states its bots honour robots.txt, so the block takes effect: the site is excluded from the web content Anthropic collects for potential model training.",
       found: "The catch-all group disallows / and no group names ClaudeBot",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details:
         '{"namedGroup":false,"hasCatchAll":true,"allowed":false,"legacyTokens":[]}',
     },
     "both-categories": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "ClaudeBot is allowed. No group names it, so under RFC 9309 §2.2.1 it obeys the catch-all group, which permits /.",
       found: "Allowed through the catch-all group",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details:
         '{"namedGroup":false,"hasCatchAll":true,"allowed":true,"legacyTokens":[]}',
     },
     "versioned-product-token": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "ClaudeBot is allowed. No group names it, so under RFC 9309 §2.2.1 it obeys the catch-all group, which permits /.",
       found: "Allowed through the catch-all group",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details:
         '{"namedGroup":false,"hasCatchAll":true,"allowed":true,"legacyTokens":[]}',
     },
     "mixed-case-tokens": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "ClaudeBot is allowed. No group in robots.txt applies to it, so nothing restricts its crawl.",
       found:
         "No group applies to ClaudeBot · legacy anthropic-ai group present — Anthropic's current crawler documentation names only ClaudeBot, Claude-User and Claude-SearchBot, so this group is not a documented Anthropic access control and does not affect this result.",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details:
         '{"namedGroup":false,"hasCatchAll":false,"allowed":true,"legacyTokens":["anthropic-ai"]}',
     },
     "anthropic-alias-only": {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       message:
         "ClaudeBot is disallowed at the site root. Anthropic states its bots honour robots.txt, so the block takes effect: the site is excluded from the web content Anthropic collects for potential model training.",
       found: "Its own group disallows /",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details:
         '{"namedGroup":true,"hasCatchAll":true,"allowed":false,"legacyTokens":[]}',
     },
     "comments-and-crlf": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "ClaudeBot is allowed. No group names it, so under RFC 9309 §2.2.1 it obeys the catch-all group, which permits /.",
       found: "Allowed through the catch-all group",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details:
         '{"namedGroup":false,"hasCatchAll":true,"allowed":true,"legacyTokens":[]}',
     },
     "bom-prefixed": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "ClaudeBot is allowed. No group names it, so under RFC 9309 §2.2.1 it obeys the catch-all group, which permits /.",
       found: "Allowed through the catch-all group",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details:
         '{"namedGroup":false,"hasCatchAll":true,"allowed":true,"legacyTokens":[]}',
     },
     "crawl-delay-reasonable": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "ClaudeBot is allowed. No group names it, so under RFC 9309 §2.2.1 it obeys the catch-all group, which permits /.",
       found: "Allowed through the catch-all group",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details:
         '{"namedGroup":false,"hasCatchAll":true,"allowed":true,"legacyTokens":[]}',
     },
     "crawl-delay-excessive": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "ClaudeBot is allowed. No group names it, so under RFC 9309 §2.2.1 it obeys the catch-all group, which permits /.",
       found: "Allowed through the catch-all group",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details:
         '{"namedGroup":false,"hasCatchAll":true,"allowed":true,"legacyTokens":[]}',
     },
     "grouped-agents": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "ClaudeBot is allowed. No group names it, so under RFC 9309 §2.2.1 it obeys the catch-all group, which permits /.",
       found: "Allowed through the catch-all group",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details:
         '{"namedGroup":false,"hasCatchAll":true,"allowed":true,"legacyTokens":[]}',
     },
     "sensitive-paths-disallowed": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "ClaudeBot is allowed. No group names it, so under RFC 9309 §2.2.1 it obeys the catch-all group, which permits /.",
       found: "Allowed through the catch-all group",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details:
         '{"namedGroup":false,"hasCatchAll":true,"allowed":true,"legacyTokens":[]}',
     },
     "youbot-and-ai2bot-explicit": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "ClaudeBot is allowed. No group names it, so under RFC 9309 §2.2.1 it obeys the catch-all group, which permits /.",
       found: "Allowed through the catch-all group",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details:
         '{"namedGroup":false,"hasCatchAll":true,"allowed":true,"legacyTokens":[]}',
     },
     "youbot-blocked": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "ClaudeBot is allowed. No group in robots.txt applies to it, so nothing restricts its crawl.",
       found: "No group applies to ClaudeBot",
-      priority: "medium",
+      priority: CheckPriority.Medium,
       details:
         '{"namedGroup":false,"hasCatchAll":false,"allowed":true,"legacyTokens":[]}',
     },
   },
   "sensitive-paths": {
     missing: {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       message:
         "Low-value URL families are crawlable by AI crawlers: cart/checkout (/cart), cart/checkout (/checkout).",
       found:
         "Still crawlable: cart/checkout (/cart), cart/checkout (/checkout) (no robots.txt is served)",
-      priority: "low",
+      priority: CheckPriority.Low,
       details: "{}",
     },
     "non-200": {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       message:
         "Low-value URL families are crawlable by AI crawlers: cart/checkout (/cart), cart/checkout (/checkout).",
       found:
         "Still crawlable: cart/checkout (/cart), cart/checkout (/checkout) (no robots.txt is served)",
-      priority: "low",
+      priority: CheckPriority.Low,
       details: "{}",
     },
     empty: {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       message:
         "Low-value URL families are crawlable by AI crawlers: cart/checkout (/cart), cart/checkout (/checkout).",
       found:
         "Still crawlable: cart/checkout (/cart), cart/checkout (/checkout) (no robots.txt is served)",
-      priority: "low",
+      priority: CheckPriority.Low,
       details: "{}",
     },
     "html-error-page": {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       message:
         "Low-value URL families are crawlable by AI crawlers: cart/checkout (/cart), cart/checkout (/checkout).",
       found:
         "Still crawlable: cart/checkout (/cart), cart/checkout (/checkout) (no robots.txt is served)",
-      priority: "low",
+      priority: CheckPriority.Low,
       details: "{}",
     },
     "wildcard-allow": {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       message:
         "Low-value URL families are crawlable by AI crawlers: cart/checkout (/cart), cart/checkout (/checkout).",
       found:
         "Still crawlable: cart/checkout (/cart), cart/checkout (/checkout)",
-      priority: "low",
+      priority: CheckPriority.Low,
       details: "{}",
     },
     "wildcard-blanket-block": {
-      status: "na",
+      status: CheckStatus.NotApplicable,
       score: 0,
       message:
         "robots.txt blanket-blocks AI crawlers, so individual low-value paths are already excluded.",
       found:
         "Blanket block in robots.txt — see access-crawl-control/no-blanket-block",
-      priority: "low",
+      priority: CheckPriority.Low,
       details: "{}",
     },
     "blanket-block-countered": {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       message:
         "Low-value URL families are crawlable by AI crawlers: cart/checkout (/cart), cart/checkout (/checkout).",
       found:
         "Still crawlable: cart/checkout (/cart), cart/checkout (/checkout)",
-      priority: "low",
+      priority: CheckPriority.Low,
       details: "{}",
     },
     "wildcard-star-disallow": {
-      status: "na",
+      status: CheckStatus.NotApplicable,
       score: 0,
       message:
         "robots.txt blanket-blocks AI crawlers, so individual low-value paths are already excluded.",
       found:
         "Blanket block in robots.txt — see access-crawl-control/no-blanket-block",
-      priority: "low",
+      priority: CheckPriority.Low,
       details: "{}",
     },
     "both-categories": {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       message:
         "Low-value URL families are crawlable by AI crawlers: cart/checkout (/cart), cart/checkout (/checkout).",
       found:
         "Still crawlable: cart/checkout (/cart), cart/checkout (/checkout)",
-      priority: "low",
+      priority: CheckPriority.Low,
       details: "{}",
     },
     "versioned-product-token": {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       message:
         "Low-value URL families are crawlable by AI crawlers: cart/checkout (/cart), cart/checkout (/checkout).",
       found:
         "Still crawlable: cart/checkout (/cart), cart/checkout (/checkout)",
-      priority: "low",
+      priority: CheckPriority.Low,
       details: "{}",
     },
     "mixed-case-tokens": {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       message:
         "Low-value URL families are crawlable by AI crawlers: cart/checkout (/cart), cart/checkout (/checkout).",
       found:
         "Still crawlable: cart/checkout (/cart), cart/checkout (/checkout)",
-      priority: "low",
+      priority: CheckPriority.Low,
       details: "{}",
     },
     "anthropic-alias-only": {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       message:
         "Low-value URL families are crawlable by AI crawlers: cart/checkout (/cart), cart/checkout (/checkout).",
       found:
         "Still crawlable: cart/checkout (/cart), cart/checkout (/checkout)",
-      priority: "low",
+      priority: CheckPriority.Low,
       details: "{}",
     },
     "comments-and-crlf": {
-      status: "warn",
+      status: CheckStatus.Warn,
       score: 0.5,
       message:
         "Some low-value URL families are still crawlable by AI crawlers: cart/checkout (/checkout).",
       found:
         "Excluded: cart/checkout (/cart); still crawlable: cart/checkout (/checkout)",
-      priority: "low",
+      priority: CheckPriority.Low,
       details: "{}",
     },
     "bom-prefixed": {
-      status: "warn",
+      status: CheckStatus.Warn,
       score: 0.5,
       message:
         "Some low-value URL families are still crawlable by AI crawlers: cart/checkout (/cart).",
       found:
         "Excluded: cart/checkout (/checkout); still crawlable: cart/checkout (/cart)",
-      priority: "low",
+      priority: CheckPriority.Low,
       details: "{}",
     },
     "crawl-delay-reasonable": {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       message:
         "Low-value URL families are crawlable by AI crawlers: cart/checkout (/cart), cart/checkout (/checkout).",
       found:
         "Still crawlable: cart/checkout (/cart), cart/checkout (/checkout)",
-      priority: "low",
+      priority: CheckPriority.Low,
       details: "{}",
     },
     "crawl-delay-excessive": {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       message:
         "Low-value URL families are crawlable by AI crawlers: cart/checkout (/cart), cart/checkout (/checkout).",
       found:
         "Still crawlable: cart/checkout (/cart), cart/checkout (/checkout)",
-      priority: "low",
+      priority: CheckPriority.Low,
       details: "{}",
     },
     "grouped-agents": {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       message:
         "Low-value URL families are crawlable by AI crawlers: cart/checkout (/cart), cart/checkout (/checkout).",
       found:
         "Still crawlable: cart/checkout (/cart), cart/checkout (/checkout)",
-      priority: "low",
+      priority: CheckPriority.Low,
       details: "{}",
     },
     "sensitive-paths-disallowed": {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message:
         "Every low-value URL family observed on the site is disallowed for AI crawlers: cart/checkout (/cart), cart/checkout (/checkout).",
       found: "Excluded: cart/checkout (/cart), cart/checkout (/checkout)",
-      priority: "low",
+      priority: CheckPriority.Low,
       details: "{}",
     },
     "youbot-and-ai2bot-explicit": {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       message:
         "Low-value URL families are crawlable by AI crawlers: cart/checkout (/cart), cart/checkout (/checkout).",
       found:
         "Still crawlable: cart/checkout (/cart), cart/checkout (/checkout)",
-      priority: "low",
+      priority: CheckPriority.Low,
       details: "{}",
     },
     "youbot-blocked": {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0,
       message:
         "Low-value URL families are crawlable by AI crawlers: cart/checkout (/cart), cart/checkout (/checkout).",
       found:
         "Still crawlable: cart/checkout (/cart), cart/checkout (/checkout)",
-      priority: "low",
+      priority: CheckPriority.Low,
       details: "{}",
     },
   },

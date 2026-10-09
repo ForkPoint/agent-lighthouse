@@ -7,24 +7,25 @@
  * Replaces the former hand-rolled ModalDialogAudit.
  */
 import { base, defineA11yAudit, graded } from "./_shared";
+import { CheckPriority, EvidenceGrade, FixEffort } from "#core/types";
 
 export const DialogNameAudit = defineA11yAudit({
   rules: ["aria-dialog-name"],
   meta: {
     ...base,
-    ...graded("A", "dialog-name"),
+    ...graded(EvidenceGrade.A, "dialog-name"),
     id: "operability-safety/dialog-name",
     title: "Dialogs have accessible names",
     failureTitle: "Dialogs without accessible names",
     description:
       'AI browser agents detect modals via role="dialog"/"alertdialog" and need an accessible name to understand the dialog’s purpose. Unlabeled dialogs trap agents in unknown UI states, blocking confirmations, forms, or cookie-consent flows.',
-    defaultPriority: "high",
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "An unlabeled dialog gives an agent no context for the interruption, so it cannot decide how to proceed.",
       fix: 'Add aria-labelledby (pointing to the dialog title) or aria-label to every role="dialog"/"alertdialog" element. Prefer the native <dialog> element.',
       code: '<div role="dialog" aria-labelledby="dlg-title">\n  <h2 id="dlg-title">Confirm action</h2>\n</div>',
-      effort: "easy",
+      effort: FixEffort.Easy,
       tags: ["aria", "dialog", "agent"],
     },
   },

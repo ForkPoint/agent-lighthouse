@@ -1,15 +1,23 @@
 import * as cheerio from "cheerio";
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext, PageContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
 import {
   parseRobots,
   directiveLines,
   isBlanketBlocked,
-} from "../../gatherers/robots";
-import { parseDictionary } from "../../gatherers/structured-fields";
+} from "#core/gatherers/robots";
+import { parseDictionary } from "#core/gatherers/structured-fields";
 import { TRAINING_CRAWLERS } from "./_robots-txt-helpers";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /**
  * The three AIPREF categories every other channel is normalized into.
@@ -18,29 +26,35 @@ import { TRAINING_CRAWLERS } from "./_robots-txt-helpers";
  * is Cloudflare's third Content-Signal and RSL's usage type, kept because two
  * channels express it and dropping it would hide a contradiction between them.
  */
-type Category = "train-ai" | "search" | "ai-input";
+const Category = {
+  TrainAi: "train-ai",
+  Search: "search",
+  AiInput: "ai-input",
+} as const;
+
+type Category = (typeof Category)[keyof typeof Category];
 
 const CATEGORIES: ReadonlySet<string> = new Set<Category>([
-  "train-ai",
-  "search",
-  "ai-input",
+  Category.TrainAi,
+  Category.Search,
+  Category.AiInput,
 ]);
 
 /** Content-Signal names, in the vocabulary Cloudflare publishes them under. */
 const CONTENT_SIGNAL_MAP: Record<string, Category> = {
-  "ai-train": "train-ai",
-  search: "search",
-  "ai-input": "ai-input",
+  "ai-train": Category.TrainAi,
+  search: Category.Search,
+  "ai-input": Category.AiInput,
 };
 
 /** RSL usage values that map onto a category. */
 const RSL_USAGE_MAP: Record<string, Category> = {
-  train: "train-ai",
-  "train-ai": "train-ai",
-  "train-genai": "train-ai",
-  search: "search",
-  "ai-input": "ai-input",
-  ai: "train-ai",
+  train: Category.TrainAi,
+  "train-ai": Category.TrainAi,
+  "train-genai": Category.TrainAi,
+  search: Category.Search,
+  "ai-input": Category.AiInput,
+  ai: Category.TrainAi,
 };
 
 /** One normalized declaration: who, where, which category, allowed or not. */
@@ -143,7 +157,7 @@ function tdmSignal(
   if (v !== "0" && v !== "1") return undefined;
   return {
     channel,
-    category: "train-ai",
+    category: Category.TrainAi,
     // Reservation 1 reserves the rights, which is a denial of mining.
     allow: v === "0",
     scope: "/",
@@ -217,7 +231,7 @@ function tdmrepSignals(body: string): {
       typeof record["location"] === "string" ? record["location"] : "/";
     signals.push({
       channel: "/.well-known/tdmrep.json",
-      category: "train-ai",
+      category: Category.TrainAi,
       allow: String(reservation) === "0",
       scope: location.startsWith("/") ? location : `/${location}`,
       agent: "*",
@@ -236,25 +250,25 @@ export class AiUsageSignalCoherenceAcrossChannelsAudit extends Audit {
       "This site tells different AI systems opposite things about the same content",
     description:
       "Normalizes every AI-usage signal the site emits — robots.txt Allow/Disallow for training crawlers, AIPREF Content-Usage, Cloudflare Content-Signal, TDM-Rep in its three transports, and inline RSL permits/prohibits — into one comparable model, and reports where two channels contradict each other for the same category over overlapping paths.",
-    scoreDisplayMode: "ternary",
-    tier: "scored",
-    evidenceGrade: "B",
-    weight: weightForGrade("B", "scored"),
-    defaultPriority: "high",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    tier: AuditTier.Scored,
+    evidenceGrade: EvidenceGrade.B,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    defaultPriority: CheckPriority.High,
     dossier:
       "docs/evidence/audits/access-crawl-control/ai-usage-signal-coherence-across-channels.md",
     // Gate exemption: being refused is what this category reports.
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     guidance: {
       impact:
         "No standard defines precedence between these channels; each specifies only its own parsing. A crawler that reads TDM-Rep and a crawler that reads AIPREF therefore read disjoint inputs, and when those inputs disagree the two reach opposite conclusions about the same page. Whichever one you did not mean to publish is the one some operator will act on. The documented worst case is not even yours to make: Cloudflare’s managed robots.txt prepends its own Content-Signal block above your file, so your stated policy can be contradicted at the edge without you knowing.",
       fix: "Decide the policy once, then say the same thing in every channel you publish. If you do not intend to maintain a channel, remove it rather than leaving a stale value — a contradicted signal is worse than a missing one. Where your CDN prepends its own robots.txt block, either turn that feature off or make your own declarations match it.",
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/access-crawl-control/ai-usage-signal-coherence-across-channels/",
       tags: ["robots", "aipref", "tdmrep", "rsl", "licensing"],
@@ -306,7 +320,7 @@ export class AiUsageSignalCoherenceAcrossChannelsAudit extends Audit {
         if (!isBlanketBlocked(groups, crawler.botName)) continue;
         signals.push({
           channel: "robots.txt Disallow",
-          category: "train-ai",
+          category: Category.TrainAi,
           allow: false,
           scope: "/",
           agent: crawler.botName,
@@ -352,7 +366,7 @@ export class AiUsageSignalCoherenceAcrossChannelsAudit extends Audit {
       if (/\bnoai\b/.test(xRobots)) {
         signals.push({
           channel: "X-Robots-Tag noai",
-          category: "train-ai",
+          category: Category.TrainAi,
           allow: false,
           scope: "/",
           agent: "*",
@@ -372,7 +386,7 @@ export class AiUsageSignalCoherenceAcrossChannelsAudit extends Audit {
       if (/\bnoai\b/.test((page.meta["robots"] ?? "").toLowerCase())) {
         signals.push({
           channel: '<meta name="robots"> noai',
-          category: "train-ai",
+          category: Category.TrainAi,
           allow: false,
           scope: "/",
           agent: "*",

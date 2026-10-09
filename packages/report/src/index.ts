@@ -17,3 +17,10 @@ export {
 export type { SectionGroupDef } from "./sections";
 export { generateHtmlReport } from "./html-generator";
 export { generateMarkdownSummary } from "./markdown-generator";
+
+export { formatPageScope, formatAuditScope } from "./page-scope";
+export type {
+  PageScopeView,
+  AuditScopeView,
+  AssessmentView,
+} from "./page-scope";

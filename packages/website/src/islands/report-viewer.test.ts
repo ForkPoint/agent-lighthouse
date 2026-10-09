@@ -1,5 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { ReportShapeError, summarize, scoreClass } from "./report-viewer";
+import {
+  AttemptOutcome,
+  CheckStatus,
+  ClassificationConfidence,
+  CoverageProvenance,
+  PageType,
+  PageTypeSource,
+  ScoreTier,
+} from "@forkpoint/agent-lighthouse-core";
 
 /**
  * `summarize` reads a file the visitor chose. Nothing about its contents is
@@ -14,7 +23,7 @@ const REPORT = {
   url: "https://example.com/",
   domain: "example.com",
   overallScore: 74,
-  scoreTier: "partially-ready",
+  scoreTier: ScoreTier.PartiallyReady,
   categories: [
     {
       id: "ai-discovery",
@@ -33,7 +42,7 @@ const REPORT = {
   ],
   pagesScanned: [
     { url: "https://example.com/", pageType: "home" },
-    { url: "https://example.com/p/1", pageType: "product" },
+    { url: "https://example.com/p/1", pageType: PageType.Product },
   ],
   durationMs: 4200,
   scannedAt: "2026-08-23T10:00:00.000Z",
@@ -166,5 +175,94 @@ describe("scoreClass", () => {
     expect(scoreClass(89)).not.toBe(scoreClass(90));
     expect(scoreClass(69)).not.toBe(scoreClass(70));
     expect(scoreClass(49)).not.toBe(scoreClass(50));
+  });
+});
+
+describe("v7 scope preview", () => {
+  it("keeps mixed advisory failures and unread URLs without counting another audit", () => {
+    const report = {
+      overallScore: 100,
+      pagesScanned: [
+        {
+          url: "https://x.test/story",
+          classification: {
+            type: "article",
+            source: PageTypeSource.Detected,
+            confidence: ClassificationConfidence.Hint,
+            signals: ["URL hint"],
+          },
+        },
+      ],
+      pageAttempts: [
+        {
+          url: "https://x.test/missing",
+          pageType: PageType.Article,
+          source: PageTypeSource.Declared,
+          outcome: AttemptOutcome.Unread,
+          status: 503,
+        },
+      ],
+      categories: [
+        {
+          name: "Articles",
+          score: 100,
+          checks: [
+            {
+              id: "author",
+              status: CheckStatus.Pass,
+              coverage: {
+                provenance: CoverageProvenance.Declared,
+                selectedUrls: ["https://x.test/missing"],
+                inputUrls: [],
+                unreadUrls: ["https://x.test/missing"],
+              },
+              advisoryResults: [
+                {
+                  status: CheckStatus.Fail,
+                  explanation: "Missing author",
+                  coverage: {
+                    provenance: CoverageProvenance.Detected,
+                    selectedUrls: ["https://x.test/story"],
+                    inputUrls: ["https://x.test/story"],
+                    unreadUrls: [],
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const view = summarize(report);
+    expect(view.categories[0]?.checks).toBe(1);
+    for (const text of [
+      "Advisory — not scored",
+      "Missing author",
+      "Unread URLs",
+      "https://x.test/missing",
+      "hint",
+      "URL hint",
+      "503",
+    ])
+      expect(view.pageScopeText).toContain(text);
+  });
+  it("does not invent scope for old files and tolerates malformed optional fields", () => {
+    expect(summarize({ overallScore: 100 }).pageScopeText).toBeUndefined();
+    expect(() =>
+      summarize({
+        overallScore: null,
+        pageAttempts: [null, 2],
+        categories: [
+          {
+            checks: [
+              {
+                coverage: { inputUrls: {}, selectedUrls: null },
+                advisoryResults: [null, 2],
+              },
+            ],
+          },
+        ],
+      }),
+    ).not.toThrow();
   });
 });

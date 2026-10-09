@@ -45,6 +45,8 @@ A bare `agent-lighthouse` with no arguments at all does **not**: it prints the u
 | `output`           | `Array<"terminal" \| "html" \| "json" \| "md">`           | `["terminal", "html", "json"]` | Report formats to produce.                                                                                   |
 | `outputDir`        | `string`                                                  | `"./reports"`                  | Where report files are written.                                                                              |
 | `timeout`          | `number` (seconds)                                        | `180`                          | Wall-clock budget for the scan; `0` disables it. `--timeout` overrides it.                                   |
+| `pageType`         | `PageType`                                                | none                           | Explicit purpose of the target URL. `--page-type` overrides it.                                              |
+| `pages`            | `PageOverride[] \| null`                                  | none                           | Explicit URL/type pairs within the six-page scan budget; discovery fills remaining slots.                    |
 | `categories`       | `string[]`                                                | —                              | **Not read by the CLI.** Use the `--categories` flag instead.                                                |
 | `maxPages`         | `number`                                                  | —                              | **Not read by anything.** The page budget is fixed; see [Fixed limits](#fixed-limits).                       |
 
@@ -114,6 +116,7 @@ An experimental audit carries weight 0 whether or not it runs, so this flag can 
 | `categories`          | `string[]`                   | all eight | Restrict the scan to these category ids. Unknown ids match nothing — validate them at your entry point so a typo is heard.        |
 | `includeExperimental` | `boolean`                    | `false`   | Include experimental-tier audits, reported but never scored.                                                                      |
 | `onEvent`             | `(event: ScanEvent) => void` | none      | Progress callback; the CLI's progress display and its NDJSON stream are both built on it.                                         |
+| `pageType`            | `PageType`                   | none      | Declare the target URL's purpose. Takes precedence over a matching entry in `pages`.                                              |
 | `pages`               | `PageOverride[] \| null`     | none      | Scan these exact URLs with a declared page type instead of relying on discovery.                                                  |
 | `signal`              | `AbortSignal`                | none      | Cancel an in-flight scan.                                                                                                         |
 | `timeoutMs`           | `number`                     | `180000`  | Wall-clock budget. When it runs out the scan finishes with what it has and records it under `conditions.budget`; `0` disables it. |
@@ -134,7 +137,23 @@ const report = await runScan("https://yourstore.com", {
 console.log(report.overallScore, report.scoreTier);
 ```
 
-A `PageOverride` declares `{ url, pageType }`, where `pageType` is `homepage`, `category`, `product` or `content`. The declared type is forced onto that page, so type-gated audits run against the page you meant rather than against whatever discovery guessed. Overrides are resolved, de-duplicated (ignoring a trailing slash) and any that collide with the homepage are dropped; the remaining page budget is filled by discovery.
+A `PageOverride` declares `{ url, pageType }`. Supported types are `homepage`, `category`, `product`, `article`, `unknown`, and the legacy `content` alias. `content` means general/unknown purpose; it never asserts that a page is an article. An article is editorial content, not every page with text.
+
+The CLI config, SDK, and MCP tool accept the same `pageType` and `pages` fields. Invalid types or non-absolute override URLs fail validation before fetching. Older SDK versions silently skipped malformed override URLs; v7 reports the error.
+
+Overrides are de-duplicated ignoring a trailing slash. A target-URL entry supplies its declaration unless top-level `pageType` overrides it. Duplicate extra URLs keep their first declaration. Discovery fills remaining slots. A declaration does not bypass evidence gates or the page budget. Failed fetches remain in `pageAttempts` and audit coverage.
+
+```json
+{
+  "url": "https://example.com/guide",
+  "pageType": "article",
+  "pages": [
+    { "url": "https://example.com/products/widget", "pageType": "product" }
+  ]
+}
+```
+
+Omit the declaration to use detection. Type-specific checks on detected pages remain advisory. Common checks still use all eligible pages. Detection confidence and signals explain the classification; they do not grant scoring permission.
 
 Field-level product verification (`report.productFields`) is only produced when a page override with `pageType: 'product'` is supplied. Without one, the report marks it skipped rather than guessing from an auto-discovered page.
 

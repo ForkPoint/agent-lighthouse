@@ -1,11 +1,6 @@
+import { PageScopeOptionsSchema } from "./schemas";
 import type { Dispatcher } from "undici";
-import type {
-  CheckStatus,
-  PageOverride,
-  PageType,
-  ScanReport,
-  ScanConditions,
-} from "./types";
+import type { PageOverride, ScanReport, ScanConditions } from "./types";
 import {
   getScoreTier,
   READINESS_WEIGHTS,
@@ -30,7 +25,8 @@ import {
   extractRdfa,
   extractMetaTags,
   extractHeadLinks,
-  detectPageType,
+  classifyPage,
+  declaredPageClassification,
 } from "./parser";
 import type { CheckContext, PageContext } from "./check-context";
 import { defaultConfig, filterConfig } from "./audit-config";
@@ -38,10 +34,11 @@ import {
   planAudits,
   runAudits,
   budgetReason,
+  compareCodePoints,
   formatBudget,
 } from "./audit-runner";
 import type { AuditTraceHandler } from "./audit-runner";
-import { ProgressTracker } from "./progress";
+import { ProgressTracker, PhaseId } from "./progress";
 import type { ScanEvent } from "./progress";
 import { runA11yForHtml } from "./audits/operability-safety/runner";
 import { A11Y_RULES } from "./audits/operability-safety";
@@ -58,6 +55,15 @@ import { detectWafProtection } from "./waf-detector";
 import { buildScanEvidence, unjudgeableReason } from "./scan-evidence";
 
 import type { FetchOptions, FetchResult } from "./fetcher";
+import {
+  AttemptOutcome,
+  AuditTier,
+  CheckStatus,
+  ClassificationConfidence,
+  EvidenceKey,
+  PageType,
+  PageTypeSource,
+} from "./types";
 
 export interface ScanOptions {
   onEvent?: (event: ScanEvent) => void;
@@ -212,6 +218,7 @@ export async function runScan(
   url: string,
   options?: ScanOptions,
 ): Promise<ScanReport> {
+  PageScopeOptionsSchema.parse(options ?? {});
   const limitMs = options?.timeoutMs ?? SCAN_TIMEOUT_MS;
   // A negative or NaN budget would silently mean "no budget" and then fail
   // the report schema, which wants `limitMs` non-negative. Refuse it here.
@@ -345,7 +352,7 @@ async function scanWithinBudget(
     originHomepageResult = cachedEvidence.originHomepage;
     originCached = true;
     originReadAt = cachedEvidence.readAt;
-    tracker.phaseStart("fetch-root", 0);
+    tracker.phaseStart(PhaseId.FetchRoot, 0);
     tracker.phaseDone();
     logger.debug(
       { origin: baseUrl },
@@ -356,7 +363,7 @@ async function scanWithinBudget(
       { count: rootFilePaths.length },
       "[orchestrator] Phase 1: Fetching root files",
     );
-    tracker.phaseStart("fetch-root", rootFilePaths.length);
+    tracker.phaseStart(PhaseId.FetchRoot, rootFilePaths.length);
 
     const prefetchedRobots = options?.robotsTxt;
     const rootResults = await Promise.all(
@@ -397,7 +404,7 @@ async function scanWithinBudget(
   signal?.throwIfAborted();
   logger.debug("[orchestrator] Phase 2: Fetching page");
 
-  tracker.phaseStart("fetch-pages", 1 + overrideUrls.length);
+  tracker.phaseStart(PhaseId.FetchPages, 1 + overrideUrls.length);
   const pageResult = await fetchPageWithRetry(
     fetcher,
     url,
@@ -439,7 +446,7 @@ async function scanWithinBudget(
 
   // ── Phase 2b: Parse pages + bounded jsdom a11y pass ─────────
   tracker.phaseStart(
-    "analyze",
+    PhaseId.Analyze,
     allPageResults.filter((r) => r.status === 200 && r.body).length,
   );
 
@@ -459,16 +466,15 @@ async function scanWithinBudget(
       const forcedType =
         (isFirstPage && options?.pageType ? options.pageType : undefined) ??
         overrideTypeByKey.get(p.url.replace(/\/$/, ""));
-      const pageTypeSource: "declared" | "detected" = forcedType
-        ? "declared"
-        : "detected";
+      const classification = forcedType
+        ? declaredPageClassification(forcedType)
+        : classifyPage(p.url, $, structuredData, meta);
       tracker.unitDone(p.url);
       return {
         url: p.url,
-        pageType:
-          forcedType ??
-          detectPageType(p.url, $, structuredData, meta, isFirstPage),
-        pageTypeSource,
+        pageType: classification.type,
+        pageTypeSource: classification.source,
+        classification,
         fetchResult: p.result,
         $,
         jsonLd,
@@ -521,7 +527,31 @@ async function scanWithinBudget(
     wafProtection: wafProtection ?? null,
   });
 
+  const pageAttempts = allPageResults
+    .map((result, index) => {
+      const pageUrl = allPageUrls[index]!;
+      const parsed = pages.find((p) => p.url === pageUrl);
+      const forcedType =
+        (index === 0 ? options?.pageType : undefined) ??
+        overrideTypeByKey.get(pageUrl.replace(/\/$/, ""));
+      const classification =
+        parsed?.classification ??
+        (forcedType
+          ? declaredPageClassification(forcedType)
+          : { type: PageType.Unknown, source: PageTypeSource.Detected });
+      return {
+        url: pageUrl,
+        pageType: classification.type,
+        source: classification.source,
+        outcome: parsed ? AttemptOutcome.Read : AttemptOutcome.Unread,
+        status: result.status,
+      };
+    })
+    .sort((a, b) => compareCodePoints(a.url, b.url));
+
   const ctx: CheckContext = {
+    pageAttempts,
+    targetUrl: displayUrl,
     rootFiles,
     pages,
     domain,
@@ -554,7 +584,10 @@ async function scanWithinBudget(
   const auditPlan = planAudits(ctx, config, {
     enforceEvidence: options?.enforceEvidenceGate ?? true,
   });
-  tracker.phaseStart("audits", auditPlan.runnable.length);
+  tracker.phaseStart(
+    PhaseId.Audits,
+    auditPlan.runnable.length + auditPlan.skipped.length,
+  );
 
   const {
     checks: allChecks,
@@ -582,7 +615,7 @@ async function scanWithinBudget(
   logger.debug("[orchestrator] Phase 3 complete: Audits finished");
 
   // ── Phase 4: Assemble report ─────────────────────────────────
-  tracker.phaseStart("report", 1);
+  tracker.phaseStart(PhaseId.Report, 1);
   logger.debug("[orchestrator] Phase 4: Building final report");
 
   const durationMs = Math.round(performance.now() - start);
@@ -594,7 +627,9 @@ async function scanWithinBudget(
   // and the evidence gate multiplies the difference.
   const recommendations = allChecks
     .filter(
-      (c) => (c.status === "fail" || c.status === "warn") && !isInformative(c),
+      (c) =>
+        (c.status === CheckStatus.Fail || c.status === CheckStatus.Warn) &&
+        !isInformative(c),
     )
     .slice()
     .sort((a: { priority: string }, b: { priority: string }) => {
@@ -612,7 +647,7 @@ async function scanWithinBudget(
 
   // Extract Top 10 Passes (sorted by the weight stamped on each check)
   const topPasses = allChecks
-    .filter((c) => c.status === "pass" && !isInformative(c))
+    .filter((c) => c.status === CheckStatus.Pass && !isInformative(c))
     .slice()
     .sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))
     .slice(0, 10);
@@ -662,7 +697,7 @@ async function scanWithinBudget(
   // ── Conditions Calculation (Phase 6: Law 8) ──────────────────
   const allScoredAudits = Object.values(config.audits)
     .flat()
-    .filter((a) => a.meta.tier === "scored");
+    .filter((a) => a.meta.tier === AuditTier.Scored);
 
   let registryMass = 0;
   let pageMass = 0;
@@ -672,11 +707,10 @@ async function scanWithinBudget(
     const weight = reg.meta.weight;
     registryMass += weight;
     const isPageScoped =
-      reg.meta.requires?.includes("rendered-body") ||
-      reg.meta.requires?.includes("sample-adequate") ||
-      Boolean(
-        reg.meta.applicablePageTypes && reg.meta.applicablePageTypes.length > 0,
-      );
+      reg.meta.requires?.includes(EvidenceKey.RenderedBody) ||
+      reg.meta.requires?.includes(EvidenceKey.SampleAdequate) ||
+      // Read both spellings: a custom audit may still use legacy `pageTypes`.
+      Boolean((reg.meta.applicablePageTypes ?? reg.meta.pageTypes)?.length);
     if (isPageScoped) {
       pageMass += weight;
     } else {
@@ -685,7 +719,7 @@ async function scanWithinBudget(
   }
 
   const assessedMass = allChecks
-    .filter((c) => c.status !== "na" && !isInformative(c))
+    .filter((c) => c.status !== CheckStatus.NotApplicable && !isInformative(c))
     .reduce((sum, c) => sum + (c.weight ?? 0), 0);
 
   const gatedMass = allChecks
@@ -703,7 +737,7 @@ async function scanWithinBudget(
       informativeCount++;
       unscoredReasons["informative"] =
         (unscoredReasons["informative"] ?? 0) + 1;
-    } else if (check.status === "na") {
+    } else if (check.status === CheckStatus.NotApplicable) {
       if (check.tags?.includes(TAG_SKIPPED_NO_EVIDENCE)) {
         gatedCount++;
         unscoredReasons["skipped-no-evidence"] =
@@ -723,7 +757,9 @@ async function scanWithinBudget(
 
   const totalUnscored =
     informativeCount +
-    allChecks.filter((c) => c.status === "na" && !isInformative(c)).length;
+    allChecks.filter(
+      (c) => c.status === CheckStatus.NotApplicable && !isInformative(c),
+    ).length;
 
   const declaredOverrideType =
     options?.pageType ?? overrideTypeByKey.get(targetKey);
@@ -733,17 +769,16 @@ async function scanWithinBudget(
   // the override. The conditions block names the target, so its page type
   // must come from the target's own entry or from the explicit fallback.
   const primaryPage = pages.find((p) => p.url === displayUrl);
-  const pageTypeCondition = primaryPage
-    ? {
-        type: primaryPage.pageType,
-        source: primaryPage.pageTypeSource ?? ("detected" as const),
-      }
-    : {
-        type: (declaredOverrideType ?? "homepage") as PageType,
-        source: declaredOverrideType
-          ? ("declared" as const)
-          : ("detected" as const),
-      };
+  const pageTypeCondition =
+    primaryPage?.classification ??
+    (declaredOverrideType
+      ? declaredPageClassification(declaredOverrideType)
+      : {
+          type: PageType.Unknown,
+          source: PageTypeSource.Detected,
+          confidence: ClassificationConfidence.Unknown,
+          signals: ["page-unread"],
+        });
 
   const originCondition = {
     origin: baseUrl,
@@ -799,7 +834,12 @@ async function scanWithinBudget(
     topPasses,
     topFails,
     recommendations,
-    pagesScanned: pages.map((p) => ({ url: p.url, pageType: p.pageType })),
+    pageAttempts,
+    pagesScanned: pages.map((p) => ({
+      url: p.url,
+      pageType: p.pageType,
+      classification: p.classification,
+    })),
     scannedAt: new Date().toISOString(),
     durationMs,
     readinessScore,
@@ -808,7 +848,7 @@ async function scanWithinBudget(
     // Field-level verification is only trustworthy when the user explicitly
     // supplied the product page. Without a product override we don't guess from
     // auto-discovered pages — leave it unset so the report marks it skipped.
-    productFields: [...overrideTypeByKey.values()].includes("product")
+    productFields: [...overrideTypeByKey.values()].includes(PageType.Product)
       ? extractProductFieldVerification(pages)
       : undefined,
     originEvidence: originCondition,
@@ -898,7 +938,9 @@ function calculateReadinessVitals(
   botAccessibility: number;
   technical: number;
 } {
-  const applicable = checks.filter((c) => c.status !== "na");
+  const applicable = checks.filter(
+    (c) => c.status !== CheckStatus.NotApplicable,
+  );
 
   const average = (matching: Array<{ score: number }>) => {
     if (matching.length === 0) return 0;

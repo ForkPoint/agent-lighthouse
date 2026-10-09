@@ -9,14 +9,15 @@ import {
   mockPageContext,
   mockCheckContext,
   mockFetchResult,
-} from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import { extractJsonLd, parseHtml } from "../../parser";
-import type { FetchOptions, FetchResult } from "../../fetcher";
-import type { AuditResult } from "../../types";
+} from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import { extractJsonLd, parseHtml } from "#core/parser";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import type { AuditResult } from "#core/types";
+import { AuditTier, CheckStatus, EvidenceGrade } from "#core/types";
 
-vi.mock("../../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) =>
@@ -84,7 +85,7 @@ describe("WikidataRoundTripVerificationAudit", () => {
     const { result, requests } = run({
       sameAs: ["https://twitter.com/example"],
     });
-    expect((await result).status).toBe("na");
+    expect((await result).status).toBe(CheckStatus.NotApplicable);
     expect(requests).toHaveLength(0);
   });
 
@@ -149,7 +150,7 @@ describe("WikidataRoundTripVerificationAudit", () => {
       sameAs: ["https://www.wikidata.org/wiki/Q95"],
     });
     const r = await result;
-    expect(r.status).toBe("pass");
+    expect(r.status).toBe(CheckStatus.Pass);
     expect(requests[0]?.url).toContain("property=P856");
     expect(strings(r, "verified").join(" ")).toContain("Q95");
   });
@@ -159,7 +160,7 @@ describe("WikidataRoundTripVerificationAudit", () => {
       sameAs: ["https://www.wikidata.org/wiki/Q95"],
       wikidata: { Q95: claims("https://www.example.com/about") },
     });
-    expect((await result).status).toBe("pass");
+    expect((await result).status).toBe(CheckStatus.Pass);
   });
 
   it("fails when the entity points at an unrelated organization", async () => {
@@ -168,7 +169,7 @@ describe("WikidataRoundTripVerificationAudit", () => {
       wikidata: { Q95: claims("https://someone-else.test/") },
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures").join(" ")).toContain("someone-else.test");
   });
 
@@ -179,7 +180,7 @@ describe("WikidataRoundTripVerificationAudit", () => {
       wikidata: { Q95: claims("https://example.io/") },
     });
     const r = await result;
-    expect(r.status).toBe("warn");
+    expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "warnings").join(" ")).toContain("different domain");
   });
 
@@ -189,7 +190,7 @@ describe("WikidataRoundTripVerificationAudit", () => {
       wikidata: { Q95: claims(undefined) },
     });
     const r = await result;
-    expect(r.status).toBe("warn");
+    expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "warnings").join(" ")).toContain("no official website");
   });
 
@@ -199,7 +200,7 @@ describe("WikidataRoundTripVerificationAudit", () => {
       wikidata: { Q95: 503 },
     });
     const r = await result;
-    expect(r.status).toBe("warn");
+    expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "warnings").join(" ")).toContain("503");
   });
 
@@ -215,8 +216,8 @@ describe("WikidataRoundTripVerificationAudit", () => {
 
   it("registers as a scored grade-B audit", () => {
     const { meta } = WikidataRoundTripVerificationAudit;
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
     expect(meta.weight).toBeCloseTo(0.6);
     expect(meta.id.length).toBeLessThanOrEqual(64);
   });

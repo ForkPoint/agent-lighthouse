@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
 import { FigureFigcaptionAudit } from "./figure-figcaption";
 import {
   attributableFixture,
@@ -8,7 +8,8 @@ import {
   shellSiteContext,
   mockPageContext,
   unreachedSiteContext,
-} from "../../__tests__/test-utils";
+} from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 describe("FigureFigcaptionAudit", () => {
   const audit = new FigureFigcaptionAudit();
@@ -19,7 +20,7 @@ describe("FigureFigcaptionAudit", () => {
       '<html><body><figure><img src="c.png" alt="chart"><figcaption>Fig 1.</figcaption></figure></body></html>',
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("1/1");
   });
 
@@ -29,7 +30,7 @@ describe("FigureFigcaptionAudit", () => {
       "<html><body><p>Plain text</p></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("No images or <figure>");
   });
 
@@ -39,7 +40,7 @@ describe("FigureFigcaptionAudit", () => {
       '<html><body><img src="a.jpg" alt="x"></body></html>',
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("could benefit");
   });
 
@@ -53,7 +54,7 @@ describe("FigureFigcaptionAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("2/3");
   });
 
@@ -63,7 +64,7 @@ describe("FigureFigcaptionAudit", () => {
       '<html><body><figure><img src="1.png" alt="a"></figure><figure><img src="2.png" alt="b"></figure></body></html>',
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("0/2");
   });
 
@@ -74,7 +75,9 @@ describe("FigureFigcaptionAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new FigureFigcaptionAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext(pages, rootFiles),
@@ -86,7 +89,7 @@ describe("FigureFigcaptionAudit", () => {
     expect(
       plan.skipped.find((stub) => stub.id === FigureFigcaptionAudit.meta.id)
         ?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 
   // A shell serves no images and no figures because it serves no body. Passing
@@ -95,9 +98,11 @@ describe("FigureFigcaptionAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new FigureFigcaptionAudit();
     const rendered = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(rendered.status, "the same input rendered is judged").not.toBe("na");
+    expect(rendered.status, "the same input rendered is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const shell = await instance.audit(shellSiteContext());
-    expect(shell.status).toBe("na");
+    expect(shell.status).toBe(CheckStatus.NotApplicable);
   });
 });

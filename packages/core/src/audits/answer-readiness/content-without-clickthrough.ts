@@ -1,9 +1,17 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import { getMainContentText, getWordCount } from "../../parser";
-import { scanReadPageText, unreadPageTextReason } from "../../scan-evidence";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import { getMainContentText, getWordCount } from "#core/parser";
+import { scanReadPageText, unreadPageTextReason } from "#core/scan-evidence";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 const TEASER_PATTERNS = [
   /click\s+(here\s+)?to\s+read\s+more/i,
@@ -24,25 +32,25 @@ export class ContentWithoutClickthroughAudit extends Audit {
     failureTitle: "Content answers without click-through",
     description:
       "AI answer engines skip teaser content that gates answers behind sign-ups or downloads. Provide substantive answers directly on the page.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/answer-readiness/content-without-clickthrough.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "high",
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         'AI answer engines skip pages dominated by teaser content ("click to read more", "sign up to access"). These pages provide no extractable answers, so agents will never surface your content in AI-generated responses, costing you visibility in AI search.',
       fix: "Replace gated teasers with substantive, self-contained answers directly on the page. Move lead-generation CTAs to secondary positions after the main content.",
       code: '<!-- Instead of: "Download our guide to learn more" -->\n<h2>How It Works</h2>\n<p>Our API supports REST and GraphQL endpoints with OAuth 2.0 authentication, processing up to 50,000 requests per second.</p>',
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       tags: ["content-quality", "answer-engine"],
     },
   };
@@ -55,7 +63,7 @@ export class ContentWithoutClickthroughAudit extends Audit {
         'No "click to read more" or "contact us to learn" teasers dominating the page',
         "No pages scanned",
         {
-          priority: "high",
+          priority: CheckPriority.High,
           description: ContentWithoutClickthroughAudit.meta.description,
           code: "<!-- Replace gated content with direct answers -->\n<p>Our API supports REST and GraphQL endpoints with OAuth 2.0 authentication.</p>",
         },
@@ -107,7 +115,7 @@ export class ContentWithoutClickthroughAudit extends Audit {
             'No "click to read more" or "contact us to learn" teasers dominating the page',
             `Only ${wordCount} words on ${checkPage.url}`,
             {
-              priority: "medium",
+              priority: CheckPriority.Medium,
               description:
                 "The page has very little content (fewer than 50 words), making it impossible to determine whether it provides substantive answers. AI answer engines need sufficient content to extract meaningful answers.",
               code: "<main>\n  <p>Provide at least 50 words of substantive content that directly answers user questions.</p>\n</main>",
@@ -145,7 +153,7 @@ export class ContentWithoutClickthroughAudit extends Audit {
       'No "click to read more" or "contact us to learn" teasers dominating the page',
       details.length > 200 ? details.slice(0, 200) + "..." : details,
       {
-        priority: "high",
+        priority: CheckPriority.High,
         description:
           'AI answer engines skip pages dominated by teaser content ("click to read more", "contact us to learn"). These pages provide no extractable answers, so agents will never surface your content in AI-generated responses. Provide substantive answers directly on the page.',
         code: '<!-- Replace "Download our guide to learn more" with: -->\n<h2>How It Works</h2>\n<p>Direct, substantive answer that AI agents can extract and cite.</p>',

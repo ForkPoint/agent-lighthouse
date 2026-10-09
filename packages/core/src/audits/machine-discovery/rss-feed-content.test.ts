@@ -4,7 +4,8 @@ import {
   mockCheckContext,
   mockPageContext,
   mockFetchResult,
-} from "../../__tests__/test-utils";
+} from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 const longText = "x".repeat(600);
 const shortText = "short summary";
@@ -29,7 +30,7 @@ describe("RssFeedContentAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("have full content");
   });
 
@@ -42,7 +43,7 @@ describe("RssFeedContentAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("1/2 items have full content");
   });
 
@@ -55,7 +56,7 @@ describe("RssFeedContentAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("1/3 items have content");
   });
 
@@ -68,14 +69,14 @@ describe("RssFeedContentAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("no items");
   });
 
   it("fails when no feed is found", async () => {
     const ctx = mockCheckContext([]);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No RSS feed found");
   });
 
@@ -94,7 +95,7 @@ describe("RssFeedContentAudit", () => {
       return r;
     };
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("passes when a page <head> alternate link uses an absolute Atom feed URL", async () => {
@@ -112,7 +113,7 @@ describe("RssFeedContentAudit", () => {
       return r;
     };
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("falls through to rootFiles when head-link feed fetch returns non-200", async () => {
@@ -137,7 +138,7 @@ describe("RssFeedContentAudit", () => {
     };
     const result = await audit.audit(ctx);
     // Falls through to rootFiles → /rss.xml found with full content
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("passes when atom.xml found via direct fetch fallback (covers atom fetch true branch)", async () => {
@@ -160,7 +161,7 @@ describe("RssFeedContentAudit", () => {
       return r;
     };
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("skips non-alternate headLinks and uses well-known paths (covers if-condition false branch)", async () => {
@@ -184,6 +185,6 @@ describe("RssFeedContentAudit", () => {
       return r;
     };
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 });

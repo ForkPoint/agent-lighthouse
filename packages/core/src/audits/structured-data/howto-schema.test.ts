@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { HowToSchemaAudit } from "./howto-schema";
-import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
+import { mockPageContext, mockCheckContext } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 const ld = (obj: unknown) =>
   `<script type="application/ld+json">${JSON.stringify(obj)}</script>`;
@@ -28,7 +29,7 @@ describe("HowToSchemaAudit", () => {
   it("warns (low) when no sequential numbered headings exist", () => {
     const ctx = mockCheckContext([page("<h2>Introduction</h2>")]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain(
       "No pages with sequential numbered headings",
     );
@@ -37,7 +38,7 @@ describe("HowToSchemaAudit", () => {
   it("passes when stepped page has HowTo schema with a step array", () => {
     const ctx = mockCheckContext([page(steps, ld(howto))]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("detects HowTo nested inside @graph", () => {
@@ -45,13 +46,13 @@ describe("HowToSchemaAudit", () => {
       page(steps, ld({ "@context": "https://schema.org", "@graph": [howto] })),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("fails when stepped page has no HowTo schema", () => {
     const ctx = mockCheckContext([page(steps)]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No HowTo schema found");
   });
 
@@ -67,7 +68,7 @@ describe("HowToSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("warns when only some pages with sequential headings have HowTo schema", () => {
@@ -81,7 +82,7 @@ describe("HowToSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toBe("1/2 pages with HowTo schema");
   });
 
@@ -95,6 +96,6 @@ describe("HowToSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 });

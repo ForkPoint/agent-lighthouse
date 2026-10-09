@@ -1,6 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { runScan, type ScanReport } from "../packages/core/src";
+import { runScan, type ScanReport } from "#core/index";
+import { StoreStatus } from "./lib/scan-outcomes";
 
 const BENCHMARK_STORES_PATH = path.resolve(
   __dirname,
@@ -63,7 +64,7 @@ const UNIQUE_URLS = Array.from(
 
 interface StoreResult {
   url: string;
-  status: "success" | "error" | "bot_blocked";
+  status: StoreStatus;
   score?: number | null;
   tier?: string | null;
   report?: ScanReport;
@@ -109,7 +110,7 @@ async function auditStore(
       );
       return {
         url: targetUrl,
-        status: "bot_blocked",
+        status: StoreStatus.BotBlocked,
         waf: wafName,
         score: report.overallScore,
         tier: report.scoreTier,
@@ -127,7 +128,7 @@ async function auditStore(
     );
     return {
       url: targetUrl,
-      status: "success",
+      status: StoreStatus.Success,
       score: report.overallScore,
       tier: report.scoreTier,
       report,
@@ -140,7 +141,7 @@ async function auditStore(
     );
     return {
       url: targetUrl,
-      status: "error",
+      status: StoreStatus.Error,
       error: err.message,
       durationMs,
     };

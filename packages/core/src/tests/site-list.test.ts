@@ -11,8 +11,13 @@ import {
   type SeedFile,
   tenantSuffixOf,
   type SiteEntry,
+  SiteSource,
 } from "./site-list";
-import { excludedDomains, type CorpusStatus } from "./corpus-status";
+import {
+  excludedDomains,
+  type CorpusStatus,
+  CorpusState,
+} from "./corpus-status";
 
 const sites: SiteEntry[] = JSON.parse(
   readFileSync(resolve(__dirname, "../../test-data/sites/sites.json"), "utf8"),
@@ -49,7 +54,9 @@ describe("the site list", () => {
     // disallows AI crawlers in robots.txt) has no smoke domain rather than a
     // smoke domain the smoke run skips.
     for (const [category, { domains }] of Object.entries(seedFile.categories)) {
-      const ok = domains.filter((d) => status.domains[d]?.state === "ok");
+      const ok = domains.filter(
+        (d) => status.domains[d]?.state === CorpusState.Ok,
+      );
       const want = Math.min(2, ok.length);
       expect(perCategory.get(category) ?? 0, category).toBe(want);
     }
@@ -106,7 +113,7 @@ describe("the site list", () => {
 
   it("never claims a ranked source for a domain that was only seeded", () => {
     // A seed carry-over stamped `tranco` would be scanned as a top-ranked site.
-    const seeded = sites.filter((s) => s.source === "seed");
+    const seeded = sites.filter((s) => s.source === SiteSource.Seed);
     expect(seeded.length).toBeGreaterThan(0);
     for (const site of seeded) {
       expect(site.category, site.domain).not.toBe("unknown");
@@ -127,9 +134,9 @@ describe("the site list", () => {
   });
 
   it("ranks seed carry-overs below every domain that made the cut", () => {
-    const ranked = sites.filter((s) => s.source !== "seed");
+    const ranked = sites.filter((s) => s.source !== SiteSource.Seed);
     const worstRanked = Math.max(...ranked.map((s) => s.rankBucket));
-    for (const site of sites.filter((s) => s.source === "seed")) {
+    for (const site of sites.filter((s) => s.source === SiteSource.Seed)) {
       expect(site.rankBucket, site.domain).toBeGreaterThan(worstRanked);
     }
   });
@@ -287,7 +294,7 @@ describe("buildSiteList", () => {
       { limit: 2, exclude: new Set(["dead.com"]) },
     );
     const ranked = built
-      .filter((s) => s.source !== "seed")
+      .filter((s) => s.source !== SiteSource.Seed)
       .map((s) => s.domain);
     expect(ranked).toEqual(["b.com", "c.com"]);
   });
@@ -384,9 +391,11 @@ describe("buildSiteList", () => {
         seeds,
         { limit },
       );
-      const seeded = built.filter((s) => s.source === "seed");
+      const seeded = built.filter((s) => s.source === SiteSource.Seed);
       const worstRanked = Math.max(
-        ...built.filter((s) => s.source !== "seed").map((s) => s.rankBucket),
+        ...built
+          .filter((s) => s.source !== SiteSource.Seed)
+          .map((s) => s.rankBucket),
       );
       expect(seeded.length).toBeGreaterThan(0);
       for (const site of seeded) {

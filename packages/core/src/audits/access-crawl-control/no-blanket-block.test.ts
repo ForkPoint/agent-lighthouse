@@ -1,13 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
 import { NoBlanketBlockAudit } from "./no-blanket-block";
 import {
   attributableFixture,
   mockCheckContext,
   mockFetchResult,
   unreachedSiteContext,
-} from "../../__tests__/test-utils";
+} from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 describe("NoBlanketBlockAudit", () => {
   const audit = new NoBlanketBlockAudit();
@@ -18,7 +19,7 @@ describe("NoBlanketBlockAudit", () => {
       "/robots.txt": mockFetchResult(robots, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("No blanket Disallow");
   });
 
@@ -28,7 +29,7 @@ describe("NoBlanketBlockAudit", () => {
       "/robots.txt": mockFetchResult(robots, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("fails when wildcard has blanket Disallow: /", () => {
@@ -37,14 +38,14 @@ describe("NoBlanketBlockAudit", () => {
       "/robots.txt": mockFetchResult(robots, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("blocks all crawlers");
   });
 
   it("warns when robots.txt is missing", () => {
     const ctx = mockCheckContext([], {});
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("No robots.txt found");
   });
 
@@ -53,7 +54,7 @@ describe("NoBlanketBlockAudit", () => {
       "/robots.txt": mockFetchResult("", 500),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
   });
 
   // The scan may hold a readable page that is not this site's — a broker's
@@ -63,7 +64,9 @@ describe("NoBlanketBlockAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new NoBlanketBlockAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext(pages, rootFiles),
@@ -75,6 +78,6 @@ describe("NoBlanketBlockAudit", () => {
     expect(
       plan.skipped.find((stub) => stub.id === NoBlanketBlockAudit.meta.id)
         ?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 });

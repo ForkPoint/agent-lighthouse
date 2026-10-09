@@ -21,6 +21,8 @@ sources:
 
 ## What it checks
 
+The v7 runner selects article-purpose pages for this check. A general or legacy `content` declaration does not establish article purpose. Detection can use Open Graph article metadata or primary article prose without author, date, or Article schema fields. Schema-only evidence remains a hint. Detected matches remain informative; a precise `article` declaration uses the existing audit tier.
+
 AI agents extract Article schema to identify content freshness (datePublished/dateModified), authorship, and topic (headline). Without it, your blog content is treated as generic text with no provenance, reducing its chances of being cited in AI-generated answers.
 
 ## Code review findings (2026-08-20, 11-agent pass)
@@ -69,3 +71,11 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - Adoption: Article found on 2.4M domains in the October 2024 Common Crawl; BlogPosting on 1.40% and Article on 0.18% of mobile pages — https://webdatacommons.org/structureddata/2024-12/stats/stats.html and https://almanac.httparchive.org/en/2024/structured-data (both verified 2026-08-21)
 
 **Counter-evidence:** Google's contract is far weaker than the audit's required-property set: "There are no required properties; instead, add the properties that apply to your content", and `headline`, `datePublished`, `dateModified`, `author` and `image` are **all** listed as _recommended_. Blocking a pass on a missing `dateModified` therefore has no basis in the documented consumer behavior. Google's news features do not need the markup either — Top stories eligibility does not require Article structured data. The audit's AI-attribution framing is separately disclaimed by Google: "There's also no special schema.org structured data that you need to add" to appear in AI Overviews or AI Mode — https://developers.google.com/search/docs/appearance/ai-features (verified 2026-08-21). A matched difference-in-differences study over 1,885 pages adding JSON-LD found no AI-citation uplift — https://ahrefs.com/blog/schema-ai-citations/ (verified 2026-08-21)
+
+## Implementation deviations (v7 P3, 2026-10-07)
+
+The page-purpose gate now excludes general pages. Body-level aggregation and narrower specialist populations remain under review in the v7 applicability ledger. This change preserves the evidence grade, tier, weight, and audit ID.
+
+## Deferred (v7 P3)
+
+See `docs/architecture/v7-audit-applicability-ledger.md` for the remaining audit-specific guards, population limits, and aggregation work. P4 will address selected-page evidence and mixed provenance.

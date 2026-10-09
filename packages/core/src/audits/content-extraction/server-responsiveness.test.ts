@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
 import { ServerResponsivenessAudit } from "./server-responsiveness";
 import {
   attributableFixture,
@@ -9,8 +9,9 @@ import {
   shellSiteContext,
   unreachedSiteContext,
   walledSiteContext,
-} from "../../__tests__/test-utils";
-import type { PageContext } from "../../check-context";
+} from "#core/__tests__/test-utils";
+import type { PageContext } from "#core/check-context";
+import { CheckPriority, CheckStatus } from "#core/types";
 
 /** A page whose fetch recorded `ttfb` milliseconds to first byte. */
 function timedPage(ttfb: number, path = "/"): PageContext {
@@ -38,7 +39,7 @@ const run = (...pages: PageContext[]) =>
 describe("ServerResponsivenessAudit", () => {
   describe("when there is nothing to measure", () => {
     it("is not applicable when no pages were scanned", () => {
-      expect(run().status).toBe("na");
+      expect(run().status).toBe(CheckStatus.NotApplicable);
     });
 
     it("is not applicable when the scan was blocked by a WAF", () => {
@@ -49,13 +50,13 @@ describe("ServerResponsivenessAudit", () => {
         reason: "challenge",
       };
       const result = new ServerResponsivenessAudit().audit(ctx);
-      expect(result.status).toBe("na");
+      expect(result.status).toBe(CheckStatus.NotApplicable);
       expect(result.message).toContain("Cloudflare");
     });
 
     it("is not applicable when every fetch failed", () => {
       const result = run(failedPage("/a"), failedPage("/b"));
-      expect(result.status).toBe("na");
+      expect(result.status).toBe(CheckStatus.NotApplicable);
     });
   });
 
@@ -66,7 +67,7 @@ describe("ServerResponsivenessAudit", () => {
         timedPage(140, "/b"),
         timedPage(5000, "/c"),
       );
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.found).toContain("140ms");
     });
 
@@ -76,7 +77,7 @@ describe("ServerResponsivenessAudit", () => {
         timedPage(100, "/b"),
         timedPage(9000, "/c"),
       );
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
     });
 
     it("excludes failed fetches from the sample instead of charging them the timeout", () => {
@@ -85,7 +86,7 @@ describe("ServerResponsivenessAudit", () => {
         timedPage(160, "/b"),
         failedPage("/c"),
       );
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.found).toContain("1 page(s) could not be measured");
     });
 
@@ -97,23 +98,23 @@ describe("ServerResponsivenessAudit", () => {
 
   describe("banded verdict", () => {
     it("passes at exactly the fast threshold", () => {
-      expect(run(timedPage(800)).status).toBe("pass");
+      expect(run(timedPage(800)).status).toBe(CheckStatus.Pass);
     });
 
     it("warns just above the fast threshold", () => {
       const result = run(timedPage(801));
-      expect(result.status).toBe("warn");
-      expect(result.priority).toBe("medium");
+      expect(result.status).toBe(CheckStatus.Warn);
+      expect(result.priority).toBe(CheckPriority.Medium);
     });
 
     it("warns at exactly the slow threshold", () => {
-      expect(run(timedPage(2500)).status).toBe("warn");
+      expect(run(timedPage(2500)).status).toBe(CheckStatus.Warn);
     });
 
     it("fails above the slow threshold", () => {
       const result = run(timedPage(2501));
-      expect(result.status).toBe("fail");
-      expect(result.priority).toBe("high");
+      expect(result.status).toBe(CheckStatus.Fail);
+      expect(result.priority).toBe(CheckPriority.High);
     });
 
     it("no longer fails on a single page above 1800ms with a fast median", () => {
@@ -122,7 +123,7 @@ describe("ServerResponsivenessAudit", () => {
         timedPage(210, "/b"),
         timedPage(1900, "/c"),
       );
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
     });
   });
 
@@ -138,7 +139,9 @@ describe("ServerResponsivenessAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new ServerResponsivenessAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext(pages, rootFiles),
@@ -150,14 +153,14 @@ describe("ServerResponsivenessAudit", () => {
     expect(
       plan.skipped.find((stub) => stub.id === ServerResponsivenessAudit.meta.id)
         ?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
   // Ordering: a walled scan gets the reason it could not be measured, which
   // names the wall. A guard above that branch would replace it with the
   // generic attribution message and lose the wall.
   it("names the wall as the reason it could not measure a walled scan", () => {
     const result = new ServerResponsivenessAudit().audit(walledSiteContext());
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("could not be measured");
     expect(result.message).toContain("Cloudflare");
   });
@@ -168,6 +171,6 @@ describe("ServerResponsivenessAudit", () => {
     const result = await new ServerResponsivenessAudit().audit(
       shellSiteContext(),
     );
-    expect(result.status).not.toBe("na");
+    expect(result.status).not.toBe(CheckStatus.NotApplicable);
   });
 });

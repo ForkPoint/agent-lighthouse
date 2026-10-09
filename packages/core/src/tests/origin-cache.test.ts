@@ -4,7 +4,7 @@ import {
   computeOriginCacheKey,
   shouldBypassOriginCache,
   type OriginEvidence,
-} from "../origin-cache";
+} from "#core/origin-cache";
 
 describe("Phase 5: Origin Cache Architecture", () => {
   describe("computeOriginCacheKey — request headers", () => {

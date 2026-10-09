@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
 import { NoBotDetectionAudit } from "./no-bot-detection";
 import {
   attributableFixture,
@@ -9,7 +9,9 @@ import {
   mockPageContext,
   unreachedSiteContext,
   walledSiteContext,
-} from "../../__tests__/test-utils";
+} from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
+import { WafProvider } from "#core/waf-detector";
 
 describe("NoBotDetectionAudit", () => {
   const audit = new NoBotDetectionAudit();
@@ -23,7 +25,7 @@ describe("NoBotDetectionAudit", () => {
     ];
     const ctx = mockCheckContext(pages);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("No aggressive bot-detection");
   });
 
@@ -36,7 +38,7 @@ describe("NoBotDetectionAudit", () => {
     ];
     const ctx = mockCheckContext(pages);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("Bot-detection scripts detected");
     expect(result.found).toContain("reCAPTCHA");
   });
@@ -50,7 +52,7 @@ describe("NoBotDetectionAudit", () => {
     ];
     const ctx = mockCheckContext(pages);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("Cloudflare Turnstile");
   });
 
@@ -67,14 +69,14 @@ describe("NoBotDetectionAudit", () => {
       ),
     ];
     const result = audit.audit(mockCheckContext(pages));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("Cloudflare Turnstile");
   });
 
   it("warns when no pages were scanned", () => {
     const ctx = mockCheckContext([]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("No pages were scanned");
   });
 
@@ -94,7 +96,7 @@ describe("NoBotDetectionAudit", () => {
     ];
     const ctx = mockCheckContext(pages);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("reCAPTCHA");
     expect(result.message).toContain("2 page(s)");
   });
@@ -106,12 +108,12 @@ describe("NoBotDetectionAudit", () => {
       ]);
       ctx.wafProtection = {
         isBlocked: true,
-        provider: "cloudflare",
+        provider: WafProvider.Cloudflare,
         name: "Cloudflare Turnstile / Managed Challenge",
         reason: "Cloudflare bot challenge detected",
       };
       const result = audit.audit(ctx);
-      expect(result.status).toBe("fail");
+      expect(result.status).toBe(CheckStatus.Fail);
       expect(result.message).toContain("Cloudflare");
     });
 
@@ -125,13 +127,13 @@ describe("NoBotDetectionAudit", () => {
       ctx.wafProtection = {
         isBlocked: true,
         isRateLimit: true,
-        provider: "rate-limited",
+        provider: WafProvider.RateLimited,
         name: "Rate limit (HTTP 429)",
         reason: "too many requests",
         statusCode: 429,
       };
       const result = audit.audit(ctx);
-      expect(result.status).toBe("na");
+      expect(result.status).toBe(CheckStatus.NotApplicable);
       expect(result.message).toMatch(/rate-limited/i);
     });
   });
@@ -143,7 +145,9 @@ describe("NoBotDetectionAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new NoBotDetectionAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext(pages, rootFiles),
@@ -155,13 +159,13 @@ describe("NoBotDetectionAudit", () => {
     expect(
       plan.skipped.find((stub) => stub.id === NoBotDetectionAudit.meta.id)
         ?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
   // This direct call pins the audit's local WAF branch. The runner does not
   // publish this finding from an unread scan; it emits an `na` stub instead.
   it("reports the firewall when its local WAF branch is called directly", () => {
     const result = new NoBotDetectionAudit().audit(walledSiteContext());
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("Bot-defense firewall detected");
     expect(result.message).toContain("Cloudflare");
   });
@@ -173,7 +177,7 @@ describe("NoBotDetectionAudit", () => {
   // the audit has to.
   it("declines a page that served no readable text", () => {
     const result = new NoBotDetectionAudit().audit(shellSiteContext());
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("no readable text");
   });
 
@@ -185,7 +189,7 @@ describe("NoBotDetectionAudit", () => {
       '<script src="https://challenges.cloudflare.com/turnstile/v0/api.js"></script></head>' +
       '<body><div id="root"></div></body></html>';
     const result = new NoBotDetectionAudit().audit(shellSiteContext(html));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("Cloudflare Turnstile");
   });
 });

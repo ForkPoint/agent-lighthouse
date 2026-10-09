@@ -1,14 +1,22 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
 import {
   defectCount,
   defectNote,
   NO_OPENAPI_SPEC,
   readOpenApiPaths,
   readOpenApiSpec,
-} from "../../gatherers/openapi";
+} from "#core/gatherers/openapi";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 function isObject(val: unknown): val is Record<string, unknown> {
   return typeof val === "object" && val !== null && !Array.isArray(val);
@@ -26,13 +34,13 @@ export class OpenApiSchemasAudit extends Audit {
     failureTitle: "OpenAPI request/response schemas",
     description:
       "Without request/response schemas, AI agents must guess the data format for your endpoints. This leads to malformed requests and failed API calls. Define JSON schemas for all request bodies and responses.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/agent-interfaces/openapi-schemas.md",
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "medium",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "Without request/response schemas, AI agents must guess what data to send and what to expect back. This leads to malformed requests, failed API calls, and agents that cannot reliably use your endpoints.",
@@ -72,7 +80,7 @@ export class OpenApiSchemasAudit extends Audit {
     }
   }
 }`,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl: "https://swagger.io/specification/#schema-object",
       tags: ["openapi", "schemas", "api", "validation"],
     },
@@ -80,7 +88,7 @@ export class OpenApiSchemasAudit extends Audit {
 
   audit(ctx: CheckContext): AuditResult {
     const recommendation = {
-      priority: "medium" as const,
+      priority: CheckPriority.Medium,
       description: OpenApiSchemasAudit.meta.description,
       code: `"post": {\n  "operationId": "submitContact",\n  "requestBody": {\n    "required": true,\n    "content": {\n      "application/json": {\n        "schema": {\n          "type": "object",\n          "required": ["email", "message"],\n          "properties": {\n            "name": { "type": "string" },\n            "email": { "type": "string", "format": "email" },\n            "message": { "type": "string" }\n          }\n        }\n      }\n    }\n  },\n  "responses": {\n    "200": {\n      "description": "Success",\n      "content": {\n        "application/json": {\n          "schema": {\n            "type": "object",\n            "properties": {\n              "success": { "type": "boolean" },\n              "id": { "type": "string" }\n            }\n          }\n        }\n      }\n    }\n  }\n}`,
     };

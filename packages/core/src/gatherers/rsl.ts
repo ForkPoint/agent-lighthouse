@@ -1,7 +1,8 @@
 import { cacheOwner } from "./cache-owner";
-import type { CheckContext } from "../check-context";
-import type { FetchResult } from "../fetcher";
-import { isSafeUrl } from "../fetcher";
+import type { CheckContext } from "#core/check-context";
+import type { FetchResult } from "#core/fetcher";
+import { isSafeUrl } from "#core/fetcher";
+import { HttpMethod } from "#core/types";
 
 const rslProbeCache = new WeakMap<
   object,
@@ -11,7 +12,7 @@ const rslProbeCache = new WeakMap<
 export function probeRsl(
   ctx: { fetch: CheckContext["fetch"] },
   url: string,
-  options: { method?: "GET" | "HEAD"; followRedirects?: boolean } = {},
+  options: { method?: HttpMethod; followRedirects?: boolean } = {},
 ): Promise<FetchResult | undefined> {
   let cache = rslProbeCache.get(cacheOwner(ctx));
   if (!cache) {
@@ -26,7 +27,7 @@ export function probeRsl(
       try {
         return await ctx.fetch({
           url,
-          method: options.method ?? "GET",
+          method: options.method ?? HttpMethod.Get,
           followRedirects: options.followRedirects ?? false,
         });
       } catch {

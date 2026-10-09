@@ -4,13 +4,14 @@ import {
   mockPageContext,
   mockCheckContext,
   mockFetchResult,
-} from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import { BASELINE_UA } from "../../gatherers/ua-parity";
-import type { FetchOptions, FetchResult } from "../../fetcher";
+} from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import { BASELINE_UA } from "#core/gatherers/ua-parity";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import { CheckStatus } from "#core/types";
 
-vi.mock("../../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => {
@@ -87,7 +88,7 @@ describe("AiCrawlerEdgeParityAudit", () => {
   });
 
   it("passes when every crawler gets the same response a browser gets", async () => {
-    expect((await run({ robots: ALLOW_ALL })).status).toBe("pass");
+    expect((await run({ robots: ALLOW_ALL })).status).toBe(CheckStatus.Pass);
   });
 
   // robots.txt is advisory metadata; the edge decides independently, and the
@@ -97,7 +98,7 @@ describe("AiCrawlerEdgeParityAudit", () => {
       robots: ALLOW_ALL,
       probe: () => mockFetchResult("", 503),
     });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("503");
   });
 
@@ -106,7 +107,7 @@ describe("AiCrawlerEdgeParityAudit", () => {
       robots: DENY_ALL,
       probe: () => mockFetchResult("", 503),
     });
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("fails a Cloudflare challenge and names it", async () => {
@@ -117,7 +118,7 @@ describe("AiCrawlerEdgeParityAudit", () => {
           "cf-mitigated": "challenge",
         }),
     });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("Cloudflare challenge");
   });
 
@@ -127,7 +128,7 @@ describe("AiCrawlerEdgeParityAudit", () => {
       probe: () =>
         withHeaders(mockFetchResult("", 402), { "crawler-price": "USD 0.01" }),
     });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("pay-per-crawl");
   });
 
@@ -141,7 +142,7 @@ describe("AiCrawlerEdgeParityAudit", () => {
           "text/html",
         ),
     });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("proof-of-work");
   });
 
@@ -151,7 +152,7 @@ describe("AiCrawlerEdgeParityAudit", () => {
       robots: ALLOW_ALL,
       probe: () => mockFetchResult(THIN, 200, "text/html"),
     });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("soft block");
   });
 
@@ -165,13 +166,13 @@ describe("AiCrawlerEdgeParityAudit", () => {
           server: "cloudflare",
         }),
     });
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("source IP");
   });
 
   it("is notApplicable when the browser baseline is blocked too", async () => {
     const result = await run({ robots: ALLOW_ALL, baselineStatus: 503 });
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("scanner");
   });
 

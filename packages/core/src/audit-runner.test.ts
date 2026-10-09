@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
-import type { AuditMeta, AuditResult, PageType } from "./types";
-import { logger } from "./logger";
+import type { AuditMeta, AuditResult } from "./types";
+import { logger, LogLevel } from "./logger";
 import { Audit } from "./audit";
 import type { CheckContext } from "./check-context";
 import {
@@ -18,6 +18,15 @@ import { mockPageContext } from "./__tests__/test-utils";
 import { unreachableContext, bareSiteContext } from "./tests/fixtures";
 import { planAllAuditsForTest } from "./tests/plan-all-audits";
 import { cacheOwner } from "./gatherers/cache-owner";
+import {
+  CheckPriority,
+  CheckStatus,
+  EvidenceKey,
+  PageType,
+  PageTypeSource,
+  ScoreDisplayMode,
+} from "./types";
+import { WafProvider } from "./waf-detector";
 
 // ---------------------------------------------------------------------------
 // Helpers: build tiny fake Audit subclasses + registrations
@@ -30,9 +39,9 @@ function meta(
     title: "T",
     failureTitle: "F",
     description: "D",
-    scoreDisplayMode: "ternary",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
     weight: 1,
-    defaultPriority: "medium",
+    defaultPriority: CheckPriority.Medium,
     ...overrides,
   };
 }
@@ -64,7 +73,7 @@ function ctxWith(pageTypes: PageType[]): CheckContext {
   return {
     pages: pageTypes.map((pt) => ({
       pageType: pt,
-      pageTypeSource: "declared" as const,
+      pageTypeSource: PageTypeSource.Declared,
     })),
     rootFiles: {},
     domain: "example.com",
@@ -91,30 +100,30 @@ describe("runAudits", () => {
         cat1: [
           // sync pass, applicablePageTypes undefined → always included, weight 2
           makeReg(meta({ id: "p1", category: "cat1", weight: 2 }), () =>
-            result("pass", 1),
+            result(CheckStatus.Pass, 1),
           ),
           // async warn, applicable to homepage (present) → included
           makeReg(
             meta({
               id: "w1",
               category: "cat1",
-              applicablePageTypes: ["homepage"],
+              applicablePageTypes: [PageType.Homepage],
             }),
-            async () => result("warn", 0.5),
+            async () => result(CheckStatus.Warn, 0.5),
           ),
           // applicable only to product (absent) → recorded as an `na` stub
           makeReg(
             meta({
               id: "s1",
               category: "cat1",
-              applicablePageTypes: ["product"],
+              applicablePageTypes: [PageType.Product],
             }),
-            () => result("fail", 0),
+            () => result(CheckStatus.Fail, 0),
           ),
           // empty applicablePageTypes array → included
           makeReg(
             meta({ id: "e1", category: "cat1", applicablePageTypes: [] }),
-            () => result("pass", 1),
+            () => result(CheckStatus.Pass, 1),
           ),
           // throws → logger.error, recorded as an `na` error stub (not dropped)
           makeReg(meta({ id: "t1", category: "cat1" }), () => {
@@ -124,7 +133,7 @@ describe("runAudits", () => {
           // stamped from the audit's own static meta (weight 1), not from reg.meta
           makeReg(
             meta({ id: "actual-mismatch", category: "cat1" }),
-            () => result("pass", 1),
+            () => result(CheckStatus.Pass, 1),
             meta({ id: "reg-mismatch", category: "cat1" }),
           ),
         ],
@@ -133,7 +142,7 @@ describe("runAudits", () => {
     };
 
     const events: AuditProgressEvent[] = [];
-    const out = await runAudits(ctxWith(["homepage"]), config, (e) =>
+    const out = await runAudits(ctxWith([PageType.Homepage]), config, (e) =>
       events.push(e),
     );
 
@@ -141,18 +150,18 @@ describe("runAudits", () => {
     // 5 audits execute (s1 never runs); t1's throw is logged once.
     expect(out.checks).toHaveLength(6);
     expect(errorSpy).toHaveBeenCalledTimes(1);
-    expect(events.filter((e) => e.type === "unit:done")).toHaveLength(4);
+    expect(events.filter((e) => e.type === "unit:done")).toHaveLength(5);
     const fails = events.filter((e) => e.type === "unit:fail");
     expect(fails).toHaveLength(1);
     expect(fails[0]).toMatchObject({ label: "t1 T", error: "boom" });
 
     // s1 → not-applicable stub tagged as a page-type skip.
     const s1 = out.checks.find((c) => c.id === "s1")!;
-    expect(s1.status).toBe("na");
+    expect(s1.status).toBe(CheckStatus.NotApplicable);
     expect(s1.tags).toContain("skipped:page-type");
     // t1 → not-applicable stub tagged as a scan error.
     const t1 = out.checks.find((c) => c.id === "t1")!;
-    expect(t1.status).toBe("na");
+    expect(t1.status).toBe(CheckStatus.NotApplicable);
     expect(t1.tags).toContain("scan-error");
 
     const cat1 = out.categories.find((c) => c.id === "cat1")!;
@@ -185,7 +194,7 @@ describe("runAudits", () => {
         w: [
           // real audit path → stamped by Audit.toCheckResult
           makeReg(meta({ id: "real", category: "w", weight: 0.6 }), () =>
-            result("pass", 1),
+            result(CheckStatus.Pass, 1),
           ),
           // page-type skip → stamped by the stub built in planAudits
           makeReg(
@@ -193,9 +202,9 @@ describe("runAudits", () => {
               id: "skip",
               category: "w",
               weight: 0.4,
-              applicablePageTypes: ["product"],
+              applicablePageTypes: [PageType.Product],
             }),
-            () => result("pass", 1),
+            () => result(CheckStatus.Pass, 1),
           ),
           // throwing audit → stamped by the stub built on the error path
           makeReg(meta({ id: "boom", category: "w", weight: 0.25 }), () => {
@@ -205,15 +214,15 @@ describe("runAudits", () => {
       },
     };
 
-    const out = await runAudits(ctxWith(["homepage"]), config);
+    const out = await runAudits(ctxWith([PageType.Homepage]), config);
     const byId = new Map(out.checks.map((c) => [c.id, c]));
 
     expect(byId.get("real")!.weight).toBe(0.6);
     expect(byId.get("skip")!.weight).toBe(0.4);
     expect(byId.get("boom")!.weight).toBe(0.25);
     // Both stub kinds are still `na`, so their stamped weight stays out of the score.
-    expect(byId.get("skip")!.status).toBe("na");
-    expect(byId.get("boom")!.status).toBe("na");
+    expect(byId.get("skip")!.status).toBe(CheckStatus.NotApplicable);
+    expect(byId.get("boom")!.status).toBe(CheckStatus.NotApplicable);
     // Only `real` contributes: 1*0.6 / 0.6 → 100
     expect(out.categories[0].score).toBe(100);
 
@@ -242,13 +251,13 @@ describe("runAudits", () => {
       audits: {
         z: [
           makeReg(meta({ id: "zero", category: "z", weight: 0 }), () =>
-            result("pass", 1),
+            result(CheckStatus.Pass, 1),
           ),
         ],
       },
     };
 
-    const out = await runAudits(ctxWith(["homepage"]), config);
+    const out = await runAudits(ctxWith([PageType.Homepage]), config);
     // one check exists (not the empty branch), but totalWeight === 0 → score 0
     expect(out.categories[0].checks).toHaveLength(1);
     expect(out.categories[0].score).toBe(0);
@@ -257,22 +266,22 @@ describe("runAudits", () => {
   it("adding a weight-0 informative audit leaves the category score unchanged", async () => {
     const baseline: AuditRegistration[] = [
       makeReg(meta({ id: "b1", category: "cat", weight: 1 }), () =>
-        result("pass", 1),
+        result(CheckStatus.Pass, 1),
       ),
       makeReg(meta({ id: "b2", category: "cat", weight: 1 }), () =>
-        result("fail", 0),
+        result(CheckStatus.Fail, 0),
       ),
     ];
     const categories = [{ id: "cat", name: "Cat", weight: 1 }];
 
-    const before = await runAudits(ctxWith(["homepage"]), {
+    const before = await runAudits(ctxWith([PageType.Homepage]), {
       categories,
       audits: { cat: baseline },
     });
 
     // A sunset (deprecated) audit: weight 0 + informative display mode. Its
     // failing check must not move the category score in either direction.
-    const withInformative = await runAudits(ctxWith(["homepage"]), {
+    const withInformative = await runAudits(ctxWith([PageType.Homepage]), {
       categories,
       audits: {
         cat: [
@@ -282,9 +291,9 @@ describe("runAudits", () => {
               id: "i1",
               category: "cat",
               weight: 0,
-              scoreDisplayMode: "informative",
+              scoreDisplayMode: ScoreDisplayMode.Informative,
             }),
-            () => result("fail", 0),
+            () => result(CheckStatus.Fail, 0),
           ),
         ],
       },
@@ -304,7 +313,7 @@ describe("runAudits", () => {
     for (let i = 0; i < 25; i++) {
       regs.push(
         makeReg(meta({ id: `m${i}`, category: "big" }), () =>
-          result("pass", 1),
+          result(CheckStatus.Pass, 1),
         ),
       );
     }
@@ -313,7 +322,7 @@ describe("runAudits", () => {
       audits: { big: regs },
     };
 
-    const out = await runAudits(ctxWith(["homepage"]), config);
+    const out = await runAudits(ctxWith([PageType.Homepage]), config);
     expect(out.checks).toHaveLength(25);
     expect(out.categories[0].score).toBe(100);
   });
@@ -328,7 +337,7 @@ function budgetOut(): AbortController {
 
 describe("runAudits — scan budget", () => {
   it("never constructs an audit once the budget is gone, and says so", async () => {
-    const ran = vi.fn(() => result("pass", 1));
+    const ran = vi.fn(() => result(CheckStatus.Pass, 1));
     const config: ScanConfig = {
       categories: [{ id: "c", name: "C", weight: 1 }],
       audits: {
@@ -340,7 +349,7 @@ describe("runAudits — scan budget", () => {
     };
     const events: AuditProgressEvent[] = [];
     const out = await runAudits(
-      ctxWith(["homepage"]),
+      ctxWith([PageType.Homepage]),
       config,
       (e) => events.push(e),
       undefined,
@@ -351,7 +360,7 @@ describe("runAudits — scan budget", () => {
     expect(ran).not.toHaveBeenCalled();
     expect(out.checks).toHaveLength(2);
     for (const check of out.checks) {
-      expect(check.status).toBe("na");
+      expect(check.status).toBe(CheckStatus.NotApplicable);
       expect(check.tags).toContain(TAG_SKIPPED_SCAN_BUDGET);
       expect(check.explanation).toBe(
         "Not assessed: The scan budget of 1 s ran out. This audit had not started.",
@@ -368,13 +377,13 @@ describe("runAudits — scan budget", () => {
     const regs: AuditRegistration[] = [
       makeReg(meta({ id: "first", category: "c" }), () => {
         controller.abort(new Error("The scan budget of 1 s ran out."));
-        return result("pass", 1);
+        return result(CheckStatus.Pass, 1);
       }),
     ];
     for (let i = 0; i < 24; i++) {
       regs.push(
         makeReg(meta({ id: `later${i}`, category: "c" }), () =>
-          result("pass", 1),
+          result(CheckStatus.Pass, 1),
         ),
       );
     }
@@ -384,7 +393,7 @@ describe("runAudits — scan budget", () => {
     };
 
     const out = await runAudits(
-      ctxWith(["homepage"]),
+      ctxWith([PageType.Homepage]),
       config,
       undefined,
       undefined,
@@ -396,7 +405,7 @@ describe("runAudits — scan budget", () => {
     // It returned "pass", but a verdict reached after the budget went may
     // rest on a request that was never sent, so it is not believed.
     const first = out.checks.find((c) => c.id === "first")!;
-    expect(first.status).toBe("na");
+    expect(first.status).toBe(CheckStatus.NotApplicable);
     expect(first.explanation).toContain("This audit was still running.");
     const stubs = out.checks.filter((c) =>
       c.tags?.includes(TAG_SKIPPED_SCAN_BUDGET),
@@ -414,12 +423,14 @@ describe("runAudits — scan budget", () => {
       categories: [{ id: "c", name: "C", weight: 1 }],
       audits: {
         c: [
-          makeReg(meta({ id: "a1", category: "c" }), () => result("pass", 1)),
+          makeReg(meta({ id: "a1", category: "c" }), () =>
+            result(CheckStatus.Pass, 1),
+          ),
         ],
       },
     };
     const out = await runAudits(
-      ctxWith(["homepage"]),
+      ctxWith([PageType.Homepage]),
       config,
       undefined,
       undefined,
@@ -432,25 +443,25 @@ describe("runAudits — scan budget", () => {
 
 describe("category mass on the scan path", () => {
   it("sets assessedMass and registryMass on every category runAudits builds", async () => {
-    const ctx = ctxWith(["homepage"]);
+    const ctx = ctxWith([PageType.Homepage]);
     const config: ScanConfig = {
       categories: [{ id: "cat1", name: "Cat One", weight: 5 }],
       audits: {
         cat1: [
           makeReg(meta({ id: "a", category: "cat1", weight: 2 }), () =>
-            result("pass", 1),
+            result(CheckStatus.Pass, 1),
           ),
           makeReg(meta({ id: "b", category: "cat1", weight: 3 }), () =>
-            result("na", 0),
+            result(CheckStatus.NotApplicable, 0),
           ),
           makeReg(
             meta({
               id: "c",
               category: "cat1",
               weight: 0,
-              scoreDisplayMode: "informative",
+              scoreDisplayMode: ScoreDisplayMode.Informative,
             }),
-            () => result("fail", 0),
+            () => result(CheckStatus.Fail, 0),
           ),
         ],
       },
@@ -462,7 +473,7 @@ describe("category mass on the scan path", () => {
   });
 
   it("weights the overall score by assessed mass, not registry mass", async () => {
-    const ctx = ctxWith(["homepage"]);
+    const ctx = ctxWith([PageType.Homepage]);
     const config: ScanConfig = {
       categories: [
         { id: "big", name: "Big", weight: 10 },
@@ -472,16 +483,16 @@ describe("category mass on the scan path", () => {
         // Registry mass 10, but only 1 of it assessed, at score 0.
         big: [
           makeReg(meta({ id: "b1", category: "big", weight: 1 }), () =>
-            result("fail", 0),
+            result(CheckStatus.Fail, 0),
           ),
           makeReg(meta({ id: "b2", category: "big", weight: 9 }), () =>
-            result("na", 0),
+            result(CheckStatus.NotApplicable, 0),
           ),
         ],
         // Registry mass 1, all assessed, at score 100.
         small: [
           makeReg(meta({ id: "s1", category: "small", weight: 1 }), () =>
-            result("pass", 1),
+            result(CheckStatus.Pass, 1),
           ),
         ],
       },
@@ -496,7 +507,7 @@ describe("category mass on the scan path", () => {
 describe("gatherer cache identity", () => {
   it("shares one gatherer cache across every audit of a scan", async () => {
     const fetch = vi.fn(async () => ({}) as never);
-    const ctx = ctxWith(["homepage"]);
+    const ctx = ctxWith([PageType.Homepage]);
     ctx.fetch = fetch;
 
     // Each audit memoises on the context it is handed, the way every
@@ -509,7 +520,7 @@ describe("gatherer cache identity", () => {
         seen.add(owner);
         await c.fetch({ url: "https://example.com/x" });
       }
-      return result("pass", 1);
+      return result(CheckStatus.Pass, 1);
     };
 
     const config: ScanConfig = {
@@ -521,7 +532,7 @@ describe("gatherer cache identity", () => {
             meta({
               id: "t1",
               category: "cat1",
-              applicablePageTypes: ["homepage"],
+              applicablePageTypes: [PageType.Homepage],
             }),
             probe,
           ),
@@ -530,7 +541,10 @@ describe("gatherer cache identity", () => {
     };
 
     const { checks } = await runAudits(ctx, config);
-    expect(checks.map((c) => c.status)).toEqual(["pass", "pass"]);
+    expect(checks.map((c) => c.status)).toEqual([
+      CheckStatus.Pass,
+      CheckStatus.Pass,
+    ]);
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 });
@@ -544,7 +558,7 @@ describe("scan-error explanations", () => {
       categories: [{ id: "cat1", name: "Cat 1", weight: 1 }],
       audits: { cat1: [makeReg(m, fail)] },
     };
-    const out = await runAudits(ctxWith(["homepage"]), config);
+    const out = await runAudits(ctxWith([PageType.Homepage]), config);
     errorSpy.mockRestore();
     return out.checks.find((c) => c.id === "x1")!;
   }
@@ -569,7 +583,7 @@ describe("scan-error explanations", () => {
     const stub = await stubFor(
       () =>
         AuditResultSchema.parse({
-          status: "pass",
+          status: CheckStatus.Pass,
           score: 1,
           details: { ghosts: [{}] },
         }) as never,
@@ -621,7 +635,7 @@ describe("planAudits on a scan that read nothing", () => {
   it("tags every skip with the reason the scan gave", () => {
     const plan = planAudits(unreachableContext(), defaultConfig);
     for (const stub of plan.skipped) {
-      expect(stub.status).toBe("na");
+      expect(stub.status).toBe(CheckStatus.NotApplicable);
       expect(stub.tags).toContain(TAG_SKIPPED_NO_EVIDENCE);
       expect(stub.explanation).toContain("ENOTFOUND");
     }
@@ -650,15 +664,15 @@ describe("audit tracing", () => {
       audits: {
         cat1: [
           makeReg(meta({ id: "ok", category: "cat1" }), () =>
-            result("pass", 1),
+            result(CheckStatus.Pass, 1),
           ),
           makeReg(
             meta({
               id: "skip",
               category: "cat1",
-              applicablePageTypes: ["product"],
+              applicablePageTypes: [PageType.Product],
             }),
-            () => result("pass", 1),
+            () => result(CheckStatus.Pass, 1),
           ),
           makeReg(meta({ id: "boom", category: "cat1" }), () => {
             throw new Error("boom");
@@ -672,7 +686,7 @@ describe("audit tracing", () => {
     const errorSpy = vi.spyOn(logger, "error").mockImplementation(() => {});
     const traces: AuditTrace[] = [];
     await runAudits(
-      ctxWith(["homepage"]),
+      ctxWith([PageType.Homepage]),
       tracingConfig(),
       undefined,
       undefined,
@@ -718,8 +732,8 @@ describe("audit tracing", () => {
     const debugSpy = vi.spyOn(logger, "debug").mockImplementation(() => {});
     const errorSpy = vi.spyOn(logger, "error").mockImplementation(() => {});
     const previous = logger.level;
-    logger.level = "info";
-    await runAudits(ctxWith(["homepage"]), tracingConfig());
+    logger.level = LogLevel.Info;
+    await runAudits(ctxWith([PageType.Homepage]), tracingConfig());
     logger.level = previous;
     errorSpy.mockRestore();
     expect(debugSpy).not.toHaveBeenCalled();
@@ -730,8 +744,8 @@ describe("audit tracing", () => {
     const debugSpy = vi.spyOn(logger, "debug").mockImplementation(() => {});
     const errorSpy = vi.spyOn(logger, "error").mockImplementation(() => {});
     const previous = logger.level;
-    logger.level = "debug";
-    await runAudits(ctxWith(["homepage"]), tracingConfig());
+    logger.level = LogLevel.Debug;
+    await runAudits(ctxWith([PageType.Homepage]), tracingConfig());
     logger.level = previous;
     errorSpy.mockRestore();
     const lines = debugSpy.mock.calls.map((c) => String(c[0]));
@@ -753,7 +767,7 @@ describe("planAudits — evidence gate", () => {
         `<html><body><main>${"Readable page text. ".repeat(60)}</main></body></html>`,
       );
       page.pageType = pageType;
-      page.pageTypeSource = "declared";
+      page.pageTypeSource = PageTypeSource.Declared;
       const ctx: CheckContext = {
         ...ctxWith([pageType]),
         pages: [page],
@@ -765,12 +779,12 @@ describe("planAudits — evidence gate", () => {
           wafProtection: null,
         }),
       };
-      const run = vi.fn((_ctx: CheckContext) => result("pass", 1));
+      const run = vi.fn((_ctx: CheckContext) => result(CheckStatus.Pass, 1));
       const universal = makeReg(
         meta({
           id: "universal",
           category: "cat1",
-          requires: ["rendered-body", "sample-adequate"],
+          requires: [EvidenceKey.RenderedBody, EvidenceKey.SampleAdequate],
         }),
         run,
       );
@@ -783,10 +797,10 @@ describe("planAudits — evidence gate", () => {
               meta({
                 id: "homepage-only",
                 category: "cat1",
-                pageTypes: ["homepage"],
-                requires: ["sample-adequate"],
+                pageTypes: [PageType.Homepage],
+                requires: [EvidenceKey.SampleAdequate],
               }),
-              () => result("pass", 1),
+              () => result(CheckStatus.Pass, 1),
             ),
           ],
         },
@@ -803,7 +817,7 @@ describe("planAudits — evidence gate", () => {
       expect(run.mock.calls[0]?.[0]?.pages).toEqual([page]);
       expect(
         output.categories[0].checks.find((c) => c.id === "universal")?.status,
-      ).toBe("pass");
+      ).toBe(CheckStatus.Pass);
     },
   );
 
@@ -832,7 +846,7 @@ describe("planAudits — evidence gate", () => {
       wafProtection: null,
     });
     return {
-      pages: [{ pageType: "homepage" }],
+      pages: [{ pageType: PageType.Homepage }],
       rootFiles: {},
       domain: "example.com",
       baseUrl: "https://example.com",
@@ -850,21 +864,21 @@ describe("planAudits — evidence gate", () => {
             id: "needs-pages",
             category: "cat1",
             requires: [
-              "origin-reachable",
-              "unblocked-fetches",
-              "rendered-body",
-              "sample-adequate",
+              EvidenceKey.OriginReachable,
+              EvidenceKey.UnblockedFetches,
+              EvidenceKey.RenderedBody,
+              EvidenceKey.SampleAdequate,
             ],
           }),
-          () => result("pass", 1),
+          () => result(CheckStatus.Pass, 1),
         ),
         makeReg(
           meta({
             id: "needs-origin",
             category: "cat1",
-            requires: ["origin-reachable"],
+            requires: [EvidenceKey.OriginReachable],
           }),
-          () => result("pass", 1),
+          () => result(CheckStatus.Pass, 1),
         ),
       ],
     },
@@ -882,7 +896,7 @@ describe("planAudits — evidence gate", () => {
       rootFiles: {},
       wafProtection: {
         isBlocked: true,
-        provider: "cloudflare",
+        provider: WafProvider.Cloudflare,
         name: "Cloudflare Managed Challenge",
         reason: "bot challenge detected",
       },
@@ -900,7 +914,7 @@ describe("planAudits — evidence gate", () => {
 
     expect(plan.runnable).toEqual([]);
     expect(stub).toMatchObject({
-      status: "na",
+      status: CheckStatus.NotApplicable,
       score: 0,
       tags: [TAG_SKIPPED_NO_EVIDENCE],
       explanation:
@@ -941,7 +955,7 @@ describe("planAudits — evidence gate", () => {
 
     expect(plan.runnable).toEqual([]);
     expect(stub).toMatchObject({
-      status: "na",
+      status: CheckStatus.NotApplicable,
       score: 0,
       tags: [TAG_SKIPPED_NO_EVIDENCE],
       explanation:
@@ -983,7 +997,7 @@ describe("planAudits — evidence gate", () => {
 
     expect(plan.runnable).toEqual([]);
     expect(stub).toMatchObject({
-      status: "na",
+      status: CheckStatus.NotApplicable,
       score: 0,
       tags: [TAG_SKIPPED_NO_EVIDENCE],
       explanation:
@@ -1022,9 +1036,9 @@ describe("planAudits — evidence gate", () => {
               id: "needs-pages",
               category: "cat1",
               requires: [
-                "origin-reachable",
-                "rendered-body",
-                "sample-adequate",
+                EvidenceKey.OriginReachable,
+                EvidenceKey.RenderedBody,
+                EvidenceKey.SampleAdequate,
               ],
             }),
           },
@@ -1044,9 +1058,9 @@ describe("planAudits — evidence gate", () => {
     const stub = plan.skipped[0];
 
     expect(stub.id).toBe("needs-pages");
-    expect(stub.status).toBe("na");
+    expect(stub.status).toBe(CheckStatus.NotApplicable);
     expect(stub.tags).toContain("skipped:no-evidence");
-    expect(stub.explanation).toContain("rendered-body");
+    expect(stub.explanation).toContain(EvidenceKey.RenderedBody);
     expect(stub.explanation).toContain("served readable text");
   });
 
@@ -1075,14 +1089,14 @@ describe("planAudits — evidence gate", () => {
             meta({
               id: "product-only",
               category: "cat1",
-              applicablePageTypes: ["product"],
+              applicablePageTypes: [PageType.Product],
               requires: [
-                "origin-reachable",
-                "rendered-body",
-                "sample-adequate",
+                EvidenceKey.OriginReachable,
+                EvidenceKey.RenderedBody,
+                EvidenceKey.SampleAdequate,
               ],
             }),
-            () => result("pass", 1),
+            () => result(CheckStatus.Pass, 1),
           ),
         ],
       },
@@ -1118,8 +1132,17 @@ describe("planAudits — evidence gate", () => {
     });
     const ctx = {
       pages: [
-        { pageType: "homepage", pageTypeSource: "declared" },
-        { pageType: "product", pageTypeSource: "declared" },
+        {
+          ...pages[0],
+          pageType: PageType.Homepage,
+          pageTypeSource: PageTypeSource.Declared,
+        },
+        {
+          ...pages[0],
+          url: "https://example.com/product",
+          pageType: PageType.Product,
+          pageTypeSource: PageTypeSource.Declared,
+        },
       ],
       rootFiles: {},
       domain: "example.com",
@@ -1136,19 +1159,25 @@ describe("planAudits — evidence gate", () => {
             meta({
               id: "product-audit",
               category: "cat1",
-              applicablePageTypes: ["product"],
-              requires: ["origin-reachable", "sample-adequate"],
+              applicablePageTypes: [PageType.Product],
+              requires: [
+                EvidenceKey.OriginReachable,
+                EvidenceKey.SampleAdequate,
+              ],
             }),
-            () => result("pass", 1),
+            () => result(CheckStatus.Pass, 1),
           ),
           makeReg(
             meta({
               id: "homepage-audit",
               category: "cat1",
-              applicablePageTypes: ["homepage"],
-              requires: ["origin-reachable", "sample-adequate"],
+              applicablePageTypes: [PageType.Homepage],
+              requires: [
+                EvidenceKey.OriginReachable,
+                EvidenceKey.SampleAdequate,
+              ],
             }),
-            () => result("pass", 1),
+            () => result(CheckStatus.Pass, 1),
           ),
         ],
       },

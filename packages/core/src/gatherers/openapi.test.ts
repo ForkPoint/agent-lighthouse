@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { mockCheckContext, mockFetchResult } from "../__tests__/test-utils";
+import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
 import {
   NO_OPENAPI_SPEC,
   openApiOperations,

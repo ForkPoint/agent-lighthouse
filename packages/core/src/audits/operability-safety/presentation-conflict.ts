@@ -5,24 +5,25 @@
  * ./_shared.ts.
  */
 import { base, defineA11yAudit, graded } from "./_shared";
+import { CheckPriority, EvidenceGrade, FixEffort } from "#core/types";
 
 export const PresentationConflictAudit = defineA11yAudit({
   rules: ["presentation-role-conflict"],
   meta: {
     ...base,
-    ...graded("A", "presentation-conflict"),
+    ...graded(EvidenceGrade.A, "presentation-conflict"),
     id: "operability-safety/presentation-conflict",
     title: "No presentation-role conflicts",
     failureTitle: "Presentation role conflicts with focusable/labeled element",
     description:
       'An element marked role="presentation"/"none" while still focusable or carrying ARIA sends contradictory signals about whether it exists in the accessibility tree.',
-    defaultPriority: "low",
+    defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
         "A presentational element that is still focusable/labeled confuses agents about whether to treat it as content or ignore it.",
       fix: 'Don’t put role="presentation"/"none" on focusable or ARIA-labeled elements.',
       code: '<!-- BAD --> <a href="/x" role="presentation">Link</a>',
-      effort: "easy",
+      effort: FixEffort.Easy,
       tags: ["aria", "agent"],
     },
   },

@@ -1,7 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { AriaRelationshipsAudit } from "./aria-relationships";
-import { mockCheckContext } from "../../__tests__/test-utils";
+import { mockCheckContext } from "#core/__tests__/test-utils";
 import { pageWithA11y, runA11yAudit } from "./_test-utils";
+import { AuditTier, CheckStatus, EvidenceGrade } from "#core/types";
+import { RuleStatus } from "./engine/rules";
 
 describe("AriaRelationshipsAudit", () => {
   it("registers under the aria-relationships id with its dossier and grade", () => {
@@ -11,16 +13,16 @@ describe("AriaRelationshipsAudit", () => {
     expect(AriaRelationshipsAudit.meta.dossier).toBe(
       "docs/evidence/audits/operability-safety/aria-relationships.md",
     );
-    expect(AriaRelationshipsAudit.meta.evidenceGrade).toBe("A");
-    expect(AriaRelationshipsAudit.meta.tier).toBe("scored");
+    expect(AriaRelationshipsAudit.meta.evidenceGrade).toBe(EvidenceGrade.A);
+    expect(AriaRelationshipsAudit.meta.tier).toBe(AuditTier.Scored);
   });
 
   it("wires exactly its a11y rule(s)", () => {
     const ctx = mockCheckContext([
       pageWithA11y("https://example.com/", {
-        "aria-required-attr": { status: "pass", nodes: [] },
-        "aria-required-children": { status: "pass", nodes: [] },
-        "aria-required-parent": { status: "pass", nodes: [] },
+        "aria-required-attr": { status: CheckStatus.Pass, nodes: [] },
+        "aria-required-children": { status: CheckStatus.Pass, nodes: [] },
+        "aria-required-parent": { status: CheckStatus.Pass, nodes: [] },
       }),
     ]);
     const result = runA11yAudit(AriaRelationshipsAudit, ctx);
@@ -33,69 +35,76 @@ describe("AriaRelationshipsAudit", () => {
     const ctx = mockCheckContext([
       pageWithA11y("https://example.com/", {
         "aria-required-attr": {
-          status: "fail",
+          status: CheckStatus.Fail,
           nodes: [{ target: "#offender", summary: "violation" }],
         },
-        "aria-required-children": { status: "pass", nodes: [] },
-        "aria-required-parent": { status: "pass", nodes: [] },
+        "aria-required-children": { status: CheckStatus.Pass, nodes: [] },
+        "aria-required-parent": { status: CheckStatus.Pass, nodes: [] },
       }),
     ]);
     const result = runA11yAudit(AriaRelationshipsAudit, ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("#offender");
   });
 
   it("fails when the `aria-required-children` rule reports a violation", () => {
     const ctx = mockCheckContext([
       pageWithA11y("https://example.com/", {
-        "aria-required-attr": { status: "pass", nodes: [] },
+        "aria-required-attr": { status: CheckStatus.Pass, nodes: [] },
         "aria-required-children": {
-          status: "fail",
+          status: CheckStatus.Fail,
           nodes: [{ target: "#offender", summary: "violation" }],
         },
-        "aria-required-parent": { status: "pass", nodes: [] },
+        "aria-required-parent": { status: CheckStatus.Pass, nodes: [] },
       }),
     ]);
     const result = runA11yAudit(AriaRelationshipsAudit, ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("#offender");
   });
 
   it("fails when the `aria-required-parent` rule reports a violation", () => {
     const ctx = mockCheckContext([
       pageWithA11y("https://example.com/", {
-        "aria-required-attr": { status: "pass", nodes: [] },
-        "aria-required-children": { status: "pass", nodes: [] },
+        "aria-required-attr": { status: CheckStatus.Pass, nodes: [] },
+        "aria-required-children": { status: CheckStatus.Pass, nodes: [] },
         "aria-required-parent": {
-          status: "fail",
+          status: CheckStatus.Fail,
           nodes: [{ target: "#offender", summary: "violation" }],
         },
       }),
     ]);
     const result = runA11yAudit(AriaRelationshipsAudit, ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("#offender");
   });
 
   it("passes when every constituent rule passes", () => {
     const ctx = mockCheckContext([
       pageWithA11y("https://example.com/", {
-        "aria-required-attr": { status: "pass", nodes: [] },
-        "aria-required-children": { status: "pass", nodes: [] },
-        "aria-required-parent": { status: "pass", nodes: [] },
+        "aria-required-attr": { status: CheckStatus.Pass, nodes: [] },
+        "aria-required-children": { status: CheckStatus.Pass, nodes: [] },
+        "aria-required-parent": { status: CheckStatus.Pass, nodes: [] },
       }),
     ]);
-    expect(runA11yAudit(AriaRelationshipsAudit, ctx).status).toBe("pass");
+    expect(runA11yAudit(AriaRelationshipsAudit, ctx).status).toBe(
+      CheckStatus.Pass,
+    );
   });
 
   it("is na when no constituent rule applies", () => {
     const ctx = mockCheckContext([
       pageWithA11y("https://example.com/", {
-        "aria-required-attr": { status: "inapplicable", nodes: [] },
-        "aria-required-children": { status: "inapplicable", nodes: [] },
-        "aria-required-parent": { status: "inapplicable", nodes: [] },
+        "aria-required-attr": { status: RuleStatus.Inapplicable, nodes: [] },
+        "aria-required-children": {
+          status: RuleStatus.Inapplicable,
+          nodes: [],
+        },
+        "aria-required-parent": { status: RuleStatus.Inapplicable, nodes: [] },
       }),
     ]);
-    expect(runA11yAudit(AriaRelationshipsAudit, ctx).status).toBe("na");
+    expect(runA11yAudit(AriaRelationshipsAudit, ctx).status).toBe(
+      CheckStatus.NotApplicable,
+    );
   });
 });

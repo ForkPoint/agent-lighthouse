@@ -1,8 +1,16 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
 import { parseRobotsTxt, isPathAllowed } from "./_robots-txt-helpers";
-import { weightForGrade } from "../../scorer";
+import { weightForGrade } from "#core/scorer";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 export class NoBlanketBlockAudit extends Audit {
   static override meta: AuditMeta = {
@@ -12,20 +20,20 @@ export class NoBlanketBlockAudit extends Audit {
     failureTitle: "No blanket AI block",
     description:
       "A blanket Disallow: / under User-agent: * blocks every crawler, including all AI agents. Your site becomes invisible to AI search engines, ChatGPT Browse, Perplexity, and others.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/access-crawl-control/no-blanket-block.md",
     // Gate exemption: being refused is what this category reports.
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "critical",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.Critical,
     guidance: {
       impact:
         "A blanket Disallow: / under User-agent: * blocks every crawler, including all AI agents. Your site becomes completely invisible to AI search engines, ChatGPT Browse, Perplexity, Claude, and all other AI-powered discovery tools.",
       fix: "Replace the blanket Disallow: / with targeted path blocks for sensitive areas only. Allow the root path and block only private directories like /api/ and /admin/.",
       code: "User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /admin/\nDisallow: /internal/",
-      effort: "trivial",
+      effort: FixEffort.Trivial,
       docsUrl:
         "https://developers.google.com/search/docs/crawling-indexing/robots/intro",
       tags: ["robots-txt", "critical", "crawler-permissions"],
@@ -41,7 +49,7 @@ export class NoBlanketBlockAudit extends Audit {
         "User-agent: * does not Disallow: / entirely",
         "No robots.txt found",
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "Without a robots.txt file, there is no way to verify whether crawler permissions are correctly configured. Create a robots.txt file with explicit rules for AI crawlers.",
           code: "User-agent: *\nAllow: /",
@@ -61,7 +69,7 @@ export class NoBlanketBlockAudit extends Audit {
         "User-agent: * does not Disallow: / entirely",
         "User-agent: * contains Disallow: /",
         {
-          priority: "critical",
+          priority: CheckPriority.Critical,
           description:
             "A blanket Disallow: / under User-agent: * blocks every crawler, including all AI agents. Your site becomes invisible to AI search engines, ChatGPT Browse, Perplexity, and others. Replace it with targeted path blocks for sensitive areas only.",
           code: "User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /admin/\nDisallow: /internal/",

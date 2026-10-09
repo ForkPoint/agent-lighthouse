@@ -29,7 +29,30 @@ sources:
 
 ## What it checks
 
-A site-wide nofollow directive prevents AI crawlers from following links to discover your content. Important internal links should be followable.
+Reads page-level `nofollow` in robots metadata and X-Robots-Tag headers on each
+scanned page. Applebot documents that this directive stops link traversal on that
+page. The audit does not inspect individual anchors or prove that linked pages
+cannot be discovered through other sources.
+
+## How it scores
+
+- No scanned pages: `notApplicable`.
+- No scanned page carries the directive: `pass`.
+- Some scanned pages carry the directive: `warn`.
+- Every scanned page carries the directive: `fail`.
+
+The sample is the selected pages, not the whole site. Page order does not change
+the result or the representative affected URL. Evidence lists up to five sorted
+URLs and the number of additional affected pages. Long evidence text is bounded
+by the result schema.
+
+## Limits
+
+The current predicate still uses substring matching for `nofollow`. It does not
+recognize `none`, resolve named-bot directives, or exempt legitimate utility
+pages. These limits remain pending. The finding asks for a policy review, not
+removal of every intentional restriction. Metadata and response headers remain
+checkable when the page body has no readable text.
 
 ## Code review findings (2026-08-20, 11-agent pass)
 
@@ -70,6 +93,15 @@ Title and guidance promise 'No nofollow on important links' and advise reserving
 
 ## Implementation deviations
 
+- 2026-10-07 — common-page scope correction: empty samples now return
+  `notApplicable`; affected URLs sort before selection; both failure and warning
+  evidence name affected pages and pass through result bounds. The title and
+  guidance describe page directives and the documented Applebot consumer,
+  rather than individual links or guaranteed site-wide invisibility. Existing
+  all/some/none aggregation, grade, tier, weight and metadata requirements stay
+  unchanged. The body-readability exemption has runner tests across all four
+  current page types and both provenance values.
+
 - 2026-08-28 — the audit declines when the scan holds no response it can
   attribute to this site. It read the nofollow directives on the scanned
   pages, and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a
@@ -95,3 +127,13 @@ Title and guidance promise 'No nofollow on important links' and advise reserving
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+## Deferred
+
+- Replace substring matching with directive-aware parsing, including `none` and
+  bot-specific scope. Test this independently of the completed page-scope fix.
+- Establish utility/indexable-page eligibility from supported purpose evidence.
+  Preserve intentional restrictions. The current whole-sample severity remains
+  unchanged until that population review has its own tests and evidence.
+- Reconcile the historical scan-gate notes with the current runner-owned
+  `requires` contract during the 7.0.0 architecture update.

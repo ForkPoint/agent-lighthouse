@@ -1,7 +1,15 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 export class OgImageAltAudit extends Audit {
   static override meta: AuditMeta = {
@@ -11,24 +19,24 @@ export class OgImageAltAudit extends Audit {
     failureTitle: "og:image:alt present",
     description:
       "AI agents cannot process images directly and rely on og:image:alt text to understand your page's visual content. Without alt text, the OG image is invisible to text-based AI systems that generate answers and summaries about your page.",
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "informative"),
-    evidenceGrade: "C",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/answer-readiness/og-image-alt.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "medium",
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "AI agents cannot process images directly and rely on og:image:alt text to understand your page's visual content. Without alt text, the OG image is invisible to text-based AI systems generating answers about your page.",
       fix: "Add an og:image:alt meta tag with a descriptive text that explains what the OG image shows. Keep it concise but informative.",
       code: '<meta property="og:image" content="https://yoursite.com/image.png">\n<meta property="og:image:alt" content="Screenshot of the dashboard showing analytics overview">',
-      effort: "trivial",
+      effort: FixEffort.Trivial,
       docsUrl: "https://ogp.me/",
       tags: ["meta-tags", "open-graph", "a11y"],
     },
@@ -45,7 +53,7 @@ export class OgImageAltAudit extends Audit {
         "og:image:alt with descriptive alt text when og:image is set",
         "No og:image",
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "AI agents cannot process images directly and rely on og:image:alt text to understand visual content. Without an og:image and alt text, agents have no visual context to reference when generating answers about your page.",
           code: '<meta property="og:image" content="https://yoursite.com/image.png">\n<meta property="og:image:alt" content="Description of the image">',
@@ -68,7 +76,7 @@ export class OgImageAltAudit extends Audit {
       "og:image:alt with descriptive alt text when og:image is set",
       "Not found",
       {
-        priority: "medium",
+        priority: CheckPriority.Medium,
         description:
           "AI agents cannot process images directly and rely on og:image:alt text to understand your page's visual content. Without alt text, the OG image is invisible to text-based AI systems that generate answers and summaries about your page.",
         code: '<meta property="og:image:alt" content="Description of the image">',

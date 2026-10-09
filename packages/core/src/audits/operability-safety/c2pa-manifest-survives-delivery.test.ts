@@ -4,14 +4,15 @@ import {
   mockPageContext,
   mockCheckContext,
   mockFetchResult,
-} from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import { MAX_RESPONSE_BODY_BYTES } from "../../constants";
-import type { FetchOptions, FetchResult } from "../../fetcher";
-import type { AuditResult } from "../../types";
+} from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import { MAX_RESPONSE_BODY_BYTES } from "#core/constants";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import type { AuditResult } from "#core/types";
+import { AuditTier, CheckStatus, EvidenceGrade } from "#core/types";
 
-vi.mock("../../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => url.startsWith("https://example.com"),
@@ -82,7 +83,7 @@ describe("C2paManifestSurvivesDeliveryAudit", () => {
       html: "<html><body><p>Text only.</p></body></html>",
       images: {},
     });
-    expect((await result).status).toBe("na");
+    expect((await result).status).toBe(CheckStatus.NotApplicable);
   });
 
   // Nothing to strip is not a defect.
@@ -91,7 +92,7 @@ describe("C2paManifestSurvivesDeliveryAudit", () => {
       html: '<html><body><img src="/a.jpg"></body></html>',
       images: { "https://example.com/a.jpg": plainJpeg() },
     });
-    expect((await result).status).toBe("na");
+    expect((await result).status).toBe(CheckStatus.NotApplicable);
   });
 
   it("fails when the origin carries a manifest and the served variant does not", async () => {
@@ -104,7 +105,7 @@ describe("C2paManifestSurvivesDeliveryAudit", () => {
       },
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "strippedInTransit").join(" ")).toContain("hero.jpg");
     expect(r.details?.["manifestCoverage"]).toBe(0);
   });
@@ -118,7 +119,7 @@ describe("C2paManifestSurvivesDeliveryAudit", () => {
       },
     });
     const r = await result;
-    expect(r.status).toBe("pass");
+    expect(r.status).toBe(CheckStatus.Pass);
     expect(strings(r, "preserved")).toHaveLength(1);
     expect(r.details?.["manifestCoverage"]).toBe(100);
   });
@@ -129,7 +130,7 @@ describe("C2paManifestSurvivesDeliveryAudit", () => {
       images: { "https://example.com/hero.jpg": signedJpeg() },
     });
     const r = await result;
-    expect(r.status).toBe("pass");
+    expect(r.status).toBe(CheckStatus.Pass);
   });
 
   // A store may sit past the read cap, so a truncated asset is unknown, not unsigned.
@@ -169,8 +170,8 @@ describe("C2paManifestSurvivesDeliveryAudit", () => {
 
   it("registers as a scored grade-B audit", () => {
     const { meta } = C2paManifestSurvivesDeliveryAudit;
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
     expect(meta.weight).toBeCloseTo(0.6);
     expect(meta.id.length).toBeLessThanOrEqual(64);
   });

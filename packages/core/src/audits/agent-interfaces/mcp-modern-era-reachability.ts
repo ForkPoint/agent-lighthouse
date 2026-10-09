@@ -4,11 +4,11 @@
 // Revision 2026-07-28 abolished the initialize handshake. One unauthenticated
 // POST of server/discover therefore answers the only question that matters
 // first: can a client built on the current revision use this server at all.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import type { FetchResult } from "../../fetcher";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import type { FetchResult } from "#core/fetcher";
 import {
   discoverMcpEndpoint,
   discoverProbe,
@@ -18,7 +18,16 @@ import {
   sharedProbe,
   isObject,
   MCP_PROTOCOL_VERSION,
-} from "../../gatherers/mcp";
+} from "#core/gatherers/mcp";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+  HttpMethod,
+} from "#core/types";
 
 /** The audit that owns the challenge this one can only report. */
 const OAUTH_AUDIT = "agent-interfaces/mcp-oauth-discovery-chain";
@@ -107,20 +116,20 @@ export class McpModernEraReachabilityAudit extends Audit {
     failureTitle: "Modern-Era Reachability Probe (server/discover)",
     description:
       "Determine, with one unauthenticated stateless POST, whether the site's MCP endpoint can be used at all by a client built on the current protocol revision (2026-07-28). Classifies the endpoint into modern / dual-era / legacy-only / deprecated-HTTP+SSE / unreachable, and extracts supportedVersions, capabilities, instructions and serverInfo from the DiscoverResult.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/agent-interfaces/mcp-modern-era-reachability.md",
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "high",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "Revision 2026-07-28 abolished the `initialize` handshake and protocol-level sessions: version, client identity and capabilities now travel as per-request `_meta`, and `server/discover` is a MUST-implement RPC. The spec's own compatibility matrix states verbatim that a Modern client against a Legacy server FAILS, with no fall-forward path. Therefore: if a single POST of `server/discover` carrying `_meta` + `MCP-Protocol-Version: 2026-07-28` does not yield either a DiscoverResult or a recognized modern JSON-RPC error, then every client that has moved to the current revision cannot invoke a single tool on this server — the failure is total, not degraded. Conversely a 404/-32601 on `server/discover` from a server that otherwise answers modern requests is a direct MUST violation that breaks pre-consent capability presentation.",
       fix: `Implement \`server/discover\` and answer it without authentication, returning \`supportedVersions\` that include ${MCP_PROTOCOL_VERSION}, your real \`capabilities\`, an \`instructions\` string and \`serverInfo\`. Read the protocol revision from the \`MCP-Protocol-Version\` header and from \`params._meta\`, and reject an unsupported one with JSON-RPC error -32022 carrying \`data.supported\`, rather than with a bare 400 or a demand for \`initialize\`. Retire the 2024-11-05 HTTP+SSE transport: a GET that opens a stream with an \`endpoint\` event has been deprecated since 2025-03-26. On a Streamable HTTP endpoint, GET and DELETE answer 405 and no \`Mcp-Session-Id\` is minted.`,
       code: SAMPLE,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/agent-interfaces/mcp-modern-era-reachability/",
       tags: [
@@ -149,7 +158,7 @@ export class McpModernEraReachabilityAudit extends Audit {
     const where = `${url} (declared in ${endpoint.source})`;
     const discover = await discoverProbe(ctx, url);
     const get = await sharedProbe(ctx, `get|${url}`, () =>
-      mcpFetch(ctx, url, { method: "GET" }),
+      mcpFetch(ctx, url, { method: HttpMethod.Get }),
     );
 
     // The deprecated transport is diagnosed from the GET, whatever the POST did:
@@ -159,7 +168,7 @@ export class McpModernEraReachabilityAudit extends Audit {
         `${url} answers GET with an SSE stream whose first event is \`endpoint\`, which is the ${DEPRECATED_REVISION} HTTP+SSE transport. It has been deprecated since 2025-03-26 and is eligible for removal, and a client on ${MCP_PROTOCOL_VERSION} cannot speak it.`,
         EXPECTED,
         `${where}; era=deprecated-HTTP+SSE`,
-        "high",
+        CheckPriority.High,
       );
     }
 
@@ -168,7 +177,7 @@ export class McpModernEraReachabilityAudit extends Audit {
         `${url} did not answer a server/discover probe — the endpoint is unreachable, or it was refused before any request because it is not an HTTP(S) URL on a public address.`,
         EXPECTED,
         `${where}; era=unreachable`,
-        "high",
+        CheckPriority.High,
       );
     }
 
@@ -178,7 +187,7 @@ export class McpModernEraReachabilityAudit extends Audit {
         `${url} answers server/discover with HTTP 401 and a \`WWW-Authenticate\` challenge, so its capabilities cannot be read before consent. That is legitimate for a private server; whether the challenge leads anywhere is scored by ${OAUTH_AUDIT}.`,
         EXPECTED,
         `${where}; era=auth-gated; challenge=${challenge.split(" ")[0] ?? "Bearer"}`,
-        "medium",
+        CheckPriority.Medium,
       );
     }
 
@@ -196,7 +205,7 @@ export class McpModernEraReachabilityAudit extends Audit {
         `${url} is a modern-era server on an older revision: it rejected ${MCP_PROTOCOL_VERSION} with JSON-RPC -32022 and supports ${supported.length > 0 ? supported.join(", ") : "no revision it would name"}${best ? `, newest ${best}` : ""}. Clients on the current revision fail against it until it is upgraded.`,
         EXPECTED,
         `${where}; era=dual-era; newest supported ${best ?? "unknown"}`,
-        "medium",
+        CheckPriority.Medium,
       );
     }
 
@@ -205,7 +214,7 @@ export class McpModernEraReachabilityAudit extends Audit {
         `${url} answers modern JSON-RPC but returns -32601 Method not found for server/discover. That is a MUST violation of ${MCP_PROTOCOL_VERSION}: a client cannot read capabilities, instructions or serverInfo before asking the user for consent.`,
         EXPECTED,
         `${where}; era=modern; server/discover missing`,
-        "critical",
+        CheckPriority.Critical,
       );
     }
 
@@ -223,14 +232,14 @@ export class McpModernEraReachabilityAudit extends Audit {
           `${url} is LEGACY-ONLY: it refused server/discover (HTTP ${discover.status}${demandsInitialize(discover) ? ", demanding `initialize` first" : ""}) and answered a 2025-03-26 \`initialize\` with an \`Mcp-Session-Id\` header. Every client on ${MCP_PROTOCOL_VERSION} fails against it, with no fall-forward path.`,
           EXPECTED,
           `${where}; era=legacy-only; Mcp-Session-Id minted`,
-          "critical",
+          CheckPriority.Critical,
         );
       }
       return this.fail(
         `${url} answered neither a modern server/discover (HTTP ${discover.status}: ${parsed.ok ? "unexpected status" : parsed.reason}) nor a legacy \`initialize\` handshake, so no MCP client of any era can use it.`,
         EXPECTED,
         `${where}; era=unusable`,
-        "critical",
+        CheckPriority.Critical,
       );
     }
 
@@ -253,7 +262,7 @@ export class McpModernEraReachabilityAudit extends Audit {
 
     // Residue: a modern endpoint has no stream to open and no session to delete.
     const del = await sharedProbe(ctx, `delete|${url}`, () =>
-      mcpFetch(ctx, url, { method: "DELETE" }),
+      mcpFetch(ctx, url, { method: HttpMethod.Delete }),
     );
     const residue: string[] = [];
     if (get && get.status !== METHOD_NOT_ALLOWED) {
@@ -277,7 +286,7 @@ export class McpModernEraReachabilityAudit extends Audit {
         `${url} answers server/discover but its result carries no \`supportedVersions\`, so a client cannot tell which revisions it accepts without probing.`,
         EXPECTED,
         found,
-        "medium",
+        CheckPriority.Medium,
       );
     }
 
@@ -286,7 +295,7 @@ export class McpModernEraReachabilityAudit extends Audit {
         `${url} answers server/discover but lists ${declared.join(", ")} without ${MCP_PROTOCOL_VERSION}, so clients on the current revision are not admitted.`,
         EXPECTED,
         found,
-        "medium",
+        CheckPriority.Medium,
       );
     }
 
@@ -295,7 +304,7 @@ export class McpModernEraReachabilityAudit extends Audit {
         `${url} is a modern ${MCP_PROTOCOL_VERSION} server, with legacy residue: ${residue.join("; ")}. Residue is not fatal, but it keeps a transport alive that the current revision does not define.`,
         EXPECTED,
         `${found}; residue: ${residue.length}`,
-        "low",
+        CheckPriority.Low,
       );
     }
 

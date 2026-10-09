@@ -1,7 +1,15 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext, PageContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /**
  * Meta names that carry robots directives. `robots` is the generic form; the
@@ -159,21 +167,21 @@ export class MetaRobotsNotBlockingAudit extends Audit {
     failureTitle: "Robots directives block AI indexing",
     description:
       'Robots directives — `<meta name="robots">`, per-bot meta tags and the `X-Robots-Tag` header — decide whether a page can be indexed at all and whether it can be quoted in an AI answer. A `noindex` on a content page removes it from the index AI Overviews and AI Mode draw on; `nosnippet` and `max-snippet:0` leave it indexed but unquotable.',
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/access-crawl-control/robots-directives.md",
     // Gate exemption: being refused is what this category reports, and robots directives
     // live in the head and the headers, which arrive whether or not the body renders.
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "high",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         'A content page carrying "noindex" (in a robots meta tag, a per-bot meta tag, or the X-Robots-Tag response header) is dropped from the search index, and Google documents that a page must be indexed to appear in AI Overviews or AI Mode. "nosnippet", "noarchive" and "max-snippet:0" keep the page indexed but stop its text being used as a direct input for AI answers.',
       fix: 'Remove "noindex"/"none" from the content pages you want AI agents to read — check the X-Robots-Tag response header as well as the HTML, since CDN and staging rules apply it there. Drop "nosnippet", "noarchive" and "max-snippet:0" from pages you want quoted. Leaving noindex on cart, login, search and account routes is correct and is not reported as a defect.',
       code: '<meta name="robots" content="index, follow">',
-      effort: "trivial",
+      effort: FixEffort.Trivial,
       docsUrl:
         "https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag",
       tags: ["meta-tags", "indexing", "crawler-permissions"],
@@ -224,7 +232,9 @@ export class MetaRobotsNotBlockingAudit extends Audit {
         "No blocking robots directive on content pages",
         blockedContent.map((v) => describe(v, v.blocking)).join(" | "),
         {
-          priority: homepageBlocked ? "critical" : "high",
+          priority: homepageBlocked
+            ? CheckPriority.Critical
+            : CheckPriority.High,
           description:
             "These pages are excluded from the search index, and Google documents that a page must be indexed to be shown as a supporting link in AI Overviews or AI Mode. Remove the noindex/none directive — checking the X-Robots-Tag response header as well as the HTML — from every page you want AI agents to find.",
           code: '<!-- Replace noindex with: -->\n<meta name="robots" content="index, follow">',
@@ -239,7 +249,7 @@ export class MetaRobotsNotBlockingAudit extends Audit {
         "No blocking robots directive on content pages",
         suppressedContent.map((v) => describe(v, v.suppressing)).join(" | "),
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             'These pages stay in the index but their text cannot be used. Google documents that "nosnippet" prevents content "being used as a direct input for AI Overviews and AI Mode" and that "max-snippet" limits it; Bing documents that "noarchive" content is not included in its chat answers. Remove the directive from pages you want cited.',
           code: '<meta name="robots" content="index, follow, max-snippet:-1">',

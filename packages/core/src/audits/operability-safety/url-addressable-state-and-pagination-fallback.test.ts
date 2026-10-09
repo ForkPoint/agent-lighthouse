@@ -4,13 +4,19 @@ import {
   mockPageContext,
   mockCheckContext,
   mockFetchResult,
-} from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { CheckContext } from "../../check-context";
-import type { FetchOptions } from "../../fetcher";
+} from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { CheckContext } from "#core/check-context";
+import type { FetchOptions } from "#core/fetcher";
+import {
+  AuditTier,
+  CheckStatus,
+  EvidenceGrade,
+  ScoreDisplayMode,
+} from "#core/types";
 
-vi.mock("../../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => {
@@ -63,7 +69,7 @@ describe("UrlAddressableStateAndPaginationFallbackAudit", () => {
         '<nav class="pagination"><a href="?page=2">2</a><a href="?page=3">3</a></nav>',
       ),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("60");
   });
 
@@ -71,14 +77,14 @@ describe("UrlAddressableStateAndPaginationFallbackAudit", () => {
     const result = await audit.audit(
       listing("", '<link rel="next" href="?page=2">'),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("fails a listing whose only affordance is an infinite-scroll sentinel", async () => {
     const result = await audit.audit(
       listing('<div class="infinite-sentinel"></div>'),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   // A button is a discrete action, so it beats a scroll sentinel; it still
@@ -93,7 +99,7 @@ describe("UrlAddressableStateAndPaginationFallbackAudit", () => {
     const sentinel = await audit.audit(
       listing('<div class="infinite-sentinel"></div>'),
     );
-    expect(button.status).toBe("warn");
+    expect(button.status).toBe(CheckStatus.Warn);
     expect(href.score).toBeGreaterThan(button.score);
     expect(button.score).toBeGreaterThan(sentinel.score);
   });
@@ -105,7 +111,7 @@ describe("UrlAddressableStateAndPaginationFallbackAudit", () => {
       numberOfItems: 100,
     })}</script>`;
     const result = await audit.audit(listing("", schema));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("100");
     expect(result.message).toContain("20");
   });
@@ -129,7 +135,7 @@ describe("UrlAddressableStateAndPaginationFallbackAudit", () => {
       mockFetchResult(filtered, 200, "text/html");
     const result = await audit.audit(ctx);
     expect(result.details?.["clientOnlyFacets"]).toBe(0);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("is notApplicable when the site has no listing page", async () => {
@@ -141,15 +147,15 @@ describe("UrlAddressableStateAndPaginationFallbackAudit", () => {
       ),
     ]);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   // Tabs and modals need a live browser to click. The audit must not claim them.
   it("does not promise the headless tab and modal extension", () => {
     const { meta } = UrlAddressableStateAndPaginationFallbackAudit;
     expect(meta.description).not.toContain("modal");
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
-    expect(meta.scoreDisplayMode).toBe("ternary");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
+    expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Ternary);
   });
 });

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { AgentGovernanceAudit } from "./agent-governance";
-import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
+import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 describe("AgentGovernanceAudit", () => {
   const audit = new AgentGovernanceAudit();
@@ -26,7 +27,7 @@ describe("AgentGovernanceAudit", () => {
       "/robots.txt": mockFetchResult(robots, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("2 training crawler(s)");
     expect(result.details?.trainingAgents).toEqual(["GPTBot", "CCBot"]);
     expect(result.details?.realtimeAgents).toEqual([
@@ -77,7 +78,7 @@ describe("AgentGovernanceAudit", () => {
       "/robots.txt": mockFetchResult(robots, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("different policies");
   });
 
@@ -93,7 +94,7 @@ describe("AgentGovernanceAudit", () => {
       "/robots.txt": mockFetchResult(robots, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("Only training crawlers");
     expect(result.details?.trainingAgents).toEqual(["GPTBot"]);
     expect(result.details?.realtimeAgents).toEqual([]);
@@ -110,7 +111,7 @@ describe("AgentGovernanceAudit", () => {
       "/robots.txt": mockFetchResult(robots, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.details?.hasCatchAll).toBe(true);
   });
 
@@ -123,7 +124,7 @@ describe("AgentGovernanceAudit", () => {
       "/robots.txt": mockFetchResult(robots, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("live conversational agents");
   });
 
@@ -136,13 +137,13 @@ describe("AgentGovernanceAudit", () => {
       "/robots.txt": mockFetchResult(robots, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).not.toBe("fail");
+    expect(result.status).not.toBe(CheckStatus.Fail);
   });
 
   it("is not applicable when robots.txt is missing", () => {
     const ctx = mockCheckContext([], {});
     const result = audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("No robots.txt found");
   });
 
@@ -151,6 +152,6 @@ describe("AgentGovernanceAudit", () => {
       "/robots.txt": mockFetchResult("", 404),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 });

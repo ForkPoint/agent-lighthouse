@@ -43,17 +43,31 @@ it("exposes usable declarations to ESM and CommonJS consumers without workspace 
       }
     }
     const consumer = `
-import { runScan, defineConfig, type ScanOptions } from "@forkpoint/agent-lighthouse-core";
-import { generateHtmlReport } from "@forkpoint/agent-lighthouse-report";
+import { runScan, defineConfig, PageScopeOptionsSchema, ScannedPageSchema, PageAttemptSchema, type ScanOptions, type AuditCoverage } from "@forkpoint/agent-lighthouse-core";
+import { generateHtmlReport, buildReportView, formatPageScope, formatAuditScope } from "@forkpoint/agent-lighthouse-report";
 import { auditWebsite } from "@forkpoint/agent-lighthouse-mcp";
 import "@forkpoint/agent-lighthouse";
-const options: ScanOptions = { timeoutMs: 1000 };
+const options: ScanOptions = { timeoutMs: 1000, pageType: "article", pages: [{ url: "https://example.com/product", pageType: "product" }] };
 const scan = runScan("https://example.com", options);
-scan.then(report => generateHtmlReport(report));
-void auditWebsite("https://example.com");
+scan.then(report => {
+  generateHtmlReport(report);
+  const scope = buildReportView(report).pageScope;
+  if (scope) {
+    formatPageScope(scope);
+    scope.audits.forEach(formatAuditScope);
+  }
+  const coverage: AuditCoverage | undefined = report.categories[0]?.checks[0]?.coverage;
+  void coverage;
+  report.pagesScanned.forEach(page => ScannedPageSchema.parse(page));
+  report.pageAttempts?.forEach(attempt => PageAttemptSchema.parse(attempt));
+});
+PageScopeOptionsSchema.parse(options);
+void auditWebsite("https://example.com", { pageType: "article", pages: options.pages });
 void defineConfig;
 // @ts-expect-error the URL must be a string
 runScan(1);
+// @ts-expect-error author is not a supported page purpose
+void auditWebsite("https://example.com", { pageType: "author" });
 `;
     writeFileSync(join(fixture, "consumer.mts"), consumer);
     writeFileSync(join(fixture, "consumer.cts"), consumer);
@@ -82,6 +96,37 @@ runScan(1);
     );
     expect(result.error).toBeUndefined();
     expect(result.status, result.stdout + result.stderr).toBe(0);
+    // Run the built exports as well as compiling their declarations. No network.
+    const runtime = `
+const oldPage = { url: "https://example.com/", pageType: "content" };
+if (JSON.stringify(core.ScannedPageSchema.parse(oldPage)) !== JSON.stringify(oldPage)) throw new Error("Legacy page changed");
+if (core.PageScopeOptionsSchema.safeParse({ pageType: "author" }).success) throw new Error("Invalid purpose accepted");
+const scope = { pages: [{ url: oldPage.url, pageType: "article", classification: { type: "article", source: "detected", confidence: "hint", signals: ["article-url-hint"] } }], audits: [] };
+if (!report.formatPageScope(scope).includes("detected, hint")) throw new Error("Scope export lost evidence");
+if (typeof mcp.auditWebsite !== "function") throw new Error("MCP export absent");
+`;
+    for (const mode of ["cjs", "mjs"]) {
+      const imports = [
+        ["core", "@forkpoint/agent-lighthouse-core"],
+        ["report", "@forkpoint/agent-lighthouse-report"],
+        ["mcp", "@forkpoint/agent-lighthouse-mcp"],
+      ]
+        .map(([name, pkg]) =>
+          mode === "cjs"
+            ? `const ${name} = require("${pkg}");`
+            : `import * as ${name} from "${pkg}";`,
+        )
+        .join("\n");
+      const path = join(fixture, `runtime.${mode}`);
+      writeFileSync(path, imports + runtime);
+      const run = spawnSync(process.execPath, [path], {
+        cwd: fixture,
+        encoding: "utf8",
+        timeout: 20_000,
+      });
+      expect(run.error).toBeUndefined();
+      expect(run.status, run.stdout + run.stderr).toBe(0);
+    }
   } finally {
     rmSync(fixture, { recursive: true, force: true });
   }

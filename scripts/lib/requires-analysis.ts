@@ -11,23 +11,19 @@ import {
   auditSourceFiles,
   declaredIds,
   readsPagesDirectly,
-} from "../../packages/core/src/tests/audit-sources";
+} from "#core/tests/audit-sources";
+import { EvidenceKey } from "#core/types";
 
 export { auditSourceFiles, declaredIds, readsPagesDirectly };
 
 /** Every evidence key, in the order they are declared in `scan-evidence.ts`. */
-export const EVIDENCE_KEYS: readonly string[] = [
-  "origin-reachable",
-  "unblocked-fetches",
-  "rendered-body",
-  "sample-adequate",
-];
+export const EVIDENCE_KEYS: readonly string[] = Object.values(EvidenceKey);
 
 /** What an audit needs when it reads pages, and when it does not. */
 const PAGE_FED_REQUIRES: readonly string[] = EVIDENCE_KEYS;
 const ORIGIN_ONLY_REQUIRES: readonly string[] = [
-  "origin-reachable",
-  "unblocked-fetches",
+  EvidenceKey.OriginReachable,
+  EvidenceKey.UnblockedFetches,
 ];
 
 /**
@@ -80,16 +76,16 @@ export interface GateExemption {
  */
 export const GATE_EXEMPTIONS: Record<string, GateExemption> = {
   "content-extraction/server-rendered": {
-    drop: ["rendered-body", "sample-adequate"],
+    drop: [EvidenceKey.RenderedBody, EvidenceKey.SampleAdequate],
     reason:
       "A shell is what this audit reports. Gating it would delete the finding.",
   },
   "operability-safety/no-blocking-captcha": {
     drop: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     reason:
       "The runner rejects an unread scan first. On a readable response, wafProtection " +
@@ -97,10 +93,10 @@ export const GATE_EXEMPTIONS: Record<string, GateExemption> = {
   },
   "access-crawl-control/no-bot-detection": {
     drop: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     reason:
       "The runner rejects an unread scan first. On a readable response, wafProtection " +
@@ -108,52 +104,52 @@ export const GATE_EXEMPTIONS: Record<string, GateExemption> = {
   },
   "access-crawl-control/no-redirect-chains": {
     drop: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     reason:
       "The runner rejects an unread scan first. On a readable response, request and final " +
       "URLs prove the redirect chain without rendered text, an adequate page sample, or unblocked status.",
   },
   "access-crawl-control/no-nofollow": {
-    drop: ["rendered-body", "sample-adequate"],
+    drop: [EvidenceKey.RenderedBody, EvidenceKey.SampleAdequate],
     reason:
       'Reads `<meta name="robots">` and the X-Robots-Tag header. A body that renders no ' +
       "text still carries both.",
   },
   "access-crawl-control/robots-directives": {
-    drop: ["rendered-body", "sample-adequate"],
+    drop: [EvidenceKey.RenderedBody, EvidenceKey.SampleAdequate],
     reason:
       "Reads robots directives from meta tags and the X-Robots-Tag header, both served " +
       "whole by a page whose body is empty.",
   },
   "access-crawl-control/robots-ai-group-shadowing": {
-    drop: ["rendered-body", "sample-adequate"],
+    drop: [EvidenceKey.RenderedBody, EvidenceKey.SampleAdequate],
     reason:
       "The verdict comes from robots.txt. The scanned pages only contribute extra probe " +
       "paths, so a shell narrows the probe set without changing what is judged.",
   },
   "content-extraction/language-attribute": {
-    drop: ["rendered-body", "sample-adequate"],
+    drop: [EvidenceKey.RenderedBody, EvidenceKey.SampleAdequate],
     reason:
       "Reads the `lang` attribute on `<html>`, which is served before any body renders.",
   },
   "content-extraction/server-responsiveness": {
-    drop: ["rendered-body", "sample-adequate"],
+    drop: [EvidenceKey.RenderedBody, EvidenceKey.SampleAdequate],
     reason:
       "Measures TTFB from the response. A shell answers as fast or as slow as anything " +
       "else the origin serves.",
   },
   "answer-readiness/descriptive-urls": {
-    drop: ["rendered-body", "sample-adequate"],
+    drop: [EvidenceKey.RenderedBody, EvidenceKey.SampleAdequate],
     reason:
       "Judges the URL strings of the pages the scan fetched. A URL is readable whether or " +
       "not the page behind it rendered text.",
   },
   "operability-safety/third-party-dom-write-blast-radius": {
-    drop: ["rendered-body", "sample-adequate"],
+    drop: [EvidenceKey.RenderedBody, EvidenceKey.SampleAdequate],
     reason:
       "Every origin the served HTML names is counted whether or not the body renders, and " +
       "a page that ships a vendor script statically is the case worth reporting. The audit " +
@@ -161,10 +157,10 @@ export const GATE_EXEMPTIONS: Record<string, GateExemption> = {
   },
   "access-crawl-control/https-enabled": {
     drop: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     reason:
       "The runner rejects an unread scan first. Once a response is readable, the base URL " +

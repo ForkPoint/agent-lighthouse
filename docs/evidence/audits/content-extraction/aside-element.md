@@ -38,6 +38,8 @@ sources:
 
 ## What it checks
 
+The v7 runner includes `article` and `unknown` alongside legacy `content` in this check's existing page population. This preserves coverage when the old catch-all classification becomes unknown. The audit body still owns its existing feature and artifact guards. This scope change does not establish a new consumer path.
+
 AI agents use <aside> to distinguish supplementary content (sidebars, callouts, related links) from primary content. Without it, sidebar content may be mixed into the main content extraction, diluting the primary message in AI-generated summaries.
 
 ## Code review findings (2026-08-20, 11-agent pass)
@@ -130,3 +132,11 @@ This audit was a delete candidate and went through dedicated adversarial researc
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — adversarial redemption research; user accepted verdict (grade B, rewrite required).
 - 2026-08-22 — required rework executed (Plan 4, Task 11): check made conditional on detected supplementary content, `na` when a page legitimately has none, page-type filter aligned with `applicablePageTypes`, `binary` → `ternary`, guidance now states that Readability and trafilatura discard `<aside>` content. Grade B / tier `scored` / weight 0.6 unchanged; `TODO(redeem)` marker removed from the source file.
+
+## Implementation deviations (v7 P3, 2026-10-07)
+
+The added labels preserve the old general-content population while classification changes. This is not the final feature-gate migration. The evidence grade, tier, weight, and audit ID stay unchanged.
+
+## Deferred (v7 P3)
+
+See `docs/architecture/v7-audit-applicability-ledger.md` for the remaining audit-specific guards, population limits, and aggregation work. P4 will address selected-page evidence and mixed provenance.

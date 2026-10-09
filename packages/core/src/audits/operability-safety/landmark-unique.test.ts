@@ -1,8 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { LandmarkUniqueAudit } from "./landmark-unique";
-import { mockCheckContext } from "../../__tests__/test-utils";
+import { mockCheckContext } from "#core/__tests__/test-utils";
 import { pageWithA11y, runA11yAudit } from "./_test-utils";
 import { runA11yForHtml } from "./runner";
+import { AuditTier, CheckStatus, EvidenceGrade } from "#core/types";
+import { RuleStatus } from "./engine/rules";
 
 const doc = (body: string) =>
   `<!doctype html><html lang="en"><head><title>t</title></head><body>${body}</body></html>`;
@@ -21,14 +23,14 @@ describe("LandmarkUniqueAudit", () => {
     expect(LandmarkUniqueAudit.meta.dossier).toBe(
       "docs/evidence/audits/operability-safety/landmark-unique.md",
     );
-    expect(LandmarkUniqueAudit.meta.evidenceGrade).toBe("A");
-    expect(LandmarkUniqueAudit.meta.tier).toBe("scored");
+    expect(LandmarkUniqueAudit.meta.evidenceGrade).toBe(EvidenceGrade.A);
+    expect(LandmarkUniqueAudit.meta.tier).toBe(AuditTier.Scored);
   });
 
   it("wires exactly its a11y rule(s)", () => {
     const ctx = mockCheckContext([
       pageWithA11y("https://example.com/", {
-        "landmark-unique": { status: "pass", nodes: [] },
+        "landmark-unique": { status: CheckStatus.Pass, nodes: [] },
       }),
     ]);
     const result = runA11yAudit(LandmarkUniqueAudit, ctx);
@@ -39,32 +41,36 @@ describe("LandmarkUniqueAudit", () => {
     const ctx = mockCheckContext([
       pageWithA11y("https://example.com/", {
         "landmark-unique": {
-          status: "fail",
+          status: CheckStatus.Fail,
           nodes: [{ target: "#offender", summary: "violation" }],
         },
       }),
     ]);
     const result = runA11yAudit(LandmarkUniqueAudit, ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("#offender");
   });
 
   it("passes when every constituent rule passes", () => {
     const ctx = mockCheckContext([
       pageWithA11y("https://example.com/", {
-        "landmark-unique": { status: "pass", nodes: [] },
+        "landmark-unique": { status: CheckStatus.Pass, nodes: [] },
       }),
     ]);
-    expect(runA11yAudit(LandmarkUniqueAudit, ctx).status).toBe("pass");
+    expect(runA11yAudit(LandmarkUniqueAudit, ctx).status).toBe(
+      CheckStatus.Pass,
+    );
   });
 
   it("is na when no constituent rule applies", () => {
     const ctx = mockCheckContext([
       pageWithA11y("https://example.com/", {
-        "landmark-unique": { status: "inapplicable", nodes: [] },
+        "landmark-unique": { status: RuleStatus.Inapplicable, nodes: [] },
       }),
     ]);
-    expect(runA11yAudit(LandmarkUniqueAudit, ctx).status).toBe("na");
+    expect(runA11yAudit(LandmarkUniqueAudit, ctx).status).toBe(
+      CheckStatus.NotApplicable,
+    );
   });
 
   // Absorbed from 7.3 (nav-aria-label): the nav-labelling signal is measured
@@ -75,7 +81,7 @@ describe("LandmarkUniqueAudit", () => {
       const rule = await landmarkRule(
         '<nav><a href="/">a</a></nav><nav><a href="/b">b</a></nav>',
       );
-      expect(rule?.status).toBe("fail");
+      expect(rule?.status).toBe(CheckStatus.Fail);
       expect(rule?.nodes[0]?.target).toContain("nav");
     });
 
@@ -83,12 +89,12 @@ describe("LandmarkUniqueAudit", () => {
       const rule = await landmarkRule(
         '<nav aria-label="Primary"><a href="/">a</a></nav><nav aria-label="Footer"><a href="/b">b</a></nav>',
       );
-      expect(rule?.status).toBe("pass");
+      expect(rule?.status).toBe(CheckStatus.Pass);
     });
 
     it("does not punish a single unlabeled <nav> — nothing is ambiguous", async () => {
       const rule = await landmarkRule('<nav><a href="/">a</a></nav>');
-      expect(rule?.status).toBe("pass");
+      expect(rule?.status).toBe(CheckStatus.Pass);
     });
 
     it("resolves a name given through aria-labelledby", async () => {
@@ -96,12 +102,12 @@ describe("LandmarkUniqueAudit", () => {
         '<nav aria-labelledby="nav-h"><h2 id="nav-h">Primary</h2><a href="/">a</a></nav>' +
           '<nav aria-label="Footer"><a href="/b">b</a></nav>',
       );
-      expect(rule?.status).toBe("pass");
+      expect(rule?.status).toBe(CheckStatus.Pass);
     });
 
     it("covers landmark types beyond <nav>", async () => {
       const rule = await landmarkRule("<aside>a</aside><aside>b</aside>");
-      expect(rule?.status).toBe("fail");
+      expect(rule?.status).toBe(CheckStatus.Fail);
     });
   });
 });

@@ -78,6 +78,13 @@ Title and description promise 'Single h1 per page' but the code only ever inspec
 
 ## Implementation deviations
 
+- 2026-10-07 — the scope pilot for 7.0.0 checks every selected page instead of
+  only `ctx.pages[0]`. Results report the fraction with exactly one `<h1>` and
+  list affected URLs with their heading counts in sorted order. `pageUrl` names
+  the first sorted affected URL. An empty sample returns `notApplicable`. The
+  wording describes scanned pages rather than assuming a homepage. Evidence
+  text uses the existing result length limit and its truncation marker.
+
 - 2026-08-28 — the audit declines when the scan holds no response it can
   attribute to this site. It read the headings of the first scanned page, and
   `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain
@@ -88,6 +95,13 @@ Title and description promise 'Single h1 per page' but the code only ever inspec
   fail → na, throttled fail → na, redirected away pass → na, non-HTML homepage
   fail → na, HTTP 200 bot challenge pass → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
+
+## Deferred
+
+- The 7.0.0 applicability review must align the multiple-heading verdict with
+  the warning described in this dossier and exclude hidden/template headings.
+  This scope-only correction retains the existing binary verdict and raw
+  element count. It does not claim the severity or visibility defects are fixed.
 
 ## Review history
 

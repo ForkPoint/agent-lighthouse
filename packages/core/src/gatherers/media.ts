@@ -1,8 +1,9 @@
 import { cacheOwner } from "./cache-owner";
-import type { FetchOptions, FetchResult } from "../fetcher";
-import { isSafeUrl } from "../fetcher";
-import { allJsonLdNodes } from "../parser";
-import type { PageContext } from "../check-context";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import { isSafeUrl } from "#core/fetcher";
+import { allJsonLdNodes } from "#core/parser";
+import type { PageContext } from "#core/check-context";
+import { HttpMethod } from "#core/types";
 
 /**
  * Image bytes and the provenance metadata inside them, once per scan.
@@ -23,7 +24,16 @@ const BMFF_C2PA_UUID = "d8fec3d61b0e483c92975828877ec481";
 /** How many images one scan fetches. Each is up to 5MB. */
 export const MAX_IMAGES = 6;
 
-export type MediaContainer = "jpeg" | "png" | "webp" | "bmff" | "unknown";
+export const MediaContainer = {
+  Jpeg: "jpeg",
+  Png: "png",
+  Webp: "webp",
+  Bmff: "bmff",
+  Unknown: "unknown",
+} as const;
+
+export type MediaContainer =
+  (typeof MediaContainer)[keyof typeof MediaContainer];
 
 export interface ManifestLocation {
   container: MediaContainer;
@@ -55,20 +65,20 @@ function beInt(bytes: Uint8Array, at: number, size: number): number {
 
 /** What container are these bytes, judged by their signature? */
 export function containerOf(bytes: Uint8Array): MediaContainer {
-  if (bytes.length < 4) return "unknown";
-  if (bytes[0] === 0xff && bytes[1] === 0xd8) return "jpeg";
+  if (bytes.length < 4) return MediaContainer.Unknown;
+  if (bytes[0] === 0xff && bytes[1] === 0xd8) return MediaContainer.Jpeg;
   if (bytes.length >= 8 && ascii(bytes.subarray(0, 8)) === "\x89PNG\r\n\x1a\n")
-    return "png";
+    return MediaContainer.Png;
   if (
     bytes.length >= 12 &&
     ascii(bytes.subarray(0, 4)) === "RIFF" &&
     ascii(bytes.subarray(8, 12)) === "WEBP"
   ) {
-    return "webp";
+    return MediaContainer.Webp;
   }
   if (bytes.length >= 8 && ascii(bytes.subarray(4, 8)) === "ftyp")
-    return "bmff";
-  return "unknown";
+    return MediaContainer.Bmff;
+  return MediaContainer.Unknown;
 }
 
 /** Walk a JPEG's marker segments, yielding `[marker, payloadStart, payloadLength]`. */
@@ -146,7 +156,7 @@ export function findC2paManifest(
 ): ManifestLocation | undefined {
   const container = containerOf(bytes);
 
-  if (container === "jpeg") {
+  if (container === MediaContainer.Jpeg) {
     for (const [marker, start, length] of jpegSegments(bytes)) {
       if (marker !== 0xeb) continue; // APP11
       const payload = ascii(bytes.subarray(start, start + length));
@@ -191,7 +201,7 @@ export function findC2paManifest(
 export function extractXmp(bytes: Uint8Array): string | undefined {
   const container = containerOf(bytes);
 
-  if (container === "jpeg") {
+  if (container === MediaContainer.Jpeg) {
     for (const [marker, start, length] of jpegSegments(bytes)) {
       if (marker !== 0xe1) continue; // APP1
       const payload = ascii(bytes.subarray(start, start + length));
@@ -200,7 +210,7 @@ export function extractXmp(bytes: Uint8Array): string | undefined {
     }
   }
 
-  if (container === "png") {
+  if (container === MediaContainer.Png) {
     for (const [type, start, length] of pngChunks(bytes)) {
       if (type !== "iTXt") continue;
       const payload = ascii(bytes.subarray(start, start + length));
@@ -375,7 +385,7 @@ export function fetchImageHead(
     hit = (async () => {
       if (!(await isSafeUrl(url))) return undefined;
       try {
-        return await ctx.fetch({ url, method: "HEAD" });
+        return await ctx.fetch({ url, method: HttpMethod.Head });
       } catch {
         return undefined;
       }

@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { filterAudits, type SearchableAudit } from "./audit-explorer";
+import { AuditTier } from "@forkpoint/agent-lighthouse-core";
 
 /**
  * `filterAudits` takes what a card can tell the explorer about itself: its id,
@@ -10,7 +11,7 @@ const record = (
   over: Partial<SearchableAudit> & { id: string },
 ): SearchableAudit => ({
   category: over.id.split("/")[0]!,
-  tier: "scored",
+  tier: AuditTier.Scored,
   haystack: "",
   ...over,
 });
@@ -24,7 +25,7 @@ describe("filterAudits", () => {
     }),
     record({
       id: "access-crawl-control/robots-directives",
-      tier: "informative",
+      tier: AuditTier.Informative,
       haystack:
         "access-crawl-control/robots-directives robots directives access & crawl control",
     }),
@@ -65,7 +66,11 @@ describe("filterAudits", () => {
       }),
     ).toHaveLength(1);
     expect(
-      filterAudits(audits, { text: "", category: "all", tier: "informative" }),
+      filterAudits(audits, {
+        text: "",
+        category: "all",
+        tier: AuditTier.Informative,
+      }),
     ).toHaveLength(1);
   });
 

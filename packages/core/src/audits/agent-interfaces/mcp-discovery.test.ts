@@ -1,6 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { McpDiscoveryAudit } from "./mcp-discovery";
-import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
+import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
+import {
+  AuditTier,
+  CheckStatus,
+  EvidenceGrade,
+  ScoreDisplayMode,
+} from "#core/types";
 
 describe("McpDiscoveryAudit", () => {
   const audit = new McpDiscoveryAudit();
@@ -19,7 +25,7 @@ describe("McpDiscoveryAudit", () => {
       "/.well-known/mcp/servers.json": mockFetchResult(body, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("1 server(s)");
   });
 
@@ -29,7 +35,7 @@ describe("McpDiscoveryAudit", () => {
   // the sites running a real MCP server discovered by any other route.
   it("reports na when no MCP discovery document is published", () => {
     const result = audit.audit(mockCheckContext([], {}));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("no documented MCP client fetches");
   });
 
@@ -38,7 +44,7 @@ describe("McpDiscoveryAudit", () => {
       "/.well-known/mcp/servers.json": mockFetchResult("", 404),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.found).toContain("HTTP 404");
   });
 
@@ -47,7 +53,7 @@ describe("McpDiscoveryAudit", () => {
       "/.well-known/mcp/servers.json": mockFetchResult("nope {{{", 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("not valid JSON");
   });
 
@@ -59,7 +65,7 @@ describe("McpDiscoveryAudit", () => {
       ),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("carries no servers array");
   });
 
@@ -72,7 +78,7 @@ describe("McpDiscoveryAudit", () => {
       ),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("lists no servers");
   });
 
@@ -81,7 +87,7 @@ describe("McpDiscoveryAudit", () => {
       "/.well-known/ucp": mockFetchResult("{}", 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("no services and no capabilities");
   });
 
@@ -92,7 +98,7 @@ describe("McpDiscoveryAudit", () => {
         200,
       ),
     });
-    expect(audit.audit(ctx).status).toBe("pass");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
   });
 
   // Four of the five researched signals record `Consumers: none-known` and
@@ -100,9 +106,9 @@ describe("McpDiscoveryAudit", () => {
   // implemented by agent-interfaces/openapi-exists at the ratified path.
   it("is registered informative at weight 0", () => {
     const { meta } = McpDiscoveryAudit;
-    expect(meta.evidenceGrade).toBe("C");
-    expect(meta.tier).toBe("informative");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.C);
+    expect(meta.tier).toBe(AuditTier.Informative);
     expect(meta.weight).toBe(0);
-    expect(meta.scoreDisplayMode).toBe("informative");
+    expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Informative);
   });
 });

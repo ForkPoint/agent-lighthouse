@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { MetaAuthorAudit } from "./meta-author";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 const doc = (head: string) =>
   `<html lang="en"><head>${head}</head><body></body></html>`;
@@ -16,7 +17,7 @@ describe("MetaAuthorAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("Jane Smith");
   });
 
@@ -25,12 +26,12 @@ describe("MetaAuthorAudit", () => {
       mockPageContext("https://example.com/", doc("")),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("missing");
   });
 
   it("fails when there are no pages", () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 });

@@ -4,8 +4,9 @@ import {
   mockCheckContext,
   mockPageContext,
   mockFetchResult,
-} from "../../__tests__/test-utils";
-import type { PageContext } from "../../check-context";
+} from "#core/__tests__/test-utils";
+import type { PageContext } from "#core/check-context";
+import { CheckStatus } from "#core/types";
 
 const ld = (obj: unknown) =>
   `<script type="application/ld+json">${JSON.stringify(obj)}</script>`;
@@ -42,7 +43,7 @@ describe("SearchEndpointAudit", () => {
     const ctx = mockCheckContext([pageWithSearchAction()]);
     ctx.fetch = async () => mockFetchResult(RESULTS_HTML, 200, "text/html");
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("functional");
   });
 
@@ -50,7 +51,7 @@ describe("SearchEndpointAudit", () => {
     const ctx = mockCheckContext([pageWithSearchAction()]);
     ctx.fetch = async () => mockFetchResult("", 404);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("HTTP 404");
   });
 
@@ -58,7 +59,7 @@ describe("SearchEndpointAudit", () => {
     const ctx = mockCheckContext([pageWithSearchAction()]);
     ctx.fetch = async () => mockFetchResult("Access denied", 403, "text/html");
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("gated");
   });
 
@@ -68,7 +69,7 @@ describe("SearchEndpointAudit", () => {
       throw new Error("network");
     };
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("could not be reached");
   });
 
@@ -81,7 +82,7 @@ describe("SearchEndpointAudit", () => {
         "text/html",
       );
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("no results");
   });
 
@@ -94,7 +95,7 @@ describe("SearchEndpointAudit", () => {
         "application/json",
       );
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("no results");
   });
 
@@ -107,7 +108,7 @@ describe("SearchEndpointAudit", () => {
         "application/json",
       );
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("finds SearchAction when potentialAction is an array (Yoast/Rank Math shape)", async () => {
@@ -129,7 +130,7 @@ describe("SearchEndpointAudit", () => {
     ]);
     ctx.fetch = async () => mockFetchResult(RESULTS_HTML, 200, "text/html");
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("finds SearchAction on a WebSite node whose @type is an array", async () => {
@@ -147,7 +148,7 @@ describe("SearchEndpointAudit", () => {
     ]);
     ctx.fetch = async () => mockFetchResult(RESULTS_HTML, 200, "text/html");
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("substitutes every placeholder in a multi-placeholder urlTemplate", async () => {
@@ -171,7 +172,7 @@ describe("SearchEndpointAudit", () => {
     };
     const result = await audit.audit(ctx);
     expect(requested).not.toContain("{");
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("finds a SearchAction nested outside @graph (mainEntity) via the shared flattener", async () => {
@@ -195,7 +196,7 @@ describe("SearchEndpointAudit", () => {
     ]);
     ctx.fetch = async () => mockFetchResult(RESULTS_HTML, 200, "text/html");
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("reads SearchAction from structuredData when the page provides it", async () => {
@@ -212,7 +213,7 @@ describe("SearchEndpointAudit", () => {
     const ctx = mockCheckContext([p]);
     ctx.fetch = async () => mockFetchResult(RESULTS_HTML, 200, "text/html");
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("scans every WebSite node, not just the first", async () => {
@@ -237,7 +238,7 @@ describe("SearchEndpointAudit", () => {
     ]);
     ctx.fetch = async () => mockFetchResult(RESULTS_HTML, 200, "text/html");
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // ── absorbed website-search-action (3.4): declared-but-incomplete markup ──
@@ -253,7 +254,7 @@ describe("SearchEndpointAudit", () => {
       ),
     ]);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("no SearchAction");
   });
 
@@ -271,7 +272,7 @@ describe("SearchEndpointAudit", () => {
       ),
     ]);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("no query placeholder");
   });
 
@@ -291,7 +292,7 @@ describe("SearchEndpointAudit", () => {
       ),
     ]);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
   });
 
   // ── OpenAPI half ────────────────────────────────────────────
@@ -304,7 +305,7 @@ describe("SearchEndpointAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("GET search endpoint");
   });
 
@@ -319,7 +320,7 @@ describe("SearchEndpointAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("matches a hyphenated search path segment", async () => {
@@ -332,7 +333,7 @@ describe("SearchEndpointAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("ignores a non-GET search operation", async () => {
@@ -343,7 +344,7 @@ describe("SearchEndpointAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   // ── nothing at all ──────────────────────────────────────────
@@ -351,7 +352,7 @@ describe("SearchEndpointAudit", () => {
   it("fails when no search endpoint is found", async () => {
     const ctx = mockCheckContext([page("")]);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No search endpoint");
   });
 
@@ -360,7 +361,7 @@ describe("SearchEndpointAudit", () => {
       page(ld({ "@type": "Organization", name: "Test Corp" })),
     ]);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("fails when openapi.json has invalid JSON and no JSON-LD search action", async () => {
@@ -368,7 +369,7 @@ describe("SearchEndpointAudit", () => {
       "/openapi.json": mockFetchResult("invalid json {{{", 200),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("fails when the spec has no paths key", async () => {
@@ -379,7 +380,7 @@ describe("SearchEndpointAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("fails when a paths entry is not an object", async () => {
@@ -390,7 +391,7 @@ describe("SearchEndpointAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("handles a null JSON-LD block gracefully", async () => {
@@ -398,6 +399,6 @@ describe("SearchEndpointAudit", () => {
       page('<script type="application/ld+json">null</script>'),
     ]);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 });

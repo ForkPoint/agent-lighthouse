@@ -1,9 +1,17 @@
 import type { AnyNode, Element } from "domhandler";
 import type { CheerioAPI } from "cheerio";
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** Below this a table is a layout wrapper or a definition list, not a grid. */
 const MIN_COLUMNS = 2;
@@ -209,24 +217,24 @@ export class TableMarkdownRoundTripLossAudit extends Audit {
       "Tables lose cells when converted to the markdown a model reads",
     description:
       "Converts every main-content table to GFM markdown — the representation an answer engine’s reader emits — reads it back, and diffs it cell for cell against the source grid. Reports every cell lost or displaced by coordinate, plus the tables whose numbers carry no header and whose units live only in the caption.",
-    scoreDisplayMode: "ternary",
-    tier: "scored",
-    evidenceGrade: "B",
-    weight: weightForGrade("B", "scored"),
-    defaultPriority: "medium",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    tier: AuditTier.Scored,
+    evidenceGrade: EvidenceGrade.B,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    defaultPriority: CheckPriority.Medium,
     dossier:
       "docs/evidence/audits/answer-readiness/table-markdown-round-trip-loss.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     guidance: {
       impact:
         "A model does not read your table markup. Something converts it to markdown first, and GFM markdown has no merged cells, no second header row and no lists inside a cell. A header spanning two columns arrives heading one of them; the other column of numbers arrives with no header at all. The model still answers the question — with a number read from the wrong column, stated as confidently as a right one.",
       fix: "Flatten spanned headers into one header row of plain `th` cells, repeating the text where a span used to cover two columns. Put the unit or currency in the header cell rather than in the caption. Take paragraphs and lists out of cells. Where a table is genuinely two tables, publish it as two.",
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/answer-readiness/table-markdown-round-trip-loss/",
       tags: ["tables", "markdown", "extraction", "accuracy"],

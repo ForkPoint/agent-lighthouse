@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { OrganizationSchemaAudit } from "./organization-schema";
-import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
+import { mockPageContext, mockCheckContext } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 const ld = (obj: unknown) =>
   `<script type="application/ld+json">${JSON.stringify(obj)}</script>`;
@@ -25,7 +26,7 @@ describe("OrganizationSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No Organization schema found");
   });
 
@@ -42,7 +43,7 @@ describe("OrganizationSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("found with name, url, and logo");
   });
 
@@ -64,7 +65,7 @@ describe("OrganizationSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("detects Organization in a top-level `[{...}]` array (Shopify-style)", () => {
@@ -82,7 +83,7 @@ describe("OrganizationSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("warns when Organization is missing logo", () => {
@@ -97,7 +98,7 @@ describe("OrganizationSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("missing: logo");
   });
 
@@ -114,6 +115,6 @@ describe("OrganizationSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 });

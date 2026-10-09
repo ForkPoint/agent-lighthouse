@@ -4,13 +4,20 @@ import {
   mockPageContext,
   mockCheckContext,
   mockFetchResult,
-} from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { FetchOptions, FetchResult } from "../../fetcher";
-import type { AuditResult } from "../../types";
+} from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import type { AuditResult } from "#core/types";
+import {
+  AuditTier,
+  CheckStatus,
+  EvidenceGrade,
+  ScoreDisplayMode,
+  HttpMethod,
+} from "#core/types";
 
-vi.mock("../../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => {
@@ -89,7 +96,7 @@ describe("WebsubHubAdvertisementAudit", () => {
   it("passes a feed with one canonical self link and a live hub", async () => {
     const { result } = run({ documentLinks: SELF_AND_HUB });
     const r = await result;
-    expect(r.status).toBe("pass");
+    expect(r.status).toBe(CheckStatus.Pass);
     expect(r.details?.["feedsWithHub"]).toBe(1);
     expect(r.details?.["feedsWithValidSelf"]).toBe(1);
   });
@@ -107,7 +114,7 @@ describe("WebsubHubAdvertisementAudit", () => {
       ),
     });
     const r = await result;
-    expect(r.status).toBe("pass");
+    expect(r.status).toBe(CheckStatus.Pass);
     expect(r.details?.["feedsWithValidSelf"]).toBe(1);
   });
 
@@ -118,7 +125,7 @@ describe("WebsubHubAdvertisementAudit", () => {
         '<a10:link href="https://example.com/feed.xml" rel="self"/><a10:link rel="hub" href="https://hub.example.net/"/>',
       ),
     });
-    expect((await result).status).toBe("pass");
+    expect((await result).status).toBe(CheckStatus.Pass);
   });
 
   it("ignores a link element under a prefix bound to another namespace", async () => {
@@ -138,7 +145,7 @@ describe("WebsubHubAdvertisementAudit", () => {
       documentLinks: SELF_AND_HUB,
       entryLinks: '<link rel="self" href="https://example.com/a.xml"/>',
     });
-    expect((await result).status).toBe("pass");
+    expect((await result).status).toBe(CheckStatus.Pass);
   });
 
   // The spec gives the response headers discovery precedence over the document.
@@ -149,7 +156,7 @@ describe("WebsubHubAdvertisementAudit", () => {
         '<https://example.com/feed.xml>; rel="self", <https://hub.example.net/>; rel="hub"',
     });
     const r = await result;
-    expect(r.status).toBe("pass");
+    expect(r.status).toBe(CheckStatus.Pass);
     expect(r.details?.["linksFromHeader"]).toBe(true);
   });
 
@@ -159,7 +166,7 @@ describe("WebsubHubAdvertisementAudit", () => {
         '<link rel="self" href="/feed.xml"/><link rel="hub" href="https://hub.example.net/"/>',
     });
     const r = await result;
-    expect(r.status).toBe("warn");
+    expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "observations").join(" ")).toContain("is relative");
   });
 
@@ -169,7 +176,7 @@ describe("WebsubHubAdvertisementAudit", () => {
         '<link rel="self" href="https://example.com/other.xml"/><link rel="hub" href="https://hub.example.net/"/>',
     });
     const r = await result;
-    expect(r.status).toBe("warn");
+    expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "observations").join(" ")).toContain(
       "different topic URL",
     );
@@ -182,7 +189,7 @@ describe("WebsubHubAdvertisementAudit", () => {
         '<link rel="self" href="http://example.com/feed.xml"/><link rel="hub" href="https://hub.example.net/"/>',
     });
     const r = await result;
-    expect(r.status).toBe("warn");
+    expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "observations").join(" ")).toContain(
       "different topic URL",
     );
@@ -194,7 +201,7 @@ describe("WebsubHubAdvertisementAudit", () => {
         '<link rel="self" href="https://example.com/feed.xml"/><link rel="self" href="https://example.com/feed.xml"/><link rel="hub" href="https://hub.example.net/"/>',
     });
     const r = await result;
-    expect(r.status).toBe("warn");
+    expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "observations").join(" ")).toContain("exactly one");
   });
 
@@ -204,7 +211,7 @@ describe("WebsubHubAdvertisementAudit", () => {
         '<link rel="self" href="https://example.com/feed.xml"/><link rel="hub" href="http://hub.example.net/"/>',
     });
     const r = await result;
-    expect(r.status).toBe("warn");
+    expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "observations").join(" ")).toContain(
       "not an absolute HTTPS URL",
     );
@@ -213,14 +220,14 @@ describe("WebsubHubAdvertisementAudit", () => {
   it("accepts 405 from a hub that refuses a bare HEAD", async () => {
     const { result } = run({ documentLinks: SELF_AND_HUB, hubStatus: 405 });
     const r = await result;
-    expect(r.status).toBe("pass");
+    expect(r.status).toBe(CheckStatus.Pass);
     expect(strings(r, "hubProbes").join(" ")).toContain("405");
   });
 
   it("reports a hub that answers 500", async () => {
     const { result } = run({ documentLinks: SELF_AND_HUB, hubStatus: 500 });
     const r = await result;
-    expect(r.status).toBe("warn");
+    expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "observations").join(" ")).toContain("not reachable");
   });
 
@@ -235,7 +242,9 @@ describe("WebsubHubAdvertisementAudit", () => {
     expect(
       requests.every(
         (o) =>
-          o.method === undefined || o.method === "HEAD" || o.method === "GET",
+          o.method === undefined ||
+          o.method === HttpMethod.Head ||
+          o.method === "GET",
       ),
     ).toBe(true);
   });
@@ -245,16 +254,16 @@ describe("WebsubHubAdvertisementAudit", () => {
       documentLinks: '<link rel="self" href="https://example.com/feed.xml"/>',
     });
     const r = await result;
-    expect(r.status).toBe("warn");
+    expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "observations").join(" ")).toContain("no rel=hub");
   });
 
   it("never returns fail and carries no scoring weight", async () => {
     const { meta } = WebsubHubAdvertisementAudit;
-    expect(meta.tier).toBe("informative");
+    expect(meta.tier).toBe(AuditTier.Informative);
     expect(meta.weight).toBe(0);
-    expect(meta.scoreDisplayMode).toBe("informative");
-    expect(meta.evidenceGrade).toBe("C");
+    expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Informative);
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.C);
 
     const cases: Site[] = [
       {},
@@ -264,7 +273,7 @@ describe("WebsubHubAdvertisementAudit", () => {
     ];
     for (const site of cases) {
       const r = await run(site).result;
-      expect(r.status, JSON.stringify(site)).not.toBe("fail");
+      expect(r.status, JSON.stringify(site)).not.toBe(CheckStatus.Fail);
     }
   });
 });

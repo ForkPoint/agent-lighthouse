@@ -5,7 +5,7 @@ import {
   mergeStatus,
   type CorpusStatus,
   type RunnerOutcome,
-} from "../packages/core/src/tests/corpus-status";
+} from "#core/tests/corpus-status";
 
 /**
  * Read and write `status.json`.

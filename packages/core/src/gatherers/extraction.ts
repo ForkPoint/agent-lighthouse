@@ -2,9 +2,9 @@ import { JSDOM } from "jsdom";
 import { Readability } from "@mozilla/readability";
 import type { Cheerio, CheerioAPI } from "cheerio";
 import type { Element } from "domhandler";
-import { parseHtml } from "../parser";
-import { stripStyles } from "../audits/operability-safety/runner";
-import { logger } from "../logger";
+import { parseHtml } from "#core/parser";
+import { stripStyles } from "#core/audits/operability-safety/runner";
+import { logger } from "#core/logger";
 
 /**
  * Three independent main-content extractors.

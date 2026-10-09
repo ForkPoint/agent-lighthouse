@@ -4,12 +4,13 @@ import {
   mockPageContext,
   mockCheckContext,
   mockFetchResult,
-} from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { FetchOptions, FetchResult } from "../../fetcher";
+} from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import { CheckStatus } from "#core/types";
 
-vi.mock("../../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => {
@@ -68,12 +69,12 @@ describe("AcpPolicyLinkSurfaceAudit", () => {
 
   it("is notApplicable when the pages carry no <a href> at all", async () => {
     const result = await run("<main><p>Copy with no links.</p></main>");
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("passes when all 8 link types resolve to real policy pages", async () => {
     const result = await run(`<footer>${ALL_LINKS}</footer>`);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("8/8");
   });
 
@@ -85,7 +86,7 @@ describe("AcpPolicyLinkSurfaceAudit", () => {
       "",
     );
     const result = await run(`<footer>${links}</footer>`);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("terms_of_use");
   });
 
@@ -98,7 +99,7 @@ describe("AcpPolicyLinkSurfaceAudit", () => {
     const result = await run(`<footer>${ALL_LINKS}</footer>`, {
       "/privacy": soft,
     });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("privacy_policy");
   });
 
@@ -109,7 +110,7 @@ describe("AcpPolicyLinkSurfaceAudit", () => {
       "/t2": redirect("/t3"),
       "/t3": redirect("/t4"),
     });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("redirect");
   });
 
@@ -121,7 +122,7 @@ describe("AcpPolicyLinkSurfaceAudit", () => {
       "https://legal.example-group.net/terms",
     );
     const result = await run(`<footer>${links}</footer>`);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain(
       "terms_of_use=https://legal.example-group.net/terms",
     );
@@ -139,7 +140,7 @@ describe("AcpPolicyLinkSurfaceAudit", () => {
       "/privacy": redirect("https://cdn.example-assets.net/legal/privacy.pdf"),
       "/legal/privacy.pdf": pdf,
     });
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain(
       "terms_of_use=https://cdn.example-assets.net/legal/terms.pdf",
     );
@@ -154,7 +155,7 @@ describe("AcpPolicyLinkSurfaceAudit", () => {
         "application/pdf",
       ),
     });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("terms_of_use");
     expect(result.message).toContain("PDF");
   });
@@ -163,14 +164,14 @@ describe("AcpPolicyLinkSurfaceAudit", () => {
     const result = await run(`<footer>${ALL_LINKS}</footer>`, {
       "/privacy": mockFetchResult("{}", 200, "application/json"),
     });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("application/json");
   });
 
   it("still gates an off-domain policy link through the URL safety check", async () => {
     const links = ALL_LINKS.replace("/terms", "https://192.168.1.10/terms");
     const result = await run(`<footer>${links}</footer>`);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("safety gate");
   });
 
@@ -185,7 +186,7 @@ describe("AcpPolicyLinkSurfaceAudit", () => {
       "text/html",
     );
     const result = await run(`<footer>${links}</footer>`, { "/privacy": soft });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("soft 404");
   });
 
@@ -201,7 +202,7 @@ describe("AcpPolicyLinkSurfaceAudit", () => {
     const result = await run(`<footer>${ALL_LINKS}</footer>`, {
       "/terms": shell,
     });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("initial HTML");
   });
 
@@ -211,7 +212,7 @@ describe("AcpPolicyLinkSurfaceAudit", () => {
       "",
     );
     const result = await run(`<footer>${links}</footer>`);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("6/8");
     expect(result.found).toContain("terms_of_use=https://example.com/terms");
   });

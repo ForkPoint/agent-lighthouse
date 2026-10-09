@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { BrandNameAudit } from "./brand-name";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 describe("BrandNameAudit", () => {
   const audit = new BrandNameAudit();
@@ -17,7 +18,7 @@ describe("BrandNameAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("Knix");
     expect(result.message).toContain("appears in body text");
   });
@@ -29,7 +30,7 @@ describe("BrandNameAudit", () => {
         <body><p>At Acme Tools we build great things.</p></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("Acme Tools");
   });
 
@@ -44,7 +45,7 @@ describe("BrandNameAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("not found in body text");
   });
 
@@ -54,13 +55,13 @@ describe("BrandNameAudit", () => {
       `<html><body><p>Some generic content.</p></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("No organization name found");
   });
 
   it("fails when no pages scanned", () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No pages scanned");
   });
 
@@ -75,7 +76,7 @@ describe("BrandNameAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("Acme");
   });
 
@@ -90,7 +91,7 @@ describe("BrandNameAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("TechCo");
   });
 
@@ -105,7 +106,7 @@ describe("BrandNameAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("appears in body text");
   });
 
@@ -120,7 +121,7 @@ describe("BrandNameAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("Acme");
   });
 
@@ -135,7 +136,7 @@ describe("BrandNameAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("WidgetCo");
   });
 });

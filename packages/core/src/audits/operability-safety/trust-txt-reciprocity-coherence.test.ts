@@ -7,13 +7,19 @@ import {
   mockPageContext,
   mockCheckContext,
   mockFetchResult,
-} from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { FetchOptions, FetchResult } from "../../fetcher";
-import type { AuditResult } from "../../types";
+} from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import type { AuditResult } from "#core/types";
+import {
+  AuditTier,
+  CheckStatus,
+  EvidenceGrade,
+  ScoreDisplayMode,
+} from "#core/types";
 
-vi.mock("../../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => {
@@ -89,7 +95,7 @@ describe("TrustTxtReciprocityCoherenceAudit", () => {
 
   it("is notApplicable when the site publishes no trust.txt", async () => {
     const { result } = run({});
-    expect((await result).status).toBe("na");
+    expect((await result).status).toBe(CheckStatus.NotApplicable);
   });
 
   describe("parseTrustTxt", () => {
@@ -114,7 +120,7 @@ describe("TrustTxtReciprocityCoherenceAudit", () => {
       robotsTxt: "User-agent: *\nAllow: /\n",
     });
     const r = await result;
-    expect(r.status).toBe("pass");
+    expect(r.status).toBe(CheckStatus.Pass);
     expect(strings(r, "reciprocated")).toHaveLength(1);
   });
 
@@ -124,7 +130,7 @@ describe("TrustTxtReciprocityCoherenceAudit", () => {
       others: { "assoc.test": "member=https://someone-else.test/\n" },
     });
     const r = await result;
-    expect(r.status).toBe("warn");
+    expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "observations").join(" ")).toContain(
       "no member= line naming example.com",
     );
@@ -199,16 +205,16 @@ describe("TrustTxtReciprocityCoherenceAudit", () => {
     ];
     for (const site of cases) {
       const r = await run(site).result;
-      expect(r.status, JSON.stringify(site)).not.toBe("fail");
+      expect(r.status, JSON.stringify(site)).not.toBe(CheckStatus.Fail);
     }
   });
 
   it("registers as an informative grade-C audit that carries no weight", () => {
     const { meta } = TrustTxtReciprocityCoherenceAudit;
-    expect(meta.evidenceGrade).toBe("C");
-    expect(meta.tier).toBe("informative");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.C);
+    expect(meta.tier).toBe(AuditTier.Informative);
     expect(meta.weight).toBe(0);
-    expect(meta.scoreDisplayMode).toBe("informative");
+    expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Informative);
     expect(meta.guidance?.impact).toContain("no AI engine");
     expect(meta.id.length).toBeLessThanOrEqual(64);
   });

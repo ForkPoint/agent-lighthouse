@@ -1,14 +1,22 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
 import {
   discoverMcpEndpoint,
   discoverProbe,
   listTools,
   parseRpcResponse,
   isObject,
-} from "../../gatherers/mcp";
+} from "#core/gatherers/mcp";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** How many `nextCursor` pages are followed. Same budget as contract validity. */
 const MAX_PAGES = 4;
@@ -136,14 +144,14 @@ export class McpToolDescriptionCoverageAudit extends Audit {
     failureTitle: "Tool Self-Description Coverage",
     description:
       "Counts, over the tool surface the endpoint already returned, what fraction of tools carry a description, what fraction of every input parameter carries one — walking `properties` recursively and into `items.properties` for arrays of objects — and reports the advisory ratios alongside: constrained string parameters, declared output schemas, titles and the server’s own `instructions`.",
-    scoreDisplayMode: "ternary",
-    tier: "scored",
-    evidenceGrade: "B",
-    weight: weightForGrade("B", "scored"),
-    defaultPriority: "medium",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    tier: AuditTier.Scored,
+    evidenceGrade: EvidenceGrade.B,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    defaultPriority: CheckPriority.Medium,
     dossier:
       "docs/evidence/audits/agent-interfaces/mcp-tool-description-coverage.md",
-    requires: ["origin-reachable", "unblocked-fetches"],
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
     guidance: {
       impact:
         "A tool description and its parameter descriptions are the only prose a model ever sees about a tool — they are the whole basis on which it decides whether to call it and what to pass. A required parameter with no description, no enum and no pattern gives the model nothing to derive a legal value from, so it guesses. Guessed values come back as validation errors, and the agent spends retry turns per call until it gives up on the tool.",
@@ -171,7 +179,7 @@ export class McpToolDescriptionCoverageAudit extends Audit {
   },
   "outputSchema": { "type": "object", "properties": { "confirmation": { "type": "string" } } }
 }`,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/agent-interfaces/mcp-tool-description-coverage/",
       tags: ["mcp", "tools", "documentation", "json-schema"],

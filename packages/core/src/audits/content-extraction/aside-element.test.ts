@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { AsideElementAudit } from "./aside-element";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 /** A content page (index > 0 so it is never typed as the homepage). */
 function contentPage(body: string, slug = "post") {
@@ -17,7 +18,7 @@ describe("AsideElementAudit", () => {
   it("is notApplicable when no page carries supplementary content at all", () => {
     const page = contentPage("<main><h1>Title</h1><p>Body only.</p></main>");
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("passes when every supplementary block is wrapped in <aside>", () => {
@@ -25,7 +26,7 @@ describe("AsideElementAudit", () => {
       '<main><p>Body.</p></main><aside class="sidebar"><h3>Related</h3></aside>',
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it('counts role="complementary" as marked supplementary content', () => {
@@ -33,7 +34,7 @@ describe("AsideElementAudit", () => {
       '<main><p>Body.</p></main><div role="complementary">Related</div>',
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("fails when a div-based sidebar exists and nothing is marked", () => {
@@ -41,7 +42,7 @@ describe("AsideElementAudit", () => {
       '<main><p>Body.</p></main><div class="sidebar"><h3>Related posts</h3></div>',
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("sidebar");
   });
 
@@ -56,7 +57,7 @@ describe("AsideElementAudit", () => {
       2,
     );
     const result = audit.audit(mockCheckContext([marked, unmarked]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
   });
 
   it("does not count a div-based sidebar that lives inside an <aside>", () => {
@@ -64,12 +65,12 @@ describe("AsideElementAudit", () => {
       '<main><p>Body.</p></main><aside><div class="related-links">More</div></aside>',
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("evaluates only content pages, not the homepage", () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("states the extraction consequence of <aside> in its guidance", () => {

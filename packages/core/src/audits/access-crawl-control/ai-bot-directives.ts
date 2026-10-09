@@ -1,9 +1,17 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { parseRobotsFile, type RobotsGroup } from "../../gatherers/robots";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { parseRobotsFile, type RobotsGroup } from "#core/gatherers/robots";
 import { isAllowed } from "./_robots-txt-helpers";
-import { weightForGrade } from "../../scorer";
+import { weightForGrade } from "#core/scorer";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /**
  * One robots.txt read, five AI bot tokens, one score.
@@ -23,7 +31,13 @@ import { weightForGrade } from "../../scorer";
  */
 
 /** A bot's robots.txt stance for the site root. */
-type Stance = "explicitly allowed" | "allowed by default" | "blocked";
+const Stance = {
+  ExplicitlyAllowed: "explicitly allowed",
+  AllowedByDefault: "allowed by default",
+  Blocked: "blocked",
+} as const;
+
+type Stance = (typeof Stance)[keyof typeof Stance];
 
 interface DirectiveBot {
   /** The robots.txt product token, matched per RFC 9309. */
@@ -89,8 +103,8 @@ const EXPECTED =
 /** Resolve one bot's stance against the parsed robots.txt groups. */
 function stanceFor(groups: RobotsGroup[], bot: DirectiveBot): Stance {
   const { explicitly, allowed } = isAllowed(groups, bot.botName);
-  if (!allowed) return "blocked";
-  return explicitly ? "explicitly allowed" : "allowed by default";
+  if (!allowed) return Stance.Blocked;
+  return explicitly ? Stance.ExplicitlyAllowed : Stance.AllowedByDefault;
 }
 
 /** Render the informational per-bot table shown in the report. */
@@ -109,20 +123,20 @@ export class AiBotDirectivesAudit extends Audit {
     failureTitle: "A documented AI bot is blocked in robots.txt",
     description:
       "Reports your robots.txt stance on five long-tail AI bot tokens in one place. Only the bots whose operator publishes crawler documentation — YouBot (You.com) and AI2Bot (Allen Institute) — affect the score, because only those directives have a documented reader. Bytespider, cohere-ai and Diffbot are listed for information: blocking them is a legitimate operational choice that costs no AI-answer visibility.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/access-crawl-control/ai-bot-directives.md",
     // Gate exemption: being refused is what this category reports.
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "medium",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "Blocking YouBot removes the site from You.com's live search index; blocking AI2Bot removes it from the Allen Institute's open training corpora while leaving closed commercial crawlers untouched. The other three tokens carry no comparable consumer, so this audit never penalises blocking them.",
       fix: "Nothing to do while YouBot and AI2Bot are allowed, whether through their own groups or through User-agent: *, which under RFC 9309 §2.2.1 grants the same access. A Disallow: / that reaches either bot is reported as a failure: a legitimate publisher decision, but one that closes a documented consumer path. If the block is unintended, remove it. A named group with Allow: / also lifts it, but a named group replaces the catch-all for that bot, so copy into it every catch-all Disallow line it should still obey. If the block is intended, enforce it at the edge too, since robots.txt alone is not a reliable block. Bytespider, cohere-ai and Diffbot never affect the score, whatever you do with them.",
       code: "User-agent: YouBot\nAllow: /\n\nUser-agent: AI2Bot\nAllow: /",
-      effort: "trivial",
+      effort: FixEffort.Trivial,
       tags: ["robots-txt", "crawler-permissions", "ai-bots"],
     },
   };
@@ -161,7 +175,7 @@ export class AiBotDirectivesAudit extends Audit {
     const table = renderTable(rows);
 
     const scoredRows = rows.filter((r) => r.bot.documentedActive);
-    const blocked = scoredRows.filter((r) => r.stance === "blocked");
+    const blocked = scoredRows.filter((r) => r.stance === Stance.Blocked);
 
     if (blocked.length > 0) {
       const names = blocked.map((r) => r.bot.displayName).join(", ");
@@ -169,13 +183,13 @@ export class AiBotDirectivesAudit extends Audit {
         `${names} ${blocked.length === 1 ? "is" : "are"} blocked by robots.txt — the documented consumer path is closed.`,
         EXPECTED,
         table,
-        { priority: "medium" },
+        { priority: CheckPriority.Medium },
       );
     }
 
     const allNames = SCORED_BOTS.map((b) => b.displayName).join(" and ");
     const inherited = scoredRows.filter(
-      (r) => r.stance === "allowed by default",
+      (r) => r.stance === Stance.AllowedByDefault,
     );
     if (inherited.length === 0) {
       return this.pass(

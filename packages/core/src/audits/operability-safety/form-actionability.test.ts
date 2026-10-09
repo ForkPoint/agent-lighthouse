@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { FormActionabilityAudit } from "./form-actionability";
-import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
+import { mockPageContext, mockCheckContext } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 const page = (html: string) =>
   mockCheckContext([mockPageContext("https://example.com/contact", html, 0)]);
@@ -12,7 +13,7 @@ describe("FormActionabilityAudit", () => {
     const result = audit.audit(
       page("<html><body><h1>Hello</h1></body></html>"),
     );
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("returns na when forms have no fillable fields", () => {
@@ -23,7 +24,7 @@ describe("FormActionabilityAudit", () => {
       </form>
     </body></html>`;
     const result = audit.audit(page(html));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("passes for a fully labeled form with standard autocomplete", () => {
@@ -40,7 +41,7 @@ describe("FormActionabilityAudit", () => {
       </form>
     </body></html>`;
     const result = audit.audit(page(html));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.score).toBe(1);
   });
 
@@ -51,7 +52,7 @@ describe("FormActionabilityAudit", () => {
       </form>
     </body></html>`;
     const result = audit.audit(page(html));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("fails for unlabeled inputs and a div role=textbox", () => {
@@ -64,7 +65,7 @@ describe("FormActionabilityAudit", () => {
       </form>
     </body></html>`;
     const result = audit.audit(page(html));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.score).toBe(0);
     expect(result.found).toContain("not a native form element");
     expect(result.found).toContain("missing autocomplete");
@@ -79,7 +80,7 @@ describe("FormActionabilityAudit", () => {
       </form>
     </body></html>`;
     const result = audit.audit(page(html));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.score).toBe(0.5);
   });
 
@@ -92,7 +93,7 @@ describe("FormActionabilityAudit", () => {
       </form>
     </body></html>`;
     const result = audit.audit(page(html));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("non-standard autocomplete");
   });
 
@@ -103,7 +104,7 @@ describe("FormActionabilityAudit", () => {
     ).join("\n");
     const html = `<html><body><form action="/x" method="post">${inputs}</form></body></html>`;
     const result = audit.audit(page(html));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("and 2 more");
   });
 
@@ -120,7 +121,7 @@ describe("FormActionabilityAudit", () => {
         </form>
       </body></html>`;
       const result = audit.audit(page(html));
-      expect(result.status).toBe("fail");
+      expect(result.status).toBe(CheckStatus.Fail);
       expect(result.found).toContain("no name attribute");
     });
 
@@ -134,7 +135,7 @@ describe("FormActionabilityAudit", () => {
         </form>
       </body></html>`;
       const result = audit.audit(page(html));
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.found).toContain("2/2");
     });
 
@@ -146,7 +147,7 @@ describe("FormActionabilityAudit", () => {
         </form>
       </body></html>`;
       const result = audit.audit(page(html));
-      expect(result.status).toBe("fail");
+      expect(result.status).toBe(CheckStatus.Fail);
       expect(result.found).toContain("WebMCP");
     });
 
@@ -157,7 +158,7 @@ describe("FormActionabilityAudit", () => {
         </form>
       </body></html>`;
       const result = audit.audit(page(html));
-      expect(result.status).toBe("fail");
+      expect(result.status).toBe(CheckStatus.Fail);
       expect(result.found).toContain("no explicit label");
     });
   });
@@ -175,7 +176,7 @@ describe("FormActionabilityAudit", () => {
         </form>
       </body></html>`;
       const result = audit.audit(page(html));
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
     });
 
     it("accepts a <label for> that lives outside the <form> element", () => {
@@ -186,7 +187,7 @@ describe("FormActionabilityAudit", () => {
         </form>
       </body></html>`;
       const result = audit.audit(page(html));
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
     });
   });
 });

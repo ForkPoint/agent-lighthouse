@@ -4,12 +4,13 @@ import {
   mockPageContext,
   mockCheckContext,
   mockFetchResult,
-} from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { FetchOptions, FetchResult } from "../../fetcher";
+} from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import { CheckStatus } from "#core/types";
 
-vi.mock("../../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => {
@@ -108,7 +109,9 @@ describe("SitemapLastmodVerifiabilityAudit", () => {
   });
 
   it("is notApplicable when no sitemap responds", async () => {
-    expect((await run(consistent(3), false)).status).toBe("na");
+    expect((await run(consistent(3), false)).status).toBe(
+      CheckStatus.NotApplicable,
+    );
   });
 
   // Presence is machine-discovery/sitemap-lastmod's question; this audit only
@@ -118,7 +121,7 @@ describe("SitemapLastmodVerifiabilityAudit", () => {
       { loc: "https://example.com/a" },
       { loc: "https://example.com/b" },
     ]);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   // A product page's customer reviews carry their own datePublished. Those
@@ -146,7 +149,7 @@ describe("SitemapLastmodVerifiabilityAudit", () => {
           jsonLd: product(60 + i * 9),
         })),
       );
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.found).toContain("0 divergent, 5 unverifiable");
     });
 
@@ -176,13 +179,13 @@ describe("SitemapLastmodVerifiabilityAudit", () => {
           },
         })),
       );
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
     });
   });
 
   it("passes when every lastmod matches the page dateModified", async () => {
     const result = await run(consistent(5));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("accepts the Last-Modified response header as the corroborating signal", async () => {
@@ -193,7 +196,7 @@ describe("SitemapLastmodVerifiabilityAudit", () => {
         lastModified: new Date(Date.now() - (20 + i * 9) * DAY).toUTCString(),
       })),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("accepts article:modified_time as the corroborating signal", async () => {
@@ -204,14 +207,14 @@ describe("SitemapLastmodVerifiabilityAudit", () => {
         metaModified: iso(20 + i * 9),
       })),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("fails on a future-dated lastmod", async () => {
     const urls = consistent(4);
     urls[0]!.lastmod = new Date(Date.now() + 30 * DAY).toISOString();
     const result = await run(urls);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("future");
   });
 
@@ -220,7 +223,7 @@ describe("SitemapLastmodVerifiabilityAudit", () => {
     urls[0]!.lastmod = "20 June 2026";
     const result = await run(urls);
     expect(result.message).toContain("malformed");
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
   });
 
   it("passes a shared recent lastmod when every page corroborates it", async () => {
@@ -231,7 +234,7 @@ describe("SitemapLastmodVerifiabilityAudit", () => {
       dateModified: stamp,
     }));
     const result = await run(urls);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).not.toContain("build stamp");
   });
 
@@ -245,7 +248,7 @@ describe("SitemapLastmodVerifiabilityAudit", () => {
       dateModified: iso(100 + i),
     }));
     const result = await run(urls);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("one lastmod run");
   });
 
@@ -261,7 +264,7 @@ describe("SitemapLastmodVerifiabilityAudit", () => {
         };
       }),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("6 corroborated, 0 divergent");
   });
 
@@ -273,7 +276,7 @@ describe("SitemapLastmodVerifiabilityAudit", () => {
         lastmod: stamp,
       })),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).not.toContain("build stamp");
   });
 
@@ -288,7 +291,7 @@ describe("SitemapLastmodVerifiabilityAudit", () => {
         lastModified: new Date(base + 5 * 60_000).toUTCString(),
       })),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain(
       "0 corroborated, 0 divergent, 6 unverifiable",
     );
@@ -308,7 +311,7 @@ describe("SitemapLastmodVerifiabilityAudit", () => {
         };
       }),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("does not call lastmods hours apart a build stamp", async () => {
@@ -327,7 +330,7 @@ describe("SitemapLastmodVerifiabilityAudit", () => {
       dateModified: iso(200 + i * 3),
     }));
     const result = await run(urls);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("7 days");
   });
 
@@ -340,7 +343,7 @@ describe("SitemapLastmodVerifiabilityAudit", () => {
       lastModified: new Date(Date.now() - DAY).toUTCString(),
     }));
     const result = await run(urls);
-    expect(result.status).not.toBe("fail");
+    expect(result.status).not.toBe(CheckStatus.Fail);
     expect(result.message).toContain("cannot be verified");
   });
 
@@ -351,7 +354,7 @@ describe("SitemapLastmodVerifiabilityAudit", () => {
       dateModified: iso(200 + i * 3),
       lastModified: new Date(Date.now() - (200 + i * 3) * DAY).toUTCString(),
     }));
-    expect((await run(urls)).status).toBe("fail");
+    expect((await run(urls)).status).toBe(CheckStatus.Fail);
   });
 
   // Nothing to compare against is a missing-signal problem on the page, not a
@@ -362,7 +365,7 @@ describe("SitemapLastmodVerifiabilityAudit", () => {
       lastmod: iso(10 + i * 9),
     }));
     const result = await run(urls);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("dateModified");
   });
 
@@ -397,5 +400,5 @@ it("does not sample a sibling project's pages for a subpath site", async () => {
   };
   const result = await new SitemapLastmodVerifiabilityAudit().audit(ctx);
   expect(seen).not.toContain("https://example.com/other-project/post/");
-  expect(result.status).toBe("na");
+  expect(result.status).toBe(CheckStatus.NotApplicable);
 });

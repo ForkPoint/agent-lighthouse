@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
 import { ThirdPartyDomWriteBlastRadiusAudit } from "./third-party-dom-write-blast-radius";
 import {
   attributableFixture,
@@ -8,9 +8,15 @@ import {
   mockPageContext,
   shellSiteContext,
   unreachedSiteContext,
-} from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { CheckContext } from "../../check-context";
+} from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { CheckContext } from "#core/check-context";
+import {
+  AuditTier,
+  CheckStatus,
+  EvidenceGrade,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** A page whose CSP arrives in the response header, as most sites deliver it. */
 function page(body: string, csp?: string, head = ""): CheckContext {
@@ -42,7 +48,7 @@ describe("ThirdPartyDomWriteBlastRadiusAudit", () => {
 
   it("passes a page that loads no third-party script", async () => {
     const result = await audit.audit(page('<script src="/app.js"></script>'));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.details?.["origins"]).toBe(0);
   });
 
@@ -53,14 +59,14 @@ describe("ThirdPartyDomWriteBlastRadiusAudit", () => {
         "script-src 'self' 'nonce-abc'",
       ),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("fails one third-party script with no CSP and no integrity", async () => {
     const result = await audit.audit(
       page('<script src="https://cdn.vendor.com/t.js"></script>'),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("vendor.com");
   });
 
@@ -73,7 +79,7 @@ describe("ThirdPartyDomWriteBlastRadiusAudit", () => {
         '<script src="https://static.brand-assets.example/app.js"></script>',
       ),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("separate host");
     expect(result.message).not.toContain("company");
   });
@@ -84,7 +90,7 @@ describe("ThirdPartyDomWriteBlastRadiusAudit", () => {
         '<script src="https://static.brand-assets.example/app.js" integrity="sha384-abc" crossorigin="anonymous"></script>',
       ),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("separate host");
     expect(result.message).not.toContain("company");
   });
@@ -97,7 +103,7 @@ describe("ThirdPartyDomWriteBlastRadiusAudit", () => {
         "script-src 'unsafe-inline' https:",
       ),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("reads a CSP delivered by meta http-equiv as well as by header", async () => {
@@ -108,7 +114,7 @@ describe("ThirdPartyDomWriteBlastRadiusAudit", () => {
         `<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'nonce-abc'">`,
       ),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("tiers the warning by the count of uncontrolled origins", async () => {
@@ -164,9 +170,9 @@ describe("ThirdPartyDomWriteBlastRadiusAudit", () => {
 
   it("registers as a scored grade-B audit", () => {
     const { meta } = ThirdPartyDomWriteBlastRadiusAudit;
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
-    expect(meta.scoreDisplayMode).toBe("ternary");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
+    expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Ternary);
   });
 
   // The scan may hold a readable page that is not this site's — a broker's
@@ -176,7 +182,9 @@ describe("ThirdPartyDomWriteBlastRadiusAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new ThirdPartyDomWriteBlastRadiusAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext(pages, rootFiles),
@@ -189,7 +197,7 @@ describe("ThirdPartyDomWriteBlastRadiusAudit", () => {
       plan.skipped.find(
         (stub) => stub.id === ThirdPartyDomWriteBlastRadiusAudit.meta.id,
       )?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 
   // `requires` deliberately omits `rendered-body`: an origin named in the
@@ -208,10 +216,10 @@ describe("ThirdPartyDomWriteBlastRadiusAudit", () => {
     expect(
       named.status,
       "an origin in the served HTML is still judged",
-    ).not.toBe("na");
+    ).not.toBe(CheckStatus.NotApplicable);
     expect(named.found).toContain("vendor.test");
 
     const empty = await audit.audit(shellSiteContext());
-    expect(empty.status).toBe("na");
+    expect(empty.status).toBe(CheckStatus.NotApplicable);
   });
 });

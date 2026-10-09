@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import fs from "fs";
 import path from "path";
-import { runAudits } from "../audit-runner";
-import { defaultConfig } from "../audit-config";
+import { runAudits } from "#core/audit-runner";
+import { defaultConfig } from "#core/audit-config";
 import {
   mockCheckContext,
   mockPageContext,

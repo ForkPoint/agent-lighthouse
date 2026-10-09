@@ -1,4 +1,4 @@
-import type { ScoreTier } from "./types";
+import { ScoreTier } from "./types";
 
 // ── Scan Limits ────────────────────────────────────────────────
 
@@ -65,17 +65,17 @@ export const READINESS_WEIGHTS = {
 } as const;
 
 export function getScoreTier(score: number): ScoreTier {
-  if (score >= 90) return "agent-ready";
-  if (score >= 70) return "partially-ready";
-  if (score >= 50) return "needs-work";
-  return "not-ready";
+  if (score >= 90) return ScoreTier.AgentReady;
+  if (score >= 70) return ScoreTier.PartiallyReady;
+  if (score >= 50) return ScoreTier.NeedsWork;
+  return ScoreTier.NotReady;
 }
 
 export const SCORE_TIER_LABELS: Record<ScoreTier, string> = {
-  "agent-ready": "Agent Ready",
-  "partially-ready": "Partially Ready",
-  "needs-work": "Needs Work",
-  "not-ready": "Not Ready",
+  [ScoreTier.AgentReady]: "Agent Ready",
+  [ScoreTier.PartiallyReady]: "Partially Ready",
+  [ScoreTier.NeedsWork]: "Needs Work",
+  [ScoreTier.NotReady]: "Not Ready",
 };
 
 export function getTierLabel(tier: string | null): string {
@@ -87,13 +87,13 @@ export function getTierLabel(tier: string | null): string {
 
 export function getTierColor(tier: string | null): string {
   switch (tier) {
-    case "agent-ready":
+    case ScoreTier.AgentReady:
       return "#10b981";
-    case "partially-ready":
+    case ScoreTier.PartiallyReady:
       return "#3b82f6";
-    case "needs-work":
+    case ScoreTier.NeedsWork:
       return "#f59e0b";
-    case "not-ready":
+    case ScoreTier.NotReady:
       return "#ef4444";
     default:
       return "#64748b";

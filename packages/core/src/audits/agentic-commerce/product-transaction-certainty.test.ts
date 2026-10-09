@@ -1,9 +1,33 @@
 import { describe, it, expect } from "vitest";
 import { ProductTransactionCertaintyAudit } from "./product-transaction-certainty";
-import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
+import { mockPageContext, mockCheckContext } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 const ld = (obj: unknown) =>
   `<script type="application/ld+json">${JSON.stringify(obj)}</script>`;
+
+// Google's variant layout: shared properties on the ProductGroup, the
+// varying ones and each variant's own Offer under hasVariant.
+const productGroup = (offers: Record<string, unknown> = {}) => ({
+  "@context": "https://schema.org",
+  "@type": "ProductGroup",
+  productGroupID: "SHIRT",
+  name: "Shirt",
+  brand: { "@type": "Brand", name: "Acme" },
+  category: "Shirts",
+  ...offers,
+  hasVariant: ["S", "M"].map((size) => ({
+    "@type": "Product",
+    sku: `SHIRT-${size}`,
+    size,
+    offers: {
+      "@type": "Offer",
+      price: 45,
+      priceCurrency: "EUR",
+      availability: "https://schema.org/InStock",
+    },
+  })),
+});
 
 describe("ProductTransactionCertaintyAudit", () => {
   const audit = new ProductTransactionCertaintyAudit();
@@ -18,7 +42,7 @@ describe("ProductTransactionCertaintyAudit", () => {
       mockPageContext("https://example.com/", html, 0),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("fails when Product relies on name and price alone", () => {
@@ -36,7 +60,7 @@ describe("ProductTransactionCertaintyAudit", () => {
       mockPageContext("https://example.com/products/shoe", html, 1),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("1/4");
     expect(result.message).toContain("offers.availability");
   });
@@ -51,7 +75,7 @@ describe("ProductTransactionCertaintyAudit", () => {
       mockPageContext("https://example.com/products/shoe", html, 1),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("no Offer block");
   });
 
@@ -71,7 +95,7 @@ describe("ProductTransactionCertaintyAudit", () => {
       mockPageContext("https://example.com/products/shoe", html, 1),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("2/4");
     expect(result.found).toContain("priceValidUntil");
   });
@@ -98,7 +122,7 @@ describe("ProductTransactionCertaintyAudit", () => {
       mockPageContext("https://example.com/products/shoe", html, 1),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("4/4");
   });
 
@@ -127,6 +151,20 @@ describe("ProductTransactionCertaintyAudit", () => {
       mockPageContext("https://example.com/products/shoe", html, 1),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
+  });
+
+  it("reads the offers of a ProductGroup's variants", () => {
+    const ctx = mockCheckContext([
+      mockPageContext(
+        "https://example.com/products/shirt",
+        `<html><head>${ld(productGroup())}</head><body></body></html>`,
+        1,
+      ),
+    ]);
+    const result = audit.audit(ctx);
+    // availability and price + currency; no priceValidUntil, no return policy.
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.found).toContain("2/4");
   });
 });

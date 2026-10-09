@@ -1,22 +1,20 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { runScan } from "../packages/core/src";
-import { boundedDispatcher, createFetcher } from "../packages/core/src/fetcher";
+import { runScan } from "#core/index";
+import { boundedDispatcher, createFetcher } from "#core/fetcher";
 import {
   parseRobots,
   groupsForBot,
   isBlanketBlocked,
-} from "../packages/core/src/gatherers/robots";
-import { SCANNER_USER_AGENT } from "../packages/core/src/constants";
-import { AI_CRAWLER_UAS } from "../packages/core/src/gatherers/ua-parity";
-import { invariantViolations } from "../packages/core/src/tests/scan-invariants";
-import {
-  excludedDomains,
-  type CorpusStatus,
-} from "../packages/core/src/tests/corpus-status";
-import type { SiteEntry } from "../packages/core/src/tests/site-list";
-import type { FetchResult } from "../packages/core/src/fetcher";
-import type { EvidenceKey } from "../packages/core/src/types";
+} from "#core/gatherers/robots";
+import { SCANNER_USER_AGENT } from "#core/constants";
+import { AI_CRAWLER_UAS } from "#core/gatherers/ua-parity";
+import { invariantViolations } from "#core/tests/scan-invariants";
+import { excludedDomains, type CorpusStatus } from "#core/tests/corpus-status";
+import type { SiteEntry } from "#core/tests/site-list";
+import type { FetchResult } from "#core/fetcher";
+import type { EvidenceKey } from "#core/types";
+import { SkipReason } from "./lib/scan-outcomes";
 
 /**
  * Scan a window of the site list and assert what a scan may claim.
@@ -90,7 +88,6 @@ const PROBED_TOKENS: readonly string[] = [
  * Why a site produced no scan. Kept apart from a violation: a site we chose not
  * to scan says nothing about the scanner.
  */
-type SkipReason = "robots-disallow" | "robots-refused" | "crawl-delay";
 
 interface SiteOutcome {
   domain: string;
@@ -312,7 +309,7 @@ async function robotsVerdict(domain: string): Promise<RobotsVerdict> {
     url: `https://${domain}/robots.txt`,
   });
   if (result.status === 401 || result.status === 403 || result.status === 429) {
-    return { scan: false, reason: "robots-refused" };
+    return { scan: false, reason: SkipReason.RobotsRefused };
   }
   // Handed to `runScan` either way, so the one file an operator watches is
   // requested once per site instead of twice.
@@ -324,9 +321,9 @@ async function robotsVerdict(domain: string): Promise<RobotsVerdict> {
   for (const token of PROBED_TOKENS) {
     const groups = groupsForBot(parsed, token);
     if (isBlanketBlocked(groups, token))
-      return { scan: false, reason: "robots-disallow" };
+      return { scan: false, reason: SkipReason.RobotsDisallow };
     if (groups.some((g) => (g.crawlDelay ?? 0) > 0))
-      return { scan: false, reason: "crawl-delay" };
+      return { scan: false, reason: SkipReason.CrawlDelay };
   }
   return { scan: true, robotsTxt: result };
 }

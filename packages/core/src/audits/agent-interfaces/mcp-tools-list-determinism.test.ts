@@ -1,14 +1,15 @@
 import { describe, it, expect, vi } from "vitest";
 import { McpToolsListDeterminismAudit } from "./mcp-tools-list-determinism";
-import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { CheckContext } from "../../check-context";
-import type { FetchOptions, FetchResult } from "../../fetcher";
+import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { CheckContext } from "#core/check-context";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import { CheckStatus } from "#core/types";
 
 // isSafeUrl resolves DNS before the client POSTs to a URL read out of a
 // site-controlled root file. Offline stand-in, still blocking private ranges.
-vi.mock("../../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => {
@@ -93,7 +94,7 @@ describe("McpToolsListDeterminismAudit", () => {
   it("is notApplicable when the site declares no MCP endpoint", async () => {
     const ctx: CheckContext = mockCheckContext([]);
     const result = (await audit.audit(ctx)) as Result;
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("is notApplicable when the server lists no tools", async () => {
@@ -102,12 +103,12 @@ describe("McpToolsListDeterminismAudit", () => {
       ttlMs: 1000,
       cacheScope: "public",
     }));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("passes a deterministic list and reports the ttl", async () => {
     const result = await run(() => healthy());
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("ttlMs 60000");
     expect(result.found).toContain("cacheScope private");
   });
@@ -117,25 +118,25 @@ describe("McpToolsListDeterminismAudit", () => {
       tools: [TOOL_A],
       cacheScope: "private",
     }));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("ttlMs");
   });
 
   it("fails ttlMs: 0 because no caching is possible", async () => {
     const result = await run(() => healthy({ ttlMs: 0 }));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("stale on arrival");
   });
 
   it("fails when cacheScope is absent", async () => {
     const result = await run(() => ({ tools: [TOOL_A], ttlMs: 60_000 }));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("cacheScope");
   });
 
   it("fails a cacheScope outside public and private", async () => {
     const result = await run(() => healthy({ cacheScope: "shared" }));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain('"shared"');
   });
 
@@ -146,7 +147,7 @@ describe("McpToolsListDeterminismAudit", () => {
       () => healthy({ cacheScope: "public" }),
       challenge,
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("shared across access tokens");
   });
 
@@ -154,7 +155,7 @@ describe("McpToolsListDeterminismAudit", () => {
     const result = await run((call) =>
       healthy({ tools: call === 2 ? [TOOL_B, TOOL_A] : [TOOL_A, TOOL_B] }),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("different order");
   });
 
@@ -169,7 +170,7 @@ describe("McpToolsListDeterminismAudit", () => {
         ],
       }),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("prompt caching");
   });
 
@@ -185,7 +186,7 @@ describe("McpToolsListDeterminismAudit", () => {
         ],
       }),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("key order");
   });
 
@@ -195,7 +196,7 @@ describe("McpToolsListDeterminismAudit", () => {
     const result = await run((call) =>
       healthy({ tools: call === 2 ? [TOOL_A] : [TOOL_A, TOOL_B] }),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("MUST NOT vary per connection");
     expect(result.message).toContain("back to back");
   });
@@ -224,7 +225,7 @@ describe("McpToolsListDeterminismAudit", () => {
       );
     };
     const result = (await audit.audit(ctx)) as Result;
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("page 2");
   });
 
@@ -257,7 +258,7 @@ describe("McpToolsListDeterminismAudit", () => {
       );
     };
     const result = (await audit.audit(ctx)) as Result;
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("differs across the pages");
   });
 
@@ -266,7 +267,7 @@ describe("McpToolsListDeterminismAudit", () => {
       tools: [TOOL_A],
       _meta: { resultType: "complete", ttlMs: 30_000, cacheScope: "private" },
     }));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("ttlMs 30000");
   });
 });

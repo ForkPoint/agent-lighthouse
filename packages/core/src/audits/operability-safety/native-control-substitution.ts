@@ -7,11 +7,19 @@
 // and neither has any notion of the native element the widget replaced. This
 // audit measures that substitution, and only then asks whether the replacement
 // carries a usable APG contract.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext, PageContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext, PageContext } from "#core/check-context";
 import { idSelector } from "./_agent-affordances";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /**
  * Controls a mainstream agent toolkit drives in one call — `selectOption`,
@@ -34,10 +42,17 @@ const CONVERSION_PATH =
 /** Roles a combobox may legally point `aria-controls` at (WAI-ARIA APG). */
 const POPUP_ROLES = new Set(["listbox", "grid", "tree", "dialog", "menu"]);
 
+const ReplacedControl = {
+  Choice: "choice",
+  File: "file",
+} as const;
+
+type ReplacedControl = (typeof ReplacedControl)[keyof typeof ReplacedControl];
+
 interface Substitution {
   pageUrl: string;
   /** What the control replaced, for the message. */
-  kind: "choice" | "file";
+  kind: ReplacedControl;
   /** 2 on a conversion path, 1 elsewhere. */
   weight: number;
   /** Empty when the APG contract is complete. */
@@ -78,25 +93,25 @@ export class NativeControlSubstitutionAudit extends Audit {
     failureTitle: "Native Control Substitution Index",
     description:
       "Counts choice, date, and file-input controls implemented as custom div widgets instead of the native HTML elements, weighted by whether they sit on a conversion-critical path (search, filter, checkout, signup). Reports each substituted control with the number of agent actions it costs versus its native equivalent.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/operability-safety/native-control-substitution.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "high",
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         'Falsifiable claim: native <select>, <input type="date">, and <input type="file"> are single-call primitives in every mainstream agent toolkit (selectOption, fill, setInputFiles) and are keyboard-operable, so they succeed in one action with no actionability risk. A custom equivalent requires open → wait for popup → scroll the option list into view → locate the option → click, where each step is independently subject to Playwright\'s visible/stable/receives-events gates, and Anthropic documents dropdowns specifically as \'tricky for Claude to manipulate using mouse movements\'. Test: instrument the same form with native vs custom controls and count tool calls and retries to reach an identical value.',
       fix: 'Use the native element wherever the choice fits it: <select> for a list, <input type="date"> for a date, <input type="file"> for an upload — an agent drives each in one call. Where a custom widget is unavoidable, give it the complete APG combobox contract: role="combobox", aria-expanded, aria-controls pointing at an element that exists and carries role="listbox", options carrying role="option", and an aria-activedescendant that resolves.',
       code: SAMPLE,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/native-control-substitution/",
       tags: ["forms", "aria", "agent-operability", "controls", "accessibility"],
@@ -105,7 +120,7 @@ export class NativeControlSubstitutionAudit extends Audit {
 
   private recommendation() {
     return {
-      priority: "high" as const,
+      priority: CheckPriority.High,
       description: NativeControlSubstitutionAudit.meta.description,
       code: SAMPLE,
     };
@@ -258,7 +273,7 @@ function survey(ctx: CheckContext): Survey {
       result.controlsSeen += 1;
       const weight = pathWeight($form.attr("action") ?? "");
       const defect =
-        kind === "file"
+        kind === ReplacedControl.File
           ? 'the drop zone has no <input type="file"> anywhere inside it, so an agent has no target for setInputFiles'
           : contractDefect(page, $el, ids);
       result.substitutions.push({
@@ -274,7 +289,7 @@ function survey(ctx: CheckContext): Survey {
       const tag = (el as { tagName?: string }).tagName?.toLowerCase() ?? "";
       // A native <select> may carry role="listbox" redundantly; it is still native.
       if (tag === "select" || tag === "input") return;
-      consider(el, "choice");
+      consider(el, ReplacedControl.Choice);
     });
 
     // (b) A clickable styled div carrying its value in a hidden or readonly input.
@@ -287,7 +302,7 @@ function survey(ctx: CheckContext): Survey {
       const $region = $form.length > 0 ? $form : $el.parent();
       const carrier = $region.find('input[type="hidden"], input[readonly]');
       if (carrier.length === 0) return;
-      consider(el, "choice");
+      consider(el, ReplacedControl.Choice);
     });
 
     // (c) A drop zone standing in for a file input.
@@ -296,7 +311,7 @@ function survey(ctx: CheckContext): Survey {
       if (!DROP_ZONE_CLASS.test($el.attr("class") ?? "")) return;
       if ($el.find('input[type="file"]').length > 0) return;
       if ($el.parent().find('input[type="file"]').length > 0) return;
-      consider(el, "file");
+      consider(el, ReplacedControl.File);
     });
   }
 

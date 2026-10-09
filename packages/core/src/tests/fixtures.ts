@@ -1,7 +1,7 @@
-import type { CheckContext } from "../check-context";
-import type { FetchOptions, FetchResult } from "../fetcher";
-import { buildScanEvidence } from "../scan-evidence";
-import { mockPageContext } from "../__tests__/test-utils";
+import type { CheckContext } from "#core/check-context";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import { buildScanEvidence } from "#core/scan-evidence";
+import { mockPageContext } from "#core/__tests__/test-utils";
 
 const BASE_URL = "https://example.test";
 

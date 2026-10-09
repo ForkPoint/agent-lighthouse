@@ -1,7 +1,15 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /**
  * One root file, one signal: does a published `/.well-known/security.txt`
@@ -77,14 +85,14 @@ export class SecurityHeaderHygieneAudit extends Audit {
     failureTitle: "security.txt does not conform to RFC 9116",
     description:
       "Reports whether a published /.well-known/security.txt conforms to RFC 9116 — plain text, a Contact field, and an Expires date in the future. RFC 9116 is an Informational document whose stated consumers are human security researchers and vulnerability-notification tooling; no AI crawler, retrieval pipeline or answer engine is documented to read it, so this audit is informative only — it carries weight 0 and never affects your score. A site that publishes no security.txt is reported as not applicable rather than warned.",
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "informative"),
-    evidenceGrade: "C",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier:
       "docs/evidence/audits/operability-safety/security-header-hygiene.md",
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "low",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
         "Vulnerability-disclosure hygiene, reported for completeness. A conformant security.txt tells a security researcher who to contact; it is read by researchers and disclosure scanners, not by AI agents. Publishing one changes nothing about how an agent retrieves, parses or cites the site, which is why nothing here moves your score. If you do publish one, an expired or contactless file is worse than none: it advertises a disclosure route that no longer works.",
@@ -94,7 +102,7 @@ export class SecurityHeaderHygieneAudit extends Audit {
         "Contact: mailto:security@example.com",
         "Expires: 2027-12-31T23:59:59.000Z",
       ].join("\n"),
-      effort: "trivial",
+      effort: FixEffort.Trivial,
       docsUrl: "https://www.rfc-editor.org/rfc/rfc9116.html",
       tags: ["security", "security.txt", "rfc9116"],
     },
@@ -146,7 +154,7 @@ export class SecurityHeaderHygieneAudit extends Audit {
         `${path} returned 200 but the body is HTML, so no security.txt is really published there.`,
         EXPECTED,
         `${path} returned 200 but the body is HTML (soft-404)`,
-        { priority: "low" },
+        { priority: CheckPriority.Low },
         url,
       );
     }
@@ -157,7 +165,7 @@ export class SecurityHeaderHygieneAudit extends Audit {
         `${path} is published but has no Contact field, which RFC 9116 requires.`,
         EXPECTED,
         `${path} has no Contact field (RFC 9116 requires it)`,
-        { priority: "low" },
+        { priority: CheckPriority.Low },
         url,
       );
     }
@@ -168,7 +176,7 @@ export class SecurityHeaderHygieneAudit extends Audit {
         `${path} is published but has no Expires field, which RFC 9116 requires.`,
         EXPECTED,
         `${path} has no Expires field (RFC 9116 requires it)`,
-        { priority: "low" },
+        { priority: CheckPriority.Low },
         url,
       );
     }
@@ -179,7 +187,7 @@ export class SecurityHeaderHygieneAudit extends Audit {
         `${path} has an Expires value that cannot be parsed as a date.`,
         EXPECTED,
         `${path} has an unparseable Expires value — "${expires}"`,
-        { priority: "low" },
+        { priority: CheckPriority.Low },
         url,
       );
     }
@@ -189,7 +197,7 @@ export class SecurityHeaderHygieneAudit extends Audit {
         `${path} expired on ${expires}, so RFC 9116 treats its contents as no longer valid.`,
         EXPECTED,
         `${path} expired on ${expires}`,
-        { priority: "low" },
+        { priority: CheckPriority.Low },
         url,
       );
     }

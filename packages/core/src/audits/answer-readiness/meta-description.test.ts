@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { MetaDescriptionAudit } from "./meta-description";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { CheckPriority, CheckStatus } from "#core/types";
 
 const doc = (head: string, body = "") =>
   `<html lang="en"><head>${head}</head><body>${body}</body></html>`;
@@ -20,19 +21,19 @@ describe("MetaDescriptionAudit", () => {
     const desc =
       "A concise summary of the page content describing exactly what users will learn here today.";
     const result = audit.audit(withDesc(desc));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("Meta description present");
   });
 
   it("warns when description is too short", () => {
     const result = audit.audit(withDesc("Too short."));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("should be 50-300");
   });
 
   it("warns when description is too long", () => {
     const result = audit.audit(withDesc("x".repeat(350)));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("350");
   });
 
@@ -41,13 +42,13 @@ describe("MetaDescriptionAudit", () => {
       mockPageContext("https://example.com/", doc("")),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("missing");
   });
 
   it("fails when there are no pages", () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   // --- absorbed from meta-description-aeo (v1 9.11) ------------------------
@@ -59,7 +60,7 @@ describe("MetaDescriptionAudit", () => {
         "<title>Merino Wool Sweaters | Acme</title>",
       ),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("warns when the description shares no term with the title or H1", () => {
@@ -70,7 +71,7 @@ describe("MetaDescriptionAudit", () => {
         "<h1>Merino Wool Sweaters</h1>",
       ),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("does not describe");
   });
 
@@ -82,7 +83,7 @@ describe("MetaDescriptionAudit", () => {
         "<h1>Sourdough baking guide</h1>",
       ),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("skips the overlap check when the page has neither a title nor an H1", () => {
@@ -91,7 +92,7 @@ describe("MetaDescriptionAudit", () => {
         "An accurate page summary with no headings on the page to compare it against here.",
       ),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("warns on a keyword string rather than a human-readable description", () => {
@@ -101,7 +102,7 @@ describe("MetaDescriptionAudit", () => {
         "<title>Merino Wool Sweaters | Acme</title>",
       ),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("keyword");
   });
 
@@ -114,7 +115,7 @@ describe("MetaDescriptionAudit", () => {
         "<title>Merino Wool Sweaters | Acme</title>",
       ),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).not.toContain("action/result");
   });
 
@@ -127,7 +128,7 @@ describe("MetaDescriptionAudit", () => {
         "<title>Merino Wool Sweaters | Acme</title>",
       ),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).not.toContain("concrete and specific");
   });
 
@@ -135,7 +136,7 @@ describe("MetaDescriptionAudit", () => {
     const result = audit.audit(
       withDesc("Discover more.", "<title>Merino Wool Sweaters</title>"),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("should be 50-300");
   });
 
@@ -146,8 +147,8 @@ describe("MetaDescriptionAudit", () => {
         "<title>Merino Wool Sweaters | Acme</title>",
       ),
     );
-    expect(result.status).not.toBe("fail");
-    expect(result.priority).toBe("medium");
+    expect(result.status).not.toBe(CheckStatus.Fail);
+    expect(result.priority).toBe(CheckPriority.Medium);
   });
 });
 
@@ -164,7 +165,7 @@ describe("MetaDescriptionAudit — brand-only page subject", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).not.toBe("warn");
+    expect(result.status).not.toBe(CheckStatus.Warn);
   });
 
   it("still warns when a real subject shares nothing with the description", () => {
@@ -178,7 +179,7 @@ describe("MetaDescriptionAudit — brand-only page subject", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("shares no term");
   });
 });

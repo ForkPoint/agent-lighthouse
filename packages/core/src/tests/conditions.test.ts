@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { runScan } from "../orchestrator";
-import { ScanConditionsSchema } from "../schemas";
-import { defaultConfig } from "../audit-config";
+import { runScan } from "#core/orchestrator";
+import { ScanConditionsSchema } from "#core/schemas";
+import { defaultConfig } from "#core/audit-config";
+import { AuditTier, PageType, PageTypeSource } from "#core/types";
 
 describe("Phase 6: The score states its conditions", () => {
   it("populates valid conditions adhering to ScanConditionsSchema", async () => {
@@ -40,12 +41,12 @@ describe("Phase 6: The score states its conditions", () => {
 
   it("marks pageType source as declared when explicitly supplied in options", async () => {
     const report = await runScan("https://example.com", {
-      pageType: "product",
+      pageType: PageType.Product,
     });
 
     expect(report.conditions).toBeDefined();
     expect(report.conditions?.pageType.type).toBe("product");
-    expect(report.conditions?.pageType.source).toBe("declared");
+    expect(report.conditions?.pageType.source).toBe(PageTypeSource.Declared);
   });
 
   it("marks pageType source as declared when supplied via explicit pages array", async () => {
@@ -53,21 +54,21 @@ describe("Phase 6: The score states its conditions", () => {
       pages: [
         {
           url: "https://example.com",
-          pageType: "category",
+          pageType: PageType.Category,
         },
       ],
     });
 
     expect(report.conditions).toBeDefined();
     expect(report.conditions?.pageType.type).toBe("category");
-    expect(report.conditions?.pageType.source).toBe("declared");
+    expect(report.conditions?.pageType.source).toBe(PageTypeSource.Declared);
   });
 
   it("marks pageType source as detected when not explicitly supplied", async () => {
     const report = await runScan("https://example.com");
 
     expect(report.conditions).toBeDefined();
-    expect(report.conditions?.pageType.source).toBe("detected");
+    expect(report.conditions?.pageType.source).toBe(PageTypeSource.Detected);
   });
 
   it("calculates registryMass accurately when filtering by specific categories", async () => {
@@ -85,7 +86,7 @@ describe("Phase 6: The score states its conditions", () => {
         .flatMap(
           (cat) => (defaultConfig.audits as Record<string, any[]>)[cat] ?? [],
         )
-        .filter((a) => a.meta.tier === "scored")
+        .filter((a) => a.meta.tier === AuditTier.Scored)
         .reduce((sum, a) => sum + a.meta.weight, 0)
         .toFixed(1),
     );
@@ -135,18 +136,18 @@ describe("Phase 6: The score states its conditions", () => {
 
   it("prioritizes explicit options.pageType over options.pages when both are provided", async () => {
     const report = await runScan("https://example.com", {
-      pageType: "product",
+      pageType: PageType.Product,
       pages: [
         {
           url: "https://example.com",
-          pageType: "category",
+          pageType: PageType.Category,
         },
       ],
     });
 
     expect(report.conditions).toBeDefined();
     expect(report.conditions?.pageType.type).toBe("product");
-    expect(report.conditions?.pageType.source).toBe("declared");
+    expect(report.conditions?.pageType.source).toBe(PageTypeSource.Declared);
   });
 
   it("matches declared page overrides regardless of trailing slash differences", async () => {
@@ -155,14 +156,15 @@ describe("Phase 6: The score states its conditions", () => {
       pages: [
         {
           url: "https://example.com/",
-          pageType: "content",
+          pageType: PageType.Content,
         },
       ],
     });
 
     expect(report.conditions).toBeDefined();
-    expect(report.conditions?.pageType.type).toBe("content");
-    expect(report.conditions?.pageType.source).toBe("declared");
+    expect(report.conditions?.pageType.type).toBe("unknown");
+    expect(report.conditions?.pageType.signals).toEqual(["declared:content"]);
+    expect(report.conditions?.pageType.source).toBe(PageTypeSource.Declared);
   });
 
   it("proves that unscored.totalCount exactly equals the sum of reasons values", async () => {

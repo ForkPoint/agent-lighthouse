@@ -1,9 +1,15 @@
 import { describe, it, expect } from "vitest";
 import { StatefulControlIntrospectabilityAudit } from "./stateful-control-introspectability";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { CheckContext } from "../../check-context";
-import { AuditResultSchema } from "../../schemas";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { CheckContext } from "#core/check-context";
+import { AuditResultSchema } from "#core/schemas";
+import {
+  AuditTier,
+  CheckStatus,
+  EvidenceGrade,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** A homepage carrying `body`. */
 function page(body: string): CheckContext {
@@ -26,7 +32,7 @@ describe("StatefulControlIntrospectabilityAudit", () => {
     const result = await audit.audit(
       page('<div role="switch" aria-checked="false">Share data</div>'),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.details?.["opaqueCount"]).toBe(0);
   });
 
@@ -53,7 +59,7 @@ describe("StatefulControlIntrospectabilityAudit", () => {
         '<button class="tab is-active" aria-pressed="true">Overview</button>',
       ),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.details?.["opaqueCount"]).toBe(0);
   });
 
@@ -71,7 +77,7 @@ describe("StatefulControlIntrospectabilityAudit", () => {
     const result = await audit.audit(
       page("<details><summary>More</summary><p>Panel</p></details>"),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.details?.["opaqueCount"]).toBe(0);
     expect(result.details?.["introspectableCount"]).toBe(1);
   });
@@ -108,7 +114,7 @@ describe("StatefulControlIntrospectabilityAudit", () => {
     const result = await audit.audit(
       page('<p>Just prose.</p><a href="/x">Link</a>'),
     );
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   // Regression for #15: `details.opaque` held Finding objects, which
@@ -126,9 +132,9 @@ describe("StatefulControlIntrospectabilityAudit", () => {
 
   it("registers as a scored grade-B audit", () => {
     const { meta } = StatefulControlIntrospectabilityAudit;
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
     expect(meta.weight).toBeCloseTo(0.6);
-    expect(meta.scoreDisplayMode).toBe("ternary");
+    expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Ternary);
   });
 });

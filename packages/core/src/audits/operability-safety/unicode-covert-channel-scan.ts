@@ -6,11 +6,19 @@
 // addressed to a model. This audit looks at text nothing hides — it is in plain
 // sight and still unreadable, because the codepoints themselves render as
 // nothing. A page can fail one and pass the other.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext, PageContext } from "../../check-context";
-import { scanReadPageText, unreadPageTextReason } from "../../scan-evidence";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { scanReadPageText, unreadPageTextReason } from "#core/scan-evidence";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** Attributes whose value reaches a model as ordinary text. */
 const SCANNED_ATTRIBUTES = [
@@ -59,7 +67,14 @@ const JOINING_SCRIPT = /[؀-ۿऀ-෿က-႟]/;
 /** How much of a decoded payload to print. */
 const MAX_PAYLOAD = 120;
 
-type Kind = "tag-block" | "bidi" | "zero-width" | "filler";
+const Kind = {
+  TagBlock: "tag-block",
+  Bidi: "bidi",
+  ZeroWidth: "zero-width",
+  Filler: "filler",
+} as const;
+
+type Kind = (typeof Kind)[keyof typeof Kind];
 
 interface Hit {
   kind: Kind;
@@ -94,7 +109,7 @@ function scan(text: string, source: string): Hit[] {
   for (const match of text.matchAll(TAG_BLOCK)) {
     const run = match[0];
     hits.push({
-      kind: "tag-block",
+      kind: Kind.TagBlock,
       source,
       decoded: decodeTags(run).slice(0, MAX_PAYLOAD),
       escaped: escape(run.slice(0, 8)),
@@ -109,7 +124,7 @@ function scan(text: string, source: string): Hit[] {
   if (pushes !== pops) {
     const first = /[‪-‮⁦-⁩]/.exec(text)?.[0] ?? "";
     hits.push({
-      kind: "bidi",
+      kind: Kind.Bidi,
       source,
       decoded: "",
       escaped: escape(first),
@@ -118,7 +133,7 @@ function scan(text: string, source: string): Hit[] {
   } else if (pushes > 0 && !RTL_SCRIPT.test(text)) {
     // Balanced, but around text that never needed a direction scope.
     hits.push({
-      kind: "bidi",
+      kind: Kind.Bidi,
       source,
       decoded: "",
       escaped: escape(/[‪-‮⁦-⁩]/.exec(text)?.[0] ?? ""),
@@ -146,7 +161,7 @@ function scan(text: string, source: string): Hit[] {
   }
   if (zeroWidth > 0) {
     hits.push({
-      kind: "zero-width",
+      kind: Kind.ZeroWidth,
       source,
       decoded: "",
       escaped: escape(firstZeroWidth),
@@ -168,7 +183,7 @@ function scan(text: string, source: string): Hit[] {
   }
   if (filler > 0) {
     hits.push({
-      kind: "filler",
+      kind: Kind.Filler,
       source,
       decoded: "",
       escaped: escape(firstFiller),
@@ -250,25 +265,25 @@ export class UnicodeCovertChannelScanAudit extends Audit {
     failureTitle: "Invisible codepoints carrying hidden text",
     description:
       "Scans rendered text, the attributes an agent reads, every JSON-LD string value and the site’s root files for codepoints that carry information invisibly: the Unicode Tags block (U+E0000–U+E007F), bidirectional overrides and isolates (U+202A–U+202E, U+2066–U+2069), and zero-width or filler characters (U+200B–U+200D, U+2060, U+FEFF, U+00AD, U+115F, U+1160, U+3164, U+FFA0). Decodes any tag-block run back to ASCII and prints the invisible sentence sitting on the page.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/operability-safety/unicode-covert-channel-scan.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "critical",
+    defaultPriority: CheckPriority.Critical,
     guidance: {
       impact:
         "Tag-block codepoints mirror ASCII and, per Unicode, render as nothing in tag-unaware implementations — while modern LLM tokenizers process them normally. A complete instruction can therefore ride inside a product description that no human and no visual QA pass can see. Bidi controls make the rendered order differ from the logical order a text-extracting agent reads, which is the Trojan Source class (CVE-2021-42574). Zero-width characters defeat naive substring matching on both sides at once: the site’s own filters and the agent’s. None of this is visible in a screenshot, a browser, or a review — only in the bytes.",
       fix: "Strip these codepoints at the boundary where text enters the site: user-generated content, imported feeds, translated copy, and anything pasted from a rich-text editor. Reject the Unicode Tags block outright — it has no legitimate web use. Allow bidi controls only in balanced pairs and only around text that is actually right-to-left. Allow ZWJ and ZWNJ only inside emoji sequences and in scripts whose shaping needs them. Run the same filter over robots.txt, llms.txt and sitemap.xml, which agents ingest with high trust and humans almost never read.",
       code: SAMPLE,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/unicode-covert-channel-scan/",
       tags: ["injection-safety", "unicode", "prompt-injection"],
@@ -277,7 +292,7 @@ export class UnicodeCovertChannelScanAudit extends Audit {
 
   private recommendation() {
     return {
-      priority: "critical" as const,
+      priority: CheckPriority.Critical,
       description: UnicodeCovertChannelScanAudit.meta.description,
       code: SAMPLE,
     };
@@ -301,10 +316,10 @@ export class UnicodeCovertChannelScanAudit extends Audit {
     }
 
     const byKind = (kind: Kind) => hits.filter((h) => h.kind === kind);
-    const tagBlock = byKind("tag-block");
-    const bidi = byKind("bidi");
-    const zeroWidth = byKind("zero-width").reduce((n, h) => n + h.count, 0);
-    const filler = byKind("filler").reduce((n, h) => n + h.count, 0);
+    const tagBlock = byKind(Kind.TagBlock);
+    const bidi = byKind(Kind.Bidi);
+    const zeroWidth = byKind(Kind.ZeroWidth).reduce((n, h) => n + h.count, 0);
+    const filler = byKind(Kind.Filler).reduce((n, h) => n + h.count, 0);
     const details = {
       tagBlockRuns: tagBlock.length,
       bidiFindings: bidi.length,

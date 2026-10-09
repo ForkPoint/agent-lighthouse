@@ -63,6 +63,14 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 
 ## Implementation deviations
 
+- 2026-10-07 — the 7.0.0 scope review found that the named-payload map merged
+  scripts across page responses. Two pages with approximately 70 kB of
+  `__NEXT_DATA__` each passed alone but failed together as a fictitious 140 kB
+  single payload. The map now belongs to one page. Same-page flight frames
+  still combine; different pages contribute distinct payloads. Size ties sort
+  by page URL and payload name so the representative URL is stable. This fixes
+  the single-payload limit and attribution without changing thresholds or weight.
+
 - **No tokenizer.** The dossier sizes payloads at `o200k_base`; the shipped
   audit uses the repo-wide estimator `characters / 4` (`CHARS_PER_TOKEN = 4`),
   because the global constraint forbids new runtime dependencies. Counts are
@@ -83,6 +91,11 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 - 2026-08-26 — the shared text helper this audit reads, `getMainContentText`, changed its selection. Among several `<main>` elements it now returns the one holding the most text rather than the first, it ignores a `<main>` inside a `<template>`, and it falls back to the whole `<body>` only when no `<main>` holds any text. Measured cause (scan evidence gate design, section 2.4): storefronts ship empty or fragmented `<main>` wrappers, and the first one is often a stub. Two consequences for this audit. A page whose real content sits in a later `<main>` is now measured on that content. A page whose every `<main>` is empty is now measured on its body text, page chrome included, where it previously measured as empty.
 
 ## Deferred
+
+- Total state share and duplication still aggregate across the selected pages.
+  Per-page ratios and duplication ownership remain part of the 7.0.0 scope
+  review. This correction does not fix cross-page dilution or infer which
+  page supplied duplicated prose. The character-based size estimator remains.
 
 - Per-payload duplication attribution (which payload repeats the body) is
   reported at the aggregate level; the per-payload breakdown needs the state

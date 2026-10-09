@@ -1,10 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
 import { fetchSampledPage } from "./sampled-pages";
-import { mockFetchResult } from "../__tests__/test-utils";
-import type { FetchOptions, FetchResult } from "../fetcher";
+import { mockFetchResult } from "#core/__tests__/test-utils";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
 
-vi.mock("../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => new URL(url).hostname !== "localhost",

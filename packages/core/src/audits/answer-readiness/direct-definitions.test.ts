@@ -1,7 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { DirectDefinitionsAudit } from "./direct-definitions";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import {
+  AuditTier,
+  CheckStatus,
+  EvidenceGrade,
+  ScoreDisplayMode,
+} from "#core/types";
 
 const page = (
   body: string,
@@ -29,7 +35,7 @@ describe("DirectDefinitionsAudit", () => {
           ),
         ]),
       );
-      expect(result.status).toBe("na");
+      expect(result.status).toBe(CheckStatus.NotApplicable);
       expect(result.message).toContain("definitional intent");
     });
 
@@ -41,7 +47,7 @@ describe("DirectDefinitionsAudit", () => {
           ),
         ]),
       );
-      expect(result.status).not.toBe("na");
+      expect(result.status).not.toBe(CheckStatus.NotApplicable);
     });
 
     it("reads intent from a glossary heading", () => {
@@ -50,7 +56,7 @@ describe("DirectDefinitionsAudit", () => {
           page("<h1>Glossary</h1><p>Terms we use across the docs.</p>"),
         ]),
       );
-      expect(result.status).not.toBe("na");
+      expect(result.status).not.toBe(CheckStatus.NotApplicable);
     });
 
     it("reads intent structurally from definition markup, whatever the language", () => {
@@ -62,7 +68,7 @@ describe("DirectDefinitionsAudit", () => {
           ),
         ]),
       );
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
     });
   });
 
@@ -83,7 +89,9 @@ describe("DirectDefinitionsAudit", () => {
             page(`<h1>${heading}</h1><p>Body copy.</p>`, lang),
           ]),
         );
-        expect(result.status, `${lang} intent`).not.toBe("na");
+        expect(result.status, `${lang} intent`).not.toBe(
+          CheckStatus.NotApplicable,
+        );
       }
     });
 
@@ -98,7 +106,7 @@ describe("DirectDefinitionsAudit", () => {
           ),
         ]),
       );
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
     });
 
     it("detects a prose definition in a non-English language", () => {
@@ -110,7 +118,7 @@ describe("DirectDefinitionsAudit", () => {
           ),
         ]),
       );
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.found).toContain("prose");
     });
   });
@@ -124,7 +132,7 @@ describe("DirectDefinitionsAudit", () => {
           ),
         ]),
       );
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.found).toContain("<dfn>");
     });
 
@@ -137,7 +145,7 @@ describe("DirectDefinitionsAudit", () => {
           </dl>`),
         ]),
       );
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.found).toContain("<dl>");
     });
 
@@ -149,7 +157,7 @@ describe("DirectDefinitionsAudit", () => {
           ),
         ]),
       );
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
     });
   });
 
@@ -165,7 +173,7 @@ describe("DirectDefinitionsAudit", () => {
         ]),
       );
       expect(result.found).not.toContain("bold-colon");
-      expect(result.status).not.toBe("pass");
+      expect(result.status).not.toBe(CheckStatus.Pass);
     });
 
     it("mentions no bold-colon pattern anywhere in its guidance", () => {
@@ -186,7 +194,7 @@ describe("DirectDefinitionsAudit", () => {
           ),
         ]),
       );
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.message).toContain("prose");
     });
 
@@ -197,7 +205,7 @@ describe("DirectDefinitionsAudit", () => {
       ];
       for (const html of inputs) {
         expect(audit.audit(mockCheckContext([page(html)])).status).not.toBe(
-          "fail",
+          CheckStatus.Fail,
         );
       }
     });
@@ -215,7 +223,7 @@ describe("DirectDefinitionsAudit", () => {
           ),
         ]),
       );
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.found).toContain("1 of 2");
     });
   });
@@ -225,10 +233,10 @@ describe("DirectDefinitionsAudit", () => {
 
     it("is grade C, informative, weight 0", () => {
       expect(meta.id).toBe("answer-readiness/direct-definitions");
-      expect(meta.evidenceGrade).toBe("C");
-      expect(meta.tier).toBe("informative");
+      expect(meta.evidenceGrade).toBe(EvidenceGrade.C);
+      expect(meta.tier).toBe(AuditTier.Informative);
       expect(meta.weight).toBe(0);
-      expect(meta.scoreDisplayMode).toBe("informative");
+      expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Informative);
     });
   });
 });

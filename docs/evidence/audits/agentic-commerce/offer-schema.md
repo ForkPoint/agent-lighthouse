@@ -16,6 +16,7 @@ sources:
   - google-ai-features-trust
   - openai-commerce-index
   - openai-feed-spec-confirm
+  - google-product-variants
 ---
 
 # offer-schema (`3.14`)
@@ -76,3 +77,29 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 - 2026-08-21 — evidence graded **A** (documented Google extractor behavior for Offer price/priceCurrency).
+- 2026-10-09 — ProductGroup variants resolved through `resolveProducts`; see Implementation deviations.
+
+## Implementation deviations
+
+- **ProductGroup variants are read as products.** Products come from the
+  shared `resolveProducts` in `packages/core/src/product-schema.ts`. Each
+  `hasVariant` entry (or a Product joined through `isVariantOf` or
+  `inProductGroupWithID`) is read with the group's shared properties beneath
+  its own, as Google's product variant documentation lays them out
+  (https://developers.google.com/search/docs/appearance/structured-data/product-variants,
+  verified 2026-10-09). A `ProductGroup` with no variants is read as the
+  product. Before this, a brand or category declared once on the group was
+  invisible, and a page whose only top-level product was a `ProductGroup`
+  read as having no product.
+- **The short-circuit is removed.** A page passes when any offer reachable
+  from its products is priced: an `Offer` with `price`, or an `AggregateOffer`
+  with `lowPrice`, each with `priceCurrency`. An `Offer` whose `itemOffered`
+  is a product also counts. A stray `Offer` attached to nothing does not pass
+  a page that has product markup. A page with no product markup is judged on
+  its standalone `Offer` nodes.
+
+## Deferred
+
+- The `/pricing|/plans|/preise|/tarifs` URL fallback named in the 2026-08-20
+  required fix. SaaS pricing pages are still assessed only when a page is
+  typed `product`.

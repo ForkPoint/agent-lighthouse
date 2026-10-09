@@ -1301,7 +1301,7 @@ describe("detectPageType", () => {
     it("needs at least three same-origin links when there is no home link", () => {
       const $ = page(`<a href="/docs/a">A</a><a href="/docs/b">B</a>`);
       expect(detectPageType("https://x.com/docs/", $, [], {}, true)).toBe(
-        "content",
+        "unknown",
       );
     });
 
@@ -1316,14 +1316,14 @@ describe("detectPageType", () => {
           {},
           true,
         ),
-      ).toBe("content");
+      ).toBe("article");
     });
 
     it("resolves home links against the document base", () => {
       const $ = parseHtml(`<html><head><base href="/"></head><body>
         <header><a href="./">Home</a></header><a href="/pricing">Pricing</a></body></html>`);
       expect(detectPageType("https://x.com/blog/", $, [], {}, true)).toBe(
-        "content",
+        "unknown",
       );
     });
 
@@ -1332,7 +1332,7 @@ describe("detectPageType", () => {
         `<a href="/blog/post/#a">A</a><a href="/blog/post/#b">B</a><a href="/blog/post/#c">C</a>`,
       );
       expect(detectPageType("https://x.com/blog/post/", $, [], {}, true)).toBe(
-        "content",
+        "unknown",
       );
     });
 
@@ -1341,7 +1341,7 @@ describe("detectPageType", () => {
         `<header><a href="#">Menu</a><a href="/">Home</a></header>`,
       );
       expect(detectPageType("https://x.com/blog/", $, [], {}, true)).toBe(
-        "content",
+        "unknown",
       );
     });
 
@@ -1350,7 +1350,7 @@ describe("detectPageType", () => {
         `<a href="/docs/a">A</a><a href="/docs/a">A again</a><a href="/docs/b">B</a>`,
       );
       expect(detectPageType("https://x.com/docs/", $, [], {}, true)).toBe(
-        "content",
+        "unknown",
       );
     });
 
@@ -1370,17 +1370,17 @@ describe("detectPageType", () => {
       );
     });
 
-    it("is not the homepage when it is not the first page", () => {
+    it("keeps mounted homepage identity when it is not the first page", () => {
       const $ = page(`<header><a href="/docs/">Home</a></header>`);
       expect(detectPageType("https://x.com/docs/", $, [], {}, false)).toBe(
-        "content",
+        "homepage",
       );
     });
   });
 
-  it("does not treat the root as homepage when it is not the first page", () => {
+  it("keeps root homepage identity when it is not the first page", () => {
     expect(detectPageType("https://x.com/", $empty, [], {}, false)).toBe(
-      "content",
+      "homepage",
     );
   });
 
@@ -1480,10 +1480,10 @@ describe("detectPageType", () => {
     );
   });
 
-  it("falls back to content when nothing matches", () => {
+  it("falls back to unknown when nothing matches", () => {
     const $ = parseHtml("<html><body><p>just words</p></body></html>");
     expect(detectPageType("https://x.com/random-page", $, [], {}, false)).toBe(
-      "content",
+      "unknown",
     );
   });
 
@@ -1529,7 +1529,7 @@ describe("detectPageType", () => {
         {},
         false,
       ),
-    ).toBe("content");
+    ).toBe("unknown");
   });
 });
 

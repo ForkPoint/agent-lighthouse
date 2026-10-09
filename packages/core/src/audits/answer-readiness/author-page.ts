@@ -1,8 +1,17 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import { probeAuthorUrl } from "../../gatherers/author";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import { probeAuthorUrl } from "#core/gatherers/author";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /**
  * Walk all JSON-LD blocks (including @graph arrays) and return every
@@ -53,25 +62,25 @@ export class AuthorPageAudit extends Audit {
     failureTitle: "Author page exists",
     description:
       "AI engines follow author page links to verify credentials and build author expertise profiles. A dedicated author page strengthens E-E-A-T signals.",
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "informative"),
-    evidenceGrade: "C",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/answer-readiness/author-page.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: ["content"],
-    defaultPriority: "medium",
+    applicablePageTypes: [PageType.Article],
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "AI engines follow author page URLs from JSON-LD and visible bylines to verify credentials and build expertise profiles. Without a linked, accessible author page, agents cannot validate your content creators' qualifications, reducing trust weight in AI recommendations.",
       fix: "Create a dedicated author page for each content creator with a bio, credentials, and expertise areas. Link to it from the JSON-LD author.url property and ensure it returns HTTP 200.",
       code: '"author": {\n  "@type": "Person",\n  "name": "Jane Smith",\n  "url": "https://yoursite.com/authors/jane-smith"\n}',
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       tags: ["trust", "e-e-a-t", "json-ld", "generative-engine"],
     },
   };
@@ -84,7 +93,7 @@ export class AuthorPageAudit extends Audit {
         "Author links in content resolve to 200",
         "No pages scanned",
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "AI engines follow author page links to verify credentials and build author expertise profiles. A dedicated author page strengthens E-E-A-T signals.",
           code: '"author": { "@type": "Person", "name": "Jane Smith", "url": "https://yoursite.com/authors/jane-smith" }',
@@ -139,7 +148,7 @@ export class AuthorPageAudit extends Audit {
         "Author links in content resolve to 200",
         "No author URLs found",
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "AI engines follow author page URLs from JSON-LD and visible bylines to verify credentials and build expertise profiles. Without a linked author page, agents cannot validate your content creators' qualifications, reducing trust weight in AI-generated recommendations.",
           code: '"author": {\n  "@type": "Person",\n  "name": "Jane Smith",\n  "url": "https://yoursite.com/authors/jane-smith"\n}',
@@ -165,7 +174,7 @@ export class AuthorPageAudit extends Audit {
         "Author links in content resolve to 200",
         `${urlToCheck} (HTTP ${result.status})`,
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "AI engines that follow your author page link and get a non-200 response will flag the author as unverifiable, negating the trust benefit of having named authors. Fix the URL to return a 200 status with real author bio content.",
           code: "# Verify: curl -I https://yoursite.com/authors/jane-smith\n# Ensure the page returns 200 with author bio content",
@@ -178,7 +187,7 @@ export class AuthorPageAudit extends Audit {
       "Author links in content resolve to 200",
       `${urlToCheck} (fetch error)`,
       {
-        priority: "medium",
+        priority: CheckPriority.Medium,
         description:
           "AI engines that follow your author page link and get a non-200 response will flag the author as unverifiable, negating the trust benefit of having named authors. Fix the URL to return a 200 status with real author bio content.",
         code: "# Verify: curl -I https://yoursite.com/authors/jane-smith\n# Ensure the page returns 200 with author bio content",

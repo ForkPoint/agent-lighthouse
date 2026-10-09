@@ -1,13 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
 import { ContentDepthAudit } from "./content-depth";
 import {
   attributableFixture,
   mockCheckContext,
   mockPageContext,
   unreachedSiteContext,
-} from "../../__tests__/test-utils";
+} from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 const manyWords = Array.from({ length: 350 }, (_, i) => `word${i}`).join(" ");
 
@@ -20,7 +21,7 @@ describe("ContentDepthAudit", () => {
       `<html><body><p>${manyWords}</p></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("1/1");
   });
 
@@ -34,7 +35,7 @@ describe("ContentDepthAudit", () => {
       "<html><body><p>Too short here.</p></body></html>",
     );
     const result = audit.audit(mockCheckContext([home, thin]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("Lowest:");
   });
 
@@ -44,14 +45,14 @@ describe("ContentDepthAudit", () => {
       "<html><body><p>Just a few words.</p></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("0/1");
   });
 
   it("passes when there are no pages (empty ctx.pages)", () => {
     const ctx = mockCheckContext([]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // The scan may hold a readable page that is not this site's — a broker's
@@ -61,7 +62,9 @@ describe("ContentDepthAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new ContentDepthAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext(pages, rootFiles),
@@ -73,6 +76,6 @@ describe("ContentDepthAudit", () => {
     expect(
       plan.skipped.find((stub) => stub.id === ContentDepthAudit.meta.id)
         ?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 });

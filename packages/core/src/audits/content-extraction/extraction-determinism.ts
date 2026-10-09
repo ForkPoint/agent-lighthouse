@@ -1,16 +1,24 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
 import {
   readabilityArticle,
   semanticText,
   densityText,
   READABILITY_CHAR_THRESHOLD,
   type Extracted,
-} from "../../gatherers/extraction";
-import { shingles, jaccard } from "../../gatherers/text-metrics";
+} from "#core/gatherers/extraction";
+import { shingles, jaccard } from "#core/gatherers/text-metrics";
 import type { CheerioAPI } from "cheerio";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** Below this much visible text there is no article for anyone to extract. */
 const MIN_VISIBLE_CHARS = 200;
@@ -54,24 +62,24 @@ export class ExtractionDeterminismAudit extends Audit {
       "What an agent reads from this page depends on which extractor it uses",
     description:
       "Runs three independent main-content extractors over the page — `@mozilla/readability`, a semantic-container selector, and a text-density scorer — and compares their output pairwise with five-word shingles. Where they disagree, what an agent quotes from this page is decided by its pipeline rather than by the page.",
-    scoreDisplayMode: "ternary",
-    tier: "scored",
-    evidenceGrade: "B",
-    weight: weightForGrade("B", "scored"),
-    defaultPriority: "high",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    tier: AuditTier.Scored,
+    evidenceGrade: EvidenceGrade.B,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    defaultPriority: CheckPriority.High,
     dossier:
       "docs/evidence/audits/content-extraction/extraction-determinism.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     guidance: {
       impact:
         "Every agent pipeline strips a page down before a model reads it, and they do not all strip the same way. When the extractors disagree, the same URL yields different answers depending on which tool fetched it — and the page cannot be tested, because there is no single thing it says. When readability declines a page outright, the most widely deployed extractor of the three hands an agent nothing at all.",
       fix: "Put the article in one container — `<main>` or `<article>` — with the chrome outside it, and keep the largest block of prose on the page the one you want quoted. Readability keys on paragraph density and link density, so a body split across many small wrappers, or padded with link-heavy blocks, is what makes the three disagree.",
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/content-extraction/extraction-determinism/",
       tags: ["content", "extraction", "agent-readiness"],

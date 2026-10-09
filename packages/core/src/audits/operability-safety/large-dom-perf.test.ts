@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { runA11yForHtml } from "./runner";
+import { CheckStatus } from "#core/types";
 
 /**
  * Regression guard for issue #11 — scans froze at 40% "Analyzing pages" and
@@ -41,7 +42,7 @@ describe("accessibility large-DOM performance (issue #11 regression)", () => {
     ]);
     const elapsedMs = Date.now() - started;
     // All menuitems are orphaned → the rule reports a violation.
-    expect(r["aria-required-parent"]?.status).toBe("fail");
+    expect(r["aria-required-parent"]?.status).toBe(CheckStatus.Fail);
     // Linear path finishes in ~1–3s; the pre-fix quadratic path took >90s. The
     // 30s test timeout is the tripwire; this assert documents the budget.
     expect(elapsedMs).toBeLessThan(20000);
@@ -64,7 +65,7 @@ describe("accessibility large-DOM performance (issue #11 regression)", () => {
     const orphanRes = await runA11yForHtml(orphan, "https://owns.test/", [
       "aria-required-parent",
     ]);
-    expect(ownedRes["aria-required-parent"]?.status).toBe("pass");
-    expect(orphanRes["aria-required-parent"]?.status).toBe("fail");
+    expect(ownedRes["aria-required-parent"]?.status).toBe(CheckStatus.Pass);
+    expect(orphanRes["aria-required-parent"]?.status).toBe(CheckStatus.Fail);
   });
 });

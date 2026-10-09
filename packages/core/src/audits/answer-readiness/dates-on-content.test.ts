@@ -1,13 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { DatesOnContentAudit } from "./dates-on-content";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { CheckPriority, CheckStatus } from "#core/types";
 
 describe("DatesOnContentAudit", () => {
   const audit = new DatesOnContentAudit();
 
   it("is not-applicable when no article content page is scanned", () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("No article content pages");
   });
 
@@ -19,7 +20,7 @@ describe("DatesOnContentAudit", () => {
       </main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.score).toBe(0.5);
     expect(result.found).toContain("<time datetime>");
   });
@@ -34,7 +35,7 @@ describe("DatesOnContentAudit", () => {
       </head><body><main><p>An article body with prose here.</p></main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("JSON-LD");
   });
 
@@ -46,7 +47,7 @@ describe("DatesOnContentAudit", () => {
       </main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("publication date");
   });
 
@@ -56,7 +57,7 @@ describe("DatesOnContentAudit", () => {
       "<html><body><main><p>An article with no date information present here.</p></main></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No dates found");
   });
 
@@ -66,7 +67,7 @@ describe("DatesOnContentAudit", () => {
       '<?xml version="1.0" encoding="UTF-8"?><rss><channel><title>Feed</title></channel></rss>',
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("is not-applicable when the body starts with <urlset (sitemap body)", () => {
@@ -75,7 +76,7 @@ describe("DatesOnContentAudit", () => {
       '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://example.com</loc></url></urlset>',
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("warns when a bare <time> element without datetime attribute contains a date", () => {
@@ -87,7 +88,7 @@ describe("DatesOnContentAudit", () => {
       </main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("<time>");
   });
 
@@ -99,7 +100,7 @@ describe("DatesOnContentAudit", () => {
       </head><body><main><p>An article with only a meta publication date.</p></main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("meta");
   });
 
@@ -109,7 +110,7 @@ describe("DatesOnContentAudit", () => {
       "<html><body><main><p>An article page with .xml URL extension.</p></main></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("warns when JSON-LD has uploadDate and no other date fields", () => {
@@ -122,7 +123,7 @@ describe("DatesOnContentAudit", () => {
       </head><body><main><p>A video article with only an upload date.</p></main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("JSON-LD");
   });
 
@@ -136,7 +137,7 @@ describe("DatesOnContentAudit", () => {
       </head><body><main><p>An article with only a creation date.</p></main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("JSON-LD");
   });
 
@@ -152,7 +153,7 @@ describe("DatesOnContentAudit", () => {
       </main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("January 15, 2025");
   });
 
@@ -166,7 +167,7 @@ describe("DatesOnContentAudit", () => {
       </head><body><main><p>An article without any usable date information present.</p></main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("fails when a bare empty <time> element exists (if(v) false branch)", () => {
@@ -177,7 +178,7 @@ describe("DatesOnContentAudit", () => {
       </main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("handles an invalid page URL (catch block in isArticleContentPage)", () => {
@@ -191,7 +192,7 @@ describe("DatesOnContentAudit", () => {
     const result = audit.audit(mockCheckContext([page]));
     // Still treated as a content page (pathname='' does not end in .xml, body is
     // not XML), so the audit runs and finds the publication date → warn.
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
   });
 
   // --- absorbed from last-updated-indicator (v1 9.10) ----------------------
@@ -204,7 +205,7 @@ describe("DatesOnContentAudit", () => {
       </main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.score).toBe(1);
     expect(result.message).toContain("last updated");
   });
@@ -215,7 +216,7 @@ describe("DatesOnContentAudit", () => {
       "<html><body><main><p>Last updated January 15, 2025 by our team.</p></main></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("last updated");
   });
 
@@ -229,7 +230,7 @@ describe("DatesOnContentAudit", () => {
       </head><body><main><p>An article with a modification date.</p></main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("dateModified");
   });
 
@@ -241,7 +242,7 @@ describe("DatesOnContentAudit", () => {
       </head><body><main><p>An article with a meta modification date.</p></main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("article:modified_time");
   });
 
@@ -253,7 +254,7 @@ describe("DatesOnContentAudit", () => {
       </main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("short-circuits on the first matching <time> when several are present", () => {
@@ -265,7 +266,7 @@ describe("DatesOnContentAudit", () => {
       </main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("falls through to the text search when no <time> carries an update keyword", () => {
@@ -277,7 +278,7 @@ describe("DatesOnContentAudit", () => {
       </main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("does not fail a dated evergreen article that was never revised", () => {
@@ -291,9 +292,9 @@ describe("DatesOnContentAudit", () => {
       </main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).not.toBe("fail");
-    expect(result.status).toBe("warn");
-    expect(result.priority).toBe("low");
+    expect(result.status).not.toBe(CheckStatus.Fail);
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.priority).toBe(CheckPriority.Low);
   });
 
   it("fails rather than warns when update wording carries no date at all", () => {
@@ -304,7 +305,7 @@ describe("DatesOnContentAudit", () => {
       "<html><body><main><p>Our content team last updated this section for better clarity.</p></main></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No dates found");
   });
 
@@ -319,7 +320,7 @@ describe("DatesOnContentAudit", () => {
       1,
     );
     const result = audit.audit(mockCheckContext([publishedOnly, updated]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.pageUrl).toBe("https://example.com/blog/b");
   });
 });

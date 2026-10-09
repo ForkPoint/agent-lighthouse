@@ -1,15 +1,23 @@
 import { describe, it, expect, vi } from "vitest";
 import { CorsApiRoutesAudit } from "./cors-api-routes";
-import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { FetchOptions, FetchResult } from "../../fetcher";
+import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import {
+  AuditTier,
+  CheckPriority,
+  CheckStatus,
+  EvidenceGrade,
+  ScoreDisplayMode,
+  HttpMethod,
+} from "#core/types";
 
 // isSafeUrl performs a real DNS lookup before the audit probes a `servers[].url`
 // it read out of a site-controlled document. Stub it with an offline stand-in
 // that still blocks loopback and private ranges, so the refusal test proves the
 // gate rather than the mock.
-vi.mock("../../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => {
@@ -59,8 +67,8 @@ describe("CorsApiRoutesAudit", () => {
     // that did not apply to it.
     it("is na when no OpenAPI document is published", async () => {
       const result = await audit.audit(mockCheckContext([], {}));
-      expect(result.status).toBe("na");
-      expect(result.status).not.toBe("warn");
+      expect(result.status).toBe(CheckStatus.NotApplicable);
+      expect(result.status).not.toBe(CheckStatus.Warn);
     });
 
     it("is na when /openapi.json is an SPA HTML soft-404", async () => {
@@ -71,7 +79,7 @@ describe("CorsApiRoutesAudit", () => {
           "text/html",
         ),
       });
-      expect((await audit.audit(ctx)).status).toBe("na");
+      expect((await audit.audit(ctx)).status).toBe(CheckStatus.NotApplicable);
     });
 
     it("is na when /openapi.json is served but is not an OpenAPI document", async () => {
@@ -82,7 +90,7 @@ describe("CorsApiRoutesAudit", () => {
           "application/json",
         ),
       });
-      expect((await audit.audit(ctx)).status).toBe("na");
+      expect((await audit.audit(ctx)).status).toBe(CheckStatus.NotApplicable);
     });
 
     // The dead gate arm: /swagger.json is not in the orchestrator's
@@ -97,7 +105,7 @@ describe("CorsApiRoutesAudit", () => {
       const { fetch } = corsFetch(undefined);
       const ctx = mockCheckContext([], { "/openapi.json": simpleSpec });
       ctx.fetch = fetch;
-      expect((await audit.audit(ctx)).status).not.toBe("fail");
+      expect((await audit.audit(ctx)).status).not.toBe(CheckStatus.Fail);
     });
   });
 
@@ -113,7 +121,7 @@ describe("CorsApiRoutesAudit", () => {
       });
       ctx.fetch = fetch;
       const result = await audit.audit(ctx);
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(seen.join(" ")).toContain("https://api.example.com/v1/products");
       expect(seen.join(" ")).not.toContain("https://example.com/api/");
     });
@@ -185,14 +193,14 @@ describe("CorsApiRoutesAudit", () => {
       ctx.fetch = async (options) => {
         seen.push(options.method ?? "GET");
         const r = mockFetchResult("", 204);
-        if (options.method === "GET")
+        if (options.method === HttpMethod.Get)
           r.headers["access-control-allow-origin"] = "*";
         return r;
       };
       const result = await audit.audit(ctx);
       expect(seen).toContain("OPTIONS");
       expect(seen).toContain("GET");
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
     });
 
     it("refuses to probe a private-address server url", async () => {
@@ -207,7 +215,7 @@ describe("CorsApiRoutesAudit", () => {
       ctx.fetch = fetch;
       const result = await audit.audit(ctx);
       expect(seen).toHaveLength(0);
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.message).toContain("not safe to probe");
     });
 
@@ -217,7 +225,7 @@ describe("CorsApiRoutesAudit", () => {
         throw new Error("network");
       };
       const result = await audit.audit(ctx);
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.message).toContain("could not be reached");
     });
   });
@@ -228,7 +236,7 @@ describe("CorsApiRoutesAudit", () => {
       const ctx = mockCheckContext([], { "/openapi.json": simpleSpec });
       ctx.fetch = fetch;
       const result = await audit.audit(ctx);
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.found).toContain("*");
     });
 
@@ -239,7 +247,7 @@ describe("CorsApiRoutesAudit", () => {
       const ctx = mockCheckContext([], { "/openapi.json": simpleSpec });
       ctx.fetch = fetch;
       const result = await audit.audit(ctx);
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.message).toContain("one named origin");
     });
 
@@ -248,7 +256,7 @@ describe("CorsApiRoutesAudit", () => {
       const ctx = mockCheckContext([], { "/openapi.json": simpleSpec });
       ctx.fetch = fetch;
       const result = await audit.audit(ctx);
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.message).toContain("own origin");
     });
 
@@ -257,7 +265,7 @@ describe("CorsApiRoutesAudit", () => {
       const ctx = mockCheckContext([], { "/openapi.json": simpleSpec });
       ctx.fetch = fetch;
       const result = await audit.audit(ctx);
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.found).toContain("1 of 1 endpoint(s) answered");
       expect(result.found).toContain("none with Access-Control-Allow-Origin");
     });
@@ -280,7 +288,7 @@ describe("CorsApiRoutesAudit", () => {
       });
       ctx.fetch = fetch;
       const result = await audit.audit(ctx);
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.found).toContain("1 of 2 endpoint(s) answered");
       expect(result.found).toContain("1 unreachable");
     });
@@ -291,10 +299,10 @@ describe("CorsApiRoutesAudit", () => {
 
     it("is grade C, informative, weight 0", () => {
       expect(meta.id).toBe("agent-interfaces/cors-api-routes");
-      expect(meta.evidenceGrade).toBe("C");
-      expect(meta.tier).toBe("informative");
+      expect(meta.evidenceGrade).toBe(EvidenceGrade.C);
+      expect(meta.tier).toBe(AuditTier.Informative);
       expect(meta.weight).toBe(0);
-      expect(meta.scoreDisplayMode).toBe("informative");
+      expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Informative);
     });
 
     // "Blocks all agentic workflows" is false: every server-side crawler and
@@ -309,7 +317,7 @@ describe("CorsApiRoutesAudit", () => {
     });
 
     it("drops the priority to low", () => {
-      expect(meta.defaultPriority).toBe("low");
+      expect(meta.defaultPriority).toBe(CheckPriority.Low);
     });
   });
 });

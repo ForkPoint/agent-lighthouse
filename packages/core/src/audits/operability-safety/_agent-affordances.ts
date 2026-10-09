@@ -1,6 +1,6 @@
 import type { AnyNode, Element } from "domhandler";
 import type { CheerioAPI } from "cheerio";
-import type { CssRule } from "../../gatherers/css-rules";
+import type { CssRule } from "#core/gatherers/css-rules";
 
 /**
  * Shared signal sets for the agent-operability audits.

@@ -21,6 +21,8 @@ sources:
 
 ## What it checks
 
+The v7 runner selects article-purpose pages for this check. A general or legacy `content` declaration does not establish article purpose. Detection can use Open Graph article metadata or primary article prose without author, date, or Article schema fields. Schema-only evidence remains a hint. Detected matches remain informative; a precise `article` declaration uses the existing audit tier.
+
 One freshness question per content page, scored once: **can a date extractor date this page, and can it tell how current it is?**
 
 | State                                                                                                                                                                                                   | Result                       |
@@ -120,3 +122,11 @@ The strongest **proven** path is 9.8's extraction claim, graded **A** — a vend
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 - 2026-08-21 — approved: 9.10 folds into 9.8 as one graded freshness audit (§5).
 - 2026-08-22 — merged (Plan 4, Task 6); registry 163 → 162 for this fold.
+
+## Implementation deviations (v7 P3, 2026-10-07)
+
+The page-purpose gate now excludes general pages. Body-level aggregation and narrower specialist populations remain under review in the v7 applicability ledger. This change preserves the evidence grade, tier, weight, and audit ID.
+
+## Deferred (v7 P3)
+
+See `docs/architecture/v7-audit-applicability-ledger.md` for the remaining audit-specific guards, population limits, and aggregation work. P4 will address selected-page evidence and mixed provenance.

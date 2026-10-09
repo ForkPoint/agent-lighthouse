@@ -1,8 +1,15 @@
 import { describe, it, expect } from "vitest";
 import { JsonLdDuplicationMassAudit } from "./json-ld-duplication-mass";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { CheckContext } from "../../check-context";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { CheckContext } from "#core/check-context";
+import {
+  AuditTier,
+  CheckPriority,
+  CheckStatus,
+  EvidenceGrade,
+  ScoreDisplayMode,
+} from "#core/types";
 
 const ARTICLE_BODY =
   "The copper kettle reaches a rolling boil in about three minutes on a gas hob, and holds its heat for a further hour once the lid is closed. Descaling it takes equal parts water and white vinegar left overnight, then two rinses. ";
@@ -30,17 +37,19 @@ describe("JsonLdDuplicationMassAudit", () => {
   });
 
   it("is notApplicable on a page with no JSON-LD", async () => {
-    expect((await audit.audit(page(""))).status).toBe("na");
+    expect((await audit.audit(page(""))).status).toBe(
+      CheckStatus.NotApplicable,
+    );
   });
 
   // The wave's only non-scored audit: it reports a cost, it does not accuse.
   it("registers as informative at weight 0", () => {
     const { meta } = JsonLdDuplicationMassAudit;
-    expect(meta.evidenceGrade).toBe("C");
-    expect(meta.tier).toBe("informative");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.C);
+    expect(meta.tier).toBe(AuditTier.Informative);
     expect(meta.weight).toBe(0);
-    expect(meta.scoreDisplayMode).toBe("informative");
-    expect(meta.defaultPriority).toBe("low");
+    expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Informative);
+    expect(meta.defaultPriority).toBe(CheckPriority.Low);
   });
 
   it("reports a small Organization block without a finding", async () => {
@@ -53,7 +62,7 @@ describe("JsonLdDuplicationMassAudit", () => {
         }),
       ),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(Number(result.details?.["jsonLdTokens"])).toBeGreaterThan(0);
   });
 
@@ -95,7 +104,7 @@ describe("JsonLdDuplicationMassAudit", () => {
         }),
       ),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(Number(result.details?.["duplicateNodes"])).toBe(0);
   });
 
@@ -107,7 +116,7 @@ describe("JsonLdDuplicationMassAudit", () => {
       name: "Kettle Co",
     };
     const result = await audit.audit(page(`${block(node)}${block(node)}`));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("declared twice");
     expect(result.message).not.toMatch(/^0 tokens/);
   });
@@ -125,7 +134,7 @@ describe("JsonLdDuplicationMassAudit", () => {
         `<main><h1>Kettles</h1><p>${body}</p></main>`,
       ),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(Number(result.details?.["duplicatedBodyOverlap"])).toBeGreaterThan(
       0.8,
     );
@@ -174,6 +183,6 @@ describe("JsonLdDuplicationMassAudit", () => {
         `<main><p>${body}</p></main>`,
       ),
     );
-    expect(result.status).not.toBe("fail");
+    expect(result.status).not.toBe(CheckStatus.Fail);
   });
 });

@@ -2,6 +2,13 @@ import { describe, it, expect } from "vitest";
 import { Audit } from "./audit";
 import type { AuditMeta, AuditResult } from "./types";
 import { AuditMetaSchema } from "./schemas";
+import {
+  AuditTier,
+  CheckPriority,
+  CheckStatus,
+  EvidenceGrade,
+  ScoreDisplayMode,
+} from "./types";
 
 const NOTICE = {
   notice: "No consumer reads this signal.",
@@ -15,16 +22,16 @@ class DeprecatedAudit extends Audit {
     title: "Deprecated thing",
     failureTitle: "Deprecated thing",
     description: "Test audit.",
-    scoreDisplayMode: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
     weight: 0,
-    defaultPriority: "low",
-    evidenceGrade: "D",
-    tier: "informative",
+    defaultPriority: CheckPriority.Low,
+    evidenceGrade: EvidenceGrade.D,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/sunset/not-a-factor.md",
     deprecated: NOTICE,
   };
   audit(): AuditResult {
-    return { status: "pass", score: 1 };
+    return { status: CheckStatus.Pass, score: 1 };
   }
 }
 
@@ -50,7 +57,7 @@ describe("deprecation notice flow", () => {
 
   it("toCheckResult carries meta.deprecated onto the CheckResult", () => {
     const audit = new DeprecatedAudit();
-    const check = audit.toCheckResult({ status: "pass", score: 1 });
+    const check = audit.toCheckResult({ status: CheckStatus.Pass, score: 1 });
     expect(check.deprecated).toEqual(NOTICE);
   });
 
@@ -59,12 +66,15 @@ describe("deprecation notice flow", () => {
       static override meta: AuditMeta = {
         ...DeprecatedAudit.meta,
         id: "operability-safety/normal-thing",
-        scoreDisplayMode: "binary",
+        scoreDisplayMode: ScoreDisplayMode.Binary,
         weight: 1.0,
         deprecated: undefined,
       };
     }
-    const check = new NormalAudit().toCheckResult({ status: "pass", score: 1 });
+    const check = new NormalAudit().toCheckResult({
+      status: CheckStatus.Pass,
+      score: 1,
+    });
     expect(check.deprecated).toBeUndefined();
   });
 });

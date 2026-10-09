@@ -6,18 +6,27 @@
 // It stops before any token request, so it needs nothing but public documents —
 // and every gate it checks is one a conforming client applies before it will
 // even show the user a consent prompt.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import { isSafeUrl } from "../../url-utils";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import { isSafeUrl } from "#core/url-utils";
 import {
   discoverMcpEndpoint,
   discoverProbe,
   mcpFetch,
   tryParseJson,
   isObject,
-} from "../../gatherers/mcp";
+} from "#core/gatherers/mcp";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+  HttpMethod,
+} from "#core/types";
 
 /** How many authorization servers are probed. */
 const MAX_AS = 2;
@@ -94,7 +103,7 @@ async function getJson(
 ): Promise<JsonDoc | undefined> {
   if (!(await isSafeUrl(url))) return undefined;
   let res = await mcpFetch(ctx, url, {
-    method: "GET",
+    method: HttpMethod.Get,
     headers: { Accept: "application/json" },
   });
   if (!res) return undefined;
@@ -152,20 +161,20 @@ export class McpOauthDiscoveryChainAudit extends Audit {
     failureTitle: "OAuth Discovery Chain Integrity (RFC 9728 → RFC 8414)",
     description:
       "Walks the full credential-free authorization discovery path an MCP client must traverse — 401 challenge, WWW-Authenticate resource_metadata, Protected Resource Metadata document, authorization server metadata — and asserts every MUST-level validation gate the client will apply. Ends before any token is requested, so it needs no credentials.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/agent-interfaces/mcp-oauth-discovery-chain.md",
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "high",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "The spec makes RFC 9728 mandatory for MCP servers and makes clients apply two hard identity checks: RFC 9728 §3.3 requires the PRM's `resource` value to be string-identical to the resource identifier used to construct the request URL, and the MCP AS-discovery rules require the fetched AS metadata's `issuer` to be string-identical to the issuer used to construct the well-known URL — on either mismatch the client MUST NOT use the metadata. MCP additionally strengthens RFC 9728 by requiring `authorization_servers` to carry at least one entry (it is merely OPTIONAL in the RFC). Each of these is a silent, total blocker: the discovery chain either resolves end to end or the agent never reaches an authorization prompt, so a single character of drift between the deployed endpoint URL and the `resource` claim makes the server unusable to every conforming client while the server's own logs show nothing but 401s.",
       fix: 'Answer an unauthenticated request with 401 and a `WWW-Authenticate: Bearer` header carrying `resource_metadata="…"`, so the client does not have to guess. Publish the PRM at that URL with `resource` set to the exact canonical server URI — same scheme, same host case, same path, no trailing slash — and with `authorization_servers` holding at least one public https issuer. Give the PRM a `resource_name` and a `scopes_supported` list of named, least-privilege scopes; do not advertise `offline_access`, and never advertise `*`, `all` or `full-access`. At the authorization server, publish RFC 8414 metadata whose `issuer` is string-identical to the issuer string in the PRM, advertise `S256` in `code_challenge_methods_supported`, and set `authorization_response_iss_parameter_supported` to true.',
       code: SAMPLE,
-      effort: "complex",
+      effort: FixEffort.Complex,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/agent-interfaces/mcp-oauth-discovery-chain/",
       tags: [
@@ -244,7 +253,7 @@ export class McpOauthDiscoveryChainAudit extends Audit {
           `${url} challenges for authorization but publishes no Protected Resource Metadata: ${candidates.join(", ")} answered nothing usable. A client has no way to learn which authorization server to use, so it stops here.`,
           EXPECTED,
           `${server}; challenge without PRM; ${candidates.length} URL(s) probed`,
-          "critical",
+          CheckPriority.Critical,
         );
       }
       return this.notApplicable(
@@ -382,7 +391,7 @@ export class McpOauthDiscoveryChainAudit extends Audit {
         `The chain breaks: ${musts.join("; ")}.${tail}`,
         EXPECTED,
         found,
-        "critical",
+        CheckPriority.Critical,
       );
     }
     if (shoulds.length > 0) {
@@ -390,7 +399,7 @@ export class McpOauthDiscoveryChainAudit extends Audit {
         `The chain resolves end to end, with review items: ${shoulds.join("; ")}.${tail}`,
         EXPECTED,
         found,
-        "medium",
+        CheckPriority.Medium,
       );
     }
     return this.pass(

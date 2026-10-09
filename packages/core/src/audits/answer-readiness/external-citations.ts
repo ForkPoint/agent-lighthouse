@@ -1,7 +1,16 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "#core/types";
 
 export class ExternalCitationsAudit extends Audit {
   static override meta: AuditMeta = {
@@ -11,25 +20,25 @@ export class ExternalCitationsAudit extends Audit {
     failureTitle: "External citations",
     description:
       "Linking to authoritative sources signals expertise. AI RAG systems cross-reference your citations to validate claims and assess content quality.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/answer-readiness/external-citations.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: ["content"],
-    defaultPriority: "medium",
+    applicablePageTypes: [PageType.Unknown, PageType.Article],
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "AI RAG systems cross-reference your outbound citations against their knowledge graph to validate claims. Pages without external references appear as unsourced opinion, receiving lower trust scores in AI-generated answers.",
       fix: "Add at least 2 outbound links per content page to authoritative external sources that support your claims. Link to research papers, official documentation, or industry authorities.",
       code: '<p>According to <a href="https://research.google/pubs/">Google Research</a>, this approach improves accuracy by 40%.\nSee also <a href="https://w3.org/standards">W3C standards</a>.</p>',
-      effort: "easy",
+      effort: FixEffort.Easy,
       tags: ["trust", "e-e-a-t", "content-quality", "generative-engine"],
     },
   };
@@ -42,7 +51,7 @@ export class ExternalCitationsAudit extends Audit {
         "At least 2 <a> tags pointing to external domains per content page",
         "No pages scanned",
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "Linking to authoritative sources signals expertise. AI RAG systems cross-reference your citations to validate claims and assess content quality.",
           code: '<p>According to <a href="https://research.google/pubs/">Google Research</a>, this approach improves accuracy by 40%.</p>',
@@ -99,7 +108,7 @@ export class ExternalCitationsAudit extends Audit {
         "At least 2 <a> tags pointing to external domains per content page",
         `External domains: ${[...new Set(examples)].join(", ")}`,
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "Linking to authoritative sources signals expertise to AI systems. AI RAG systems cross-reference your outbound citations against their knowledge graph to validate claims. Pages with more external citations to authoritative domains receive higher trust scores in AI-generated recommendations.",
           code: '<p>According to <a href="https://authoritative-source.com/study">this research</a>, the approach improves outcomes by 40%.</p>',
@@ -113,7 +122,7 @@ export class ExternalCitationsAudit extends Audit {
       "At least 2 <a> tags pointing to external domains per content page",
       "Not found",
       {
-        priority: "medium",
+        priority: CheckPriority.Medium,
         description:
           "Linking to authoritative external sources signals well-researched expertise to AI systems. AI RAG systems cross-reference citations against their knowledge graph to validate your claims. Pages without external references appear as unsourced opinion, receiving lower trust scores in AI-generated answers.",
         code: '<p>Research from <a href="https://authoritative-source.com">Source</a> confirms this approach.\nSee also <a href="https://another-authority.org/data">additional data</a>.</p>',

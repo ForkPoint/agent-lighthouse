@@ -13,6 +13,7 @@ sources:
   - google-merchant-listing
   - openai-commerce-index
   - openai-getstarted
+  - google-product-variants
 ---
 
 # Checkout-Eligible Offer Field Mapping
@@ -57,6 +58,7 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+- 2026-10-09 — ProductGroup variants resolved through `resolveProducts`; see Implementation deviations.
 
 ## Relationship to `machine-discovery/agent-commerce-feed-parity`
 
@@ -71,12 +73,26 @@ across the sample there while the scanned PDP passes here.
 
 ## Implementation deviations
 
+- **ProductGroup variants are read as products.** Products come from the
+  shared `resolveProducts` in `packages/core/src/product-schema.ts`. Each
+  `hasVariant` entry (or a Product joined through `isVariantOf` or
+  `inProductGroupWithID`) is read with the group's shared properties beneath
+  its own, as Google's product variant documentation lays them out
+  (https://developers.google.com/search/docs/appearance/structured-data/product-variants,
+  verified 2026-10-09). A `ProductGroup` with no variants is read as the
+  product. Before this, a brand or category declared once on the group was
+  invisible, and a page whose only top-level product was a `ProductGroup`
+  read as having no product.
+
 - **The plan sheet's GTIN example was wrong.** It names `gtin13: '1234567890128'`
   as a _wrong_ check digit; 8 is in fact the correct check digit for that body.
   The test pins both directions instead: `1234567890128` is accepted and
   `1234567890123` is rejected with the digit it should have ended in. The check
   digit is computed the same way for GTIN-8/12/13/14 — alternating 3/1 weights
   from the right — so one function covers all four lengths.
+- **An image list is read by its first entry.** schema.org and Google's
+  merchant listing accept `image` as a list of URLs; the first URL is the one
+  mapped to `image_url`. Before 2026-10-09 a list read as "no image".
 - **`image_url` is not fetched.** Extension and scheme are checked; a HEAD
   request per PDP to confirm `200` and an `image/*` content type is deferred, so
   a URL that looks right but 404s is reported as valid here.

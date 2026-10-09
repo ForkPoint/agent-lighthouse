@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { FormsNoJsAudit } from "./forms-no-js";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 describe("FormsNoJsAudit", () => {
   const audit = new FormsNoJsAudit();
@@ -15,7 +16,7 @@ describe("FormsNoJsAudit", () => {
     );
     const ctx = mockCheckContext([page]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("2 form(s)");
   });
 
@@ -30,7 +31,7 @@ describe("FormsNoJsAudit", () => {
     );
     const ctx = mockCheckContext([page]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("1/2 forms have action");
   });
 
@@ -43,7 +44,7 @@ describe("FormsNoJsAudit", () => {
     );
     const ctx = mockCheckContext([page]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("require JavaScript");
   });
 
@@ -54,7 +55,7 @@ describe("FormsNoJsAudit", () => {
     );
     const ctx = mockCheckContext([page]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.found).toBe("0 forms");
   });
 
@@ -74,7 +75,7 @@ describe("FormsNoJsAudit", () => {
     );
     const ctx = mockCheckContext([page1, page2]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("2 form(s)");
   });
 });

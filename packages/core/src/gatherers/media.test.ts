@@ -11,11 +11,11 @@ import {
   mockPageContext,
   mockCheckContext,
   mockFetchResult,
-} from "../__tests__/test-utils";
-import type { FetchOptions, FetchResult } from "../fetcher";
+} from "#core/__tests__/test-utils";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
 
-vi.mock("../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => url.startsWith("https://example.com"),

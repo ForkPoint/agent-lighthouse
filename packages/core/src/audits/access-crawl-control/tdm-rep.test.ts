@@ -1,15 +1,21 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
 import { TdmRepAudit } from "./tdm-rep";
 import {
   challengedSiteContext,
   mockPageContext,
   mockCheckContext,
   mockFetchResult,
-} from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { PageContext } from "../../check-context";
+} from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { PageContext } from "#core/check-context";
+import {
+  AuditTier,
+  CheckStatus,
+  EvidenceGrade,
+  ScoreDisplayMode,
+} from "#core/types";
 
 const page = (head = "", url = "https://example.com/"): PageContext =>
   mockPageContext(
@@ -48,16 +54,20 @@ describe("TdmRepAudit", () => {
           "/.well-known/tdmrep.json": mockFetchResult("", 404),
         }),
       );
-      expect(result.status).toBe("na");
-      expect(result.status).not.toBe("warn");
+      expect(result.status).toBe(CheckStatus.NotApplicable);
+      expect(result.status).not.toBe(CheckStatus.Warn);
     });
 
     it("is na when the well-known path was never fetched", () => {
-      expect(audit.audit(mockCheckContext([page()])).status).toBe("na");
+      expect(audit.audit(mockCheckContext([page()])).status).toBe(
+        CheckStatus.NotApplicable,
+      );
     });
 
     it("never returns fail", () => {
-      expect(audit.audit(mockCheckContext([page()])).status).not.toBe("fail");
+      expect(audit.audit(mockCheckContext([page()])).status).not.toBe(
+        CheckStatus.Fail,
+      );
     });
   });
 
@@ -85,7 +95,7 @@ describe("TdmRepAudit", () => {
       const result = audit.audit(
         mockCheckContext([page('<meta name="tdm-reservation" content="yes">')]),
       );
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.message).not.toContain("permitted");
       expect(result.message).toContain("not a value the protocol defines");
     });
@@ -100,7 +110,7 @@ describe("TdmRepAudit", () => {
           ),
         ]),
       );
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.message).toContain("disagree");
     });
 
@@ -114,7 +124,7 @@ describe("TdmRepAudit", () => {
           ),
         ]),
       );
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
     });
 
     it("reports the policy URL when one is declared", () => {
@@ -134,7 +144,7 @@ describe("TdmRepAudit", () => {
       const result = audit.audit(
         mockCheckContext([withHeader(page(), "tdm-reservation", "1")]),
       );
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.found).toContain("header");
     });
 
@@ -164,7 +174,7 @@ describe("TdmRepAudit", () => {
           ),
         }),
       );
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.message).toContain("reserved");
       expect(result.found).toContain("tdmrep.json");
     });
@@ -182,7 +192,7 @@ describe("TdmRepAudit", () => {
           ),
         }),
       );
-      expect(result.status).toBe("na");
+      expect(result.status).toBe(CheckStatus.NotApplicable);
     });
 
     it("guards on a leading < even when the content-type claims JSON", () => {
@@ -195,7 +205,7 @@ describe("TdmRepAudit", () => {
           ),
         }),
       );
-      expect(result.status).toBe("na");
+      expect(result.status).toBe(CheckStatus.NotApplicable);
     });
 
     it("warns when a JSON document is served but does not parse", () => {
@@ -208,7 +218,7 @@ describe("TdmRepAudit", () => {
           ),
         }),
       );
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.message).toContain("does not parse");
     });
 
@@ -228,7 +238,7 @@ describe("TdmRepAudit", () => {
             ),
           }),
         );
-        expect(result.status, body).toBe("warn");
+        expect(result.status, body).toBe(CheckStatus.Warn);
         expect(result.message, body).toContain("array of objects");
       }
     });
@@ -253,10 +263,10 @@ describe("TdmRepAudit", () => {
 
     it("is grade C, experimental, weight 0, informative", () => {
       expect(meta.id).toBe("access-crawl-control/tdm-rep");
-      expect(meta.evidenceGrade).toBe("C");
-      expect(meta.tier).toBe("experimental");
+      expect(meta.evidenceGrade).toBe(EvidenceGrade.C);
+      expect(meta.tier).toBe(AuditTier.Experimental);
       expect(meta.weight).toBe(0);
-      expect(meta.scoreDisplayMode).toBe("informative");
+      expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Informative);
     });
 
     // The internal incoherence: a legal-compliance signal was being described
@@ -279,13 +289,13 @@ describe("TdmRepAudit", () => {
     expect(
       audit.audit(mockCheckContext(pages)).status,
       "the same header reached is judged",
-    ).toBe("pass");
+    ).toBe(CheckStatus.Pass);
     const plan = planAudits(challengedSiteContext(pages), defaultConfig);
     expect(plan.runnable.map((entry) => entry.reg.meta.id)).not.toContain(
       TdmRepAudit.meta.id,
     );
     expect(
       plan.skipped.find((stub) => stub.id === TdmRepAudit.meta.id)?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 });
