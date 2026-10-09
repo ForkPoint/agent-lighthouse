@@ -6,6 +6,8 @@ import {
   detectPageType,
   extractJsonLd,
   extractMetaTags,
+  extractMicrodata,
+  extractRdfa,
   parseHtml,
 } from "#core/parser";
 import { planAudits, scopeAudit } from "#core/audit-runner";
@@ -166,6 +168,157 @@ describe("classification evidence", () => {
     expect(evidence("/listing", card.repeat(3))).toMatchObject({
       type: "category",
       signals: ["product-grid"],
+    });
+  });
+  const tile = (name: string) =>
+    `<div class="product-tile"><a class="product-tile-image" href="/${name}">${name}</a><div class="product-tile-price price">10</div><button class="add-to-cart">Buy</button></div>`;
+  it("keeps a product page with a recommendation rail a product", () => {
+    const html = `<meta property="og:type" content="product">
+      <main><h1>Shirt</h1><span class="price">20</span><button class="add-to-cart-btn">Add</button>
+      <div class="filter-size"></div>
+      <section class="recentlyViewed"><div class="productcarousel">${["a", "b", "c", "d"].map(tile).join("")}</div>
+      <div class="swiper-pagination"></div></section></main>`;
+    expect(evidence("/shirt.html", html)).toEqual({
+      type: "product",
+      source: PageTypeSource.Detected,
+      confidence: ClassificationConfidence.Strong,
+      signals: ["product-open-graph", "purchase-controls"],
+    });
+  });
+  it("lets the page's own product evidence outrank a grid", () => {
+    expect(
+      evidence(
+        "/shirt",
+        `<meta property="og:type" content="product"><main>${["a", "b", "c"].map(tile).join("")}</main>`,
+      ),
+    ).toMatchObject({ type: "product", signals: ["product-open-graph"] });
+  });
+  it("counts a card once, not once per part that repeats its class", () => {
+    // Two tiles match the card selector six times: still two cards, no grid.
+    expect(
+      evidence("/shirt", `<main>${tile("a")}${tile("b")}</main>`),
+    ).toMatchObject({
+      type: "unknown",
+      signals: [],
+    });
+  });
+  it("reads one top-level ProductGroup as the page's product", () => {
+    expect(
+      evidence(
+        "/shirt",
+        '<script type="application/ld+json">{"@graph":[{"@type":"ItemPage"},{"@type":"ProductGroup","hasVariant":[{"@type":"Product"},{"@type":"Product"}]}]}</script>',
+      ),
+    ).toEqual({
+      type: "product",
+      source: PageTypeSource.Detected,
+      confidence: ClassificationConfidence.Strong,
+      signals: ["product-schema-hint", "product-schema-primary"],
+    });
+  });
+  it("reads a microdata Product as the page's product", () => {
+    // Some stores mark up the product with itemscope attributes, not JSON-LD.
+    const $ = parseHtml(
+      '<meta property="og:type" content="website"><main itemscope itemtype="http://schema.org/Product"><h1 itemprop="name">Drill attachment</h1><div itemprop="offers" itemscope itemtype="http://schema.org/Offer"><span itemprop="price">10</span></div></main>',
+    );
+    expect(
+      classifyPage(
+        "https://example.com/drill-attachment/2025463.html",
+        $,
+        [...extractJsonLd($), ...extractMicrodata($), ...extractRdfa($)],
+        extractMetaTags($),
+      ),
+    ).toEqual({
+      type: "product",
+      source: PageTypeSource.Detected,
+      confidence: ClassificationConfidence.Strong,
+      signals: ["product-schema-hint", "product-schema-primary"],
+    });
+  });
+  it("keeps several top-level products with a grid a listing", () => {
+    const products = JSON.stringify([
+      { "@type": "Product" },
+      { "@type": "Product" },
+    ]);
+    expect(
+      evidence(
+        "/shirts",
+        `<script type="application/ld+json">${products}</script><main>${["a", "b", "c"].map(tile).join("")}</main>`,
+      ),
+    ).toMatchObject({
+      type: "category",
+      signals: ["product-grid"],
+    });
+  });
+  it("does not read a single product beside listing schema as primary", () => {
+    expect(
+      evidence(
+        "/shirts",
+        '<script type="application/ld+json">[{"@type":"CollectionPage"},{"@type":"Product"}]</script>',
+      ),
+    ).toMatchObject({
+      type: "product",
+      confidence: ClassificationConfidence.Hint,
+      signals: ["product-schema-hint"],
+    });
+  });
+  it("keeps the buy controls of a lone main product section", () => {
+    // A PDP may mark its own product section with data-product-id; only
+    // cards that sit in a listing hide their controls.
+    expect(
+      evidence(
+        "/shirt",
+        '<main><section class="pdp" data-product-id="42"><h1>Shirt</h1><span class="price">20</span><button class="add-to-cart">Add</button></section></main>',
+      ),
+    ).toMatchObject({ type: "product", signals: ["purchase-controls"] });
+  });
+  it("keeps a main product section a product beside a recommendation rail", () => {
+    expect(
+      evidence(
+        "/shirt",
+        `<main><section data-product-id="42"><span class="price">20</span><button class="add-to-cart">Add</button></section><div class="recommendations">${["a", "b", "c"].map(tile).join("")}</div></main>`,
+      ),
+    ).toMatchObject({ type: "product", signals: ["purchase-controls"] });
+  });
+  it.each([1, 4, 6])(
+    "keeps a grid a listing however deeply each card is wrapped: %i levels",
+    (depth) => {
+      const wrap = (inner: string) =>
+        "<div>".repeat(depth) + inner + "</div>".repeat(depth);
+      const card =
+        '<div class="product-card"><span class="price">10</span><button class="add-to-cart">Add</button></div>';
+      expect(
+        evidence(
+          "/collections/shirts",
+          `<main><h1>Shirts</h1><div class="grid">${wrap(card).repeat(3)}</div></main>`,
+        ),
+      ).toMatchObject({ type: "category" });
+    },
+  );
+  it("keeps the controls of a card that holds the page title", () => {
+    const related =
+      '<div class="product-card"><span class="price">5</span><button class="add-to-cart">Add</button></div>';
+    expect(
+      evidence(
+        "/shirt",
+        `<main><section data-product-id="42"><h1>Shirt</h1><span class="price">20</span><button class="add-to-cart">Add</button></section>${related.repeat(2)}</main>`,
+      ),
+    ).toMatchObject({ type: "product", confidence: "strong" });
+  });
+  it("does not read carousel dots as result pagination", () => {
+    expect(
+      evidence(
+        "/shirt",
+        '<div class="filter"></div><div class="swiper-pagination"></div>',
+      ),
+    ).toMatchObject({ type: "unknown", signals: [] });
+    expect(
+      evidence(
+        "/shirts",
+        '<div class="filter"></div><nav class="pagination"></nav>',
+      ),
+    ).toMatchObject({
+      type: "category",
+      signals: ["pagination-filter-hint"],
     });
   });
   it("keeps homepage identity when the page has article and product features", () => {

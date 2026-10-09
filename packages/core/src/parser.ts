@@ -688,7 +688,10 @@ export function classifyPage(
     article.push("article-schema-hint");
 
   const strongProduct = product.some(
-    (s) => s === "product-open-graph" || s === "purchase-controls",
+    (s) =>
+      s === "product-open-graph" ||
+      s === "product-schema-primary" ||
+      s === "purchase-controls",
   );
   const strongArticle = article.some((s) => s !== "article-schema-hint");
   if (strongProduct && strongArticle)
@@ -700,9 +703,12 @@ export function classifyPage(
     ]);
   if (strongArticle)
     return result(PageType.Article, ClassificationConfidence.Strong, article);
-  if (strongProduct && !category.includes("product-grid"))
+  // The page's own product evidence outranks a grid. Card buy controls and
+  // recommendation rails never reach `product`, so a listing whose cards
+  // carry prices stays a listing, and a product page with a rail of
+  // related items stays a product page.
+  if (strongProduct)
     return result(PageType.Product, ClassificationConfidence.Strong, product);
-  // A grid is listing evidence even when each card has price/buy controls.
   if (category.includes("product-grid"))
     return result(PageType.Category, ClassificationConfidence.Hint, category);
   if (product.length > 0)
@@ -799,6 +805,84 @@ function isSubpathHome(url: string, $: CheerioAPI): boolean {
   return internal.size >= 3 && [...internal].every((p) => p.startsWith(base));
 }
 
+const PRODUCT_SCHEMA_TYPES = [
+  "Product",
+  "ProductGroup",
+  "IndividualProduct",
+  "ProductModel",
+];
+const LISTING_SCHEMA_TYPES = [
+  "CollectionPage",
+  "ItemList",
+  "OfferCatalog",
+  "ProductCollection",
+];
+const PRODUCT_CARD_SELECTOR =
+  '[class*="product-card"], [class*="product-item"], [class*="product-tile"], [data-product-id], [class*="product-grid"] > *, [class*="product-list"] > *';
+const ADD_TO_CART_SELECTOR =
+  '[class*="add-to-cart"], [id*="add-to-cart"], button:contains("Add to Cart"), button:contains("Add to Bag"), [data-action="add-to-cart"]';
+
+/**
+ * Class or id words that mark a region as supporting content beside the
+ * page's purpose: recommendation rails, recently viewed items, carousels.
+ * A product page routinely carries one, and its cards and dots say nothing
+ * about whether the page itself is a listing.
+ */
+const SECONDARY_REGION =
+  /recommend|related|recently|upsell|up-sell|cross-?sell|also-(?:like|bought|viewed)|you-may|carousel|slider|swiper|slick/i;
+
+function inSecondaryRegion($: CheerioAPI, el: Element): boolean {
+  return [el, ...$(el).parents().toArray()].some(
+    (node) =>
+      node.tagName === "aside" ||
+      SECONDARY_REGION.test(
+        `${$(node).attr("class") ?? ""} ${$(node).attr("id") ?? ""}`,
+      ),
+  );
+}
+
+/** Outermost card matches: a card's parts often repeat the card class. */
+function outermostCards($: CheerioAPI): Element[] {
+  const matches = $(PRODUCT_CARD_SELECTOR).toArray();
+  const set = new Set(matches);
+  return matches.filter(
+    (el) =>
+      !$(el)
+        .parents()
+        .toArray()
+        .some((p) => set.has(p)),
+  );
+}
+
+/**
+ * Product cards in the page's own content. A card's parts often repeat the
+ * card class (`product-tile-image`, `product-tile-price`), so only the
+ * outermost match counts, and cards in a secondary region do not count.
+ */
+function primaryProductCards($: CheerioAPI): Element[] {
+  return outermostCards($).filter((el) => !inSecondaryRegion($, el));
+}
+
+/**
+ * Cards that sit in a listing: every card in a secondary region, and every
+ * primary card once the page has two or more of them, however deeply the
+ * grid wraps each card. A lone element marked as a product, such as a PDP's
+ * main section carrying `data-product-id`, is the page's own product, and so
+ * is a card that holds the page's visible `<h1>`.
+ */
+function listingCards($: CheerioAPI): Element[] {
+  const primary = primaryProductCards($);
+  const secondary = outermostCards($).filter((el) => inSecondaryRegion($, el));
+  const holdsTitle = (card: Element) =>
+    $(card)
+      .find("h1")
+      .toArray()
+      .some((h1) => !hiddenFromReaders($, h1));
+  const listed =
+    primary.length >= 2 ? primary.filter((c) => !holdsTitle(c)) : [];
+  return [...secondary, ...listed];
+}
+
 function productSignals(
   pathname: string,
   $: CheerioAPI,
@@ -806,10 +890,11 @@ function productSignals(
   meta: Record<string, string>,
 ): string[] {
   const signals: string[] = [];
-  // JSON-LD Product schema
-  if (hasJsonLdType(jsonLd, ["Product", "IndividualProduct", "ProductModel"])) {
-    signals.push("product-schema-hint");
-  }
+  // One top-level product entity describes the page; several describe a list.
+  const productEntities = countJsonLdType(jsonLd, PRODUCT_SCHEMA_TYPES);
+  if (productEntities > 0) signals.push("product-schema-hint");
+  if (productEntities === 1 && !hasJsonLdType(jsonLd, LISTING_SCHEMA_TYPES))
+    signals.push("product-schema-primary");
 
   // og:type = product or product.item
   const ogType = (meta["og:type"] ?? "").toLowerCase();
@@ -831,15 +916,19 @@ function productSignals(
     signals.push("product-url-hint");
   }
 
-  // HTML signals: add-to-cart button/form, price elements
-  const hasAddToCart =
-    $(
-      '[class*="add-to-cart"], [id*="add-to-cart"], button:contains("Add to Cart"), button:contains("Add to Bag"), [data-action="add-to-cart"]',
-    ).length > 0;
-  const hasPrice =
-    $(
-      '[class*="product-price"], [class*="product__price"], [itemprop="price"], [data-price], .price',
-    ).length > 0;
+  // HTML signals: add-to-cart button/form, price elements. A buy button
+  // inside a listing card or a recommendation rail buys that card's item,
+  // not the page's, so only a control outside both counts.
+  const cards = listingCards($);
+  const ownControl = (el: Element) =>
+    !cards.some((card) => card === el || $(card).find(el).length > 0) &&
+    !inSecondaryRegion($, el);
+  const hasAddToCart = $(ADD_TO_CART_SELECTOR).toArray().some(ownControl);
+  const hasPrice = $(
+    '[class*="product-price"], [class*="product__price"], [itemprop="price"], [data-price], .price',
+  )
+    .toArray()
+    .some(ownControl);
 
   if (hasAddToCart && hasPrice) {
     signals.push("purchase-controls");
@@ -855,14 +944,7 @@ function categorySignals(
 ): string[] {
   const signals: string[] = [];
   // JSON-LD CollectionPage or ItemList schema
-  if (
-    hasJsonLdType(jsonLd, [
-      "CollectionPage",
-      "ItemList",
-      "OfferCatalog",
-      "ProductCollection",
-    ])
-  ) {
+  if (hasJsonLdType(jsonLd, LISTING_SCHEMA_TYPES)) {
     signals.push("listing-schema-hint");
   }
 
@@ -877,18 +959,17 @@ function categorySignals(
   }
 
   // HTML signals: product grid/list with multiple product cards
-  const productCards = $(
-    '[class*="product-card"], [class*="product-item"], [class*="product-tile"], [data-product-id], [class*="product-grid"] > *, [class*="product-list"] > *',
-  );
-  if (productCards.length >= 3) {
+  if (primaryProductCards($).length >= 3) {
     signals.push("product-grid");
   }
 
-  // Pagination + multiple items suggests a listing
-  const hasPagination =
-    $(
-      '[class*="pagination"], nav[aria-label*="pagination"], .pager, [class*="load-more"]',
-    ).length > 0;
+  // Pagination + multiple items suggests a listing. Carousel dots
+  // (`swiper-pagination`) page through a rail, not through results.
+  const hasPagination = $(
+    '[class*="pagination"], nav[aria-label*="pagination"], .pager, [class*="load-more"]',
+  )
+    .toArray()
+    .some((el) => !inSecondaryRegion($, el));
   const hasFilterOrSort =
     $('[class*="filter"], [class*="facet"], [class*="sort-by"], [data-filter]')
       .length > 0;
@@ -901,23 +982,28 @@ function categorySignals(
 }
 
 function hasJsonLdType(jsonLd: object[], types: string[]): boolean {
+  return countJsonLdType(jsonLd, types) > 0;
+}
+
+/** Top-level entities and `@graph` members of the given types. */
+function countJsonLdType(jsonLd: object[], types: string[]): number {
   // Only top-level entities and @graph members describe purpose. Do not visit
   // nested related entities, and do not mutate the parsed evidence.
-  const matches = (node: unknown): boolean => {
-    if (Array.isArray(node)) return node.some(matches);
-    if (!node || typeof node !== "object") return false;
+  const count = (node: unknown): number => {
+    if (Array.isArray(node))
+      return node.reduce((n, item) => n + count(item), 0);
+    if (!node || typeof node !== "object") return 0;
     const obj = node as Record<string, unknown>;
     const declared = obj["@type"];
     const names = Array.isArray(declared) ? declared : [declared];
-    if (
-      names.some(
-        (name) =>
-          typeof name === "string" &&
-          types.includes(name.replace(/^https?:\/\/schema\.org\//, "")),
-      )
+    const own = names.some(
+      (name) =>
+        typeof name === "string" &&
+        types.includes(name.replace(/^https?:\/\/schema\.org\//, "")),
     )
-      return true;
-    return Array.isArray(obj["@graph"]) && obj["@graph"].some(matches);
+      ? 1
+      : 0;
+    return own + (Array.isArray(obj["@graph"]) ? count(obj["@graph"]) : 0);
   };
-  return jsonLd.some(matches);
+  return count(jsonLd);
 }
