@@ -37,6 +37,9 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Check published type declarations
+        run: pnpm check:package-types
+
       - name: Check audit-dossier linkage
         run: pnpm check:dossiers
 
@@ -48,6 +51,9 @@ jobs:
 
       - name: Check enum constants replace magic strings
         run: pnpm check:enums
+
+      - name: Check docs for retired page type names
+        run: pnpm check:retired-names
 
       - name: Typecheck
         run: pnpm typecheck
