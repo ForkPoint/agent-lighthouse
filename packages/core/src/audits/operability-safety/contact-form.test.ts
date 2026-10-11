@@ -4,7 +4,8 @@ import {
   mockCheckContext,
   mockPageContext,
   mockFetchResult,
-} from "../../__tests__/test-utils";
+} from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 describe("ContactFormAudit", () => {
   const audit = new ContactFormAudit();
@@ -21,7 +22,7 @@ describe("ContactFormAudit", () => {
     );
     const ctx = mockCheckContext([page]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("contact");
   });
 
@@ -35,7 +36,7 @@ describe("ContactFormAudit", () => {
       </body></html>`,
     );
     const ctx = mockCheckContext([page]);
-    expect(audit.audit(ctx).status).toBe("pass");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
   });
 
   it("passes when OpenAPI has a POST contact endpoint", () => {
@@ -50,7 +51,7 @@ describe("ContactFormAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("POST");
   });
 
@@ -63,7 +64,7 @@ describe("ContactFormAudit", () => {
     );
     const ctx = mockCheckContext([page]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No contact");
   });
 
@@ -75,7 +76,7 @@ describe("ContactFormAudit", () => {
       `<html><body><header><a href="/support/">Support</a><a href="https://other.example.org/contact">Partner</a></header><p>Home.</p></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("https://example.com/support/");
     expect(result.message).not.toContain("other.example.org");
   });
@@ -85,7 +86,7 @@ describe("ContactFormAudit", () => {
       "https://example.com",
       `<html><body><a href="/leadership">Leadership</a><a href="https://other.example.org/contact">Partner</a></body></html>`,
     );
-    expect(audit.audit(mockCheckContext([page])).status).toBe("fail");
+    expect(audit.audit(mockCheckContext([page])).status).toBe(CheckStatus.Fail);
   });
 
   it("fails when openapi.json contains invalid JSON and no forms match", () => {
@@ -97,7 +98,7 @@ describe("ContactFormAudit", () => {
       "/openapi.json": mockFetchResult("not valid json {{{", 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("fails when spec has no paths property and no contact forms", () => {
@@ -112,7 +113,7 @@ describe("ContactFormAudit", () => {
       ),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("fails when only a GET contact endpoint exists (not POST)", () => {
@@ -127,7 +128,7 @@ describe("ContactFormAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("skips path items that are not objects in getOperations", () => {
@@ -146,7 +147,7 @@ describe("ContactFormAudit", () => {
     });
     const result = audit.audit(ctx);
     // POST /api/submit-order doesn't match any contact indicator → fail
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("fails when paths is an array (covers Array.isArray branch of isObject)", () => {
@@ -159,7 +160,7 @@ describe("ContactFormAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("fails when path item is a string (covers typeof branch of isObject)", () => {
@@ -172,7 +173,7 @@ describe("ContactFormAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("fails when path item is an array (covers Array.isArray branch of isObject at pathItem)", () => {
@@ -185,6 +186,6 @@ describe("ContactFormAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 });

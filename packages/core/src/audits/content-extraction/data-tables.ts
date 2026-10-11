@@ -1,8 +1,16 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
-import { scanReadPageText, unreadPageTextReason } from "../../scan-evidence";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import { scanReadPageText, unreadPageTextReason } from "#core/scan-evidence";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 export class DataTablesAudit extends Audit {
   static override meta: AuditMeta = {
@@ -12,24 +20,24 @@ export class DataTablesAudit extends Audit {
     failureTitle: "Data tables properly structured",
     description:
       "AI agents use <thead> and <th> elements to understand column headers and interpret table data correctly. Without proper structure, agents cannot map cell values to their column meanings, leading to garbled data extraction in AI-generated comparisons and summaries.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/content-extraction/data-tables.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "medium",
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "AI agents rely on <thead> and <th> elements to understand column headers and map cell values to their meanings. Without proper table structure, agents cannot interpret tabular data correctly, leading to garbled comparisons and inaccurate data extraction in AI-generated summaries.",
       fix: "Add a <thead> section containing a <tr> with <th> elements for each column header. Place data rows inside a <tbody> section. Use the scope attribute on <th> elements for complex tables with row and column headers.",
       code: '<table>\n  <thead>\n    <tr><th scope="col">Feature</th><th scope="col">Value</th></tr>\n  </thead>\n  <tbody>\n    <tr><td>Speed</td><td>100ms</td></tr>\n  </tbody>\n</table>',
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl:
         "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/table",
       tags: ["tables", "structure", "semantic", "html"],
@@ -86,7 +94,7 @@ export class DataTablesAudit extends Audit {
         "All <table> elements have <thead> and <th>",
         `${properTables}/${totalTables} properly structured tables`,
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "AI agents use <thead> and <th> elements to understand column headers and interpret table data correctly. Without proper structure, agents cannot map cell values to their column meanings, leading to garbled data extraction in AI-generated comparisons and summaries.",
           code: "<table>\n  <thead><tr><th>Feature</th><th>Value</th></tr></thead>\n  <tbody><tr><td>Speed</td><td>100ms</td></tr></tbody>\n</table>",
@@ -99,7 +107,7 @@ export class DataTablesAudit extends Audit {
       "All <table> elements have <thead> and <th>",
       `${properTables}/${totalTables} properly structured tables`,
       {
-        priority: "medium",
+        priority: CheckPriority.Medium,
         description:
           "AI agents use <thead> and <th> elements to understand column headers and interpret table data correctly. Without proper structure, agents cannot map cell values to their column meanings, leading to garbled data extraction in AI-generated comparisons and summaries.",
         code: "<table>\n  <thead><tr><th>Feature</th><th>Value</th></tr></thead>\n  <tbody><tr><td>Speed</td><td>100ms</td></tr></tbody>\n</table>",

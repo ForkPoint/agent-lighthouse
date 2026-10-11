@@ -1,10 +1,18 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext, PageContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
-import { countTokens } from "../../gatherers/tokens";
-import { readabilityArticle, semanticText } from "../../gatherers/extraction";
-import { shingles } from "../../gatherers/text-metrics";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import { countTokens } from "#core/gatherers/tokens";
+import { readabilityArticle, semanticText } from "#core/gatherers/extraction";
+import { shingles } from "#core/gatherers/text-metrics";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** Below this, document frequency is arithmetic on too few documents. */
 const MIN_PAGES = 3;
@@ -69,23 +77,23 @@ export class BoilerplateTaxAudit extends Audit {
       "Most of what an agent fetches from this site it has already read",
     description:
       "Samples pages across the crawl, finds the five-word windows that appear on at least 80% of them, and reports how many of the tokens an agent pays for are distinct information rather than repeated chrome. Site-level rather than page-level: the cost of boilerplate is only visible across fetches.",
-    scoreDisplayMode: "ternary",
-    tier: "scored",
-    evidenceGrade: "B",
-    weight: weightForGrade("B", "scored"),
-    defaultPriority: "medium",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    tier: AuditTier.Scored,
+    evidenceGrade: EvidenceGrade.B,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    defaultPriority: CheckPriority.Medium,
     dossier: "docs/evidence/audits/content-extraction/boilerplate-tax.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     guidance: {
       impact:
         "An agent answering a question about a site fetches several of its pages. If each fetch delivers the same navigation, the same promotional header and the same footer around a thin body, the agent pays for those tokens once per fetch and learns nothing new from them. The cost compounds with every page, and the distinct content it came for competes for what is left of the context window.",
       fix: "Cut repeated chrome down to what a reader needs on every page: collapse mega-menus to a short nav, move legal and marketing boilerplate to the pages that are about it, and let each page carry more of its own content. Where the chrome must stay for humans, keeping it out of `<main>` at least lets an extractor drop it.",
-      effort: "complex",
+      effort: FixEffort.Complex,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/content-extraction/boilerplate-tax/",
       tags: ["tokens", "context-window", "content", "crawl"],

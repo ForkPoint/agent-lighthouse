@@ -1,8 +1,16 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { getWordCount } from "../../parser";
-import { weightForGrade } from "../../scorer";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { getWordCount } from "#core/parser";
+import { weightForGrade } from "#core/scorer";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 export class ContentDepthAudit extends Audit {
   static override meta: AuditMeta = {
@@ -12,23 +20,23 @@ export class ContentDepthAudit extends Audit {
     failureTitle: "Sufficient content depth",
     description:
       "AI RAG systems need sufficient content depth to generate accurate, detailed answers. Pages with fewer than 300 words provide too little context for meaningful vector embeddings, causing your content to rank poorly in retrieval and be excluded from AI-generated responses.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/content-extraction/content-depth.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "medium",
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "Pages with fewer than 300 words provide too little context for AI RAG systems to generate accurate, detailed answers. Thin content produces weak vector embeddings that rank poorly in retrieval, causing your pages to be excluded from AI-generated responses entirely.",
       fix: "Expand thin pages with substantive content: add detailed explanations, practical examples, FAQs, and relevant context. Aim for at least 300 words of meaningful content per page. Avoid filler text -- focus on answering real user questions comprehensively.",
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       tags: ["content", "depth", "quality"],
     },
   };
@@ -66,7 +74,7 @@ export class ContentDepthAudit extends Audit {
         "More than 300 words of content per page",
         `${pagesAboveThreshold}/${ctx.pages.length} pages above threshold`,
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "AI RAG systems need sufficient content depth to generate accurate, detailed answers. Pages with fewer than 300 words provide too little context for meaningful vector embeddings, causing your content to rank poorly in retrieval and be excluded from AI-generated responses.",
           code: "<!-- Ensure each page has 300+ words of substantive content -->\n<!-- Expand thin pages with detailed explanations, examples, and context -->",
@@ -79,7 +87,7 @@ export class ContentDepthAudit extends Audit {
       "More than 300 words of content per page",
       `${pagesAboveThreshold}/${ctx.pages.length} pages above threshold`,
       {
-        priority: "medium",
+        priority: CheckPriority.Medium,
         description:
           "AI RAG systems need sufficient content depth to generate accurate, detailed answers. Pages with fewer than 300 words provide too little context for meaningful vector embeddings, causing your content to rank poorly in retrieval and be excluded from AI-generated responses.",
         code: "<!-- Ensure each page has 300+ words of substantive content -->\n<!-- Expand thin pages with detailed explanations, examples, and context -->",

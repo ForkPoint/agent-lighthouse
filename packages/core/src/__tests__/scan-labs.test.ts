@@ -8,20 +8,21 @@
  *   npx vitest run libs/scanner/src/__tests__/scan-labs.test.ts
  */
 import { describe, it, expect, beforeAll } from "vitest";
-import { runAudits } from "../audit-runner";
-import { defaultConfig } from "../audit-config";
-import { createFetcher } from "../fetcher";
+import { runAudits } from "#core/audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { createFetcher } from "#core/fetcher";
 import {
   parseHtml,
   extractJsonLd,
   extractMetaTags,
   extractHeadLinks,
   detectPageType,
-} from "../parser";
-import type { CheckContext, PageContext } from "../check-context";
-import type { CheckResult } from "../types";
-import type { FetchResult } from "../fetcher";
-import { allEvidenceMet } from "../scan-evidence";
+} from "#core/parser";
+import type { CheckContext, PageContext } from "#core/check-context";
+import type { CheckResult } from "#core/types";
+import type { FetchResult } from "#core/fetcher";
+import { allEvidenceMet } from "#core/scan-evidence";
+import { CheckStatus } from "#core/types";
 
 const IS_LABS_ENABLED = Boolean(
   process.env.NEXT_PUBLIC_LABS_URL || process.env.LABS_PORT,
@@ -60,7 +61,7 @@ function resolveAuditExpectation(id: string): {
       titleSuffix: " (known fail — localhost)",
       assert: (result) => {
         expect(result).toBeDefined();
-        expect(result!.status).toBe("fail");
+        expect(result!.status).toBe(CheckStatus.Fail);
       },
     };
   }
@@ -69,7 +70,7 @@ function resolveAuditExpectation(id: string): {
       titleSuffix: " (known warn — N/A)",
       assert: (result) => {
         expect(result).toBeDefined();
-        expect(result!.status).toBe("warn");
+        expect(result!.status).toBe(CheckStatus.Warn);
       },
     };
   }
@@ -78,7 +79,12 @@ function resolveAuditExpectation(id: string): {
       titleSuffix: " (timing-sensitive)",
       assert: (result) => {
         // In dev mode, TTFB can exceed thresholds due to compilation
-        expect(["pass", "warn", "fail", undefined]).toContain(result?.status);
+        expect([
+          CheckStatus.Pass,
+          CheckStatus.Warn,
+          CheckStatus.Fail,
+          undefined,
+        ]).toContain(result?.status);
       },
     };
   }
@@ -87,10 +93,10 @@ function resolveAuditExpectation(id: string): {
     assert: (result) => {
       // Audit was filtered out by applicablePageTypes — that's OK
       expect(
-        result === undefined || result.status === "pass"
-          ? "pass"
+        result === undefined || result.status === CheckStatus.Pass
+          ? CheckStatus.Pass
           : `${id}:${result.status}:${result.explanation} expected=${result.details?.expected} found=${result.details?.found}`,
-      ).toBe("pass");
+      ).toBe(CheckStatus.Pass);
     },
   };
 }
@@ -193,9 +199,9 @@ describe.skipIf(!IS_LABS_ENABLED)(
       checkMap = new Map(checks.map((c) => [c.id, c]));
       console.log(
         `\nScan complete: ${checks.length} audits run, ` +
-          `${checks.filter((c) => c.status === "pass").length} pass, ` +
-          `${checks.filter((c) => c.status === "warn").length} warn, ` +
-          `${checks.filter((c) => c.status === "fail").length} fail\n`,
+          `${checks.filter((c) => c.status === CheckStatus.Pass).length} pass, ` +
+          `${checks.filter((c) => c.status === CheckStatus.Warn).length} warn, ` +
+          `${checks.filter((c) => c.status === CheckStatus.Fail).length} fail\n`,
       );
     });
 

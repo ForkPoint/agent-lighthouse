@@ -25,6 +25,21 @@ categories: `access-crawl-control`, `agent-interfaces`, `agentic-commerce`,
 `operability-safety`, `structured-data`. An audit's id is `category/slug`,
 capped at 64 characters by `packages/core/src/schemas.ts`.
 
+## Central audit index
+
+Start with `docs/evidence/audit-map.json` for audit discovery. Its `readingGuide`
+explains each field. Select `audits[]` by exact ID or feature tag instead of loading
+all dossiers. The index includes purpose, feature tags, current page-type scope,
+evidence requirements, scoring metadata, source/test/dossier paths, and historical
+review notes. `docs/evidence/audit-map.md` has field definitions and `jq` examples.
+
+Runtime fields come from audit metadata. Review notes come from the dated v7 P2
+ledger; proposals and acceptance criteria do not prove implementation or test
+coverage. Read the source and dossier before changing behavior. Use the execution
+plan for completed work. Regenerate with `pnpm build:audit-map`; CI runs
+`pnpm check:audit-map` to reject stale output. Do not hand-edit generated active
+records.
+
 ## Commands
 
 ```bash
@@ -35,6 +50,7 @@ pnpm lint               # oxlint
 pnpm check:dossiers     # registry <-> dossier agreement, both directions
 pnpm check:requires     # each audit's `requires` matches what its source reads
 pnpm check:audit-map    # audit map <-> codebase & dossier agreement
+pnpm check:enums        # no string literal where an enum constant exists
 pnpm changeset          # one per user-visible change
 ```
 
@@ -83,6 +99,21 @@ draft standard with real adoption, or strong empirical measurement; **C** is a
 community convention nothing documents consuming; **D** is speculative.
 
 ## Writing an audit
+
+- **All page types by default; restrict only a proven population.** Omit
+  `applicablePageTypes` for common checks. Use a short inclusion list only when
+  the dossier establishes a purpose-specific obligation, such as article authors
+  or product offers. Never enumerate most or all page types to express a common
+  check or to exclude one type. A feature such as code blocks, dates, definitions,
+  services, or breadcrumbs can occur on several page types: select its relevant
+  pages from observed evidence inside the audit or its shared gatherer instead.
+  Return `notApplicable` when that feature or obligation is absent. Record any
+  genuine exception beside the selection and in the dossier. Do not invent an
+  exclusion metadata field; the runner does not support one. See
+  `docs/architecture/audits.md#511-default-scope-and-page-type-restrictions` for
+  the rule, current broad-list inventory, and migration checks. Removing a list
+  changes execution and can change scoring; review the dossier and test the
+  affected populations before doing it.
 
 - **Absence is usually `notApplicable`, not `fail`.** A site that never adopted
   an optional convention has done nothing wrong. Fail only what a source says
@@ -170,13 +201,33 @@ Write for a reader, not for a researcher:
 - oxlint is the only linter. There is no ESLint config and none should appear.
   Use `// oxlint-disable-*` if a suppression is genuinely needed.
 - Prettier for formatting: `pnpm format`.
+- Inside `packages/core/src`, import another core module as `#core/<path>`
+  (`import { CheckStatus } from "#core/types"`), not with a climbing `../`
+  path. Same-folder imports stay `./x`. The alias is a Node subpath import in
+  `packages/core/package.json`: the `agent-lighthouse-source` condition (set in
+  `tsconfig.base.json`) points TypeScript at `src/`, `types` points package
+  users at `dist/*.d.ts`, and the bundle inlines it. Do not use the shorter
+  `#/` form: published declarations would then need TypeScript 6.0 or newer.
+  Scripts under `scripts/` use the same `#core/<path>`, mapped by the root
+  `package.json`. oxlint's `no-restricted-imports` rejects a climbing `../`
+  import inside core and a `packages/core/src` path inside scripts.
+- Name enum values through their constant, never as a string: `CheckStatus.Pass`,
+  `PageType.Product`, `EvidenceKey.RenderedBody`. Each public string union in
+  core is a const object plus a type of the same name, and its Zod schema reads
+  from that object. `pnpm check:enums` rejects a plain string wherever the type
+  checker sees one of those types, and finds new enums by that shape on its own.
+  It also rejects a new `"a" | "b"` union: declare an enum, or a constant list
+  (`as const` array with `(typeof LIST)[number]`) when the code iterates the
+  set. Tagged-union discriminants and `Pick`/`Omit`/`Record` key lists pass.
+  Exempt files and kept unions are listed with a reason in
+  `scripts/check-enums.ts`.
 
 ## Before you commit
 
-All seven, in order:
+All eight, in order:
 
 ```bash
-pnpm build && pnpm test && pnpm typecheck && pnpm lint && pnpm check:dossiers && pnpm check:requires && pnpm check:audit-map
+pnpm build && pnpm test && pnpm typecheck && pnpm lint && pnpm check:dossiers && pnpm check:requires && pnpm check:audit-map && pnpm check:enums
 ```
 
 `check:dossiers` and `check:requires` read the _built_ core bundle, so

@@ -7,6 +7,7 @@ import {
 } from "./constants";
 import { isPrivateIp } from "./url-utils";
 import { logger } from "./logger";
+import { HttpMethod } from "./types";
 
 export async function isSafeUrl(url: string): Promise<boolean> {
   try {
@@ -44,7 +45,7 @@ export interface FetchOptions {
   timeout?: number;
   followRedirects?: boolean;
   acceptHeader?: string;
-  method?: "GET" | "POST" | "OPTIONS" | "HEAD" | "DELETE";
+  method?: HttpMethod;
   body?: string;
   contentType?: string;
   /** Override the User-Agent header (e.g. to probe a site as a specific AI bot). */
@@ -270,7 +271,7 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
       url,
       timeout = REQUEST_TIMEOUT_MS,
       acceptHeader = "*/*",
-      method = "GET",
+      method = HttpMethod.Get,
       body: requestBody,
       contentType,
       userAgent,
@@ -307,7 +308,7 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
         setHeader(reqHeaders, "Authorization", authHeader);
       }
 
-      if (method === "POST" && contentType) {
+      if (method === HttpMethod.Post && contentType) {
         setHeader(reqHeaders, "Content-Type", contentType);
       }
 
@@ -390,11 +391,11 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
         // for a POST, as every browser does. 307 and 308 keep both.
         if (
           response.statusCode === 303 ||
-          (currentMethod === "POST" &&
+          (currentMethod === HttpMethod.Post &&
             response.statusCode !== 307 &&
             response.statusCode !== 308)
         ) {
-          currentMethod = "GET";
+          currentMethod = HttpMethod.Get;
           currentBody = undefined;
         }
 
@@ -419,7 +420,7 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
 
       let body = "";
       let bytes: Uint8Array | undefined;
-      if (currentMethod === "OPTIONS") {
+      if (currentMethod === HttpMethod.Options) {
         // For OPTIONS requests, consume and discard the body
         await response.body.dump();
       } else if (binary) {

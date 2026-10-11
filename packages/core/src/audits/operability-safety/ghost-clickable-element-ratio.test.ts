@@ -1,14 +1,15 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
 import { GhostClickableElementRatioAudit } from "./ghost-clickable-element-ratio";
 import {
   mockCheckContext,
   mockPageContext,
   walledSiteContext,
-} from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { CheckContext } from "../../check-context";
+} from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { CheckContext } from "#core/check-context";
+import { AuditTier, CheckStatus, EvidenceGrade } from "#core/types";
 
 /** A homepage carrying `body`, with an optional inline stylesheet. */
 function page(body: string, css = ""): CheckContext {
@@ -104,7 +105,7 @@ describe("GhostClickableElementRatioAudit", () => {
 
   it("passes a page of native buttons at ratio 1.0", async () => {
     const result = await audit.audit(page(semantic(5)));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("1.00");
   });
 
@@ -205,27 +206,27 @@ describe("GhostClickableElementRatioAudit", () => {
     const atBoundary = await audit.audit(
       page(`${semantic(9)}<div onclick="go()">x</div>`),
     );
-    expect(atBoundary.status).toBe("warn");
+    expect(atBoundary.status).toBe(CheckStatus.Warn);
     // 2 ghosts of 10 -> 0.80.
     const below = await audit.audit(
       page(
         `${semantic(8)}<div onclick="go()">x</div><div onclick="go()">y</div>`,
       ),
     );
-    expect(below.status).toBe("fail");
+    expect(below.status).toBe(CheckStatus.Fail);
   });
 
   it("is notApplicable when the page carries no click target of either kind", async () => {
     const result = await audit.audit(page("<p>Just prose.</p>"));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   // The CDP tier in the sketch needs a live browser. The audit must not claim it.
   it("does not promise the headless CDP tier in its description", () => {
     const { meta } = GhostClickableElementRatioAudit;
     expect(meta.description).not.toContain("CDP");
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
     expect(meta.weight).toBeCloseTo(0.6);
   });
 
@@ -242,7 +243,7 @@ describe("GhostClickableElementRatioAudit", () => {
     expect(plan.runnable.map((entry) => entry.reg.meta.id)).not.toContain(
       GhostClickableElementRatioAudit.meta.id,
     );
-    expect(result?.status).toBe("na");
+    expect(result?.status).toBe(CheckStatus.NotApplicable);
     expect(result?.explanation).toMatch(/^Not assessed: /);
   });
 });

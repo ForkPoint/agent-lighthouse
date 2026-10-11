@@ -7,11 +7,19 @@
 // invest in a channel its largest documented consumer is leaving. Absence is
 // notApplicable, never a pass: a site with no fact-check markup has nothing to
 // be advised about.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import { allJsonLdNodes } from "../../parser";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import { allJsonLdNodes } from "#core/parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 interface ClaimReviewNode {
   pageUrl: string;
@@ -100,24 +108,24 @@ export class ClaimreviewAdvisoryAudit extends Audit {
     failureTitle: "ClaimReview investment advisory",
     description:
       "ADVISORY / UNSCORED. Detects ClaimReview markup and tells the operator the truth about its status rather than rewarding coverage: Google is phasing out ClaimReview support in Search, while the Fact Check Explorer still consumes it. Also validates the required shape and the one-per-page constraint for sites that keep it.",
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("A", "informative"),
-    evidenceGrade: "A",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/structured-data/claimreview-advisory.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "low",
+    defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
         "Google's fact check documentation states plainly: 'We're phasing out support for ClaimReview markup in Google Search', with no deprecation date, and notes only one ClaimReview element per page qualifies for rich results. A check that scored ClaimReview coverage as an AI-readiness win would therefore push publishers to invest in a channel its largest documented consumer is actively withdrawing from. FALSIFIABLE and grade A on the evidence, but it measures the state of an external product, not the quality of the site — which is exactly why it must not contribute to a score.",
       fix: 'Do not add ClaimReview markup for Google Search: support is being withdrawn. If you already publish it, keep it well-formed for the Fact Check Explorer — claimReviewed, url, and a reviewRating carrying a human-readable alternateName such as "Mostly false" — and keep exactly one ClaimReview node per page, since only one has ever qualified. Spend new effort on the schema types AI systems actually consume rather than on extending fact-check coverage.',
       code: SAMPLE,
-      effort: "trivial",
+      effort: FixEffort.Trivial,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/structured-data/claimreview-advisory/",
       tags: [
@@ -176,7 +184,7 @@ export class ClaimreviewAdvisoryAudit extends Audit {
         `${defects.join("; ")}. ${ADVISORY}`,
         EXPECTED,
         `${found}; ${defects.length} shape defect(s)`,
-        "low",
+        CheckPriority.Low,
         first.pageUrl,
       );
     }

@@ -1,11 +1,19 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import { isSafeUrl } from "../../url-utils";
-import { sharedProbeUrl } from "../../gatherers/discovery";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import { isSafeUrl } from "#core/url-utils";
+import { sharedProbeUrl } from "#core/gatherers/discovery";
 import { AI_CATALOG_PATH, entryLabel, readAiCatalog } from "./_ard";
 import type { ArdEntry } from "./_ard";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /**
  * How many probes run at once.
@@ -103,19 +111,19 @@ export class AiCatalogUrlsAudit extends Audit {
     failureTitle: "AI Catalog entry URLs valid",
     description:
       "Every AI catalog entry either embeds its artifact inline or points at one with a url. Consumers dereference those urls to load MCP server cards, agent cards and nested catalogs, so a dead url silently truncates a whole branch of discovery and breaks any agent that trusted the manifest.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/agent-interfaces/ai-catalog-urls.md",
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "medium",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "A broken entry url makes an agent fail mid-task: it read your manifest, followed the link you published, and got nothing. Entries whose url points at a nested catalog or registry cut off everything behind them as well.",
       fix: "Check every entries[].url in your ai-catalog.json against your live deployment, use absolute HTTPS URLs, and remove or update stale entries. Entries that embed their artifact in `data` instead of `url` need no endpoint at all.",
       code: SAMPLE,
-      effort: "trivial",
+      effort: FixEffort.Trivial,
       docsUrl: "https://github.com/ards-project/ard-spec/blob/main/spec/ard.md",
       tags: ["ai-catalog", "validation", "agent-protocol", "ard"],
     },
@@ -123,7 +131,7 @@ export class AiCatalogUrlsAudit extends Audit {
 
   private recommendation() {
     return {
-      priority: "medium" as const,
+      priority: CheckPriority.Medium,
       description: AiCatalogUrlsAudit.meta.description,
       code: SAMPLE,
     };

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { defaultConfig } from "../audit-config";
+import { defaultConfig } from "#core/audit-config";
 import { NEW_IN_V2, MIGRATED_COUNT } from "./new-in-v2";
 
 const registeredIds = Object.values(defaultConfig.audits)

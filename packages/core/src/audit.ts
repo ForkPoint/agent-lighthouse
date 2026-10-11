@@ -1,11 +1,7 @@
-import type {
-  AuditMeta,
-  AuditResult,
-  CheckResult,
-  CheckPriority,
-} from "./types";
+import type { AuditMeta, AuditResult, CheckResult } from "./types";
 import { AuditResultSchema } from "./schemas";
 import type { CheckContext } from "./check-context";
+import { CheckPriority, CheckStatus, ScoreDisplayMode } from "./types";
 
 /**
  * Where an audit's evidence dossier is published. A pure function of the id.
@@ -26,10 +22,10 @@ export function evidenceUrl(id: string): string {
 export abstract class Audit {
   static meta: AuditMeta;
   private static readonly PRIORITY_MAP: Record<string, CheckPriority> = {
-    critical: "critical",
-    high: "high",
-    medium: "medium",
-    low: "low",
+    critical: CheckPriority.Critical,
+    high: CheckPriority.High,
+    medium: CheckPriority.Medium,
+    low: CheckPriority.Low,
   };
 
   /**
@@ -82,7 +78,14 @@ export abstract class Audit {
     found: string,
     pageUrl?: string,
   ): AuditResult {
-    return { status: "pass", score: 1.0, message, expected, found, pageUrl };
+    return {
+      status: CheckStatus.Pass,
+      score: 1.0,
+      message,
+      expected,
+      found,
+      pageUrl,
+    };
   }
 
   /**
@@ -97,7 +100,14 @@ export abstract class Audit {
     found: string,
     pageUrl?: string,
   ): AuditResult {
-    return { status: "na", score: 0, message, expected, found, pageUrl };
+    return {
+      status: CheckStatus.NotApplicable,
+      score: 0,
+      message,
+      expected,
+      found,
+      pageUrl,
+    };
   }
 
   /** Create a warning result. */
@@ -128,7 +138,7 @@ export abstract class Audit {
         : undefined;
 
     return {
-      status: "warn",
+      status: CheckStatus.Warn,
       score: 0.5,
       message,
       expected,
@@ -169,7 +179,7 @@ export abstract class Audit {
         : undefined;
 
     return {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0.0,
       message,
       expected,
@@ -190,7 +200,7 @@ export abstract class Audit {
     const result = this.validate(rawResult);
     const meta = (this.constructor as typeof Audit).meta;
     const scoreDisplayMode = overrideDisplayMode ?? meta.scoreDisplayMode;
-    const isInformative = scoreDisplayMode === "informative";
+    const isInformative = scoreDisplayMode === ScoreDisplayMode.Informative;
 
     // Backward compatibility mapping
     const rawDisplay = result.displayValue ?? result.found ?? result.message;
@@ -214,7 +224,8 @@ export abstract class Audit {
       // precondition was absent, and printing "… blocked by robots.txt" over a
       // site that serves no robots.txt states something untrue.
       title:
-        result.status === "pass" || result.status === "na"
+        result.status === CheckStatus.Pass ||
+        result.status === CheckStatus.NotApplicable
           ? meta.title
           : meta.failureTitle,
       description: meta.description,

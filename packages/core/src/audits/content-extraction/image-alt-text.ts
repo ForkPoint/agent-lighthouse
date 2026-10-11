@@ -1,9 +1,17 @@
 import type { CheerioAPI } from "cheerio";
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { extractImages } from "../../parser";
-import { weightForGrade } from "../../scorer";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { extractImages } from "#core/parser";
+import { weightForGrade } from "#core/scorer";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 type ExtractedImage = ReturnType<typeof extractImages>[number];
 
@@ -50,24 +58,24 @@ export class ImageAltTextAudit extends Audit {
     failureTitle: "Images with no text alternative",
     description:
       "An image with no text alternative has no accessible name, so it is an unnamed node in the accessibility-tree snapshots agent toolkits send to a model — Playwright MCP, Claude-in-Chrome read_page, Chrome DevTools take_snapshot — and it carries no subject matter for Google Images, which states it uses alt text to understand what an image shows. A multimodal agent that fetches the image bytes can caption it without one; a text-only crawler or a snapshot-driven agent cannot.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/content-extraction/image-alt-text.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "high",
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "An image with no text alternative has no accessible name, so it is an unnamed node in the accessibility-tree snapshots agent toolkits send to a model — Playwright MCP, Claude-in-Chrome read_page, Chrome DevTools take_snapshot — and it carries no subject matter for Google Images, which states it uses alt text to understand what an image shows. A multimodal agent that fetches the image bytes can caption it without one; a text-only crawler or a snapshot-driven agent cannot.",
       fix: 'Give every image that carries meaning a text alternative: `alt` on the `<img>`, or `aria-label` / `aria-labelledby` where the name already exists elsewhere on the page. Mark a genuinely decorative image `alt=""` or `role="presentation"`, and use `aria-hidden="true"` only for an image that should be hidden from assistive technology altogether.',
       code: '<img src="product.jpg" alt="Blue running shoe, side view, with breathable mesh upper and cushioned sole">',
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/alt",
       tags: ["images", "alt-text", "accessibility", "semantic"],
@@ -169,7 +177,7 @@ export class ImageAltTextAudit extends Audit {
 
     const message = `${named}/${total} image(s) that need a text alternative have one (${percent}%).`;
     const recommendation = {
-      priority: "high" as const,
+      priority: CheckPriority.High,
       code: '<img src="product.jpg" alt="Product name shown from the front, featuring key design element">',
     };
 

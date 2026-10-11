@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { AiCatalogMetadataAudit } from "./ai-catalog-metadata";
-import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
+import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 /** An entry carrying everything hf-discover indexes. */
 function richEntry(n: number): Record<string, unknown> {
@@ -51,13 +52,13 @@ describe("AiCatalogMetadataAudit", () => {
     const result = audit.audit(
       ctxWith(manifest({ entries: [richEntry(1), richEntry(2)] })),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("2/2");
   });
 
   it("passes without the optional updatedAt / trustManifest bonuses", () => {
     const result = audit.audit(ctxWith(manifest()));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // ARD §4.2 puts updatedAt on the entry, and §4.2/§4.3 put trustManifest on
@@ -76,7 +77,7 @@ describe("AiCatalogMetadataAudit", () => {
         }),
       ),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("updatedAt");
     expect(result.found).toContain("trustManifest");
   });
@@ -94,7 +95,7 @@ describe("AiCatalogMetadataAudit", () => {
         }),
       ),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("trustManifest");
   });
 
@@ -107,7 +108,7 @@ describe("AiCatalogMetadataAudit", () => {
         }),
       ),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).not.toContain("updatedAt");
     expect(result.found).not.toContain("trustManifest");
   });
@@ -130,7 +131,7 @@ describe("AiCatalogMetadataAudit", () => {
     const result = audit.audit(
       ctxWith(manifest({ entries: [richEntry(1), bareEntry(2)] })),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("Bare 2");
   });
 
@@ -138,14 +139,14 @@ describe("AiCatalogMetadataAudit", () => {
     const result = audit.audit(
       ctxWith(manifest({ entries: [bareEntry(1), bareEntry(2)] })),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("warns when host.displayName is missing even though every entry is rich", () => {
     const result = audit.audit(
       ctxWith(manifest({ host: { identifier: "did:web:example.com" } })),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("host.displayName");
   });
 
@@ -153,7 +154,7 @@ describe("AiCatalogMetadataAudit", () => {
     const result = audit.audit(
       ctxWith(manifest({ host: { displayName: "Example" } })),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("host.identifier");
   });
 
@@ -166,20 +167,22 @@ describe("AiCatalogMetadataAudit", () => {
       tags: [],
     };
     expect(audit.audit(ctxWith(manifest({ entries: [hollow] }))).status).toBe(
-      "fail",
+      CheckStatus.Fail,
     );
   });
 
   it("requires more than a description alone to call an entry indexable", () => {
     const descOnly = { ...bareEntry(1), description: "Just a description." };
     const result = audit.audit(ctxWith(manifest({ entries: [descOnly] })));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
   });
 
   // ── no second zero for a file ai-catalog-exists already scores ──
 
   it("is not applicable when no manifest is served", () => {
-    expect(audit.audit(mockCheckContext([], {})).status).toBe("na");
+    expect(audit.audit(mockCheckContext([], {})).status).toBe(
+      CheckStatus.NotApplicable,
+    );
   });
 
   it("is not applicable when the served file is not an ARD manifest", () => {
@@ -188,11 +191,13 @@ describe("AiCatalogMetadataAudit", () => {
       name: "Site",
       services: [],
     });
-    expect(audit.audit(ctxWith(legacy)).status).toBe("na");
+    expect(audit.audit(ctxWith(legacy)).status).toBe(CheckStatus.NotApplicable);
   });
 
   it("is not applicable when the manifest body is not valid JSON", () => {
-    expect(audit.audit(ctxWith("nope {{{")).status).toBe("na");
+    expect(audit.audit(ctxWith("nope {{{")).status).toBe(
+      CheckStatus.NotApplicable,
+    );
   });
 
   // ── guidance must not teach the invented field list ──

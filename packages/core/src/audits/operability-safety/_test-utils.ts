@@ -2,10 +2,10 @@
  * Test helpers shared by the colocated tests of the engine-backed
  * operability-safety audits. Not shipped logic — imported only from *.test.ts.
  */
-import { mockPageContext } from "../../__tests__/test-utils";
-import type { Audit } from "../../audit";
-import type { CheckContext, PageContext } from "../../check-context";
-import type { AuditResult } from "../../types";
+import { mockPageContext } from "#core/__tests__/test-utils";
+import type { Audit } from "#core/audit";
+import type { CheckContext, PageContext } from "#core/check-context";
+import type { AuditResult } from "#core/types";
 import type { A11yPageResult } from "./runner";
 
 /**

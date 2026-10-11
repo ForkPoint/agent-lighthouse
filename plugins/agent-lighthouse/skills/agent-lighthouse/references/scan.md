@@ -49,7 +49,7 @@ Only eligible scored checks affect the score. Grade A carries weight 1.0 and gra
 
 ## Cover the site honestly
 
-Compare scanned URLs with the route inventory. Select further relevant page types such as content, product, category, author, or forms. Scan each needed target separately and record remaining coverage gaps. Use `--page-type` only for a known page type. Enable `--experimental` only when requested or needed for an agreed investigation.
+Compare scanned URLs with the route inventory. Select further relevant page types such as article, general, product, category, author, or forms. Scan each needed target separately and record remaining coverage gaps. Use `--page-type` only for a known page type. Enable `--experimental` only when requested or needed for an agreed investigation.
 
 After fixes are deployed and a valid rescan exists, offer a CI gate so the gains do not regress: `--min-score <n>` and `--assert-category <id:min>` fail the run below a threshold. Set thresholds from the rescan, not from a target. The [CI guide](https://forkpoint.github.io/agent-lighthouse/docs/ci/) has a ready workflow. Review a valid baseline before adding score thresholds. Never use a successful exit alone as proof of whole-site readiness.
 

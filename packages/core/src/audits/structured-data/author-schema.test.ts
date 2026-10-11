@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { AuthorSchemaAudit } from "./author-schema";
-import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
+import { mockPageContext, mockCheckContext } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 const ld = (obj: unknown) =>
   `<script type="application/ld+json">${JSON.stringify(obj)}</script>`;
@@ -34,14 +35,14 @@ describe("AuthorSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No Person (author) schema found");
   });
 
   it("passes when a complete Person schema is present", () => {
     const ctx = mockCheckContext([page(ld(completePerson))]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("detects a complete Person via an Article author property", () => {
@@ -62,13 +63,13 @@ describe("AuthorSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("detects a Person in a top-level `[{...}]` array (Shopify-style)", () => {
     const ctx = mockCheckContext([page(ld([completePerson]))]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("warns when the Person schema is missing credentials", () => {
@@ -82,7 +83,7 @@ describe("AuthorSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("missing: jobTitle, sameAs, affiliation");
   });
 
@@ -101,7 +102,7 @@ describe("AuthorSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("handles a schema without @type alongside a valid Person (return false branch)", () => {
@@ -122,7 +123,7 @@ describe("AuthorSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("picks the best Person when multiple persons differ in completeness", () => {
@@ -144,6 +145,6 @@ describe("AuthorSchemaAudit", () => {
     ]);
     const result = audit.audit(ctx);
     // Should pass because Jane (the better person) is selected by reduce
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 });

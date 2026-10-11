@@ -1,7 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { AgentsJsonAudit } from "./agents-json";
-import { weightForGrade } from "../../scorer";
-import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
+import { weightForGrade } from "#core/scorer";
+import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
+import {
+  AuditTier,
+  CheckPriority,
+  CheckStatus,
+  EvidenceGrade,
+  ScoreDisplayMode,
+} from "#core/types";
 
 const PATH = "/.well-known/agents.json";
 
@@ -28,7 +35,7 @@ describe("AgentsJsonAudit", () => {
   describe("a published document", () => {
     it("passes only for a real agents.json document", () => {
       const result = runWith(VALID_DOCUMENT);
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.message).toContain("agents.json document");
       expect(result.found).toContain("1 source(s)");
     });
@@ -39,7 +46,7 @@ describe("AgentsJsonAudit", () => {
         flows: [{ id: "search", name: "Search content" }],
       });
       const result = runWith(body);
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.found).toContain("1 flow(s)");
     });
 
@@ -54,15 +61,15 @@ describe("AgentsJsonAudit", () => {
       ["info without sources or flows", '{"info":{"title":"Site"}}'],
     ])("warns instead of passing on %s", (_label, body) => {
       const result = runWith(body);
-      expect(result.status).toBe("warn");
-      expect(result.status).not.toBe("pass");
+      expect(result.status).toBe(CheckStatus.Warn);
+      expect(result.status).not.toBe(CheckStatus.Pass);
       expect(result.message).toContain("info");
       expect(result.message).toContain("sources");
     });
 
     it("warns when the served body does not parse", () => {
       const result = runWith("not json {{{", 200, "application/json");
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.message).toContain("does not parse");
     });
   });
@@ -70,7 +77,7 @@ describe("AgentsJsonAudit", () => {
   describe("absence", () => {
     it("reports not-applicable when agents.json is absent (404)", () => {
       const result = runWith("", 404, "text/html");
-      expect(result.status).toBe("na");
+      expect(result.status).toBe(CheckStatus.NotApplicable);
       expect(result.score).toBe(0);
       expect(result.found).toContain("404");
       expect(result.message).toContain("not a finding");
@@ -78,13 +85,13 @@ describe("AgentsJsonAudit", () => {
 
     it("reports not-applicable when the path was not fetched", () => {
       const result = audit.audit(mockCheckContext([], {}));
-      expect(result.status).toBe("na");
+      expect(result.status).toBe(CheckStatus.NotApplicable);
       expect(result.found).toContain("No agents.json published");
     });
 
     it("reports not-applicable on an empty 200 body", () => {
       const result = runWith("   ", 200, "application/json");
-      expect(result.status).toBe("na");
+      expect(result.status).toBe(CheckStatus.NotApplicable);
       expect(result.found).toContain("empty body");
     });
   });
@@ -92,7 +99,7 @@ describe("AgentsJsonAudit", () => {
   describe("the soft-404 signal", () => {
     it("names an HTML 200 at the well-known path as a soft-404, not invalid JSON", () => {
       const result = runWith(HTML_SHELL, 200, "text/html");
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.message).toContain("HTML page");
       expect(result.message).toContain("404 is the honest answer");
       expect(result.message).not.toContain("not valid JSON");
@@ -100,13 +107,13 @@ describe("AgentsJsonAudit", () => {
 
     it("sniffs the body, not the content type — HTML served as JSON is still HTML", () => {
       const result = runWith(HTML_SHELL, 200, "application/json");
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.message).toContain("HTML page");
     });
 
     it("does not claim an HTML body when a real document is served as text/html", () => {
       const result = runWith(VALID_DOCUMENT, 200, "text/html");
-      expect(result.status).toBe("warn");
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.message).toContain("text/html");
       expect(result.message).toContain("media type");
       expect(result.message).not.toContain("HTML page");
@@ -127,21 +134,27 @@ describe("AgentsJsonAudit", () => {
       [VALID_DOCUMENT, 200, "text/html"],
     ];
     for (const [body, status, contentType] of fixtures) {
-      expect(runWith(body, status, contentType).status).not.toBe("fail");
+      expect(runWith(body, status, contentType).status).not.toBe(
+        CheckStatus.Fail,
+      );
     }
-    expect(audit.audit(mockCheckContext([], {})).status).not.toBe("fail");
+    expect(audit.audit(mockCheckContext([], {})).status).not.toBe(
+      CheckStatus.Fail,
+    );
   });
 
   describe("meta", () => {
     const meta = AgentsJsonAudit.meta;
 
     it("stays grade C, informative, weight 0", () => {
-      expect(meta.evidenceGrade).toBe("C");
-      expect(meta.tier).toBe("informative");
-      expect(meta.scoreDisplayMode).toBe("informative");
+      expect(meta.evidenceGrade).toBe(EvidenceGrade.C);
+      expect(meta.tier).toBe(AuditTier.Informative);
+      expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Informative);
       expect(meta.weight).toBe(0);
-      expect(meta.weight).toBe(weightForGrade("C", "informative"));
-      expect(meta.defaultPriority).toBe("low");
+      expect(meta.weight).toBe(
+        weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+      );
+      expect(meta.defaultPriority).toBe(CheckPriority.Low);
     });
 
     it("carries no deprecation notice — the audit is not retired", () => {

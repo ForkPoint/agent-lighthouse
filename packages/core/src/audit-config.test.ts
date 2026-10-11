@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import type { AuditMeta } from "./types";
 import { defaultConfig, filterConfig, CATEGORY_IDS } from "./audit-config";
 import type { AuditRegistration, ScanConfig } from "./audit-config";
+import { AuditTier } from "./types";
 
 describe("CATEGORY_IDS", () => {
   it("names exactly the 8 v2 categories", () => {
@@ -62,7 +63,7 @@ describe("filterConfig", () => {
       meta: {
         ...(base[0]!.meta as AuditMeta),
         id: "machine-discovery/probe-x",
-        tier: "experimental",
+        tier: AuditTier.Experimental,
         weight: 0,
       },
     };
@@ -91,7 +92,7 @@ describe("filterConfig", () => {
     const kept = filterConfig(defaultConfig, {});
     const experimental = Object.values(defaultConfig.audits)
       .flat()
-      .filter((r) => r.meta.tier === "experimental");
+      .filter((r) => r.meta.tier === AuditTier.Experimental);
 
     expect(experimental.length).toBeGreaterThan(0);
     expect(count(kept)).toBe(count(defaultConfig) - experimental.length);
@@ -102,8 +103,10 @@ describe("filterConfig", () => {
 
   it("keeps scored and informative audits when experimental ones are dropped", () => {
     const kept = Object.values(filterConfig(defaultConfig, {}).audits).flat();
-    expect(kept.every((r) => r.meta.tier !== "experimental")).toBe(true);
-    expect(kept.some((r) => r.meta.tier === "informative")).toBe(true);
-    expect(kept.some((r) => r.meta.tier === "scored")).toBe(true);
+    expect(kept.every((r) => r.meta.tier !== AuditTier.Experimental)).toBe(
+      true,
+    );
+    expect(kept.some((r) => r.meta.tier === AuditTier.Informative)).toBe(true);
+    expect(kept.some((r) => r.meta.tier === AuditTier.Scored)).toBe(true);
   });
 });

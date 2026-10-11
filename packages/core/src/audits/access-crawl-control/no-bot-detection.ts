@@ -1,12 +1,19 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
 import {
   pageRendersText,
   scanReadPageText,
   unreadPageTextReason,
-} from "../../scan-evidence";
+} from "#core/scan-evidence";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 const BOT_DETECTION_PATTERNS: Array<{
   name: string;
@@ -26,22 +33,22 @@ export class NoBotDetectionAudit extends Audit {
     failureTitle: "No aggressive bot-detection blocking agents",
     description:
       "Bot-detection services like Cloudflare Turnstile, DataDome, and reCAPTCHA can block legitimate AI agents from accessing your content. Configure your service to allowlist known AI user-agents.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/access-crawl-control/no-bot-detection.md",
     // Gate exemption: being refused is what this category reports, and this audit names
     // the firewall from `wafProtection` alone. Evidence a wall destroys is not evidence
     // the wall finding needs.
     requires: [],
-    defaultPriority: "high",
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "Bot-detection services like Cloudflare Turnstile, DataDome, and reCAPTCHA can block legitimate AI agents from accessing your content. When agents are challenged, they cannot complete page fetches, making your content inaccessible to AI-powered search and assistants.",
       fix: "Configure your bot-detection service to allowlist known AI agent user-agents (GPTBot, ChatGPT-User, Claude-User, PerplexityBot) so they bypass challenges while still protecting against malicious bots.",
       code: "// Allowlist these AI agent user-agents in your WAF/CDN config:\n// GPTBot, ChatGPT-User, OAI-SearchBot (OpenAI)\n// Claude-User, Claude-SearchBot, anthropic-ai (Anthropic)\n// PerplexityBot, Google-Extended, Bravebot, DuckAssistBot",
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       tags: ["security", "bot-detection", "crawler-permissions"],
     },
   };
@@ -66,7 +73,7 @@ export class NoBotDetectionAudit extends Audit {
         "No JavaScript-based bot challenges that would block legitimate AI agents",
         `Blocked by ${ctx.wafProtection.name}`,
         {
-          priority: "critical",
+          priority: CheckPriority.Critical,
           description:
             "A Web Application Firewall (WAF) or bot defense system is actively dropping, resetting, or challenging crawler HTTP connections. Legitimate AI search crawlers (GPTBot, Claude, Perplexity) cannot access or index your store content unless allowlisted.",
           code: '// Example: Allowlist AI crawler user-agents in your WAF settings\n// Akamai / Cloudflare / DataDome WAF Custom Rules:\n// Allow User-Agent matching "GPTBot" OR "ChatGPT-User" OR "Claude-User" OR "PerplexityBot"',
@@ -80,7 +87,7 @@ export class NoBotDetectionAudit extends Audit {
         "No JavaScript-based bot challenges that would block legitimate AI agents",
         "No pages scanned",
         {
-          priority: "low",
+          priority: CheckPriority.Low,
           description:
             "Aggressive bot-detection scripts can block legitimate AI agents like ChatGPT Browse, Google Mariner, and Claude from accessing your pages. Ensure your security settings allowlist known AI user-agents.",
           code: '// Example: allowlist AI agents in your WAF/CDN config\n// Cloudflare: Security > WAF > Custom Rules\n// Allow User-Agent contains "GPTBot" OR "ChatGPT-User" OR "Claude-User"',
@@ -154,7 +161,7 @@ export class NoBotDetectionAudit extends Audit {
       "No JavaScript-based bot challenges that would block legitimate AI agents",
       `Detected: ${serviceNames.join(", ")}`,
       {
-        priority: "high",
+        priority: CheckPriority.High,
         description:
           "Bot-detection services like Cloudflare Turnstile, DataDome, and reCAPTCHA can block legitimate AI agents from accessing your content. Configure your service to allowlist known AI user-agents so they are not challenged, while still protecting against malicious bots.",
         code: '// Allowlist these AI agent user-agents in your bot-detection config:\n// GPTBot, ChatGPT-User, OAI-SearchBot (OpenAI)\n// Claude-User, Claude-SearchBot, anthropic-ai (Anthropic)\n// PerplexityBot (Perplexity)\n// Google-Extended (Google AI)\n// Bravebot, DuckAssistBot\n//\n// Example Cloudflare WAF rule:\n// IF User-Agent contains "ChatGPT-User" OR "Claude-User"\n// THEN Skip all managed challenges',

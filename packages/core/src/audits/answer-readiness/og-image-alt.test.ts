@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { OgImageAltAudit } from "./og-image-alt";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 const doc = (head: string) =>
   `<html lang="en"><head>${head}</head><body></body></html>`;
@@ -18,7 +19,7 @@ describe("OgImageAltAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("A dashboard screenshot");
   });
 
@@ -30,7 +31,7 @@ describe("OgImageAltAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("og:image:alt is missing");
   });
 
@@ -39,12 +40,12 @@ describe("OgImageAltAudit", () => {
       mockPageContext("https://example.com/", doc("")),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("No og:image");
   });
 
   it("warns when there are no pages", () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
   });
 });

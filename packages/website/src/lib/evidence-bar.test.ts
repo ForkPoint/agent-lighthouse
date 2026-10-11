@@ -9,6 +9,7 @@ import { publicDossier, type SourceRef } from "./dossier-public";
 import { repoPath } from "./markdown-slice";
 import { auditList } from "./registry";
 import { readSourceRegistry } from "./evidence";
+import { AuditTier } from "@forkpoint/agent-lighthouse-core";
 
 const DOSSIER_DIR = repoPath("docs/evidence/audits");
 
@@ -47,7 +48,7 @@ function goodPage() {
 
 const SCORED = {
   id: "x/y",
-  tier: "scored",
+  tier: AuditTier.Scored,
   dossierGrade: "A",
   registryGrade: "A",
 };
@@ -89,7 +90,9 @@ describe("barViolations", () => {
       markdown: "No source, no stamp.",
       published: ["What it checks", "Why it matters", "Evidence"],
     };
-    expect(barViolations({ ...SCORED, tier: "informative" }, page)).toEqual([]);
+    expect(
+      barViolations({ ...SCORED, tier: AuditTier.Informative }, page),
+    ).toEqual([]);
   });
 
   // Both spellings the corpus uses. A stamp is a date attached to the act of

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import type { AuditMeta, AuditResult, CheckResult, PageType } from "./types";
+import type { AuditMeta, AuditResult, CheckResult } from "./types";
 import { AuditMetaSchema, CheckResultSchema } from "./schemas";
 import { weightForGrade } from "./scorer";
 import { Audit } from "./audit";
@@ -7,6 +7,14 @@ import { planAudits } from "./audit-runner";
 import type { CheckContext } from "./check-context";
 import { defaultConfig, type ScanConfig } from "./audit-config";
 import { allEvidenceMet } from "./scan-evidence";
+import {
+  AuditTier,
+  CheckPriority,
+  CheckStatus,
+  EvidenceGrade,
+  PageType,
+  ScoreDisplayMode,
+} from "./types";
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -20,11 +28,11 @@ function makeMeta(overrides: Partial<AuditMeta> = {}): AuditMeta {
     title: "llms.txt is present",
     failureTitle: "llms.txt is missing",
     description: "Checks for a machine-readable llms.txt file.",
-    scoreDisplayMode: "binary",
+    scoreDisplayMode: ScoreDisplayMode.Binary,
     weight: 1.0,
-    defaultPriority: "high",
-    evidenceGrade: "A",
-    tier: "scored",
+    defaultPriority: CheckPriority.High,
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/machine-discovery/llms-txt.md",
     ...overrides,
   };
@@ -36,10 +44,10 @@ function makeCheck(overrides: Partial<CheckResult> = {}): CheckResult {
     category: "machine-discovery",
     title: "llms.txt is present",
     description: "Checks for a machine-readable llms.txt file.",
-    status: "pass",
+    status: CheckStatus.Pass,
     score: 1,
-    scoreDisplayMode: "binary",
-    priority: "high",
+    scoreDisplayMode: ScoreDisplayMode.Binary,
+    priority: CheckPriority.High,
     impact: "Agents cannot discover a curated entry point.",
     fix: "Publish /llms.txt.",
     ...overrides,
@@ -50,28 +58,28 @@ function makeCheck(overrides: Partial<CheckResult> = {}): CheckResult {
 
 describe("weightForGrade (spec §4 weight law)", () => {
   it("grades A and B carry weight only in the scored tier", () => {
-    expect(weightForGrade("A", "scored")).toBe(1.0);
-    expect(weightForGrade("B", "scored")).toBe(0.6);
+    expect(weightForGrade(EvidenceGrade.A, AuditTier.Scored)).toBe(1.0);
+    expect(weightForGrade(EvidenceGrade.B, AuditTier.Scored)).toBe(0.6);
   });
 
   it("grades C and D never carry weight", () => {
-    expect(weightForGrade("C", "scored")).toBe(0);
-    expect(weightForGrade("D", "scored")).toBe(0);
+    expect(weightForGrade(EvidenceGrade.C, AuditTier.Scored)).toBe(0);
+    expect(weightForGrade(EvidenceGrade.D, AuditTier.Scored)).toBe(0);
   });
 
   it("non-scored tiers are weightless regardless of grade", () => {
-    expect(weightForGrade("C", "informative")).toBe(0);
-    expect(weightForGrade("A", "informative")).toBe(0);
-    expect(weightForGrade("D", "experimental")).toBe(0);
-    expect(weightForGrade("A", "experimental")).toBe(0);
+    expect(weightForGrade(EvidenceGrade.C, AuditTier.Informative)).toBe(0);
+    expect(weightForGrade(EvidenceGrade.A, AuditTier.Informative)).toBe(0);
+    expect(weightForGrade(EvidenceGrade.D, AuditTier.Experimental)).toBe(0);
+    expect(weightForGrade(EvidenceGrade.A, AuditTier.Experimental)).toBe(0);
   });
 });
 
 describe("AuditMetaSchema v2 fields", () => {
   it("accepts evidenceGrade, tier, dossier and a slug id", () => {
     const parsed = AuditMetaSchema.parse(makeMeta());
-    expect(parsed.evidenceGrade).toBe("A");
-    expect(parsed.tier).toBe("scored");
+    expect(parsed.evidenceGrade).toBe(EvidenceGrade.A);
+    expect(parsed.tier).toBe(AuditTier.Scored);
     expect(parsed.dossier).toBe(
       "docs/evidence/audits/machine-discovery/llms-txt.md",
     );
@@ -155,20 +163,26 @@ describe("CheckResultSchema v2 fields", () => {
 
   it("accepts evidenceGrade and tier passed through from meta", () => {
     const parsed = CheckResultSchema.parse(
-      makeCheck({ evidenceGrade: "B", tier: "informative" }),
+      makeCheck({
+        evidenceGrade: EvidenceGrade.B,
+        tier: AuditTier.Informative,
+      }),
     );
-    expect(parsed.evidenceGrade).toBe("B");
-    expect(parsed.tier).toBe("informative");
+    expect(parsed.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(parsed.tier).toBe(AuditTier.Informative);
   });
 });
 
 describe("meta → CheckResult pass-through", () => {
   it("toCheckResult copies evidenceGrade and tier onto the check", () => {
     class FakeAudit extends Audit {
-      static override meta = makeMeta({ evidenceGrade: "B", tier: "scored" });
+      static override meta = makeMeta({
+        evidenceGrade: EvidenceGrade.B,
+        tier: AuditTier.Scored,
+      });
       audit(): AuditResult {
         return {
-          status: "pass",
+          status: CheckStatus.Pass,
           score: 1,
           message: "m",
           expected: "e",
@@ -177,21 +191,21 @@ describe("meta → CheckResult pass-through", () => {
       }
     }
     const check = new FakeAudit().toCheckResult(new FakeAudit().audit());
-    expect(check.evidenceGrade).toBe("B");
-    expect(check.tier).toBe("scored");
+    expect(check.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(check.tier).toBe(AuditTier.Scored);
     expect(check.id).toBe(V2_ID);
   });
 
   it("the page-type-skipped stub copies evidenceGrade and tier too", () => {
     const m = makeMeta({
-      applicablePageTypes: ["product"],
-      evidenceGrade: "A",
-      tier: "scored",
+      applicablePageTypes: [PageType.Product],
+      evidenceGrade: EvidenceGrade.A,
+      tier: AuditTier.Scored,
     });
     class FakeAudit extends Audit {
       static override meta = m;
       audit(): AuditResult {
-        return { status: "pass", score: 1 };
+        return { status: CheckStatus.Pass, score: 1 };
       }
     }
     const config: ScanConfig = {
@@ -203,13 +217,15 @@ describe("meta → CheckResult pass-through", () => {
       },
     };
     const ctx = {
-      pages: (["homepage"] as PageType[]).map((pageType) => ({ pageType })),
+      pages: ([PageType.Homepage] as PageType[]).map((pageType) => ({
+        pageType,
+      })),
       evidence: allEvidenceMet(),
     } as unknown as CheckContext;
 
     const { skipped } = planAudits(ctx, config);
     expect(skipped).toHaveLength(1);
-    expect(skipped[0].evidenceGrade).toBe("A");
-    expect(skipped[0].tier).toBe("scored");
+    expect(skipped[0].evidenceGrade).toBe(EvidenceGrade.A);
+    expect(skipped[0].tier).toBe(AuditTier.Scored);
   });
 });

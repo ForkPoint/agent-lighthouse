@@ -19,6 +19,8 @@ sources:
 
 ## What it checks
 
+The v7 runner selects article-purpose pages for this check. A `general` declaration does not establish article purpose. Detection can use Open Graph article metadata or primary article prose without author, date, or Article schema fields. Schema-only evidence remains a hint. Detected matches remain informative; a precise `article` declaration uses the existing audit tier.
+
 AI systems assign higher confidence to content from named experts. Generic authors like "Staff" or "Admin" reduce trust scoring because agents cannot verify expertise.
 
 ## Code review findings (2026-08-20, 11-agent pass)
@@ -44,7 +46,7 @@ Signal is real — schema.org `author` on a Person is genuinely consumed by sear
 - No test for multi-word generic names ("Staff Writer", "Editorial Team").
 - No test for non-English author names or non-English generic names.
 - No test for a Tailwind/CSS-Modules/styled-components byline with no `author` substring in the class.
-- No test where the author is found on a non-content page (homepage/product) — the applicablePageTypes leak is entirely untested.
+- No test where the author is found on a non-article page (homepage/product) — the applicablePageTypes leak is entirely untested.
 - No test for `mainEntity`/`isPartOf`-nested Article, which the shallow helper misses.
 - No test for `<meta name="author" content="WordPress">`-style CMS boilerplate.
 - No test for an Organization-typed author.
@@ -73,3 +75,11 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+## Implementation deviations (v7 P3, 2026-10-07)
+
+The page-purpose gate now excludes general pages. Body-level aggregation and narrower specialist populations remain under review in the v7 applicability ledger. This change preserves the evidence grade, tier, weight, and audit ID.
+
+## Deferred (v7 P3)
+
+See `docs/architecture/v7-audit-applicability-ledger.md` for the remaining audit-specific guards, population limits, and aggregation work. P4 will address selected-page evidence and mixed provenance.

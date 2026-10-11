@@ -9,13 +9,14 @@ import {
   mockPageContext,
   mockCheckContext,
   mockFetchResult,
-} from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { FetchOptions, FetchResult } from "../../fetcher";
-import type { AuditResult } from "../../types";
+} from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import type { AuditResult } from "#core/types";
+import { AuditTier, CheckStatus, EvidenceGrade } from "#core/types";
 
-vi.mock("../../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => url.startsWith("https://example.com"),
@@ -80,7 +81,7 @@ describe("SyntheticMediaDisclosureValidityAudit", () => {
 
   it("is notApplicable when no image declares a source type", async () => {
     const result = await run({ "https://example.com/a.jpg": jpegWith() });
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   describe("digitalSourceType", () => {
@@ -121,7 +122,7 @@ describe("SyntheticMediaDisclosureValidityAudit", () => {
     const result = await run({
       "https://example.com/a.jpg": jpegWith(packet(VALID_URI)),
     });
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.details?.["declaredCoverage"]).toBe(100);
   });
 
@@ -129,7 +130,7 @@ describe("SyntheticMediaDisclosureValidityAudit", () => {
     const result = await run({
       "https://example.com/a.jpg": jpegWith(packet("trainedAlgorithmicMedia")),
     });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(strings(result, "failures").join(" ")).toContain("bare concept");
   });
 
@@ -139,7 +140,7 @@ describe("SyntheticMediaDisclosureValidityAudit", () => {
         packet(VALID_URI.replace("http://", "https://")),
       ),
     });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(strings(result, "failures").join(" ")).toContain(
       "https where the vocabulary uses http",
     );
@@ -149,7 +150,7 @@ describe("SyntheticMediaDisclosureValidityAudit", () => {
     const result = await run({
       "https://example.com/a.jpg": jpegWith(packet(`${VALID_URI}/`)),
     });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(strings(result, "failures").join(" ")).toContain("trailing slash");
   });
 
@@ -157,7 +158,7 @@ describe("SyntheticMediaDisclosureValidityAudit", () => {
     const result = await run({
       "https://example.com/a.jpg": jpegWith(packet("AI-generated")),
     });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(strings(result, "failures").join(" ")).toContain("free text");
   });
 
@@ -169,7 +170,7 @@ describe("SyntheticMediaDisclosureValidityAudit", () => {
         "actions trainedAlgorithmicMedia",
       ),
     });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(strings(result, "failures").join(" ")).toContain(
       "contradict each other",
     );
@@ -182,7 +183,7 @@ describe("SyntheticMediaDisclosureValidityAudit", () => {
         "actions trainedAlgorithmicMedia",
       ),
     });
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // Detecting undisclosed synthetic imagery needs a classifier, which this is not.
@@ -195,8 +196,8 @@ describe("SyntheticMediaDisclosureValidityAudit", () => {
 
   it("registers as a scored grade-B audit", () => {
     const { meta } = SyntheticMediaDisclosureValidityAudit;
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
     expect(meta.weight).toBeCloseTo(0.6);
     expect(meta.id.length).toBeLessThanOrEqual(64);
   });

@@ -1,16 +1,24 @@
 import type { Element } from "domhandler";
 import type { CheerioAPI } from "cheerio";
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext, PageContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
 import {
   readabilityArticle,
   isAggressiveDropTarget,
-} from "../../gatherers/extraction";
-import { normalizeText, sentences } from "../../gatherers/text-metrics";
-import { parseHtml, allJsonLdNodes } from "../../parser";
-import { hiddenFromReaders } from "../../dom-visibility";
+} from "#core/gatherers/extraction";
+import { normalizeText, sentences } from "#core/gatherers/text-metrics";
+import { parseHtml, allJsonLdNodes } from "#core/parser";
+import { hiddenFromReaders } from "#core/dom-visibility";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** Below this share of key spans surviving, an agent reads a different page. */
 const RECALL_FLOOR = 0.9;
@@ -196,24 +204,24 @@ export class ExtractorSurvivalRecallAudit extends Audit {
       "Facts on this page do not survive the extractors that read it",
     description:
       "Names the spans that carry the page's facts — the `h1`, each section's opening sentences, every `caption`, `dt` and `th`, and the structured-data strings the prose repeats — then runs the page through `@mozilla/readability` and through a Firecrawl/Jina-style stripper and reports which spans did not survive, and what dropped them.",
-    scoreDisplayMode: "ternary",
-    tier: "scored",
-    evidenceGrade: "B",
-    weight: weightForGrade("B", "scored"),
-    defaultPriority: "high",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    tier: AuditTier.Scored,
+    evidenceGrade: EvidenceGrade.B,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    defaultPriority: CheckPriority.High,
     dossier:
       "docs/evidence/audits/answer-readiness/extractor-survival-recall.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     guidance: {
       impact:
         'An answer engine never sees the page; it sees whatever its extractor kept. A specification table inside `<aside class="related-specs">` is invisible to every pipeline that strips asides, and the answer about that product gets written without it. The loss is silent: the page looks complete to its author and to every human reviewer.',
       fix: 'Put facts inside the main content container, not in an aside, a footer, or a block whose class says "related" or "promo". Where a table must sit outside the article, repeat its facts in the prose so at least one copy survives.',
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/answer-readiness/extractor-survival-recall/",
       tags: ["retrieval", "extraction", "content", "answer-engines"],

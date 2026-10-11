@@ -8,13 +8,14 @@ import {
   mockPageContext,
   mockCheckContext,
   mockFetchResult,
-} from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { FetchOptions, FetchResult } from "../../fetcher";
-import type { AuditResult } from "../../types";
+} from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import type { AuditResult } from "#core/types";
+import { CheckStatus } from "#core/types";
 
-vi.mock("../../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) =>
@@ -98,7 +99,7 @@ describe("McpRegistryListingOwnershipAudit", () => {
 
   it("is notApplicable when the site declares no MCP endpoint", async () => {
     const { result, requests } = run({ undeclared: true });
-    expect((await result).status).toBe("na");
+    expect((await result).status).toBe(CheckStatus.NotApplicable);
     expect(requests).toHaveLength(0);
   });
 
@@ -124,7 +125,7 @@ describe("McpRegistryListingOwnershipAudit", () => {
   it("passes a first-party listing whose ownership proof is served", async () => {
     const { result } = run({ servers: [FIRST_PARTY()], proof: VALID_PROOF });
     const r = await result;
-    expect(r.status).toBe("pass");
+    expect(r.status).toBe(CheckStatus.Pass);
     expect(r.details?.["ownershipProof"]).toBe("valid");
     expect(r.details?.["firstPartyListings"]).toBe(1);
   });
@@ -132,7 +133,7 @@ describe("McpRegistryListingOwnershipAudit", () => {
   it("fails a first-party listing whose proof is missing", async () => {
     const { result } = run({ servers: [FIRST_PARTY()] });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(r.details?.["ownershipProof"]).toBe("absent");
     expect(strings(r, "failures")[0]).toContain(
       "/.well-known/mcp-registry-auth",
@@ -145,14 +146,14 @@ describe("McpRegistryListingOwnershipAudit", () => {
       proof: "MCPv1 ed25519 abc",
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(r.details?.["ownershipProof"]).toBe("malformed");
   });
 
   it("fails when no registry listing names a server on this domain", async () => {
     const { result } = run({ servers: [], proof: VALID_PROOF });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures")[0]).toContain("No registry listing");
   });
 
@@ -167,7 +168,7 @@ describe("McpRegistryListingOwnershipAudit", () => {
       proof: VALID_PROOF,
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "listings")).toHaveLength(0);
   });
 
@@ -190,7 +191,7 @@ describe("McpRegistryListingOwnershipAudit", () => {
       proof: VALID_PROOF,
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "warnings").join(" ")).toContain("server.smithery.ai");
     expect(r.details?.["firstPartyListings"]).toBe(0);
   });
@@ -206,7 +207,7 @@ describe("McpRegistryListingOwnershipAudit", () => {
       proof: VALID_PROOF,
     });
     const r = await result;
-    expect(r.status).toBe("warn");
+    expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "warnings").join(" ")).toContain("GitHub account");
   });
 
@@ -224,7 +225,7 @@ describe("McpRegistryListingOwnershipAudit", () => {
       ],
       proof: VALID_PROOF,
     });
-    expect((await stale.result).status).toBe("warn");
+    expect((await stale.result).status).toBe(CheckStatus.Warn);
     expect(strings(await stale.result, "warnings").join(" ")).toContain(
       "not the latest",
     );
@@ -255,7 +256,7 @@ describe("McpRegistryListingOwnershipAudit", () => {
       proof: VALID_PROOF,
     });
     const r = await result;
-    expect(r.status).toBe("warn");
+    expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "warnings").join(" ")).toContain("sse");
   });
 

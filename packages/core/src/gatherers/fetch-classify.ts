@@ -1,7 +1,22 @@
-import type { FetchResult } from "../fetcher";
+import type { FetchResult } from "#core/fetcher";
 
-export type FetchClass = "ok" | "soft-404" | "blocked" | "missing" | "error";
-export type ExpectedKind = "text" | "json" | "xml" | "html";
+export const FetchClass = {
+  Ok: "ok",
+  Soft404: "soft-404",
+  Blocked: "blocked",
+  Missing: "missing",
+  Error: "error",
+} as const;
+
+export type FetchClass = (typeof FetchClass)[keyof typeof FetchClass];
+export const ExpectedKind = {
+  Text: "text",
+  Json: "json",
+  Xml: "xml",
+  Html: "html",
+} as const;
+
+export type ExpectedKind = (typeof ExpectedKind)[keyof typeof ExpectedKind];
 
 export function stripBom(text: string): string {
   return text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
@@ -38,43 +53,44 @@ export function classifyFetch(
   result: FetchResult | undefined,
   expected: ExpectedKind,
 ): FetchClass {
-  if (!result) return "missing";
-  if (result.error) return "error";
-  if (result.status === 404 || result.status === 410) return "missing";
+  if (!result) return FetchClass.Missing;
+  if (result.error) return FetchClass.Error;
+  if (result.status === 404 || result.status === 410) return FetchClass.Missing;
   if (result.status === 401 || result.status === 403 || result.status === 429)
-    return "blocked";
-  if (result.status >= 500 || result.status === 0) return "error";
-  if (result.status !== 200) return "missing";
+    return FetchClass.Blocked;
+  if (result.status >= 500 || result.status === 0) return FetchClass.Error;
+  if (result.status !== 200) return FetchClass.Missing;
 
-  if (expected === "html") return "ok";
+  if (expected === ExpectedKind.Html) return FetchClass.Ok;
   if (expected === "json") {
     // A body that parses IS the file, whatever the header claims.
     try {
       JSON.parse(stripBom(result.body));
-      return "ok";
+      return FetchClass.Ok;
     } catch {
       return HTML_SIGNATURE.test(head(result)) || declaresHtml(result)
-        ? "soft-404"
-        : "error";
+        ? FetchClass.Soft404
+        : FetchClass.Error;
     }
   }
 
   // A real XML document wins even under a text/html header.
-  if (expected === "xml" && XML_SIGNATURE.test(head(result))) return "ok";
+  if (expected === "xml" && XML_SIGNATURE.test(head(result)))
+    return FetchClass.Ok;
 
   // text / xml: an HTML document where a machine file should be is a soft 404.
-  if (HTML_SIGNATURE.test(head(result))) return "soft-404";
+  if (HTML_SIGNATURE.test(head(result))) return FetchClass.Soft404;
 
   // Header-only suspicion: for xml, a non-XML body under text/html is most
   // likely an app shell. For text, any non-HTML body is a plausible plain-text
   // file (llms.txt, robots.txt), so the header alone never condemns it.
-  if (expected === "xml" && declaresHtml(result)) return "soft-404";
-  return "ok";
+  if (expected === "xml" && declaresHtml(result)) return FetchClass.Soft404;
+  return FetchClass.Ok;
 }
 
 export function isRealFile(
   result: FetchResult | undefined,
   expected: ExpectedKind,
 ): boolean {
-  return classifyFetch(result, expected) === "ok";
+  return classifyFetch(result, expected) === FetchClass.Ok;
 }

@@ -8,13 +8,14 @@ import {
   mockPageContext,
   mockCheckContext,
   mockFetchResult,
-} from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { FetchOptions, FetchResult } from "../../fetcher";
-import type { AuditResult } from "../../types";
+} from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import type { AuditResult } from "#core/types";
+import { AuditTier, CheckStatus, EvidenceGrade } from "#core/types";
 
-vi.mock("../../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => url.startsWith("https://example.com"),
@@ -121,7 +122,7 @@ describe("C2paSignerTrustStatusAudit", () => {
       0xff, 0xd8, 0xff, 0xe0, 0x00, 0x04, 0x00, 0x00, 0xff, 0xd9,
     ]);
     const { result } = run({ "https://example.com/hero.jpg": plain });
-    expect((await result).status).toBe("na");
+    expect((await result).status).toBe(CheckStatus.NotApplicable);
   });
 
   describe("certificatesIn", () => {
@@ -152,7 +153,7 @@ describe("C2paSignerTrustStatusAudit", () => {
       "https://example.com/hero.jpg": signedJpeg(store(SELF_SIGNED)),
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures").join(" ")).toContain("self-signed");
   });
 
@@ -161,7 +162,7 @@ describe("C2paSignerTrustStatusAudit", () => {
       "https://example.com/hero.jpg": signedJpeg(store(EXPIRED)),
     });
     const r = await result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures").join(" ")).toContain("expired on");
   });
 
@@ -170,7 +171,7 @@ describe("C2paSignerTrustStatusAudit", () => {
       "https://example.com/hero.jpg": signedJpeg(store(CA_ISSUED)),
     });
     const r = await result;
-    expect(r.status).toBe("pass");
+    expect(r.status).toBe(CheckStatus.Pass);
     expect(r.details?.["timestamped"]).toBe(1);
     expect(strings(r, "signers").join(" ")).toContain("Example Test CA");
   });
@@ -181,7 +182,7 @@ describe("C2paSignerTrustStatusAudit", () => {
       "https://example.com/hero.jpg": signedJpeg(store(CA_ISSUED, false)),
     });
     const r = await result;
-    expect(r.status).toBe("warn");
+    expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "warnings").join(" ")).toContain("no timestamp token");
   });
 
@@ -190,7 +191,7 @@ describe("C2paSignerTrustStatusAudit", () => {
       "https://example.com/hero.jpg": signedJpeg("not a certificate at all"),
     });
     const r = await result;
-    expect(r.status).toBe("warn");
+    expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "unreadable").join(" ")).toContain(
       "no signing certificate",
     );
@@ -211,8 +212,8 @@ describe("C2paSignerTrustStatusAudit", () => {
 
   it("registers as a scored grade-B audit", () => {
     const { meta } = C2paSignerTrustStatusAudit;
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
     expect(meta.weight).toBeCloseTo(0.6);
     expect(meta.id.length).toBeLessThanOrEqual(64);
   });

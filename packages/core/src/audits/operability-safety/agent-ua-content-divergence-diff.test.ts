@@ -4,14 +4,21 @@ import {
   mockCheckContext,
   mockPageContext,
   mockFetchResult,
-} from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import { BASELINE_UA, CONTROL_UA } from "../../gatherers/ua-parity";
-import type { CheckContext } from "../../check-context";
-import type { FetchOptions, FetchResult } from "../../fetcher";
+} from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import { BASELINE_UA, CONTROL_UA } from "#core/gatherers/ua-parity";
+import type { CheckContext } from "#core/check-context";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import {
+  AuditTier,
+  CheckPriority,
+  CheckStatus,
+  EvidenceGrade,
+  ScoreDisplayMode,
+} from "#core/types";
 
-vi.mock("../../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => {
@@ -101,7 +108,7 @@ describe("AgentUaContentDivergenceDiffAudit", () => {
 
   it("passes when every UA is served the same main content", async () => {
     const result = await audit.audit(site({}));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("fails an agent UA served half the words, and shows the diff", async () => {
@@ -109,7 +116,7 @@ describe("AgentUaContentDivergenceDiffAudit", () => {
     const result = await audit.audit(
       site({ agent: doc(WORDS.slice(0, 10).join(" ")) }),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("kilo");
   });
 
@@ -118,12 +125,12 @@ describe("AgentUaContentDivergenceDiffAudit", () => {
     const atFloor = await audit.audit(
       site({ agent: doc(WORDS.slice(0, 17).join(" ")) }),
     );
-    expect(atFloor.status).toBe("pass");
+    expect(atFloor.status).toBe(CheckStatus.Pass);
     // 16 of 20 -> 0.80.
     const below = await audit.audit(
       site({ agent: doc(WORDS.slice(0, 16).join(" ")) }),
     );
-    expect(below.status).toBe("fail");
+    expect(below.status).toBe(CheckStatus.Fail);
   });
 
   it("fails on an instruction payload present only in the agent copy", async () => {
@@ -134,7 +141,7 @@ describe("AgentUaContentDivergenceDiffAudit", () => {
         ),
       }),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("instruction");
   });
 
@@ -152,7 +159,7 @@ describe("AgentUaContentDivergenceDiffAudit", () => {
         agent: doc(WORDS.join(" "), block("USD")),
       }),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("JSON-LD");
   });
 
@@ -164,7 +171,7 @@ describe("AgentUaContentDivergenceDiffAudit", () => {
           ua.includes("GPTBot") ? mockFetchResult("", 403) : undefined,
       }),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("gptbot");
   });
 
@@ -173,7 +180,7 @@ describe("AgentUaContentDivergenceDiffAudit", () => {
     const result = await audit.audit(
       site({ agent: reduced, control: reduced }),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("bot management");
   });
 
@@ -184,7 +191,7 @@ describe("AgentUaContentDivergenceDiffAudit", () => {
         agent: doc(`${WORDS.join(" ")} 2026-08-23T10:41:57Z`),
       }),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("is notApplicable when no probe returns a readable page", async () => {
@@ -193,14 +200,14 @@ describe("AgentUaContentDivergenceDiffAudit", () => {
     ]);
     ctx.fetch = async () => mockFetchResult("", 0);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("registers as a scored grade-B audit with high priority", () => {
     const { meta } = AgentUaContentDivergenceDiffAudit;
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
-    expect(meta.defaultPriority).toBe("high");
-    expect(meta.scoreDisplayMode).toBe("ternary");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
+    expect(meta.defaultPriority).toBe(CheckPriority.High);
+    expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Ternary);
   });
 });

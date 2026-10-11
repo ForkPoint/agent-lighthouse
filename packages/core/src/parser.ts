@@ -1,7 +1,9 @@
 import * as cheerio from "cheerio";
 import type { CheerioAPI } from "cheerio";
 import type { AnyNode, Element } from "domhandler";
-import type { PageType } from "./types";
+import type { PageClassification } from "./types";
+import { hiddenFromReaders } from "./dom-visibility";
+import { ClassificationConfidence, PageType, PageTypeSource } from "./types";
 
 export function parseHtml(html: string): CheerioAPI {
   return cheerio.load(html);
@@ -605,39 +607,178 @@ export function extractStylesheetUrls($: CheerioAPI): string[] {
 // ── Page Type Detection ───────────────────────────────────────
 
 /**
- * Detect whether a page is a Homepage, Category Page, Product Details Page,
- * or Content Page based on URL patterns, JSON-LD schemas, meta tags, and
- * HTML signals typical of ecommerce websites.
+ * Legacy return shape. The final argument remains accepted for callers, but
+ * scan order no longer determines the purpose of the same page.
  */
 export function detectPageType(
   url: string,
   $: CheerioAPI,
   jsonLd: object[],
   meta: Record<string, string>,
-  isFirstPage: boolean,
+  _isFirstPage: boolean,
 ): PageType {
+  return classifyPage(url, $, jsonLd, meta).type;
+}
+
+/** An operator's declaration is a precise claim about the page's purpose. */
+export function declaredPageClassification(type: PageType): PageClassification {
+  return {
+    type,
+    source: PageTypeSource.Declared,
+    confidence: ClassificationConfidence.Strong,
+    signals: [`declared:${type}`],
+  };
+}
+
+/** Purpose evidence, separate from the audit's own feature or artifact guards. */
+export function classifyPage(
+  url: string,
+  $: CheerioAPI,
+  structuredData: object[],
+  meta: Record<string, string>,
+): PageClassification {
   const pathname = new URL(url).pathname.toLowerCase();
+  const result = (
+    type: PageType,
+    confidence: PageClassification["confidence"],
+    signals: string[],
+  ): PageClassification => ({
+    type,
+    source: PageTypeSource.Detected,
+    confidence,
+    signals: [...new Set(signals)].sort(),
+  });
+  if (pathname === "/")
+    return result(PageType.Homepage, ClassificationConfidence.Strong, [
+      "root-path",
+    ]);
+  if (isSubpathHome(url, $))
+    return result(PageType.Homepage, ClassificationConfidence.Strong, [
+      "mounted-home-links",
+    ]);
+  if (isLocaleRoot(url, pathname, $))
+    return result(PageType.Homepage, ClassificationConfidence.Strong, [
+      "locale-root",
+    ]);
 
-  // ── 1. Homepage ─────────────────────────────────────────────
-  if (isFirstPage && (pathname === "/" || pathname === "")) {
-    return "homepage";
-  }
-  if (isFirstPage && isSubpathHome(url, $)) {
-    return "homepage";
-  }
+  const product = productSignals(pathname, $, structuredData, meta);
+  const category = categorySignals(pathname, $, structuredData);
+  const article: string[] = [];
+  if ((meta["og:type"] ?? "").trim().toLowerCase() === "article")
+    article.push("article-open-graph");
+  // An article card has no primary heading and must not classify its container.
+  // No author, date, Article schema or article URL is required by this path.
+  const articles = $("main article, body > article").filter(
+    (_, el) =>
+      $(el).parents("article").length === 0 && !hiddenFromReaders($, el),
+  );
+  const paragraphs = articles
+    .find("p")
+    .filter(
+      (_, el) => !hiddenFromReaders($, el) && $(el).text().trim().length > 0,
+    );
+  if (
+    articles.length === 1 &&
+    articles.find("h1").filter((_, el) => !hiddenFromReaders($, el)).length ===
+      1 &&
+    paragraphs.length >= 2 &&
+    paragraphs.text().trim().length >= 200
+  )
+    article.push("primary-article-prose");
+  if (hasJsonLdType(structuredData, ["Article", "NewsArticle", "BlogPosting"]))
+    article.push("article-schema-hint");
 
-  // ── 2. Product Details Page (check before category) ─────────
-  if (isProductPage(pathname, $, jsonLd, meta)) {
-    return "product";
-  }
+  // A collection page often declares one Product, with an AggregateOffer and
+  // rating, beside its grid. Schema alone does not outrank a grid of cards;
+  // Open Graph and the page's own buy controls do.
+  const grid = category.includes("product-grid");
+  const strongProduct = product.some(
+    (s) =>
+      s === "product-open-graph" ||
+      (s === "product-schema-primary" && !grid) ||
+      s === "purchase-controls",
+  );
+  const strongArticle = article.some((s) => s !== "article-schema-hint");
+  if (strongProduct && strongArticle)
+    return result(PageType.General, ClassificationConfidence.Unknown, [
+      ...product,
+      ...category,
+      ...article,
+      "conflicting-purpose",
+    ]);
+  if (strongArticle)
+    return result(PageType.Article, ClassificationConfidence.Strong, article);
+  // The page's own product evidence outranks a grid. Card buy controls and
+  // recommendation rails never reach `product`, so a listing whose cards
+  // carry prices stays a listing, and a product page with a rail of
+  // related items stays a product page.
+  if (strongProduct)
+    return result(PageType.Product, ClassificationConfidence.Strong, product);
+  if (grid)
+    return result(PageType.Category, ClassificationConfidence.Hint, category);
+  if (product.length > 0)
+    return result(PageType.Product, ClassificationConfidence.Hint, product);
+  if (category.length > 0)
+    return result(PageType.Category, ClassificationConfidence.Hint, category);
+  if (article.length > 0)
+    return result(PageType.Article, ClassificationConfidence.Hint, article);
+  return result(PageType.General, ClassificationConfidence.Unknown, []);
+}
 
-  // ── 3. Category / Listing Page ──────────────────────────────
-  if (isCategoryPage(pathname, $, jsonLd)) {
-    return "category";
-  }
+/**
+ * A path made only of locale segments, optionally ending in `home` or
+ * `index`: `/us/`, `/us/en`, `/en-gb/`, `/de_de/`, `/en/home/`. A two-letter
+ * segment is also a plausible section name (`/tv/`, `/en/tv/`), and a
+ * multilingual store puts hreflang alternates on every page, so neither the
+ * path nor the presence of alternates decides. The hreflang codes do: every
+ * segment of a locale root names a language or region its alternates declare
+ * (`/us/en/` beside `en-US`), while a section adds a segment no code names
+ * (`tv` in `/en/tv/` beside `en` and `de`). Comparing segments between
+ * alternates cannot decide it: `/us/en/` beside `/ca/en/` has the same shape
+ * as `/en/tv/` beside `/de/tv/`.
+ */
+const LOCALE_ROOT =
+  /^(?:\/[a-z]{2}(?:[-_][a-z]{2,4})?)+(?:\/(?:home|index)(?:\.html?)?)?\/?$/;
 
-  // ── 4. Fallback: Content Page ───────────────────────────────
-  return "content";
+/** The language and region parts of a locale-root path: `/us/en-gb/home/` gives us, en, gb. */
+function localeParts(pathname: string): string[] {
+  return pathname
+    .replace(/\/(?:home|index)(?:\.html?)?\/?$/, "")
+    .split(/[/_-]/)
+    .filter(Boolean);
+}
+
+function isLocaleRoot(url: string, pathname: string, $: CheerioAPI): boolean {
+  if (!LOCALE_ROOT.test(pathname)) return false;
+  const page = new URL(url);
+  const declared = new Set<string>();
+  let siblings = 0;
+  for (const el of $('link[rel~="alternate"][hreflang]').toArray()) {
+    const code = ($(el).attr("hreflang") ?? "").trim().toLowerCase();
+    // `x-default` names no locale, and some sites point it at `/` everywhere.
+    if (code === "" || code === "x-default") continue;
+    const parts = code.split(/[-_]/);
+    for (const part of parts) declared.add(part);
+    let href: URL;
+    try {
+      href = new URL($(el).attr("href") ?? "", page);
+    } catch {
+      continue;
+    }
+    const path = href.pathname.toLowerCase();
+    // A same-origin `/` alternate is what a site with lazy hreflang emits on
+    // every page, so only another host's root counts as a sibling root.
+    if (path === "/") {
+      if (href.host !== page.host) siblings++;
+    } else if (
+      LOCALE_ROOT.test(path) &&
+      localeParts(path).every((part) => parts.includes(part))
+    )
+      siblings++;
+  }
+  return (
+    siblings >= 2 && localeParts(pathname).every((part) => declared.has(part))
+  );
 }
 
 /** A same-origin path with a trailing `index.html` folded into its directory. */
@@ -650,7 +791,7 @@ function directoryPath(pathname: string): string {
  *
  * A path of exactly `/` is not the only homepage. A GitHub project site lives
  * at `/<project>/`, a store at `/shop/`, a docs portal at `/docs/`, a locale
- * at `/en-us/`. Reading such a root as a content page runs article checks on a
+ * at `/en-us/`. Reading such a root as a general page runs article checks on a
  * homepage. The path alone cannot tell a mounted site's root from a section of
  * a larger site (`/blog/`), so the page's own links decide:
  *
@@ -725,16 +866,100 @@ function isSubpathHome(url: string, $: CheerioAPI): boolean {
   return internal.size >= 3 && [...internal].every((p) => p.startsWith(base));
 }
 
-function isProductPage(
+const PRODUCT_SCHEMA_TYPES = [
+  "Product",
+  "ProductGroup",
+  "IndividualProduct",
+  "ProductModel",
+];
+const LISTING_SCHEMA_TYPES = [
+  "CollectionPage",
+  "ItemList",
+  "OfferCatalog",
+  "ProductCollection",
+];
+const PRODUCT_CARD_SELECTOR =
+  '[class*="product-card"], [class*="product-item"], [class*="product-tile"], [data-product-id], [class*="product-grid"] > *, [class*="product-list"] > *';
+const ADD_TO_CART_SELECTOR =
+  '[class*="add-to-cart"], [id*="add-to-cart"], button:contains("Add to Cart"), button:contains("Add to Bag"), [data-action="add-to-cart"]';
+
+/**
+ * Class or id words that mark a region as supporting content beside the
+ * page's purpose: recommendation rails, recently viewed items, carousels.
+ * A product page routinely carries one, and its cards and dots say nothing
+ * about whether the page itself is a listing.
+ */
+const SECONDARY_REGION =
+  /recommend|related|recently|upsell|up-sell|cross-?sell|also-(?:like|bought|viewed)|you-may|carousel|slider|swiper|slick/i;
+
+/**
+ * The walk stops below `<main>` and `<body>`: a theme class such as
+ * `has-slider` on a page-wide wrapper says nothing about one region.
+ */
+function inSecondaryRegion($: CheerioAPI, el: Element): boolean {
+  return [el, ...$(el).parentsUntil("main, body").toArray()].some(
+    (node) =>
+      node.tagName === "aside" ||
+      SECONDARY_REGION.test(
+        `${$(node).attr("class") ?? ""} ${$(node).attr("id") ?? ""}`,
+      ),
+  );
+}
+
+/** Outermost card matches: a card's parts often repeat the card class. */
+function outermostCards($: CheerioAPI): Element[] {
+  const matches = $(PRODUCT_CARD_SELECTOR).toArray();
+  const set = new Set(matches);
+  return matches.filter(
+    (el) =>
+      !$(el)
+        .parents()
+        .toArray()
+        .some((p) => set.has(p)),
+  );
+}
+
+/**
+ * Product cards in the page's own content. A card's parts often repeat the
+ * card class (`product-tile-image`, `product-tile-price`), so only the
+ * outermost match counts, and cards in a secondary region do not count.
+ */
+function primaryProductCards($: CheerioAPI): Element[] {
+  return outermostCards($).filter((el) => !inSecondaryRegion($, el));
+}
+
+/**
+ * Cards that sit in a listing: every card in a secondary region, and every
+ * primary card once the page has two or more of them, however deeply the
+ * grid wraps each card. A lone element marked as a product, such as a PDP's
+ * main section carrying `data-product-id`, is the page's own product, and so
+ * is a card that holds the page's visible `<h1>`.
+ */
+function listingCards($: CheerioAPI): Element[] {
+  const primary = primaryProductCards($);
+  const secondary = outermostCards($).filter((el) => inSecondaryRegion($, el));
+  const holdsTitle = (card: Element) =>
+    $(card)
+      .find("h1")
+      .toArray()
+      .some((h1) => !hiddenFromReaders($, h1));
+  const listed =
+    primary.length >= 2 ? primary.filter((c) => !holdsTitle(c)) : [];
+  return [...secondary, ...listed];
+}
+
+function productSignals(
   pathname: string,
   $: CheerioAPI,
   jsonLd: object[],
   meta: Record<string, string>,
-): boolean {
-  // JSON-LD Product schema
-  if (hasJsonLdType(jsonLd, ["Product", "IndividualProduct", "ProductModel"])) {
-    return true;
-  }
+): string[] {
+  const signals: string[] = [];
+  // One top-level product entity describes the page; several describe a list.
+  const productEntities = countJsonLdType(jsonLd, PRODUCT_SCHEMA_TYPES);
+  if (productEntities > 0) signals.push("product-schema-hint");
+  if (productEntities === 1 && !hasJsonLdType(jsonLd, LISTING_SCHEMA_TYPES))
+    signals.push("product-schema-primary");
 
   // og:type = product or product.item
   const ogType = (meta["og:type"] ?? "").toLowerCase();
@@ -743,7 +968,7 @@ function isProductPage(
     ogType === "product.item" ||
     ogType === "og:product"
   ) {
-    return true;
+    signals.push("product-open-graph");
   }
 
   // URL patterns common in ecommerce product pages
@@ -753,41 +978,39 @@ function isProductPage(
     ) ||
     /\/(product|item|sku)-[a-z0-9-]+/i.test(pathname)
   ) {
-    return true;
+    signals.push("product-url-hint");
   }
 
-  // HTML signals: add-to-cart button/form, price elements
-  const hasAddToCart =
-    $(
-      '[class*="add-to-cart"], [id*="add-to-cart"], button:contains("Add to Cart"), button:contains("Add to Bag"), [data-action="add-to-cart"]',
-    ).length > 0;
-  const hasPrice =
-    $(
-      '[class*="product-price"], [class*="product__price"], [itemprop="price"], [data-price], .price',
-    ).length > 0;
+  // HTML signals: add-to-cart button/form, price elements. A buy button
+  // inside a listing card or a recommendation rail buys that card's item,
+  // not the page's, so only a control outside both counts.
+  const cards = listingCards($);
+  const ownControl = (el: Element) =>
+    !cards.some((card) => card === el || $(card).find(el).length > 0) &&
+    !inSecondaryRegion($, el);
+  const hasAddToCart = $(ADD_TO_CART_SELECTOR).toArray().some(ownControl);
+  const hasPrice = $(
+    '[class*="product-price"], [class*="product__price"], [itemprop="price"], [data-price], .price',
+  )
+    .toArray()
+    .some(ownControl);
 
   if (hasAddToCart && hasPrice) {
-    return true;
+    signals.push("purchase-controls");
   }
 
-  return false;
+  return signals;
 }
 
-function isCategoryPage(
+function categorySignals(
   pathname: string,
   $: CheerioAPI,
   jsonLd: object[],
-): boolean {
+): string[] {
+  const signals: string[] = [];
   // JSON-LD CollectionPage or ItemList schema
-  if (
-    hasJsonLdType(jsonLd, [
-      "CollectionPage",
-      "ItemList",
-      "OfferCatalog",
-      "ProductCollection",
-    ])
-  ) {
-    return true;
+  if (hasJsonLdType(jsonLd, LISTING_SCHEMA_TYPES)) {
+    signals.push("listing-schema-hint");
   }
 
   // URL patterns common in ecommerce category/listing pages
@@ -797,58 +1020,63 @@ function isCategoryPage(
     ) ||
     /^\/(men|women|kids|sale|new-arrivals|best-sellers)(\/|$)/i.test(pathname)
   ) {
-    return true;
+    signals.push("listing-url-hint");
   }
 
   // HTML signals: product grid/list with multiple product cards
-  const productCards = $(
-    '[class*="product-card"], [class*="product-item"], [class*="product-tile"], [data-product-id], [class*="product-grid"] > *, [class*="product-list"] > *',
-  );
-  if (productCards.length >= 3) {
-    return true;
+  if (primaryProductCards($).length >= 3) {
+    signals.push("product-grid");
   }
 
-  // Pagination + multiple items suggests a listing
-  const hasPagination =
-    $(
-      '[class*="pagination"], nav[aria-label*="pagination"], .pager, [class*="load-more"]',
-    ).length > 0;
+  // Pagination + multiple items suggests a listing. Carousel dots
+  // (`swiper-pagination`) page through a rail, not through results.
+  const hasPagination = $(
+    '[class*="pagination"], nav[aria-label*="pagination"], .pager, [class*="load-more"]',
+  )
+    .toArray()
+    .some((el) => !inSecondaryRegion($, el));
   const hasFilterOrSort =
     $('[class*="filter"], [class*="facet"], [class*="sort-by"], [data-filter]')
       .length > 0;
 
   if (hasPagination && hasFilterOrSort) {
-    return true;
+    signals.push("pagination-filter-hint");
   }
 
-  return false;
+  return signals;
 }
 
 function hasJsonLdType(jsonLd: object[], types: string[]): boolean {
-  for (const block of jsonLd) {
-    const b = block as Record<string, unknown>;
+  return countJsonLdType(jsonLd, types) > 0;
+}
 
-    // Check top-level @type
-    const blockType = b["@type"];
-    if (typeof blockType === "string" && types.includes(blockType)) return true;
-    if (Array.isArray(blockType) && blockType.some((t) => types.includes(t)))
-      return true;
-
-    // Check inside @graph
-    if (Array.isArray(b["@graph"])) {
-      for (const item of b["@graph"]) {
-        if (item && typeof item === "object") {
-          const itemType = (item as Record<string, unknown>)["@type"];
-          if (typeof itemType === "string" && types.includes(itemType))
-            return true;
-          if (
-            Array.isArray(itemType) &&
-            itemType.some((t: unknown) => types.includes(t as string))
-          )
-            return true;
-        }
-      }
-    }
-  }
-  return false;
+/** Top-level entities and `@graph` members of the given types. */
+function countJsonLdType(jsonLd: object[], types: string[]): number {
+  const wanted = new Set(types.map((type) => type.toLowerCase()));
+  // Only top-level entities and @graph members describe purpose. Do not visit
+  // nested related entities, and do not mutate the parsed evidence.
+  const count = (node: unknown): number => {
+    if (Array.isArray(node))
+      return node.reduce((n, item) => n + count(item), 0);
+    if (!node || typeof node !== "object") return 0;
+    const obj = node as Record<string, unknown>;
+    const declared = obj["@type"];
+    const names = Array.isArray(declared) ? declared : [declared];
+    // Case and a `www.` host are ignored: `"@type": "product"` under
+    // `https://www.schema.org` is invalid markup for a consumer, but it still
+    // says what the page is about. Audits that judge the markup stay strict.
+    const own = names.some(
+      (name) =>
+        typeof name === "string" &&
+        wanted.has(
+          name
+            .replace(/^https?:\/\/(?:www\.)?schema\.org\//i, "")
+            .toLowerCase(),
+        ),
+    )
+      ? 1
+      : 0;
+    return own + (Array.isArray(obj["@graph"]) ? count(obj["@graph"]) : 0);
+  };
+  return count(jsonLd);
 }

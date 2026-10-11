@@ -1,9 +1,17 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext, PageContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
-import type { FetchResult } from "../../fetcher";
-import { siteSitemapTree } from "../../gatherers/sitemap";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import type { FetchResult } from "#core/fetcher";
+import { siteSitemapTree } from "#core/gatherers/sitemap";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 function isOk(result: FetchResult): boolean {
   return result.status === 200;
@@ -65,25 +73,25 @@ export class DiscoveryIndexCoverageAudit extends Audit {
     failureTitle: "Pages are covered by a discovery index",
     description:
       "Every scanned page should be listed in a discovery index — the sitemap (including its sub-sitemaps) or llms.txt — so AI crawlers can find it without relying on the link graph.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/machine-discovery/discovery-index-coverage.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "medium",
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "A page listed in no discovery index is reachable only through the link graph, and the major AI crawlers do not execute JavaScript — so a page missing from both the sitemap and llms.txt can stay invisible to AI search even though it exists on your site.",
       fix: "List every important page in sitemap.xml (or in one of the sub-sitemaps its index points at), and/or reference it from llms.txt. Configure your CMS or build tool to add new pages automatically.",
       code: "<!-- sitemap.xml -->\n<url>\n  <loc>https://yoursite.com/missing-page</loc>\n  <lastmod>2026-01-01</lastmod>\n</url>\n\n<!-- or llms.txt -->\n- [Missing Page](/missing-page): Description of the page",
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl: "https://www.sitemaps.org/protocol.html",
       tags: ["sitemap", "llms-txt", "discoverability"],
     },
@@ -145,7 +153,7 @@ export class DiscoveryIndexCoverageAudit extends Audit {
         expected,
         "No discovery index entries found",
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "Without a sitemap or an llms.txt link list, AI crawlers have no reference list of your pages and must rely entirely on the link graph. Publish at least one.",
           code: `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url>\n    <loc>https://yoursite.com/</loc>\n    <lastmod>2026-01-01</lastmod>\n  </url>\n</urlset>`,
@@ -177,7 +185,7 @@ export class DiscoveryIndexCoverageAudit extends Audit {
 
       if (uncovered.length / ctx.pages.length > 0.5) {
         return this.fail(message, expected, shown, {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "Most scanned pages are listed in neither the sitemap nor llms.txt. AI crawlers that do not execute JavaScript may never reach them. Add them to your sitemap or llms.txt.",
           code: `<url>\n  <loc>https://yoursite.com/missing-page</loc>\n  <lastmod>2026-01-01</lastmod>\n</url>`,
@@ -185,7 +193,7 @@ export class DiscoveryIndexCoverageAudit extends Audit {
       }
 
       return this.warn(message, expected, shown, {
-        priority: "low",
+        priority: CheckPriority.Low,
         description:
           "Some scanned pages are listed in neither the sitemap nor llms.txt. Adding them helps AI crawlers discover all your content.",
         code: `<url>\n  <loc>https://yoursite.com/missing-page</loc>\n  <lastmod>2026-01-01</lastmod>\n</url>`,

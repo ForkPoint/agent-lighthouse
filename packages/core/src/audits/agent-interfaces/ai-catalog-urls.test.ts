@@ -1,13 +1,14 @@
 import { describe, it, expect, vi } from "vitest";
 import { AiCatalogUrlsAudit } from "./ai-catalog-urls";
-import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
-import type { FetchResult } from "../../fetcher";
+import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
+import type { FetchResult } from "#core/fetcher";
+import { CheckStatus } from "#core/types";
 
 // isSafeUrl does a real DNS lookup before the audit probes a site-controlled
 // URL. Stub it with an offline stand-in that still refuses loopback, private
 // ranges and non-HTTP schemes, so the refusal test proves the gate not the mock.
-vi.mock("../../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => {
@@ -67,7 +68,7 @@ describe("AiCatalogUrlsAudit", () => {
     ]);
     ctx.fetch = responder(() => 200);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("2/2");
   });
 
@@ -78,7 +79,7 @@ describe("AiCatalogUrlsAudit", () => {
     ]);
     ctx.fetch = responder(() => 200);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("1/1");
     expect(result.message).toContain("inline");
   });
@@ -90,14 +91,14 @@ describe("AiCatalogUrlsAudit", () => {
     async (status) => {
       const ctx = ctxWith([entry({ url: "https://example.com/a" })]);
       ctx.fetch = responder(() => status);
-      expect((await audit.audit(ctx)).status).toBe("pass");
+      expect((await audit.audit(ctx)).status).toBe(CheckStatus.Pass);
     },
   );
 
   it.each([404, 410, 500, 0])("treats HTTP %i as broken", async (status) => {
     const ctx = ctxWith([entry({ url: "https://example.com/a" })]);
     ctx.fetch = responder(() => status);
-    expect((await audit.audit(ctx)).status).toBe("fail");
+    expect((await audit.audit(ctx)).status).toBe(CheckStatus.Fail);
   });
 
   it("warns when only some entry urls are reachable", async () => {
@@ -107,7 +108,7 @@ describe("AiCatalogUrlsAudit", () => {
     ]);
     ctx.fetch = responder((url) => (url.includes("/ok") ? 200 : 404));
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("1/2");
   });
 
@@ -116,7 +117,7 @@ describe("AiCatalogUrlsAudit", () => {
     ctx.fetch = async () => {
       throw new Error("network error");
     };
-    expect((await audit.audit(ctx)).status).toBe("fail");
+    expect((await audit.audit(ctx)).status).toBe(CheckStatus.Fail);
   });
 
   it("resolves a relative entry url against the site base url", async () => {
@@ -128,7 +129,7 @@ describe("AiCatalogUrlsAudit", () => {
     };
     const result = await audit.audit(ctx);
     expect(seen).toEqual(["https://example.com/api/search"]);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("refuses to probe an unsafe url and never fetches it", async () => {
@@ -140,7 +141,7 @@ describe("AiCatalogUrlsAudit", () => {
     };
     const result = await audit.audit(ctx);
     expect(seen).toEqual([]);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("not safe to probe");
   });
 
@@ -176,7 +177,9 @@ describe("AiCatalogUrlsAudit", () => {
   // ── no second zero for a file ai-catalog-exists already scores ──
 
   it("is not applicable when no manifest is served", async () => {
-    expect((await audit.audit(mockCheckContext([], {}))).status).toBe("na");
+    expect((await audit.audit(mockCheckContext([], {}))).status).toBe(
+      CheckStatus.NotApplicable,
+    );
   });
 
   it("is not applicable when the served file is not an ARD manifest", async () => {
@@ -187,12 +190,12 @@ describe("AiCatalogUrlsAudit", () => {
         "application/json",
       ),
     });
-    expect((await audit.audit(ctx)).status).toBe("na");
+    expect((await audit.audit(ctx)).status).toBe(CheckStatus.NotApplicable);
   });
 
   it("is not applicable when every entry is inline and there is nothing to probe", async () => {
     const ctx = ctxWith([entry({ data: { name: "inline" } })]);
-    expect((await audit.audit(ctx)).status).toBe("na");
+    expect((await audit.audit(ctx)).status).toBe(CheckStatus.NotApplicable);
   });
 
   it("ships guidance about entries[].url, not a services array", () => {

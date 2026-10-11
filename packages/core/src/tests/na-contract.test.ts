@@ -1,16 +1,19 @@
 import { describe, it, expect } from "vitest";
 import { expectNotApplicableOnEmpty } from "./na-contract";
+import { CheckStatus } from "#core/types";
 
 describe("expectNotApplicableOnEmpty", () => {
   it("rejects an audit that verdicts on a scan that read nothing", async () => {
-    const passing = { audit: () => ({ status: "pass" as const, score: 1 }) };
+    const passing = { audit: () => ({ status: CheckStatus.Pass, score: 1 }) };
     await expect(expectNotApplicableOnEmpty(passing)).rejects.toThrow(
       /vacuous pass/,
     );
   });
 
   it("accepts an audit that declines", async () => {
-    const declining = { audit: () => ({ status: "na" as const, score: 0 }) };
+    const declining = {
+      audit: () => ({ status: CheckStatus.NotApplicable, score: 0 }),
+    };
     await expect(
       expectNotApplicableOnEmpty(declining),
     ).resolves.toBeUndefined();
@@ -24,7 +27,7 @@ describe("expectNotApplicableOnEmpty", () => {
     await expectNotApplicableOnEmpty({
       audit: (ctx) => {
         sawJudgeable = ctx.evidence.judgeable;
-        return { status: "na" as const, score: 0 };
+        return { status: CheckStatus.NotApplicable, score: 0 };
       },
     });
     expect(sawJudgeable).toBe(false);

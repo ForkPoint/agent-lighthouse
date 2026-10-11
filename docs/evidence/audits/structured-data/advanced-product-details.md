@@ -13,6 +13,7 @@ sources:
   - openai-feed-spec-confirm
   - google-product-snippet
   - google-ai-features-trust
+  - google-product-variants
 ---
 
 # advanced-product-details (`3.22`, Product half of `3.8`)
@@ -74,6 +75,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 - 2026-08-21 — evidence graded **A** (availability/brand/category documented in Google's merchant-listing extraction; category the weakest of the three).
 - 2026-08-22 — absorbs the Product half of 3.8 (Plan 4, Task 9); the `name` requirement is ported in. Registry count unchanged by this half (net 0 — 3.8's Service half survives as `structured-data/service-schema`).
+- 2026-10-09 — ProductGroup variants resolved through `resolveProducts`; see Implementation deviations.
 
 ## Ported from 3.8 (Plan 4, Task 9, 2026-08-22)
 
@@ -110,3 +112,16 @@ Both audits were graded **A** on the same commerce-markup record — Google Merc
 - **`products[0]` across all pages is still the selection rule.** Adopting per-product-page selection with an N/M ratio is this audit's own standing required fix (shared with 3.21), not part of the fold; 3.8 had the same defect, so the split neither adds nor removes it. Note the contrast with `service-schema`, where the equivalent clause _was_ in that half's required fix and did land.
 - **`category` is still pass-blocking**, though the graded evidence above records it as the weakest of the three and only _recommended_. Demoting it is a separate documented decision, not a port.
 - **`Product.availability` is still accepted** even though schema.org puts `ItemAvailability` on `Offer`, and `"offers": "https://site/#offer"` (an `@id` reference) still reads as no availability. Both are pre-existing items on this audit's fix list.
+
+## Implementation deviations
+
+- **ProductGroup variants are read as products.** Products come from the
+  shared `resolveProducts` in `packages/core/src/product-schema.ts`. Each
+  `hasVariant` entry (or a Product joined through `isVariantOf` or
+  `inProductGroupWithID`) is read with the group's shared properties beneath
+  its own, as Google's product variant documentation lays them out
+  (https://developers.google.com/search/docs/appearance/structured-data/product-variants,
+  verified 2026-10-09). A `ProductGroup` with no variants is read as the
+  product. Before this, a brand or category declared once on the group was
+  invisible, and a page whose only top-level product was a `ProductGroup`
+  read as having no product.

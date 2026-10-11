@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
 import { RobotsAiGroupShadowingAudit } from "./robots-ai-group-shadowing";
 import {
   attributableFixture,
@@ -9,9 +9,10 @@ import {
   mockPageContext,
   shellSiteContext,
   unreachedSiteContext,
-} from "../../__tests__/test-utils";
-import type { FetchResult } from "../../fetcher";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
+} from "#core/__tests__/test-utils";
+import type { FetchResult } from "#core/fetcher";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import { CheckStatus } from "#core/types";
 
 function run(
   robots: string | undefined,
@@ -40,7 +41,7 @@ describe("RobotsAiGroupShadowingAudit", () => {
   });
 
   it("is notApplicable when the site serves no robots.txt", () => {
-    expect(run(undefined).status).toBe("na");
+    expect(run(undefined).status).toBe(CheckStatus.NotApplicable);
   });
 
   // RFC 9309 §2.2.1: once a named group exists, the wildcard is never consulted.
@@ -48,7 +49,7 @@ describe("RobotsAiGroupShadowingAudit", () => {
     const result = run(
       "User-agent: *\nAllow: /\n\nUser-agent: GPTBot\nDisallow: /\n",
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("GPTBot");
   });
 
@@ -56,13 +57,13 @@ describe("RobotsAiGroupShadowingAudit", () => {
     const result = run(
       "User-agent: GPTBot\nDisallow: /\n\nUser-agent: *\nAllow: /\n",
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("GPTBot");
   });
 
   it("finds nothing when no AI token has a named group", () => {
     const result = run("User-agent: *\nAllow: /\nDisallow: /admin\n");
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // Longest match wins, so the named group's Allow reopens a path the wildcard
@@ -72,7 +73,7 @@ describe("RobotsAiGroupShadowingAudit", () => {
       "User-agent: *\nDisallow: /blog\n\nUser-agent: GPTBot\nDisallow: /blog\nAllow: /blog/2026\n",
       ["https://example.com/", "https://example.com/blog/2026/x"],
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("/blog/2026");
   });
 
@@ -81,7 +82,7 @@ describe("RobotsAiGroupShadowingAudit", () => {
     const result = run(
       "User-agent: *\nDisallow: /reports\n\nUser-agent: ClaudeBot\nDisallow: /reports\nAllow: /reports\n",
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("/reports");
   });
 
@@ -91,7 +92,7 @@ describe("RobotsAiGroupShadowingAudit", () => {
     const result = run(
       "User-agent: *\nDisallow: /private\n\nUser-agent: PerplexityBot\nCrawl-delay: 10\n",
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("PerplexityBot");
   });
 
@@ -99,7 +100,7 @@ describe("RobotsAiGroupShadowingAudit", () => {
     const result = run(
       "User-agent: *\nDisallow: /admin\n\nUser-agent: GPTBot\nDisallow: /admin\n",
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("reports the robots.txt as the finding location", () => {
@@ -116,7 +117,9 @@ describe("RobotsAiGroupShadowingAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new RobotsAiGroupShadowingAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext(pages, rootFiles),
@@ -129,7 +132,7 @@ describe("RobotsAiGroupShadowingAudit", () => {
       plan.skipped.find(
         (stub) => stub.id === RobotsAiGroupShadowingAudit.meta.id,
       )?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 
   // `requires` deliberately omits `rendered-body`: the verdict comes from
@@ -143,6 +146,6 @@ describe("RobotsAiGroupShadowingAudit", () => {
     const result = await new RobotsAiGroupShadowingAudit().audit(
       shellSiteContext(undefined, { "/robots.txt": robots }),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 });

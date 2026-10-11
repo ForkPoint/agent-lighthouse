@@ -1,9 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { SectionSplitRiskProfileAudit } from "./section-split-risk-profile";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import { countTokens } from "../../gatherers/tokens";
-import type { CheckContext } from "../../check-context";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import { countTokens } from "#core/gatherers/tokens";
+import type { CheckContext } from "#core/check-context";
+import { AuditTier, CheckStatus, EvidenceGrade } from "#core/types";
 
 /** Roughly `n` tokens of ordinary prose. */
 const prose = (n: number) =>
@@ -34,7 +35,7 @@ describe("SectionSplitRiskProfileAudit", () => {
 
   it("is notApplicable on a page under one retrieval window", async () => {
     expect((await audit.audit(page(section("Boiling", 100)))).status).toBe(
-      "na",
+      CheckStatus.NotApplicable,
     );
   });
 
@@ -43,7 +44,7 @@ describe("SectionSplitRiskProfileAudit", () => {
       .map((heading) => section(heading, 300))
       .join("");
     const result = await audit.audit(page(body));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("flags a section over 512 tokens as SPLIT with its headless tail count", async () => {
@@ -57,7 +58,7 @@ describe("SectionSplitRiskProfileAudit", () => {
   it("flags a long page with fewer than two h2 elements as BLOB", async () => {
     const result = await audit.audit(page(`<p>${prose(900)}</p>`));
     expect(result.found).toContain("BLOB");
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("flags a section under 25 tokens as THIN", async () => {
@@ -75,7 +76,7 @@ describe("SectionSplitRiskProfileAudit", () => {
         .join("") +
       "<h3>Fast</h3><p>Boils in three minutes.</p><h2>Newsletter</h2><p>Sign up below.</p>";
     const result = await audit.audit(page(body));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("THIN");
   });
 
@@ -120,8 +121,8 @@ describe("SectionSplitRiskProfileAudit", () => {
 
   it("registers as a scored grade-B audit", () => {
     const { meta } = SectionSplitRiskProfileAudit;
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
     expect(meta.weight).toBeCloseTo(0.6);
   });
 });

@@ -1,7 +1,7 @@
 import { cacheOwner } from "./cache-owner";
-import type { FetchOptions, FetchResult } from "../fetcher";
-import { isSafeUrl } from "../fetcher";
-import { parseHtml, getMainContentText } from "../parser";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import { isSafeUrl } from "#core/fetcher";
+import { parseHtml, getMainContentText } from "#core/parser";
 
 /**
  * The AI crawlers whose published User-Agent strings can actually be sent.
@@ -59,15 +59,18 @@ export const BASELINE_UA =
  * rate limit each need a different remedy from the operator, and an opaque 403
  * may even be correct impersonation defence.
  */
-export type BlockClass =
-  | "ok"
-  | "cf-challenge"
-  | "pay-per-crawl"
-  | "anubis-pow"
-  | "rate-limited"
-  | "opaque-403"
-  | "soft-block"
-  | "transport-error";
+export const BlockClass = {
+  Ok: "ok",
+  CfChallenge: "cf-challenge",
+  PayPerCrawl: "pay-per-crawl",
+  AnubisPow: "anubis-pow",
+  RateLimited: "rate-limited",
+  Opaque403: "opaque-403",
+  SoftBlock: "soft-block",
+  TransportError: "transport-error",
+} as const;
+
+export type BlockClass = (typeof BlockClass)[keyof typeof BlockClass];
 
 export interface UaProbe {
   url: string;
@@ -130,7 +133,7 @@ export function classifyResponse(
   const baselineOk = baseline.status >= 200 && baseline.status < 300;
   if (!baselineOk) {
     return {
-      blockClass: "ok",
+      blockClass: BlockClass.Ok,
       textRatio: 1,
       evidence: "baseline blocked; nothing bot-specific to report",
       baselineText: "",
@@ -162,29 +165,29 @@ export function classifyResponse(
 
   const cfMitigated = probe.headers["cf-mitigated"];
   if (cfMitigated && cfMitigated.toLowerCase().includes("challenge")) {
-    return done("cf-challenge", `cf-mitigated: ${cfMitigated}`);
+    return done(BlockClass.CfChallenge, `cf-mitigated: ${cfMitigated}`);
   }
   if (probe.status === 402 && probe.headers["crawler-price"] !== undefined) {
     return done(
-      "pay-per-crawl",
+      BlockClass.PayPerCrawl,
       `402 with crawler-price: ${probe.headers["crawler-price"]}`,
     );
   }
   const marker = ANUBIS_MARKERS.find((m) => probe.body.includes(m));
-  if (marker) return done("anubis-pow", `body contains "${marker}"`);
-  if (probe.status === 429) return done("rate-limited", "HTTP 429");
+  if (marker) return done(BlockClass.AnubisPow, `body contains "${marker}"`);
+  if (probe.status === 429) return done(BlockClass.RateLimited, "HTTP 429");
   if (probe.status === 403)
-    return done("opaque-403", "HTTP 403 with no challenge header");
+    return done(BlockClass.Opaque403, "HTTP 403 with no challenge header");
   if (probe.error || probe.status === 0) {
-    return done("transport-error", probe.error ?? "no response");
+    return done(BlockClass.TransportError, probe.error ?? "no response");
   }
   if (probe.status === 200 && textRatio < SOFT_BLOCK_RATIO) {
     return done(
-      "soft-block",
+      BlockClass.SoftBlock,
       `HTTP 200 with ${Math.round(textRatio * 100)}% of the baseline main-content text`,
     );
   }
-  return done("ok", `HTTP ${probe.status}`);
+  return done(BlockClass.Ok, `HTTP ${probe.status}`);
 }
 
 /**

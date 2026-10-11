@@ -7,13 +7,21 @@
 // imported from there rather than copied, so the two cannot drift apart.
 // `accessible-names` asks whether an element has a name at all; `label` asks
 // whether a field has one. Neither reads what the name says.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
 import { INSTRUCTION_LEXICON } from "./invisible-instruction-scan";
 import { idSelector } from "./_agent-affordances";
-import { scanReadPageText, unreadPageTextReason } from "../../scan-evidence";
+import { scanReadPageText, unreadPageTextReason } from "#core/scan-evidence";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** Long values are the canonical smuggling slot, since long alt is already an anti-pattern. */
 const LONG_VALUE_CHARS = 250;
@@ -121,20 +129,23 @@ const OPPOSING_VERBS: ReadonlyArray<[string, string]> = [
   ["yes", "no"],
 ];
 
-type Channel =
-  | "alt"
-  | "aria-label"
-  | "aria-describedby target"
-  | "aria-labelledby target"
-  | "aria-description"
-  | "title"
-  | "placeholder"
-  | "hidden input value"
-  | "option text"
-  | "document title"
-  | "og:title"
-  | "og:description"
-  | "href";
+const Channel = {
+  Alt: "alt",
+  AriaLabel: "aria-label",
+  AriaDescribedbyTarget: "aria-describedby target",
+  AriaLabelledbyTarget: "aria-labelledby target",
+  AriaDescription: "aria-description",
+  Title: "title",
+  Placeholder: "placeholder",
+  HiddenInputValue: "hidden input value",
+  OptionText: "option text",
+  DocumentTitle: "document title",
+  OgTitle: "og:title",
+  OgDescription: "og:description",
+  Href: "href",
+} as const;
+
+type Channel = (typeof Channel)[keyof typeof Channel];
 
 interface Finding {
   pageUrl: string;
@@ -227,27 +238,29 @@ function survey(ctx: CheckContext): Survey {
       }
       if (
         value.length > LONG_VALUE_CHARS &&
-        (channel === "alt" || channel === "aria-label")
+        (channel === Channel.Alt || channel === "aria-label")
       ) {
         result.longValues.push(finding);
       }
     };
 
-    $("[alt]").each((_, el) => record("alt", $(el).attr("alt") ?? ""));
-    $("[title]").each((_, el) => record("title", $(el).attr("title") ?? ""));
+    $("[alt]").each((_, el) => record(Channel.Alt, $(el).attr("alt") ?? ""));
+    $("[title]").each((_, el) =>
+      record(Channel.Title, $(el).attr("title") ?? ""),
+    );
     $("[placeholder]").each((_, el) =>
-      record("placeholder", $(el).attr("placeholder") ?? ""),
+      record(Channel.Placeholder, $(el).attr("placeholder") ?? ""),
     );
     $("[aria-description]").each((_, el) =>
-      record("aria-description", $(el).attr("aria-description") ?? ""),
+      record(Channel.AriaDescription, $(el).attr("aria-description") ?? ""),
     );
-    $("option").each((_, el) => record("option text", $(el).text()));
-    $("title").each((_, el) => record("document title", $(el).text()));
+    $("option").each((_, el) => record(Channel.OptionText, $(el).text()));
+    $("title").each((_, el) => record(Channel.DocumentTitle, $(el).text()));
     $('meta[property="og:title"]').each((_, el) =>
-      record("og:title", $(el).attr("content") ?? ""),
+      record(Channel.OgTitle, $(el).attr("content") ?? ""),
     );
     $('meta[property="og:description"]').each((_, el) =>
-      record("og:description", $(el).attr("content") ?? ""),
+      record(Channel.OgDescription, $(el).attr("content") ?? ""),
     );
 
     for (const attr of ["aria-labelledby", "aria-describedby"] as const) {
@@ -259,8 +272,8 @@ function survey(ctx: CheckContext): Survey {
           if (target.length > 0) {
             record(
               attr === "aria-labelledby"
-                ? "aria-labelledby target"
-                : "aria-describedby target",
+                ? Channel.AriaLabelledbyTarget
+                : Channel.AriaDescribedbyTarget,
               target.text(),
             );
           }
@@ -276,7 +289,7 @@ function survey(ctx: CheckContext): Survey {
       if (hits(decoded)) {
         result.injections.push({
           pageUrl: page.url,
-          channel: "href",
+          channel: Channel.Href,
           text: decoded,
         });
       }
@@ -291,7 +304,7 @@ function survey(ctx: CheckContext): Survey {
       if (hits(value) || isSentence(value)) {
         result.injections.push({
           pageUrl: page.url,
-          channel: "hidden input value",
+          channel: Channel.HiddenInputValue,
           text: value,
         });
       }
@@ -301,7 +314,7 @@ function survey(ctx: CheckContext): Survey {
     $("[aria-label]").each((_, el) => {
       const $e = $(el);
       const label = ($e.attr("aria-label") ?? "").replace(/\s+/g, " ").trim();
-      record("aria-label", label);
+      record(Channel.AriaLabel, label);
       if (!label || hits(label)) return;
       // Only a control is clicked by its name. A landmark or container names
       // its region, and its descendants' text is theirs, not its label.
@@ -310,7 +323,7 @@ function survey(ctx: CheckContext): Survey {
       if (!visible) return;
       const finding: Finding = {
         pageUrl: page.url,
-        channel: "aria-label",
+        channel: Channel.AriaLabel,
         text: label,
         visible,
       };
@@ -349,25 +362,25 @@ export class AriaLayerInjectionScanAudit extends Audit {
     failureTitle: "Accessibility-Layer Injection Scan",
     description:
       "Audit the text that reaches an agent through the accessibility tree and non-visual attributes rather than through body copy: alt, aria-label, aria-labelledby targets, aria-description, title, placeholder, hidden input values, <option> labels, document title and og:* metadata. Flag instruction-shaped content, anomalously long values, and aria-label/visible-text divergence.",
-    scoreDisplayMode: "binary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Binary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/operability-safety/aria-layer-injection-scan.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "critical",
+    defaultPriority: CheckPriority.Critical,
     guidance: {
       impact:
         "Computer-use and browser agents drive pages through the DOM and accessibility tree, not pixels, so a11y attributes enter the model context with the same weight as visible text while remaining invisible to a sighted human. Anthropic names the vector explicitly: 'hidden malicious form fields in a webpage's DOM invisible to humans, and other hard-to-catch injections such as through the URL text and tab title that only an agent might see.' The divergence sub-check is a defect in its own right independent of injection: an agent that clicks by accessible name will actuate an aria-label that contradicts the rendered label. Falsifier: if every a11y attribute is short, descriptive, and token-consistent with its element's visible text, this channel carries no payload.",
       fix: 'Remove any instruction-shaped text from alt, aria-label, title, placeholder, option labels, hidden input values, the document title and og:* metadata. Keep accessible names short and descriptive, and make each one agree with the element it names — an aria-label reading "Confirm payment" on a button labelled "Cancel" fires the wrong action for every agent that selects by accessible name. Keep hidden inputs to identifiers, tokens and ids rather than prose.',
       code: SAMPLE,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/aria-layer-injection-scan/",
       tags: [
@@ -382,7 +395,7 @@ export class AriaLayerInjectionScanAudit extends Audit {
 
   private recommendation() {
     return {
-      priority: "critical" as const,
+      priority: CheckPriority.Critical,
       description: AriaLayerInjectionScanAudit.meta.description,
       code: SAMPLE,
     };

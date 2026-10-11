@@ -1,8 +1,16 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
-import type { FetchResult } from "../../fetcher";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import type { FetchResult } from "#core/fetcher";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 function isOk(result: FetchResult): boolean {
   return result.status === 200;
@@ -39,19 +47,19 @@ export class LlmsTxtStructureAudit extends Audit {
     failureTitle: "llms.txt is well-formed",
     description:
       "The llms.txt format defines a blockquote summary under the H1 and H2 sections grouping the link lists. Both are optional in the spec, so this check is advisory: it reports the shape of the file, it does not score it.",
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "informative"),
-    evidenceGrade: "C",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/machine-discovery/llms-txt-structure.md",
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "low",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
         "The reference llms.txt parser extracts the blockquote as a `summary` field and the H2 headings as a `sections` map, so a file that carries both is machine-navigable: an agent can read the summary and pick a section instead of consuming the whole file. No vendor documents an agent behaving differently when either element is absent, so this is reported, not scored.",
       fix: "Put a blockquote line (starting with >) immediately after the H1 in your llms.txt, and group the link lists under H2 headings (## Section Name).",
       code: "# Your Site Name\n\n> Your site provides X for Y. It covers topics including A, B, and C.\n\n## Documentation\n- [Getting Started](/docs/start): Quick start guide\n- [API Reference](/docs/api): Full API documentation\n\n## Company\n- [About](/about): Company information",
-      effort: "trivial",
+      effort: FixEffort.Trivial,
       docsUrl: "https://llmstxt.org/",
       tags: ["llms-txt", "discoverability"],
     },
@@ -118,7 +126,7 @@ export class LlmsTxtStructureAudit extends Audit {
     // H1 "the only required section"), so a partial file warns and an entirely
     // flat file fails — at low priority either way, and at weight 0 always.
     return missing.length === 1
-      ? this.warn(message, expected, found, "low")
-      : this.fail(message, expected, found, "low");
+      ? this.warn(message, expected, found, CheckPriority.Low)
+      : this.fail(message, expected, found, CheckPriority.Low);
   }
 }

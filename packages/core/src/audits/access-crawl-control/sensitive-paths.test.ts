@@ -4,7 +4,8 @@ import {
   mockCheckContext,
   mockFetchResult,
   mockPageContext,
-} from "../../__tests__/test-utils";
+} from "#core/__tests__/test-utils";
+import { CheckPriority, CheckStatus } from "#core/types";
 
 /** Homepage carrying the given anchors, so the crawl "observes" those paths. */
 function pageLinking(...hrefs: string[]) {
@@ -24,7 +25,7 @@ describe("SensitivePathsAudit", () => {
       {},
     );
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("never demands a Disallow for /api/ — agent surfaces are not low-value", async () => {
@@ -35,7 +36,7 @@ describe("SensitivePathsAudit", () => {
       },
     );
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(JSON.stringify(result)).not.toContain("/api/");
   });
 
@@ -49,7 +50,7 @@ describe("SensitivePathsAudit", () => {
       },
     );
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("passes a WordPress site on its own /wp-admin/ rule without demanding /admin/", async () => {
@@ -60,7 +61,7 @@ describe("SensitivePathsAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("warns when only some observed families are excluded", async () => {
@@ -68,7 +69,7 @@ describe("SensitivePathsAudit", () => {
       "/robots.txt": mockFetchResult("User-agent: *\nDisallow: /cart", 200),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
   });
 
   it("fails when robots.txt excludes none of the observed families", async () => {
@@ -76,8 +77,8 @@ describe("SensitivePathsAudit", () => {
       "/robots.txt": mockFetchResult("User-agent: *\nAllow: /", 200),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
-    expect(result.priority).toBe("low");
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.priority).toBe(CheckPriority.Low);
   });
 
   it("treats an empty `Disallow:` as protecting nothing (RFC 9309 §2.2.2)", async () => {
@@ -85,7 +86,7 @@ describe("SensitivePathsAudit", () => {
       "/robots.txt": mockFetchResult("User-agent: *\nDisallow:", 200),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("does not count a rule that applies to one bot only as full coverage", async () => {
@@ -96,7 +97,7 @@ describe("SensitivePathsAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).not.toBe("pass");
+    expect(result.status).not.toBe(CheckStatus.Pass);
   });
 
   it("is notApplicable when the whole site is blanket-blocked", async () => {
@@ -104,13 +105,13 @@ describe("SensitivePathsAudit", () => {
       "/robots.txt": mockFetchResult("User-agent: *\nDisallow: /", 200),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("fails when robots.txt is missing but low-value URLs were observed", async () => {
     const ctx = mockCheckContext([pageLinking("/checkout")], {});
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("no robots.txt");
   });
 
@@ -122,7 +123,7 @@ describe("SensitivePathsAudit", () => {
       "/sitemap.xml": mockFetchResult(sitemap, 200, "application/xml"),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("account");
   });
 
@@ -134,7 +135,7 @@ describe("SensitivePathsAudit", () => {
       },
     );
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("emits a fix rule that matches a locale-prefixed path, and applying it passes", async () => {
@@ -144,7 +145,7 @@ describe("SensitivePathsAudit", () => {
         "/robots.txt": mockFetchResult("User-agent: *\nAllow: /", 200),
       }),
     );
-    expect(before.status).toBe("fail");
+    expect(before.status).toBe(CheckStatus.Fail);
 
     // A bare `Disallow: /checkout` would not match `/en-gb/checkout` under
     // RFC 9309, so the emitted rule has to carry the locale segment.
@@ -156,7 +157,7 @@ describe("SensitivePathsAudit", () => {
     const after = await audit.audit(
       mockCheckContext(pages, { "/robots.txt": mockFetchResult(emitted, 200) }),
     );
-    expect(after.status).toBe("pass");
+    expect(after.status).toBe(CheckStatus.Pass);
   });
 
   it("emits one rule per locale rather than collapsing them to one family", async () => {
@@ -175,13 +176,13 @@ describe("SensitivePathsAudit", () => {
   it("emits a rule that makes a non-locale candidate pass too", async () => {
     const pages = [pageLinking("/search?q=shoes", "/account/orders")];
     const before = await audit.audit(mockCheckContext(pages, {}));
-    expect(before.status).toBe("fail");
+    expect(before.status).toBe(CheckStatus.Fail);
 
     const emitted = before.details?.code ?? "";
     const after = await audit.audit(
       mockCheckContext(pages, { "/robots.txt": mockFetchResult(emitted, 200) }),
     );
-    expect(after.status).toBe("pass");
+    expect(after.status).toBe(CheckStatus.Pass);
   });
 
   it("does not frame the finding as a security or privacy control", () => {
@@ -189,7 +190,7 @@ describe("SensitivePathsAudit", () => {
     const blob = JSON.stringify(meta).toLowerCase();
     expect(blob).not.toContain("security risk");
     expect(blob).not.toContain("privacy risk");
-    expect(meta.defaultPriority).toBe("low");
+    expect(meta.defaultPriority).toBe(CheckPriority.Low);
     // The RFC 9309 caveat and the user-initiated-fetcher caveat must both be stated.
     expect(meta.guidance?.impact).toContain(
       "not a substitute for valid content security measures",

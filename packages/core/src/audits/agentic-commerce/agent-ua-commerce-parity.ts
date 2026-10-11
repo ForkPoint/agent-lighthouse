@@ -5,21 +5,29 @@
 // ranges. The one that matters for commerce is ChatGPT-User: the shopper's own
 // agent, fetching the PDP at the moment of the question. A WAF that answers it
 // with a challenge is invisible to any audit that only reads robots.txt.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
 import {
   parseRobots,
   isPathAllowed,
   hasNamedGroup,
-} from "../../gatherers/robots";
+} from "#core/gatherers/robots";
 import {
   AI_CRAWLER_UAS,
   sharedUaProbes,
   type UaProbe,
-} from "../../gatherers/ua-parity";
+} from "#core/gatherers/ua-parity";
 import { resolvePolicyLinks } from "./acp-policy-link-surface";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** The two OpenAI agents a purchase depends on. */
 const TOKENS = ["chatgpt-user", "oai-searchbot"];
@@ -102,25 +110,25 @@ export class AgentUaCommerceParityAudit extends Audit {
     failureTitle: "Shopping agents are blocked on the commerce paths",
     description:
       "Issues paired requests to the homepage, sampled product pages, the cart and the linked policy pages with a browser User-Agent and with the ChatGPT-User and OAI-SearchBot User-Agents, detecting WAF blocks, challenge interstitials and stub pages that a robots.txt-only audit cannot see. Reads the OpenAI robots.txt tokens separately, so opting out of training while staying in search is reported as the deliberate posture it is.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/agentic-commerce/agent-ua-commerce-parity.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "critical",
+    defaultPriority: CheckPriority.Critical,
     guidance: {
       impact:
         "OpenAI operates four separately-tokened agents with separately published IP ranges: OAI-SearchBot (search indexing), ChatGPT-User (user-initiated fetches — the shopper's agent), GPTBot (training) and OAI-AdsBot (ad landing-page validation). Falsifiable claim: if a product page returns 403, 429, 503 or a challenge interstitial to ChatGPT-User or OAI-SearchBot while returning 200 to a browser, ChatGPT cannot read live price and availability nor follow the buy link, so the product cannot be surfaced or transacted no matter how good the feed is. That block lives at the WAF or CDN edge, which is why an audit that only parses robots.txt is structurally blind to it. Disproof condition: a site 403ing ChatGPT-User on its product pages that still shows live, accurate prices in ChatGPT.",
       fix: "Separate the four OpenAI tokens instead of treating 'OpenAI' as one switch: Disallow GPTBot if you do not want your catalogue in training, and keep OAI-SearchBot and ChatGPT-User allowed, since those two are what put your product in an answer and let the shopper's agent read the page. At the edge, allowlist the published address ranges from https://openai.com/searchbot.json and https://openai.com/chatgpt-user.json — UA-string rules are both spoofable and, when they misfire, invisible from the dashboard. Then verify from outside with curl -A on a product page, the cart and the policy pages, and check you get the whole page rather than a stub.",
       code: SAMPLE,
-      effort: "complex",
+      effort: FixEffort.Complex,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/agentic-commerce/agent-ua-commerce-parity/",
       tags: ["commerce", "waf", "chatgpt", "crawlers", "robots"],
@@ -208,7 +216,7 @@ export class AgentUaCommerceParityAudit extends Audit {
         `${shown}${more}. ${CIDR_SOURCES}${posture}`,
         EXPECTED,
         found,
-        "critical",
+        CheckPriority.Critical,
       );
     }
 

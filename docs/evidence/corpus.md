@@ -1,6 +1,6 @@
 # The real-page corpus
 
-`packages/core/test-data/corpus/real/` holds 41 responses that real sites
+`packages/core/test-data/corpus/real/` holds 61 responses that real sites
 served to the scanner's own fetcher on the dates below. Each fixture is a
 gzipped body plus a provenance record — url, capture date, sha256, status,
 kind, headers, content type, redirect chain, timings.
@@ -45,16 +45,17 @@ npx tsx scripts/capture-fixture.ts <url> [--name=<name>] [--allow-non-page] [--a
 One request per page. A site that refuses twice is a wall fixture or is
 skipped; it is not retried into submission.
 
-### No dated JSON-LD
+### Dated JSON-LD and the pinned clock
 
 `agentic-commerce/offer-truth-consistency` compares a `priceValidUntil` against
 `Date.now()`, so a fixture carrying one would flip a snapshot cell on a
-calendar date with no code change behind it. No fixture carries one: a search
-across all 41 finds `priceValidUntil` and `validThrough` nowhere, and the eight
-files that contain the string `expires` carry it in analytics payloads, cookie
-code and query strings — never inside a `<script type="application/ld+json">`.
+calendar date with no code change behind it. The first 41 fixtures carry none.
+Two retail fixtures do (`product-productgroup-rail`, `product-open-graph-schema`),
+and they are kept because the shapes they cover are the reason they were
+captured. `real-page-corpus.test.ts` therefore fakes `Date` alone and pins it
+to 2026-10-09, before either date passes. Timers and promises stay real.
 
-Four other audits read the clock. All four snapshot `na` on all 41 fixtures and
+Four other audits read the clock. All four snapshot `na` on every fixture and
 cannot do otherwise here: `sitemap-lastmod-verifiability` and
 `security-header-hygiene` read root files, which a fixture context serves as
 404s; `c2pa-signer-trust-status` reads signed media the harness has none of;
@@ -254,6 +255,41 @@ mostly closed to an honest user agent, and that is the finding.
 | `magicspoon-com-product`                                                                         | magicspoon.com/products/…                   | page | 151.3 KB | Shopify product page at a product URL — the page type commerce audits gate on.                           |
 | `allbirds-com-collection`                                                                        | allbirds.com/products/… → /collections/mens | page | 172.3 KB | A product URL that permanently redirects to a collection, and 15,140 words of collection text behind it. |
 | `velasca-com`, `hiutdenim-co-uk`, `gymshark-com-shell`, `tattly-com-shell`, `quitenice-co-shell` |                                             |      |          | See the first table.                                                                                     |
+
+### Retail page types
+
+Captured 2026-10-09 from 19 storefronts, one or more page types each, to pin
+the page-type classifier on real retail markup. Names describe the shape, not
+the site; the provenance record holds the URL. Each fixture's page type, as a
+reader gives it, is in `packages/core/test-data/corpus/page-types.json`, and
+`page-type-corpus.test.ts` asserts the classifier agrees, classifying the URL
+the scan requested (the first redirect hop) as the orchestrator does. Five of
+them, one per type, are marked `live` and re-checked against the live page by
+`page-type-live.test.ts`, which asserts the page type only and skips a page
+that no longer answers 200.
+
+| Fixture                              | Kind | Type     | The shape it covers                                                                                            |
+| :----------------------------------- | :--- | :------- | :------------------------------------------------------------------------------------------------------------- |
+| `homepage-root-plain`                | page | homepage | Served at `/`, no redirect.                                                                                    |
+| `homepage-root-canonical-locale`     | page | homepage | Served at `/`, canonical at a locale root, 110 hreflang alternates.                                            |
+| `homepage-redirect-locale-dir`       | page | homepage | `/` redirects to `/xx-yy/`. Live.                                                                              |
+| `homepage-redirect-locale-home`      | page | homepage | `/` redirects to `/xx/home/`.                                                                                  |
+| `homepage-locale-root-hreflang`      | page | homepage | A locale root requested directly; hreflang names its siblings.                                                 |
+| `homepage-wall-403`                  | wall | —        | A storefront that refuses the scanner with 403.                                                                |
+| `category-collection-listing-schema` | page | category | Collection URL plus listing schema. Live.                                                                      |
+| `category-grid-no-schema`            | page | category | Product grid, filters and pagination, no listing schema.                                                       |
+| `category-filter-only`               | page | category | Pagination beside filters is the only listing evidence.                                                        |
+| `category-client-rendered`           | page | category | Grid rendered by script; only the URL marks it.                                                                |
+| `category-listing-schema-grid`       | page | category | ItemList schema and a product grid.                                                                            |
+| `product-productgroup-rail`          | page | product  | ProductGroup with two variants, an AggregateOffer on the group, a recently-viewed tile carousel. Dated offers. |
+| `product-microdata`                  | page | product  | Product and Offer in microdata only; og:type `website`.                                                        |
+| `product-lowercase-type`             | page | product  | `"@type": "product"` under `https://www.schema.org`.                                                           |
+| `product-open-graph-only`            | page | product  | og:type `product` and buy controls, no Product schema.                                                         |
+| `product-schema-no-open-graph`       | page | product  | Product schema and buy controls, no og:type.                                                                   |
+| `product-open-graph-schema`          | page | product  | og:type `product` plus Product schema. Dated offers. Live.                                                     |
+| `article-blog-post`                  | page | article  | Storefront blog post, og:type `article` plus Article schema. Live.                                             |
+| `general-about-page`                 | page | unknown  | About page: no listing, product or article.                                                                    |
+| `general-faq`                        | page | unknown  | Help page with FAQPage schema. Live.                                                                           |
 
 ## What the corpus still lacks
 

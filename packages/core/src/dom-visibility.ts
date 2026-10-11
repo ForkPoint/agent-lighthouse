@@ -53,7 +53,13 @@ const DISPLAY_KEYWORDS = new Set([
 
 const VISIBILITY_KEYWORDS = new Set(["visible", "hidden", "collapse"]);
 
-export type HidingProperty = "display" | "visibility";
+export const HidingProperty = {
+  Display: "display",
+  Visibility: "visibility",
+} as const;
+
+export type HidingProperty =
+  (typeof HidingProperty)[keyof typeof HidingProperty];
 
 /** Cheap pre-checks, so a style that names neither property is never parsed. */
 const MENTIONS: Record<HidingProperty, RegExp> = {
@@ -72,7 +78,8 @@ function validValue(property: HidingProperty, value: string): boolean {
   // overrides an earlier declaration. Its result is unknown here; callers
   // compare against `none` / `hidden` and treat it as neither.
   if (/\bvar\(/.test(value)) return true;
-  if (property === "visibility") return VISIBILITY_KEYWORDS.has(value);
+  if (property === HidingProperty.Visibility)
+    return VISIBILITY_KEYWORDS.has(value);
   const keywords = value.split(/\s+/);
   return (
     keywords.length <= 3 && keywords.every((word) => DISPLAY_KEYWORDS.has(word))
@@ -123,8 +130,8 @@ export function declaredValue(
  */
 export function styleHidesFromReaders(style: string): boolean {
   return (
-    declaredValue(style, "display")?.value === "none" ||
-    declaredValue(style, "visibility")?.value === "hidden"
+    declaredValue(style, HidingProperty.Display)?.value === "none" ||
+    declaredValue(style, HidingProperty.Visibility)?.value === "hidden"
   );
 }
 
@@ -152,7 +159,10 @@ function unrenderedMarker($n: ReturnType<CheerioAPI>, tag: string): boolean {
   // reveal it.
   if (hidden !== undefined && hidden.trim().toLowerCase() !== "until-found")
     return true;
-  return declaredValue($n.attr("style") ?? "", "display")?.value === "none";
+  return (
+    declaredValue($n.attr("style") ?? "", HidingProperty.Display)?.value ===
+    "none"
+  );
 }
 
 /**
@@ -166,7 +176,7 @@ function visibilityHidden($: CheerioAPI, el: AnyNode): boolean {
     if ((node as { tagName?: string }).tagName) {
       const value = declaredValue(
         $(node).attr("style") ?? "",
-        "visibility",
+        HidingProperty.Visibility,
       )?.value;
       if (value && value !== "inherit" && value !== "unset")
         return value === "hidden" || value === "collapse";
@@ -211,6 +221,7 @@ export function hiddenFromReaders($: CheerioAPI, el: AnyNode): boolean {
       $n.attr("hidden") !== undefined ||
       ($n.attr("aria-hidden") ?? "").trim().toLowerCase() === "true" ||
       unrenderedMarker($n, tag) ||
-      declaredValue($n.attr("style") ?? "", "visibility")?.value === "hidden",
+      declaredValue($n.attr("style") ?? "", HidingProperty.Visibility)
+        ?.value === "hidden",
   );
 }

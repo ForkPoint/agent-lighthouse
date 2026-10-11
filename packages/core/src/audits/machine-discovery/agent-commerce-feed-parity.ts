@@ -7,22 +7,30 @@
 // a separate agent-commerce gap for the fields Google's rich-result validator
 // never asks for. Both dossiers state the split.
 import type { CheerioAPI } from "cheerio";
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext, PageContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext, PageContext } from "#core/check-context";
 
-import { fetchImageHead } from "../../gatherers/media";
-import { fetchSampledPage } from "../../gatherers/sampled-pages";
+import { fetchImageHead } from "#core/gatherers/media";
+import { fetchSampledPage } from "#core/gatherers/sampled-pages";
 import {
   parseHtml,
   extractJsonLd,
   extractMetaTags,
   flattenJsonLd,
-} from "../../parser";
-import { siteSitemapTree, sampleEntries } from "../../gatherers/sitemap";
-import { gtinCheckDigit } from "../agentic-commerce/checkout-offer-field-mapping";
-import { ISO_4217 } from "../../gatherers/currency";
+} from "#core/parser";
+import { siteSitemapTree, sampleEntries } from "#core/gatherers/sitemap";
+import { gtinCheckDigit } from "#core/audits/agentic-commerce/checkout-offer-field-mapping";
+import { ISO_4217 } from "#core/gatherers/currency";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** How many sitemap URLs to open looking for product pages. */
 const MAX_SAMPLE = 6;
@@ -63,20 +71,23 @@ const PRICE_PATTERN =
 /** Selects that expose sibling variants of the same product. */
 const VARIANT_SELECT = /variant|option|size|colou?r|style|length|width/i;
 
-type Field =
-  | "item_id"
-  | "brand"
-  | "description"
-  | "image"
-  | "price"
-  | "currency"
-  | "availability"
-  | "condition"
-  | "seller"
-  | "target_country"
-  | "item_group_id"
-  | "price_parity"
-  | "offer_url";
+const FEED_FIELDS = [
+  "item_id",
+  "brand",
+  "description",
+  "image",
+  "price",
+  "currency",
+  "availability",
+  "condition",
+  "seller",
+  "target_country",
+  "item_group_id",
+  "price_parity",
+  "offer_url",
+] as const;
+
+type Field = (typeof FEED_FIELDS)[number];
 
 /** The fields OpenAI's feed requires that Google's rich-result test never asks for. */
 const AGENT_COMMERCE_ONLY: Field[] = [
@@ -345,25 +356,25 @@ export class AgentCommerceFeedParityAudit extends Audit {
       "Product pages cannot supply the fields an agent-commerce feed needs",
     description:
       "Samples product pages from the sitemap and audits each against the union of OpenAI's Product Feed Spec and Google Merchant Center's required attributes, using the PDP's structured data as the auditable proxy for feed eligibility. Reports a per-field pass rate plus a separate agent-commerce gap for the fields Google's rich-result validator never asks for, and cross-checks the JSON-LD price against the price the page renders.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/machine-discovery/agent-commerce-feed-parity.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "high",
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         'Google\'s automatic item updates repair feed/page discrepancies "using the structured data markup the crawlers find on your website", and state that where extractors cannot determine price, availability and condition, "your products will be subject to item-level disapprovals". Merchant Center separately requires that feed availability match the landing page and that price match the landing page and checkout. OpenAI\'s Product Feed Spec requires a strictly larger per-item set than Google\'s rich-result minimum: a stable item_id (<=100 chars), brand (<=70), seller_name, target_countries as ISO 3166-1 alpha-2, a plain-text description under 5000 characters, availability from a fixed enum, and price with an ISO 4217 currency. Falsifiable claim: a PDP missing brand, seller, itemCondition-as-URL, a stable SKU or a country signal passes every Google rich-result test yet cannot be reconciled by automatic item updates, so feed rejections are silent and unattributable. Second claim, sharper: where the JSON-LD price disagrees with the price the page renders, automatic item updates overwrite the feed with one value while an agent reading the page quotes the other.',
       fix: "Publish the feed row on the page. Add brand.name, offers.seller.name, an itemCondition from the three schema.org condition URLs, and a country signal (offers.shippingDetails.shippingDestination.addressCountry is the most portable) — none of these are required for a Google rich result, and all of them are required for an agent-commerce feed. Write availability as the full https://schema.org/InStock URL, not the bare token. Keep the description plain text. Serve the primary image as JPEG or PNG. Where a page exposes sibling variants, add inProductGroupWithID or isVariantOf so the feed can group them. Above all, render the same number the JSON-LD publishes: one price, one currency, one page.",
       code: SAMPLE,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/machine-discovery/agent-commerce-feed-parity/",
       tags: ["commerce", "product-feed", "structured-data", "sitemap"],
@@ -449,7 +460,7 @@ export class AgentCommerceFeedParityAudit extends Audit {
         `${brokenPages.size} of ${candidates.length} sampled product page(s) cannot supply a valid feed row: ${shown}${more}.`,
         EXPECTED,
         found,
-        "high",
+        CheckPriority.High,
       );
     }
 
@@ -458,7 +469,7 @@ export class AgentCommerceFeedParityAudit extends Audit {
         `${risks.slice(0, 3).join("; ")}.`,
         EXPECTED,
         found,
-        "low",
+        CheckPriority.Low,
       );
     }
 

@@ -3,14 +3,15 @@ import {
   McpToolDescriptionCoverageAudit,
   collectLeaves,
 } from "./mcp-tool-description-coverage";
-import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { CheckContext } from "../../check-context";
-import type { FetchOptions, FetchResult } from "../../fetcher";
-import type { AuditResult } from "../../types";
+import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { CheckContext } from "#core/check-context";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import type { AuditResult } from "#core/types";
+import { CheckStatus } from "#core/types";
 
-vi.mock("../../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => url.startsWith("https://api.example.com"),
@@ -113,7 +114,7 @@ describe("McpToolDescriptionCoverageAudit", () => {
 
   it("is notApplicable when the endpoint lists no tools", async () => {
     const r = await run({ tools: [] }).result;
-    expect(r.status).toBe("na");
+    expect(r.status).toBe(CheckStatus.NotApplicable);
   });
 
   // The tools/list read is the shared probe; this audit adds no fetch of its own
@@ -135,7 +136,7 @@ describe("McpToolDescriptionCoverageAudit", () => {
       tools: [GOOD()],
       instructions: "Call search_products first.",
     }).result;
-    expect(r.status).toBe("pass");
+    expect(r.status).toBe(CheckStatus.Pass);
     expect(num(r, "toolDescriptionCoverage")).toBe(100);
     expect(num(r, "paramDescriptionCoverage")).toBe(100);
     expect(num(r, "requiredParamDescriptionCoverage")).toBe(100);
@@ -145,7 +146,7 @@ describe("McpToolDescriptionCoverageAudit", () => {
     const tool = GOOD() as Record<string, unknown>;
     delete tool["description"];
     const r = await run({ tools: [tool], instructions: "x" }).result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(num(r, "toolDescriptionCoverage")).toBe(0);
     expect(strings(r, "undescribedTools")).toEqual(["search_products"]);
   });
@@ -156,7 +157,7 @@ describe("McpToolDescriptionCoverageAudit", () => {
       tools: [{ ...GOOD(), description: "Searches." }],
       instructions: "x",
     }).result;
-    expect(r.status).toBe("warn");
+    expect(r.status).toBe(CheckStatus.Warn);
     expect(num(r, "stubDescriptions")).toBe(1);
     expect(num(r, "toolDescriptionCoverage")).toBe(100);
   });
@@ -165,7 +166,7 @@ describe("McpToolDescriptionCoverageAudit", () => {
     const tool = GOOD();
     tool.inputSchema.properties.query = { type: "string" } as never;
     const r = await run({ tools: [tool], instructions: "x" }).result;
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(num(r, "requiredParamDescriptionCoverage")).toBe(0);
     expect(strings(r, "undescribedRequiredParams")).toEqual([
       "search_products.query",
@@ -215,10 +216,10 @@ describe("McpToolDescriptionCoverageAudit", () => {
     const atThreshold = await run({ tools: [tool(9, 10)], instructions: "x" })
       .result;
     expect(num(atThreshold, "paramDescriptionCoverage")).toBe(90);
-    expect(atThreshold.status).toBe("pass");
+    expect(atThreshold.status).toBe(CheckStatus.Pass);
 
     const below = await run({ tools: [tool(8, 10)], instructions: "x" }).result;
-    expect(below.status).toBe("fail");
+    expect(below.status).toBe(CheckStatus.Fail);
   });
 
   it("reports the advisory ratios without gating on them", async () => {
@@ -231,7 +232,7 @@ describe("McpToolDescriptionCoverageAudit", () => {
       },
     };
     const r = await run({ tools: [bare], instructions: "x" }).result;
-    expect(r.status).toBe("pass");
+    expect(r.status).toBe(CheckStatus.Pass);
     expect(num(r, "constrainedStringRatio")).toBe(0);
     expect(num(r, "outputSchemaCoverage")).toBe(0);
     expect(num(r, "titleCoverage")).toBe(0);
@@ -239,7 +240,7 @@ describe("McpToolDescriptionCoverageAudit", () => {
 
   it("warns when the server returns no instructions and reports the length", async () => {
     const r = await run({ tools: [GOOD()] }).result;
-    expect(r.status).toBe("warn");
+    expect(r.status).toBe(CheckStatus.Warn);
     expect(num(r, "instructionsLength")).toBe(0);
     expect(r.message).toContain("instructions");
   });

@@ -1,7 +1,15 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext, PageContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** Template chrome: links here say the site has a layout, not that it interlinks. */
 const CHROME_SELECTOR =
@@ -89,24 +97,24 @@ export class InContentLinksAudit extends Audit {
     failureTitle: "In-content internal links",
     description:
       "Contextual links inside the page body — not the nav or footer — are how AI crawlers discover related pages and read the relationships between them. Crawlers that do not execute JavaScript see only the links present as <a href> in the served HTML.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/machine-discovery/in-content-links.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "medium",
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "Google can only crawl a link that is an <a> element with an href, and the measured behaviour of GPTBot and ClaudeBot is that they do not execute JavaScript — so a page whose only links are in a client-rendered nav is a dead end for them. Links inside the body copy also tell an agent which pages belong together, which template chrome (identical on every page) cannot.",
       fix: "Link to related pages from within the body copy, with anchor text that names the destination. Aim for at least two distinct in-content destinations per page (the nav and footer do not count), and make sure they are server-rendered <a href> elements.",
       code: '<main>\n  <p>Our <a href="/guide/getting-started">getting-started guide</a> walks through setup, and the <a href="/api">API reference</a> documents every endpoint.</p>\n</main>',
-      effort: "easy",
+      effort: FixEffort.Easy,
       tags: ["internal-links", "in-content", "discoverability"],
     },
   };
@@ -142,7 +150,7 @@ export class InContentLinksAudit extends Audit {
         expected,
         found,
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "Template chrome is identical on every page, so it tells an agent nothing about which pages belong together — and if your navigation is client-rendered, the crawlers that do not execute JavaScript see no links at all. Add contextual links from the body copy of each page to related pages.",
           code: `<p>See our <a href="/guide">guide</a> and the <a href="/api">API reference</a>.</p>`,
@@ -158,7 +166,7 @@ export class InContentLinksAudit extends Audit {
         expected,
         `${found}. Thin pages: ${shown}`,
         {
-          priority: "low",
+          priority: CheckPriority.Low,
           description:
             "Some pages link to fewer than two other pages from their own content, so an agent reading them learns little about what else is relevant. Add contextual links to related pages.",
           code: `<p>See our <a href="/guide">guide</a> and the <a href="/api">API reference</a>.</p>`,

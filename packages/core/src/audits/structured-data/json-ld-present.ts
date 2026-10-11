@@ -1,7 +1,15 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 export class JsonLdPresentAudit extends Audit {
   static override meta: AuditMeta = {
@@ -11,18 +19,18 @@ export class JsonLdPresentAudit extends Audit {
     failureTitle: "JSON-LD present",
     description:
       "AI agents rely on JSON-LD structured data to understand what your site offers, who runs it, and how to interact with it. Without any JSON-LD, agents like ChatGPT and Perplexity treat your site as unstructured text with no machine-readable identity. Add Organization and WebSite schemas to your homepage <head> as a starting point.",
-    scoreDisplayMode: "binary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Binary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/structured-data/json-ld-present.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "critical",
+    defaultPriority: CheckPriority.Critical,
     guidance: {
       impact:
         "Without any JSON-LD structured data, AI agents like ChatGPT and Perplexity treat your site as unstructured text with no machine-readable identity. Your brand, products, and services become invisible to AI-powered discovery, search, and recommendation systems.",
@@ -36,7 +44,7 @@ export class JsonLdPresentAudit extends Audit {
   "logo": "https://yoursite.com/logo.png"
 }
 </script>`,
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl:
         "https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data",
       tags: ["json-ld", "schema", "foundation"],
@@ -60,7 +68,7 @@ export class JsonLdPresentAudit extends Audit {
       "At least one valid JSON-LD block across all pages.",
       "None",
       {
-        priority: "critical",
+        priority: CheckPriority.Critical,
         description:
           "AI agents rely on JSON-LD structured data to understand what your site offers, who runs it, and how to interact with it. Without any JSON-LD, agents like ChatGPT and Perplexity treat your site as unstructured text with no machine-readable identity. Add Organization and WebSite schemas to your homepage <head> as a starting point.",
         code: `<script type="application/ld+json">

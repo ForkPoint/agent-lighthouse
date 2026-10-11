@@ -38,6 +38,8 @@ sources:
 
 ## What it checks
 
+The v7 runner selects article-purpose pages for this check. A `general` declaration does not establish article purpose. Detection can use Open Graph article metadata or primary article prose without author, date, or Article schema fields. Schema-only evidence remains a hint. Detected matches remain informative; a precise `article` declaration uses the existing audit tier.
+
 RAG systems chunk content by <article> boundaries for vector embedding, treating each article as an independent retrieval unit. Without <article> tags, AI chunking algorithms fall back to arbitrary text splitting, which fragments related content across multiple embeddings and reduces answer quality.
 
 ## Code review findings (2026-08-20, 11-agent pass)
@@ -48,7 +50,7 @@ Declares applicablePageTypes ['content'] but then loops every page in the crawl 
 
 **False-positive risks:**
 
-- applicablePageTypes is only a run-gate (audit-runner.ts:64); the loop still counts non-content pages → systematic false fails on mixed-content sites.
+- applicablePageTypes is only a run-gate (audit-runner.ts:64); the loop still counts non-article pages → systematic false fails on mixed-content sites.
 - detectPageType falls back to 'content' for anything not matched as product/category, so About/Contact/Pricing/Legal pages are all classed 'content' and expected to carry <article>.
 - Documentation sites, SaaS marketing pages, and single-page apps legitimately have no self-contained article units → fail with no correct remediation.
 - The inverse is also unhandled: a page wrapping its nav or its whole body in <article> scores full marks.
@@ -92,3 +94,11 @@ Declares applicablePageTypes ['content'] but then loops every page in the crawl 
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+## Implementation deviations (v7 P3, 2026-10-07)
+
+The page-purpose gate now excludes general pages. Body-level aggregation and narrower specialist populations remain under review in the v7 applicability ledger. This change preserves the evidence grade, tier, weight, and audit ID.
+
+## Deferred (v7 P3)
+
+See `docs/architecture/v7-audit-applicability-ledger.md` for the remaining audit-specific guards, population limits, and aggregation work. P4 will address selected-page evidence and mixed provenance.

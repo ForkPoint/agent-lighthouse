@@ -1,8 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { HoverOnlyContentAndNavigationAudit } from "./hover-only-content-and-navigation";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { CheckContext } from "../../check-context";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { CheckContext } from "#core/check-context";
+import {
+  AuditTier,
+  CheckStatus,
+  EvidenceGrade,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** A homepage carrying `body`, with an optional inline stylesheet. */
 function page(body: string, css = ""): CheckContext {
@@ -37,7 +43,7 @@ describe("HoverOnlyContentAndNavigationAudit", () => {
 
   it("fails a submenu revealed only by :hover and names every lost destination", async () => {
     const result = await audit.audit(page(MENU(), HOVER_CSS));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("/products/mugs");
     expect(result.found).toContain("/products/plates");
   });
@@ -49,7 +55,7 @@ describe("HoverOnlyContentAndNavigationAudit", () => {
         `${HOVER_CSS} .nav li:focus-within .submenu { display: block }`,
       ),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // aria-expanded plus aria-controls means a JS toggle exists; CSS is not the
@@ -58,7 +64,7 @@ describe("HoverOnlyContentAndNavigationAudit", () => {
     const result = await audit.audit(
       page(MENU('aria-expanded="false" aria-controls="sub"'), HOVER_CSS),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("reports title-only information apart from the navigation findings", async () => {
@@ -94,15 +100,15 @@ describe("HoverOnlyContentAndNavigationAudit", () => {
     const result = await audit.audit(
       page('<nav><a href="/products">Products</a></nav>'),
     );
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   // The snapshot-diff tier needs a live browser. The audit must not claim it.
   it("does not promise the headless snapshot-diff tier", () => {
     const { meta } = HoverOnlyContentAndNavigationAudit;
     expect(meta.description).not.toContain("snapshot");
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
-    expect(meta.scoreDisplayMode).toBe("binary");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
+    expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Binary);
   });
 });

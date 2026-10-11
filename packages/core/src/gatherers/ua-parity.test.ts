@@ -8,15 +8,15 @@ import {
   sharedControlProbe,
   CONTROL_UA,
 } from "./ua-parity";
-import { mockFetchResult } from "../__tests__/test-utils";
-import type { FetchOptions, FetchResult } from "../fetcher";
+import { mockFetchResult } from "#core/__tests__/test-utils";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
 
 // isSafeUrl performs a real DNS lookup before the gatherer probes a URL it read
 // out of site-controlled content. Stub it with an offline stand-in that still
 // blocks loopback and private ranges, so the refusal test proves the gate
 // rather than the mock.
-vi.mock("../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => {

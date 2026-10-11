@@ -6,13 +6,13 @@ import {
   sharedFeed,
   sharedFeeds,
 } from "./feeds";
-import { mockFetchResult } from "../__tests__/test-utils";
-import type { FetchOptions, FetchResult } from "../fetcher";
+import { mockFetchResult } from "#core/__tests__/test-utils";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
 
 // isSafeUrl does a real DNS lookup. The offline stand-in still blocks loopback
 // and private ranges, so a refusal test proves the gate rather than the mock.
-vi.mock("../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => {

@@ -6,11 +6,19 @@
 // audit asks a different question of it — does the hidden text read like an
 // instruction addressed to an AI — and fails only on that. A page can fail one
 // and pass the other.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext, PageContext } from "../../check-context";
-import { collectPageCss, type CssRule } from "../../gatherers/css-rules";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { collectPageCss, type CssRule } from "#core/gatherers/css-rules";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /**
  * Phrases that mark text as an instruction addressed to a model rather than
@@ -314,25 +322,25 @@ export class InvisibleInstructionScanAudit extends Audit {
     failureTitle: "Invisible Instruction Payload Scan",
     description:
       'Detect text that is present in the byte stream or DOM but not perceivable by a human, and that reads like an instruction addressed to an AI. Covers CSS-hidden text (color ≈ background, font-size:0, opacity:0, off-screen absolute positioning, zero-size + overflow:hidden, visibility:hidden, display:none), plus channels that never render at all: HTML comments, <noscript>, <template>, oversized data-* attribute values, <script type="text/plain">/application/json blobs, non-standard <meta name> content, and inline <svg><text> with fill-opacity:0 or display:none.',
-    scoreDisplayMode: "binary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Binary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/operability-safety/invisible-instruction-scan.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "critical",
+    defaultPriority: CheckPriority.Critical,
     guidance: {
       impact:
         "If a page carries text nodes that a sighted human cannot perceive but that survive DOM-to-text serialization, an LLM browsing agent ingests them with the same weight as body copy and can act on them. Brave demonstrated exactly this against Comet (white-on-white text, HTML comments, invisible elements hidden in a Reddit spoiler tag) and confirmed Opera Neon was exploitable through 'hidden HTML elements and other non-rendered markup'. Falsifier: an agent that ingests only visually perceivable, rendered text would be immune — the disclosed incidents show current agents are not. Google's spam policy independently enumerates the same hiding techniques and their legitimate exceptions, giving the detector a canonical technique list and a false-positive allowlist.",
       fix: 'Remove the hidden text. If it exists for assistive technology, keep it short, keep it free of anything that reads as an instruction, and use the visually-hidden idiom (class="sr-only") so it is announced rather than concealed. If a third party injected it, treat the page as compromised: hidden instruction text is how the disclosed Comet and Opera Neon attacks worked.',
       code: SAMPLE,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/invisible-instruction-scan/",
       tags: [
@@ -347,7 +355,7 @@ export class InvisibleInstructionScanAudit extends Audit {
 
   private recommendation() {
     return {
-      priority: "critical" as const,
+      priority: CheckPriority.Critical,
       description: InvisibleInstructionScanAudit.meta.description,
       code: SAMPLE,
     };

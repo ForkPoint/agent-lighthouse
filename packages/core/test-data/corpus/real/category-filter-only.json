@@ -1,0 +1,27 @@
+{
+  "url": "https://www.shiseido.com/us/en/skincare/",
+  "capturedAt": "2026-10-09T17:48:55.972Z",
+  "sha256": "5d85e363efe2a542c867f9e316e36d9da8fc7dcf03e0e28ba2d02fa041179e0a",
+  "status": 200,
+  "kind": "page",
+  "headers": {
+    "date": "Fri, 09 Oct 2026 17:48:55 GMT",
+    "content-type": "text/html;charset=UTF-8",
+    "server": "cloudflare",
+    "x-dw-request-base-id": "tVQR7gcpyWoBAAB_",
+    "referrer-policy": "strict-origin-when-cross-origin",
+    "permissions-policy": "geolocation=(self), camera=(self)",
+    "x-frame-options": "SAMEORIGIN",
+    "x-content-type-options": "nosniff",
+    "cache-control": "no-cache, no-store, must-revalidate",
+    "pragma": "no-cache",
+    "expires": "Thu, 01 Dec 1994 16:00:00 GMT",
+    "vary": "accept-encoding",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a47f380dbf9af937-SOF"
+  },
+  "contentType": "text/html;charset=UTF-8",
+  "ttfbMs": 628,
+  "totalMs": 673,
+  "contentLength": 552489
+}

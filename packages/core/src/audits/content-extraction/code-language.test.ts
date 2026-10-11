@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { CodeLanguageAudit } from "./code-language";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 describe("CodeLanguageAudit", () => {
   const audit = new CodeLanguageAudit();
@@ -11,7 +12,7 @@ describe("CodeLanguageAudit", () => {
       "<html><body><p>No code</p></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("No code blocks found");
   });
 
@@ -21,7 +22,7 @@ describe("CodeLanguageAudit", () => {
       '<html><body><pre><code class="language-javascript">const x = 1;</code></pre></body></html>',
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("1/1");
   });
 
@@ -35,7 +36,7 @@ describe("CodeLanguageAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("2/3");
   });
 
@@ -45,7 +46,7 @@ describe("CodeLanguageAudit", () => {
       "<html><body><pre><code>plain code</code></pre></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("0/1");
   });
 });

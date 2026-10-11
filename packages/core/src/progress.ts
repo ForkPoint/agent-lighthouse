@@ -1,5 +1,12 @@
-export type PhaseId =
-  "fetch-root" | "fetch-pages" | "analyze" | "audits" | "report";
+export const PhaseId = {
+  FetchRoot: "fetch-root",
+  FetchPages: "fetch-pages",
+  Analyze: "analyze",
+  Audits: "audits",
+  Report: "report",
+} as const;
+
+export type PhaseId = (typeof PhaseId)[keyof typeof PhaseId];
 
 export type ScanEvent =
   | { type: "scan:start"; url: string; fraction: number; elapsedMs: number }
@@ -48,11 +55,11 @@ export type ScanEvent =
  * fraction of a finished scan is exactly 1.
  */
 export const PHASE_WEIGHTS: Record<PhaseId, number> = {
-  "fetch-root": 0.35,
-  "fetch-pages": 0.2,
-  analyze: 0.1,
-  audits: 0.3,
-  report: 0.05,
+  [PhaseId.FetchRoot]: 0.35,
+  [PhaseId.FetchPages]: 0.2,
+  [PhaseId.Analyze]: 0.1,
+  [PhaseId.Audits]: 0.3,
+  [PhaseId.Report]: 0.05,
 };
 
 /**

@@ -1,7 +1,13 @@
 import { describe, it, expect } from "vitest";
-import type { AuditMeta, AuditResult, CheckPriority } from "./types";
+import type { AuditMeta, AuditResult } from "./types";
 import { Audit } from "./audit";
 import type { CheckContext } from "./check-context";
+import {
+  CheckPriority,
+  CheckStatus,
+  FixEffort,
+  ScoreDisplayMode,
+} from "./types";
 
 // ---------------------------------------------------------------------------
 // Concrete test subclasses that expose the protected helpers.
@@ -13,14 +19,14 @@ const META_WITH_GUIDANCE: AuditMeta = {
   title: "Passing Title",
   failureTitle: "Failing Title",
   description: "Some description",
-  scoreDisplayMode: "ternary",
+  scoreDisplayMode: ScoreDisplayMode.Ternary,
   weight: 1.0,
-  defaultPriority: "medium",
+  defaultPriority: CheckPriority.Medium,
   guidance: {
     impact: "Guidance impact",
     fix: "Guidance fix",
     code: "guidance-code",
-    effort: "easy",
+    effort: FixEffort.Easy,
     docsUrl: "https://docs.example.com",
     tags: ["tag-a", "tag-b"],
   },
@@ -32,9 +38,9 @@ const META_NO_GUIDANCE: AuditMeta = {
   title: "Passing Title 2",
   failureTitle: "Failing Title 2",
   description: "Description fallback",
-  scoreDisplayMode: "binary",
+  scoreDisplayMode: ScoreDisplayMode.Binary,
   weight: 1.0,
-  defaultPriority: "high",
+  defaultPriority: CheckPriority.High,
 };
 
 class WithGuidanceAudit extends Audit {
@@ -91,7 +97,7 @@ describe("Audit.pass", () => {
   it("builds a passing result without pageUrl", () => {
     const r = a.callPass("m", "e", "f");
     expect(r).toEqual({
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1.0,
       message: "m",
       expected: "e",
@@ -102,7 +108,7 @@ describe("Audit.pass", () => {
 
   it("builds a passing result with pageUrl", () => {
     const r = a.callPass("m", "e", "f", "https://example.com/p");
-    expect(r.status).toBe("pass");
+    expect(r.status).toBe(CheckStatus.Pass);
     expect(r.pageUrl).toBe("https://example.com/p");
   });
 });
@@ -112,14 +118,14 @@ describe("Audit.notApplicable", () => {
 
   it("builds an na result without pageUrl", () => {
     const r = a.callNotApplicable("m", "e", "f");
-    expect(r.status).toBe("na");
+    expect(r.status).toBe(CheckStatus.NotApplicable);
     expect(r.score).toBe(0);
     expect(r.pageUrl).toBeUndefined();
   });
 
   it("builds an na result with pageUrl", () => {
     const r = a.callNotApplicable("m", "e", "f", "/relative");
-    expect(r.status).toBe("na");
+    expect(r.status).toBe(CheckStatus.NotApplicable);
     expect(r.pageUrl).toBe("/relative");
   });
 });
@@ -133,9 +139,9 @@ describe("Audit.warn", () => {
 
   it("resolves a known string priority via PRIORITY_MAP", () => {
     const r = a.callWarn("m", "e", "f", "high");
-    expect(r.status).toBe("warn");
+    expect(r.status).toBe(CheckStatus.Warn);
     expect(r.score).toBe(0.5);
-    expect(r.priority).toBe("high");
+    expect(r.priority).toBe(CheckPriority.High);
   });
 
   // A string that is not one of the four tokens is a fix sentence, not a
@@ -147,8 +153,11 @@ describe("Audit.warn", () => {
   });
 
   it("resolves priority from an object form", () => {
-    const r = a.callWarn("m", "e", "f", { priority: "critical", extra: 1 });
-    expect(r.priority).toBe("critical");
+    const r = a.callWarn("m", "e", "f", {
+      priority: CheckPriority.Critical,
+      extra: 1,
+    });
+    expect(r.priority).toBe(CheckPriority.Critical);
   });
 
   it("leaves priority undefined when no recommendation given", () => {
@@ -167,9 +176,9 @@ describe("Audit.fail", () => {
 
   it("resolves a known string priority via PRIORITY_MAP", () => {
     const r = a.callFail("m", "e", "f", "low");
-    expect(r.status).toBe("fail");
+    expect(r.status).toBe(CheckStatus.Fail);
     expect(r.score).toBe(0.0);
-    expect(r.priority).toBe("low");
+    expect(r.priority).toBe(CheckPriority.Low);
   });
 
   it("reads an unknown string as the remediation, not as the priority", () => {
@@ -179,8 +188,8 @@ describe("Audit.fail", () => {
   });
 
   it("resolves priority from an object form", () => {
-    const r = a.callFail("m", "e", "f", { priority: "critical" });
-    expect(r.priority).toBe("critical");
+    const r = a.callFail("m", "e", "f", { priority: CheckPriority.Critical });
+    expect(r.priority).toBe(CheckPriority.Critical);
   });
 
   it("leaves priority undefined when no recommendation given", () => {
@@ -202,28 +211,28 @@ describe("Audit.toCheckResult", () => {
   it("uses left-hand sources (displayValue/explanation/details/guidance) for a pass", () => {
     const a = new WithGuidanceAudit();
     const result: AuditResult = {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1.0,
       displayValue: "DV",
       explanation: "EX",
       details: { expected: "d-exp", found: "d-found", code: "d-code" },
-      priority: "critical",
+      priority: CheckPriority.Critical,
     };
     const c = a.toCheckResult(result);
 
     expect(c.id).toBe("a1");
     expect(c.title).toBe("Passing Title"); // pass → meta.title
-    expect(c.status).toBe("pass");
+    expect(c.status).toBe(CheckStatus.Pass);
     expect(c.displayValue).toBe("DV");
     expect(c.explanation).toBe("EX");
-    expect(c.priority).toBe("critical"); // result.priority wins
+    expect(c.priority).toBe(CheckPriority.Critical); // result.priority wins
     expect(c.impact).toBe("Guidance impact");
     expect(c.fix).toBe("Guidance fix");
     expect(c.details?.expected).toBe("d-exp");
     expect(c.details?.found).toBe("d-found");
     expect(c.details?.code).toBe("d-code");
     expect(c.details?.docsUrl).toBe("https://docs.example.com");
-    expect(c.details?.effort).toBe("easy");
+    expect(c.details?.effort).toBe(FixEffort.Easy);
     expect(c.tags).toEqual(["tag-a", "tag-b"]);
   });
 
@@ -233,17 +242,17 @@ describe("Audit.toCheckResult", () => {
     const a = new NoGuidanceAudit();
     const c = a.toCheckResult(
       {
-        status: "warn",
+        status: CheckStatus.Warn,
         score: 0.5,
         found: "f",
         expected: "e",
         message: "MSG",
       },
-      "informative",
+      ScoreDisplayMode.Informative,
     );
     expect(c.score).toBe(0.5);
     expect(c.weight).toBe(0);
-    expect(c.scoreDisplayMode).toBe("informative");
+    expect(c.scoreDisplayMode).toBe(ScoreDisplayMode.Informative);
   });
 
   // `failureTitle` names what went wrong. A not-applicable check did not go
@@ -251,20 +260,20 @@ describe("Audit.toCheckResult", () => {
   it("titles a not-applicable result with the plain title, not the failure title", () => {
     const a = new NoGuidanceAudit();
     const c = a.toCheckResult({
-      status: "na",
+      status: CheckStatus.NotApplicable,
       score: 0,
       found: "nothing to evaluate",
       expected: "something to evaluate",
       message: "MSG",
     });
     expect(c.title).toBe("Passing Title 2");
-    expect(c.status).toBe("na");
+    expect(c.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("falls back to found/message/meta when optional fields absent (fail, no guidance)", () => {
     const a = new NoGuidanceAudit();
     const result: AuditResult = {
-      status: "fail",
+      status: CheckStatus.Fail,
       score: 0.0,
       found: "top-found",
       expected: "top-expected",
@@ -280,7 +289,7 @@ describe("Audit.toCheckResult", () => {
     expect(c.details?.code).toBeUndefined(); // no details, no guidance
     expect(c.details?.docsUrl).toBeUndefined();
     expect(c.details?.effort).toBeUndefined();
-    expect(c.priority).toBe("high"); // no result.priority → meta.defaultPriority
+    expect(c.priority).toBe(CheckPriority.High); // no result.priority → meta.defaultPriority
     expect(c.impact).toBe("Description fallback"); // no guidance → meta.description
     expect(c.fix).toBe("No fix instructions available.");
     expect(c.tags).toBeUndefined();
@@ -289,7 +298,7 @@ describe("Audit.toCheckResult", () => {
   it("falls back displayValue to message and code to guidance.code", () => {
     const a = new WithGuidanceAudit();
     const result: AuditResult = {
-      status: "warn",
+      status: CheckStatus.Warn,
       score: 0.5,
       message: "only-message",
     };
@@ -305,7 +314,7 @@ describe("Audit — structured details and per-result code", () => {
   it("carries unknown details keys through validation into the CheckResult", () => {
     const a = new WithGuidanceAudit();
     const result: AuditResult = {
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       message: "ok",
       expected: "e",
@@ -330,26 +339,34 @@ describe("Audit — structured details and per-result code", () => {
   it("carries a per-result code from fail() into the check details", () => {
     const a = new WithGuidanceAudit();
     const c = a.toCheckResult(
-      a.callFail("m", "e", "f", { priority: "high", code: "SITE-SPECIFIC" }),
+      a.callFail("m", "e", "f", {
+        priority: CheckPriority.High,
+        code: "SITE-SPECIFIC",
+      }),
     );
 
     expect(c.details?.code).toBe("SITE-SPECIFIC");
-    expect(c.priority).toBe("high");
+    expect(c.priority).toBe(CheckPriority.High);
   });
 
   it("carries a per-result code from warn() into the check details", () => {
     const a = new WithGuidanceAudit();
     const c = a.toCheckResult(
-      a.callWarn("m", "e", "f", { priority: "low", code: "WARN-SNIPPET" }),
+      a.callWarn("m", "e", "f", {
+        priority: CheckPriority.Low,
+        code: "WARN-SNIPPET",
+      }),
     );
 
     expect(c.details?.code).toBe("WARN-SNIPPET");
-    expect(c.priority).toBe("low");
+    expect(c.priority).toBe(CheckPriority.Low);
   });
 
   it("still falls back to guidance.code when the result carries none", () => {
     const a = new WithGuidanceAudit();
-    const c = a.toCheckResult(a.callFail("m", "e", "f", { priority: "high" }));
+    const c = a.toCheckResult(
+      a.callFail("m", "e", "f", { priority: CheckPriority.High }),
+    );
 
     expect(c.details?.code).toBe("guidance-code");
   });
@@ -363,8 +380,10 @@ describe("Audit.fail / Audit.warn — the fourth argument", () => {
   const a = new WithGuidanceAudit();
 
   it("reads a priority token as the priority", () => {
-    expect(a.callFail("m", "e", "f", "critical").priority).toBe("critical");
-    expect(a.callWarn("m", "e", "f", "low").priority).toBe("low");
+    expect(a.callFail("m", "e", "f", "critical").priority).toBe(
+      CheckPriority.Critical,
+    );
+    expect(a.callWarn("m", "e", "f", "low").priority).toBe(CheckPriority.Low);
   });
 
   // Thirty audits pass a sentence here. A sentence is not a CheckPriority, and
@@ -375,7 +394,7 @@ describe("Audit.fail / Audit.warn — the fourth argument", () => {
     expect(r.priority).toBeUndefined();
     expect(r.remediation).toBe("Move the table out of the aside.");
     expect(() => a.toCheckResult(r)).not.toThrow();
-    expect(a.toCheckResult(r).priority).toBe("medium");
+    expect(a.toCheckResult(r).priority).toBe(CheckPriority.Medium);
   });
 
   it("lets that sentence replace the generic fix in the report", () => {
@@ -388,10 +407,10 @@ describe("Audit.fail / Audit.warn — the fourth argument", () => {
 
   it("reads an object’s description as the remediation and keeps its priority", () => {
     const r = a.callFail("m", "e", "f", {
-      priority: "high",
+      priority: CheckPriority.High,
       description: "Add a canonical.",
     });
-    expect(r.priority).toBe("high");
+    expect(r.priority).toBe(CheckPriority.High);
     expect(r.remediation).toBe("Add a canonical.");
   });
 });

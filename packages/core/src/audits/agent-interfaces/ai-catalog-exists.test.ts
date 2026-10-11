@@ -4,8 +4,9 @@ import {
   mockCheckContext,
   mockPageContext,
   mockFetchResult,
-} from "../../__tests__/test-utils";
-import type { PageContext } from "../../check-context";
+} from "#core/__tests__/test-utils";
+import type { PageContext } from "#core/check-context";
+import { CheckStatus } from "#core/types";
 
 /** An ARD §4.1 manifest, shaped like the spec's own conformance example. */
 function ard(over: Record<string, unknown> = {}): string {
@@ -59,13 +60,13 @@ describe("AiCatalogExistsAudit", () => {
 
   it("passes on an ARD §4.1 manifest (specVersion + host + entries)", () => {
     const result = audit.audit(withCatalog(ard()));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("1 entr");
   });
 
   it("fails on the invented top-level services array", () => {
     const result = audit.audit(withCatalog(LEGACY));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("specVersion");
     expect(result.message).toContain("host");
     expect(result.message).toContain("entries");
@@ -73,50 +74,50 @@ describe("AiCatalogExistsAudit", () => {
 
   it("names exactly the missing required field when only one is absent", () => {
     const result = audit.audit(withCatalog(ard({ specVersion: undefined })));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("specVersion");
     expect(result.message).not.toContain("entries");
   });
 
   it("fails when host is missing", () => {
     expect(audit.audit(withCatalog(ard({ host: undefined }))).status).toBe(
-      "fail",
+      CheckStatus.Fail,
     );
   });
 
   it("fails when entries is not an array", () => {
     expect(audit.audit(withCatalog(ard({ entries: { a: 1 } }))).status).toBe(
-      "fail",
+      CheckStatus.Fail,
     );
   });
 
   it("warns on a conformant manifest that lists no entries at all", () => {
     const result = audit.audit(withCatalog(ard({ entries: [] })));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("no entries");
   });
 
   it("does not require the ai-catalog media type to pass", () => {
     expect(
       audit.audit(withCatalog(ard(), 200, "application/json")).status,
-    ).toBe("pass");
+    ).toBe(CheckStatus.Pass);
   });
 
   // ── absence, soft-404 and malformed bodies ──
 
   it("fails when the manifest is not fetched at all", () => {
     const result = audit.audit(mockCheckContext([], {}));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("Not fetched");
   });
 
   it("fails when the manifest 404s", () => {
-    expect(audit.audit(withCatalog("", 404)).status).toBe("fail");
+    expect(audit.audit(withCatalog("", 404)).status).toBe(CheckStatus.Fail);
   });
 
   it("fails when the manifest body is not valid JSON", () => {
     const result = audit.audit(withCatalog("nope {{{"));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("not valid JSON");
   });
 
@@ -124,7 +125,7 @@ describe("AiCatalogExistsAudit", () => {
     const result = audit.audit(
       withCatalog("<!doctype html><html></html>", 200, "text/html"),
     );
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("HTML");
     expect(result.message).not.toContain("not valid JSON");
   });
@@ -139,7 +140,7 @@ describe("AiCatalogExistsAudit", () => {
       },
     );
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("/ai-catalog.json");
   });
 
@@ -152,7 +153,7 @@ describe("AiCatalogExistsAudit", () => {
       ],
       { "/.well-known/ai-catalog.json": mockFetchResult("", 404) },
     );
-    expect(audit.audit(ctx).status).toBe("warn");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.Warn);
   });
 
   it("accepts an HTTP Link header advertising the catalog", () => {
@@ -161,7 +162,7 @@ describe("AiCatalogExistsAudit", () => {
     const ctx = mockCheckContext([p], {
       "/.well-known/ai-catalog.json": mockFetchResult("", 404),
     });
-    expect(audit.audit(ctx).status).toBe("warn");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.Warn);
   });
 
   it("finds the advertisement on any crawled page, not only the homepage", () => {
@@ -176,7 +177,7 @@ describe("AiCatalogExistsAudit", () => {
       ],
       { "/.well-known/ai-catalog.json": mockFetchResult("", 404) },
     );
-    expect(audit.audit(ctx).status).toBe("warn");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.Warn);
   });
 
   it("does not treat the old title-matched alternate link as an advertisement", () => {
@@ -188,7 +189,7 @@ describe("AiCatalogExistsAudit", () => {
       ],
       { "/.well-known/ai-catalog.json": mockFetchResult("", 404) },
     );
-    expect(audit.audit(ctx).status).toBe("fail");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.Fail);
   });
 
   it("reports the advertisement alongside a valid well-known manifest", () => {
@@ -203,7 +204,7 @@ describe("AiCatalogExistsAudit", () => {
       },
     );
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain('rel="ai-catalog"');
   });
 
@@ -215,7 +216,7 @@ describe("AiCatalogExistsAudit", () => {
         "application/ai-catalog+json",
       ),
     });
-    expect(audit.audit(ctx).status).toBe("pass");
+    expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
   });
 
   it('does not claim "advertised but not served" when the served manifest is merely malformed', () => {
@@ -230,7 +231,7 @@ describe("AiCatalogExistsAudit", () => {
       },
     );
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).not.toContain("resolves only");
   });
 

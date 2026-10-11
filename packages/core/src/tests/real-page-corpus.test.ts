@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { afterAll, beforeAll, describe, it, expect, vi } from "vitest";
 
 // Ensure corpus tests run hermetically offline without invoking live DNS
 vi.mock("node:dns/promises", () => ({
@@ -7,10 +7,10 @@ vi.mock("node:dns/promises", () => ({
   },
 }));
 
-import { defaultConfig } from "../audit-config";
-import { mockCheckContext } from "../__tests__/test-utils";
-import type { CheckContext, PageContext } from "../check-context";
-import type { FetchResult } from "../fetcher";
+import { defaultConfig } from "#core/audit-config";
+import { mockCheckContext } from "#core/__tests__/test-utils";
+import type { CheckContext, PageContext } from "#core/check-context";
+import type { FetchResult } from "#core/fetcher";
 import {
   parseHtml,
   extractJsonLd,
@@ -19,8 +19,8 @@ import {
   extractMetaTags,
   extractHeadLinks,
   detectPageType,
-} from "../parser";
-import { detectWafProtection } from "../waf-detector";
+} from "#core/parser";
+import { detectWafProtection } from "#core/waf-detector";
 import {
   listFixtures,
   readFixture,
@@ -148,12 +148,11 @@ function fixturePageContext(
  *   at all: `reflected-parameter-injection-canary` passes on every page
  *   because its probe fetch 404s.
  *
- * One rule for whoever captures the next fixture: **no dated JSON-LD.**
- * `agentic-commerce/offer-truth-consistency` compares `priceValidUntil`
- * against `Date.now()`. No fixture carries one today, so the snapshot is
- * deterministic. A capture that did would make a cell flip on a calendar date
- * with no code change behind it, which is the one failure mode this baseline
- * must never have.
+ * The clock is pinned. `agentic-commerce/offer-truth-consistency` compares
+ * `priceValidUntil` against `Date.now()`, and two retail fixtures carry one.
+ * On a live clock that cell would flip on a calendar date with no code change
+ * behind it, which is the one failure mode this baseline must never have.
+ * Only `Date` is faked, so the audits' timers and promises run as normal.
  */
 function fixtureContext(
   html: string,
@@ -173,7 +172,18 @@ function fixtureContext(
   };
 }
 
+/** A fixed instant before every dated offer in the corpus expires. */
+const CORPUS_NOW = new Date("2026-10-09T00:00:00Z");
+
 describe("real-page corpus", () => {
+  beforeAll(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(CORPUS_NOW);
+  });
+  afterAll(() => {
+    vi.useRealTimers();
+  });
+
   it("has fixtures and audits to run", () => {
     expect(fixtures.length).toBeGreaterThan(0);
     expect(registrations.length).toBeGreaterThan(200);

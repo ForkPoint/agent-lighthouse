@@ -6,12 +6,20 @@
 // stream, and fails on its size. This audit is the mirror case: markup that is
 // hidden from the machine until a pointer arrives, and it fails on the
 // destinations lost, not on the bytes.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import { collectPageCss, type CssRule } from "../../gatherers/css-rules";
-import { escapeAttrValue } from "../../parser";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import { collectPageCss, type CssRule } from "#core/gatherers/css-rules";
+import { escapeAttrValue } from "#core/parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** Declarations that bring a hidden element back into view. */
 const REVEALING = [
@@ -234,25 +242,25 @@ export class HoverOnlyContentAndNavigationAudit extends Audit {
     failureTitle: "Hover-only navigation and content",
     description:
       "Detects navigation subtrees and information that exist in the DOM only while a pointer hovers — `:hover`-revealed submenus with no focus or `aria-expanded` equivalent, and content carried solely in `title` attributes or hover cards. Reports each destination URL an agent never discovers.",
-    scoreDisplayMode: "binary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Binary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/operability-safety/hover-only-content-and-navigation.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "high",
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "A submenu revealed only by an ancestor `:hover` rule is `display:none` or `visibility:hidden` in the resting DOM, and Playwright's actionability contract defines such an element as not visible — so every Playwright-derived agent refuses to click it, and the snapshot serializer omits it entirely. The agent never learns those destinations exist: it does not fail loudly, it simply reports that the site has no page for what the user asked. WebSuite measures the information half of the same defect at 0% success for tooltip-based retrieval across both agents it tested. The fix is cheap and it is the same fix keyboard users need, which is why it is worth doing once.",
       fix: 'Add a keyboard and ARIA path beside the pointer path. Put `:focus-within` (or a `[aria-expanded="true"]` selector driven by a real toggle) on the same rule that `:hover` triggers, so the submenu is revealed by focus as well as by a pointer. Give the trigger `aria-expanded` and `aria-controls` pointing at the submenu. Move anything a `title` attribute carries into visible text or an `aria-describedby` target, and give every hover card an id that a focusable element references.',
       code: SAMPLE,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/hover-only-content-and-navigation/",
       tags: ["agent-operability", "navigation", "discoverability"],
@@ -261,7 +269,7 @@ export class HoverOnlyContentAndNavigationAudit extends Audit {
 
   private recommendation() {
     return {
-      priority: "high" as const,
+      priority: CheckPriority.High,
       description: HoverOnlyContentAndNavigationAudit.meta.description,
       code: SAMPLE,
     };

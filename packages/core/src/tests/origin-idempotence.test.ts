@@ -1,11 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
-import { runScan } from "../orchestrator";
+import { runScan } from "#core/orchestrator";
 import {
   OriginCache,
   computeOriginCacheKey,
   shouldBypassOriginCache,
-} from "../origin-cache";
-import type { FetchResult } from "../fetcher";
+} from "#core/origin-cache";
+import type { FetchResult } from "#core/fetcher";
 
 const h = vi.hoisted(() => ({ map: new Map<string, FetchResult>() }));
 
@@ -29,8 +29,8 @@ function mockFetch(
 
 const fetchedUrls: string[] = [];
 
-vi.mock("../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async () => true,

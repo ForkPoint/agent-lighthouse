@@ -1,7 +1,16 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext, PageContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  PageType,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /**
  * Class/id tokens that name a supplementary-content container.
@@ -81,7 +90,7 @@ function findSupplementary(page: PageContext): PageFindings {
 }
 
 const EXPECTED =
-  'Every sidebar / promo / related-links block on a content page is wrapped in <aside> (or carries role="complementary")';
+  'Every sidebar / promo / related-links block on an article or general page is wrapped in <aside> (or carries role="complementary")';
 
 export class AsideElementAudit extends Audit {
   static override meta: AuditMeta = {
@@ -91,25 +100,25 @@ export class AsideElementAudit extends Audit {
     failureTitle: "<aside> for supplementary content",
     description:
       "Mozilla Readability and trafilatura delete <aside> subtrees before extraction, and Chromium exposes <aside> as a complementary landmark in the accessibility tree agents read. Wrapping sidebars, promos and related-links blocks in <aside> is what keeps them out of the text an LLM ingests; a sidebar left in a bare <div> is extracted as if it were article body.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/content-extraction/aside-element.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: ["content"],
-    defaultPriority: "low",
+    applicablePageTypes: [PageType.General, PageType.Article],
+    defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
         'Mozilla Readability removes every <aside> from extracted article content (`this._clean(articleContent, "aside")`) and trafilatura lists "aside" first in its MANUALLY_CLEANED tag list, so supplementary blocks marked this way never reach the model. Firefox Reader Mode, Jina Reader and a long tail of LLM/agent tools run on Readability. Chromium additionally exposes <aside> as a `complementary` landmark, which is what Anthropic\'s browser-use `read_page` returns. A sidebar left in a bare <div> is invisible to all three paths and gets extracted as if it were part of your article.',
       fix: 'Wrap sidebar, promo, advert and related-links containers in <aside> (or give them role="complementary"). Because Readability and trafilatura discard that subtree entirely, never put citable facts — author bios, specifications, key figures — inside an <aside>; those belong in the main article body.',
       code: '<article>\n  <p>Citable article body stays here.</p>\n</article>\n<aside>\n  <h3>Related Resources</h3>\n  <ul>\n    <li><a href="/related-topic">Related Topic</a></li>\n  </ul>\n</aside>',
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl:
         "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/aside",
       tags: ["aside", "structure", "semantic", "html", "content-extraction"],
@@ -117,7 +126,7 @@ export class AsideElementAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    // The meta declares content pages, so only content pages are evaluated —
+    // The meta declares article and general pages, so only article and general pages are evaluated —
     // the v1 code looped every page and reported a denominator that mixed
     // page types.
     const pages = ctx.pages;
@@ -142,7 +151,7 @@ export class AsideElementAudit extends Audit {
     // stands. v1 warned at it, which asked authors to invent a sidebar.
     if (evaluated === 0) {
       return this.notApplicable(
-        "No content page carries a sidebar, promo or related-links block, so there is nothing to mark up as supplementary.",
+        "No article or general page carries a sidebar, promo or related-links block, so there is nothing to mark up as supplementary.",
         EXPECTED,
         "No supplementary content detected",
       );
@@ -152,7 +161,7 @@ export class AsideElementAudit extends Audit {
 
     if (unmarked.length === 0) {
       return this.pass(
-        `All ${marked} supplementary block(s) across ${evaluated} content page(s) are marked with <aside> or role="complementary".`,
+        `All ${marked} supplementary block(s) across ${evaluated} article or general page(s) are marked with <aside> or role="complementary".`,
         EXPECTED,
         `${marked} marked supplementary block(s), 0 unmarked`,
       );
@@ -164,7 +173,7 @@ export class AsideElementAudit extends Audit {
         EXPECTED,
         `${marked} marked, ${unmarked.length} unmarked — ${sample}`,
         {
-          priority: "low",
+          priority: CheckPriority.Low,
           description:
             "Some sidebar/promo blocks are wrapped in <aside> and some are not. The unwrapped ones survive Readability and trafilatura extraction and are fed to the model as article body, diluting the page. Wrap them in <aside> too — but keep citable facts out, because that subtree is discarded.",
           code: '<aside class="sidebar">\n  <h3>Related Resources</h3>\n  <ul><li><a href="/related">Related page</a></li></ul>\n</aside>',
@@ -178,9 +187,9 @@ export class AsideElementAudit extends Audit {
       EXPECTED,
       `0 marked, ${unmarked.length} unmarked — ${sample}`,
       {
-        priority: "low",
+        priority: CheckPriority.Low,
         description:
-          "Sidebar, promo and related-links containers on your content pages are plain <div>s. Readability and trafilatura cannot tell them from article body, so promos and tangential links are extracted into the text an LLM reads and summarises, and accessibility-tree agents see an undifferentiated generic node instead of a complementary landmark.",
+          "Sidebar, promo and related-links containers on your article and general pages are plain <div>s. Readability and trafilatura cannot tell them from article body, so promos and tangential links are extracted into the text an LLM reads and summarises, and accessibility-tree agents see an undifferentiated generic node instead of a complementary landmark.",
         code: '<article>\n  <p>Citable article body stays here.</p>\n</article>\n<aside class="sidebar">\n  <h3>Related Resources</h3>\n  <ul><li><a href="/related">Related page</a></li></ul>\n</aside>',
       },
       firstGapUrl,

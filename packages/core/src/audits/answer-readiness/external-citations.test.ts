@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { ExternalCitationsAudit } from "./external-citations";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 describe("ExternalCitationsAudit", () => {
   const audit = new ExternalCitationsAudit();
@@ -15,7 +16,7 @@ describe("ExternalCitationsAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("2+ external links");
   });
 
@@ -28,7 +29,7 @@ describe("ExternalCitationsAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("no page has 2+ external citations");
   });
 
@@ -38,13 +39,13 @@ describe("ExternalCitationsAudit", () => {
       `<html><body><a href="/internal">Internal</a></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No external links found");
   });
 
   it("fails when no pages scanned", () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No pages scanned");
   });
 
@@ -58,7 +59,7 @@ describe("ExternalCitationsAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("ignores invalid hrefs that cause URL parsing to throw", () => {
@@ -71,7 +72,7 @@ describe("ExternalCitationsAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("2+ external links");
   });
 
@@ -95,7 +96,7 @@ describe("ExternalCitationsAudit", () => {
       1,
     );
     const result = audit.audit(mockCheckContext([page1, page2]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("external link");
   });
 });

@@ -4,13 +4,14 @@ import {
   mockPageContext,
   mockCheckContext,
   mockFetchResult,
-} from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import { BASELINE_UA } from "../../gatherers/ua-parity";
-import type { FetchOptions, FetchResult } from "../../fetcher";
+} from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import { BASELINE_UA } from "#core/gatherers/ua-parity";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import { CheckStatus } from "#core/types";
 
-vi.mock("../../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => {
@@ -98,11 +99,13 @@ describe("BotContentDeltaDeclaredAudit", () => {
   });
 
   it("is notApplicable when no content URL can be sampled", async () => {
-    expect((await run({ sitemap: false })).status).toBe("na");
+    expect((await run({ sitemap: false })).status).toBe(
+      CheckStatus.NotApplicable,
+    );
   });
 
   it("passes when the crawler and the browser get the same text", async () => {
-    expect((await run()).status).toBe("pass");
+    expect((await run()).status).toBe(CheckStatus.Pass);
   });
 
   // Serving a crawler less than a user is sanctioned only when it is declared.
@@ -111,7 +114,7 @@ describe("BotContentDeltaDeclaredAudit", () => {
       browser: page(FULL_TEXT),
       bot: page(STUB_TEXT),
     });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("isAccessibleForFree");
   });
 
@@ -122,7 +125,7 @@ describe("BotContentDeltaDeclaredAudit", () => {
       browser: page(FULL_TEXT),
       bot: page(REWRITTEN_TEXT),
     });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("shingle");
   });
 
@@ -137,7 +140,7 @@ describe("BotContentDeltaDeclaredAudit", () => {
         selectorClass: "paywalled-body",
       }),
     });
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // The markup is present, and it points at nothing — the failure mode most
@@ -147,7 +150,7 @@ describe("BotContentDeltaDeclaredAudit", () => {
       browser: page(FULL_TEXT, { jsonLd: PAYWALL_MARKUP }),
       bot: page(STUB_TEXT, { jsonLd: PAYWALL_MARKUP }),
     });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain(".paywalled-body");
     expect(result.message).toContain("no-op");
   });
@@ -155,7 +158,7 @@ describe("BotContentDeltaDeclaredAudit", () => {
   it("reports a bot-only variant that is materially longer than the browser page", async () => {
     const longer = page(`${FULL_TEXT} ${FULL_TEXT}`);
     const result = await run({ browser: page(FULL_TEXT), bot: longer });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("longer");
   });
 

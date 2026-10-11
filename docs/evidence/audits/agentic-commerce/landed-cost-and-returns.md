@@ -93,3 +93,8 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
   treats as optional.
 - Microdata and RDFa offers are read only through the shared JSON-LD-shaped
   normalization; no separate microdata traversal is performed.
+- Until 2026-10-09 the code read `page.jsonLd` only, so a product marked up in
+  microdata read as "no Offer" despite the line above. It now reads the merged
+  `structuredData`, takes the offer of the page's own product first through
+  the shared `resolveProducts`, and falls back to the first `Offer` node only
+  when no product carries one.

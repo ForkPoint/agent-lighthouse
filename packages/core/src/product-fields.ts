@@ -1,31 +1,7 @@
-import type { FieldStatus, ProductFieldVerification } from "./types";
+import type { ProductFieldVerification } from "./types";
 import type { PageContext } from "./check-context";
-
-const PRODUCT_TYPES = ["Product", "IndividualProduct", "ProductModel"];
-
-/** Flatten @graph wrappers so nested schema objects are inspectable. */
-function flatten(blocks: object[]): Record<string, unknown>[] {
-  const flat: Record<string, unknown>[] = [];
-  for (const block of blocks) {
-    const b = block as Record<string, unknown>;
-    if (Array.isArray(b["@graph"])) {
-      for (const item of b["@graph"]) {
-        if (item && typeof item === "object")
-          flat.push(item as Record<string, unknown>);
-      }
-    } else {
-      flat.push(b);
-    }
-  }
-  return flat;
-}
-
-function isType(s: Record<string, unknown>, types: string[]): boolean {
-  const t = s["@type"];
-  if (typeof t === "string") return types.includes(t);
-  if (Array.isArray(t)) return t.some((x) => types.includes(x as string));
-  return false;
-}
+import { FieldStatus, PageType } from "./types";
+import { resolveProducts } from "./product-schema";
 
 /** A field is present only if it carries a real value (not '', null, "null"). */
 function has(v: unknown): boolean {
@@ -45,14 +21,14 @@ function first(v: unknown): Record<string, unknown> | undefined {
 }
 
 const EMPTY: ProductFieldVerification = {
-  sku: "missing",
-  gtin: "missing",
-  brand: "missing",
-  category: "missing",
-  availability: "missing",
-  priceCurrency: "missing",
-  stockLevel: "missing",
-  reviewCount: "missing",
+  sku: FieldStatus.Missing,
+  gtin: FieldStatus.Missing,
+  brand: FieldStatus.Missing,
+  category: FieldStatus.Missing,
+  availability: FieldStatus.Missing,
+  priceCurrency: FieldStatus.Missing,
+  stockLevel: FieldStatus.Missing,
+  reviewCount: FieldStatus.Missing,
 };
 
 /**
@@ -63,14 +39,13 @@ const EMPTY: ProductFieldVerification = {
 export function extractProductFieldVerification(
   pages: PageContext[],
 ): ProductFieldVerification {
-  const productPages = pages.filter((p) => p.pageType === "product");
+  const productPages = pages.filter((p) => p.pageType === PageType.Product);
 
   let product: Record<string, unknown> | undefined;
   let sourceUrl: string | undefined;
   for (const page of productPages) {
-    const found = flatten(page.structuredData ?? page.jsonLd).find((s) =>
-      isType(s, PRODUCT_TYPES),
-    );
+    // A ProductGroup's variants carry its shared properties, such as brand.
+    const [found] = resolveProducts(page.structuredData ?? page.jsonLd);
     if (found) {
       product = found;
       sourceUrl = page.url;
@@ -82,7 +57,8 @@ export function extractProductFieldVerification(
 
   const offer = first(product["offers"] ?? product["offer"]);
   const rating = first(product["aggregateRating"]);
-  const st = (b: boolean): FieldStatus => (b ? "found" : "missing");
+  const st = (b: boolean): FieldStatus =>
+    b ? FieldStatus.Found : FieldStatus.Missing;
 
   const hasGtin = ["gtin", "gtin8", "gtin12", "gtin13", "gtin14"].some((k) =>
     has(product![k]),
@@ -115,9 +91,17 @@ export function extractProductFieldVerification(
     // Price and currency are both required for a clean "found"; price-only
     // (e.g. a malformed priceCurrency) reads partial rather than missing.
     priceCurrency:
-      price && currency ? "found" : price || currency ? "partial" : "missing",
+      price && currency
+        ? FieldStatus.Found
+        : price || currency
+          ? FieldStatus.Partial
+          : FieldStatus.Missing,
     // Explicit inventory count = found; an availability enum alone = partial.
-    stockLevel: inventory ? "found" : availability ? "partial" : "missing",
+    stockLevel: inventory
+      ? FieldStatus.Found
+      : availability
+        ? FieldStatus.Partial
+        : FieldStatus.Missing,
     reviewCount: st(reviewCount),
     sourceUrl,
   };

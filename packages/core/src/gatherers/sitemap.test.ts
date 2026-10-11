@@ -9,15 +9,16 @@ import {
   sitemapSiteRoot,
 } from "./sitemap";
 
-import { mockFetchResult } from "../__tests__/test-utils";
-import type { FetchOptions, FetchResult } from "../fetcher";
+import { mockFetchResult } from "#core/__tests__/test-utils";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import { PageType } from "#core/types";
 
 // isSafeUrl performs a real DNS lookup before the gatherer follows a URL it
 // read out of a site-controlled sitemap. Stub it with an offline stand-in that
 // still blocks loopback and private ranges, so the refusal tests prove the gate
 // rather than the mock.
-vi.mock("../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => {
@@ -722,19 +723,46 @@ describe("sitemapSiteRoot", () => {
     expect(
       sitemapSiteRoot({
         url: "https://a.test/project/index.html?q=1#top",
-        pageType: "homepage",
+        pageType: PageType.Homepage,
       }),
     ).toBe("https://a.test/project/");
     expect(
-      sitemapSiteRoot({ url: "https://a.test/project/", pageType: "content" }),
+      sitemapSiteRoot({
+        url: "https://a.test/project/",
+        pageType: PageType.General,
+      }),
     ).toBeUndefined();
     expect(
-      sitemapSiteRoot({ url: "https://a.test/", pageType: "homepage" }),
+      sitemapSiteRoot({ url: "https://a.test/", pageType: PageType.Homepage }),
     ).toBeUndefined();
     expect(
-      sitemapSiteRoot({ url: "https://a.test/project", pageType: "homepage" }),
+      sitemapSiteRoot({
+        url: "https://a.test/project",
+        pageType: PageType.Homepage,
+      }),
     ).toBeUndefined();
     expect(sitemapSiteRoot(undefined)).toBeUndefined();
+  });
+
+  it.each(["/en/home/", "/en/home", "/en/home.html"])(
+    "scopes a home page to the directory that holds it: %s",
+    (path) => {
+      expect(
+        sitemapSiteRoot({
+          url: `https://a.test${path}`,
+          pageType: PageType.Homepage,
+        }),
+      ).toBe("https://a.test/en/");
+    },
+  );
+
+  it("leaves a root home page unscoped", () => {
+    expect(
+      sitemapSiteRoot({
+        url: "https://a.test/home/",
+        pageType: PageType.Homepage,
+      }),
+    ).toBeUndefined();
   });
 });
 

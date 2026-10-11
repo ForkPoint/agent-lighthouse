@@ -1,15 +1,21 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../audit-config";
+import { defaultConfig } from "#core/audit-config";
 import {
   AuditMetaSchema,
   AuditResultSchema,
   CheckResultSchema,
-} from "../schemas";
+} from "#core/schemas";
 import {
   mockCheckContext,
   mockPageContext,
   mockFetchResult,
 } from "./test-utils";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  ScoreDisplayMode,
+} from "#core/types";
 
 describe("AuditMetaSchema.weight", () => {
   const meta = {
@@ -18,11 +24,11 @@ describe("AuditMetaSchema.weight", () => {
     title: "t",
     failureTitle: "ft",
     description: "d",
-    scoreDisplayMode: "informative" as const,
+    scoreDisplayMode: ScoreDisplayMode.Informative,
     weight: 0,
-    defaultPriority: "low" as const,
-    evidenceGrade: "C" as const,
-    tier: "informative" as const,
+    defaultPriority: CheckPriority.Low,
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/content-extraction/single-h1.md",
   };
 

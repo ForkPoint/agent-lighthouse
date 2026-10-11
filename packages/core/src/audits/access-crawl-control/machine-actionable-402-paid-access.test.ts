@@ -4,14 +4,15 @@ import {
   mockPageContext,
   mockCheckContext,
   mockFetchResult,
-} from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import { BASELINE_UA } from "../../gatherers/ua-parity";
-import type { FetchOptions, FetchResult } from "../../fetcher";
-import type { AuditResult } from "../../types";
+} from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import { BASELINE_UA } from "#core/gatherers/ua-parity";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import type { AuditResult } from "#core/types";
+import { AuditTier, CheckStatus, EvidenceGrade } from "#core/types";
 
-vi.mock("../../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => {
@@ -115,7 +116,7 @@ describe("MachineActionable402PaidAccessAudit", () => {
 
   it("is notApplicable when no 402 is observed, never a failure", async () => {
     const result = await run();
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.found).toContain("none answered 402");
   });
 
@@ -123,7 +124,7 @@ describe("MachineActionable402PaidAccessAudit", () => {
     const result = await run({
       challenge: { "crawler-price": "USD 0.01", "cache-control": "no-store" },
     });
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(strings(result, "mechanisms")).toContain("crawler-price header");
   });
 
@@ -131,7 +132,7 @@ describe("MachineActionable402PaidAccessAudit", () => {
     const result = await run({
       challenge: { "payment-required": x402(), "cache-control": "no-store" },
     });
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(strings(result, "mechanisms")).toContain(
       "x402 PAYMENT-REQUIRED challenge",
     );
@@ -143,7 +144,7 @@ describe("MachineActionable402PaidAccessAudit", () => {
       inlineRsl: RSL_CRAWL,
       robots: "License: https://example.com/license.xml\n",
     });
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(strings(result, "mechanisms")).toContain(
       "RSL licence with a crawl payment",
     );
@@ -151,7 +152,7 @@ describe("MachineActionable402PaidAccessAudit", () => {
 
   it("fails a 402 that carries only HTML", async () => {
     const result = await run({ challenge: {} });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(strings(result, "findings")[0]).toContain("no crawler-price");
   });
 
@@ -192,7 +193,7 @@ describe("MachineActionable402PaidAccessAudit", () => {
         "cache-control": "public, max-age=3600",
       },
     });
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(strings(result, "findings").join(" ")).toContain("shared cache");
   });
 
@@ -201,15 +202,15 @@ describe("MachineActionable402PaidAccessAudit", () => {
       challenge: { "crawler-price": "USD 0.01", "cache-control": "no-store" },
       hitBrowsers: true,
     });
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.details?.["browserFacing402s"]).toBeGreaterThan(0);
     expect(strings(result, "findings").join(" ")).toContain("hitting people");
   });
 
   it("is a scored grade B audit with an id inside the cap", () => {
     const { meta } = MachineActionable402PaidAccessAudit;
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
     expect(meta.weight).toBeCloseTo(0.6);
     expect(meta.id.length).toBeLessThanOrEqual(64);
   });

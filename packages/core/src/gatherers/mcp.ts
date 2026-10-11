@@ -1,7 +1,8 @@
 import { cacheOwner } from "./cache-owner";
-import type { CheckContext } from "../check-context";
-import type { FetchResult } from "../fetcher";
-import { isSafeUrl } from "../fetcher";
+import type { CheckContext } from "#core/check-context";
+import type { FetchResult } from "#core/fetcher";
+import { isSafeUrl } from "#core/fetcher";
+import { HttpMethod } from "#core/types";
 
 /**
  * MCP's current specification revision. Pinning an older one makes servers that
@@ -201,7 +202,7 @@ export async function postRpc(
   try {
     response = await ctx.fetch({
       url,
-      method: "POST",
+      method: HttpMethod.Post,
       acceptHeader: MCP_ACCEPT,
       contentType: "application/json",
       body: rpcRequest(id, method, params),
@@ -223,7 +224,7 @@ export async function mcpFetch(
   ctx: CheckContext,
   url: string,
   init: {
-    method?: "GET" | "POST" | "OPTIONS" | "DELETE";
+    method?: HttpMethod;
     body?: string;
     headers?: Record<string, string>;
     signal?: AbortSignal;
@@ -233,9 +234,9 @@ export async function mcpFetch(
   try {
     return await ctx.fetch({
       url,
-      method: init.method ?? "POST",
+      method: init.method ?? HttpMethod.Post,
       acceptHeader: MCP_ACCEPT,
-      ...(init.method === undefined || init.method === "POST"
+      ...(init.method === undefined || init.method === HttpMethod.Post
         ? { contentType: "application/json" }
         : {}),
       ...(init.body !== undefined ? { body: init.body } : {}),
@@ -257,7 +258,7 @@ export function postRpcRaw(
   headers?: Record<string, string>,
 ): Promise<FetchResult | undefined> {
   return mcpFetch(ctx, url, {
-    method: "POST",
+    method: HttpMethod.Post,
     body: rpcRequest(id, method, params),
     ...(headers ? { headers } : {}),
   });

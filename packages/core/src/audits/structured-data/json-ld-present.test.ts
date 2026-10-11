@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { JsonLdPresentAudit } from "./json-ld-present";
-import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
+import { mockPageContext, mockCheckContext } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 const ld = (obj: unknown) =>
   `<script type="application/ld+json">${JSON.stringify(obj)}</script>`;
@@ -18,7 +19,7 @@ describe("JsonLdPresentAudit", () => {
       mockPageContext("https://example.com/", html, 0),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("Found 1 JSON-LD block(s)");
   });
 
@@ -30,7 +31,7 @@ describe("JsonLdPresentAudit", () => {
       mockPageContext("https://example.com/products/shoe", html, 1),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("fails when no JSON-LD is found on any page", () => {
@@ -39,7 +40,7 @@ describe("JsonLdPresentAudit", () => {
       mockPageContext("https://example.com/", html, 0),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No JSON-LD structured data found");
   });
 });

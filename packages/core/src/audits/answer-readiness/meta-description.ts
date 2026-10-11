@@ -1,7 +1,15 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext, PageContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext, PageContext } from "#core/check-context";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /**
  * Words carried by any English page, which say nothing about *this* page. Kept
@@ -94,24 +102,24 @@ export class MetaDescriptionAudit extends Audit {
     failureTitle: "Meta description quality",
     description:
       'Google may reproduce <meta name="description"> verbatim as the snippet for a page when it describes the page better than the body text does, and the same snippet pipeline feeds AI Overviews and AI Mode source cards. This audit checks the properties Google documents: the tag is present, it is a usable length, it reads as prose rather than a keyword string, and it actually describes this page.',
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/answer-readiness/meta-description.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "high",
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "Google sometimes uses the meta description as the search snippet when it describes the page more accurately than the body text, and AI Overviews and AI Mode inherit that snippet pipeline. A missing, keyword-stuffed or off-topic description means the summary shown alongside your page is written by someone else.",
       fix: 'Add a <meta name="description"> tag with a concise 50-300 character summary, written as prose, that accurately describes what is on this page — reusing the page\'s own subject terms.',
       code: '<meta name="description" content="A concise summary of the page content in 50-300 characters that describes what users will learn.">',
-      effort: "trivial",
+      effort: FixEffort.Trivial,
       tags: ["meta-tags", "seo", "content-discovery"],
     },
   };
@@ -134,7 +142,7 @@ export class MetaDescriptionAudit extends Audit {
           expected,
           desc,
           {
-            priority: "medium",
+            priority: CheckPriority.Medium,
             description:
               'Google asks for descriptions that are readable text rather than "long strings of keywords", because a keyword run is not usable as a snippet. Rewrite it as one or two sentences about the page.',
             code: '<meta name="description" content="One or two sentences describing what is on this page and who it is for.">',
@@ -158,7 +166,7 @@ export class MetaDescriptionAudit extends Audit {
             expected,
             `Description: "${desc}" · Page subject: "${subject}"`,
             {
-              priority: "medium",
+              priority: CheckPriority.Medium,
               description:
                 'Google uses the meta description when it "might give users a more accurate description of the page", and asks for page-specific descriptions rather than boilerplate. A description with no term in common with the page\'s own title or heading is describing something else.',
               code: '<meta name="description" content="A summary that names what this page is actually about.">',
@@ -182,7 +190,7 @@ export class MetaDescriptionAudit extends Audit {
         expected,
         desc,
         {
-          priority: "high",
+          priority: CheckPriority.High,
           description:
             "Google places no hard limit on the tag, but a very short description carries too little context to be chosen over the body text, and a very long one is truncated in the result. 50-300 characters is the working window this audit reports against.",
           code: '<meta name="description" content="A clear, 50-300 character summary of what this page covers and why it matters.">',
@@ -196,7 +204,7 @@ export class MetaDescriptionAudit extends Audit {
       expected,
       "Not found",
       {
-        priority: "high",
+        priority: CheckPriority.High,
         description:
           "With no description tag, the snippet shown beside your page is written entirely from body text by whoever indexes it. Add a concise 50-300 character summary of the page.",
         code: '<meta name="description" content="A concise summary of the page content in 50-300 characters.">',

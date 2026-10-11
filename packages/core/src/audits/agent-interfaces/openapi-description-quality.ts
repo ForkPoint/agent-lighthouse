@@ -1,13 +1,21 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
 import {
   NO_OPENAPI_SPEC,
   openApiOperations,
   readOpenApiSpec,
   type OpenApiSpec,
-} from "../../gatherers/openapi";
+} from "#core/gatherers/openapi";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 function isObject(val: unknown): val is Record<string, unknown> {
   return typeof val === "object" && val !== null && !Array.isArray(val);
@@ -59,14 +67,14 @@ export class OpenApiDescriptionQualityAudit extends Audit {
     failureTitle: "OpenAPI descriptions too thin for tool-calling",
     description:
       'When an AI agent converts your OpenAPI spec into callable tools, the description fields become the prompt the LLM uses to decide when and how to call each function. A one-word description like "search" tells the model nothing about what the endpoint does, what the parameter means, or what values are valid — so the agent guesses, calls the wrong tool, or fills parameters with hallucinated values. Every operation and every parameter needs a verbose description (more than 15 characters) that explains purpose, expected input, and behavior.',
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/agent-interfaces/openapi-description-quality.md",
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "high",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "LLM tool-calling treats your OpenAPI descriptions as the function-calling prompt. Missing or terse descriptions force the model to guess what each endpoint does and what each parameter accepts, producing wrong tool selection, malformed arguments, and failed API calls that erode user trust in agent-driven workflows on your site.",
@@ -84,7 +92,7 @@ export class OpenApiDescriptionQualityAudit extends Audit {
     "responses": { "200": { "description": "List of matching products" } }
   }
 }`,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl: "https://swagger.io/specification/#operation-object",
       tags: ["openapi", "descriptions", "tool-calling", "llm", "api"],
     },
@@ -143,7 +151,7 @@ export class OpenApiDescriptionQualityAudit extends Audit {
     }
 
     const recommendation = {
-      priority: "high" as const,
+      priority: CheckPriority.High,
       description: OpenApiDescriptionQualityAudit.meta.description,
       code: OpenApiDescriptionQualityAudit.meta.guidance?.code,
     };

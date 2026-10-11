@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { CATEGORY_IDS } from "@forkpoint/agent-lighthouse-core";
+import {
+  CATEGORY_IDS,
+  CheckStatus,
+  LEGACY_PAGE_TYPES,
+  PageType,
+} from "@forkpoint/agent-lighthouse-core";
 import {
   getArgValue,
   splitList,
@@ -441,15 +446,23 @@ describe("selectDebugChecks", () => {
     {
       id: "structured-data/json-ld-present",
       title: "JSON-LD present",
-      status: "pass",
+      status: CheckStatus.Pass,
     },
     {
       id: "structured-data/faqpage-schema",
       title: "FAQPage schema",
-      status: "fail",
+      status: CheckStatus.Fail,
     },
-    { id: "agent-interfaces/webmcp", title: "WebMCP endpoint", status: "warn" },
-    { id: "agent-interfaces/openapi", title: "OpenAPI document", status: "na" },
+    {
+      id: "agent-interfaces/webmcp",
+      title: "WebMCP endpoint",
+      status: CheckStatus.Warn,
+    },
+    {
+      id: "agent-interfaces/openapi",
+      title: "OpenAPI document",
+      status: CheckStatus.NotApplicable,
+    },
   ];
 
   it("selects every fail and warn for the reserved value 'fails'", () => {
@@ -499,9 +512,9 @@ describe("openCommand", () => {
 });
 
 describe("--page-type", () => {
-  it("passes a known page type through", () => {
-    const o = parseCliOptions(["--page-type=product"], "https://example.com");
-    expect(o.pageType).toBe("product");
+  it.each(["product", "article", "general"])("passes %s through", (type) => {
+    const o = parseCliOptions([`--page-type=${type}`], "https://example.com");
+    expect(o.pageType).toBe(type);
     expect(o.invalidPageType).toBeUndefined();
   });
 
@@ -510,7 +523,7 @@ describe("--page-type", () => {
       ["--page-type", "category"],
       "https://example.com",
     );
-    expect(o.pageType).toBe("category");
+    expect(o.pageType).toBe(PageType.Category);
   });
 
   it("rejects a value that names no page type, at parse time", () => {
@@ -524,8 +537,27 @@ describe("--page-type", () => {
       "homepage",
       "category",
       "product",
-      "content",
+      "article",
+      "general",
     ]);
+  });
+
+  it.each(["unknown", "content"])(
+    "refuses the pre-v7 page type %s",
+    (legacy) => {
+      const o = parseCliOptions(
+        [`--page-type=${legacy}`],
+        "https://example.com",
+      );
+      expect(o.pageType).toBeUndefined();
+      expect(o.invalidPageType).toBe(legacy);
+    },
+  );
+  it("keeps the old names for the error message", () => {
+    expect(LEGACY_PAGE_TYPES).toEqual({
+      unknown: "general",
+      content: "general",
+    });
   });
 });
 
@@ -598,5 +630,58 @@ describe("--timeout from the config file", () => {
     });
     expect(o.timeoutSeconds).toBe(30);
     expect(o.invalidTimeout).toBeUndefined();
+  });
+});
+
+describe("v7 manual page declarations", () => {
+  it("reads config declarations and lets the flag override the target only", () => {
+    const config = {
+      pageType: PageType.Product,
+      pages: [{ url: "https://example.com/guide", pageType: PageType.Article }],
+    };
+    const before = structuredClone(config);
+    expect(parseCliOptions([], "https://example.com", config)).toMatchObject(
+      config,
+    );
+    expect(
+      parseCliOptions(["--page-type=general"], "https://example.com", config),
+    ).toMatchObject({ pageType: PageType.General, pages: config.pages });
+    expect(config).toEqual(before);
+  });
+  it.each([
+    { args: ["--page-type"] },
+    { args: ["--page-type="] },
+    { args: ["--page-type", "--silent"] },
+  ])(
+    "rejects missing declaration $args instead of detecting silently",
+    ({ args }) => {
+      expect(
+        parseCliOptions(args, "https://example.com", {
+          pageType: PageType.Article,
+        }).invalidPageType,
+      ).toBe("");
+    },
+  );
+  it.each([
+    { pages: [{ url: "broken", pageType: PageType.Article }] },
+    { pageType: "author" },
+    { pages: [{ url: "https://example.com", pageType: "typo" }] },
+  ])("rejects invalid config %j", (config) => {
+    expect(
+      parseCliOptions([], "https://example.com", config as never)
+        .invalidPageScope,
+    ).toBeDefined();
+  });
+  it("includes mixed-population failures in debug fails", () => {
+    const checks = [
+      {
+        id: "mixed",
+        title: "Mixed",
+        status: CheckStatus.Pass,
+        advisoryResults: [{ status: CheckStatus.Fail }],
+      },
+      { id: "pass", title: "Pass", status: CheckStatus.Pass },
+    ];
+    expect(selectDebugChecks(checks, "fails")).toEqual([checks[0]]);
   });
 });

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { AuthorSameAsAudit } from "./author-same-as";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 describe("AuthorSameAsAudit", () => {
   const audit = new AuthorSameAsAudit();
@@ -15,7 +16,7 @@ describe("AuthorSameAsAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("2 external profile URL(s)");
   });
 
@@ -29,7 +30,7 @@ describe("AuthorSameAsAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("external profile URL");
   });
 
@@ -43,13 +44,13 @@ describe("AuthorSameAsAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No author sameAs");
   });
 
   it("fails when no pages scanned", () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No pages scanned");
   });
 
@@ -63,7 +64,7 @@ describe("AuthorSameAsAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("passes when author sameAs is inside a @graph block", () => {
@@ -76,7 +77,7 @@ describe("AuthorSameAsAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("fails when sameAs array contains no http/https URLs", () => {
@@ -89,7 +90,7 @@ describe("AuthorSameAsAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("fails when author is an array but none has sameAs", () => {
@@ -102,7 +103,7 @@ describe("AuthorSameAsAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("handles null item in @graph gracefully (covers line 14 walk null check)", () => {
@@ -115,7 +116,7 @@ describe("AuthorSameAsAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("handles @type as array with non-string element (covers lines 25-27 Array.isArray + typeof false)", () => {
@@ -128,7 +129,7 @@ describe("AuthorSameAsAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("skips Article with no author property (covers line 99 continue)", () => {
@@ -142,7 +143,7 @@ describe("AuthorSameAsAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No author sameAs");
   });
 
@@ -156,6 +157,6 @@ describe("AuthorSameAsAudit", () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 });

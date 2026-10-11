@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { CoreOpenGraphAudit } from "./core-open-graph";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { CheckPriority, CheckStatus } from "#core/types";
 
 const doc = (head: string) =>
   `<html lang="en"><head>${head}</head><body></body></html>`;
@@ -28,7 +29,7 @@ describe("CoreOpenGraphAudit", () => {
 
   it("passes when all four core OG tags and og:site_name are present", () => {
     const result = audit.audit(ctxFor(ALL_OG + SITE_NAME));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("All core OG tags");
   });
 
@@ -39,20 +40,20 @@ describe("CoreOpenGraphAudit", () => {
           SITE_NAME,
       ),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("og:image");
-    expect(result.priority).toBe("high");
+    expect(result.priority).toBe(CheckPriority.High);
   });
 
   it("fails when all core OG tags are missing", () => {
     const result = audit.audit(ctxFor(""));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("Missing OG tags");
   });
 
   it("fails when there are no pages", () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   // --- absorbed from og-site-name (v1 4.8) ---------------------------------
@@ -64,9 +65,9 @@ describe("CoreOpenGraphAudit", () => {
 
   it("warns at low priority when only og:site_name is missing", () => {
     const result = audit.audit(ctxFor(ALL_OG));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("og:site_name");
-    expect(result.priority).toBe("low");
+    expect(result.priority).toBe(CheckPriority.Low);
   });
 
   it("treats an unrendered template token as a missing og:site_name", () => {
@@ -75,7 +76,7 @@ describe("CoreOpenGraphAudit", () => {
         ALL_OG + '<meta property="og:site_name" content="{{ site.title }}">',
       ),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("og:site_name");
   });
 
@@ -85,7 +86,7 @@ describe("CoreOpenGraphAudit", () => {
         ALL_OG + '<meta property="og:site_name" content="Your Site Name">',
       ),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("og:site_name");
   });
 
@@ -93,7 +94,7 @@ describe("CoreOpenGraphAudit", () => {
     // og:site_name alone still leaves all four core tags missing: the score is
     // decided by the core tags, and the recommended tag cannot rescue it.
     const result = audit.audit(ctxFor(SITE_NAME));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("Missing OG tags");
   });
 
@@ -113,7 +114,7 @@ describe("CoreOpenGraphAudit", () => {
         ALL_OG + SITE_NAME + '<meta name="twitter:card" content="summary">',
       ),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.score).toBe(1);
   });
 
@@ -152,7 +153,7 @@ describe("CoreOpenGraphAudit", () => {
           '<meta name="twitter:card" content="summary_large_image">',
       ),
     );
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found?.toLowerCase()).not.toContain("no image");
   });
 

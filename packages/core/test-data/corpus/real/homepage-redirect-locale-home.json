@@ -1,0 +1,33 @@
+{
+  "url": "https://shop.mancity.com/en/home/",
+  "capturedAt": "2026-10-09T17:48:37.244Z",
+  "sha256": "f6f9b4cefd71472a0a6d34c24fe41ebe203342af9c9e6c39d1c1958a083368c0",
+  "status": 200,
+  "kind": "page",
+  "headers": {
+    "date": "Fri, 09 Oct 2026 17:48:37 GMT",
+    "content-type": "text/html;charset=UTF-8",
+    "server": "cloudflare",
+    "strict-transport-security": "max-age=31536000",
+    "cf-cache-status": "DYNAMIC",
+    "x-content-type-options": "nosniff",
+    "content-security-policy": "frame-ancestors 'self';",
+    "x-dw-request-base-id": "4kppwHFdyGoBAAB_",
+    "cache-control": "no-cache, no-store, must-revalidate",
+    "pragma": "no-cache",
+    "expires": "Thu, 01 Dec 1994 16:00:00 GMT",
+    "vary": "accept-encoding",
+    "cf-ray": "a47f37992af6d0ee-SOF"
+  },
+  "contentType": "text/html;charset=UTF-8",
+  "ttfbMs": 1691,
+  "totalMs": 1709,
+  "contentLength": 384037,
+  "redirectChain": [
+    {
+      "status": 301,
+      "from": "https://shop.mancity.com/",
+      "to": "https://shop.mancity.com/en/home/"
+    }
+  ]
+}

@@ -1,9 +1,17 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
 import type { CheerioAPI } from "cheerio";
-import { flattenJsonLd } from "../../parser";
+import { flattenJsonLd } from "#core/parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /**
  * Return every flattened JSON-LD node whose @type matches one of the given
@@ -58,24 +66,24 @@ export class BrandNameAudit extends Audit {
     failureTitle: "Brand name in body text",
     description:
       "AI engines build entity graphs by matching Organization schema names to in-content mentions. If your brand name only appears in schema but not body text, agents cannot associate your content with your entity.",
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "informative"),
-    evidenceGrade: "C",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/answer-readiness/brand-name.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "medium",
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "AI engines build entity graphs by matching Organization schema names to in-content mentions. If your brand name only appears in schema but not body text, agents cannot associate your content with your entity, weakening brand recognition in AI responses.",
       fix: "Mention your brand name naturally in the body text of your pages. Ensure it matches the name in your Organization JSON-LD schema exactly.",
       code: '<p>At YourBrand, we build tools that help developers ship faster.</p>\n\n<!-- Ensure JSON-LD matches: -->\n<script type="application/ld+json">\n{"@context":"https://schema.org","@type":"Organization","name":"YourBrand"}\n</script>',
-      effort: "trivial",
+      effort: FixEffort.Trivial,
       tags: ["brand", "entity", "generative-engine"],
     },
   };
@@ -135,7 +143,7 @@ export class BrandNameAudit extends Audit {
         "Organization name from JSON-LD appears in <main> text content",
         "No org name in schema",
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           description:
             "AI agents need to identify your brand to attribute content correctly. Without an Organization schema with your brand name, agents cannot connect your pages to your entity in AI knowledge graphs. Add Organization schema and mention your brand naturally in body text.",
           code: '<script type="application/ld+json">\n{"@context":"https://schema.org","@type":"Organization","name":"Your Brand"}\n</script>',
@@ -175,7 +183,7 @@ export class BrandNameAudit extends Audit {
       "Organization name from JSON-LD appears in <main> text content",
       `"${orgName}" not in body text`,
       {
-        priority: "medium",
+        priority: CheckPriority.Medium,
         description:
           "AI engines build entity graphs by matching Organization schema names to in-content mentions. If your brand name only appears in schema but not body text, agents cannot associate your content with your entity. Mention your brand name naturally in the body to strengthen entity recognition.",
         code: "<!-- Mention your brand naturally in content: -->\n<p>At YourBrand, we build tools that help developers ship faster.</p>",

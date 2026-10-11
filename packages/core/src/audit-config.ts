@@ -10,6 +10,7 @@ import { ANSWER_READINESS_AUDITS } from "./audits/answer-readiness";
 import { AGENT_INTERFACES_AUDITS } from "./audits/agent-interfaces";
 import { AGENTIC_COMMERCE_AUDITS } from "./audits/agentic-commerce";
 import { OPERABILITY_SAFETY_AUDITS } from "./audits/operability-safety";
+import { AuditTier } from "./types";
 
 // ── Category Config ─────────────────────────────────────────────
 
@@ -135,7 +136,7 @@ export function filterConfig(
   const dropExperimental =
     opts.includeExperimental !== true &&
     Object.values(config.audits).some((list) =>
-      list.some((r) => r.meta.tier === "experimental"),
+      list.some((r) => r.meta.tier === AuditTier.Experimental),
     );
   if (!wanted && !dropExperimental) return config;
 
@@ -147,7 +148,8 @@ export function filterConfig(
       cat.id,
       (config.audits[cat.id] ?? []).filter(
         (registration) =>
-          !dropExperimental || registration.meta.tier !== "experimental",
+          !dropExperimental ||
+          registration.meta.tier !== AuditTier.Experimental,
       ),
     ]),
   );

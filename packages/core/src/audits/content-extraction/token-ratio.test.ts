@@ -1,13 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
 import { TokenRatioAudit } from "./token-ratio";
 import {
   attributableFixture,
   mockCheckContext,
   mockPageContext,
   unreachedSiteContext,
-} from "../../__tests__/test-utils";
+} from "#core/__tests__/test-utils";
+import { CheckPriority, CheckStatus } from "#core/types";
 
 describe("TokenRatioAudit", () => {
   const audit = new TokenRatioAudit();
@@ -19,7 +20,7 @@ describe("TokenRatioAudit", () => {
       mockPageContext("https://example.com/", html, 0),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.displayValue).toContain("%");
   });
 
@@ -31,8 +32,8 @@ describe("TokenRatioAudit", () => {
       mockPageContext("https://example.com/", html, 0),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
-    expect(result.priority).toBe("high");
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.priority).toBe(CheckPriority.High);
   });
 
   it("fails when tiny text is buried in huge markup padding", () => {
@@ -45,9 +46,9 @@ describe("TokenRatioAudit", () => {
       mockPageContext("https://example.com/", html, 0),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.displayValue).toContain("%");
-    expect(result.priority).toBe("high");
+    expect(result.priority).toBe(CheckPriority.High);
   });
 
   it("ignores inline script and style weight in the content measure", () => {
@@ -59,7 +60,7 @@ describe("TokenRatioAudit", () => {
     ]);
     const result = audit.audit(ctx);
     // script is excluded from clean text but counted in raw HTML -> low ratio -> fail
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("returns na when the body is empty", () => {
@@ -67,7 +68,7 @@ describe("TokenRatioAudit", () => {
       mockPageContext("https://example.com/", "", 0),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
   // The signal-density fold: BPE tokens, not characters. Base64 tokenizes far
   // worse than prose of the same length, and the ratio must show that.
@@ -134,7 +135,9 @@ describe("TokenRatioAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new TokenRatioAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext(pages, rootFiles),
@@ -145,6 +148,6 @@ describe("TokenRatioAudit", () => {
     );
     expect(
       plan.skipped.find((stub) => stub.id === TokenRatioAudit.meta.id)?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 });

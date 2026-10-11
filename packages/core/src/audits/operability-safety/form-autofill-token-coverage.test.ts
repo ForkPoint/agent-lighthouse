@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { FormAutofillTokenCoverageAudit } from "./form-autofill-token-coverage";
-import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
+import { mockPageContext, mockCheckContext } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import { CheckStatus } from "#core/types";
 
 const page = (body: string) => `<html><body>${body}</body></html>`;
 
@@ -28,12 +29,12 @@ describe("FormAutofillTokenCoverageAudit", () => {
 
   it("is notApplicable on a page with no form", () => {
     const result = run("<main><p>Just prose.</p></main>");
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("passes a form whose every control carries the right token, a name and a matching type", () => {
     const result = run(COVERED_FORM);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("2 of 2");
   });
 
@@ -45,7 +46,7 @@ describe("FormAutofillTokenCoverageAudit", () => {
         <label for="e">Email address</label>
         <input id="e" name="f_2" type="text">
       </form>`);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain('autocomplete="email"');
   });
 
@@ -57,7 +58,7 @@ describe("FormAutofillTokenCoverageAudit", () => {
         <label for="p">ZIP</label>
         <input id="p" name="f_3" type="text" autocomplete="postal-code">
       </form>`);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("1 of 1");
   });
 
@@ -83,7 +84,7 @@ describe("FormAutofillTokenCoverageAudit", () => {
         <label for="z">Postcode</label>
         <input id="z" name="z" type="text" autocomplete="billing postal-code">
       </form>`);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("does not count a field whose type contradicts the token", () => {
@@ -92,7 +93,7 @@ describe("FormAutofillTokenCoverageAudit", () => {
         <label for="e">Email</label>
         <input id="e" name="e" type="text" autocomplete="email">
       </form>`);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain('type="email"');
   });
 
@@ -101,7 +102,7 @@ describe("FormAutofillTokenCoverageAudit", () => {
       <form>
         <label>Email <input type="email" autocomplete="email"></label>
       </form>`);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("0 of 1");
   });
 
@@ -113,7 +114,7 @@ describe("FormAutofillTokenCoverageAudit", () => {
         <label for="e">Email *</label>
         <input id="e" name="email" type="email" autocomplete="email">
       </form>`);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     // Token coverage is untouched by the asterisk finding.
     expect(result.found).toContain("1 of 1");
     expect(result.found).toContain("1 required by a visual asterisk only");
@@ -125,7 +126,7 @@ describe("FormAutofillTokenCoverageAudit", () => {
         <label for="e">Email *</label>
         <input id="e" name="email" type="email" autocomplete="email" required>
       </form>`);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("reports an unwired error message as a separate finding", () => {
@@ -135,7 +136,7 @@ describe("FormAutofillTokenCoverageAudit", () => {
         <input id="e" name="email" type="email" autocomplete="email">
         <span class="error-text">Invalid</span>
       </form>`);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("1 of 1");
     expect(result.found).toContain("1 error message not wired");
   });
@@ -148,7 +149,7 @@ describe("FormAutofillTokenCoverageAudit", () => {
                aria-invalid="true" aria-describedby="err">
         <span id="err" class="error-text">Invalid</span>
       </form>`);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("warns when some fields are covered and some are not", () => {
@@ -159,7 +160,7 @@ describe("FormAutofillTokenCoverageAudit", () => {
         <label for="c">City</label>
         <input id="c" name="city" type="text">
       </form>`);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("1 of 2");
     expect(result.message).toContain('autocomplete="address-level2"');
   });
@@ -172,7 +173,7 @@ describe("FormAutofillTokenCoverageAudit", () => {
         <input id="q" name="q" type="search">
         <button type="submit">Go</button>
       </form>`);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("reads the concept off a placeholder when there is no label", () => {
@@ -201,7 +202,7 @@ describe("FormAutofillTokenCoverageAudit", () => {
       </form>`,
       "https://example.test/",
     );
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.found).toContain("1 search or store-locator form(s) skipped");
   });
 
@@ -212,7 +213,7 @@ describe("FormAutofillTokenCoverageAudit", () => {
       </form>`,
       "https://example.test/",
     );
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("skips a location field whose label offers alternatives", () => {
@@ -221,7 +222,7 @@ describe("FormAutofillTokenCoverageAudit", () => {
         <label for="l">City or postcode</label>
         <input id="l" name="l" type="text">
       </form>`);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   // True positive: a real checkout postcode field still owes its token.
@@ -231,7 +232,7 @@ describe("FormAutofillTokenCoverageAudit", () => {
         <label for="z">Postcode</label>
         <input id="z" name="postcode" type="text">
       </form>`);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain('autocomplete="postal-code"');
   });
 
@@ -242,7 +243,7 @@ describe("FormAutofillTokenCoverageAudit", () => {
         <label for="e">Email</label>
         <input id="e" name="e" type="text">
       </form>`);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain('autocomplete="email"');
   });
 

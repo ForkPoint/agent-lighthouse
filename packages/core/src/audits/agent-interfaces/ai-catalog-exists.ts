@@ -1,8 +1,16 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext, PageContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext, PageContext } from "#core/check-context";
 import { AI_CATALOG_PATH, describeFailure, readAiCatalog } from "./_ard";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** `<link ...; rel="ai-catalog">` in an HTTP Link header (RFC 8288). */
 const LINK_HEADER_RE = /<([^>]+)>\s*;[^,]*?\brel\s*=\s*"?([^",;]+)"?/gi;
@@ -80,24 +88,24 @@ export class AiCatalogExistsAudit extends Audit {
     failureTitle: "AI Catalog exists",
     description:
       "The AI catalog is the ARD discovery manifest that tells AI agents which MCP servers, agent cards, skills and API descriptions your site offers. Hugging Face's hf-discover resolves it at /.well-known/ai-catalog.json and reads its entries; without it, agents must probe endpoints to work out what your site can do.",
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "informative"),
-    evidenceGrade: "C",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/agent-interfaces/ai-catalog-exists.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "medium",
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "Without an AI catalog, agents must probe multiple endpoints to discover your services. This wastes time, increases error rates, and often results in agents skipping your site entirely in favor of competitors with a machine-readable capability manifest.",
       fix: 'Serve /.well-known/ai-catalog.json as application/ai-catalog+json with the three fields ARD §4.1 requires — specVersion, a host object naming your site, and an entries array where each entry has an identifier, displayName, type and either a url or inline data. Optionally advertise it with <link rel="ai-catalog"> or the equivalent HTTP Link header, but serve it at the well-known path, which is the only location a documented consumer resolves.',
       code: SAMPLE,
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl: "https://github.com/ards-project/ard-spec/blob/main/spec/ard.md",
       tags: ["ai-catalog", "discovery", "agent-protocol", "ard"],
     },
@@ -105,7 +113,7 @@ export class AiCatalogExistsAudit extends Audit {
 
   private recommendation() {
     return {
-      priority: "medium" as const,
+      priority: CheckPriority.Medium,
       description: AiCatalogExistsAudit.meta.description,
       code: SAMPLE,
     };

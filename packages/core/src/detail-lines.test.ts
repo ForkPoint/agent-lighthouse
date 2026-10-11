@@ -7,6 +7,7 @@ import {
   MAX_DETAIL_ITEMS,
   MAX_DETAIL_CHARS,
 } from "./detail-lines";
+import { CheckStatus } from "./types";
 
 /**
  * The caps here are the schema's, so they are asserted against the schema
@@ -15,8 +16,11 @@ import {
 
 /** Whether `details` survives the schema an audit result is validated with. */
 function accepted(details: Record<string, unknown>): boolean {
-  return AuditResultSchema.safeParse({ status: "fail", score: 0, details })
-    .success;
+  return AuditResultSchema.safeParse({
+    status: CheckStatus.Fail,
+    score: 0,
+    details,
+  }).success;
 }
 
 describe("detailLines", () => {

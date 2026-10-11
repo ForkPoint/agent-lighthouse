@@ -1,8 +1,16 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
-import { flattenJsonLd } from "../../parser";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import { flattenJsonLd } from "#core/parser";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 export class SchemaValidationAudit extends Audit {
   static override meta: AuditMeta = {
@@ -12,18 +20,18 @@ export class SchemaValidationAudit extends Audit {
     failureTitle: "Schema validation",
     description:
       'AI agents parse @context and @type to identify entity types in your structured data. Blocks missing these properties are silently ignored by every schema consumer, including Google, ChatGPT plugins, and RAG pipelines. Add "@context": "https://schema.org" and a valid @type to each block.',
-    scoreDisplayMode: "binary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Binary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/structured-data/schema-validation.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "critical",
+    defaultPriority: CheckPriority.Critical,
     guidance: {
       impact:
         "JSON-LD blocks missing @context or @type are silently ignored by every schema consumer, including Google, ChatGPT plugins, and RAG pipelines. Even if you have structured data on the page, invalid blocks provide zero value to AI agents.",
@@ -36,7 +44,7 @@ export class SchemaValidationAudit extends Audit {
   "description": "Page description"
 }
 </script>`,
-      effort: "trivial",
+      effort: FixEffort.Trivial,
       docsUrl: "https://json-ld.org/spec/latest/json-ld/",
       tags: ["json-ld", "schema", "validation", "foundation"],
     },
@@ -71,7 +79,7 @@ export class SchemaValidationAudit extends Audit {
         "All JSON-LD blocks have @context and @type.",
         "No JSON-LD blocks found.",
         {
-          priority: "critical",
+          priority: CheckPriority.Critical,
           description:
             'AI agents parse @context and @type to determine the schema vocabulary and entity type. Without these properties, the JSON-LD block is meaningless to any machine reader. Ensure every JSON-LD block includes "@context": "https://schema.org" and a valid @type.',
           code: `<script type="application/ld+json">
@@ -113,7 +121,7 @@ export class SchemaValidationAudit extends Audit {
       "All JSON-LD blocks have @context and @type.",
       `${flat.length - invalid.length}/${flat.length} valid`,
       {
-        priority: "high",
+        priority: CheckPriority.High,
         description:
           'AI agents parse @context and @type to identify entity types in your structured data. Blocks missing these properties are silently ignored by every schema consumer, including Google, ChatGPT plugins, and RAG pipelines. Add "@context": "https://schema.org" and a valid @type to each block.',
         code: `"@context": "https://schema.org",

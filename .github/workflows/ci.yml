@@ -46,6 +46,9 @@ jobs:
       - name: Check audit map agreement
         run: pnpm check:audit-map
 
+      - name: Check enum constants replace magic strings
+        run: pnpm check:enums
+
       - name: Typecheck
         run: pnpm typecheck
 

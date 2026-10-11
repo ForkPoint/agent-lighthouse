@@ -7,8 +7,8 @@ import {
   offerNodes,
   platformFingerprint,
 } from "./commerce";
-import { mockPageContext } from "../__tests__/test-utils";
-import { extractJsonLd } from "../parser";
+import { mockPageContext } from "#core/__tests__/test-utils";
+import { extractJsonLd } from "#core/parser";
 
 describe("commerce gatherer", () => {
   describe("parseAmount", () => {

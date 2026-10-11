@@ -1,10 +1,11 @@
 import { describe, it, expect } from "vitest";
 import type { ScanEvent } from "@forkpoint/agent-lighthouse-core";
 import { createProgressNotifier, type ProgressNotification } from "./progress";
+import { PhaseId } from "@forkpoint/agent-lighthouse-core";
 
 const unitDone = (fraction: number): ScanEvent => ({
   type: "unit:done",
-  phase: "audits",
+  phase: PhaseId.Audits,
   completed: 1,
   total: 207,
   fraction,
@@ -24,7 +25,7 @@ describe("createProgressNotifier", () => {
     const handle = createProgressNotifier("tok-1", (n) => sent.push(n))!;
     handle({
       type: "phase:start",
-      phase: "fetch-root",
+      phase: PhaseId.FetchRoot,
       totalUnits: 34,
       fraction: 0.1,
       elapsedMs: 0,
@@ -77,7 +78,7 @@ describe("createProgressNotifier", () => {
     });
     handle({
       type: "unit:fail",
-      phase: "audits",
+      phase: PhaseId.Audits,
       label: "3.1",
       error: "boom",
       fraction: 0.5,

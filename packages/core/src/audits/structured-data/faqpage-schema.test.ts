@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { FaqPageSchemaAudit } from "./faqpage-schema";
-import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
+import { mockPageContext, mockCheckContext } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 const ld = (obj: unknown) =>
   `<script type="application/ld+json">${JSON.stringify(obj)}</script>`;
@@ -29,7 +30,7 @@ describe("FaqPageSchemaAudit", () => {
   it("warns (low) when no question-patterned headings exist", () => {
     const ctx = mockCheckContext([page("<h1>Welcome</h1>")]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain(
       "No pages with question-patterned headings",
     );
@@ -40,7 +41,7 @@ describe("FaqPageSchemaAudit", () => {
       page("<h2>What is your return policy?</h2>", ld(faq)),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("detects FAQPage nested inside @graph", () => {
@@ -51,7 +52,7 @@ describe("FaqPageSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("fails when question headings exist but no FAQPage schema", () => {
@@ -59,7 +60,7 @@ describe("FaqPageSchemaAudit", () => {
       page("<h2>What is your return policy?</h2>"),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No FAQPage schema found");
   });
 
@@ -74,7 +75,7 @@ describe("FaqPageSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toBe("1/2 pages with FAQPage schema");
   });
 
@@ -87,6 +88,6 @@ describe("FaqPageSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 });

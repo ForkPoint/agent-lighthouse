@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { createHash } from "node:crypto";
-import type { FetchResult } from "../fetcher";
+import type { FetchResult } from "#core/fetcher";
 import {
   classifyCapture,
   listFixtures,

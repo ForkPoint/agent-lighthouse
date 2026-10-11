@@ -2,9 +2,9 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { createHash } from "node:crypto";
 import { gzipSync } from "node:zlib";
-import { createFetcher } from "../packages/core/src/fetcher";
-import { classifyCapture } from "../packages/core/src/tests/fixture-io";
-import type { FixtureProvenance } from "../packages/core/src/tests/fixture-io";
+import { createFetcher } from "#core/fetcher";
+import { classifyCapture, FixtureKind } from "#core/tests/fixture-io";
+import type { FixtureProvenance } from "#core/tests/fixture-io";
 
 /**
  * Freeze one real page as a test fixture.
@@ -112,7 +112,7 @@ async function main(): Promise<void> {
   // can interpret. The two gates stay separate: "I meant a non-page" and "I
   // meant something this small" are different claims, and one flag covering
   // both let a 0-byte file through on the strength of the other.
-  if (kind !== "page" && !allowNonPage) {
+  if (kind !== FixtureKind.Page && !allowNonPage) {
     refuse(
       `${url} answered HTTP ${result.status} and reads as a ${kind}, not a page — ` +
         "pass --allow-non-page to keep it",

@@ -5,6 +5,15 @@ import type {
   ScanReport,
 } from "@forkpoint/agent-lighthouse-core";
 import { generateHtmlReport } from "./html-generator";
+import {
+  AuditTier,
+  CheckPriority,
+  CheckStatus,
+  PageType,
+  PageTypeSource,
+  ScoreDisplayMode,
+  ScoreTier,
+} from "@forkpoint/agent-lighthouse-core";
 
 // ── Fixtures ────────────────────────────────────────────────────
 
@@ -14,10 +23,10 @@ function check(over: Partial<CheckResult> = {}): CheckResult {
     category: "agent-interfaces",
     title: "title",
     description: "desc",
-    status: "pass",
+    status: CheckStatus.Pass,
     score: 1,
-    scoreDisplayMode: "binary",
-    priority: "medium",
+    scoreDisplayMode: ScoreDisplayMode.Binary,
+    priority: CheckPriority.Medium,
     impact: "",
     fix: "",
     ...over,
@@ -47,12 +56,12 @@ function report(
     url: "https://x.test/",
     domain: "x.test",
     overallScore: 42,
-    scoreTier: "needs-work",
+    scoreTier: ScoreTier.NeedsWork,
     categories,
     topPasses: [],
     topFails: [],
     recommendations: [],
-    pagesScanned: [{ url: "https://x.test/", pageType: "homepage" }],
+    pagesScanned: [{ url: "https://x.test/", pageType: PageType.Homepage }],
     scannedAt: "2026-01-01T00:00:00.000Z",
     durationMs: 1234,
     ...over,
@@ -95,7 +104,7 @@ describe("generateHtmlReport", () => {
           checks: [
             check({
               id: "accessibility-skip-nav",
-              status: "fail",
+              status: CheckStatus.Fail,
               deprecated: {
                 notice: "No consumer reads this signal.",
                 link: NOT_A_FACTOR_LINK,
@@ -125,7 +134,7 @@ describe("generateHtmlReport", () => {
           checks: [
             check({
               id: "access-crawl-control/ai-bot-directives",
-              status: "warn",
+              status: CheckStatus.Warn,
               displayValue: table,
               details: { found: table },
             }),
@@ -156,7 +165,7 @@ describe("generateHtmlReport", () => {
           checks: [
             check({
               id: "access-crawl-control/ai-bot-directives",
-              status: "warn",
+              status: CheckStatus.Warn,
               displayValue: "1 of 2 documented AI bots allowed",
               details: { found: "GPTBot: allowed\nClaudeBot: blocked" },
             }),
@@ -176,7 +185,7 @@ describe("generateHtmlReport", () => {
       report([
         cat({
           id: "agent-interfaces",
-          checks: [check({ id: "live", status: "pass" })],
+          checks: [check({ id: "live", status: CheckStatus.Pass })],
         }),
       ]),
     );
@@ -196,15 +205,15 @@ describe("tier badges", () => {
             check({
               id: "structured-data/claimreview-advisory",
               title: "Advisory check",
-              tier: "informative",
-              scoreDisplayMode: "informative",
-              status: "fail",
+              tier: AuditTier.Informative,
+              scoreDisplayMode: ScoreDisplayMode.Informative,
+              status: CheckStatus.Fail,
               score: 0,
             }),
             check({
               id: "agent-interfaces/scored",
               title: "Scored check",
-              tier: "scored",
+              tier: AuditTier.Scored,
             }),
           ],
         }),
@@ -220,7 +229,9 @@ describe("tier badges", () => {
       report([
         cat({
           id: "agent-interfaces",
-          checks: [check({ title: "Trial check", tier: "experimental" })],
+          checks: [
+            check({ title: "Trial check", tier: AuditTier.Experimental }),
+          ],
         }),
       ]),
     );
@@ -282,7 +293,7 @@ describe("evidence link", () => {
       ...report([]),
       conditions: {
         url: "https://x.test/",
-        pageType: { type: "homepage", source: "detected" },
+        pageType: { type: PageType.Homepage, source: PageTypeSource.Detected },
         origin: {
           origin: "https://x.test",
           version: "v1",
@@ -357,7 +368,7 @@ describe("evidence link", () => {
       ...report([]),
       conditions: {
         url: "https://x.test/",
-        pageType: { type: "homepage", source: "detected" },
+        pageType: { type: PageType.Homepage, source: PageTypeSource.Detected },
         origin: {
           origin: "https://x.test",
           version: "v1",

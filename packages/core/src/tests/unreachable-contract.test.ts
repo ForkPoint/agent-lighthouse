@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { planAudits } from "../audit-runner";
-import { defaultConfig } from "../audit-config";
+import { planAudits } from "#core/audit-runner";
+import { defaultConfig } from "#core/audit-config";
 import { unreachableContext } from "./fixtures";
+import { CheckStatus } from "#core/types";
 
 /**
  * The one absolute rule in the registry: a scan that could not read the site
@@ -35,7 +36,7 @@ describe("an unread scan verdicts nothing", () => {
   it("gives every skipped audit a reason a reader can act on", () => {
     const plan = planAudits(unreachableContext(), defaultConfig);
     for (const stub of plan.skipped) {
-      expect(stub.status, stub.id).toBe("na");
+      expect(stub.status, stub.id).toBe(CheckStatus.NotApplicable);
       expect(stub.explanation, stub.id).toMatch(/^Not assessed: /);
       expect(stub.score, stub.id).toBe(0);
     }

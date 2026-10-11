@@ -6,8 +6,9 @@ import {
   TAG_SCAN_ERROR,
   TAG_SKIPPED_NO_EVIDENCE,
   TAG_SKIPPED_PAGE_TYPE,
-} from "../packages/core/src";
-import type { ScanReport, CheckResult } from "../packages/core/src";
+} from "#core/index";
+import type { ScanReport, CheckResult } from "#core/index";
+import { StoreStatus } from "./lib/scan-outcomes";
 
 /**
  * Prove that every audit ran, on every store a benchmark scanned.
@@ -35,7 +36,7 @@ const DEFAULT_DATA = "reports/investigation/benchmark-stores-data.json";
 
 interface StoreResult {
   url: string;
-  status: "success" | "error" | "bot_blocked";
+  status: StoreStatus;
   report?: ScanReport;
   error?: string;
 }
@@ -121,9 +122,11 @@ function main(): void {
     StoreResult[] | Record<string, StoreResult>;
   const stores = Array.isArray(raw) ? raw : Object.values(raw);
   const expected = expectedAuditIds();
-  const scanned = stores.filter((s) => s.status === "success" && s.report);
-  const blocked = stores.filter((s) => s.status === "bot_blocked");
-  const failed = stores.filter((s) => s.status === "error");
+  const scanned = stores.filter(
+    (s) => s.status === StoreStatus.Success && s.report,
+  );
+  const blocked = stores.filter((s) => s.status === StoreStatus.BotBlocked);
+  const failed = stores.filter((s) => s.status === StoreStatus.Error);
 
   console.log(`\nScan coverage — ${path.basename(dataPath)}`);
   console.log(

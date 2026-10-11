@@ -8,6 +8,7 @@ import {
   gatedMassShare,
   GATED_MASS_UNSCORED_THRESHOLD,
 } from "./scorer";
+import { CheckPriority, CheckStatus, ScoreDisplayMode } from "./types";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -19,13 +20,13 @@ function makeCheck(overrides: Partial<CheckResult> = {}): CheckResult {
     category: "test",
     title: "Test Check",
     description: "Test Description",
-    status: "pass",
+    status: CheckStatus.Pass,
     score: 1.0,
     // Equal weight by default: these cases describe the equal-weight behaviour,
     // where a weighted mean reduces to a plain mean.
     weight: 1.0,
-    scoreDisplayMode: "binary",
-    priority: "medium",
+    scoreDisplayMode: ScoreDisplayMode.Binary,
+    priority: CheckPriority.Medium,
     impact: "Low",
     fix: "Fix it",
     explanation: "OK",
@@ -64,18 +65,18 @@ describe("calculateCategoryScore", () => {
 
   it("returns 0 when all checks fail (score 0.0)", () => {
     const checks = [
-      makeCheck({ score: 0.0, status: "fail" }),
-      makeCheck({ score: 0.0, status: "fail" }),
-      makeCheck({ score: 0.0, status: "fail" }),
+      makeCheck({ score: 0.0, status: CheckStatus.Fail }),
+      makeCheck({ score: 0.0, status: CheckStatus.Fail }),
+      makeCheck({ score: 0.0, status: CheckStatus.Fail }),
     ];
     expect(calculateCategoryScore(checks)).toBe(0);
   });
 
   it("returns 50 for mixed results (1 pass, 1 warn, 1 fail)", () => {
     const checks = [
-      makeCheck({ score: 1.0, status: "pass" }),
-      makeCheck({ score: 0.5, status: "warn" }),
-      makeCheck({ score: 0.0, status: "fail" }),
+      makeCheck({ score: 1.0, status: CheckStatus.Pass }),
+      makeCheck({ score: 0.5, status: CheckStatus.Warn }),
+      makeCheck({ score: 0.0, status: CheckStatus.Fail }),
     ];
     expect(calculateCategoryScore(checks)).toBe(50);
   });
@@ -102,31 +103,55 @@ describe("calculateCategoryScore", () => {
 describe("informative checks are score-neutral", () => {
   it("adding an informative check never changes the category score", () => {
     const scored = [
-      makeCheck({ status: "pass", score: 1, scoreDisplayMode: "binary" }),
-      makeCheck({ status: "fail", score: 0, scoreDisplayMode: "binary" }),
+      makeCheck({
+        status: CheckStatus.Pass,
+        score: 1,
+        scoreDisplayMode: ScoreDisplayMode.Binary,
+      }),
+      makeCheck({
+        status: CheckStatus.Fail,
+        score: 0,
+        scoreDisplayMode: ScoreDisplayMode.Binary,
+      }),
     ];
     const before = calculateCategoryScore(scored);
     const withInformative = [
       ...scored,
-      makeCheck({ status: "fail", score: 0, scoreDisplayMode: "informative" }),
-      makeCheck({ status: "pass", score: 1, scoreDisplayMode: "informative" }),
+      makeCheck({
+        status: CheckStatus.Fail,
+        score: 0,
+        scoreDisplayMode: ScoreDisplayMode.Informative,
+      }),
+      makeCheck({
+        status: CheckStatus.Pass,
+        score: 1,
+        scoreDisplayMode: ScoreDisplayMode.Informative,
+      }),
     ];
     expect(calculateCategoryScore(withInformative)).toBe(before);
   });
 
   it("a failing informative check on its own does not drag the mean down", () => {
     const scored = [
-      makeCheck({ status: "pass", score: 1, scoreDisplayMode: "binary" }),
-      makeCheck({ status: "pass", score: 1, scoreDisplayMode: "binary" }),
+      makeCheck({
+        status: CheckStatus.Pass,
+        score: 1,
+        scoreDisplayMode: ScoreDisplayMode.Binary,
+      }),
+      makeCheck({
+        status: CheckStatus.Pass,
+        score: 1,
+        scoreDisplayMode: ScoreDisplayMode.Binary,
+      }),
     ];
     expect(calculateCategoryScore(scored)).toBe(100);
     expect(
       calculateCategoryScore([
         ...scored,
         makeCheck({
-          status: "fail",
+          status: CheckStatus.Fail,
           score: 0,
-          scoreDisplayMode: "informative",
+          scoreDisplayMode: ScoreDisplayMode.Informative,
         }),
       ]),
     ).toBe(100);
@@ -134,7 +159,11 @@ describe("informative checks are score-neutral", () => {
 
   it("a category of only informative checks scores 0", () => {
     const only = [
-      makeCheck({ status: "pass", score: 1, scoreDisplayMode: "informative" }),
+      makeCheck({
+        status: CheckStatus.Pass,
+        score: 1,
+        scoreDisplayMode: ScoreDisplayMode.Informative,
+      }),
     ];
     expect(calculateCategoryScore(only)).toBe(0);
   });
@@ -167,10 +196,10 @@ describe("buildCategoryResult", () => {
 
   it("calculates passCount, warnCount, failCount correctly", () => {
     const checks = [
-      makeCheck({ status: "pass", score: 1.0 }),
-      makeCheck({ status: "pass", score: 1.0 }),
-      makeCheck({ status: "warn", score: 0.5 }),
-      makeCheck({ status: "fail", score: 0.0 }),
+      makeCheck({ status: CheckStatus.Pass, score: 1.0 }),
+      makeCheck({ status: CheckStatus.Pass, score: 1.0 }),
+      makeCheck({ status: CheckStatus.Warn, score: 0.5 }),
+      makeCheck({ status: CheckStatus.Fail, score: 0.0 }),
     ];
     const result = buildCategoryResult("machine-discovery", checks);
     expect(result.passCount).toBe(2);
@@ -206,15 +235,15 @@ describe("calculateOverallScore", () => {
       score: 0,
       weight: 4,
       checks: [
-        makeCheck({ status: "na", score: 0 }),
-        makeCheck({ status: "na", score: 0 }),
+        makeCheck({ status: CheckStatus.NotApplicable, score: 0 }),
+        makeCheck({ status: CheckStatus.NotApplicable, score: 0 }),
       ],
     });
     const discovery = makeCategory({
       id: "machine-discovery",
       score: 50,
       weight: 4,
-      checks: [makeCheck(), makeCheck({ status: "fail", score: 0 })],
+      checks: [makeCheck(), makeCheck({ status: CheckStatus.Fail, score: 0 })],
     });
     // Without the rule this is (0*4 + 50*4) / 8 = 25.
     expect(calculateOverallScore([commerce, discovery])).toBe(50);
@@ -226,8 +255,8 @@ describe("calculateOverallScore", () => {
       score: 0,
       weight: 4,
       checks: [
-        makeCheck({ status: "na", score: 0 }),
-        makeCheck({ status: "fail", score: 0 }),
+        makeCheck({ status: CheckStatus.NotApplicable, score: 0 }),
+        makeCheck({ status: CheckStatus.Fail, score: 0 }),
       ],
     });
     const discovery = makeCategory({
@@ -247,8 +276,8 @@ describe("calculateOverallScore", () => {
       weight: 2,
       checks: [
         makeCheck({
-          scoreDisplayMode: "informative",
-          status: "fail",
+          scoreDisplayMode: ScoreDisplayMode.Informative,
+          status: CheckStatus.Fail,
           score: 0,
         }),
       ],
@@ -395,18 +424,20 @@ describe("calculateOverallScore — evidence mass", () => {
 describe("weighted category score", () => {
   it("weights A (1.0) over B (0.6)", () => {
     const checks = [
-      makeCheck({ status: "pass", score: 1, weight: 1.0 }),
-      makeCheck({ status: "fail", score: 0, weight: 0.6 }),
+      makeCheck({ status: CheckStatus.Pass, score: 1, weight: 1.0 }),
+      makeCheck({ status: CheckStatus.Fail, score: 0, weight: 0.6 }),
     ];
     // (1*1.0 + 0*0.6) / 1.6 = 0.625
     expect(calculateCategoryScore(checks)).toBe(63);
   });
 
   it("weight 0 (informative) never moves the score", () => {
-    const base = [makeCheck({ status: "pass", score: 1, weight: 1.0 })];
+    const base = [
+      makeCheck({ status: CheckStatus.Pass, score: 1, weight: 1.0 }),
+    ];
     const withInformative = [
       ...base,
-      makeCheck({ status: "fail", score: 0, weight: 0 }),
+      makeCheck({ status: CheckStatus.Fail, score: 0, weight: 0 }),
     ];
     expect(calculateCategoryScore(withInformative)).toBe(
       calculateCategoryScore(base),
@@ -417,43 +448,45 @@ describe("weighted category score", () => {
     // An unstamped check is unproven evidence: it must not move the score, so
     // this mixed set scores exactly as the weighted pair alone does.
     const base = [
-      makeCheck({ status: "pass", score: 1, weight: 1.0 }),
-      makeCheck({ status: "fail", score: 0, weight: 0.6 }),
+      makeCheck({ status: CheckStatus.Pass, score: 1, weight: 1.0 }),
+      makeCheck({ status: CheckStatus.Fail, score: 0, weight: 0.6 }),
     ];
     const withUnweighted = [
       ...base,
-      makeCheck({ status: "fail", score: 0, weight: undefined }),
-      makeCheck({ status: "pass", score: 1, weight: undefined }),
+      makeCheck({ status: CheckStatus.Fail, score: 0, weight: undefined }),
+      makeCheck({ status: CheckStatus.Pass, score: 1, weight: undefined }),
     ];
     expect(calculateCategoryScore(base)).toBe(63);
     expect(calculateCategoryScore(withUnweighted)).toBe(63);
     // …and a set of only unweighted checks has no evidence at all.
     expect(
       calculateCategoryScore([
-        makeCheck({ status: "pass", score: 1, weight: undefined }),
+        makeCheck({ status: CheckStatus.Pass, score: 1, weight: undefined }),
       ]),
     ).toBe(0);
   });
 
   it("property: adding a na check never changes the score", () => {
     const base = [
-      makeCheck({ status: "pass", score: 1, weight: 1.0 }),
-      makeCheck({ status: "fail", score: 0, weight: 0.6 }),
+      makeCheck({ status: CheckStatus.Pass, score: 1, weight: 1.0 }),
+      makeCheck({ status: CheckStatus.Fail, score: 0, weight: 0.6 }),
     ];
     const withNa = [
       ...base,
-      makeCheck({ status: "na", score: 0, weight: 1.0 }),
+      makeCheck({ status: CheckStatus.NotApplicable, score: 0, weight: 1.0 }),
     ];
     expect(calculateCategoryScore(withNa)).toBe(calculateCategoryScore(base));
   });
 
   it("all-na or zero-total-weight scores 0", () => {
     expect(
-      calculateCategoryScore([makeCheck({ status: "na", weight: 1 })]),
+      calculateCategoryScore([
+        makeCheck({ status: CheckStatus.NotApplicable, weight: 1 }),
+      ]),
     ).toBe(0);
     expect(
       calculateCategoryScore([
-        makeCheck({ status: "fail", score: 0, weight: 0 }),
+        makeCheck({ status: CheckStatus.Fail, score: 0, weight: 0 }),
       ]),
     ).toBe(0);
   });
@@ -466,11 +499,11 @@ describe("gatedMassShare — what the gate removed", () => {
       category: "content-extraction",
       title: "t",
       description: "d",
-      status: "pass",
+      status: CheckStatus.Pass,
       score: 1,
       weight: 1,
-      scoreDisplayMode: "binary",
-      priority: "medium",
+      scoreDisplayMode: ScoreDisplayMode.Binary,
+      priority: CheckPriority.Medium,
       impact: "",
       fix: "",
       ...over,
@@ -478,14 +511,25 @@ describe("gatedMassShare — what the gate removed", () => {
 
   it("is zero when nothing was gated", () => {
     expect(
-      gatedMassShare([check({}), check({ status: "fail", score: 0 })]),
+      gatedMassShare([
+        check({}),
+        check({ status: CheckStatus.Fail, score: 0 }),
+      ]),
     ).toBe(0);
   });
 
   it("counts only the mass the gate itself removed", () => {
     const share = gatedMassShare([
-      check({ id: "a/1", status: "na", tags: ["skipped:no-evidence"] }),
-      check({ id: "a/2", status: "na", tags: ["skipped:page-type"] }),
+      check({
+        id: "a/1",
+        status: CheckStatus.NotApplicable,
+        tags: ["skipped:no-evidence"],
+      }),
+      check({
+        id: "a/2",
+        status: CheckStatus.NotApplicable,
+        tags: ["skipped:page-type"],
+      }),
       check({ id: "a/3" }),
     ]);
     // 1 of 3 units of mass. A page-type skip is a legitimate absence and is
@@ -498,7 +542,7 @@ describe("gatedMassShare — what the gate removed", () => {
       check({
         id: "a/1",
         weight: 0,
-        scoreDisplayMode: "informative",
+        scoreDisplayMode: ScoreDisplayMode.Informative,
         tags: ["skipped:no-evidence"],
       }),
       check({ id: "a/2" }),
@@ -509,8 +553,16 @@ describe("gatedMassShare — what the gate removed", () => {
   it("reports the whole registry gone when every scored check was gated", () => {
     expect(
       gatedMassShare([
-        check({ id: "a/1", status: "na", tags: ["skipped:no-evidence"] }),
-        check({ id: "a/2", status: "na", tags: ["skipped:no-evidence"] }),
+        check({
+          id: "a/1",
+          status: CheckStatus.NotApplicable,
+          tags: ["skipped:no-evidence"],
+        }),
+        check({
+          id: "a/2",
+          status: CheckStatus.NotApplicable,
+          tags: ["skipped:no-evidence"],
+        }),
       ]),
     ).toBe(1);
   });

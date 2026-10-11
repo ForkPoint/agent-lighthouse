@@ -20,9 +20,20 @@ it("versions the private website when a core major release updates its dependenc
   const packages = ["cli", "core", "mcp", "report", "website"];
   const versions = new Map<string, string>();
   try {
+    // Pin the repository's pnpm. Without `packageManager` the fixture runs
+    // whatever pnpm the machine has globally, and pnpm 11 checks the
+    // dependency state before `pnpm exec prettier` and refuses the linked
+    // `node_modules`, so the result would depend on the developer's setup.
+    const { packageManager } = JSON.parse(
+      readFileSync(join(root, "package.json"), "utf8"),
+    ) as { packageManager: string };
     writeFileSync(
       join(fixture, "package.json"),
-      JSON.stringify({ name: "release-versioning-fixture", private: true }),
+      JSON.stringify({
+        name: "release-versioning-fixture",
+        private: true,
+        packageManager,
+      }),
     );
     writeFileSync(
       join(fixture, "pnpm-workspace.yaml"),

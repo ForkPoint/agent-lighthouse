@@ -108,5 +108,5 @@ Both audits grade **A** on the same proven consumer path (Google parses `ratingV
 ### Deviations
 
 - **A rating on `Organization`/`LocalBusiness` still passes on non-product pages.** Google's self-serving-review exclusion is real, but demoting every first-party testimonial block to a failure would punish sites that publish their reviews correctly for other consumers; the product-page scoping is where the exclusion actually bites, and that is where it is enforced.
-- **`applicablePageTypes` stays `['homepage', 'product']`** rather than gaining `content`. The audit itself reads every crawled page (the product scoping needs them), so the field only steers page-type reporting.
+- **`applicablePageTypes` stays `['homepage', 'product']`** rather than gaining `general` (then called `content`). The audit itself reads every crawled page (the product scoping needs them), so the field only steers page-type reporting.
 - **Repeated-component detection is class-name based** (`testimonial`, `review-item`/`review-card`/`review-body`, `customer-review`, plus microdata `[itemtype*="Review"]`/`[itemprop="review"]`). A review list rendered with entirely semantic class names and no microdata or JSON-LD is invisible to it — which yields `na`, never a false failure.

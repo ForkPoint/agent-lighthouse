@@ -4,14 +4,14 @@ import {
   mockPageContext,
   mockCheckContext,
   mockFetchResult,
-} from "../__tests__/test-utils";
-import type { FetchOptions } from "../fetcher";
+} from "#core/__tests__/test-utils";
+import type { FetchOptions } from "#core/fetcher";
 
 // isSafeUrl performs a real DNS lookup before the gatherer fetches a stylesheet
 // whose href came out of site-controlled markup. Stub it with an offline
 // stand-in that still blocks loopback and private ranges.
-vi.mock("../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => {

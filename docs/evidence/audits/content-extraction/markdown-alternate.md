@@ -82,7 +82,7 @@ Best of the AI-specific link audits — the underlying practice is real and does
 - No `text/x-markdown` test.
 - No type-less `.md` href test.
 - No uppercase/multi-token `rel` test.
-- No multi-page test where the homepage lacks the alternate but content pages have it — the production case.
+- No multi-page test where the homepage lacks the alternate but interior pages have it — the production case.
 - No dangling-link test.
 
 **Overlaps with:** _none_

@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
-import { defaultConfig } from "../audit-config";
+import { defaultConfig } from "#core/audit-config";
 import { bareSiteContext } from "./fixtures";
 
-vi.mock("../fetcher", () => ({
+vi.mock("#core/fetcher", () => ({
   isSafeUrl: vi.fn(async () => false),
 }));
 

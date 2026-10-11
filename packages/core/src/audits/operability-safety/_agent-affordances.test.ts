@@ -7,7 +7,7 @@ import {
   CLICKABILITY_CLASS_RE,
   NATIVE_INTERACTIVE,
 } from "./_agent-affordances";
-import { parseCssRules } from "../../gatherers/css-rules";
+import { parseCssRules } from "#core/gatherers/css-rules";
 
 const load = (html: string) => cheerio.load(html);
 

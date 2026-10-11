@@ -6,11 +6,19 @@
 // audit asks the opposite question — whether a control an agent cannot drive at
 // all, native or not, has a discrete alternative beside it. A native
 // `<input type="range">` passes the other audit and fails this one.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext, PageContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext, PageContext } from "#core/check-context";
 import { accessibleName, isElement } from "./_agent-affordances";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /**
  * Paths where a gesture-only control costs a task rather than a nicety.
@@ -47,7 +55,15 @@ const REORDER_CONTROL = /up|down|move|position|order|top|bottom/i;
 /** The three values APG requires a slider to publish. */
 const SLIDER_VALUES = ["aria-valuenow", "aria-valuemin", "aria-valuemax"];
 
-type Arm = "slider" | "sliderAria" | "dragList" | "dropZone" | "carousel";
+const Arm = {
+  Slider: "slider",
+  SliderAria: "sliderAria",
+  DragList: "dragList",
+  DropZone: "dropZone",
+  Carousel: "carousel",
+} as const;
+
+type Arm = (typeof Arm)[keyof typeof Arm];
 
 interface Finding {
   pageUrl: string;
@@ -136,14 +152,14 @@ function survey(ctx: CheckContext): Finding[] {
         if (missingValues.length > 0 || unnamed) {
           const parts = [...missingValues];
           if (unnamed) parts.push("an accessible name");
-          add("sliderAria", parts.join(", "), node);
+          add(Arm.SliderAria, parts.join(", "), node);
           return;
         }
       }
 
       if (!hasDiscreteValue($, node)) {
         add(
-          "slider",
+          Arm.Slider,
           "a numeric input or select bound to the same value",
           node,
         );
@@ -168,7 +184,7 @@ function survey(ctx: CheckContext): Finding[] {
         if (
           findings.some(
             (f) =>
-              f.arm === "dragList" &&
+              f.arm === Arm.DragList &&
               f.hint ===
                 hintFor(
                   (key as { tagName?: string })?.tagName?.toLowerCase() ?? "",
@@ -178,7 +194,11 @@ function survey(ctx: CheckContext): Finding[] {
         )
           return;
         if (hasReorderControl($, scope)) return;
-        add("dragList", "move-up/move-down buttons or a position select", key);
+        add(
+          Arm.DragList,
+          "move-up/move-down buttons or a position select",
+          key,
+        );
       });
     }
 
@@ -193,7 +213,7 @@ function survey(ctx: CheckContext): Finding[] {
       if ($node.siblings().find('input[type="file"]').length > 0) return;
       if ($node.siblings('input[type="file"]').length > 0) return;
       add(
-        "dropZone",
+        Arm.DropZone,
         'an <input type="file"> the agent can set files on',
         node,
       );
@@ -214,7 +234,7 @@ function survey(ctx: CheckContext): Finding[] {
         if (CAROUSEL_CONTROL.test(label)) hasControl = true;
       });
       if (hasControl) return;
-      add("carousel", "rendered next and previous buttons", node);
+      add(Arm.Carousel, "rendered next and previous buttons", node);
     });
   }
 
@@ -244,25 +264,25 @@ export class DragAndSliderDependencyAudit extends Audit {
     failureTitle: "Gesture-only controls with no discrete alternative",
     description:
       "Flags interactions on task-critical paths whose only operation path is a continuous pointer gesture — range sliders, drag-to-reorder lists, drag-only upload zones, swipe carousels — with no click, keyboard, or typed-value alternative. Each finding names the discrete control that is missing.",
-    scoreDisplayMode: "binary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Binary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/operability-safety/drag-and-slider-dependency.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "high",
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         'A continuous pointer gesture asks an agent to synthesise a pointerdown, a run of intermediate pointermove events and a pointerup at a computed pixel offset, with no feedback between steps and no way to check the interim value. Every other agent action is discrete and verifiable. WebSuite measures slider interaction at 0% success for both agents it tested — the worst primitive in its taxonomy — and Anthropic separately documents scrollbars and dropdowns as unreliable under mouse control, recommending keyboard paths instead. Pair the slider with a numeric input bound to the same value and "set max price to 300" stops being a gesture and becomes a fill.',
       fix: 'Keep the gesture and add the discrete path beside it. Give every range slider a numeric input or a select bound to the same value, and give every `role="slider"` the full `aria-valuenow`/`aria-valuemin`/`aria-valuemax` set plus an accessible name. Put move-up and move-down buttons, or a position select, on each item of a reorderable list that sits on a checkout or configuration path. Always render an `<input type="file">` inside a drop zone — an agent sets files on an input and cannot synthesise a drop. Give a carousel real next and previous buttons rather than swipe handlers alone.',
       code: SAMPLE,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/drag-and-slider-dependency/",
       tags: ["agent-operability", "actionability", "forms"],
@@ -271,7 +291,7 @@ export class DragAndSliderDependencyAudit extends Audit {
 
   private recommendation() {
     return {
-      priority: "high" as const,
+      priority: CheckPriority.High,
       description: DragAndSliderDependencyAudit.meta.description,
       code: SAMPLE,
     };
@@ -281,11 +301,11 @@ export class DragAndSliderDependencyAudit extends Audit {
     const findings = survey(ctx);
     const count = (arm: Arm) => findings.filter((f) => f.arm === arm).length;
     const details = {
-      sliders: count("slider"),
-      sliderAria: count("sliderAria"),
-      dragLists: count("dragList"),
-      dropZones: count("dropZone"),
-      carousels: count("carousel"),
+      sliders: count(Arm.Slider),
+      sliderAria: count(Arm.SliderAria),
+      dragLists: count(Arm.DragList),
+      dropZones: count(Arm.DropZone),
+      carousels: count(Arm.Carousel),
     };
 
     const constructs = ctx.pages.some(

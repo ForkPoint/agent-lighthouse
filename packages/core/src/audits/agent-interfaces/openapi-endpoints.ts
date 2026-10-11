@@ -1,14 +1,22 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
 import {
   defectCount,
   defectNote,
   NO_OPENAPI_SPEC,
   readOpenApiPaths,
   readOpenApiSpec,
-} from "../../gatherers/openapi";
+} from "#core/gatherers/openapi";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** Shared `expected` line: one path, one operation, is the whole requirement. */
 const EXPECTED = "At least one path with one operation in the OpenAPI spec";
@@ -23,13 +31,13 @@ export class OpenApiEndpointsAudit extends Audit {
     failureTitle: "OpenAPI has endpoints",
     description:
       "An OpenAPI spec without endpoints is like a menu with no items. AI agents need at least one path with an operation to know what actions they can perform on your site. Add your most important endpoints first.",
-    scoreDisplayMode: "binary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Binary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/agent-interfaces/openapi-endpoints.md",
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "high",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "An OpenAPI spec without endpoints is unusable -- AI agents see a spec file but have zero actions they can perform. Your site remains a passive document that agents cannot interact with programmatically.",
@@ -46,7 +54,7 @@ export class OpenApiEndpointsAudit extends Audit {
     }
   }
 }`,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl: "https://swagger.io/specification/#paths-object",
       tags: ["openapi", "endpoints", "api"],
     },
@@ -77,7 +85,7 @@ export class OpenApiEndpointsAudit extends Audit {
         EXPECTED,
         paths.found,
         {
-          priority: "high",
+          priority: CheckPriority.High,
           description: OpenApiEndpointsAudit.meta.description,
           code: FIX_CODE,
         },
@@ -105,7 +113,7 @@ export class OpenApiEndpointsAudit extends Audit {
       EXPECTED,
       "0 operations",
       {
-        priority: "high",
+        priority: CheckPriority.High,
         description: OpenApiEndpointsAudit.meta.description,
         code: FIX_CODE,
       },

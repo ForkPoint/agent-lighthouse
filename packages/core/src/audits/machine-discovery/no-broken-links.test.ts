@@ -1,11 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { NoBrokenLinksAudit } from "./no-broken-links";
-import { AuditResultSchema } from "../../schemas";
+import { AuditResultSchema } from "#core/schemas";
 import {
   mockCheckContext,
   mockPageContext,
   mockFetchResult,
-} from "../../__tests__/test-utils";
+} from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 function fetchStub(statusByUrl: Record<string, number>) {
   return async ({ url }: { url: string }) => {
@@ -28,7 +29,7 @@ describe("NoBrokenLinksAudit", () => {
     ]);
     ctx.fetch = fetchStub({});
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("return HTTP 200");
   });
 
@@ -39,7 +40,7 @@ describe("NoBrokenLinksAudit", () => {
     // 1 of 2 broken -> not more than half -> warn
     ctx.fetch = fetchStub({ "https://example.com/b": 404 });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("404");
   });
 
@@ -52,7 +53,7 @@ describe("NoBrokenLinksAudit", () => {
       "https://example.com/b": 500,
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("broken");
   });
 
@@ -64,14 +65,14 @@ describe("NoBrokenLinksAudit", () => {
       ),
     ]);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("No internal links found");
   });
 
   it("fails when no pages were scanned", async () => {
     const ctx = mockCheckContext([]);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No pages scanned");
   });
 
@@ -88,7 +89,7 @@ describe("NoBrokenLinksAudit", () => {
     ctx.fetch = fetchStub({});
     const result = await audit.audit(ctx);
     // 'Bad URL' skipped; '/good' resolves and returns 200 → pass
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("return HTTP 200");
   });
 
@@ -108,7 +109,7 @@ describe("NoBrokenLinksAudit", () => {
       return mockFetchResult("<html>OK</html>", 200);
     };
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(AuditResultSchema.safeParse(result).success).toBe(true);
   });
 
@@ -133,7 +134,7 @@ describe("NoBrokenLinksAudit", () => {
       ),
     );
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(AuditResultSchema.safeParse(result).success).toBe(true);
     expect(result.displayValue!.length).toBeLessThanOrEqual(1000);
   });

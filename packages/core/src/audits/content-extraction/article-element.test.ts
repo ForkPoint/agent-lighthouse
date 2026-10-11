@@ -1,13 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
 import { ArticleElementAudit } from "./article-element";
 import {
   attributableFixture,
   mockCheckContext,
   mockPageContext,
   unreachedSiteContext,
-} from "../../__tests__/test-utils";
+} from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 describe("ArticleElementAudit", () => {
   const audit = new ArticleElementAudit();
@@ -18,7 +19,7 @@ describe("ArticleElementAudit", () => {
       "<html><body><article><h2>Post</h2><p>Body</p></article></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("1/1");
   });
 
@@ -32,7 +33,7 @@ describe("ArticleElementAudit", () => {
       "<html><body><div>No article</div></body></html>",
     );
     const result = audit.audit(mockCheckContext([home, other]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("1/2");
   });
 
@@ -42,7 +43,7 @@ describe("ArticleElementAudit", () => {
       "<html><body><div>No article</div></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("0/1");
   });
 
@@ -53,7 +54,9 @@ describe("ArticleElementAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new ArticleElementAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext(pages, rootFiles),
@@ -65,6 +68,6 @@ describe("ArticleElementAudit", () => {
     expect(
       plan.skipped.find((stub) => stub.id === ArticleElementAudit.meta.id)
         ?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 });

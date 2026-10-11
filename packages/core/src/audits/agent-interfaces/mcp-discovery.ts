@@ -1,7 +1,15 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 function tryParseJson(body: string): unknown {
   try {
@@ -23,13 +31,13 @@ export class McpDiscoveryAudit extends Audit {
     failureTitle: "MCP discovery file is published but unreadable",
     description:
       "Reports whether the site publishes an MCP discovery document at `/.well-known/mcp/servers.json` or `/.well-known/ucp`, and whether what it publishes can be parsed. Neither path is registered or specified, and no shipping MCP client is documented as fetching either, so this is reported rather than scored: a site with a working MCP server discovered by any other route is not less agent-ready for having no such file.",
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "informative"),
-    evidenceGrade: "C",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/agent-interfaces/mcp-discovery.md",
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "medium",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "No shipping MCP client is documented as fetching `/.well-known/mcp/servers.json` or `/.well-known/ucp`, so publishing one is not known to make a site reachable to any agent. What does matter is that a document published at a well-known path can be read: a 200 carrying HTML or unparseable JSON tells a conforming client the resource exists and then gives it nothing to parse.",
@@ -49,7 +57,7 @@ export class McpDiscoveryAudit extends Audit {
     }
   ]
 }`,
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl:
         "https://modelcontextprotocol.io/specification/2025-03-26/basic/transports",
       tags: ["mcp", "discovery", "agent-protocol"],
@@ -69,7 +77,10 @@ export class McpDiscoveryAudit extends Audit {
           "A document is published at /.well-known/mcp/servers.json, but it is not valid JSON.",
           expected,
           "Published, but the body does not parse as a JSON object",
-          { priority: "medium", code: McpDiscoveryAudit.meta.guidance?.code },
+          {
+            priority: CheckPriority.Medium,
+            code: McpDiscoveryAudit.meta.guidance?.code,
+          },
         );
       }
 
@@ -79,7 +90,10 @@ export class McpDiscoveryAudit extends Audit {
           "mcp/servers.json parses but carries no servers array.",
           expected,
           "No servers array",
-          { priority: "medium", code: McpDiscoveryAudit.meta.guidance?.code },
+          {
+            priority: CheckPriority.Medium,
+            code: McpDiscoveryAudit.meta.guidance?.code,
+          },
         );
       }
 
@@ -89,7 +103,10 @@ export class McpDiscoveryAudit extends Audit {
           "mcp/servers.json lists no servers, so it advertises nothing.",
           expected,
           "servers array is empty",
-          { priority: "medium", code: McpDiscoveryAudit.meta.guidance?.code },
+          {
+            priority: CheckPriority.Medium,
+            code: McpDiscoveryAudit.meta.guidance?.code,
+          },
         );
       }
 
@@ -123,7 +140,10 @@ export class McpDiscoveryAudit extends Audit {
             "A document is published at /.well-known/ucp, but it declares no services and no capabilities.",
             expected,
             "UCP document carries neither services nor capabilities",
-            { priority: "medium", code: McpDiscoveryAudit.meta.guidance?.code },
+            {
+              priority: CheckPriority.Medium,
+              code: McpDiscoveryAudit.meta.guidance?.code,
+            },
           );
         }
 
@@ -138,7 +158,10 @@ export class McpDiscoveryAudit extends Audit {
         "A document is published at /.well-known/ucp, but it is not valid JSON.",
         expected,
         "Published, but the body does not parse as a JSON object",
-        { priority: "medium", code: McpDiscoveryAudit.meta.guidance?.code },
+        {
+          priority: CheckPriority.Medium,
+          code: McpDiscoveryAudit.meta.guidance?.code,
+        },
       );
     }
 

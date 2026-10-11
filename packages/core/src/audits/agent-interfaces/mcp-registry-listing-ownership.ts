@@ -1,15 +1,24 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import { isSafeUrl } from "../../url-utils";
-import { registrableDomain } from "../../gatherers/domains";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import { isSafeUrl } from "#core/url-utils";
+import { registrableDomain } from "#core/gatherers/domains";
 import {
   discoverMcpEndpoint,
   mcpFetch,
   isObject,
   tryParseJson,
-} from "../../gatherers/mcp";
+} from "#core/gatherers/mcp";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+  HttpMethod,
+} from "#core/types";
 
 /** The public registry clients resolve "the MCP server for this domain" against. */
 const REGISTRY = "https://registry.modelcontextprotocol.io/v0.1/servers";
@@ -24,15 +33,21 @@ const PROOF_GRAMMAR =
 /** Search calls per scan. Each is a query to somebody else's registry. */
 const MAX_SEARCHES = 2;
 
-export type Namespace = "first-party" | "github-account" | "aggregator";
+export const Namespace = {
+  FirstParty: "first-party",
+  GithubAccount: "github-account",
+  Aggregator: "aggregator",
+} as const;
+
+export type Namespace = (typeof Namespace)[keyof typeof Namespace];
 
 /** Which kind of namespace does this server name sit in? */
 export function namespaceKind(name: string, apex: string): Namespace {
   const reverse = apex.split(".").reverse().join(".");
   if (name.toLowerCase().startsWith(`${reverse.toLowerCase()}/`))
-    return "first-party";
-  if (/^io\.github\.[^/]+\//i.test(name)) return "github-account";
-  return "aggregator";
+    return Namespace.FirstParty;
+  if (/^io\.github\.[^/]+\//i.test(name)) return Namespace.GithubAccount;
+  return Namespace.Aggregator;
 }
 
 interface Listing {
@@ -98,19 +113,19 @@ export class McpRegistryListingOwnershipAudit extends Audit {
       "This site’s MCP server is missing from the registry, or listed under a namespace it does not own",
     description:
       "Searches the official MCP Registry for servers whose `remotes[].url` lives on this domain, classifies each listing by namespace — reverse-DNS of this domain, an individual’s GitHub account, or a third-party aggregator — and checks that the domain-control proof the reverse-DNS namespace requires is actually being served at `/.well-known/mcp-registry-auth`.",
-    scoreDisplayMode: "ternary",
-    tier: "scored",
-    evidenceGrade: "B",
-    weight: weightForGrade("B", "scored"),
-    defaultPriority: "medium",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    tier: AuditTier.Scored,
+    evidenceGrade: EvidenceGrade.B,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    defaultPriority: CheckPriority.Medium,
     dossier:
       "docs/evidence/audits/agent-interfaces/mcp-registry-listing-ownership.md",
-    requires: ["origin-reachable", "unblocked-fetches"],
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
     guidance: {
       impact:
         'The registry is the index a client resolves "the MCP server for this domain" against. A domain with no first-party entry is absent from it, so the only path to the server is a URL somebody pastes by hand. A listing under an aggregator’s namespace is worse than absent in one way: the brand cannot update or revoke it, and agents routed through it reach a proxy rather than the origin. The reverse-DNS namespace that fixes this is granted on proof of domain control, and that proof has to keep being served.',
       fix: "Publish the server under your own reverse-DNS namespace (`com.example/...`), serve the proof at `/.well-known/mcp-registry-auth` in the exact `v=MCPv1; k=ed25519; p=<base64>` form and keep serving it after DNS migrations, keep the listing’s version in step with what the server reports, and offer a `streamable-http` remote rather than only the deprecated `sse`.",
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/agent-interfaces/mcp-registry-listing-ownership/",
       tags: ["mcp", "registry", "namespace", "discovery"],
@@ -150,7 +165,7 @@ export class McpRegistryListingOwnershipAudit extends Audit {
       if (!(await isSafeUrl(url))) continue;
       searched += 1;
       const response = await mcpFetch(ctx, url, {
-        method: "GET",
+        method: HttpMethod.Get,
         headers: { Accept: "application/json" },
       });
       if (!response || response.status !== 200) continue;
@@ -171,7 +186,7 @@ export class McpRegistryListingOwnershipAudit extends Audit {
     const found: string[] = [];
 
     const firstParty = listings.filter(
-      (listing) => namespaceKind(listing.name, apex) === "first-party",
+      (listing) => namespaceKind(listing.name, apex) === Namespace.FirstParty,
     );
     for (const listing of listings) {
       const kind = namespaceKind(listing.name, apex);
@@ -179,7 +194,7 @@ export class McpRegistryListingOwnershipAudit extends Audit {
         `${listing.name} (${kind}, ${listing.version || "no version"}, ${listing.status || "no status"})`,
       );
 
-      if (kind === "aggregator") {
+      if (kind === Namespace.Aggregator) {
         const proxying = listing.remotes
           .filter((remote) => !remoteBelongsTo(remote.url, apex))
           .map((remote) => {
@@ -225,7 +240,7 @@ export class McpRegistryListingOwnershipAudit extends Audit {
     // apex, and a scan of `www.example.com` collects root files for the www
     // host, not for the apex the registry namespace is bound to.
     const proofResult = (await isSafeUrl(proofUrl))
-      ? await mcpFetch(ctx, proofUrl, { method: "GET" })
+      ? await mcpFetch(ctx, proofUrl, { method: HttpMethod.Get })
       : undefined;
     if (proofResult && proofResult.status === 200) {
       const line =
@@ -247,7 +262,7 @@ export class McpRegistryListingOwnershipAudit extends Audit {
       );
     } else if (
       firstParty.length === 0 &&
-      listings.some((l) => namespaceKind(l.name, apex) === "aggregator")
+      listings.some((l) => namespaceKind(l.name, apex) === Namespace.Aggregator)
     ) {
       // Only the aggregator case fails here. A `io.github.<user>` listing is at
       // least held by somebody who can update it; an aggregator republish is

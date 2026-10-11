@@ -1,6 +1,7 @@
 import type { ScanReport } from "./types";
 import { SCORE_TIER_LABELS } from "./constants";
 import { isCategoryAssessed } from "./scorer";
+import { CheckPriority } from "./types";
 
 /**
  * Generates a pragmatic, rule-based summary for a scan report.
@@ -23,9 +24,11 @@ export function generateScanSummary(report: Partial<ScanReport>): string {
 
   const tierLabel = scoreTier ? SCORE_TIER_LABELS[scoreTier] : "N/A";
   const criticalCount = recommendations.filter(
-    (r) => r.priority === "critical",
+    (r) => r.priority === CheckPriority.Critical,
   ).length;
-  const highCount = recommendations.filter((r) => r.priority === "high").length;
+  const highCount = recommendations.filter(
+    (r) => r.priority === CheckPriority.High,
+  ).length;
 
   const passCount = categories.reduce((sum, cat) => sum + cat.passCount, 0);
   const totalChecks = categories.reduce(

@@ -25,7 +25,6 @@
     "x-xss-protection": "1; mode=block",
     "x-rm": "GW",
     "vary": "accept-encoding",
-    "set-cookie": "__cf_bm=uZSe_zk77cHGVD35SLMv6F4VMds2PMT19ut2eUzbT8Y-1787919650.4995904-1.0.1.1-Xd9Mtlns5FNlorc_27cv0LHq6mJBktuBUW00ez7eho4bfW7C.pr9DbkQaFSpTiqZCNjBi7uz4IkKu65rpBZllElAWCtbkRpGQrJsZO9OBHjJez_USapAeBlx2C_mMD7BF6W1AAH1ucF_SYKFybfNmQ; HttpOnly; SameSite=None; Secure; Path=/; Domain=www.cloudflare.com; Expires=Fri, 28 Aug 2026 12:50:50 GMT",
     "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=wQf7QO%2BPbTUIMLsDGFgatkVHZYZLkAnXnmGM7jGDgPJMjo6vlY3Ra0SfGBxdn%2FExBULqfcuI5Nkpc3TuDGfFjEQmuB8rBGo9igMpWwl8UXkh2aSm03VRHHFUX0EWt%2BOie7ttRw%3D%3D\"}]}",
     "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
     "server": "cloudflare",

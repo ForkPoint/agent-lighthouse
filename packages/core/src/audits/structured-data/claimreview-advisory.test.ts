@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { ClaimreviewAdvisoryAudit } from "./claimreview-advisory";
-import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
+import { mockPageContext, mockCheckContext } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import { AuditTier, CheckStatus, ScoreDisplayMode } from "#core/types";
 
 function withJsonLd(nodes: object[], url = "https://example.test/fact-check") {
   const audit = new ClaimreviewAdvisoryAudit();
@@ -37,12 +38,12 @@ describe("ClaimreviewAdvisoryAudit", () => {
     const result = withJsonLd([
       { "@context": "https://schema.org", "@type": "Article", headline: "X" },
     ]);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("passes a well-formed ClaimReview and carries the advisory", () => {
     const result = withJsonLd([VALID]);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("phasing out");
     expect(result.message).toContain("Fact Check Explorer");
   });
@@ -51,7 +52,7 @@ describe("ClaimreviewAdvisoryAudit", () => {
     const result = withJsonLd([
       { "@context": "https://schema.org", "@graph": [VALID] },
     ]);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("warns when reviewRating carries only a numeric ratingValue", () => {
@@ -61,21 +62,21 @@ describe("ClaimreviewAdvisoryAudit", () => {
         reviewRating: { "@type": "Rating", ratingValue: 2, bestRating: 5 },
       },
     ]);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("alternateName");
   });
 
   it("warns when claimReviewed is missing", () => {
     const { claimReviewed: _drop, ...withoutClaim } = VALID;
     const result = withJsonLd([withoutClaim]);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("claimReviewed");
   });
 
   it("warns when url is missing", () => {
     const { url: _drop, ...withoutUrl } = VALID;
     const result = withJsonLd([withoutUrl]);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
   });
 
   it("warns when a page carries more than one ClaimReview node", () => {
@@ -83,7 +84,7 @@ describe("ClaimreviewAdvisoryAudit", () => {
       VALID,
       { ...VALID, claimReviewed: "A second claim entirely." },
     ]);
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("only one");
   });
 
@@ -96,8 +97,10 @@ describe("ClaimreviewAdvisoryAudit", () => {
   });
 
   it("is declared informative in both places the scorer reads", () => {
-    expect(ClaimreviewAdvisoryAudit.meta.tier).toBe("informative");
-    expect(ClaimreviewAdvisoryAudit.meta.scoreDisplayMode).toBe("informative");
+    expect(ClaimreviewAdvisoryAudit.meta.tier).toBe(AuditTier.Informative);
+    expect(ClaimreviewAdvisoryAudit.meta.scoreDisplayMode).toBe(
+      ScoreDisplayMode.Informative,
+    );
     expect(ClaimreviewAdvisoryAudit.meta.weight).toBe(0);
   });
 

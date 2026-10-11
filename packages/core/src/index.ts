@@ -1,7 +1,8 @@
 export { runScan } from "./orchestrator";
 export type { ScanOptions } from "./orchestrator";
 export { ProgressTracker, PHASE_WEIGHTS } from "./progress";
-export type { PhaseId, ScanEvent } from "./progress";
+export { PhaseId } from "./progress";
+export type { ScanEvent } from "./progress";
 export { createFetcher, isSafeUrl, boundedDispatcher } from "./fetcher";
 export type { FetchResult, FetchOptions, FetcherOptions } from "./fetcher";
 export {
@@ -39,7 +40,7 @@ export type { CssRule, PageCss } from "./gatherers/css-rules";
 export { pagesOfType, judgePages } from "./gatherers/pages";
 export type { PageJudgement } from "./gatherers/pages";
 export type { CheckContext, CheckFn, PageContext } from "./check-context";
-export type { ScanEvidence, EvidenceKey } from "./scan-evidence";
+export type { ScanEvidence } from "./scan-evidence";
 export { buildScanEvidence, allEvidenceMet } from "./scan-evidence";
 export { Audit, evidenceUrl } from "./audit";
 export { runAudits, planAudits } from "./audit-runner";
@@ -60,7 +61,12 @@ export type {
   AuditRunResult,
   AuditTraceHandler,
 } from "./audit-runner";
-export { traceFromCheck, outcomeOf, formatTrace } from "./audit-trace";
+export {
+  traceFromCheck,
+  outcomeOf,
+  formatTrace,
+  AuditOutcome,
+} from "./audit-trace";
 export type { AuditTrace } from "./audit-trace";
 export {
   parseHtml,
@@ -82,6 +88,8 @@ export {
   getRenderedText,
   getWordCount,
   detectPageType,
+  classifyPage,
+  declaredPageClassification,
 } from "./parser";
 export {
   calculateCategoryScore,
@@ -105,8 +113,8 @@ export * from "./url-utils";
 export * from "./presets";
 export * from "./config-loader";
 export * from "./origin-cache";
-export { detectWafProtection } from "./waf-detector";
-export { logger } from "./logger";
+export { detectWafProtection, WafProvider } from "./waf-detector";
+export { logger, LogLevel } from "./logger";
 
 // ACP policy-link resolution, reused by the checkout-eligibility audits.
 export {

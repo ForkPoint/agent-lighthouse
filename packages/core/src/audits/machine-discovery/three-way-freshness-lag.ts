@@ -1,20 +1,28 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext, PageContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
 
-import { allJsonLdNodes } from "../../parser";
+import { allJsonLdNodes } from "#core/parser";
 import {
   siteSitemapTree,
   isW3CDateTime,
   sampleEntries,
-} from "../../gatherers/sitemap";
+} from "#core/gatherers/sitemap";
 import {
   sharedFeeds,
   parseFeedDate,
   sharedCanonicalCheck,
   type FeedDocument,
-} from "../../gatherers/feeds";
+} from "#core/gatherers/feeds";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** How far a surface may trail the page before it is a lag rather than a delay. */
 const LAG_DAYS = 7;
@@ -91,24 +99,24 @@ export class ThreeWayFreshnessLagAudit extends Audit {
       "This site’s sitemap or feed trails what the site actually publishes",
     description:
       "Compares the newest date the pages themselves publish against the newest `<lastmod>` in the sitemap and the newest entry in the feed. A surface that trails the site by more than a week is regenerated on a slower cadence than publication, so a crawler polling it sees a site that stopped publishing. Also checks that a feed’s own build timestamp is not older than its newest item, and that its items are in newest-first order.",
-    scoreDisplayMode: "ternary",
-    tier: "scored",
-    evidenceGrade: "B",
-    weight: weightForGrade("B", "scored"),
-    defaultPriority: "medium",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    tier: AuditTier.Scored,
+    evidenceGrade: EvidenceGrade.B,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    defaultPriority: CheckPriority.Medium,
     dossier:
       "docs/evidence/audits/machine-discovery/three-way-freshness-lag.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     guidance: {
       impact:
         "A pull-based crawler fetches the sitemap and the feed on a schedule and reads nothing else. When those two surfaces trail the site, everything published in between is discoverable only by link-following, which is the slow path the site published a sitemap to avoid. A feed whose `lastBuildDate` is older than its own newest item is worse than stale: consumers that poll conditionally on that timestamp skip the feed entirely, so the new items are never read at all.",
       fix: "Regenerate the sitemap and the feed when content changes, not on a nightly cron that can fail silently. Stamp `<lastBuildDate>` (or the Atom feed-level `<updated>`) from the newest item at generation time. Order feed items newest-first, since many consumers read only the head. Remove sitemap entries whose URLs 404 or are noindex.",
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/machine-discovery/three-way-freshness-lag/",
       tags: ["freshness", "sitemap", "feeds", "discovery"],

@@ -1,13 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
 import { HeaderFooterAudit } from "./header-footer";
 import {
   attributableFixture,
   mockCheckContext,
   mockPageContext,
   unreachedSiteContext,
-} from "../../__tests__/test-utils";
+} from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 describe("HeaderFooterAudit", () => {
   const audit = new HeaderFooterAudit();
@@ -18,11 +19,11 @@ describe("HeaderFooterAudit", () => {
       "<html><body><header>Nav</header><main>x</main><footer>Legal</footer></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("1/1");
   });
 
-  it("warns when the homepage has both but another page is missing one", () => {
+  it("warns when one page has both but another page is missing one", () => {
     const home = mockPageContext(
       "https://example.com",
       "<html><body><header>H</header><footer>F</footer></body></html>",
@@ -32,18 +33,87 @@ describe("HeaderFooterAudit", () => {
       "<html><body><header>H only</header></body></html>",
     );
     const result = audit.audit(mockCheckContext([home, other]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("footer on 1/2");
   });
 
-  it("fails when the homepage lacks both landmarks", () => {
+  it("fails when no page has both landmarks", () => {
     const page = mockPageContext(
       "https://example.com",
       "<html><body><div>Nothing</div></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("Header found on 0/1");
+  });
+
+  it("declines an empty sample", () => {
+    expect(audit.audit(mockCheckContext([])).status).toBe(
+      CheckStatus.NotApplicable,
+    );
+  });
+
+  it("reports each missing landmark with stable evidence in every page order", () => {
+    const complete = mockPageContext(
+      "https://example.com/z-good",
+      "<header>Header</header><footer>Footer</footer>",
+    );
+    const noFooter = mockPageContext(
+      "https://example.com/a-no-footer",
+      "<header>Header</header>",
+    );
+    const noHeader = mockPageContext(
+      "https://example.com/b-no-header",
+      "<footer>Footer</footer>",
+    );
+    const neither = mockPageContext(
+      "https://example.com/c-neither",
+      "<p>Body</p>",
+    );
+    const orders = [
+      [complete, noFooter, noHeader, neither],
+      [neither, noHeader, noFooter, complete],
+      [noFooter, complete, neither, noHeader],
+    ];
+    const results = orders.map((pages) => {
+      const original = [...pages];
+      const result = audit.audit(mockCheckContext(pages));
+      expect(pages).toEqual(original);
+      return result;
+    });
+    expect(results.map((result) => result.status)).toEqual([
+      CheckStatus.Warn,
+      CheckStatus.Warn,
+      CheckStatus.Warn,
+    ]);
+    expect(results[1]).toEqual(results[0]);
+    expect(results[2]).toEqual(results[0]);
+    expect(results[0]!.pageUrl).toBe(noFooter.url);
+    expect(results[0]!.found).toContain("1/4 pages with both landmarks");
+    expect(results[0]!.found).toContain(`${noFooter.url}: missing <footer>`);
+    expect(results[0]!.found).toContain(`${noHeader.url}: missing <header>`);
+    expect(results[0]!.found).toContain(
+      `${neither.url}: missing <header> and <footer>`,
+    );
+    expect(results[0]!.found).not.toContain(complete.url);
+  });
+
+  it("does not combine a header on one page with a footer on another", () => {
+    const header = mockPageContext(
+      "https://example.com/a",
+      "<header>H</header>",
+    );
+    const footer = mockPageContext(
+      "https://example.com/b",
+      "<footer>F</footer>",
+    );
+    const forward = audit.audit(mockCheckContext([header, footer]));
+    const reverse = audit.audit(mockCheckContext([footer, header]));
+    expect(forward.status).toBe(CheckStatus.Fail);
+    expect(forward.found).toContain("0/2 pages with both landmarks");
+    expect(forward.found).toContain(header.url);
+    expect(forward.found).toContain(footer.url);
+    expect(reverse).toEqual(forward);
   });
 
   // The scan may hold a readable page that is not this site's — a broker's
@@ -53,7 +123,9 @@ describe("HeaderFooterAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new HeaderFooterAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext(pages, rootFiles),
@@ -65,6 +137,6 @@ describe("HeaderFooterAudit", () => {
     expect(
       plan.skipped.find((stub) => stub.id === HeaderFooterAudit.meta.id)
         ?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 });

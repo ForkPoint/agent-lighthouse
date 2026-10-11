@@ -1,7 +1,15 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** The path the agents.json spec names for discovery. */
 const AGENTS_JSON_PATH = "/.well-known/agents.json";
@@ -64,13 +72,13 @@ export class AgentsJsonAudit extends Audit {
       "agents.json is published but not served as a usable document",
     description:
       "agents.json (Wild Card AI, spec v0.1.0) layers agent-facing flows over OpenAPI at `/.well-known/agents.json`. No AI vendor documents consuming it, the spec never moved past v0.1.0, both of its project domains are offline and the path is absent from the IANA Well-Known URIs registry — so this check never asks a site to publish the file. It reports, with no score effect, whether what is served at that path is a real agents.json document or an HTML shell.",
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "informative"),
-    evidenceGrade: "C",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/agent-interfaces/agents-json.md",
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "low",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
         "Publishing agents.json is not known to make a site reachable to any agent: no vendor documents reading the file, and the specification has been dormant since 2025-08-21. What does matter is that a document already published at a well-known path can be read — a 200 carrying the site's HTML shell tells a conforming client the resource exists and then gives it nothing to parse, which is worse than a clean 404.",
@@ -92,7 +100,7 @@ export class AgentsJsonAudit extends Audit {
       // `effort` is a required field on AuditGuidance and ships on every
       // status, including `na`. It describes correcting a file the site has
       // already chosen to publish, not creating one.
-      effort: "easy",
+      effort: FixEffort.Easy,
       // The audit shipped `https://agentsjson.org/`, which the 2026-08-21
       // research confirmed is NXDOMAIN. The upstream repository is the only
       // reachable primary source for the spec.
@@ -135,7 +143,7 @@ export class AgentsJsonAudit extends Audit {
           `${AGENTS_JSON_PATH} answers HTTP 200 with an HTML page rather than a document. A well-known path that returns the site shell reports adoption the site does not have; a clean 404 is the honest answer and is not a finding here.`,
           expected,
           `HTTP 200 ${contentType}, body begins with HTML`,
-          "low",
+          CheckPriority.Low,
         ),
         details: { contentType, bodyLooksLikeHtml: true },
       };
@@ -149,7 +157,7 @@ export class AgentsJsonAudit extends Audit {
           `Something is served at ${AGENTS_JSON_PATH}, but the body does not parse as JSON.`,
           expected,
           `HTTP 200 ${contentType}, body does not parse as JSON`,
-          "low",
+          CheckPriority.Low,
         ),
         details: { contentType },
       };
@@ -164,7 +172,7 @@ export class AgentsJsonAudit extends Audit {
           `JSON is served at ${AGENTS_JSON_PATH}, but it is not an agents.json document — the spec requires an \`info\` object and a \`sources\` or \`flows\` array.`,
           expected,
           describeJsonShape(parsed),
-          "low",
+          CheckPriority.Low,
         ),
         details: { contentType },
       };
@@ -183,7 +191,7 @@ export class AgentsJsonAudit extends Audit {
           `An agents.json document is published at ${AGENTS_JSON_PATH}, but it is served as \`${file.contentType}\`. A client that dispatches on media type will not read it as a document.`,
           expected,
           `Valid agents.json document served with Content-Type: ${file.contentType}`,
-          "low",
+          CheckPriority.Low,
         ),
         details: { contentType, sources, flows },
       };

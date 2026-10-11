@@ -1,13 +1,22 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import type { CheckContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import type { CheckContext } from "#core/check-context";
 import type { CrawlerBot } from "./_robots-txt-helpers";
 import { CrawlerBotAudit } from "./_crawler-bot-audit";
 import {
   parseRobotsFile,
   hasNamedGroup,
   isPathAllowed,
-} from "../../gatherers/robots";
-import { weightForGrade } from "../../scorer";
+} from "#core/gatherers/robots";
+import { weightForGrade } from "#core/scorer";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
+import { CrawlerPurpose } from "./_robots-txt-helpers";
 
 /** The token this audit scores, spelled as Meta documents it. */
 const TOKEN = "Meta-ExternalAgent";
@@ -20,20 +29,20 @@ export class MetaExternalAgentAudit extends CrawlerBotAudit {
     failureTitle: "Meta-ExternalAgent disallowed by robots.txt",
     description:
       "Meta-ExternalAgent collects pages for Meta's foundation-model training and for indexing content directly into Meta products, and Meta documents it as respecting robots.txt. This check reads the robots.txt rules that actually apply to it — its own group if it has one, otherwise the catch-all — and reports whether they let it fetch the site root. A named group is not required: under RFC 9309 an open catch-all grants the same access.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/access-crawl-control/meta-external-agent.md",
     // Gate exemption: being refused is what this category reports.
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "medium",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "Disallowing Meta-ExternalAgent keeps the site out of Meta's foundation-model training corpus and out of the direct content indexing that improves Meta products. It is an effective, documented control, so it is only a problem where the block was not intended. It does not by itself govern Meta AI search citations — Meta documents Meta-WebIndexer as the token behind those.",
       fix: "If the block was not intended, remove the Disallow rule that applies to Meta-ExternalAgent, or add a named `User-agent: Meta-ExternalAgent` group with `Allow: /` — under RFC 9309 §2.2.1 a named group overrides the catch-all for that crawler.",
       code: "User-agent: Meta-ExternalAgent\nAllow: /",
-      effort: "trivial",
+      effort: FixEffort.Trivial,
       tags: ["robots-txt", "meta", "crawler-permissions"],
     },
   };
@@ -41,7 +50,7 @@ export class MetaExternalAgentAudit extends CrawlerBotAudit {
   protected bot: CrawlerBot = {
     botName: TOKEN,
     displayName: TOKEN,
-    category: "training",
+    category: CrawlerPurpose.Training,
   };
 
   /**
@@ -115,7 +124,7 @@ export class MetaExternalAgentAudit extends CrawlerBotAudit {
           ? "Its own group disallows /"
           : `The catch-all group disallows / and no group names ${TOKEN}`,
         {
-          priority: "medium",
+          priority: CheckPriority.Medium,
           code: `User-agent: ${TOKEN}\nAllow: /`,
         },
       ),

@@ -5,24 +5,25 @@
  * ./_shared.ts.
  */
 import { base, defineA11yAudit, graded } from "./_shared";
+import { CheckPriority, EvidenceGrade, FixEffort } from "#core/types";
 
 export const NestedInteractiveAudit = defineA11yAudit({
   rules: ["nested-interactive"],
   meta: {
     ...base,
-    ...graded("A", "nested-interactive"),
+    ...graded(EvidenceGrade.A, "nested-interactive"),
     id: "operability-safety/nested-interactive",
     title: "No nested interactive controls",
     failureTitle: "Nested interactive controls",
     description:
       "Interactive elements nested inside other interactive elements (e.g. a button inside a link) create ambiguous targets in the accessibility tree.",
-    defaultPriority: "medium",
+    defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
         "Nested controls give agents two overlapping action targets, so the wrong action may fire or the control becomes unoperable.",
       fix: "Do not nest focusable/interactive elements; keep one control per actionable region.",
       code: '<!-- BAD --> <a href="/x"><button>Go</button></a>',
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       tags: ["interactive", "agent"],
     },
   },

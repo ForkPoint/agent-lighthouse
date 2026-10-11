@@ -8,6 +8,14 @@ import {
   CATEGORY_MASS,
   TAG_SCAN_ERROR,
   TAG_SKIPPED_PAGE_TYPE,
+  AuditTier,
+  CheckPriority,
+  CheckStatus,
+  EvidenceKey,
+  PageType,
+  PageTypeSource,
+  ScoreDisplayMode,
+  ScoreTier,
 } from "@forkpoint/agent-lighthouse-core";
 import { buildReportView } from "./view-model";
 
@@ -19,10 +27,10 @@ function check(over: Partial<CheckResult> = {}): CheckResult {
     category: "agent-interfaces",
     title: "title",
     description: "desc",
-    status: "pass",
+    status: CheckStatus.Pass,
     score: 1,
-    scoreDisplayMode: "binary",
-    priority: "medium",
+    scoreDisplayMode: ScoreDisplayMode.Binary,
+    priority: CheckPriority.Medium,
     impact: "",
     fix: "",
     ...over,
@@ -52,12 +60,12 @@ function report(
     url: "https://x.test/",
     domain: "x.test",
     overallScore: 42,
-    scoreTier: "needs-work",
+    scoreTier: ScoreTier.NeedsWork,
     categories,
     topPasses: [],
     topFails: [],
     recommendations: [],
-    pagesScanned: [{ url: "https://x.test/", pageType: "homepage" }],
+    pagesScanned: [{ url: "https://x.test/", pageType: PageType.Homepage }],
     scannedAt: "2026-01-01T00:00:00.000Z",
     durationMs: 1234,
     ...over,
@@ -87,12 +95,28 @@ function mixedReport(): ScanReport {
       assessedMass: mass("agent-interfaces"),
       score: 80,
       checks: [
-        check({ id: "p1", status: "pass" }),
-        check({ id: "w1", status: "warn", priority: "high" }),
-        check({ id: "f1", status: "fail", priority: "critical" }),
-        check({ id: "e1", status: "na", tags: [TAG_SCAN_ERROR] }),
-        check({ id: "s1", status: "na", tags: [TAG_SKIPPED_PAGE_TYPE] }),
-        check({ id: "n1", status: "na" }),
+        check({ id: "p1", status: CheckStatus.Pass }),
+        check({
+          id: "w1",
+          status: CheckStatus.Warn,
+          priority: CheckPriority.High,
+        }),
+        check({
+          id: "f1",
+          status: CheckStatus.Fail,
+          priority: CheckPriority.Critical,
+        }),
+        check({
+          id: "e1",
+          status: CheckStatus.NotApplicable,
+          tags: [TAG_SCAN_ERROR],
+        }),
+        check({
+          id: "s1",
+          status: CheckStatus.NotApplicable,
+          tags: [TAG_SKIPPED_PAGE_TYPE],
+        }),
+        check({ id: "n1", status: CheckStatus.NotApplicable }),
       ],
     }),
     cat({
@@ -101,7 +125,11 @@ function mixedReport(): ScanReport {
       assessedMass: mass("machine-discovery"),
       score: 60,
       checks: [
-        check({ id: "cd1", category: "machine-discovery", status: "pass" }),
+        check({
+          id: "cd1",
+          category: "machine-discovery",
+          status: CheckStatus.Pass,
+        }),
       ],
     }),
     cat({
@@ -110,7 +138,11 @@ function mixedReport(): ScanReport {
       assessedMass: mass("answer-readiness"),
       score: 100,
       checks: [
-        check({ id: "ar1", category: "answer-readiness", status: "pass" }),
+        check({
+          id: "ar1",
+          category: "answer-readiness",
+          status: CheckStatus.Pass,
+        }),
       ],
     }),
   ]);
@@ -146,20 +178,20 @@ describe("buildReportView", () => {
           weight: mass("agentic-commerce"),
           assessedMass: 0,
           score: 0,
-          checks: [check({ id: "na1", status: "na" })],
+          checks: [check({ id: "na1", status: CheckStatus.NotApplicable })],
         }),
         cat({
           id: "content-extraction",
           weight: mass("content-extraction"),
           score: 100,
           checks: [
-            check({ id: "s1", status: "pass", weight: 1 }),
+            check({ id: "s1", status: CheckStatus.Pass, weight: 1 }),
             // A scored-tier audit the scan ran as informative: no weight.
             check({
               id: "i1",
-              status: "fail",
+              status: CheckStatus.Fail,
               weight: 0,
-              scoreDisplayMode: "informative",
+              scoreDisplayMode: ScoreDisplayMode.Informative,
             }),
           ],
         }),
@@ -248,13 +280,13 @@ describe("buildReportView", () => {
             checks: [
               check({
                 id: "g1",
-                status: "na",
+                status: CheckStatus.NotApplicable,
                 score: 0,
                 tags: ["skipped:no-evidence"],
               }),
               check({
                 id: "g2",
-                status: "na",
+                status: CheckStatus.NotApplicable,
                 score: 0,
                 tags: ["skipped:no-evidence"],
               }),
@@ -266,13 +298,13 @@ describe("buildReportView", () => {
           scanValidity: {
             judgeable: true,
             evidence: {
-              "origin-reachable": true,
-              "unblocked-fetches": true,
-              "rendered-body": false,
-              "sample-adequate": false,
+              [EvidenceKey.OriginReachable]: true,
+              [EvidenceKey.UnblockedFetches]: true,
+              [EvidenceKey.RenderedBody]: false,
+              [EvidenceKey.SampleAdequate]: false,
             },
             reasons: {
-              "rendered-body":
+              [EvidenceKey.RenderedBody]:
                 "None of the 3 fetched page(s) served readable text.",
             },
           },
@@ -296,12 +328,14 @@ describe("buildReportView", () => {
         scanValidity: {
           judgeable: false,
           evidence: {
-            "origin-reachable": false,
-            "unblocked-fetches": true,
-            "rendered-body": false,
-            "sample-adequate": false,
+            [EvidenceKey.OriginReachable]: false,
+            [EvidenceKey.UnblockedFetches]: true,
+            [EvidenceKey.RenderedBody]: false,
+            [EvidenceKey.SampleAdequate]: false,
           },
-          reasons: { "origin-reachable": "The homepage answered HTTP 403." },
+          reasons: {
+            [EvidenceKey.OriginReachable]: "The homepage answered HTTP 403.",
+          },
           unscoredReason: "The homepage answered HTTP 403.",
         },
       }),
@@ -340,17 +374,21 @@ describe("buildReportView", () => {
           checks: [
             check({
               id: "inf-fail",
-              status: "fail",
-              priority: "critical",
-              scoreDisplayMode: "informative",
+              status: CheckStatus.Fail,
+              priority: CheckPriority.Critical,
+              scoreDisplayMode: ScoreDisplayMode.Informative,
             }),
-            check({ id: "norm-fail", status: "fail", priority: "high" }),
+            check({
+              id: "norm-fail",
+              status: CheckStatus.Fail,
+              priority: CheckPriority.High,
+            }),
             check({
               id: "inf-pass",
-              status: "pass",
-              scoreDisplayMode: "informative",
+              status: CheckStatus.Pass,
+              scoreDisplayMode: ScoreDisplayMode.Informative,
             }),
-            check({ id: "norm-pass", status: "pass" }),
+            check({ id: "norm-pass", status: CheckStatus.Pass }),
           ],
         }),
       ]),
@@ -364,7 +402,11 @@ describe("buildReportView", () => {
       cat({
         id: "agent-interfaces",
         checks: Array.from({ length: 5 }, (_v, i) =>
-          check({ id: `f${i}`, status: "fail", priority: "high" }),
+          check({
+            id: `f${i}`,
+            status: CheckStatus.Fail,
+            priority: CheckPriority.High,
+          }),
         ),
       }),
     ]);
@@ -372,7 +414,9 @@ describe("buildReportView", () => {
   });
 
   it("applies the priority filter to checks, categories, and recommendations", () => {
-    const v = buildReportView(mixedReport(), { priority: "critical" });
+    const v = buildReportView(mixedReport(), {
+      priority: CheckPriority.Critical,
+    });
     // only f1 (critical) survives → only agent-interfaces remains.
     expect(v.categories.map((c) => c.id)).toEqual(["agent-interfaces"]);
     expect(v.categories[0]!.checks.map((c) => c.id)).toEqual(["f1"]);
@@ -384,19 +428,21 @@ describe("buildReportView", () => {
       [
         cat({
           id: "agent-interfaces",
-          checks: [check({ status: "fail", priority: "low" })],
+          checks: [
+            check({ status: CheckStatus.Fail, priority: CheckPriority.Low }),
+          ],
         }),
       ],
       {
         recommendations: [
-          { priority: "critical", description: "crit" },
-          { priority: "low", description: "low" },
+          { priority: CheckPriority.Critical, description: "crit" },
+          { priority: CheckPriority.Low, description: "low" },
         ],
       },
     );
-    expect(buildReportView(r, { priority: "low" }).recommendations).toEqual([
-      { priority: "low", description: "low" },
-    ]);
+    expect(
+      buildReportView(r, { priority: CheckPriority.Low }).recommendations,
+    ).toEqual([{ priority: CheckPriority.Low, description: "low" }]);
   });
 
   it("guards the group roll-up against a zero total weight", () => {
@@ -433,12 +479,12 @@ describe("tier counts", () => {
         cat({
           id: "agent-interfaces",
           checks: [
-            check({ id: "agent-interfaces/a", tier: "scored" }),
+            check({ id: "agent-interfaces/a", tier: AuditTier.Scored }),
             check({
               id: "structured-data/claimreview-advisory",
-              tier: "informative",
-              scoreDisplayMode: "informative",
-              status: "fail",
+              tier: AuditTier.Informative,
+              scoreDisplayMode: ScoreDisplayMode.Informative,
+              status: CheckStatus.Fail,
               score: 0,
             }),
           ],
@@ -455,9 +501,9 @@ describe("tier counts", () => {
           id: "agent-interfaces",
           checks: [
             check({
-              tier: "informative",
-              scoreDisplayMode: "informative",
-              status: "na",
+              tier: AuditTier.Informative,
+              scoreDisplayMode: ScoreDisplayMode.Informative,
+              status: CheckStatus.NotApplicable,
               score: 0,
             }),
           ],
@@ -472,7 +518,7 @@ describe("tier counts", () => {
       report([
         cat({
           id: "agent-interfaces",
-          checks: [check({ tier: "experimental" })],
+          checks: [check({ tier: AuditTier.Experimental })],
         }),
       ]),
     );
@@ -482,7 +528,7 @@ describe("tier counts", () => {
   it("passes through conditions from ScanReport to ReportView", () => {
     const conditions = {
       url: "https://x.test/",
-      pageType: { type: "homepage" as const, source: "detected" as const },
+      pageType: { type: "homepage" as const, source: PageTypeSource.Detected },
       origin: {
         origin: "https://x.test",
         version: "v1",

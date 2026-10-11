@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { TimeElementAudit } from "./time-element";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 describe("TimeElementAudit", () => {
   const audit = new TimeElementAudit();
@@ -11,7 +12,7 @@ describe("TimeElementAudit", () => {
       '<html><body><time datetime="2025-01-15">January 15, 2025</time></body></html>',
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("1 page(s)");
   });
 
@@ -21,7 +22,7 @@ describe("TimeElementAudit", () => {
       "<html><body><p>Jan 15, 2025</p></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No <time datetime");
   });
 
@@ -31,6 +32,6 @@ describe("TimeElementAudit", () => {
       "<html><body><time>January 15</time></body></html>",
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 });

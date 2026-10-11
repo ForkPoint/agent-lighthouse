@@ -10,7 +10,7 @@ import {
   parseHtml,
   getWordCount,
   getMainContentText,
-} from "../../packages/core/src/index";
+} from "#core/index";
 
 const CANDIDATES = [
   // suspected client-rendered

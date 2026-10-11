@@ -3,6 +3,7 @@ import { glob } from "astro/loaders";
 import { z } from "astro/zod";
 import { publicDossier, type SourceRef } from "./lib/dossier-public";
 import { readSourceRegistry } from "./lib/evidence";
+import { AuditTier, EvidenceGrade } from "@forkpoint/agent-lighthouse-core";
 
 /**
  * The source registry, by id.
@@ -87,10 +88,10 @@ const audits = defineCollection({
     category: z.string(),
     source_file: z.string(),
     slug: z.string(),
-    evidence_grade: z.enum(["A", "B", "C", "D"]),
+    evidence_grade: z.enum(EvidenceGrade),
     // Only the v2-native dossiers record a tier; for the 148 v1 survivors the
     // registry (`meta.tier`) is the authoritative source, not the frontmatter.
-    tier: z.enum(["scored", "informative", "experimental"]).optional(),
+    tier: z.enum(AuditTier).optional(),
     disposition: z.string(),
     // The two whitelist escapes. `public_extra` names a heading exactly as the
     // dossier writes it, because the point is that the whitelist has no public
@@ -109,7 +110,7 @@ const audits = defineCollection({
       .array(
         z.object({
           name: z.string(),
-          grade: z.enum(["A", "B", "C", "D"]),
+          grade: z.enum(EvidenceGrade),
           domain: z.string().optional(),
         }),
       )
@@ -122,7 +123,7 @@ const audits = defineCollection({
     // audit outright. Where this disagrees with the registry, `tier_rationale`
     // has to say why — see `sunset.test.ts`.
     recommended_tier: z
-      .enum(["scored", "informative", "experimental", "delete"])
+      .enum([...Object.values(AuditTier), "delete"])
       .optional(),
     tier_rationale: z.string().optional(),
     // Unquoted YAML dates arrive as `Date`, quoted ones as strings; coerce both.

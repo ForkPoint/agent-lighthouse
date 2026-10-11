@@ -1,4 +1,12 @@
-export type PresetName = "ecommerce" | "saas" | "content" | "quick" | "full";
+export const PresetName = {
+  Ecommerce: "ecommerce",
+  Saas: "saas",
+  Content: "content",
+  Quick: "quick",
+  Full: "full",
+} as const;
+
+export type PresetName = (typeof PresetName)[keyof typeof PresetName];
 
 export interface PresetOptions {
   name: PresetName;
@@ -9,8 +17,8 @@ export interface PresetOptions {
 }
 
 export const PRESETS: Record<PresetName, PresetOptions> = {
-  ecommerce: {
-    name: "ecommerce",
+  [PresetName.Ecommerce]: {
+    name: PresetName.Ecommerce,
     description:
       "Optimized for storefronts with heavy focus on Schema.org Product, SKU, GTIN, stock status, and WebMCP actions.",
     customWeights: {
@@ -23,8 +31,8 @@ export const PRESETS: Record<PresetName, PresetOptions> = {
       "content-extraction": 5,
     },
   },
-  saas: {
-    name: "saas",
+  [PresetName.Saas]: {
+    name: PresetName.Saas,
     description:
       "Optimized for software and developer tools focusing on OpenAPI discovery, llms.txt, API permissions, and bot crawling.",
     customWeights: {
@@ -35,8 +43,8 @@ export const PRESETS: Record<PresetName, PresetOptions> = {
       "answer-readiness": 15,
     },
   },
-  content: {
-    name: "content",
+  [PresetName.Content]: {
+    name: PresetName.Content,
     description:
       "Optimized for blogs and publications focusing on llms.txt, RSS feeds, article markup, author credentials, and citations.",
     customWeights: {
@@ -45,14 +53,14 @@ export const PRESETS: Record<PresetName, PresetOptions> = {
       "content-extraction": 15,
     },
   },
-  quick: {
-    name: "quick",
+  [PresetName.Quick]: {
+    name: PresetName.Quick,
     description:
       "Fast single-page scan checking only root files (robots.txt, llms.txt, sitemaps) and the homepage.",
     maxPages: 1,
   },
-  full: {
-    name: "full",
+  [PresetName.Full]: {
+    name: PresetName.Full,
     description: "Default comprehensive scan executing all 8 audit categories.",
   },
 };

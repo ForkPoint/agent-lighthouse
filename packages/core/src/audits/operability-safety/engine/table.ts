@@ -142,13 +142,22 @@ export function isHeader(cell: Cell): boolean {
   return false;
 }
 
+const HeaderType = {
+  Row: "row",
+  Col: "col",
+} as const;
+
+type HeaderType = (typeof HeaderType)[keyof typeof HeaderType];
+
 function traverseForHeaders(
-  headerType: "row" | "col",
+  headerType: HeaderType,
   position: { x: number; y: number },
   tableGrid: Cell[][],
 ): Cell[] {
-  const property = headerType === "row" ? "_rowHeaders" : "_colHeaders";
-  const predicate = headerType === "row" ? isRowHeader : isColumnHeader;
+  const property =
+    headerType === HeaderType.Row ? "_rowHeaders" : "_colHeaders";
+  const predicate =
+    headerType === HeaderType.Row ? isRowHeader : isColumnHeader;
   const startCell = tableGrid[position.y][position.x];
 
   const colspan = startCell.colSpan - 1;
@@ -162,8 +171,8 @@ function traverseForHeaders(
 
   const rowStart = position.y + rowspan;
   const colStart = position.x + colspan;
-  const rowEnd = headerType === "row" ? position.y : 0;
-  const colEnd = headerType === "row" ? 0 : position.x;
+  const rowEnd = headerType === HeaderType.Row ? position.y : 0;
+  const colEnd = headerType === HeaderType.Row ? 0 : position.x;
 
   let headers: Cell[] | undefined;
   const cells: Cell[] = [];
@@ -197,8 +206,8 @@ export function getHeaders(cell: Cell, tableGrid?: Cell[][]): (Cell | null)[] {
   }
   if (!tableGrid) tableGrid = toGrid(findUp(cell, "table") as unknown as Table);
   const position = getCellPosition(cell, tableGrid)!;
-  const rowHeaders = traverseForHeaders("row", position, tableGrid);
-  const colHeaders = traverseForHeaders("col", position, tableGrid);
+  const rowHeaders = traverseForHeaders(HeaderType.Row, position, tableGrid);
+  const colHeaders = traverseForHeaders(HeaderType.Col, position, tableGrid);
   return ([] as (Cell | null)[]).concat(rowHeaders, colHeaders).reverse();
 }
 

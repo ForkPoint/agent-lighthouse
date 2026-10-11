@@ -13,6 +13,7 @@ sources:
   - google-product-snippet
   - google-auto-item-updates
   - webalmanac-2024-structured-data
+  - google-product-variants
 ---
 
 # product-identifiers (`3.21`)
@@ -73,3 +74,17 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 - 2026-08-21 — evidence graded **A** (documented identifier consumption by Google merchant listings and OpenAI's product feed spec).
+- 2026-10-09 — ProductGroup variants resolved through `resolveProducts`; see Implementation deviations.
+
+## Implementation deviations
+
+- **ProductGroup variants are read as products.** Products come from the
+  shared `resolveProducts` in `packages/core/src/product-schema.ts`. Each
+  `hasVariant` entry (or a Product joined through `isVariantOf` or
+  `inProductGroupWithID`) is read with the group's shared properties beneath
+  its own, as Google's product variant documentation lays them out
+  (https://developers.google.com/search/docs/appearance/structured-data/product-variants,
+  verified 2026-10-09). A `ProductGroup` with no variants is read as the
+  product. Before this, a brand or category declared once on the group was
+  invisible, and a page whose only top-level product was a `ProductGroup`
+  read as having no product.

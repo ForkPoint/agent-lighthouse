@@ -78,6 +78,13 @@ Checks only the literal tag — 'page.$('main').length > 0' — so <div role="ma
 
 ## Implementation deviations
 
+- 2026-10-07 — the scope pilot for 7.0.0 removes the first page's special
+  role. Every selected page contributes to the same count. All pages with
+  `<main>` pass; partial coverage warns; no pages with `<main>` fail. An empty
+  sample returns `notApplicable`. Results name the missing-page URLs in sorted
+  order and use the first sorted missing URL as `pageUrl`. Evidence text uses
+  the existing result length limit and its truncation marker.
+
 - 2026-08-28 — the audit declines when the scan holds no response it can
   attribute to this site. It read the `<main>` landmark on the scanned pages,
   and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked
@@ -88,6 +95,13 @@ Checks only the literal tag — 'page.$('main').length > 0' — so <div role="ma
   pass → na, throttled pass → na, redirected away pass → na, non-HTML homepage
   fail → na, HTTP 200 bot challenge fail → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
+
+## Deferred
+
+- The 7.0.0 applicability review must address `[role="main"]`, multiple main
+  landmarks and hidden landmarks. This scope-only correction retains the
+  existing literal `<main>` predicate. It does not claim those semantic defects
+  are fixed or that fetched HTML represents a hydrated browser DOM.
 
 ## Review history
 

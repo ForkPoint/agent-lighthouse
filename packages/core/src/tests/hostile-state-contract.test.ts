@@ -1,14 +1,16 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../audit-config";
-import { planAudits } from "../audit-runner";
-import { AuditResultSchema } from "../schemas";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
+import { AuditResultSchema } from "#core/schemas";
 import { NOTHING_OBTAINED, SHELL_STATE } from "./hostile-states";
 import {
   auditSources,
   readsPagesDirectly,
   SHELL_STANCE,
+  ShellStance,
 } from "./audit-sources";
-import type { AuditResult } from "../types";
+import type { AuditResult } from "#core/types";
+import { CheckStatus, EvidenceKey } from "#core/types";
 
 /**
  * A scan that obtained nothing holds no evidence about the site, so the runner
@@ -49,7 +51,7 @@ describe("hostile-state contract — nothing obtained", () => {
           plan.runnable.map((entry) => entry.reg.meta.id),
           state.name,
         ).not.toContain(id);
-        expect(result?.status, state.name).toBe("na");
+        expect(result?.status, state.name).toBe(CheckStatus.NotApplicable);
         expect(result?.explanation, state.name).toMatch(/^Not assessed: /);
       }
     });
@@ -74,13 +76,13 @@ describe("hostile-state contract — a shell page", () => {
   // the requirement, so the set cannot drift from the exemptions themselves.
   const exempted = registrations.filter(
     (r) =>
-      !(r.meta.requires ?? []).includes("rendered-body") &&
+      !(r.meta.requires ?? []).includes(EvidenceKey.RenderedBody) &&
       readsPagesDirectly(sources.get(r.meta.id) ?? ""),
   );
   const readsRenderedBody = registrations.filter(
     (r) =>
-      (r.meta.requires ?? []).includes("rendered-body") ||
-      SHELL_STANCE.get(r.meta.id) === "body",
+      (r.meta.requires ?? []).includes(EvidenceKey.RenderedBody) ||
+      SHELL_STANCE.get(r.meta.id) === ShellStance.Body,
   );
 
   it("has page-reading audits to check", () => {
@@ -134,7 +136,7 @@ describe("hostile-state contract — a shell page", () => {
       expect(
         result.status,
         `passed a page that rendered no text — "${result.message}"`,
-      ).not.toBe("pass");
+      ).not.toBe(CheckStatus.Pass);
     });
   }
 });

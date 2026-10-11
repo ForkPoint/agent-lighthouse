@@ -1,6 +1,7 @@
-import type { CheckContext } from "../check-context";
-import type { AuditResult } from "../types";
+import type { CheckContext } from "#core/check-context";
+import type { AuditResult } from "#core/types";
 import { unreachableContext } from "./fixtures";
+import { CheckStatus } from "#core/types";
 
 /**
  * Contract test: on a site the scan could not read, an audit must decline.
@@ -17,7 +18,7 @@ export async function expectNotApplicableOnEmpty(audit: {
   audit(ctx: CheckContext): AuditResult | Promise<AuditResult>;
 }): Promise<void> {
   const result = await audit.audit(unreachableContext());
-  if (result.status !== "na") {
+  if (result.status !== CheckStatus.NotApplicable) {
     throw new Error(
       `Expected notApplicable on a scan that read nothing, got "${result.status}" — a vacuous pass or a verdict here describes the scanner, not the site.`,
     );

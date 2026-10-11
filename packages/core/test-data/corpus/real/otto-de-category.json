@@ -21,7 +21,6 @@
     "traceresponse": "00-fc12037d4b00eb146d97cd3329110136-c63f45ced7a2af4f-00",
     "x-recruiting": "Seems you like http headers. To write ours, apply at www.otto.de/jobs/ and mention this header.",
     "accept-ch": "Sec-CH-UA, Sec-CH-UA-Mobile, Sec-CH-UA-Full-Version-List, Sec-CH-UA-Platform, Sec-CH-UA-Platform-Version, Sec-CH-UA-Arch, Sec-CH-UA-Model, Sec-CH-UA-Bitness",
-    "set-cookie": "visitorId=4fea069a-ab39-4609-aa34-868c24b7b2c6.v1; Path=/; Domain=.otto.de; max-age=63072000; Expires=Sun, 27 Aug 2028 12:19:29 GMT; Secure\nBrowserId=84377ab9-3bfc-4528-9d8c-44ae3c9f8d6f.v1; Path=/; Domain=.otto.de; max-age=63072000; Expires=Sun, 27 Aug 2028 12:19:29 GMT; Secure",
     "timing-allow-origin": "*",
     "strict-transport-security": "max-age=31536000",
     "content-security-policy": "frame-ancestors 'self' https://*.otto.de https://*.ottogroup.com https://og2gether.sharepoint.com https://otto.mpp360.cloud https://internal.otto.market;",

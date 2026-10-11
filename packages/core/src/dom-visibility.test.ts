@@ -5,6 +5,7 @@ import {
   hiddenFromReaders,
   notRendered,
   styleHidesFromReaders,
+  HidingProperty,
 } from "./dom-visibility";
 
 describe("declaredValue", () => {
@@ -27,14 +28,17 @@ describe("declaredValue", () => {
       { value: "inline flow-root", important: false },
     ],
   ])("resolves %s", (style, expected) => {
-    expect(declaredValue(style, "display")).toEqual(expected);
+    expect(declaredValue(style, HidingProperty.Display)).toEqual(expected);
   });
 
   it.each(["inherit", "initial", "unset", "revert", "revert-layer"])(
     "accepts CSS-wide %s after a hidden declaration",
     (keyword) => {
       expect(
-        declaredValue(`visibility:hidden;visibility:${keyword}`, "visibility"),
+        declaredValue(
+          `visibility:hidden;visibility:${keyword}`,
+          HidingProperty.Visibility,
+        ),
       ).toEqual({ value: keyword, important: false });
     },
   );

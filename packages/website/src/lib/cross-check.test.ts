@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { crossCheck } from "./cross-check";
 import { auditList, categoryList } from "./registry";
+import { AuditTier, EvidenceGrade } from "@forkpoint/agent-lighthouse-core";
 
 describe("crossCheck", () => {
   it("passes when both sides carry the same ids", () => {
@@ -23,8 +24,8 @@ describe("registry", () => {
     const one = audits.find(
       (a) => a.id === "agentic-commerce/offer-truth-consistency",
     );
-    expect(one?.evidenceGrade).toBe("B");
-    expect(one?.tier).toBe("scored");
+    expect(one?.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(one?.tier).toBe(AuditTier.Scored);
   });
 
   it("groups every audit under a known category", () => {

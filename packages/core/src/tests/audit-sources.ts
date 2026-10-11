@@ -97,34 +97,39 @@ export function readsPagesDirectly(source: string): boolean {
  * The contract suite asserts this table covers every exempted audit, so a new
  * exemption fails there until someone says which kind it is.
  */
-export type ShellStance = "envelope" | "body";
+export const ShellStance = {
+  Envelope: "envelope",
+  Body: "body",
+} as const;
+
+export type ShellStance = (typeof ShellStance)[keyof typeof ShellStance];
 
 export const SHELL_STANCE: ReadonlyMap<string, ShellStance> = new Map<
   string,
   ShellStance
 >([
   // Reads `<meta name="robots">` and the X-Robots-Tag header.
-  ["access-crawl-control/no-nofollow", "envelope"],
+  ["access-crawl-control/no-nofollow", ShellStance.Envelope],
   // Reads the redirect chain the response carries.
-  ["access-crawl-control/no-redirect-chains", "envelope"],
+  ["access-crawl-control/no-redirect-chains", ShellStance.Envelope],
   // Reads robots directives from meta tags and the X-Robots-Tag header.
-  ["access-crawl-control/robots-directives", "envelope"],
+  ["access-crawl-control/robots-directives", ShellStance.Envelope],
   // Reads the request scheme and the response status.
-  ["access-crawl-control/https-enabled", "envelope"],
+  ["access-crawl-control/https-enabled", ShellStance.Envelope],
   // The verdict comes from robots.txt; pages only contribute probe paths.
-  ["access-crawl-control/robots-ai-group-shadowing", "envelope"],
+  ["access-crawl-control/robots-ai-group-shadowing", ShellStance.Envelope],
   // Measures TTFB, which a shell answers with as anything else.
-  ["content-extraction/server-responsiveness", "envelope"],
+  ["content-extraction/server-responsiveness", ShellStance.Envelope],
   // Reads the `lang` attribute on `<html>`, served before any body renders.
-  ["content-extraction/language-attribute", "envelope"],
+  ["content-extraction/language-attribute", ShellStance.Envelope],
   // Judges the URL strings of the pages the scan fetched.
-  ["answer-readiness/descriptive-urls", "envelope"],
+  ["answer-readiness/descriptive-urls", ShellStance.Envelope],
   // A shell is this audit's finding: it must report it, never pass it.
-  ["content-extraction/server-rendered", "body"],
+  ["content-extraction/server-rendered", ShellStance.Body],
   // Substring search over the served HTML for a bot-defense loader.
-  ["access-crawl-control/no-bot-detection", "body"],
+  ["access-crawl-control/no-bot-detection", ShellStance.Body],
   // Substring search over the served HTML for CAPTCHA markup.
-  ["operability-safety/no-blocking-captcha", "body"],
+  ["operability-safety/no-blocking-captcha", ShellStance.Body],
   // Censuses the origins the served document names, through `page.$`.
-  ["operability-safety/third-party-dom-write-blast-radius", "body"],
+  ["operability-safety/third-party-dom-write-blast-radius", ShellStance.Body],
 ]);

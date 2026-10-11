@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import * as cheerio from "cheerio";
-import { escapeAttrValue, extractForms } from "../parser";
-import { HoverOnlyContentAndNavigationAudit } from "../audits/operability-safety/hover-only-content-and-navigation";
-import { mockCheckContext, mockPageContext } from "../__tests__/test-utils";
+import { escapeAttrValue, extractForms } from "#core/parser";
+import { HoverOnlyContentAndNavigationAudit } from "#core/audits/operability-safety/hover-only-content-and-navigation";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
 
 describe("Debt Item 4: CSS Selector Escaping for User/DOM Content", () => {
   describe("escapeAttrValue", () => {

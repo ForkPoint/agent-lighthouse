@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
 import { RssFeedAudit } from "./rss-feed";
 import {
   attributableFixture,
@@ -8,7 +8,8 @@ import {
   mockFetchResult,
   mockPageContext,
   unreachedSiteContext,
-} from "../../__tests__/test-utils";
+} from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 describe("RssFeedAudit", () => {
   const audit = new RssFeedAudit();
@@ -22,7 +23,7 @@ describe("RssFeedAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("RSS/Atom feed found");
   });
 
@@ -32,7 +33,7 @@ describe("RssFeedAudit", () => {
     // No pages, no root feed files; ctx.fetch defaults to 404 for the /atom.xml probe.
     const ctx = mockCheckContext([]);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("No RSS or Atom feed");
   });
 
@@ -44,7 +45,7 @@ describe("RssFeedAudit", () => {
       mockPageContext("https://example.com/", html),
     ]);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("https://example.com/feed.xml");
     expect(result.found).toContain("autodiscovery <link> present");
   });
@@ -67,7 +68,7 @@ describe("RssFeedAudit", () => {
       return r;
     };
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("RSS/Atom feed found");
   });
 
@@ -85,7 +86,7 @@ describe("RssFeedAudit", () => {
       return r;
     };
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("RSS/Atom feed found");
   });
 
@@ -112,7 +113,7 @@ describe("RssFeedAudit", () => {
       return r;
     };
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(
       requested.filter((u) => u === "https://example.com/rss.xml"),
     ).toHaveLength(1);
@@ -140,7 +141,7 @@ describe("RssFeedAudit", () => {
     };
     const result = await audit.audit(ctx);
     // Falls through to rootFiles → /rss.xml found
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("passes when atom.xml is found via direct fetch fallback (covers atom fetch true branch)", async () => {
@@ -162,7 +163,7 @@ describe("RssFeedAudit", () => {
       return r;
     };
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("atom.xml");
   });
 
@@ -187,7 +188,7 @@ describe("RssFeedAudit", () => {
       return r;
     };
     const result = await audit.audit(ctx);
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   describe("feed autodiscovery <link> (absorbed from rss-feed-link, v1 4.16)", () => {
@@ -223,7 +224,7 @@ describe("RssFeedAudit", () => {
         return r;
       };
       const result = await audit.audit(ctx);
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.found).toContain("autodiscovery <link> present");
     });
 
@@ -236,7 +237,7 @@ describe("RssFeedAudit", () => {
         ),
       });
       const result = await audit.audit(ctx);
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.found).toContain("no autodiscovery <link>");
     });
 
@@ -263,7 +264,7 @@ describe("RssFeedAudit", () => {
           return r;
         };
         const result = await audit.audit(ctx);
-        expect(result.status, type).toBe("pass");
+        expect(result.status, type).toBe(CheckStatus.Pass);
         expect(result.found, type).toContain("autodiscovery <link> present");
       }
     });
@@ -288,7 +289,7 @@ describe("RssFeedAudit", () => {
           return r;
         };
         const result = await audit.audit(ctx);
-        expect(result.status, rel).toBe("pass");
+        expect(result.status, rel).toBe(CheckStatus.Pass);
         expect(result.found, rel).toContain("autodiscovery <link> present");
       }
     });
@@ -312,7 +313,7 @@ describe("RssFeedAudit", () => {
         return r;
       };
       const result = await audit.audit(ctx);
-      expect(result.status).toBe("pass");
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.message).toContain("blog/feed.xml");
     });
 
@@ -344,7 +345,7 @@ describe("RssFeedAudit", () => {
     it("reports the missing link when no feed is found at all", async () => {
       const ctx = mockCheckContext([withHead("")]);
       const result = await audit.audit(ctx);
-      expect(result.status).toBe("na");
+      expect(result.status).toBe(CheckStatus.NotApplicable);
       expect(result.found).toContain("no autodiscovery <link>");
     });
   });
@@ -356,7 +357,9 @@ describe("RssFeedAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new RssFeedAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext(pages, rootFiles),
@@ -367,6 +370,6 @@ describe("RssFeedAudit", () => {
     );
     expect(
       plan.skipped.find((stub) => stub.id === RssFeedAudit.meta.id)?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 });

@@ -1,19 +1,27 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import type { FetchResult } from "../../fetcher";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import type { FetchResult } from "#core/fetcher";
 import {
   platformFingerprint,
   type CommercePlatform,
-} from "../../gatherers/commerce";
+} from "#core/gatherers/commerce";
 import {
   AI_CRAWLER_UAS,
   BASELINE_UA,
   sharedUaFetch,
-} from "../../gatherers/ua-parity";
-import { parseRobots, isPathAllowed } from "../../gatherers/robots";
-import { detectWafProtection } from "../../waf-detector";
+} from "#core/gatherers/ua-parity";
+import { parseRobots, isPathAllowed } from "#core/gatherers/robots";
+import { detectWafProtection } from "#core/waf-detector";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** Where each storefront keeps its cart. */
 const CANDIDATES: Record<CommercePlatform, string[]> = {
@@ -83,24 +91,24 @@ export class CartHandoffReachabilityAudit extends Audit {
     failureTitle: "Cart Handoff Reachability",
     description:
       "Reads the storefront cart and checkout paths — the URL an agent hands a buyer to, whether through an ACP `continue_url` or a computer-use agent driving the storefront — as a browser and as ChatGPT-User, and reports an account wall, a bot challenge on the checkout document, or a hard block. Read-only: every request is a GET, nothing is ever added to a cart.",
-    scoreDisplayMode: "ternary",
-    tier: "scored",
-    evidenceGrade: "B",
-    weight: weightForGrade("B", "scored"),
-    defaultPriority: "high",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    tier: AuditTier.Scored,
+    evidenceGrade: EvidenceGrade.B,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    defaultPriority: CheckPriority.High,
     dossier:
       "docs/evidence/audits/agentic-commerce/cart-handoff-reachability.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     guidance: {
       impact:
         "Every upstream signal can be perfect and the purchase still dies at the last click. If the cart 302s to a login form because guest checkout is off, or Turnstile is mounted on the checkout document alone, the agent walks the buyer to a wall it cannot pass. ACP reserves a `requires_sign_in` message code for exactly this case, which is a description of the failure, not a fix for it.",
       fix: "Allow guest checkout, or at least let an unauthenticated buyer reach the cart and see the totals. Keep bot challenges off the cart and checkout documents — challenge the payment submission instead, where a human is present. Allow ChatGPT-User in robots.txt and at the edge on cart paths: blocking GPTBot does not block it, and the two are separately tokened.",
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/agentic-commerce/cart-handoff-reachability/",
       tags: ["commerce", "cart", "checkout", "acp", "chatgpt"],

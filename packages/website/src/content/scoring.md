@@ -8,6 +8,16 @@ Before you compare numbers, check which pages the scan reached and which checks 
 
 An unscored result means the scan cannot give a reliable overall number under its rules. It does not mean your website scored zero.
 
+## Check the page purpose
+
+Common checks apply across page types. An article check applies to an article, not to a privacy or contact page. A general page has `unknown` purpose. The older `content` name also means general content.
+
+The report shows whether you declared a purpose or the scanner detected it. Detection includes its signals and confidence. Type-specific findings on detected pages are advisory. Declaring a purpose makes matching checks eligible to score when the scan has the evidence they need.
+
+Open **Page scope and coverage** to see selected URLs, input URLs, unread URLs, and fetch outcomes. Input URLs identify the pages supplied to a check; they do not prove that every part of a page was inspected. Origin evidence can also support a finding. Old reports may lack this data.
+
+A mixed scan can show a scored result for declared pages and a separate advisory result for detected pages. Each audit counts toward the score at most once. An advisory failure stays visible even when the declared pages pass.
+
 ## What each result means
 
 | Result                         | How to read it                                     | What to do                                                   |

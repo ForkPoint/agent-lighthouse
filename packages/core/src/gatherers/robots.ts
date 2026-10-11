@@ -1,7 +1,15 @@
 import { stripBom, normalizeNewlines } from "./fetch-classify";
 
+export const RobotsRuleType = {
+  Allow: "allow",
+  Disallow: "disallow",
+} as const;
+
+export type RobotsRuleType =
+  (typeof RobotsRuleType)[keyof typeof RobotsRuleType];
+
 export interface RobotsRule {
-  type: "allow" | "disallow";
+  type: RobotsRuleType;
   path: string;
 }
 
@@ -271,7 +279,7 @@ export function decidingRule(
       if (
         !best ||
         length > best.length ||
-        (length === best.length && rule.type === "allow")
+        (length === best.length && rule.type === RobotsRuleType.Allow)
       ) {
         best = { length, rule };
       }
@@ -286,7 +294,7 @@ export function isPathAllowed(
   path: string,
 ): boolean {
   const rule = decidingRule(groups, botToken, path);
-  return !rule || rule.type === "allow";
+  return !rule || rule.type === RobotsRuleType.Allow;
 }
 
 export function isBlanketBlocked(

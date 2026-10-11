@@ -1,10 +1,18 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
-import { isSafeUrl } from "../../url-utils";
-import { extractMarkdownLinks } from "../../parser";
-import { sharedProbeUrl } from "../../gatherers/discovery";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import { isSafeUrl } from "#core/url-utils";
+import { extractMarkdownLinks } from "#core/parser";
+import { sharedProbeUrl } from "#core/gatherers/discovery";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 function isOk(res: { status: number }): boolean {
   return res.status >= 200 && res.status < 300;
 }
@@ -17,19 +25,19 @@ export class LlmsTxtLinksValidAudit extends Audit {
     failureTitle: "llms.txt links are valid",
     description:
       "Reports whether the links inside a published llms.txt resolve. Link validity is spec-optional and no known consumer enforces it — Chrome Lighthouse, the only shipping checker, fetches no link at all — so this check is reported and never scored.",
-    scoreDisplayMode: "informative",
-    weight: weightForGrade("C", "informative"),
-    evidenceGrade: "C",
-    tier: "informative",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/machine-discovery/llms-txt-links-valid.md",
-    requires: ["origin-reachable", "unblocked-fetches"],
-    defaultPriority: "low",
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
+    defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
         "A broken link inside llms.txt points at nothing, the same as a broken link anywhere else. No documented agent consumer reads the file, so the cost is to any human or tool that follows it, not to a measured AI outcome.",
       fix: "Optional. If you publish an llms.txt, check that its links resolve to HTTP 200 and drop the ones that do not.",
       code: "- [Page Name](/correct-path): Description of the page content",
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl: "https://llmstxt.org/",
       tags: ["llms-txt", "broken-links", "discoverability"],
     },
@@ -56,7 +64,7 @@ export class LlmsTxtLinksValidAudit extends Audit {
         "All links return HTTP 200",
         "No links found",
         {
-          priority: "low",
+          priority: CheckPriority.Low,
           description:
             "An llms.txt with no links is an index of nothing. If you publish the file, list your key pages in it.",
           code: `- [Home](/): Main landing page\n- [About](/about/): Company information`,
@@ -96,7 +104,7 @@ export class LlmsTxtLinksValidAudit extends Audit {
         "All links return HTTP 200",
         `Broken: ${brokenSummary}`,
         {
-          priority: "low",
+          priority: CheckPriority.Low,
           description:
             "Broken links in llms.txt cause AI agents to hit dead ends, wasting their context window and degrading user experience. Fix the URLs to point to valid pages or remove links to pages that no longer exist.",
           code: `- [Page Name](/correct-path): Description of the page`,

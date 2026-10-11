@@ -1,8 +1,16 @@
 import type { CheerioAPI } from "cheerio";
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** Input types that carry no user data and are skipped. */
 const SKIP_TYPES = ["hidden", "submit", "button", "reset", "image"];
@@ -165,18 +173,18 @@ export class FormActionabilityAudit extends Audit {
     failureTitle: "Form backend actionability",
     description:
       "Autonomous agents fill forms by reading the DOM directly — they cannot see placeholders rendered visually or guess what a custom div-based widget expects. Fields without a native element, a name attribute, an explicit label (label[for], wrapping label, aria-label, or aria-labelledby), or a standard autocomplete attribute for identity data (email, phone, name, address) force agents to guess, producing failed or incorrect submissions. Keep every fillable field a native input/select/textarea with a name, an explicit label and standard autocomplete tokens.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("A", "scored"),
-    evidenceGrade: "A",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.A,
+    tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/operability-safety/form-actionability.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "high",
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "AI agents do not render your page visually. Unlabeled fields, div-based fake inputs, and missing autocomplete attributes mean agents cannot tell which field is the email address or the name, so submissions fail silently or land in the wrong fields — lost leads, broken signups, and abandoned checkouts.",
@@ -193,7 +201,7 @@ export class FormActionabilityAudit extends Audit {
 
   <button type="submit">Send</button>
 </form>`,
-      effort: "easy",
+      effort: FixEffort.Easy,
       docsUrl:
         "https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#autofill",
       tags: ["forms", "labels", "autocomplete", "agent-fillable", "webmcp"],
@@ -358,7 +366,7 @@ export class FormActionabilityAudit extends Audit {
         `${actionableFields}/${totalFields} form fields are fully actionable — agents will struggle with the rest.`,
         "At least 90% of form fields are native, named, labeled, and use standard autocomplete",
         found,
-        "high",
+        CheckPriority.High,
         firstIssueUrl,
       );
     }
@@ -367,7 +375,7 @@ export class FormActionabilityAudit extends Audit {
       `Only ${actionableFields}/${totalFields} form fields are actionable — agents cannot reliably fill these forms.`,
       "At least 90% of form fields are native, named, labeled, and use standard autocomplete",
       found,
-      "high",
+      CheckPriority.High,
       firstIssueUrl,
     );
   }

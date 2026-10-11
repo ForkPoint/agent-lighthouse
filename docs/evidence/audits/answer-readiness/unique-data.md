@@ -19,6 +19,8 @@ sources:
 
 ## What it checks
 
+The v7 runner includes `article` and `general` pages in this check's existing page population. This preserves coverage when the old catch-all classification becomes unknown. The audit body still owns its existing feature and artifact guards. This scope change does not establish a new consumer path.
+
 AI generative engines prioritize content with original, citable data points over vague claims. Include specific statistics and metrics.
 
 ## Code review findings (2026-08-20, 11-agent pass)
@@ -53,10 +55,10 @@ There is thin published support for 'statistics make content more citable in gen
 
 - 2026-08-26 — the shared text helper this audit reads, `getMainContentText`, changed its selection. Among several `<main>` elements it now returns the one holding the most text rather than the first, it ignores a `<main>` inside a `<template>`, and it falls back to the whole `<body>` only when no `<main>` holds any text. Measured cause (scan evidence gate design, section 2.4): storefronts ship empty or fragmented `<main>` wrappers, and the first one is often a stub. Two consequences for this audit. A page whose real content sits in a later `<main>` is now measured on that content. A page whose every `<main>` is empty is now measured on its body text, page chrome included, where it previously measured as empty.
 
-### Scoped to content pages; euro, pound and comma-decimal amounts (2026-10-06)
+### Scoped to article and general pages; euro, pound and comma-decimal amounts (2026-10-06)
 
-Required fix #6 lands. The audit declares `applicablePageTypes: ["content"]`,
-so the runner hands it content pages only and returns not applicable when the
+Required fix #6 lands. The audit declares `applicablePageTypes: ["content"]`
+(now `general` and `article`), so the runner hands it those pages only and returns not applicable when the
 scan holds none. A large retail site's homepage was failed for carrying no
 statistics.
 
@@ -68,8 +70,8 @@ bare comma decimal with no unit still counts as nothing.
 
 ## Deferred
 
-- **Prices still count as figures (fix #1).** A content page that lists
-  prices can pass on them. The content-page scope removes the product-grid
+- **Prices still count as figures (fix #1).** An article or general page that lists
+  prices can pass on them. The page scope removes the product-grid
   path; the in-sentence test is not built.
 - **Per-page threshold (fix #3), rename (fix #4) and chrome exclusion
   (fix #5)** are unchanged.
@@ -96,3 +98,11 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+## Implementation deviations (v7 P3, 2026-10-07)
+
+The added labels preserve the old general-content population while classification changes. This is not the final feature-gate migration. The evidence grade, tier, weight, and audit ID stay unchanged.
+
+## Deferred (v7 P3)
+
+See `docs/architecture/v7-audit-applicability-ledger.md` for the remaining audit-specific guards, population limits, and aggregation work. P4 will address selected-page evidence and mixed provenance.

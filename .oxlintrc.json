@@ -14,5 +14,39 @@
     "unicorn/consistent-function-scoping": "off",
     "no-shadow": "off",
     "no-underscore-dangle": "off"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["packages/core/src/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^\\.\\./",
+                "message": "Import another core module as #core/<path>, not with a climbing ../ path. See CLAUDE.md, Style."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["scripts/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "packages/core/src",
+                "message": "Import core source as #core/<path>; the root package.json maps it. See CLAUDE.md, Style."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
 }

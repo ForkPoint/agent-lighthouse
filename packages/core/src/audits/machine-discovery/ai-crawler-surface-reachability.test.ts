@@ -4,12 +4,13 @@ import {
   mockPageContext,
   mockCheckContext,
   mockFetchResult,
-} from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { FetchOptions, FetchResult } from "../../fetcher";
+} from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import { CheckStatus } from "#core/types";
 
-vi.mock("../../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => {
@@ -64,7 +65,7 @@ describe("AiCrawlerSurfaceReachabilityAudit", () => {
   });
 
   it("is notApplicable with no robots.txt, no sitemap and no feed", async () => {
-    expect((await run()).status).toBe("na");
+    expect((await run()).status).toBe(CheckStatus.NotApplicable);
   });
 
   it("passes when every panel crawler can reach every advertised surface", async () => {
@@ -73,7 +74,7 @@ describe("AiCrawlerSurfaceReachabilityAudit", () => {
         "User-agent: *\nAllow: /\nSitemap: https://example.com/sitemap.xml\n",
       urls: ALL_URLS,
     });
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // The Sitemap: directive is host-global and user-agent independent, which is
@@ -84,7 +85,7 @@ describe("AiCrawlerSurfaceReachabilityAudit", () => {
         "Sitemap: https://example.com/sitemap.xml\n\nUser-agent: *\nDisallow: /sitemap.xml\n",
       urls: ALL_URLS,
     });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain(
       "Sitemap: https://example.com/sitemap.xml",
     );
@@ -97,7 +98,7 @@ describe("AiCrawlerSurfaceReachabilityAudit", () => {
         "User-agent: *\nAllow: /\nSitemap: https://example.com/sitemap.xml\n\nUser-agent: GPTBot\nDisallow: /docs\n",
       urls: ALL_URLS,
     });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("GPTBot");
   });
 
@@ -108,7 +109,7 @@ describe("AiCrawlerSurfaceReachabilityAudit", () => {
       urls: ALL_URLS,
       head: '<link rel="alternate" type="application/rss+xml" href="/feed.xml">',
     });
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("/feed.xml");
   });
 
@@ -119,7 +120,7 @@ describe("AiCrawlerSurfaceReachabilityAudit", () => {
         "User-agent: *\nAllow: /\nSitemap: https://example.com/sitemap.xml\n\nUser-agent: ClaudeBot\nDisallow: /\n",
       urls: ALL_URLS,
     });
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("ClaudeBot");
   });
 

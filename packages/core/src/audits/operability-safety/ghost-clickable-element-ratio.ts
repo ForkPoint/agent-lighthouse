@@ -8,12 +8,12 @@
 // all, so neither of the others can see them.
 import type { CheerioAPI } from "cheerio";
 import type { Element } from "domhandler";
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import { collectPageCss } from "../../gatherers/css-rules";
-import { detailLines } from "../../detail-lines";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import { collectPageCss } from "#core/gatherers/css-rules";
+import { detailLines } from "#core/detail-lines";
 import {
   NATIVE_INTERACTIVE,
   accessibleName,
@@ -23,6 +23,14 @@ import {
   stopsPropagation,
 } from "./_agent-affordances";
 import { ariaRoles } from "./engine/standards";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** Below this share of addressable click targets the page fails. */
 const RATIO_FLOOR = 0.9;
@@ -297,25 +305,25 @@ export class GhostClickableElementRatioAudit extends Audit {
       "Ghost-clickable elements: click targets an agent cannot address",
     description:
       "Measures the share of on-page click targets that a DOM/accessibility-tree agent cannot address at all: elements that look and behave clickable to a human or a vision model but expose no native or ARIA role and no accessible name, so they never appear in a Playwright-MCP style snapshot. Reported as semantic / (semantic + ghost) over the served markup and its same-origin stylesheets, with the reason each ghost is unaddressable.",
-    scoreDisplayMode: "ternary",
-    weight: weightForGrade("B", "scored"),
-    evidenceGrade: "B",
-    tier: "scored",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
+    tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/operability-safety/ghost-clickable-element-ratio.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: "high",
+    defaultPriority: CheckPriority.High,
     guidance: {
       impact:
         "An element whose click behaviour comes only from a JS listener on a non-interactive tag, or from cursor:pointer styling, and which carries no role and no accessible name, is omitted from the serialized accessibility snapshot that agent toolkits send to the model. Playwright MCP's default mode is the accessibility tree, not pixel input: every action tool takes an exact element reference from the snapshot, and coordinate clicking exists only behind the optional vision capability. An element absent from the snapshot is therefore unaddressable by the default toolchain — the agent cannot emit a valid click and must fail or guess a URL. The accessibility linters cannot warn about it either: axe's button-name and link-name rules only fire on elements that already declare button or link semantics, so a bare unroled div is invisible to them by construction.",
       fix: 'Make each click target a real control. Use `<a href>` for navigation and `<button>` for actions instead of a div with a click handler; where the markup cannot change, add `role="button"`, `tabindex="0"` and a keyboard handler. Give every icon-only control an accessible name through `aria-label`, `aria-labelledby` or an `<svg><title>`. Never ship an `<a>` without an `href` — it has no link role and no snapshot entry, whatever it is styled to look like.',
       code: SAMPLE,
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/ghost-clickable-element-ratio/",
       tags: ["agent-operability", "accessibility-tree", "actionability"],
@@ -324,7 +332,7 @@ export class GhostClickableElementRatioAudit extends Audit {
 
   private recommendation() {
     return {
-      priority: "high" as const,
+      priority: CheckPriority.High,
       description: GhostClickableElementRatioAudit.meta.description,
       code: SAMPLE,
     };

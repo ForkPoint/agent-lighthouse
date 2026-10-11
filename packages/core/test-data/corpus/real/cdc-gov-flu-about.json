@@ -14,7 +14,6 @@
     "date": "Fri, 28 Aug 2026 12:17:31 GMT",
     "transfer-encoding": "chunked",
     "connection": "keep-alive, Transfer-Encoding",
-    "set-cookie": "akamai_visit_id=164e1202194512276114; expires=Sun, 27-Aug-2028 12:17:31 GMT; path=/; domain=.cdc.gov; secure; SameSite=None\nAkamai-Request-ID=164e1202194512276114; path=/; domain=.cdc.gov; secure; SameSite=none",
     "strict-transport-security": "max-age=31536000 ; includeSubDomains ; preload"
   },
   "contentType": "text/html",

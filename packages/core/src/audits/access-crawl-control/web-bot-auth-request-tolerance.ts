@@ -5,12 +5,20 @@ import {
   randomBytes,
   sign,
 } from "node:crypto";
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
-import { isSafeUrl } from "../../url-utils";
-import { probeSecurityUrl } from "../../gatherers/security";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import { isSafeUrl } from "#core/url-utils";
+import { probeSecurityUrl } from "#core/gatherers/security";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** The derived components the Web Bot Auth profile signs. */
 const COVERED = ["@authority", "@method", "@path"] as const;
@@ -121,20 +129,20 @@ export class WebBotAuthRequestToleranceAudit extends Audit {
       "This site rejects requests that carry HTTP message signatures",
     description:
       "Fetches the site root twice: once plainly, and once with the RFC 9421 `Signature`, `Signature-Input` and `Signature-Agent` headers a Web Bot Auth agent sends, signed with a per-scan ephemeral Ed25519 key. Reports when the signed request is refused, truncated, or answered differently without `Vary` naming the headers that changed the answer.",
-    scoreDisplayMode: "ternary",
-    tier: "scored",
-    evidenceGrade: "B",
-    weight: weightForGrade("B", "scored"),
-    defaultPriority: "medium",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    tier: AuditTier.Scored,
+    evidenceGrade: EvidenceGrade.B,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    defaultPriority: CheckPriority.Medium,
     dossier:
       "docs/evidence/audits/access-crawl-control/web-bot-auth-request-tolerance.md",
     // Gate exemption: being refused is what this category reports.
-    requires: ["origin-reachable", "unblocked-fetches"],
+    requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
     guidance: {
       impact:
         "Web Bot Auth is how an agent says who it is in a way an origin can check, and the operators building it are the ones whose traffic you would most want to identify. An edge that answers a signed request with 400 or 403 turns that identification into a reason for refusal: the agents willing to declare themselves are the ones you turn away, and the ones that lie carry no signature headers at all and sail through. A 431 is the same outcome from a different cause — a header-size limit — and it is fixed differently.",
       fix: "Let unknown request headers through: `Signature`, `Signature-Input` and `Signature-Agent` are additive and safe to ignore. If your edge enforces a header-size budget, raise it enough for an Ed25519 signature. If you do vary behaviour on those headers, list them in `Vary` so a shared cache cannot serve the rejected variant to everyone.",
-      effort: "complex",
+      effort: FixEffort.Complex,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/access-crawl-control/web-bot-auth-request-tolerance/",
       tags: ["web-bot-auth", "rfc9421", "signatures", "waf", "crawlers"],

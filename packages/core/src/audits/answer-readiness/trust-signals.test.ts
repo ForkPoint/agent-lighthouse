@@ -1,6 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { TrustSignalsAudit } from "./trust-signals";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import {
+  AuditTier,
+  CheckPriority,
+  CheckStatus,
+  EvidenceGrade,
+  PageType,
+  ScoreDisplayMode,
+} from "#core/types";
 
 function homepage(body: string, htmlAttrs = "") {
   return mockPageContext(
@@ -24,7 +32,7 @@ describe("TrustSignalsAudit", () => {
 
   it("is notApplicable when the scan contains no homepage", () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("is notApplicable on a non-English homepage instead of failing it", () => {
@@ -33,13 +41,13 @@ describe("TrustSignalsAudit", () => {
       ' lang="de"',
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("na");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("fails a homepage carrying none of the measured factors", () => {
     const page = homepage("<main><p>We build software.</p></main>");
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("ignores promotional puffery — the study found no consistent benefit", () => {
@@ -48,7 +56,7 @@ describe("TrustSignalsAudit", () => {
         <p>Money-back guarantee. Sustainable, organic, handcrafted and handmade.</p>
       </main>`);
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("does not pass on ordinary site chrome (a Partners nav link plus a shipping banner)", () => {
@@ -58,14 +66,14 @@ describe("TrustSignalsAudit", () => {
       <main><p>Welcome.</p></main>
       <footer><p>Certified. As seen in the press. Awards.</p></footer>`);
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("neither");
   });
 
   it("warns when exactly one measured factor is present", () => {
     const page = homepage("<main><p>Trusted by 12,000 companies.</p></main>");
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
   });
 
   it("passes on quantified social proof plus evidence-backed claims", () => {
@@ -74,7 +82,7 @@ describe("TrustSignalsAudit", () => {
         ${CITATIONS}
       </main>`);
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // "1 / 5" is what a slider prints under its arrows. Reading it as a 1-star
@@ -85,7 +93,7 @@ describe("TrustSignalsAudit", () => {
         ${CITATIONS}
       </main>`);
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).not.toContain("quantified social proof");
   });
 
@@ -95,7 +103,7 @@ describe("TrustSignalsAudit", () => {
         ${CITATIONS}
       </main>`);
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
   });
 
   // Comparison content left the scored tally on 2026-08-24: the study behind
@@ -108,7 +116,7 @@ describe("TrustSignalsAudit", () => {
           <tbody><tr><td>Price</td><td>$10</td><td>$20</td></tr></tbody></table>
       </main>`);
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).not.toMatch(/comparison/i);
     expect(result.message).toContain("1 of the 2");
   });
@@ -120,7 +128,7 @@ describe("TrustSignalsAudit", () => {
           <tbody><tr><td>Price</td><td>$10</td><td>$20</td></tr></tbody></table>
       </main>`);
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toBe("None found");
   });
 
@@ -142,10 +150,10 @@ describe("TrustSignalsAudit", () => {
     const citationsOnly = audit.audit(
       mockCheckContext([homepage(`<main>${CITATIONS}</main>`)]),
     );
-    expect(both.status).toBe("pass");
-    expect(ratingOnly.status).toBe("warn");
+    expect(both.status).toBe(CheckStatus.Pass);
+    expect(ratingOnly.status).toBe(CheckStatus.Warn);
     expect(ratingOnly.message).toContain("1 of the 2");
-    expect(citationsOnly.status).toBe("warn");
+    expect(citationsOnly.status).toBe(CheckStatus.Warn);
     expect(citationsOnly.message).toContain("1 of the 2");
   });
 
@@ -159,7 +167,7 @@ describe("TrustSignalsAudit", () => {
     expect(result.found).toContain("answer-readiness/review-signals");
     // The deferral is an attribution change, not a penalty: this is the same
     // page as the "quantified social proof plus evidence" case above.
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     // The deferred factor leaves the denominator as well as the numerator, so
     // the bar drops with it. Pinned rather than inferred.
     expect(result.message).toContain("1 of the 1");
@@ -174,8 +182,8 @@ describe("TrustSignalsAudit", () => {
     const withMarkup = audit.audit(
       mockCheckContext([homepage(`${body}${REVIEW_MARKUP}`)]),
     );
-    expect(without.status).toBe("pass");
-    expect(withMarkup.status).toBe("pass");
+    expect(without.status).toBe(CheckStatus.Pass);
+    expect(withMarkup.status).toBe(CheckStatus.Pass);
     expect(withMarkup.score).toBeGreaterThanOrEqual(without.score);
   });
 
@@ -190,8 +198,8 @@ describe("TrustSignalsAudit", () => {
         homepage(`<main><p>We build software.</p>${REVIEW_MARKUP}</main>`),
       ]),
     );
-    expect(bare.status).toBe("fail");
-    expect(withMarkup.status).toBe("warn");
+    expect(bare.status).toBe(CheckStatus.Fail);
+    expect(withMarkup.status).toBe(CheckStatus.Warn);
     expect(withMarkup.score).toBeGreaterThan(bare.score);
 
     // Same invariant at the other corner the narrowed denominator touches: a
@@ -203,8 +211,8 @@ describe("TrustSignalsAudit", () => {
     const socialMarkup = audit.audit(
       mockCheckContext([homepage(`${socialBody}${REVIEW_MARKUP}`)]),
     );
-    expect(socialBare.status).toBe("warn");
-    expect(socialMarkup.status).toBe("warn");
+    expect(socialBare.status).toBe(CheckStatus.Warn);
+    expect(socialMarkup.status).toBe(CheckStatus.Warn);
     expect(socialMarkup.score).toBeGreaterThanOrEqual(socialBare.score);
   });
 
@@ -213,7 +221,7 @@ describe("TrustSignalsAudit", () => {
       `<main><p>Great software.</p>${REVIEW_MARKUP}</main>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).not.toBe("pass");
+    expect(result.status).not.toBe(CheckStatus.Pass);
   });
 
   it("does not count social or share links as evidence-backed citations", () => {
@@ -224,17 +232,17 @@ describe("TrustSignalsAudit", () => {
         <a href="https://www.linkedin.com/company/example">LinkedIn</a>
       </main>`);
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
   });
 
   it('is scoped to the homepage and demoted to the "smaller gains" tier', () => {
     const meta = TrustSignalsAudit.meta;
-    expect(meta.applicablePageTypes).toEqual(["homepage"]);
-    expect(meta.defaultPriority).toBe("low");
-    expect(meta.evidenceGrade).toBe("B");
-    expect(meta.tier).toBe("scored");
+    expect(meta.applicablePageTypes).toEqual([PageType.Homepage]);
+    expect(meta.defaultPriority).toBe(CheckPriority.Low);
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
     expect(meta.weight).toBeCloseTo(0.6);
-    expect(meta.scoreDisplayMode).toBe("ternary");
+    expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Ternary);
     // The description must claim exactly what the study measured. It may name
     // `comparison-tables` as the owner of the dropped factor, so the pin is on
     // the count of scored factors rather than on the absence of a word.
@@ -254,6 +262,6 @@ describe("TrustSignalsAudit", () => {
     );
     const result = audit.audit(mockCheckContext([page]));
     expect(result.found).not.toContain("deferred");
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
   });
 });

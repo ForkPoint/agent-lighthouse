@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach } from "vitest";
 import { mountExplorer } from "./audit-explorer";
+import { AuditTier } from "@forkpoint/agent-lighthouse-core";
 
 /**
  * The interaction layer, against a fixture that mirrors what
@@ -14,21 +15,21 @@ const CARDS = [
   {
     id: "agentic-commerce/offer-truth-consistency",
     category: "agentic-commerce",
-    tier: "scored",
+    tier: AuditTier.Scored,
     title: "Offer Truth Consistency",
     tags: "price offer",
   },
   {
     id: "access-crawl-control/robots-directives",
     category: "access-crawl-control",
-    tier: "informative",
+    tier: AuditTier.Informative,
     title: "Robots Directives",
     tags: "robots",
   },
   {
     id: "access-crawl-control/llms-txt",
     category: "access-crawl-control",
-    tier: "experimental",
+    tier: AuditTier.Experimental,
     title: "LLMs Txt",
     tags: "",
   },

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
 import { DescriptiveUrlsAudit } from "./descriptive-urls";
 import {
   attributableFixture,
@@ -8,7 +8,8 @@ import {
   mockPageContext,
   shellSiteContext,
   unreachedSiteContext,
-} from "../../__tests__/test-utils";
+} from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 describe("DescriptiveUrlsAudit", () => {
   const audit = new DescriptiveUrlsAudit();
@@ -19,7 +20,7 @@ describe("DescriptiveUrlsAudit", () => {
       `<html><body><p>Content</p></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("pass");
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("descriptive slugs");
   });
 
@@ -34,7 +35,7 @@ describe("DescriptiveUrlsAudit", () => {
       1,
     );
     const result = audit.audit(mockCheckContext([good, bad]));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("non-descriptive URL slugs");
   });
 
@@ -44,7 +45,7 @@ describe("DescriptiveUrlsAudit", () => {
       `<html><body><p>Content</p></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain(
       "All scanned page URLs have non-descriptive slugs",
     );
@@ -52,7 +53,7 @@ describe("DescriptiveUrlsAudit", () => {
 
   it("fails when no pages scanned", () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("No pages scanned");
   });
 
@@ -63,7 +64,9 @@ describe("DescriptiveUrlsAudit", () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new DescriptiveUrlsAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
-    expect(reached.status, "the same input reached is judged").not.toBe("na");
+    expect(reached.status, "the same input reached is judged").not.toBe(
+      CheckStatus.NotApplicable,
+    );
 
     const plan = planAudits(
       unreachedSiteContext(pages, rootFiles),
@@ -75,13 +78,13 @@ describe("DescriptiveUrlsAudit", () => {
     expect(
       plan.skipped.find((stub) => stub.id === DescriptiveUrlsAudit.meta.id)
         ?.status,
-    ).toBe("na");
+    ).toBe(CheckStatus.NotApplicable);
   });
 
   // `requires` deliberately omits `rendered-body`: a URL is readable whether or
   // not the page behind it rendered text.
   it("still judges a page that served no readable text", async () => {
     const result = await new DescriptiveUrlsAudit().audit(shellSiteContext());
-    expect(result.status).not.toBe("na");
+    expect(result.status).not.toBe(CheckStatus.NotApplicable);
   });
 });

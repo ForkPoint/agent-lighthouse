@@ -1,17 +1,25 @@
 import { describe, it, expect } from "vitest";
 import type { CategoryResult, CheckResult, ScanReport } from "./types";
 import { generateScanSummary } from "./summary";
+import {
+  CheckPriority,
+  CheckStatus,
+  ScoreDisplayMode,
+  ScoreTier,
+} from "./types";
 
-function makeCheck(status: CheckResult["status"] = "pass"): CheckResult {
+function makeCheck(
+  status: CheckResult["status"] = CheckStatus.Pass,
+): CheckResult {
   return {
     id: "c",
     category: "cat",
     title: "T",
     description: "D",
     status,
-    score: status === "pass" ? 1 : 0,
-    scoreDisplayMode: "binary",
-    priority: "medium",
+    score: status === CheckStatus.Pass ? 1 : 0,
+    scoreDisplayMode: ScoreDisplayMode.Binary,
+    priority: CheckPriority.Medium,
     impact: "i",
     fix: "f",
     weight: 1,
@@ -50,7 +58,7 @@ describe("generateScanSummary", () => {
     const summary = generateScanSummary({
       domain: "example.com",
       overallScore: 70,
-      scoreTier: "partially-ready",
+      scoreTier: ScoreTier.PartiallyReady,
       categories: [
         makeCategory({ id: "a", name: "Strong", score: 90 }),
         makeCategory({ id: "b", name: "Middling", score: 60 }),
@@ -73,7 +81,7 @@ describe("generateScanSummary", () => {
     const report: Partial<ScanReport> = {
       domain: "example.com",
       overallScore: 72,
-      scoreTier: "partially-ready",
+      scoreTier: ScoreTier.PartiallyReady,
       readinessVitals: {
         commerce: 80,
         content: 60,
@@ -94,14 +102,14 @@ describe("generateScanSummary", () => {
           score: 20,
           passCount: 0,
           failCount: 1,
-          checks: [makeCheck("fail")],
+          checks: [makeCheck(CheckStatus.Fail)],
         }),
       ],
       recommendations: [
-        { priority: "critical", description: "x" },
-        { priority: "critical", description: "y" },
-        { priority: "high", description: "z" },
-        { priority: "low", description: "w" },
+        { priority: CheckPriority.Critical, description: "x" },
+        { priority: CheckPriority.Critical, description: "y" },
+        { priority: CheckPriority.High, description: "z" },
+        { priority: CheckPriority.Low, description: "w" },
       ],
     };
 
@@ -141,7 +149,7 @@ describe("generateScanSummary", () => {
   it("shows a strength but no improvement area for a single category", () => {
     const summary = generateScanSummary({
       domain: "one.com",
-      scoreTier: "agent-ready",
+      scoreTier: ScoreTier.AgentReady,
       categories: [makeCategory({ id: "only", name: "Only", score: 88 })],
     });
 

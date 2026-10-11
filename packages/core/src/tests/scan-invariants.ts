@@ -1,8 +1,9 @@
-import { defaultConfig } from "../audit-config";
-import { TAG_SCAN_ERROR } from "../constants";
-import { CheckResultSchema } from "../schemas";
-import { gatedMassShare, GATED_MASS_UNSCORED_THRESHOLD } from "../scorer";
-import type { CheckResult, ScanReport } from "../types";
+import { defaultConfig } from "#core/audit-config";
+import { TAG_SCAN_ERROR } from "#core/constants";
+import { CheckResultSchema } from "#core/schemas";
+import { gatedMassShare, GATED_MASS_UNSCORED_THRESHOLD } from "#core/scorer";
+import type { CheckResult, ScanReport } from "#core/types";
+import { CheckStatus, EvidenceKey } from "#core/types";
 
 /**
  * Everything a scan report must be true about itself, whatever site it describes.
@@ -47,7 +48,7 @@ import type { CheckResult, ScanReport } from "../types";
 export const READS_RENDERED_BODY = new Set(
   Object.values(defaultConfig.audits)
     .flat()
-    .filter((r) => (r.meta.requires ?? []).includes("rendered-body"))
+    .filter((r) => (r.meta.requires ?? []).includes(EvidenceKey.RenderedBody))
     .map((r) => r.meta.id),
 );
 
@@ -84,7 +85,7 @@ export function invariantViolations(
     );
   }
 
-  const passes = checks.filter((c) => c.status === "pass");
+  const passes = checks.filter((c) => c.status === CheckStatus.Pass);
 
   // Rule 3, tripwire. Nothing obtained: the scan holds no response it can
   // attribute to this site, so no audit may congratulate it. Mirrors
@@ -92,7 +93,10 @@ export function invariantViolations(
   // a synthetic state. The runner's unread-scan guard skips all 215 audits to
   // `na` before any audit runs. On a live scan this fires only if that guard
   // regresses or another path constructs an inconsistent report.
-  if (validity.evidence["origin-reachable"] === false && passes.length > 0) {
+  if (
+    validity.evidence[EvidenceKey.OriginReachable] === false &&
+    passes.length > 0
+  ) {
     violations.push(
       `origin unreachable but ${passes.length} check(s) passed, e.g. ${passes[0]!.id}`,
     );
@@ -107,8 +111,8 @@ export function invariantViolations(
   // regresses. Merging rules 3 and 4 would produce false failures on every
   // client-rendered site in the list.
   if (
-    validity.evidence["origin-reachable"] === true &&
-    validity.evidence["rendered-body"] === false
+    validity.evidence[EvidenceKey.OriginReachable] === true &&
+    validity.evidence[EvidenceKey.RenderedBody] === false
   ) {
     const blind = passes.filter((c) => READS_RENDERED_BODY.has(c.id));
     if (blind.length > 0) {
@@ -124,8 +128,8 @@ export function invariantViolations(
   // A report whose flag disagrees with its own evidence is unreadable either
   // way round.
   const expectedJudgeable =
-    validity.evidence["origin-reachable"] === true &&
-    validity.evidence["unblocked-fetches"] === true;
+    validity.evidence[EvidenceKey.OriginReachable] === true &&
+    validity.evidence[EvidenceKey.UnblockedFetches] === true;
   if (validity.judgeable !== expectedJudgeable) {
     violations.push(
       `judgeable is ${validity.judgeable} but the evidence says ${expectedJudgeable}`,

@@ -20,7 +20,14 @@ sources:
 
 ## What it checks
 
-AI agents use the lang attribute to select the correct language model and tokenizer when processing your content. Without it, agents may misinterpret content language, leading to poor translations or incorrect answers in multilingual AI systems.
+Checks that every selected page has a non-empty `lang` attribute on `<html>`,
+including pages that serve no body text. Screen readers use the declared language
+to select pronunciation rules. This check measures presence; it does not validate
+BCP 47 tags or compare the declared language with the page's text.
+
+All selected pages with a non-empty declaration pass. Any missing or blank
+declaration fails. An empty sample is not applicable. Different pages can declare
+different languages; this check does not require a site-wide language value.
 
 ## Code review findings (2026-08-20, 11-agent pass)
 
@@ -53,6 +60,15 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Implementation deviations
 
+- 2026-10-07 — the 7.0.0 scope review replaces the first-page read with
+  `judgePages` over the selected sample. Missing and blank declarations now
+  contribute equally on every page. Results report coverage and sorted affected
+  URLs, with the first affected URL as `pageUrl`. Empty samples return
+  `notApplicable`; existing result limits bound long findings. The body-readability
+  exemption remains because the attribute exists independently of body text.
+  The description and impact text now state the documented accessibility
+  mechanism. They no longer claim AI model or tokenizer selection.
+
 - 2026-08-28 — the audit declines when the scan holds no response it can
   attribute to this site. It read the `<html lang>` of the first scanned page,
   and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked
@@ -73,6 +89,14 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
   With `server-responsiveness`, this is what takes the `content-extraction`
   category from unscored to 73 on the shell contract state. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
+
+## Deferred
+
+- BCP 47 validation and declared-versus-observed language agreement remain open.
+  This correction retains the non-empty-attribute predicate and binary mode.
+  The later evidence below governs the old review's fallback proposal: a
+  `meta http-equiv="Content-Language"` element does not replace `<html lang>`.
+  XML document handling needs its own parsing and evidence contract.
 
 ## Review history
 

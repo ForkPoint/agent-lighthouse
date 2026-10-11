@@ -1,13 +1,21 @@
 import * as cheerio from "cheerio";
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
-import { isSafeUrl } from "../../url-utils";
-import { probeRsl } from "../../gatherers/rsl";
-import { directiveLines } from "../../gatherers/robots";
-import { linksWithRel } from "../../gatherers/structured-fields";
-import { isIso4217 } from "../../gatherers/currency";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import { isSafeUrl } from "#core/url-utils";
+import { probeRsl } from "#core/gatherers/rsl";
+import { directiveLines } from "#core/gatherers/robots";
+import { linksWithRel } from "#core/gatherers/structured-fields";
+import { isIso4217 } from "#core/gatherers/currency";
+import {
+  AuditTier,
+  CheckPriority,
+  EvidenceGrade,
+  EvidenceKey,
+  FixEffort,
+  ScoreDisplayMode,
+} from "#core/types";
 
 /** The namespace the RSL 1.0 specification defines. */
 const RSL_NAMESPACE = "https://rslstandard.org/rsl";
@@ -64,24 +72,24 @@ export class RslLicensingTermsConformanceAudit extends Audit {
       "This site’s machine-readable licence cannot be found or cannot be read",
     description:
       'Looks for an RSL licence in all four channels the specification defines — the robots.txt `License:` directive, a `Link: rel=license` response header, an HTML `<link>`, and an inline `<script type="application/rsl+xml">` — then validates the document: its namespace, its media type, the paths its `<content url>` covers, and the enumerated attributes on every permits, prohibits, payment and amount element.',
-    scoreDisplayMode: "ternary",
-    tier: "scored",
-    evidenceGrade: "B",
-    weight: weightForGrade("B", "scored"),
-    defaultPriority: "medium",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    tier: AuditTier.Scored,
+    evidenceGrade: EvidenceGrade.B,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    defaultPriority: CheckPriority.Medium,
     dossier:
       "docs/evidence/audits/access-crawl-control/rsl-licensing-terms-conformance.md",
     requires: [
-      "origin-reachable",
-      "unblocked-fetches",
-      "rendered-body",
-      "sample-adequate",
+      EvidenceKey.OriginReachable,
+      EvidenceKey.UnblockedFetches,
+      EvidenceKey.RenderedBody,
+      EvidenceKey.SampleAdequate,
     ],
     guidance: {
       impact:
         'RSL is the machine-readable form of "here are my terms". A crawler that cannot find the document applies its own defaults instead, and a document it finds but cannot parse is worth no more than one it never found. The specification mandates no default location, so a licence reachable only at a guessed path is one no crawler is obliged to look for. The quiet failure is a `<content url>` prefix that does not cover the pages the licence was written for: the terms load, parse, and apply to nothing.',
       fix: 'Point at the licence from robots.txt with an absolute `License:` URI, and add the `Link: <...>; rel="license"; type="application/rsl+xml"` response header so a crawler that never reads robots.txt still finds it. Serve the document as `application/rsl+xml`, keep the `https://rslstandard.org/rsl` namespace on the root element, and make every `<content url>` prefix cover the paths it licenses.',
-      effort: "moderate",
+      effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/access-crawl-control/rsl-licensing-terms-conformance/",
       tags: ["rsl", "licensing", "robots", "headers"],
