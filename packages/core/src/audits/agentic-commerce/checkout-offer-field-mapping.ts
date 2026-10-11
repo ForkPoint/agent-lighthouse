@@ -225,7 +225,9 @@ function assess(
     // A sale price above the list price rejects the row and misprices the offer.
     const spec = first(offer["priceSpecification"]);
     const listFromSpec =
-      spec && /ListPrice/i.test(String(spec["priceType"] ?? ""))
+      spec &&
+      typeof spec["priceType"] === "string" &&
+      /ListPrice/i.test(spec["priceType"])
         ? Number(spec["price"])
         : undefined;
     const listPrice =

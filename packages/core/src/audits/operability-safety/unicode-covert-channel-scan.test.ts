@@ -22,6 +22,8 @@ import {
 
 /** The same sentence, written in the Unicode Tags block: invisible everywhere. */
 const tagged = (text: string) =>
+  // Maps each ASCII character to its tag code point on purpose.
+  // oxlint-disable-next-line typescript/no-misused-spread
   [...text]
     .map((c) => String.fromCodePoint(0xe0000 + c.charCodeAt(0)))
     .join("");

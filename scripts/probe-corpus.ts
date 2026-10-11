@@ -200,7 +200,9 @@ async function main(): Promise<void> {
   console.log(
     `\n${outcomes.length} probed -> ${OUT}; survivors -> ${survivorsPath}`,
   );
-  for (const [category, domains] of Object.entries(survivors).sort()) {
+  for (const [category, domains] of Object.entries(survivors).sort(
+    ([a], [b]) => (a < b ? -1 : a > b ? 1 : 0),
+  )) {
     console.log(
       `  ${category.padEnd(11)} ${domains.length} of ${candidates[category]?.length ?? 0}`,
     );

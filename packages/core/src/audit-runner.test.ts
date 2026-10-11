@@ -595,6 +595,8 @@ describe("scan-error explanations", () => {
 
   it("names at most three fields, so one bad shape cannot fill the report", async () => {
     const stub = await stubFor(() => {
+      // Throws a bare ZodError-shaped object on purpose: the runner must read its issues.
+      // oxlint-disable-next-line typescript/only-throw-error
       throw {
         issues: Array.from({ length: 40 }, (_v, i) => ({
           path: ["details", "items", i],
@@ -614,7 +616,9 @@ describe("scan-error explanations", () => {
   });
 
   it("handles a thrown non-Error", async () => {
-    const stub = await stubFor((() => {
+    const stub = await stubFor(() => {
+      // Throws a non-Error on purpose: the runner must still explain it.
+      // oxlint-disable-next-line typescript/only-throw-error
       throw "just a string";
     });
     expect(stub.explanation).toBe("Audit failed to run: just a string");
@@ -748,7 +752,9 @@ describe("audit tracing", () => {
     await runAudits(ctxWith([PageType.Homepage]), tracingConfig());
     logger.level = previous;
     errorSpy.mockRestore();
-    const lines = debugSpy.mock.calls.map((c) => String(c[0]));
+    const lines = debugSpy.mock.calls.map((c) =>
+      typeof c[0] === "string" ? c[0] : "",
+    );
     expect(lines.filter((l) => l.startsWith("[audit] "))).toHaveLength(3);
     debugSpy.mockRestore();
   });

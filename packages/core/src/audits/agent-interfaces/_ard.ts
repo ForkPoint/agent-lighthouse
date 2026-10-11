@@ -219,6 +219,8 @@ export function readAiCatalog(ctx: CheckContext): ArdRead {
  * A single sentence explaining why the manifest could not be read, reusable in
  * every consuming audit's message.
  */
+// The switch is exhaustive over ArdRead; tsc (noImplicitReturns) proves every path returns.
+// oxlint-disable-next-line typescript/consistent-return
 export function describeFailure(read: Exclude<ArdRead, { ok: true }>): string {
   switch (read.reason) {
     case "absent":

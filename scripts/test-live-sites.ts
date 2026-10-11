@@ -110,8 +110,8 @@ function parseCliArgs(argv: string[]): CliOptions {
     }
     const match = /^--([a-z-]+)=(.*)$/.exec(arg);
     if (!match) continue;
-    // `(.*)` always participates in a match, so `val` is a string.
-    const [, name, val = ""] = match;
+    // Both groups always participate in a match, so each is a string.
+    const [, name = "", val = ""] = match;
     switch (name) {
       case "limit":
         options.limit = Math.max(0, parseInt(val, 10) || 0);

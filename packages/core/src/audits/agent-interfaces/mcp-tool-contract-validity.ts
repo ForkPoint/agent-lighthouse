@@ -199,6 +199,8 @@ export class McpToolContractValidityAudit extends Audit {
           shoulds.push(`\`${name}\` is outside /^[A-Za-z0-9_.\\-]+$/`);
         }
         if (
+          // Iterates code points on purpose: each one is range-checked.
+          // oxlint-disable-next-line typescript/no-misused-spread
           [...name].some(
             (ch) => ch.codePointAt(0)! < 0x21 || ch.codePointAt(0)! > 0x7e,
           )

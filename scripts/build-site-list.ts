@@ -122,6 +122,8 @@ console.log(
   `${sites.length} sites -> ${OUT} (tranco ${count("tranco")}, crux ${count("crux")}, ` +
     `seed ${count("seed")}; excluded ${exclude.size} by status)`,
 );
-for (const [category, n] of [...byCategory.entries()].sort()) {
+for (const [category, n] of [...byCategory.entries()].sort(([a], [b]) =>
+  a < b ? -1 : a > b ? 1 : 0,
+)) {
   console.log(`  ${category.padEnd(12)} ${n}`);
 }

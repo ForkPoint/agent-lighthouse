@@ -164,6 +164,8 @@ export function accessibleName(el: Element, $: CheerioAPI): string {
 
 /** True when the node is an element rather than text or a comment. */
 export function isElement(node: AnyNode): node is Element {
+  // `type` is domelementtype's string enum, installed twice; compare its value.
+  // oxlint-disable-next-line typescript/no-unsafe-enum-comparison
   return node.type === "tag";
 }
 

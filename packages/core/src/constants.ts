@@ -95,6 +95,7 @@ export function getTierColor(tier: string | null): string {
       return "#f59e0b";
     case ScoreTier.NotReady:
       return "#ef4444";
+    case null:
     default:
       return "#64748b";
   }

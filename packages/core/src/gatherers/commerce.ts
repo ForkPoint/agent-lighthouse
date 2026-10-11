@@ -175,8 +175,12 @@ export function priceCandidates(
   const visit = (el: Element, inStruck: boolean): void => {
     const nowStruck = inStruck || struck.has(el);
     for (const child of el.children) {
+      // `type` is domelementtype's string enum, installed twice; compare its value.
+      // oxlint-disable-next-line typescript/no-unsafe-enum-comparison
       if (child.type === "tag") {
-        visit(child as Element, nowStruck);
+        visit(child, nowStruck);
+        // Same as above.
+        // oxlint-disable-next-line typescript/no-unsafe-enum-comparison
       } else if (child.type === "text") {
         const text = flatten(child.data ?? "");
         for (const match of text.matchAll(pattern)) {

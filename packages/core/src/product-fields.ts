@@ -8,9 +8,9 @@ function has(v: unknown): boolean {
   if (v === undefined || v === null) return false;
   if (Array.isArray(v)) return v.some(has);
   if (typeof v === "object") return Object.keys(v).length > 0;
-  const s = String(v as string | number | boolean)
-    .trim()
-    .toLowerCase();
+  // Objects and arrays returned above; only primitives reach String().
+  // oxlint-disable-next-line typescript/no-base-to-string
+  const s = String(v).trim().toLowerCase();
   return s !== "" && s !== "null" && s !== "undefined" && s !== "n/a";
 }
 

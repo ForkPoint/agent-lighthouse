@@ -52,7 +52,7 @@ const transitions = {};
 let verdictChanges = 0;
 const auditIds = [
   ...new Set(raw.results.flatMap((r) => r.after.coverage.map((c) => c.id))),
-].sort();
+].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 const auditIndex = new Map(auditIds.map((id, index) => [id, index]));
 for (const [caseIndex, entry] of raw.results.entries()) {
   for (const change of entry.changes) {

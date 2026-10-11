@@ -139,11 +139,7 @@ const deprecatedrole: EvaluateFn = function (_node, _options, virtualNode) {
   return true;
 };
 
-const ariaAllowedRole: EvaluateFn = function (
-  _node,
-  options = {},
-  virtualNode,
-) {
+const ariaAllowedRole: EvaluateFn = function (_node, options, virtualNode) {
   const { allowImplicit = true, ignoredTags = [] } = options as {
     allowImplicit?: boolean;
     ignoredTags?: string[];
@@ -444,11 +440,7 @@ function listProhibitedAttrs(
   return ["aria-label", "aria-labelledby"];
 }
 
-const ariaProhibitedAttr: EvaluateFn = function (
-  _node,
-  options = {},
-  virtualNode,
-) {
+const ariaProhibitedAttr: EvaluateFn = function (_node, options, virtualNode) {
   const elementsAllowedAriaLabel =
     (options as { elementsAllowedAriaLabel?: string[] })
       .elementsAllowedAriaLabel || [];
@@ -489,11 +481,7 @@ function isClosedCombobox(vNode: VNode, role: string | null): boolean {
   );
 }
 
-const ariaRequiredAttr: EvaluateFn = function (
-  _node,
-  options = {},
-  virtualNode,
-) {
+const ariaRequiredAttr: EvaluateFn = function (_node, options, virtualNode) {
   const role = getExplicitRole(virtualNode);
   const attrs = virtualNode.attrNames;
   let requiredAttrs = requiredAttr(role);
@@ -849,7 +837,7 @@ const tdHasHeader: EvaluateFn = function (node) {
     if (hasContent(cell) && tableUtils.isDataCell(cell) && !label(cell)) {
       const hasHeaders = tableUtils
         .getHeaders(cell, tableGrid)
-        .some((header) => header !== null && !!hasContent(header));
+        .some((header) => header !== null && hasContent(header));
       if (!hasHeaders) badCells.push(cell);
     }
   });
@@ -1009,7 +997,7 @@ const docHasTitle: EvaluateFn = function () {
   return !!sanitize(title);
 };
 
-const attrNonSpaceContent: EvaluateFn = function (_node, options = {}, vNode) {
+const attrNonSpaceContent: EvaluateFn = function (_node, options, vNode) {
   const attribute = (options as { attribute?: string }).attribute;
   if (!attribute || typeof attribute !== "string") {
     throw new TypeError(

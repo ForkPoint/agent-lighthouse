@@ -104,8 +104,11 @@ const GRADE_LABEL = /^\*\*Grade:\s*([A-D])\*\*\s*(?:—\s*)?(.*)$/;
 interface Section {
   /** The heading exactly as written, without the `## `. */
   heading: string;
-  /** Its public name, or `undefined` when it is withheld. */
-  publicName?: PublicName | string;
+  /**
+   * Its public name (a `PublicName`, or the heading itself for a
+   * `public_extra` section), or `undefined` when it is withheld.
+   */
+  publicName?: string;
   /** The date in its heading, when it carries one — drives the supersede rule. */
   date?: string;
   /** Everything under the heading, up to the next `## `. */

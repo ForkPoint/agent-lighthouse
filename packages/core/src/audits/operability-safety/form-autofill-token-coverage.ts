@@ -377,6 +377,8 @@ function survey(ctx: CheckContext): Survey {
 }
 
 /** The shortest actionable sentence for one uncovered field. */
+// The switch is exhaustive over TokenGap; tsc (noImplicitReturns) proves every path returns.
+// oxlint-disable-next-line typescript/consistent-return
 function describe(finding: FieldFinding): string {
   const token = `autocomplete="${finding.expected}"`;
   switch (finding.reason) {

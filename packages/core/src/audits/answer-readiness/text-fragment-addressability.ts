@@ -80,6 +80,8 @@ function blockRuns(page: PageContext): BlockRun[] {
     run = "";
   };
   const walk = (node: AnyNode, rendered: boolean) => {
+    // `type` is domelementtype's string enum, installed twice; compare its value.
+    // oxlint-disable-next-line typescript/no-unsafe-enum-comparison
     if (node.type === "text") {
       if (rendered !== runRendered) {
         flush();

@@ -214,6 +214,7 @@ export const implicitHtmlRoles: Record<string, ImplicitRoleResolver> = {
       case "email":
       case "":
         return !suggestionsSourceElement ? "textbox" : "combobox";
+      case undefined:
       default:
         return "textbox";
     }

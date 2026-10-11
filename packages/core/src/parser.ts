@@ -152,7 +152,9 @@ const TEXT_VALUE_MAX = 200;
 function nearestScope(node: AnyNode, attr: string): Element | null {
   let p: AnyNode | null = node.parent;
   while (p) {
-    if (p.type === "tag" && attr in (p as Element).attribs) return p as Element;
+    // `type` is domelementtype's string enum, installed twice; compare its value.
+    // oxlint-disable-next-line typescript/no-unsafe-enum-comparison
+    if (p.type === "tag" && attr in p.attribs) return p;
     p = p.parent as AnyNode | null;
   }
   return null;
