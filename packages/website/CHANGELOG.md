@@ -1,5 +1,25 @@
 # @forkpoint/agent-lighthouse-website
 
+## 0.0.14
+
+### Patch Changes
+
+- Updated dependencies [d524d37]
+- Updated dependencies [d524d37]
+- Updated dependencies [d524d37]
+- Updated dependencies [d524d37]
+- Updated dependencies [d524d37]
+- Updated dependencies [d524d37]
+- Updated dependencies [d524d37]
+- Updated dependencies [d524d37]
+- Updated dependencies [d524d37]
+- Updated dependencies [d524d37]
+- Updated dependencies [dbbac43]
+- Updated dependencies [d524d37]
+- Updated dependencies [d524d37]
+- Updated dependencies [d524d37]
+  - @forkpoint/agent-lighthouse-core@7.0.0
+
 ## 0.0.13
 
 ### Patch Changes
