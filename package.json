@@ -14,7 +14,7 @@
     "test:watch": "vitest",
     "typecheck": "pnpm -r run typecheck && tsc --noEmit -p tsconfig.scripts.json",
     "typecheck:scripts": "tsc --noEmit -p tsconfig.scripts.json",
-    "lint": "oxlint .",
+    "lint": "oxlint --type-aware .",
     "check:dossiers": "node scripts/check-dossiers.mjs",
     "check:requires": "node --import tsx scripts/check-requires.ts",
     "check:audit-boundaries": "node scripts/check-audit-boundaries.mjs",

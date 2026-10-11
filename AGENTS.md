@@ -46,7 +46,7 @@ records.
 pnpm build              # every package; core must build before check:dossiers
 pnpm test               # vitest, from the repo root only
 pnpm typecheck          # tsc --noEmit per package
-pnpm lint               # oxlint
+pnpm lint               # oxlint, type-aware
 pnpm check:dossiers     # registry <-> dossier agreement, both directions
 pnpm check:requires     # each audit's `requires` matches what its source reads
 pnpm check:audit-map    # audit map <-> codebase & dossier agreement
@@ -202,6 +202,9 @@ Write for a reader, not for a researcher:
   regardless of the surrounding content.
 - oxlint is the only linter. There is no ESLint config and none should appear.
   Use `// oxlint-disable-*` if a suppression is genuinely needed.
+  Lint is type-aware (oxlint-tsgolint) and reads each file's nearest
+  `tsconfig.json`, hence `scripts/tsconfig.json`. `no-unsafe-type-assertion`
+  and the `no-unsafe-*` family are off for now because of their volume.
 - Prettier for formatting: `pnpm format`.
 - Inside `packages/core/src`, import another core module as `#core/<path>`
   (`import { CheckStatus } from "#core/types"`), not with a climbing `../`
