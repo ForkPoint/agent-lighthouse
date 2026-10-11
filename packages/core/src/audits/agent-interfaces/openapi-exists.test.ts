@@ -115,6 +115,20 @@ describe("OpenApiExistsAudit", () => {
     expect(result.message).toContain("/openapi.json");
   });
 
+  it("names the string version when openapi is a malformed object", async () => {
+    const spec = JSON.stringify({
+      openapi: { major: 3 },
+      swagger: "2.0",
+      paths: { "/x": {} },
+    });
+    const ctx = mockCheckContext([], {
+      "/openapi.json": mockFetchResult(spec, 200, "application/json"),
+    });
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.found).toBe("/openapi.json -> OpenAPI 2.0");
+  });
+
   it("passes with a Swagger 2.0 document", async () => {
     const swagger = JSON.stringify({
       swagger: "2.0",

@@ -23,6 +23,16 @@ function isObject(val: unknown): val is Record<string, unknown> {
   return typeof val === "object" && val !== null && !Array.isArray(val);
 }
 
+/**
+ * The UCP profile's declared version, for evidence. A malformed object or
+ * array version reads as unversioned rather than "[object Object]".
+ */
+function ucpVersion(version: unknown): string {
+  if (typeof version === "string") return version;
+  if (typeof version === "number") return String(version);
+  return "stable";
+}
+
 export class McpDiscoveryAudit extends Audit {
   static override meta: AuditMeta = {
     id: "agent-interfaces/mcp-discovery",
@@ -150,7 +160,7 @@ export class McpDiscoveryAudit extends Audit {
         return this.pass(
           `Universal Commerce Protocol discovery profile found with ${svcCount} service(s) and ${capCount} capabilit(ies).`,
           expected,
-          `UCP profile (v${ucpObj["version"] ?? "stable"}, ${capCount} capabilit(ies))`,
+          `UCP profile (v${ucpVersion(ucpObj["version"])}, ${capCount} capabilit(ies))`,
         );
       }
 

@@ -59,6 +59,17 @@ function isOpenApiDocument(parsed: unknown): boolean {
 }
 
 /**
+ * The version string that made `isOpenApiDocument` accept the document. A
+ * non-string `openapi` beside a string `swagger` must not print as
+ * "[object Object]".
+ */
+function openApiVersion(doc: Record<string, unknown>): string {
+  const { openapi, swagger } = doc;
+  if (typeof openapi === "string") return openapi;
+  return typeof swagger === "string" ? swagger : "";
+}
+
+/**
  * YAML without a YAML parser: require the version and `paths` keys at the start
  * of a line, which an HTML page mentioning `openapi:` in prose cannot produce.
  * Paired with the non-HTML content-type gate above, this replaces the old
@@ -188,7 +199,7 @@ export class OpenApiExistsAudit extends Audit {
         return this.pass(
           "Valid OpenAPI document found at /openapi.json.",
           EXPECTED,
-          `/openapi.json -> OpenAPI ${(parsed as Record<string, unknown>)["openapi"] ?? (parsed as Record<string, unknown>)["swagger"]}`,
+          `/openapi.json -> OpenAPI ${openApiVersion(parsed as Record<string, unknown>)}`,
         );
       }
       // Something is served there, so the site does have an API surface —

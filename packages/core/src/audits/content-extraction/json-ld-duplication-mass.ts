@@ -149,9 +149,9 @@ export class JsonLdDuplicationMassAudit extends Audit {
       seen.set(key, count);
       if (count === 2) {
         const type = (node as { "@type"?: unknown })["@type"];
-        duplicateTypes.push(
-          Array.isArray(type) ? String(type[0]) : String(type ?? "node"),
-        );
+        const first: unknown = Array.isArray(type) ? type[0] : type;
+        // A malformed non-string @type must not print as "[object Object]".
+        duplicateTypes.push(typeof first === "string" ? first : "node");
       }
     }
     const duplicateNodes = duplicateTypes.length;

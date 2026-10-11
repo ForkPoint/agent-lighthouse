@@ -119,6 +119,17 @@ describe("JsonLdDuplicationMassAudit", () => {
     expect(result.message).not.toMatch(/^0 tokens/);
   });
 
+  it("names a duplicated node with a malformed object @type as a node", () => {
+    const node = {
+      "@context": "https://schema.org",
+      "@type": { "@id": "https://schema.org/Organization" },
+      name: "Kettle Co",
+    };
+    const result = audit.audit(page(`${block(node)}${block(node)}`));
+    expect(result.found).toContain("1 node(s) declared twice (node)");
+    expect(result.found).not.toContain("[object Object]");
+  });
+
   it("reports an articleBody that repeats text already in the DOM", async () => {
     const body = ARTICLE_BODY.repeat(3);
     const result = audit.audit(
