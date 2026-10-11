@@ -361,3 +361,33 @@ describe("extractProductFieldVerification — ProductGroup", () => {
     });
   });
 });
+
+describe("extractProductFieldVerification — related products", () => {
+  it("judges the page's own product, not one in an earlier related list", () => {
+    const result = extractProductFieldVerification([
+      makePage(PageType.Product, [
+        {
+          "@type": "ItemList",
+          itemListElement: [
+            {
+              "@type": "ListItem",
+              item: { "@type": "Product", name: "Related" },
+            },
+          ],
+        },
+        {
+          "@type": "Product",
+          name: "Main",
+          sku: "MAIN-1",
+          brand: { "@type": "Brand", name: "Acme" },
+          offers: { "@type": "Offer", price: 30, priceCurrency: "USD" },
+        },
+      ]),
+    ]);
+    expect(result).toMatchObject({
+      sku: FieldStatus.Found,
+      brand: FieldStatus.Found,
+      priceCurrency: FieldStatus.Found,
+    });
+  });
+});

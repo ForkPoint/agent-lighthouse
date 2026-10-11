@@ -131,4 +131,34 @@ describe("resolveProducts", () => {
     ]);
     expect(product?.["offers"]).toEqual(offer);
   });
+  it("reads the page's own product before products nested in a related list", () => {
+    const related = (name: string) => ({
+      "@type": "ListItem",
+      item: {
+        "@type": "Product",
+        name,
+        offers: { "@type": "Offer", price: 5, priceCurrency: "USD" },
+      },
+    });
+    const products = resolveProducts([
+      {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        name: "You may also like",
+        itemListElement: [related("Related A"), related("Related B")],
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        name: "Main",
+        sku: "MAIN-1",
+        offers: { "@type": "Offer", price: 30, priceCurrency: "USD" },
+      },
+    ]);
+    expect(products.map((p) => p["name"])).toEqual([
+      "Main",
+      "Related A",
+      "Related B",
+    ]);
+  });
 });

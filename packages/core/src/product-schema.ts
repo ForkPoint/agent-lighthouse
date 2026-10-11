@@ -1,4 +1,4 @@
-import { allJsonLdNodes } from "#core/parser";
+import { allJsonLdNodes, topLevelJsonLd } from "#core/parser";
 
 type SchemaNode = Record<string, unknown>;
 
@@ -81,8 +81,9 @@ function refersTo(value: unknown, group: SchemaNode): boolean {
 }
 
 /**
- * The products a page's structured data describes, in document order, as an
- * agent reads them.
+ * The products a page's structured data describes, as an agent reads them:
+ * the page's own products first, then products nested under other entities,
+ * each in document order.
  *
  * A variant of a ProductGroup is returned with the group's shared properties
  * beneath its own, so `brand` or `aggregateRating` declared once on the group
@@ -121,23 +122,35 @@ export function resolveProducts(blocks: object[]): SchemaNode[] {
     if (group) groupOf.set(node, group);
   }
 
+  // The page's own products are its top-level entities and the variants of a
+  // top-level group. A product nested under another entity, such as an
+  // ItemList of related items, is read after them, so callers that take the
+  // first product judge the page's own.
+  const tops = new Set(topLevelJsonLd(blocks));
+  const own = (node: SchemaNode) => {
+    const group = groupOf.get(node);
+    return tops.has(node) || (group !== undefined && tops.has(group));
+  };
+
   const withVariants = new Set(groupOf.values());
   const products: SchemaNode[] = [];
+  const nested: SchemaNode[] = [];
   for (const node of nodes) {
+    const into = own(node) ? products : nested;
     if (typesOf(node).includes(PRODUCT_GROUP)) {
-      if (!withVariants.has(node)) products.push(withOffers(node, byId));
+      if (!withVariants.has(node)) into.push(withOffers(node, byId));
       continue;
     }
     if (!isProduct(node)) continue;
     const group = groupOf.get(node);
     if (!group) {
-      products.push(withOffers(node, byId));
+      into.push(withOffers(node, byId));
       continue;
     }
     const shared = Object.fromEntries(
       Object.entries(group).filter(([key]) => !GROUP_ONLY.has(key)),
     );
-    products.push(withOffers({ ...shared, ...node }, byId));
+    into.push(withOffers({ ...shared, ...node }, byId));
   }
-  return products;
+  return [...products, ...nested];
 }
