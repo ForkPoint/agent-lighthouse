@@ -1,5 +1,127 @@
 # @forkpoint/agent-lighthouse-core
 
+## 7.0.0
+
+### Major Changes
+
+- d524d37: Separate article purpose from general pages. The page types are now `homepage`,
+  `category`, `product`, `article` and `general`. `article` is an editorial page with
+  author and date obligations. `general` is any other page, such as about, FAQ, help,
+  contact or policy pages, and it is also what the classifier returns when it cannot
+  tell, with confidence `unknown`. The `content` and `unknown` page types are removed:
+  `--page-type`, config files and the MCP tool refuse them with an error that names
+  `general`, and saved reports that carry them read back as `general`. Results add
+  classification source, signal strength and signal names. Detected typed findings
+  remain informative.
+
+  Make page identity independent of crawl order. Restrict 12 article obligations to
+  article-purpose pages and preserve the previous general-page population for 10
+  other typed checks. Normalize custom audit metadata to `applicablePageTypes` at
+  the runner boundary; accept equivalent `pageTypes` aliases and reject conflicts,
+  including conflicts involving empty arrays. Older report conditions remain readable.
+
+  This starts the 7.0.0 contract migration. Mixed-provenance execution, selected-page
+  evidence, and the full coverage/report contract remain separate planned work.
+
+- d524d37: Align manual page declarations across SDK, CLI config, and MCP for the v7 applicability contract. Reject invalid declarations before fetching, including malformed override URLs that older SDK versions silently skipped.
+
+  Expose page classification, failed fetches, selected-page coverage, and separate advisory populations in HTML, Markdown, terminal diagnostics, MCP summaries, and the shared report view. Per-audit coverage is listed only for audits with a typed or advisory population, unread inputs, or a warn or fail result, so a passing check over the full sample adds no URL list. Preserve old saved reports without inferring absent evidence. Keep audit counts and scores based on one primary result per audit.
+
+- d524d37: Evaluate typed audits on declared and detected populations separately. Retain
+  informative `advisoryResults` beside the primary result without duplicating audit
+  weight. Check required page evidence against the selected URLs; exclude unread
+  body inputs from content verdicts while retaining them in `coverage`. Preserve
+  failed fetches in `pageAttempts` instead of losing them when parsing filters pages.
+
+  Sort audit input sets by URL. Emit one progress event and trace per registration,
+  including skipped audits. Preserve shared per-scan URL caches across population
+  views. Validate result coverage and advisory shapes; older reports can omit them.
+  Human report rendering and client controls follow in the next v7 stage.
+
+### Minor Changes
+
+- d524d37: Expand the repository's central audit map to format version 5. Each active audit
+  now includes declared purpose, feature tags, current page-type scope, default
+  participation, and source/test paths. Keep the existing scoring and lifecycle
+  fields. Include historical applicability reviews with explicit baseline and
+  proposal labels so readers do not mistake planned work for implemented behavior.
+  The generator and existing CI drift check keep metadata and references in sync.
+- d524d37: Export every string union in the public types as an enum-style constant, so code can name a value instead of repeating a magic string: `PageType`, `PageTypeSource`, `ClassificationConfidence`, `CheckStatus`, `CheckPriority`, `FixEffort`, `ScoreDisplayMode`, `EvidenceGrade`, `AuditTier`, `EvidenceKey`, `ScoreTier`, `FieldStatus`, `CoverageProvenance`, `AttemptOutcome`, `PhaseId`, `LogLevel`, `PresetName`, `HttpMethod`, `AuditOutcome` and `WafProvider` (for example `CheckStatus.Pass`, `PageType.Product`). `OUTPUT_FORMATS` lists the report formats a config file accepts, with the `OutputFormat` type. `PAGE_TYPES` lists every page type. Each type keeps its name and its string values, so code that passes plain strings such as `"pass"` or `"product"` still type-checks. The Zod schemas now read their allowed values from these constants, so a type and its schema cannot drift apart. `AuditMetaSchema` now validates `applicablePageTypes` and `pageTypes` against the page-type enum instead of accepting any string.
+
+### Patch Changes
+
+- d524d37: Make the `single-h1` and `main-element` audits judge every scanned page without
+  giving the first page a special role. Reordering the same page sample no longer
+  changes either result. Empty samples return not applicable. Findings report
+  affected URLs and no longer call every scanned page a homepage.
+
+  This is the first scope correction in the planned 7.0.0 applicability migration.
+  It preserves audit IDs, grades, tiers, weights and public schemas. The broader
+  page-purpose and scoring contract changes require a separate major changeset
+  when implemented.
+
+- d524d37: Judge header and footer coverage across every selected page without treating
+  the first page as a homepage. Mixed coverage now warns in any page order, and
+  an empty sample returns not applicable. Findings name each affected URL and
+  its missing elements, with bounded text for large samples.
+
+  This is a scope correction in the 7.0.0 workstream. Audit identity, grade, tier,
+  weight and result mode remain unchanged. Landmark semantics remain a separate
+  follow-up in the applicability plan.
+
+- d524d37: Keep hydration payloads from different page responses separate. Previously,
+  two individually valid payloads with the same name could combine into a false
+  single-payload size failure. The audit now attributes oversized payloads to
+  their own pages and resolves size ties in a stable order.
+
+  Chunks of the same named stream on one page still combine. Aggregate share
+  and duplication measurements remain unchanged pending the wider 7.0.0 review.
+
+- d524d37: Check language declarations on every selected page instead of only the first.
+  Report all pages with missing or blank declarations in a stable order. Return
+  not applicable for an empty sample. Keep judging the HTML attribute when a page
+  serves no readable body text, and allow different page languages.
+
+  Restate the documented accessibility benefit instead of claiming that AI agents
+  choose models or tokenizers from the attribute. This scope correction retains
+  the presence predicate, binary mode, grade, tier and weight. Language-tag
+  validation remains separate work in the 7.0.0 plan.
+
+- d524d37: Page-type detection reads two more real storefront shapes.
+
+  - A locale root scanned directly — a path made only of locale segments such as `/us/`, `/us/en`, `/en-gb/` or `/en/home/` — is the homepage when its hreflang alternates name at least two sibling locale roots and every path segment is a language or region those alternates declare. `/us/en/` beside `en-US` and `en-CA` is a locale root. A section such as `/en/tv/` is not: no hreflang code names `tv`. The new signal is `locale-root`.
+  - Product, listing and article schema types are matched without regard to case or a `www.schema.org` host, so `"@type": "product"` still marks a product page. Only classification is lenient; audits that judge the markup stay strict.
+  - A homepage served as a `home` page, such as `/en/home/`, scopes sitemap discovery to the directory that holds it (`/en/`), not to `/en/home/`.
+
+- d524d37: Report page-level nofollow findings over the scanned sample. Empty samples now
+  return not applicable, affected URLs remain stable on page reorder, and long
+  URL evidence stays within result limits. Clarify the documented consumer and
+  retain intentional-policy review in the guidance.
+- d524d37: Product audits read `ProductGroup` markup the way Google documents it.
+
+  - A new shared reader, `resolveProducts`, returns each `hasVariant` entry, and each Product joined through `isVariantOf` or `inProductGroupWithID`, with the group's shared properties beneath its own. A `ProductGroup` with no variants is read as the product. The page's own products, top-level entities and the variants of a top-level group, come before products nested under another entity, such as an `ItemList` of related items.
+  - `offer-schema`, `product-identifiers`, `advanced-product-details`, `product-transaction-certainty`, `checkout-offer-field-mapping` and the product field summary use it. A brand or category declared once on the group is no longer missed.
+  - `offer-schema` no longer judges only the first `Offer` node in the page. Any priced offer reachable from the page's products passes, including an `AggregateOffer` with `lowPrice` and an `Offer` that names its product through `itemOffered`, nested or by `@id`.
+  - `checkout-offer-field-mapping` reads an `image` list by its first URL instead of reporting "no image".
+  - `@id` references are followed: a `hasVariant` entry or an `offers` value given as `{"@id": ...}` is read as the node it names.
+  - `landed-cost-and-returns` reads microdata and RDFa products, as its dossier states, and takes the page's own product offer before any other `Offer` node.
+
+- d524d37: Product pages with a recommendation rail are detected as product pages again.
+
+  - A page's own product evidence (`og:type=product`, one top-level product entity, or a buy control outside listing cards) now outranks a product grid.
+  - One top-level `Product`, `ProductGroup`, `IndividualProduct` or `ProductModel` entity, in JSON-LD, microdata or RDFa, is strong product evidence. The new signal is `product-schema-primary`. Several top-level products, or listing schema beside them, stay a hint. Beside a grid of three or more product cards, one product entity is also only a hint: a collection page often declares one `Product` with an `AggregateOffer`, and it stays a category page.
+  - Product cards count once: parts that repeat the card class (`product-tile-image`) no longer add cards. Cards in recommendation, recently viewed and carousel regions do not count toward a grid. `<html>`, `<body>` and `<main>` are never read as such a region, so a theme class such as `has-slider` on `<body>` does not hide the page's own buy controls.
+  - Carousel dots (`swiper-pagination`) no longer count as result pagination.
+  - Buy buttons and prices inside listing cards no longer count as the page's own purchase controls. Once a page has two or more product cards, each is a listing card however deeply it is wrapped, and so is every card in a recommendation region. A lone element marked `data-product-id`, or a card that holds the page's `<h1>`, is the page's own product and keeps its controls.
+
+- dbbac43: Assess general checks on product, category, article, and general scans. An audit that applies to all pages now accepts a readable page of any type as sample evidence. Before, it required a readable homepage, so a scan that started on a non-homepage URL skipped every general check and often reported no overall score.
+
+  - General audits judge the first scanned page that serves readable text, not the first scanned page. A near-empty page no longer fails a check when another scanned page is readable.
+  - Findings name the page that was judged. They no longer call a product, category, article, or general page "the homepage".
+  - Audits whose evidence covers the homepage only still require a homepage and return not applicable without one.
+  - Audits that declare page types still require readable evidence from those types.
+  - The score suppression threshold is unchanged. No audit id, tier, grade, or weight changes.
+
 ## 6.0.0
 
 ### Major Changes
