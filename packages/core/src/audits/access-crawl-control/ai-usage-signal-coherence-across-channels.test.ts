@@ -52,7 +52,7 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
   });
 
   it("maps every channel into the same category space", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       site({
         robots:
           "User-agent: GPTBot\nDisallow: /\n\nUser-agent: *\nContent-Signal: search=no\n",
@@ -67,7 +67,7 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
   });
 
   it("fails when two channels disagree, naming both and their source lines", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       site({
         robots: "User-agent: *\nContent-Usage: train-ai=y\nAllow: /\n",
         headers: { "tdm-reservation": "1" },
@@ -81,14 +81,14 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
   });
 
   it("reads a tdm-reservation of 1 as a denial and 0 as a permission", async () => {
-    const denied = await audit.audit(
+    const denied = audit.audit(
       site({
         head: '<meta name="tdm-reservation" content="1">',
         robots: "User-agent: *\nContent-Usage: train-ai=n\n",
       }),
     );
     expect(denied.status).toBe(CheckStatus.Pass);
-    const contradicted = await audit.audit(
+    const contradicted = audit.audit(
       site({
         head: '<meta name="tdm-reservation" content="0">',
         robots: "User-agent: *\nContent-Usage: train-ai=n\n",
@@ -100,14 +100,14 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
   // A Content-Signal line written inside a named group is that group's, which
   // is the same RFC 9309 precedence rule robots-ai-group-shadowing applies.
   it("does not apply a named group’s Content-Signal to another agent", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       site({
         robots: "User-agent: GPTBot\nContent-Signal: ai-train=no\nAllow: /\n",
         headers: { "content-usage": "train-ai=y" },
       }),
     );
     expect(result.status).toBe(CheckStatus.Fail);
-    const other = await audit.audit(
+    const other = audit.audit(
       site({
         robots:
           "User-agent: GPTBot\nContent-Signal: ai-train=no\nAllow: /\n\nUser-agent: CCBot\nDisallow: /\n",
@@ -119,7 +119,7 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
   });
 
   it("reports a prepended Content-Signal block as an edge override, not an ordinary contradiction", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       site({
         robots:
           "User-Agent: *\nContent-Signal: search=yes, ai-train=no\nAllow: /\n\nUser-agent: *\nContent-Usage: train-ai=y\nAllow: /\n",
@@ -137,7 +137,7 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
   // Coherence needs at least one declaration. Silence has nothing to
   // contradict, and no source documents a cost for it.
   it("is not applicable on total silence, and keeps the notes it gathered", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       site({
         robots: "User-agent: *\nAllow: /\n",
         tdmrep: '{"tdm-reservation": 1}',
@@ -153,7 +153,7 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
   });
 
   it("still fails a robots.txt block contradicted by a response header", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       site({
         robots: "User-agent: GPTBot\nDisallow: /\n",
         headers: { "content-usage": "train-ai=y" },
@@ -166,14 +166,14 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
   });
 
   it("still passes a single declaration with nothing to contradict it", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       site({ robots: "User-agent: *\nContent-Usage: train-ai=n\n" }),
     );
     expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("reads an inline RSL document without fetching anything", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       site({
         body: '<script type="application/rsl+xml"><rsl xmlns="https://rslstandard.org/rsl"><content url="/"><license><prohibits type="usage">ai-input</prohibits></license></content></rsl></script>',
         headers: { "content-usage": "ai-input=y" },
@@ -186,7 +186,7 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
   });
 
   it("does not use a tdmrep.json that is a bare object, and says so", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       site({
         tdmrep: '{"tdm-reservation": 1}',
         robots: "User-agent: *\nContent-Usage: train-ai=y\n",
@@ -205,7 +205,7 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
   it("declines to compare channels a bot wall answering 200 filled in", async () => {
     const reached = site({ headers: { "content-usage": "train-ai=n" } });
     expect(
-      (await audit.audit(reached)).status,
+      audit.audit(reached).status,
       "the same header reached is judged",
     ).toBe(CheckStatus.Pass);
 

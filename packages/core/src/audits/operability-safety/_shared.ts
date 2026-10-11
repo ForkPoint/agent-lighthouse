@@ -122,7 +122,7 @@ export function defineA11yAudit(spec: A11yAuditSpec): typeof Audit {
   return class extends A11yBackedAudit {
     static override meta = spec.meta;
     protected rules = spec.rules;
-  } as unknown as typeof Audit;
+  };
 }
 
 // 7.22 (deprecated <marquee>/<blink> elements) was sunset — grade D, no

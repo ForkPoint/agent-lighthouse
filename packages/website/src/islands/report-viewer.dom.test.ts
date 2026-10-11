@@ -29,6 +29,8 @@ const fixture = `
   </section>
 `;
 
+// The caller names the element type, as with querySelector<T>.
+// oxlint-disable-next-line typescript/no-unnecessary-type-parameters
 const el = <T extends HTMLElement>(selector: string): T =>
   document.querySelector<T>(selector) as T;
 

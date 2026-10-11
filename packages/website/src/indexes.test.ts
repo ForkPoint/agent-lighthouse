@@ -11,7 +11,7 @@ const page = (relative: string) =>
 
 /** The audit ids a page renders a card for, in document order. */
 const cardIds = (html: string) =>
-  [...html.matchAll(/data-audit-id="([^"]+)"/g)].map((m) => m[1]!);
+  [...html.matchAll(/data-audit-id="([^"]+)"/g)].map((m) => m[1]);
 
 /** Every heading on a page, in document order, as depths. */
 const headingDepths = (html: string) =>
@@ -107,13 +107,13 @@ describe.skipIf(!built)("rendered /audits/", () => {
     // both forms: whichever the bundler chose is what the browser executes.
     const inline = [
       ...html.matchAll(/<script type="module">([\s\S]*?)<\/script>/g),
-    ].map((m) => ["inline", m[1]!] as const);
+    ].map((m) => ["inline", m[1]] as const);
     const external = [...html.matchAll(/<script[^>]*src="([^"]+)"/g)].map(
       (m) =>
         [
-          m[1]!,
+          m[1],
           readFileSync(
-            resolve(DIST, m[1]!.replace("/agent-lighthouse/", "")),
+            resolve(DIST, m[1].replace("/agent-lighthouse/", "")),
             "utf8",
           ),
         ] as const,
@@ -144,7 +144,7 @@ describe.skipIf(!built)("rendered /audits/", () => {
 
     expect(cards).toHaveLength(byId.size);
     for (const card of cards) {
-      const id = /data-audit-id="([^"]+)"/.exec(card)![1]!;
+      const id = /data-audit-id="([^"]+)"/.exec(card)![1];
       const audit = byId.get(id)!;
       expect(card, id).toContain(`data-category="${audit.category}"`);
       expect(card, id).toContain(`data-tier="${audit.tier}"`);

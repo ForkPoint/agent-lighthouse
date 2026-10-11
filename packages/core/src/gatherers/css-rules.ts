@@ -9,8 +9,8 @@ export interface CssRule {
   declarations: string;
   /** The enclosing at-rule prelude (`media print`, `supports (...)`), if any. */
   atRule?: string;
-  /** Where the rule came from, for evidence. */
-  origin: "inline" | string;
+  /** Where the rule came from, for evidence: `inline` or the stylesheet URL. */
+  origin: string;
 }
 
 /** How many bytes of a single stylesheet to scan. */

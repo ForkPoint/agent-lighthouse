@@ -279,7 +279,7 @@ export class DatesOnContentAudit extends Audit {
           "Google estimates a byline date from a page's visible date and its datePublished/dateModified structured data, and the open extraction stack reads the same fields. A page carrying neither gives every consumer nothing to date it by.",
         code: '<p>Published: <time datetime="2025-01-15">January 15, 2025</time></p>',
       },
-      contentPages[0].url,
+      contentPages[0]?.url,
     );
   }
 }

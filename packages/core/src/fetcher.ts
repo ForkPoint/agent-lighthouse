@@ -57,8 +57,11 @@ export interface FetchOptions {
    * URL's userinfo.
    */
   headers?: Record<string, string>;
-  /** External abort (e.g. the per-scan deadline). Combined with the per-request timeout. */
-  signal?: AbortSignal;
+  /**
+   * External abort (e.g. the per-scan deadline). Combined with the per-request
+   * timeout. Callers forward an optional scan signal, so `undefined` is allowed.
+   */
+  signal?: AbortSignal | undefined;
   /**
    * Read the response as bytes instead of text.
    *
@@ -324,7 +327,7 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
       let response = await request(currentUrl, {
         method: currentMethod,
         headers: reqHeaders,
-        body: currentBody,
+        ...(currentBody !== undefined && { body: currentBody }),
         signal,
         dispatcher,
       });
@@ -410,7 +413,7 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
         response = await request(currentUrl, {
           method: currentMethod,
           headers: reqHeaders,
-          body: currentBody,
+          ...(currentBody !== undefined && { body: currentBody }),
           signal,
           dispatcher,
         });

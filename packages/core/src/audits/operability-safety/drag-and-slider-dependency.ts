@@ -114,7 +114,7 @@ function hasReorderControl($: PageContext["$"], scope: unknown): boolean {
   let found = false;
   $scope.find('button, [role="button"], a[href]').each((_i, node) => {
     if (!isElement(node)) return;
-    const label = `${accessibleName(node, $ as never)} ${node.attribs?.["aria-label"] ?? ""} ${node.attribs?.["class"] ?? ""}`;
+    const label = `${accessibleName(node, $)} ${node.attribs?.["aria-label"] ?? ""} ${node.attribs?.["class"] ?? ""}`;
     if (REORDER_CONTROL.test(label)) found = true;
   });
   return found;
@@ -148,7 +148,7 @@ function survey(ctx: CheckContext): Finding[] {
         const missingValues = SLIDER_VALUES.filter(
           (name) => attribs[name] === undefined,
         );
-        const unnamed = accessibleName(node, $ as never) === "";
+        const unnamed = accessibleName(node, $) === "";
         if (missingValues.length > 0 || unnamed) {
           const parts = [...missingValues];
           if (unnamed) parts.push("an accessible name");
@@ -230,7 +230,7 @@ function survey(ctx: CheckContext): Finding[] {
       let hasControl = false;
       $node.find('button, [role="button"], a[href]').each((_j, control) => {
         if (!isElement(control)) return;
-        const label = `${accessibleName(control, $ as never)} ${control.attribs?.["aria-label"] ?? ""} ${control.attribs?.["class"] ?? ""}`;
+        const label = `${accessibleName(control, $)} ${control.attribs?.["aria-label"] ?? ""} ${control.attribs?.["class"] ?? ""}`;
         if (CAROUSEL_CONTROL.test(label)) hasControl = true;
       });
       if (hasControl) return;

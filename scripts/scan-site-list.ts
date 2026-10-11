@@ -100,8 +100,9 @@ interface SiteOutcome {
    * no score. A dated score for a domain that never asked to be scanned is not
    * this job's to publish.
    */
-  evidence?: Record<EvidenceKey, boolean>;
-  unscoredReason?: string;
+  // Copied from `scanValidity`, which an unjudgeable report may lack.
+  evidence?: Record<EvidenceKey, boolean> | undefined;
+  unscoredReason?: string | undefined;
   statusCounts: Record<string, number>;
   violations: string[];
   durationMs: number;
@@ -198,7 +199,7 @@ function parseFlags(argv: string[]): Record<FlagName, number> {
     }
     values[name] = value;
   }
-  return values as Record<FlagName, number>;
+  return values;
 }
 
 const FLAGS = parseFlags(process.argv.slice(2));

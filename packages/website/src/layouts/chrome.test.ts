@@ -137,19 +137,19 @@ describe("prev/next ordering", () => {
     for (const category of categories) {
       const siblings = audits.filter((audit) => audit.category === category);
       expect(siblings.length).toBeGreaterThan(0);
-      expect(neighbours(siblings[0]!.id).prev).toBeUndefined();
+      expect(neighbours(siblings[0].id).prev).toBeUndefined();
       expect(neighbours(siblings.at(-1)!.id).next).toBeUndefined();
     }
   });
 
   it("links a middle audit to the sibling on each side, by route", () => {
-    const category = audits[0]!.category;
+    const category = audits[0].category;
     const siblings = audits.filter((audit) => audit.category === category);
-    const middle = siblings[1]!;
+    const middle = siblings[1];
     const { prev, next } = neighbours(middle.id);
 
-    expect(auditPath(prev!.id)).toBe(auditPath(siblings[0]!.id));
-    expect(auditPath(next!.id)).toBe(auditPath(siblings[2]!.id));
+    expect(auditPath(prev.id)).toBe(auditPath(siblings[0].id));
+    expect(auditPath(next.id)).toBe(auditPath(siblings[2].id));
   });
 });
 
@@ -212,24 +212,24 @@ describe.skipIf(!built)("rendered dossier pages", () => {
       ].map((m) => m[0]);
       // One per sidebar copy — the desktop rail and the small-screen disclosure.
       // Only one of the two is ever visible, so the reader still sees one.
-      expect(current, `${page.id}`).toHaveLength(2);
+      expect(current, page.id).toHaveLength(2);
       for (const anchor of current) {
-        expect(anchor, `${page.id}`).toContain(`href="${auditPath(page.id)}"`);
+        expect(anchor, page.id).toContain(`href="${auditPath(page.id)}"`);
       }
     }
   });
 
   it("keeps navigation reachable below the sidebar breakpoint", () => {
     const [page] = pages();
-    expect(page!.html).toMatch(/<details[^>]*lg:hidden/);
-    expect(page!.html).toContain("<summary");
+    expect(page.html).toMatch(/<details[^>]*lg:hidden/);
+    expect(page.html).toContain("<summary");
     // One copy of each nav is visible at any width; the other is `display: none`
     // and so out of the accessibility tree. The ids must still be unique.
-    expect(page!.html.match(/aria-label="Documentation"/g) ?? []).toHaveLength(
+    expect(page.html.match(/aria-label="Documentation"/g) ?? []).toHaveLength(
       2,
     );
-    expect(page!.html.match(/id="toc-heading"/g) ?? []).toHaveLength(1);
-    expect(page!.html.match(/id="toc-heading-compact"/g) ?? []).toHaveLength(1);
+    expect(page.html.match(/id="toc-heading"/g) ?? []).toHaveLength(1);
+    expect(page.html.match(/id="toc-heading-compact"/g) ?? []).toHaveLength(1);
   });
 
   /**
@@ -250,7 +250,7 @@ describe.skipIf(!built)("rendered dossier pages", () => {
 
   it("links the favicon at a path the build actually emits", () => {
     const [page] = pages();
-    const href = /<link rel="icon" href="([^"]+)"/.exec(page!.full)?.[1];
+    const href = /<link rel="icon" href="([^"]+)"/.exec(page.full)?.[1];
     expect(href).toBeDefined();
     expect(
       existsSync(resolve(DIST, href!.replace("/agent-lighthouse/", ""))),

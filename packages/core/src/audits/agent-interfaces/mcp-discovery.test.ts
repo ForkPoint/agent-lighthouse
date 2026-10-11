@@ -101,6 +101,21 @@ describe("McpDiscoveryAudit", () => {
     expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
   });
 
+  it("does not print a malformed object version as [object Object]", () => {
+    const ctx = mockCheckContext([], {
+      "/.well-known/ucp": mockFetchResult(
+        JSON.stringify({
+          version: { major: 1 },
+          capabilities: { checkout: true },
+        }),
+        200,
+      ),
+    });
+    const result = audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.found).toBe("UCP profile (vstable, 1 capabilit(ies))");
+  });
+
   // Four of the five researched signals record `Consumers: none-known` and
   // recommend informative or delete. The fifth is a validation rule already
   // implemented by agent-interfaces/openapi-exists at the ratified path.

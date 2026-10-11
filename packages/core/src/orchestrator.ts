@@ -65,16 +65,20 @@ import {
   PageTypeSource,
 } from "./types";
 
+/**
+ * Every option may be passed as `undefined`, which means the same as omitting
+ * it: callers forward optional CLI flags and parsed MCP arguments as they are.
+ */
 export interface ScanOptions {
-  onEvent?: (event: ScanEvent) => void;
-  pages?: PageOverride[] | null;
+  onEvent?: ((event: ScanEvent) => void) | undefined;
+  pages?: PageOverride[] | null | undefined;
   /** Explicitly declared page type for the target URL. */
-  pageType?: PageType;
+  pageType?: PageType | undefined;
   /**
    * The caller's cancellation. Aborting it makes `runScan` throw; the scan
    * budget below never does.
    */
-  signal?: AbortSignal;
+  signal?: AbortSignal | undefined;
   /**
    * Wall-clock budget for the whole scan, in milliseconds. Defaults to
    * {@link SCAN_TIMEOUT_MS}. When it runs out the scan finishes with what it
@@ -83,24 +87,24 @@ export interface ScanOptions {
    * tagged `skipped:scan-budget`. `conditions.budget` on the report records
    * it. `0` disables the budget.
    */
-  timeoutMs?: number;
+  timeoutMs?: number | undefined;
   /**
    * Restrict the scan to these category ids. Unknown ids simply match nothing —
    * validate them at the entry point so the operator hears about a typo.
    */
-  categories?: string[];
+  categories?: string[] | undefined;
   /**
    * Include audits whose tier is `experimental`. Off by default, per
    * docs/evidence/policy.md: an experimental check is behind a flag and never
    * scored.
    */
-  includeExperimental?: boolean;
+  includeExperimental?: boolean | undefined;
   /**
    * Called once per registered audit with what it did — including the ones
    * that were skipped or failed. Use it to trace a verdict back to the
    * evidence it was drawn from; see {@link AuditTrace}.
    */
-  onAuditTrace?: AuditTraceHandler;
+  onAuditTrace?: AuditTraceHandler | undefined;
   /**
    * Skip audits the scan could not feed, instead of running them blind.
    *
@@ -110,32 +114,32 @@ export interface ScanOptions {
    * `requires` checks. The unread-scan guard remains unconditional, so a scan
    * that read no attributable site response still runs no audit.
    */
-  enforceEvidenceGate?: boolean;
+  enforceEvidenceGate?: boolean | undefined;
   /**
    * undici dispatcher for every request this scan makes.
    */
-  dispatcher?: Dispatcher;
+  dispatcher?: Dispatcher | undefined;
   /**
    * How many requests this scan may have in flight at once.
    */
-  maxConcurrent?: number;
+  maxConcurrent?: number | undefined;
   /**
    * Extra HTTP request headers to pass on all fetches.
    */
-  headers?: Record<string, string>;
+  headers?: Record<string, string> | undefined;
   /**
    * Explicitly bypass the shared origin evidence cache for this scan.
    */
-  bypassOriginCache?: boolean;
+  bypassOriginCache?: boolean | undefined;
   /**
    * Optional custom OriginCache instance (defaults to defaultOriginCache).
    */
-  originCache?: OriginCache;
+  originCache?: OriginCache | undefined;
   /**
    * A `robots.txt` response the caller already has, used instead of fetching
    * it again.
    */
-  robotsTxt?: FetchResult;
+  robotsTxt?: FetchResult | undefined;
 }
 
 // Cap how many pages get the jsdom-based a11y pass. Accessibility issues are
@@ -144,7 +148,7 @@ export interface ScanOptions {
 // a11y pass entirely (audits degrade to "not applicable").
 const A11Y_MAX_PAGES = Math.max(
   0,
-  Number(process.env.SCANNER_A11Y_MAX_PAGES ?? 3),
+  Number(process.env["SCANNER_A11Y_MAX_PAGES"] ?? 3),
 );
 
 /** How long to wait before the single 429 retry when no `Retry-After` says. */
@@ -262,9 +266,13 @@ async function scanWithinBudget(
   const tracker = new ProgressTracker((event) => onEvent?.(event));
   const start = performance.now();
   const fetcher = createFetcher({
-    dispatcher: options?.dispatcher,
-    maxConcurrent: options?.maxConcurrent,
-    headers: options?.headers,
+    ...(options?.dispatcher !== undefined && {
+      dispatcher: options.dispatcher,
+    }),
+    ...(options?.maxConcurrent !== undefined && {
+      maxConcurrent: options.maxConcurrent,
+    }),
+    ...(options?.headers !== undefined && { headers: options.headers }),
   });
 
   const baseUrl = new URL(url).origin;
@@ -427,7 +435,9 @@ async function scanWithinBudget(
       version: ORIGIN_EVIDENCE_VERSION,
       readAt: originReadAt,
       rootFiles,
-      originHomepage: originHomepageResult,
+      ...(originHomepageResult !== undefined && {
+        originHomepage: originHomepageResult,
+      }),
     });
   }
 
@@ -549,6 +559,9 @@ async function scanWithinBudget(
     })
     .sort((a, b) => compareCodePoints(a.url, b.url));
 
+  const siteRootUrl = sitemapSiteRoot(
+    pages.find((page) => page.url === displayUrl),
+  );
   const ctx: CheckContext = {
     pageAttempts,
     targetUrl: displayUrl,
@@ -556,7 +569,7 @@ async function scanWithinBudget(
     pages,
     domain,
     baseUrl,
-    siteRootUrl: sitemapSiteRoot(pages.find((page) => page.url === displayUrl)),
+    ...(siteRootUrl !== undefined && { siteRootUrl }),
     // Once the budget is gone no request leaves: the audit reads an error
     // result at once, the same shape a refused connection gives it.
     fetch: (options) =>
@@ -565,19 +578,23 @@ async function scanWithinBudget(
             unsentResult(options.url, budgetReason(budget.signal)),
           )
         : fetcher.fetch({ ...options, signal: fetchSignal }),
-    wafProtection: wafProtection ?? undefined,
+    ...(wafProtection != null && { wafProtection }),
     evidence,
     originEvidence: {
       origin: baseUrl,
       version: ORIGIN_EVIDENCE_VERSION,
       readAt: originReadAt,
       cached: originCached,
-      originHomepage: originHomepageResult,
+      ...(originHomepageResult !== undefined && {
+        originHomepage: originHomepageResult,
+      }),
     },
   };
 
   const config = filterConfig(defaultConfig, {
-    categories: options?.categories,
+    ...(options?.categories !== undefined && {
+      categories: options.categories,
+    }),
     includeExperimental: options?.includeExperimental ?? false,
   });
 
@@ -817,6 +834,11 @@ async function scanWithinBudget(
     },
   };
 
+  const productFields = [...overrideTypeByKey.values()].includes(
+    PageType.Product,
+  )
+    ? extractProductFieldVerification(pages)
+    : undefined;
   const report: ScanReport = {
     scanId: "", // Set by the caller
     url: displayUrl,
@@ -838,19 +860,19 @@ async function scanWithinBudget(
     pagesScanned: pages.map((p) => ({
       url: p.url,
       pageType: p.pageType,
-      classification: p.classification,
+      ...(p.classification !== undefined && {
+        classification: p.classification,
+      }),
     })),
     scannedAt: new Date().toISOString(),
     durationMs,
     readinessScore,
     readinessVitals,
-    wafProtection: wafProtection ?? undefined,
+    ...(wafProtection != null && { wafProtection }),
     // Field-level verification is only trustworthy when the user explicitly
     // supplied the product page. Without a product override we don't guess from
     // auto-discovered pages — leave it unset so the report marks it skipped.
-    productFields: [...overrideTypeByKey.values()].includes(PageType.Product)
-      ? extractProductFieldVerification(pages)
-      : undefined,
+    ...(productFields !== undefined && { productFields }),
     originEvidence: originCondition,
     conditions,
   };

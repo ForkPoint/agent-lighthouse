@@ -171,7 +171,7 @@ function main(): void {
     `  statuses: ${Object.entries(totals)
       .map(([s, n]) => `${s} ${n}`)
       .join(", ")}` +
-      `${totalSkipped > 0 ? `, skipped:page-type ${totalSkipped}` : ""}` +
+      (totalSkipped > 0 ? `, skipped:page-type ${totalSkipped}` : "") +
       `${totalGated > 0 ? `, skipped:no-evidence ${totalGated}` : ""}\n`,
   );
 

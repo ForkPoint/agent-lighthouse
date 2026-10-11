@@ -9,7 +9,8 @@ export const LogLevel = {
 export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 
 class Logger {
-  public level: LogLevel = (process.env.LOG_LEVEL as LogLevel) || LogLevel.Info;
+  public level: LogLevel =
+    (process.env["LOG_LEVEL"] as LogLevel) || LogLevel.Info;
 
   private shouldLog(targetLevel: LogLevel): boolean {
     if (this.level === LogLevel.Silent) return false;

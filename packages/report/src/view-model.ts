@@ -306,6 +306,7 @@ export function buildReportView(
     );
   }
 
+  const pageScope = buildPageScope(report, allChecks);
   const vitals = report.readinessVitals ?? {
     commerce: 0,
     content: 0,
@@ -331,9 +332,11 @@ export function buildReportView(
     recommendations,
     coverage,
     pagesScanned: report.pagesScanned ?? [],
-    pageScope: buildPageScope(report, allChecks),
+    ...(pageScope !== undefined && { pageScope }),
     durationMs: report.durationMs ?? 0,
-    wafProtection: report.wafProtection,
-    conditions: report.conditions,
+    ...(report.wafProtection !== undefined && {
+      wafProtection: report.wafProtection,
+    }),
+    ...(report.conditions !== undefined && { conditions: report.conditions }),
   };
 }

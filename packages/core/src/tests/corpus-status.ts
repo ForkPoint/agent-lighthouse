@@ -61,9 +61,10 @@ export function stateOf(outcome: RunnerOutcome): {
   const reachable = outcome.evidence?.[EvidenceKey.OriginReachable];
   const unblocked = outcome.evidence?.[EvidenceKey.UnblockedFetches];
   const reason = outcome.unscoredReason;
+  const withReason = reason !== undefined ? { reason } : {};
   if (reachable === false && unblocked !== false)
-    return { state: CorpusState.Dead, reason };
-  return { state: CorpusState.Unscored, reason };
+    return { state: CorpusState.Dead, ...withReason };
+  return { state: CorpusState.Unscored, ...withReason };
 }
 
 /**

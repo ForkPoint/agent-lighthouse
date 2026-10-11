@@ -138,16 +138,20 @@ export class OpenApiDescriptionQualityAudit extends Audit {
       missing.length > 0
         ? { missingDescriptions: truncatedMissing }
         : undefined;
+    // The missing list replaces whatever details the result helper attached.
+    const withDetails = (result: AuditResult): AuditResult => {
+      const { details: _replaced, ...rest } = result;
+      return details ? { ...rest, details } : rest;
+    };
 
     if (ratio >= 0.9) {
-      return {
-        ...this.pass(
+      return withDetails(
+        this.pass(
           `${described}/${items.length} operation/parameter description(s) are verbose enough for LLM tool-calling.${missing.length > 0 ? ` Still thin: ${missingSummary}` : ""}`,
           expected,
           found,
         ),
-        details,
-      };
+      );
     }
 
     const recommendation = {
@@ -157,25 +161,23 @@ export class OpenApiDescriptionQualityAudit extends Audit {
     };
 
     if (ratio >= 0.5) {
-      return {
-        ...this.warn(
+      return withDetails(
+        this.warn(
           `Only ${described}/${items.length} operation/parameter description(s) are verbose enough: ${missingSummary}`,
           expected,
           found,
           recommendation,
         ),
-        details,
-      };
+      );
     }
 
-    return {
-      ...this.fail(
+    return withDetails(
+      this.fail(
         `Only ${described}/${items.length} operation/parameter description(s) are verbose enough: ${missingSummary}`,
         expected,
         found,
         recommendation,
       ),
-      details,
-    };
+    );
   }
 }

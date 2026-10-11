@@ -28,7 +28,7 @@ describe.skipIf(!built)("published branding", () => {
     ];
     expect(paths.length).toBeGreaterThan(10);
     for (const [, path] of paths)
-      expect(existsSync(resolve(dist, path!)), path).toBe(true);
+      expect(existsSync(resolve(dist, path)), path).toBe(true);
   });
 });
 

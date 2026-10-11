@@ -37,7 +37,7 @@ export type A11yPageResult = Record<string, A11yRuleResult>;
 // limiter, not a correctness lock.
 const MAX_CONCURRENT_A11Y = Math.max(
   1,
-  Number(process.env.A11Y_CONCURRENCY ?? 3),
+  Number(process.env["A11Y_CONCURRENCY"] ?? 3),
 );
 let activeA11y = 0;
 const a11yQueue: Array<() => void> = [];
@@ -90,7 +90,7 @@ export async function runA11yForHtml(
       runScripts: "outside-only",
       pretendToBeVisual: true,
     });
-    const doc = dom.window.document as unknown as Document;
+    const doc = dom.window.document;
     const results = runRules(doc, ruleIds);
 
     const out: A11yPageResult = {};

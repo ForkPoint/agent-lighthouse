@@ -10,7 +10,7 @@ import { AuditTier } from "@forkpoint/agent-lighthouse-core";
 const record = (
   over: Partial<SearchableAudit> & { id: string },
 ): SearchableAudit => ({
-  category: over.id.split("/")[0]!,
+  category: over.id.split("/")[0],
   tier: AuditTier.Scored,
   haystack: "",
   ...over,

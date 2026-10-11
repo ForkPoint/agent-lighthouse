@@ -20,13 +20,13 @@ describe("AnthropicAudit (ClaudeBot)", () => {
       expect(result.status).toBe(CheckStatus.Pass);
       expect(result.score).toBe(1);
       expect(result.message).toContain("its own robots.txt group");
-      expect(result.details?.namedGroup).toBe(true);
+      expect(result.details?.["namedGroup"]).toBe(true);
     });
 
     it("passes on a versioned product token, which RFC 9309 matching accepts", () => {
       const result = audit.audit(ctxFor("User-agent: ClaudeBot/1.0\nAllow: /"));
       expect(result.status).toBe(CheckStatus.Pass);
-      expect(result.details?.namedGroup).toBe(true);
+      expect(result.details?.["namedGroup"]).toBe(true);
     });
 
     it("fails when ClaudeBot is disallowed by its own group", () => {
@@ -81,7 +81,7 @@ describe("AnthropicAudit (ClaudeBot)", () => {
       expect(result.found).toContain(
         "not a documented Anthropic access control",
       );
-      expect(result.details?.legacyTokens).toEqual(["anthropic-ai"]);
+      expect(result.details?.["legacyTokens"]).toEqual(["anthropic-ai"]);
     });
 
     it("recognises Claude-Web as legacy too, and matches tokens case-insensitively", () => {
@@ -91,7 +91,7 @@ describe("AnthropicAudit (ClaudeBot)", () => {
         ),
       );
       expect(result.status).toBe(CheckStatus.Pass);
-      expect(result.details?.legacyTokens).toEqual([
+      expect(result.details?.["legacyTokens"]).toEqual([
         "anthropic-ai",
         "Claude-Web",
       ]);
@@ -100,7 +100,7 @@ describe("AnthropicAudit (ClaudeBot)", () => {
     it("carries no legacy note when no legacy group is present", () => {
       const result = audit.audit(ctxFor("User-agent: ClaudeBot\nAllow: /"));
       expect(result.found).not.toContain("legacy");
-      expect(result.details?.legacyTokens).toEqual([]);
+      expect(result.details?.["legacyTokens"]).toEqual([]);
     });
   });
 
@@ -110,15 +110,15 @@ describe("AnthropicAudit (ClaudeBot)", () => {
       expect(result.status).toBe(CheckStatus.Pass);
       expect(result.score).toBe(1);
       expect(result.message).toContain("catch-all");
-      expect(result.details?.namedGroup).toBe(false);
-      expect(result.details?.hasCatchAll).toBe(true);
+      expect(result.details?.["namedGroup"]).toBe(false);
+      expect(result.details?.["hasCatchAll"]).toBe(true);
     });
 
     it("passes when no group in the file applies to ClaudeBot at all", () => {
       const result = audit.audit(ctxFor("User-agent: GPTBot\nDisallow: /"));
       expect(result.status).toBe(CheckStatus.Pass);
       expect(result.found).toContain("No group applies to ClaudeBot");
-      expect(result.details?.hasCatchAll).toBe(false);
+      expect(result.details?.["hasCatchAll"]).toBe(false);
     });
 
     it("passes on a Sitemap-only file, which restricts nothing", () => {

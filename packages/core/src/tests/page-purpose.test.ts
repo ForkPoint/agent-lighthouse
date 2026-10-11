@@ -22,6 +22,7 @@ import {
   PageType,
   PageTypeSource,
 } from "#core/types";
+import { omit } from "./omit";
 
 const prose =
   "This guide explains how to maintain a reusable widget and check each part before use. ".repeat(
@@ -130,7 +131,7 @@ describe("audit type aliases", () => {
       scopeAudit(ctx, {
         ...ArticleSchemaAudit.meta,
         ...aliases,
-      } as typeof ArticleSchemaAudit.meta),
+      }),
     ).toThrow(/Conflicting page types/);
   });
 });
@@ -511,8 +512,7 @@ describe("canonical metadata at the runner boundary", () => {
       "structured-data": [
         {
           meta: {
-            ...ArticleSchemaAudit.meta,
-            applicablePageTypes: undefined,
+            ...omit(ArticleSchemaAudit.meta, "applicablePageTypes"),
             ...aliases,
           },
           create: () => new ArticleSchemaAudit(),
@@ -534,8 +534,8 @@ describe("canonical metadata at the runner boundary", () => {
       const before = JSON.stringify(config);
       const plan = planAudits(ctx, config);
       expect(plan.runnable).toHaveLength(1);
-      expect(plan.runnable[0].reg.meta.pageTypes).toBeUndefined();
-      expect(plan.runnable[0].reg.meta.applicablePageTypes).toContain(
+      expect(plan.runnable[0]!.reg.meta.pageTypes).toBeUndefined();
+      expect(plan.runnable[0]!.reg.meta.applicablePageTypes).toContain(
         PageType.Article,
       );
       expect(JSON.stringify(config)).toBe(before);

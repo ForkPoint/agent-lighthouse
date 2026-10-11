@@ -89,6 +89,8 @@ interface Hit {
 
 /** Every codepoint as `\u{XXXX}`, so a copied report stays visible. */
 function escape(text: string): string {
+  // Splits by code point on purpose: each one is escaped.
+  // oxlint-disable-next-line typescript/no-misused-spread
   return [...text]
     .map((c) => `\\u{${c.codePointAt(0)!.toString(16).toUpperCase()}}`)
     .join("");
@@ -96,6 +98,8 @@ function escape(text: string): string {
 
 /** The ASCII a tag-block run mirrors. */
 function decodeTags(run: string): string {
+  // Splits by code point on purpose: each tag character maps to one ASCII byte.
+  // oxlint-disable-next-line typescript/no-misused-spread
   return [...run]
     .map((c) => String.fromCharCode(c.codePointAt(0)! - 0xe0000))
     .join("");
@@ -113,6 +117,8 @@ function scan(text: string, source: string): Hit[] {
       source,
       decoded: decodeTags(run).slice(0, MAX_PAYLOAD),
       escaped: escape(run.slice(0, 8)),
+      // Counts code points on purpose: a tag character is a surrogate pair.
+      // oxlint-disable-next-line typescript/no-misused-spread
       count: [...run].length,
     });
   }
@@ -143,6 +149,8 @@ function scan(text: string, source: string): Hit[] {
 
   // (3) A zero-width character between two letters splits a word for every
   // substring match without changing what a reader sees.
+  // Walks code points on purpose, so a surrogate pair is one character.
+  // oxlint-disable-next-line typescript/no-misused-spread
   const chars = [...text];
   let zeroWidth = 0;
   let firstZeroWidth = "";

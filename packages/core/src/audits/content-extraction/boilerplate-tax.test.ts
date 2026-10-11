@@ -45,7 +45,7 @@ describe("BoilerplateTaxAudit", () => {
       { url: "https://example.com/a", content: body("alpha") },
       { url: "https://example.com/b", content: body("bravo") },
     ]);
-    expect((await audit.audit(ctx)).status).toBe(CheckStatus.NotApplicable);
+    expect(audit.audit(ctx).status).toBe(CheckStatus.NotApplicable);
   });
 
   it("fails when every page repeats the same chrome around a thin body", async () => {
@@ -56,7 +56,7 @@ describe("BoilerplateTaxAudit", () => {
       { url: "https://example.com/d", content: body("delta", 2) },
       { url: "https://example.com/e", content: body("echo", 2) },
     ]);
-    const result = await audit.audit(ctx);
+    const result = audit.audit(ctx);
     expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("distinct");
   });
@@ -67,7 +67,7 @@ describe("BoilerplateTaxAudit", () => {
       { url: "https://example.com/b", content: body("bravo"), chrome: false },
       { url: "https://example.com/c", content: body("charlie"), chrome: false },
     ]);
-    const result = await audit.audit(ctx);
+    const result = audit.audit(ctx);
     expect(result.status).toBe(CheckStatus.Pass);
   });
 
@@ -118,11 +118,9 @@ describe("BoilerplateTaxAudit", () => {
       { url: "https://example.com/e", content: body("echo"), chrome: false },
     ]);
     expect(
-      Number((await audit.audit(at80)).details?.["boilerplateShingles"]),
+      Number(audit.audit(at80).details?.["boilerplateShingles"]),
     ).toBeGreaterThan(0);
-    expect(
-      Number((await audit.audit(at60)).details?.["boilerplateShingles"]),
-    ).toBe(0);
+    expect(Number(audit.audit(at60).details?.["boilerplateShingles"])).toBe(0);
   });
 
   it("states the cost in the dossier terms: tokens paid for tokens received", async () => {
@@ -131,7 +129,7 @@ describe("BoilerplateTaxAudit", () => {
       { url: "https://example.com/b", content: body("bravo") },
       { url: "https://example.com/c", content: body("charlie") },
     ]);
-    const result = await audit.audit(ctx);
+    const result = audit.audit(ctx);
     expect(result.found).toMatch(
       /reading 3 pages .* pays \d+ tokens to receive \d+ tokens/,
     );
@@ -152,7 +150,7 @@ describe("BoilerplateTaxAudit", () => {
         chrome: false,
       },
     ];
-    const result = await audit.audit(site([...blog, ...products]));
+    const result = audit.audit(site([...blog, ...products]));
     const analyzed = result.details?.["analyzedPages"] as string[];
     expect(analyzed.length).toBeLessThan(22);
     expect(analyzed).toContain("https://example.com/mug");

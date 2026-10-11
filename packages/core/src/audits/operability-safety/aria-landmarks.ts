@@ -66,7 +66,8 @@ export class AriaLandmarksAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    if (!ctx.pages || ctx.pages.length === 0) {
+    const page = ctx.pages?.[0];
+    if (!page) {
       return this.warn(
         "No pages scanned to check ARIA landmarks.",
         "Page has banner/header, main, navigation, and contentinfo/footer landmarks",
@@ -74,7 +75,7 @@ export class AriaLandmarksAudit extends Audit {
       );
     }
 
-    const $ = ctx.pages[0].$;
+    const $ = page.$;
     const present: string[] = [];
     const missing: string[] = [];
 
@@ -91,7 +92,7 @@ export class AriaLandmarksAudit extends Audit {
         "All required ARIA landmarks are present.",
         "Page has banner/header, main, navigation, and contentinfo/footer landmarks",
         `Present: ${present.join(", ")}`,
-        ctx.pages[0].url,
+        page.url,
       );
     }
 
@@ -113,7 +114,7 @@ export class AriaLandmarksAudit extends Audit {
             })
             .join("\n"),
         },
-        ctx.pages[0].url,
+        page.url,
       );
     }
 
@@ -134,7 +135,7 @@ export class AriaLandmarksAudit extends Audit {
           })
           .join("\n"),
       },
-      ctx.pages[0].url,
+      page.url,
     );
   }
 }

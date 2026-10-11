@@ -21,8 +21,8 @@ const page = (name: string, source: PageTypeSource, readable = true) => {
 const context = (pages: PageContext[]) => {
   const ctx = mockCheckContext(pages);
   ctx.evidence = buildScanEvidence({
-    requestedUrl: pages[0].url,
-    homepageResult: pages[0].fetchResult,
+    requestedUrl: pages[0]!.url,
+    homepageResult: pages[0]!.fetchResult,
     pages,
     rootFiles: {},
     wafProtection: null,
@@ -79,13 +79,13 @@ describe("selected page evidence", () => {
     );
     const check = result.checks[0];
     expect(result.checks).toHaveLength(1);
-    expect(check.status).toBe(CheckStatus.Pass);
-    expect(check.advisoryResults?.[0]).toMatchObject({
+    expect(check!.status).toBe(CheckStatus.Pass);
+    expect(check!.advisoryResults?.[0]).toMatchObject({
       status: CheckStatus.Fail,
       scoreDisplayMode: ScoreDisplayMode.Informative,
       pageUrl: "https://example.com/bad",
     });
-    expect(result.categories[0].assessedMass).toBe(1);
+    expect(result.categories[0]!.assessedMass).toBe(1);
     expect(event).toHaveBeenCalledTimes(1);
     expect(trace).toHaveBeenCalledTimes(1);
     expect(CheckResultSchema.parse(check)).toEqual(check);
@@ -100,11 +100,13 @@ describe("selected page evidence", () => {
       ]),
       config,
     );
-    expect(result.checks[0].status).toBe(CheckStatus.NotApplicable);
-    expect(result.checks[0].tags).toContain("skipped:no-evidence");
-    expect(result.checks[0].advisoryResults?.[0].status).toBe(CheckStatus.Fail);
+    expect(result.checks[0]!.status).toBe(CheckStatus.NotApplicable);
+    expect(result.checks[0]!.tags).toContain("skipped:no-evidence");
+    expect(result.checks[0]!.advisoryResults?.[0]!.status).toBe(
+      CheckStatus.Fail,
+    );
     expect(calls).toEqual([["https://example.com/bad"]]);
-    expect(result.categories[0].assessedMass).toBe(0);
+    expect(result.categories[0]!.assessedMass).toBe(0);
   });
 
   it("keeps unread pages in coverage but out of content verdicts", async () => {
@@ -117,7 +119,7 @@ describe("selected page evidence", () => {
       config,
     );
     expect(calls).toEqual([["https://example.com/good"]]);
-    expect(result.checks[0].coverage).toEqual({
+    expect(result.checks[0]!.coverage).toEqual({
       provenance: CoverageProvenance.Declared,
       selectedUrls: ["https://example.com/empty", "https://example.com/good"],
       inputUrls: ["https://example.com/good"],
@@ -151,6 +153,7 @@ import {
   PageTypeSource,
   ScoreDisplayMode,
 } from "#core/types";
+import { omit } from "./omit";
 vi.mock("#core/fetcher", async (load) => ({
   ...(await load<typeof import("#core/fetcher")>()),
   isSafeUrl: async () => true,
@@ -174,15 +177,17 @@ describe("scope failure and cache boundaries", () => {
       },
     ];
     const result = await runAudits(ctx, config);
-    expect(result.checks[0].status).toBe(CheckStatus.NotApplicable);
-    expect(result.checks[0].coverage?.selectedUrls).toEqual([
+    expect(result.checks[0]!.status).toBe(CheckStatus.NotApplicable);
+    expect(result.checks[0]!.coverage?.selectedUrls).toEqual([
       "https://example.com/missing",
     ]);
-    expect(result.checks[0].coverage?.unreadUrls).toEqual([
+    expect(result.checks[0]!.coverage?.unreadUrls).toEqual([
       "https://example.com/missing",
     ]);
-    expect(result.checks[0].advisoryResults?.[0].status).toBe(CheckStatus.Fail);
-    expect(result.categories[0].assessedMass).toBe(0);
+    expect(result.checks[0]!.advisoryResults?.[0]!.status).toBe(
+      CheckStatus.Fail,
+    );
+    expect(result.categories[0]!.assessedMass).toBe(0);
   });
 
   it("leaves absent optional artifacts to their gatherer", async () => {
@@ -190,9 +195,9 @@ describe("scope failure and cache boundaries", () => {
       context([page("good", PageTypeSource.Declared)]),
       one(OpenApiServersAudit.meta, () => new OpenApiServersAudit()),
     );
-    expect(result.checks[0].status).toBe(CheckStatus.NotApplicable);
-    expect(result.checks[0].tags ?? []).not.toContain("skipped:no-evidence");
-    expect(result.checks[0].tags ?? []).not.toContain("scan-error");
+    expect(result.checks[0]!.status).toBe(CheckStatus.NotApplicable);
+    expect(result.checks[0]!.tags ?? []).not.toContain("skipped:no-evidence");
+    expect(result.checks[0]!.tags ?? []).not.toContain("scan-error");
   });
 
   it("preserves a declared verdict when the advisory execution has a schema error", async () => {
@@ -216,14 +221,16 @@ describe("scope failure and cache boundaries", () => {
       undefined,
       trace,
     );
-    expect(result.checks[0].status).toBe(CheckStatus.Pass);
-    expect(result.checks[0].advisoryResults?.[0].tags).toContain("scan-error");
-    expect(result.checks[0].advisoryResults?.[0].scoreDisplayMode).toBe(
+    expect(result.checks[0]!.status).toBe(CheckStatus.Pass);
+    expect(result.checks[0]!.advisoryResults?.[0]!.tags).toContain(
+      "scan-error",
+    );
+    expect(result.checks[0]!.advisoryResults?.[0]!.scoreDisplayMode).toBe(
       "informative",
     );
     expect(event).toHaveBeenCalledTimes(1);
-    expect(event.mock.calls[0][0].type).toBe("unit:fail");
-    expect(trace.mock.calls[0][0].advisoryResults[0].tags).toContain(
+    expect(event.mock.calls[0]![0].type).toBe("unit:fail");
+    expect(trace.mock.calls[0]![0].advisoryResults[0].tags).toContain(
       "scan-error",
     );
     expect(CheckResultSchema.safeParse(result.checks[0]).success).toBe(true);
@@ -250,8 +257,8 @@ describe("scope failure and cache boundaries", () => {
       undefined,
       budget.signal,
     );
-    expect(result.checks[0].status).toBe(CheckStatus.Pass);
-    expect(result.checks[0].advisoryResults?.[0].tags).toContain(
+    expect(result.checks[0]!.status).toBe(CheckStatus.Pass);
+    expect(result.checks[0]!.advisoryResults?.[0]!.tags).toContain(
       "skipped:scan-budget",
     );
     expect(events).toHaveBeenCalledTimes(1);
@@ -326,7 +333,7 @@ describe("scope failure and cache boundaries", () => {
   it("does not attribute old reports coverage they did not record", async () => {
     const check = (
       await runAudits(context([page("good", PageTypeSource.Declared)]), config)
-    ).checks[0];
+    ).checks[0]!;
     const { coverage: _coverage, advisoryResults: _advisory, ...old } = check;
     expect(CheckResultSchema.parse(old).coverage).toBeUndefined();
     expect(
@@ -370,8 +377,10 @@ describe("evidence views", () => {
       { urls: ["https://example.com/shell"], readable: false },
       { urls: ["https://example.com/readable"], readable: true },
     ]);
-    expect(result.checks[0].status).toBe(CheckStatus.NotApplicable);
-    expect(result.checks[0].advisoryResults?.[0].status).toBe(CheckStatus.Pass);
+    expect(result.checks[0]!.status).toBe(CheckStatus.NotApplicable);
+    expect(result.checks[0]!.advisoryResults?.[0]!.status).toBe(
+      CheckStatus.Pass,
+    );
   });
 
   it("keeps simultaneous scoring modes separate without mutating static metadata", async () => {
@@ -380,22 +389,22 @@ describe("evidence views", () => {
       runAudits(context([page("good", PageTypeSource.Declared)]), config),
       runAudits(context([page("bad", PageTypeSource.Detected)]), config),
     ]);
-    expect(declared.checks[0].scoreDisplayMode).toBe(ScoreDisplayMode.Binary);
-    expect(declared.categories[0].assessedMass).toBe(1);
-    expect(detected.checks[0].scoreDisplayMode).toBe(
+    expect(declared.checks[0]!.scoreDisplayMode).toBe(ScoreDisplayMode.Binary);
+    expect(declared.categories[0]!.assessedMass).toBe(1);
+    expect(detected.checks[0]!.scoreDisplayMode).toBe(
       ScoreDisplayMode.Informative,
     );
-    expect(detected.categories[0].assessedMass).toBe(0);
+    expect(detected.categories[0]!.assessedMass).toBe(0);
     expect(JSON.stringify(ScopedAudit.meta)).toBe(before);
   });
 });
 
 describe("page order and failed declared populations", () => {
-  const universal: AuditMeta = {
-    ...ScopedAudit.meta,
-    applicablePageTypes: undefined,
-    requires: undefined,
-  };
+  const universal: AuditMeta = omit(
+    ScopedAudit.meta,
+    "applicablePageTypes",
+    "requires",
+  );
 
   it("puts the scan target first and sorts the rest by code point", () => {
     const urls = ["ab", "a-b", "Z", "target"];
@@ -429,13 +438,13 @@ describe("page order and failed declared populations", () => {
         status: 404,
       },
     ];
-    const meta = { ...ScopedAudit.meta, requires: undefined };
+    const meta = omit(ScopedAudit.meta, "requires");
     const result = await runAudits(
       ctx,
       one(meta, () => new ScopedAudit()),
     );
-    expect(result.checks[0].status).toBe(CheckStatus.NotApplicable);
-    expect(result.checks[0].tags).toEqual(["skipped:page-type"]);
+    expect(result.checks[0]!.status).toBe(CheckStatus.NotApplicable);
+    expect(result.checks[0]!.tags).toEqual(["skipped:page-type"]);
     expect(gatedMassShare(result.checks)).toBe(0);
   });
 });

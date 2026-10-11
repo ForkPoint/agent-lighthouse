@@ -81,7 +81,9 @@ export function officialWebsite(body: string): string | undefined {
   let best: { rank: number; value: string } | undefined;
   for (const claim of claims) {
     if (!isObject(claim)) continue;
-    const rank = RANK_ORDER[String(claim["rank"] ?? "normal")] ?? 1;
+    const rawRank = claim["rank"];
+    const rank =
+      RANK_ORDER[typeof rawRank === "string" ? rawRank : "normal"] ?? 1;
     if (rank === 0) continue;
     const snak = isObject(claim["mainsnak"]) ? claim["mainsnak"] : undefined;
     const datavalue =

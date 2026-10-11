@@ -100,7 +100,7 @@ export class ProductDetailsAudit extends Audit {
         ? first["offers"]
         : [first["offers"]];
       hasAvailability = offers.some(
-        (o: Record<string, unknown>) => o && o.availability,
+        (o: Record<string, unknown>) => o && o["availability"],
       );
     }
     if (!hasAvailability) missing.push("availability");

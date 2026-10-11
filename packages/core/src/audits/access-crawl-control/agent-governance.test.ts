@@ -29,8 +29,8 @@ describe("AgentGovernanceAudit", () => {
     const result = audit.audit(ctx);
     expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("2 training crawler(s)");
-    expect(result.details?.trainingAgents).toEqual(["GPTBot", "CCBot"]);
-    expect(result.details?.realtimeAgents).toEqual([
+    expect(result.details?.["trainingAgents"]).toEqual(["GPTBot", "CCBot"]);
+    expect(result.details?.["realtimeAgents"]).toEqual([
       "ChatGPT-User",
       "Claude-User",
     ]);
@@ -59,8 +59,8 @@ describe("AgentGovernanceAudit", () => {
       "/robots.txt": mockFetchResult(robots, 200),
     });
     const check = audit.toCheckResult(audit.audit(ctx));
-    expect(check.details?.trainingAgents).toEqual(["GPTBot", "CCBot"]);
-    expect(check.details?.hasCatchAll).toBe(true);
+    expect(check.details?.["trainingAgents"]).toEqual(["GPTBot", "CCBot"]);
+    expect(check.details?.["hasCatchAll"]).toBe(true);
   });
 
   it("passes when the two categories are explicitly treated differently", () => {
@@ -96,8 +96,8 @@ describe("AgentGovernanceAudit", () => {
     const result = audit.audit(ctx);
     expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("Only training crawlers");
-    expect(result.details?.trainingAgents).toEqual(["GPTBot"]);
-    expect(result.details?.realtimeAgents).toEqual([]);
+    expect(result.details?.["trainingAgents"]).toEqual(["GPTBot"]);
+    expect(result.details?.["realtimeAgents"]).toEqual([]);
   });
 
   // RFC 9309 §2.2.1: a crawler falls back to `*` only when no group matches its
@@ -112,7 +112,7 @@ describe("AgentGovernanceAudit", () => {
     });
     const result = audit.audit(ctx);
     expect(result.status).toBe(CheckStatus.NotApplicable);
-    expect(result.details?.hasCatchAll).toBe(true);
+    expect(result.details?.["hasCatchAll"]).toBe(true);
   });
 
   // The one case the evidence does support: the fallback carries a blanket

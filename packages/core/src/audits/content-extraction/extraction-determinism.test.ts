@@ -41,13 +41,13 @@ describe("ExtractionDeterminismAudit", () => {
   });
 
   it("is notApplicable on a page with no prose at all", async () => {
-    expect(
-      (await audit.audit(page('<div><img src="/a.png"></div>'))).status,
-    ).toBe(CheckStatus.NotApplicable);
+    expect(audit.audit(page('<div><img src="/a.png"></div>')).status).toBe(
+      CheckStatus.NotApplicable,
+    );
   });
 
   it("passes when all three extractors agree", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         `<main><article><h1>Kettles</h1><p>${prose("copper")}</p></article></main>`,
       ),
@@ -59,7 +59,7 @@ describe("ExtractionDeterminismAudit", () => {
   });
 
   it("fails when one extractor returns a different article", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         `<main><p>${prose("copper", 2)}</p></main><div class="feature"><p>${prose("ceramic", 40)}</p></div>`,
       ),
@@ -75,7 +75,7 @@ describe("ExtractionDeterminismAudit", () => {
       (_v, i) =>
         `<option>Kettle option number ${i} in this long list of choices</option>`,
     ).join("");
-    const result = await audit.audit(page(`<select>${options}</select>`));
+    const result = audit.audit(page(`<select>${options}</select>`));
     expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("declined");
   });
@@ -85,7 +85,7 @@ describe("ExtractionDeterminismAudit", () => {
       { length: 30 },
       (_v, i) => `<a href="/c/${i}">Category number ${i}</a>`,
     ).join("");
-    const result = await audit.audit(
+    const result = audit.audit(
       page(`<nav>${nav}</nav><main><p>A short line about kettles.</p></main>`),
     );
     expect(result.status).toBe(CheckStatus.Fail);
@@ -93,7 +93,7 @@ describe("ExtractionDeterminismAudit", () => {
   });
 
   it("reports the symmetric difference of the worst-disagreeing pair", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         `<main><p>${prose("copper", 2)}</p></main><div class="feature"><p>${prose("ceramic", 40)}</p></div>`,
       ),
@@ -115,7 +115,7 @@ describe("ExtractionDeterminismAudit", () => {
   it("declines when no response can be attributed to this site", async () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new ExtractionDeterminismAudit();
-    const reached = await instance.audit(mockCheckContext(pages, rootFiles));
+    const reached = instance.audit(mockCheckContext(pages, rootFiles));
     expect(reached.status, "the same input reached is judged").not.toBe(
       CheckStatus.NotApplicable,
     );
@@ -136,7 +136,7 @@ describe("ExtractionDeterminismAudit", () => {
 
   // A promo strip marked up as the first <article> is not the page's article.
   it("does not read a leading promo article as the semantic extraction", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         `<article class="ticker"><p>New hoodies have just arrived. Shop now.</p></article><article><h1>Kettles</h1><p>${prose("copper")}</p></article>`,
       ),
@@ -146,7 +146,7 @@ describe("ExtractionDeterminismAudit", () => {
   });
 
   it("falls back to the body when no article holds the page's text", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         `<article class="ticker"><p>New hoodies have just arrived. Shop now.</p></article><div class="copy"><h1>Kettles</h1><p>${prose("copper")}</p></div>`,
       ),
@@ -157,7 +157,7 @@ describe("ExtractionDeterminismAudit", () => {
   // True positive: an article that is a real share of the page and disagrees
   // with the density block is still reported.
   it("still fails when the page's one article disagrees with the largest prose block", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         `<article><h1>Kettles</h1><p>${prose("copper", 10)}</p></article><div class="feature"><p>${prose("ceramic", 30)}</p></div>`,
       ),

@@ -183,12 +183,12 @@ describe("mountSourcesTable", () => {
   it("gives each row a row header carrying the title, the link and the id", async () => {
     await mount();
 
-    const head = rows()[0]!.querySelector("th")!;
+    const head = rows()[0].querySelector("th")!;
     expect(head.getAttribute("scope")).toBe("row");
     const link = head.querySelector("a")!;
-    expect(link.getAttribute("href")).toBe(SOURCES[0]!.url);
-    expect(link.textContent).toBe(SOURCES[0]!.title);
-    expect(head.querySelector("code")!.textContent).toBe(SOURCES[0]!.id);
+    expect(link.getAttribute("href")).toBe(SOURCES[0].url);
+    expect(link.textContent).toBe(SOURCES[0].title);
+    expect(head.querySelector("code")!.textContent).toBe(SOURCES[0].id);
   });
 
   // Was a Yes/No rendering of a boolean that every record set to `true`. The
@@ -197,38 +197,38 @@ describe("mountSourcesTable", () => {
     await mount();
 
     const cells = (index: number) =>
-      [...rows()[index]!.querySelectorAll("td")].map((c) => c.textContent);
-    expect(cells(0)![2]).toBe("2026-08-20");
-    expect(cells(1)![2]).toBe("2026-08-21");
+      [...rows()[index].querySelectorAll("td")].map((c) => c.textContent);
+    expect(cells(0)[2]).toBe("2026-08-20");
+    expect(cells(1)[2]).toBe("2026-08-21");
   });
 
   it("collapses a long finding behind a preview and keeps a short one plain", async () => {
     await mount();
 
-    const long = rows()[0]!.querySelectorAll("td")[3]!;
+    const long = rows()[0].querySelectorAll("td")[3];
     const details = long.querySelector("details")!;
     expect(details).not.toBeNull();
-    expect(details.querySelector("summary")!.textContent!.endsWith("…")).toBe(
+    expect(details.querySelector("summary")!.textContent.endsWith("…")).toBe(
       true,
     );
     expect(details.querySelector("p")!.textContent).toContain(
       "Direct Configuration",
     );
 
-    const short = rows()[1]!.querySelectorAll("td")[3]!;
+    const short = rows()[1].querySelectorAll("td")[3];
     expect(short.querySelector("details")).toBeNull();
-    expect(short.textContent).toBe(SOURCES[1]!.keyFindings);
+    expect(short.textContent).toBe(SOURCES[1].keyFindings);
   });
 
   it("renders a finding’s backtick spans as code, never as markup", async () => {
     await mount({
       accessed: "2026-08-20",
       sources: [
-        { ...SOURCES[1]!, keyFindings: "Reads `<script>` at `/llms.txt`." },
+        { ...SOURCES[1], keyFindings: "Reads `<script>` at `/llms.txt`." },
       ],
     });
 
-    const cell = rows()[0]!.querySelectorAll("td")[3]!;
+    const cell = rows()[0].querySelectorAll("td")[3];
     expect(
       [...cell.querySelectorAll("code")].map((c) => c.textContent),
     ).toEqual(["<script>", "/llms.txt"]);
@@ -244,7 +244,7 @@ describe("mountSourcesTable", () => {
     type("vercel");
     expect(visible()).toEqual(["vercel-ai-crawlers"]);
     expect(status()).toBe("Showing 1 of 2 sources.");
-    expect(rows()[0]!.hidden).toBe(true);
+    expect(rows()[0].hidden).toBe(true);
   });
 
   it("searches the key findings, which is where the detail is", async () => {
@@ -299,14 +299,14 @@ describe("mountSourcesTable", () => {
   });
 
   it("blanks one findings cell rather than losing the whole table to it", async () => {
-    const incomplete = { ...SOURCES[1]! } as Partial<SourceRecord>;
+    const incomplete = { ...SOURCES[1] } as Partial<SourceRecord>;
     delete incomplete.keyFindings;
-    await mount({ accessed: "2026-08-20", sources: [incomplete, SOURCES[0]!] });
+    await mount({ accessed: "2026-08-20", sources: [incomplete, SOURCES[0]] });
 
     expect(rows()).toHaveLength(2);
-    expect(rows()[0]!.querySelectorAll("td")[3]!.textContent).toBe("");
+    expect(rows()[0].querySelectorAll("td")[3].textContent).toBe("");
     expect(
-      rows()[1]!.querySelectorAll("td")[3]!.querySelector("details"),
+      rows()[1].querySelectorAll("td")[3].querySelector("details"),
     ).not.toBeNull();
     expect(status()).toBe("Showing 2 of 2 sources.");
   });

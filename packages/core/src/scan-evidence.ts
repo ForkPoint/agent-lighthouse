@@ -382,9 +382,11 @@ export function evidenceForPages(
     met,
     reasons,
     renderedByPage: Object.fromEntries(
-      pages
-        .filter((p) => Object.hasOwn(evidence.renderedByPage, p.url))
-        .map((p) => [p.url, evidence.renderedByPage[p.url]]),
+      pages.flatMap((p) => {
+        if (!Object.hasOwn(evidence.renderedByPage, p.url)) return [];
+        const rendered = evidence.renderedByPage[p.url];
+        return rendered === undefined ? [] : [[p.url, rendered] as const];
+      }),
     ),
     usablePageTypes: new Set(readable.map((p) => p.pageType)),
   };

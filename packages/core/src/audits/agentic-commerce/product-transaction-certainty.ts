@@ -144,7 +144,7 @@ export class ProductTransactionCertaintyAudit extends Audit {
     }
 
     const missing = (Object.keys(best.signals) as (keyof CertaintySignals)[])
-      .filter((k) => !best!.signals[k])
+      .filter((k) => !best.signals[k])
       .map((k) => SIGNAL_LABELS[k]);
 
     if (best.count === 4) {

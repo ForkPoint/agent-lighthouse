@@ -29,9 +29,9 @@ describe("Debt Item 4: CSS Selector Escaping for User/DOM Content", () => {
       // Should not throw "Attribute selector didn't terminate"
       const forms = extractForms($);
       expect(forms).toHaveLength(1);
-      expect(forms[0].inputs).toHaveLength(2);
-      expect(forms[0].inputs[0].label).toBe("Username");
-      expect(forms[0].inputs[1].label).toBe("Password");
+      expect(forms[0]!.inputs).toHaveLength(2);
+      expect(forms[0]!.inputs[0]!.label).toBe("Username");
+      expect(forms[0]!.inputs[1]!.label).toBe("Password");
     });
   });
 

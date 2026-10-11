@@ -48,7 +48,7 @@ function run(
 ): Promise<unknown> {
   const ctx: CheckContext = mockCheckContext([], files);
   ctx.fetch = async (o: FetchOptions) => handler(o);
-  return new McpModernEraReachabilityAudit().audit(ctx) as Promise<unknown>;
+  return new McpModernEraReachabilityAudit().audit(ctx);
 }
 
 const DISCOVER_OK = {

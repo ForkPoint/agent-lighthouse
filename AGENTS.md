@@ -46,11 +46,13 @@ records.
 pnpm build              # every package; core must build before check:dossiers
 pnpm test               # vitest, from the repo root only
 pnpm typecheck          # tsc --noEmit per package
-pnpm lint               # oxlint
+pnpm lint               # oxlint, type-aware
 pnpm check:dossiers     # registry <-> dossier agreement, both directions
 pnpm check:requires     # each audit's `requires` matches what its source reads
 pnpm check:audit-map    # audit map <-> codebase & dossier agreement
 pnpm check:enums        # no string literal where an enum constant exists
+pnpm check:retired-names # user docs name no retired page type
+pnpm check:package-types # published .d.ts resolve like the JS (after build)
 pnpm changeset          # one per user-visible change
 ```
 
@@ -200,6 +202,12 @@ Write for a reader, not for a researcher:
   regardless of the surrounding content.
 - oxlint is the only linter. There is no ESLint config and none should appear.
   Use `// oxlint-disable-*` if a suppression is genuinely needed.
+  Lint is type-aware (oxlint-tsgolint) and reads each file's nearest
+  `tsconfig.json`, hence `scripts/tsconfig.json`. `no-unsafe-type-assertion`
+  and the `no-unsafe-*` family are off for now because of their volume.
+  cli, mcp and report read core's types from its built `dist`, so run
+  `pnpm build` before `pnpm lint`; without it, every core type reads as an
+  error type.
 - Prettier for formatting: `pnpm format`.
 - Inside `packages/core/src`, import another core module as `#core/<path>`
   (`import { CheckStatus } from "#core/types"`), not with a climbing `../`
@@ -224,14 +232,14 @@ Write for a reader, not for a researcher:
 
 ## Before you commit
 
-All eight, in order:
+All ten, in order:
 
 ```bash
-pnpm build && pnpm test && pnpm typecheck && pnpm lint && pnpm check:dossiers && pnpm check:requires && pnpm check:audit-map && pnpm check:enums
+pnpm build && pnpm test && pnpm typecheck && pnpm lint && pnpm check:dossiers && pnpm check:requires && pnpm check:audit-map && pnpm check:enums && pnpm check:retired-names && pnpm check:package-types
 ```
 
-`check:dossiers` and `check:requires` read the _built_ core bundle, so
-`pnpm build` has to run first. Watch for stale build artifacts: an untracked `.js` or `.d.ts` under
+`check:dossiers`, `check:requires`, `check:package-types` and the type-aware
+`lint` read the _built_ packages, so `pnpm build` has to run first. Watch for stale build artifacts: an untracked `.js` or `.d.ts` under
 `packages/*/src/` shadows its source in vitest and turns a red suite green.
 
 Add a changeset for anything a user would notice. The bump follows what a

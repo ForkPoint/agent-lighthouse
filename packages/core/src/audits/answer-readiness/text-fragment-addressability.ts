@@ -80,6 +80,8 @@ function blockRuns(page: PageContext): BlockRun[] {
     run = "";
   };
   const walk = (node: AnyNode, rendered: boolean) => {
+    // `type` is domelementtype's string enum, installed twice; compare its value.
+    // oxlint-disable-next-line typescript/no-unsafe-enum-comparison
     if (node.type === "text") {
       if (rendered !== runRendered) {
         flush();
@@ -183,7 +185,7 @@ function candidates(page: PageContext): Candidate[] {
 
   $("h2, h3").each((_i, heading) => {
     if (notRendered($, heading)) return;
-    const span = answerAfter(page, heading as Element);
+    const span = answerAfter(page, heading);
     if (span === undefined) return;
     add(
       `first sentence after "${normalize($(heading).text()).slice(0, 60)}"`,

@@ -54,8 +54,7 @@ export function idrefs(
     let attrValue = dom.getAttribute(attr);
     if (attrValue) {
       const tokens = tokenList(attrValue);
-      for (let i = 0; i < tokens.length; i++)
-        result.push(doc.getElementById(tokens[i]));
+      for (const token of tokens) result.push(doc.getElementById(token));
     }
     return result;
   } catch {
@@ -161,7 +160,7 @@ function clipHidden(vNode: VNode): boolean {
   }
   if (matchesClipPath) {
     const type = matchesClipPath[1];
-    const value = parseInt(matchesClipPath[2], 10);
+    const value = parseInt(matchesClipPath[2] ?? "", 10);
     if (type === "inset") return value >= 50;
     if (type === "circle") return value === 0;
   }

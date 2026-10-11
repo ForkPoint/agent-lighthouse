@@ -159,7 +159,7 @@ export class CoreOpenGraphAudit extends Audit {
         "All core OG tags and og:site_name are present.",
         expected,
         found,
-        page.url,
+        page?.url,
       );
     }
 

@@ -256,7 +256,7 @@ describe("fetcher.fetch — basic auth from URL", () => {
     const fetcher = createFetcher();
     await fetcher.fetch({ url: "https://example.com" });
 
-    const headers = mockRequest.mock.calls[0][1]?.headers as Record<
+    const headers = mockRequest.mock.calls[0]![1]?.headers as Record<
       string,
       string
     >;
@@ -394,7 +394,7 @@ describe("fetcher.fetch — request headers", () => {
       headers: { authorization: "Bearer stale" },
     });
 
-    const headers = mockRequest.mock.calls[0][1]?.headers as Record<
+    const headers = mockRequest.mock.calls[0]![1]?.headers as Record<
       string,
       string
     >;
@@ -413,7 +413,7 @@ describe("fetcher.fetch — request headers", () => {
     const fetcher = createFetcher({ headers: { "X-Scan-Id": "abc" } });
     await fetcher.fetch({ url: "https://example.com" });
 
-    const headers = mockRequest.mock.calls[0][1]?.headers as Record<
+    const headers = mockRequest.mock.calls[0]![1]?.headers as Record<
       string,
       string
     >;
@@ -477,7 +477,7 @@ describe("fetcher.fetch — request headers", () => {
     const fetcher = createFetcher();
     await fetcher.fetch({ url: "https://example.com" });
 
-    const callHeaders = mockRequest.mock.calls[0][1]?.headers as Record<
+    const callHeaders = mockRequest.mock.calls[0]![1]?.headers as Record<
       string,
       string
     >;
@@ -496,7 +496,7 @@ describe("fetcher.fetch — request configuration", () => {
     const fetcher = createFetcher();
     await fetcher.fetch({ url: "https://example.com", timeout: 5000 });
 
-    const callOptions = mockRequest.mock.calls[0][1] as any;
+    const callOptions = mockRequest.mock.calls[0]![1] as any;
     expect(callOptions.signal).toBeDefined();
   });
 });
@@ -516,7 +516,7 @@ describe("fetcher.fetch — body and headers edge cases", () => {
       body: "raw",
     });
 
-    const callHeaders = mockRequest.mock.calls[0][1]?.headers as Record<
+    const callHeaders = mockRequest.mock.calls[0]![1]?.headers as Record<
       string,
       string
     >;
@@ -712,7 +712,7 @@ describe("isSafeUrl", () => {
     mockLookup.mockResolvedValue({
       address: "93.184.216.34",
       family: 4,
-    } as any);
+    });
     expect(await isSafeUrl("http://[::1]/")).toBe(false);
     expect(mockLookup).not.toHaveBeenCalled();
   });
@@ -736,7 +736,7 @@ describe("isSafeUrl", () => {
   );
 
   it("rejects hostnames that resolve to a private address", async () => {
-    mockLookup.mockResolvedValue({ address: "10.1.2.3", family: 4 } as any);
+    mockLookup.mockResolvedValue({ address: "10.1.2.3", family: 4 });
     expect(await isSafeUrl("https://internal.example.com/")).toBe(false);
   });
 
@@ -744,7 +744,7 @@ describe("isSafeUrl", () => {
     mockLookup.mockResolvedValue({
       address: "93.184.216.34",
       family: 4,
-    } as any);
+    });
     expect(await isSafeUrl("https://example.com/")).toBe(true);
   });
 
@@ -778,7 +778,7 @@ describe("createFetcher redirect handling", () => {
     mockLookup.mockResolvedValue({
       address: "93.184.216.34",
       family: 4,
-    } as never);
+    });
 
     const result = await createFetcher().fetch({
       url: "https://example.com/start",
@@ -801,7 +801,7 @@ describe("createFetcher redirect handling", () => {
     mockLookup.mockResolvedValue({
       address: "93.184.216.34",
       family: 4,
-    } as never);
+    });
 
     const result = await createFetcher().fetch({
       url: "https://example.com/start",
@@ -822,7 +822,7 @@ describe("createFetcher redirect handling", () => {
     mockLookup.mockResolvedValue({
       address: "93.184.216.34",
       family: 4,
-    } as never);
+    });
 
     const result = await createFetcher().fetch({
       url: "https://example.com/start",
@@ -846,7 +846,7 @@ describe("createFetcher redirect handling", () => {
     mockLookup.mockResolvedValue({
       address: "93.184.216.34",
       family: 4,
-    } as never);
+    });
 
     const result = await createFetcher().fetch({ url: "https://old.example/" });
 
@@ -892,7 +892,7 @@ describe("createFetcher redirect handling", () => {
     mockLookup.mockResolvedValue({
       address: "93.184.216.34",
       family: 4,
-    } as never);
+    });
 
     const result = await createFetcher().fetch({
       url: "https://example.com/hop-0",
@@ -912,7 +912,7 @@ describe("createFetcher redirect handling", () => {
     mockLookup.mockResolvedValue({
       address: "93.184.216.34",
       family: 4,
-    } as never);
+    });
 
     await createFetcher().fetch({
       url: "https://example.com/submit",

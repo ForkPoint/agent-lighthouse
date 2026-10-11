@@ -53,7 +53,7 @@ export class ContentDepthAudit extends Audit {
 
     const allPass = pagesAboveThreshold === ctx.pages.length;
     const majorityPass = pagesAboveThreshold > ctx.pages.length / 2;
-    const homepagePass = wordCounts.length > 0 && wordCounts[0].count > 300;
+    const homepagePass = (wordCounts[0]?.count ?? 0) > 300;
 
     const lowestPage = wordCounts.reduce(
       (min, wc) => (wc.count < min.count ? wc : min),

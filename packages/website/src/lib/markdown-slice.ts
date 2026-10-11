@@ -42,7 +42,7 @@ export function sliceSection(markdown: string, heading: string): string {
     }
 
     if (run !== undefined) {
-      fence = { char: run[0]!, length: run.length };
+      fence = { char: run[0], length: run.length };
       continue;
     }
 

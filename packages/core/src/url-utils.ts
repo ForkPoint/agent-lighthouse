@@ -53,11 +53,12 @@ function mappedIpv4(ip: string): string | undefined {
 
   if (/^\d{1,3}(?:\.\d{1,3}){3}$/.test(suffix)) return suffix;
 
-  const hexMatch = suffix.match(/^([0-9a-f]{1,4}):([0-9a-f]{1,4})$/i);
-  if (!hexMatch) return undefined;
+  const [, highHex, lowHex] =
+    suffix.match(/^([0-9a-f]{1,4}):([0-9a-f]{1,4})$/i) ?? [];
+  if (highHex === undefined || lowHex === undefined) return undefined;
 
-  const high = Number.parseInt(hexMatch[1], 16);
-  const low = Number.parseInt(hexMatch[2], 16);
+  const high = Number.parseInt(highHex, 16);
+  const low = Number.parseInt(lowHex, 16);
   return `${high >> 8}.${high & 0xff}.${low >> 8}.${low & 0xff}`;
 }
 

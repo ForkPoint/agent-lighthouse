@@ -79,7 +79,7 @@ export class OgTypeAudit extends Audit {
             'AI agents use og:type "article" to apply content-specific handling like freshness scoring and author attribution. Blog pages with og:type "website" are treated as static pages instead of time-sensitive content, reducing their prominence in recency-weighted AI answers.',
           code: '<meta property="og:type" content="article">',
         },
-        page.url,
+        page?.url,
       );
     }
 
@@ -87,7 +87,7 @@ export class OgTypeAudit extends Audit {
       `og:type is "${ogType}".`,
       'og:type present; "article" on blog pages, "website" on others',
       ogType,
-      page.url,
+      page?.url,
     );
   }
 }

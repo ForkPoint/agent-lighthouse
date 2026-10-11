@@ -165,7 +165,7 @@ describe("summarize", () => {
     // Kept verbatim: escaping belongs at the DOM boundary, and the renderer
     // writes text nodes, so the value never reaches a markup parser.
     expect(summary.url).toBe("<img src=x onerror=alert(1)>");
-    expect(summary.categories[0]!.name).toBe("<script>alert(1)</script>");
+    expect(summary.categories[0].name).toBe("<script>alert(1)</script>");
   });
 });
 

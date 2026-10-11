@@ -9,6 +9,7 @@ import {
   ScoreDisplayMode,
   ScoreTier,
 } from "#core/types";
+import { omit } from "./omit";
 
 /**
  * The rules the nightly corpus job asserts, exercised on synthetic reports.
@@ -27,7 +28,7 @@ function check(overrides: Partial<CheckResult> & { id: string }): CheckResult {
     category: "content-extraction",
     title: "A check",
     description: "A synthetic check.",
-    status: CheckStatus.Pass as CheckStatus,
+    status: CheckStatus.Pass,
     score: 1,
     weight: 1,
     scoreDisplayMode: ScoreDisplayMode.Binary,
@@ -87,9 +88,9 @@ describe("scan invariants", () => {
   });
 
   it("reports a report with no scanValidity", () => {
-    expect(
-      invariantViolations(report({ scanValidity: undefined }), []),
-    ).toEqual(["the report carried no scanValidity"]);
+    expect(invariantViolations(omit(report(), "scanValidity"), [])).toEqual([
+      "the report carried no scanValidity",
+    ]);
   });
 
   describe("rule 1 — no audit threw", () => {
@@ -119,7 +120,7 @@ describe("scan invariants", () => {
       // An array of objects is the shape that throws in `toCheckResult`, which
       // a unit test calling `audit.audit(ctx)` never reaches.
       const bad = check({ id: "a/bad" });
-      bad.details = { rows: [{ nested: true }] } as CheckResult["details"];
+      bad.details = { rows: [{ nested: true }] };
       expect(invariantViolations(report(), [bad])).toEqual([
         "1 check(s) rejected by CheckResultSchema, e.g. a/bad",
       ]);

@@ -16,17 +16,18 @@ import { ariaAttrs } from "./standards";
 
 export type AnyNode = Node;
 
+/** Optional fields copy DOM properties, which jsdom leaves undefined where an element lacks them. */
 export interface VNodeProps {
   nodeType: number;
   nodeName: string;
   id: string;
-  type?: string;
+  type?: string | undefined;
   nodeValue: string | null;
-  multiple?: boolean;
-  value?: string;
-  selected?: boolean;
-  checked?: boolean;
-  indeterminate?: boolean;
+  multiple?: boolean | undefined;
+  value?: string | undefined;
+  selected?: boolean | undefined;
+  checked?: boolean | undefined;
+  indeterminate?: boolean | undefined;
 }
 
 const VALID_INPUT_TYPES = [

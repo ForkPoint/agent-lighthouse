@@ -139,11 +139,7 @@ const deprecatedrole: EvaluateFn = function (_node, _options, virtualNode) {
   return true;
 };
 
-const ariaAllowedRole: EvaluateFn = function (
-  _node,
-  options = {},
-  virtualNode,
-) {
+const ariaAllowedRole: EvaluateFn = function (_node, options, virtualNode) {
   const { allowImplicit = true, ignoredTags = [] } = options as {
     allowImplicit?: boolean;
     ignoredTags?: string[];
@@ -206,7 +202,7 @@ const ariaValidAttrValue: EvaluateFn = function (_node, options, virtualNode) {
           ?.value !== "false" &&
         getAriaValue(virtualNode, "aria-selected", { lowercase: true })
           ?.value !== "false" &&
-        hasPopup === false
+        !hasPopup
       );
     },
     "aria-current": (validValue) => {
@@ -320,7 +316,7 @@ const ariaErrormessage: EvaluateFn = function (_node, options, virtualNode) {
   };
 
   if (opts.indexOf(errorMessageAttr as string) === -1 && hasAttr) {
-    this.data(tokenList(errorMessageAttr as string));
+    this.data(tokenList(errorMessageAttr));
     return validateAttrValueLocal(errorMessageAttr as string);
   }
   return true;
@@ -352,7 +348,7 @@ const ariaAllowedAttr: EvaluateFn = function (_node, options, virtualNode) {
   const invalid: string[] = [];
   const role = getRole(virtualNode);
   let allowed = allowedAttr(role);
-  const opts = options as Record<string, unknown>;
+  const opts = options;
   if (Array.isArray(opts[role as string])) {
     allowed = uniqueArray(opts[role as string] as string[], allowed);
   }
@@ -444,11 +440,7 @@ function listProhibitedAttrs(
   return ["aria-label", "aria-labelledby"];
 }
 
-const ariaProhibitedAttr: EvaluateFn = function (
-  _node,
-  options = {},
-  virtualNode,
-) {
+const ariaProhibitedAttr: EvaluateFn = function (_node, options, virtualNode) {
   const elementsAllowedAriaLabel =
     (options as { elementsAllowedAriaLabel?: string[] })
       .elementsAllowedAriaLabel || [];
@@ -489,15 +481,11 @@ function isClosedCombobox(vNode: VNode, role: string | null): boolean {
   );
 }
 
-const ariaRequiredAttr: EvaluateFn = function (
-  _node,
-  options = {},
-  virtualNode,
-) {
+const ariaRequiredAttr: EvaluateFn = function (_node, options, virtualNode) {
   const role = getExplicitRole(virtualNode);
   const attrs = virtualNode.attrNames;
   let requiredAttrs = requiredAttr(role);
-  const opts = options as Record<string, unknown>;
+  const opts = options;
   if (Array.isArray(opts[role as string])) {
     requiredAttrs = uniqueArray(
       opts[role as string] as string[],
@@ -553,7 +541,7 @@ function getOwnedRoles(
     } else if (role || hasGlobalAriaOrFocusable) {
       const attr =
         globalAriaAttr || (vNode.hasAttr("tabindex") ? "tabindex" : undefined);
-      ownedRoles.push({ role, attr, vNode });
+      ownedRoles.push({ role, vNode, ...(attr !== undefined && { attr }) });
     }
   }
   return ownedRoles;
@@ -668,10 +656,10 @@ function getMissingContext(
 const ariaOwnsIndexByRoot = new WeakMap<object, Map<string, AnyNode[]>>();
 
 function getAriaOwnsIndex(root: AnyNode): Map<string, AnyNode[]> {
-  const cached = ariaOwnsIndexByRoot.get(root as unknown as object);
+  const cached = ariaOwnsIndexByRoot.get(root);
   if (cached) return cached;
   const idx = new Map<string, AnyNode[]>();
-  ariaOwnsIndexByRoot.set(root as unknown as object, idx);
+  ariaOwnsIndexByRoot.set(root, idx);
   const scope = root as unknown as {
     querySelectorAll?: (s: string) => ArrayLike<AnyNode>;
   };
@@ -701,10 +689,7 @@ function getAriaOwners(element: AnyNode): AnyNode[] | null {
   let el: {
     getAttribute?: (a: string) => string | null;
     parentElement?: AnyNode | null;
-  } | null = element as unknown as {
-    getAttribute?: (a: string) => string | null;
-    parentElement?: AnyNode | null;
-  };
+  } | null = element;
   while (el) {
     const id = el.getAttribute ? el.getAttribute("id") : null;
     if (id) {
@@ -727,9 +712,9 @@ const ariaRequiredParent: EvaluateFn = function (node, options, virtualNode) {
   if (!missingParents) return true;
   const owners = getAriaOwners(node);
   if (owners) {
-    for (let i = 0, l = owners.length; i < l; i++) {
+    for (const owner of owners) {
       missingParents = getMissingContext(
-        getNodeFromTree(owners[i]),
+        getNodeFromTree(owner),
         ownGroupRoles,
         missingParents,
         true,
@@ -792,7 +777,7 @@ const duplicateIdAfter: AfterFn = function (results) {
 
 const autocompleteValid: EvaluateFn = function (_node, options, virtualNode) {
   const autocomplete = virtualNode.attr("autocomplete") || "";
-  return isValidAutocomplete(autocomplete, options as Record<string, never>);
+  return isValidAutocomplete(autocomplete, options);
 };
 
 // ── keyboard ─────────────────────────────────────────────────────
@@ -852,7 +837,7 @@ const tdHasHeader: EvaluateFn = function (node) {
     if (hasContent(cell) && tableUtils.isDataCell(cell) && !label(cell)) {
       const hasHeaders = tableUtils
         .getHeaders(cell, tableGrid)
-        .some((header) => header !== null && !!hasContent(header));
+        .some((header) => header !== null && hasContent(header));
       if (!hasHeaders) badCells.push(cell);
     }
   });
@@ -930,7 +915,8 @@ const tdHeadersAttrMessageKeys = [
   "cell-header-not-th",
   "header-refs-self",
   "empty-hdrs",
-];
+] as const;
+type TdHeadersAttrMessageKey = (typeof tdHeadersAttrMessageKeys)[number];
 const tdHeadersAttr: EvaluateFn = function (node) {
   const [notInTable, notTh, selfRef, emptyHdrs] = tdHeadersAttrMessageKeys;
   const tableNode = node as unknown as {
@@ -940,8 +926,10 @@ const tdHeadersAttr: EvaluateFn = function (node) {
   const cellRoleById: Record<string, string | null> = {};
   for (let rowIndex = 0; rowIndex < tableNode.rows.length; rowIndex++) {
     const row = tableNode.rows[rowIndex];
+    if (!row) continue;
     for (let cellIndex = 0; cellIndex < row.cells.length; cellIndex++) {
       const cell = row.cells[cellIndex];
+      if (!cell) continue;
       cells.push(cell);
       const cellId = (
         cell as unknown as { getAttribute: (a: string) => string | null }
@@ -949,7 +937,7 @@ const tdHeadersAttr: EvaluateFn = function (node) {
       if (cellId) cellRoleById[cellId] = getRole(cell);
     }
   }
-  const badCells: Record<string, Set<AnyNode>> = {
+  const badCells: Record<TdHeadersAttrMessageKey, Set<AnyNode>> = {
     [selfRef]: new Set(),
     [notInTable]: new Set(),
     [notTh]: new Set(),
@@ -971,11 +959,7 @@ const tdHeadersAttr: EvaluateFn = function (node) {
     headers.forEach((headerId) => {
       if (cellId && headerId === cellId) badCells[selfRef].add(cell);
       else if (!cellRoleById[headerId]) badCells[notInTable].add(cell);
-      else if (
-        !["columnheader", "rowheader"].includes(
-          cellRoleById[headerId] as string,
-        )
-      )
+      else if (!["columnheader", "rowheader"].includes(cellRoleById[headerId]))
         badCells[notTh].add(cell);
     });
   });
@@ -1013,7 +997,7 @@ const docHasTitle: EvaluateFn = function () {
   return !!sanitize(title);
 };
 
-const attrNonSpaceContent: EvaluateFn = function (_node, options = {}, vNode) {
+const attrNonSpaceContent: EvaluateFn = function (_node, options, vNode) {
   const attribute = (options as { attribute?: string }).attribute;
   if (!attribute || typeof attribute !== "string") {
     throw new TypeError(
@@ -1103,7 +1087,8 @@ const metaRefresh: EvaluateFn = function (_node, options, virtualNode) {
     maxDelay?: number;
   };
   const content = (virtualNode.attr("content") || "").trim();
-  const [redirectStr] = content.split(separatorRegex);
+  // `split` always yields at least one element; the fallback only satisfies the type.
+  const redirectStr = content.split(separatorRegex)[0] ?? "";
   if (!validRedirectNumRegex.test(redirectStr)) return true;
   const redirectDelay = parseFloat(redirectStr);
   this.data({ redirectDelay });

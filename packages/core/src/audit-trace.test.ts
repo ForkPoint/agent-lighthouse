@@ -13,6 +13,7 @@ import {
   EvidenceGrade,
   ScoreDisplayMode,
 } from "./types";
+import { omit } from "#core/tests/omit";
 
 /**
  * The trace record.
@@ -99,7 +100,7 @@ describe("traceFromCheck", () => {
   });
 
   it("defaults a missing weight to zero rather than leaving it undefined", () => {
-    expect(traceFromCheck(check({ weight: undefined }), 1).weight).toBe(0);
+    expect(traceFromCheck(omit(check(), "weight"), 1).weight).toBe(0);
   });
 
   // Omitted, not emitted as undefined: a diff of two runs should show only the

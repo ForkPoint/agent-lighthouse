@@ -133,7 +133,7 @@ describe("ServerRenderedAudit — every page, not just the first", () => {
 
     expect(result.status).toBe(CheckStatus.Warn);
     expect(result.found).toContain("1 of 2");
-    expect(AuditResultSchema.parse(result).details?.emptyPages).toContain(
+    expect(AuditResultSchema.parse(result).details?.["emptyPages"]).toContain(
       "https://example.com/shop",
     );
   });
@@ -174,7 +174,7 @@ describe("ServerRenderedAudit — every page, not just the first", () => {
   it("declines when no response can be attributed to this site", async () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new ServerRenderedAudit();
-    const reached = await instance.audit(mockCheckContext(pages, rootFiles));
+    const reached = instance.audit(mockCheckContext(pages, rootFiles));
     expect(reached.status, "the same input reached is judged").not.toBe(
       CheckStatus.NotApplicable,
     );

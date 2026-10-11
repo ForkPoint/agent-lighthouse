@@ -96,9 +96,11 @@ function stubCheck(
     impact: meta.guidance?.impact ?? "",
     fix: meta.guidance?.fix ?? "",
     tags: [tag],
-    deprecated: meta.deprecated,
-    evidenceGrade: meta.evidenceGrade,
-    tier: meta.tier,
+    ...(meta.deprecated !== undefined && { deprecated: meta.deprecated }),
+    ...(meta.evidenceGrade !== undefined && {
+      evidenceGrade: meta.evidenceGrade,
+    }),
+    ...(meta.tier !== undefined && { tier: meta.tier }),
   };
 }
 
@@ -311,6 +313,8 @@ function planAssessment(
 
 function combineAssessments(checks: CheckResult[]): CheckResult {
   const [primary, ...advisory] = checks;
+  // Every audit plans at least one assessment, so an empty list is a caller bug.
+  if (!primary) throw new Error("combineAssessments needs at least one check");
   return {
     ...primary,
     ...(advisory.length ? { advisoryResults: advisory } : {}),
@@ -401,16 +405,15 @@ export function planAudits(
         continue;
       }
       const enforce = options.enforceEvidence ?? true;
-      const assessments = [
-        planAssessment(
-          ctx,
-          reg.meta,
-          scope.pages,
-          scope.provenance,
-          scope.scoreDisplayMode,
-          enforce,
-        ),
-      ];
+      const primary = planAssessment(
+        ctx,
+        reg.meta,
+        scope.pages,
+        scope.provenance,
+        scope.scoreDisplayMode,
+        enforce,
+      );
+      const assessments = [primary];
       if (scope.advisoryPages)
         assessments.push(
           planAssessment(
@@ -429,7 +432,7 @@ export function planAudits(
       runnable.push({
         reg,
         categoryId: cat.id,
-        scopedPages: assessments[0].pages,
+        scopedPages: primary.pages,
         scoreDisplayMode: scope.scoreDisplayMode,
         assessments,
       });
@@ -527,15 +530,10 @@ export async function runAudits(
     }
     const batch = runnable.slice(i, i + batchSize);
     const batchResults = await Promise.all(
-      batch.map(async ({ reg, scopedPages, scoreDisplayMode, assessments }) => {
+      batch.map(async (entry) => {
+        const { reg, scopedPages, scoreDisplayMode, assessments } = entry;
         if (budget?.aborted) {
-          const stub = budgetStub({
-            reg,
-            categoryId: reg.meta.category,
-            scopedPages,
-            scoreDisplayMode,
-            assessments,
-          });
+          const stub = budgetStub(entry);
           trace(stub, 0);
           return stub;
         }
@@ -579,9 +577,11 @@ export async function runAudits(
                   `Not assessed: ${budgetReason(budget)} This audit was still running.`,
                 ),
               );
+            // Zod types optional keys as `T | undefined`; parsing a
+            // `CheckResult` adds no explicit undefined, so the shape holds.
             return CheckResultSchema.parse(
               finish(instance.toCheckResult(result, mode)),
-            );
+            ) as CheckResult;
           } catch (err) {
             logger.error(
               { err, auditId: reg.meta.id },

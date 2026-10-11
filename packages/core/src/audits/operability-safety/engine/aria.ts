@@ -31,7 +31,10 @@ export function isValidRole(
   {
     allowAbstract,
     flagUnsupported = false,
-  }: { allowAbstract?: boolean; flagUnsupported?: boolean } = {},
+  }: {
+    allowAbstract?: boolean | undefined;
+    flagUnsupported?: boolean;
+  } = {},
 ): boolean {
   const roleDefinition = ariaRoles[role as string];
   const isRoleUnsupported = isUnsupportedRole(role);
@@ -100,7 +103,7 @@ export function getExplicitRole(
 
 export function getImplicitRole(
   node: VNode | AnyNode,
-  { chromium }: { chromium?: boolean } = {},
+  { chromium }: { chromium?: boolean | undefined } = {},
 ): string | null {
   const { vNode } = nodeLookup(node);
   if (!vNode) {
@@ -234,7 +237,7 @@ export function getRole(
 
 export function namedFromContents(
   vNode: VNode | AnyNode,
-  { strict }: { strict?: boolean } = {},
+  { strict }: { strict?: boolean | undefined } = {},
 ): boolean {
   vNode = vNode instanceof VNode ? vNode : getNodeFromTree(vNode);
   if (vNode.props.nodeType !== 1) return false;
@@ -300,7 +303,7 @@ export function validateAttrValue(
         attrInfo.values.includes(value.toLowerCase())
       );
     case "nmtokens":
-      list = tokenList(value as string);
+      list = tokenList(value);
       return list.reduce(
         (result: boolean, token: string) =>
           result && attrInfo.values.includes(token),
@@ -394,7 +397,9 @@ function roleIsAllowed(
   role: string,
   vNode: VNode,
   allowImplicit: boolean,
-  implicitRole: string | null,
+  // `undefined` (no landmark fallback) and `null` (no implicit role) compare
+  // differently against getRoleType below, so both stay distinct.
+  implicitRole: string | null | undefined,
 ): boolean {
   if (allowImplicit && role === implicitRole) return true;
   if (dpubFallbackRoles.includes(role) && getRoleType(role) !== implicitRole)
@@ -410,7 +415,7 @@ export function getOwnedVirtual(virtualNode: VNode): VNode[] {
   if (virtualNode.hasAttr("aria-owns")) {
     const owns = idrefs(virtualNode.actualNode, "aria-owns")
       .filter((element) => !!element)
-      .map((element) => getNodeFromTree(element as AnyNode));
+      .map((element) => getNodeFromTree(element));
     const uniqueOwns = owns.filter((own, index) => owns.indexOf(own) === index);
     const nativeChildren = children.filter(
       (child) => !uniqueOwns.includes(child),
@@ -441,8 +446,7 @@ function cacheIdRefs(
       if (!idRefs.has(id)) idRefs.set(id, [node]);
       else idRefs.get(id)!.push(node);
     }
-    for (let i = 0; i < refAttrs.length; ++i) {
-      const attr = refAttrs[i];
+    for (const attr of refAttrs) {
       const attrValue = sanitize(el.getAttribute!(attr) || "");
       if (!attrValue) continue;
       for (const token of tokenList(attrValue)) {
@@ -452,8 +456,8 @@ function cacheIdRefs(
     }
   }
   for (let i = 0; i < el.childNodes.length; i++) {
-    if (el.childNodes[i].nodeType === 1)
-      cacheIdRefs(el.childNodes[i], idRefs, refAttrs);
+    const child = el.childNodes[i];
+    if (child?.nodeType === 1) cacheIdRefs(child, idRefs, refAttrs);
   }
 }
 
@@ -472,10 +476,10 @@ export function getAccessibleRefs(node: VNode | AnyNode): AnyNode[] {
     documentElement?: AnyNode;
   };
 
-  let idRefs = idRefsByRoot.get(root as unknown as object);
+  let idRefs = idRefsByRoot.get(root);
   if (!idRefs) {
     idRefs = new Map();
-    idRefsByRoot.set(root as unknown as object, idRefs);
+    idRefsByRoot.set(root, idRefs);
     const refAttrs = Object.keys(ariaAttrs).filter((attr) => {
       const { type } = ariaAttrs[attr];
       return idRefsRegex.test(type);

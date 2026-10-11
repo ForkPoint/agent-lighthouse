@@ -224,7 +224,7 @@ describe("runAudits", () => {
     expect(byId.get("skip")!.status).toBe(CheckStatus.NotApplicable);
     expect(byId.get("boom")!.status).toBe(CheckStatus.NotApplicable);
     // Only `real` contributes: 1*0.6 / 0.6 → 100
-    expect(out.categories[0].score).toBe(100);
+    expect(out.categories[0]!.score).toBe(100);
 
     errorSpy.mockRestore();
   });
@@ -259,8 +259,8 @@ describe("runAudits", () => {
 
     const out = await runAudits(ctxWith([PageType.Homepage]), config);
     // one check exists (not the empty branch), but totalWeight === 0 → score 0
-    expect(out.categories[0].checks).toHaveLength(1);
-    expect(out.categories[0].score).toBe(0);
+    expect(out.categories[0]!.checks).toHaveLength(1);
+    expect(out.categories[0]!.score).toBe(0);
   });
 
   it("adding a weight-0 informative audit leaves the category score unchanged", async () => {
@@ -299,9 +299,9 @@ describe("runAudits", () => {
       },
     });
 
-    expect(before.categories[0].score).toBe(50);
-    expect(withInformative.categories[0].score).toBe(
-      before.categories[0].score,
+    expect(before.categories[0]!.score).toBe(50);
+    expect(withInformative.categories[0]!.score).toBe(
+      before.categories[0]!.score,
     );
     expect(withInformative.overallScore).toBe(before.overallScore);
     // The informative check is still reported, just not scored.
@@ -324,7 +324,7 @@ describe("runAudits", () => {
 
     const out = await runAudits(ctxWith([PageType.Homepage]), config);
     expect(out.checks).toHaveLength(25);
-    expect(out.categories[0].score).toBe(100);
+    expect(out.categories[0]!.score).toBe(100);
   });
 });
 
@@ -369,7 +369,7 @@ describe("runAudits — scan budget", () => {
     // The progress phase was sized on every runnable audit, so a stub still
     // counts as a unit done or the bar never reaches the end.
     expect(events.filter((e) => e.type === "unit:done")).toHaveLength(2);
-    expect(out.categories[0].score).toBe(0);
+    expect(out.categories[0]!.score).toBe(0);
   });
 
   it("withholds the audit that was still running, and stubs every later one", async () => {
@@ -437,7 +437,7 @@ describe("runAudits — scan budget", () => {
       undefined,
       controller.signal,
     );
-    expect(out.checks[0].explanation).toContain("The scan budget ran out.");
+    expect(out.checks[0]!.explanation).toContain("The scan budget ran out.");
   });
 });
 
@@ -595,6 +595,8 @@ describe("scan-error explanations", () => {
 
   it("names at most three fields, so one bad shape cannot fill the report", async () => {
     const stub = await stubFor(() => {
+      // Throws a bare ZodError-shaped object on purpose: the runner must read its issues.
+      // oxlint-disable-next-line typescript/only-throw-error
       throw {
         issues: Array.from({ length: 40 }, (_v, i) => ({
           path: ["details", "items", i],
@@ -614,9 +616,11 @@ describe("scan-error explanations", () => {
   });
 
   it("handles a thrown non-Error", async () => {
-    const stub = await stubFor((() => {
+    const stub = await stubFor(() => {
+      // Throws a non-Error on purpose: the runner must still explain it.
+      // oxlint-disable-next-line typescript/only-throw-error
       throw "just a string";
-    }) as () => never);
+    });
     expect(stub.explanation).toBe("Audit failed to run: just a string");
   });
 });
@@ -748,7 +752,9 @@ describe("audit tracing", () => {
     await runAudits(ctxWith([PageType.Homepage]), tracingConfig());
     logger.level = previous;
     errorSpy.mockRestore();
-    const lines = debugSpy.mock.calls.map((c) => String(c[0]));
+    const lines = debugSpy.mock.calls.map((c) =>
+      typeof c[0] === "string" ? c[0] : "",
+    );
     expect(lines.filter((l) => l.startsWith("[audit] "))).toHaveLength(3);
     debugSpy.mockRestore();
   });
@@ -809,14 +815,14 @@ describe("planAudits — evidence gate", () => {
       const plan = planAudits(ctx, config);
       expect(plan.runnable.map((r) => r.reg.meta.id)).toEqual(["universal"]);
       expect(plan.skipped).toHaveLength(1);
-      expect(plan.skipped[0].id).toBe("homepage-only");
-      expect(plan.skipped[0].tags).toContain("skipped:page-type");
+      expect(plan.skipped[0]!.id).toBe("homepage-only");
+      expect(plan.skipped[0]!.tags).toContain("skipped:page-type");
 
       const output = await runAudits(ctx, config);
       expect(run).toHaveBeenCalledOnce();
       expect(run.mock.calls[0]?.[0]?.pages).toEqual([page]);
       expect(
-        output.categories[0].checks.find((c) => c.id === "universal")?.status,
+        output.categories[0]!.checks.find((c) => c.id === "universal")?.status,
       ).toBe(CheckStatus.Pass);
     },
   );
@@ -1057,11 +1063,11 @@ describe("planAudits — evidence gate", () => {
     });
     const stub = plan.skipped[0];
 
-    expect(stub.id).toBe("needs-pages");
-    expect(stub.status).toBe(CheckStatus.NotApplicable);
-    expect(stub.tags).toContain("skipped:no-evidence");
-    expect(stub.explanation).toContain(EvidenceKey.RenderedBody);
-    expect(stub.explanation).toContain("served readable text");
+    expect(stub!.id).toBe("needs-pages");
+    expect(stub!.status).toBe(CheckStatus.NotApplicable);
+    expect(stub!.tags).toContain("skipped:no-evidence");
+    expect(stub!.explanation).toContain(EvidenceKey.RenderedBody);
+    expect(stub!.explanation).toContain("served readable text");
   });
 
   it("traces a gated audit as gated, not as skipped", async () => {
@@ -1103,7 +1109,7 @@ describe("planAudits — evidence gate", () => {
     };
     const stub = planAudits(shellContext(), config, { enforceEvidence: true })
       .skipped[0];
-    expect(stub.tags).toContain("skipped:page-type");
+    expect(stub!.tags).toContain("skipped:page-type");
   });
 
   it("resolves sample-adequate against the page types the audit declares", () => {
@@ -1187,6 +1193,6 @@ describe("planAudits — evidence gate", () => {
     // Only the homepage served readable text, so the product audit is gated
     // even though a product page was fetched.
     expect(plan.runnable.map((r) => r.reg.meta.id)).toEqual(["homepage-audit"]);
-    expect(plan.skipped[0].id).toBe("product-audit");
+    expect(plan.skipped[0]!.id).toBe("product-audit");
   });
 });

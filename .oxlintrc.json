@@ -13,7 +13,15 @@
     "unicorn/no-array-reverse": "off",
     "unicorn/consistent-function-scoping": "off",
     "no-shadow": "off",
-    "no-underscore-dangle": "off"
+    "no-underscore-dangle": "off",
+    "typescript/no-unsafe-type-assertion": "off",
+    "typescript/no-floating-promises": "error",
+    "typescript/no-misused-promises": "error",
+    "typescript/switch-exhaustiveness-check": "error",
+    "typescript/only-throw-error": "error",
+    "typescript/return-await": "error",
+    "typescript/restrict-plus-operands": "error",
+    "typescript/prefer-promise-reject-errors": "error"
   },
   "overrides": [
     {

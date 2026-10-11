@@ -229,7 +229,7 @@ export function discoverFeedUrls(ctx: FeedContext): string[] {
   const head = discoverFeedHeadUrls(ctx);
   const conv = CONVENTIONAL_PATHS.map((path) =>
     resolve(path, ctx.baseUrl),
-  ).filter(Boolean) as string[];
+  ).filter(Boolean);
   const seen = new Set<string>();
   return [...head, ...conv].filter((url) => {
     if (seen.has(url)) return false;

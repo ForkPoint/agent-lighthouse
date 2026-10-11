@@ -37,7 +37,7 @@ interface Server {
   /** Answer with a WWW-Authenticate challenge on the baseline. */
   challenges?: boolean;
   /** 'reflect' echoes the request Origin; anything else is sent verbatim. */
-  allowOrigin?: "reflect" | string;
+  allowOrigin?: string;
   allowCredentials?: boolean;
   allowHeaders?: string;
   accelBuffering?: string;

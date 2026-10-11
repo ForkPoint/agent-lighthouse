@@ -212,7 +212,7 @@ describe("MetaRobotsNotBlockingAudit", () => {
   it("declines when no response can be attributed to this site", async () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new MetaRobotsNotBlockingAudit();
-    const reached = await instance.audit(mockCheckContext(pages, rootFiles));
+    const reached = instance.audit(mockCheckContext(pages, rootFiles));
     expect(reached.status, "the same input reached is judged").not.toBe(
       CheckStatus.NotApplicable,
     );
@@ -234,9 +234,7 @@ describe("MetaRobotsNotBlockingAudit", () => {
   // `requires` deliberately omits `rendered-body`: robots directives live in the
   // head and the headers, which arrive whether or not the body renders.
   it("still judges a page that served no readable text", async () => {
-    const result = await new MetaRobotsNotBlockingAudit().audit(
-      shellSiteContext(),
-    );
+    const result = new MetaRobotsNotBlockingAudit().audit(shellSiteContext());
     expect(result.status).not.toBe(CheckStatus.NotApplicable);
   });
 });

@@ -69,10 +69,7 @@ export function parseListings(body: string): Listing[] {
     const server = isObject(entry["server"]) ? entry["server"] : entry;
     const meta = isObject(entry["_meta"]) ? entry["_meta"] : {};
     const official = isObject(meta["io.modelcontextprotocol.registry/official"])
-      ? (meta["io.modelcontextprotocol.registry/official"] as Record<
-          string,
-          unknown
-        >)
+      ? meta["io.modelcontextprotocol.registry/official"]
       : {};
     const remotes = Array.isArray(server["remotes"]) ? server["remotes"] : [];
 

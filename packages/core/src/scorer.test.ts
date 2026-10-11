@@ -9,6 +9,7 @@ import {
   GATED_MASS_UNSCORED_THRESHOLD,
 } from "./scorer";
 import { CheckPriority, CheckStatus, ScoreDisplayMode } from "./types";
+import { omit } from "#core/tests/omit";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -453,15 +454,15 @@ describe("weighted category score", () => {
     ];
     const withUnweighted = [
       ...base,
-      makeCheck({ status: CheckStatus.Fail, score: 0, weight: undefined }),
-      makeCheck({ status: CheckStatus.Pass, score: 1, weight: undefined }),
+      omit(makeCheck({ status: CheckStatus.Fail, score: 0 }), "weight"),
+      omit(makeCheck({ status: CheckStatus.Pass, score: 1 }), "weight"),
     ];
     expect(calculateCategoryScore(base)).toBe(63);
     expect(calculateCategoryScore(withUnweighted)).toBe(63);
     // …and a set of only unweighted checks has no evidence at all.
     expect(
       calculateCategoryScore([
-        makeCheck({ status: CheckStatus.Pass, score: 1, weight: undefined }),
+        omit(makeCheck({ status: CheckStatus.Pass, score: 1 }), "weight"),
       ]),
     ).toBe(0);
   });
@@ -493,21 +494,20 @@ describe("weighted category score", () => {
 });
 
 describe("gatedMassShare — what the gate removed", () => {
-  const check = (over: Partial<CheckResult>): CheckResult =>
-    ({
-      id: "x/y",
-      category: "content-extraction",
-      title: "t",
-      description: "d",
-      status: CheckStatus.Pass,
-      score: 1,
-      weight: 1,
-      scoreDisplayMode: ScoreDisplayMode.Binary,
-      priority: CheckPriority.Medium,
-      impact: "",
-      fix: "",
-      ...over,
-    }) as CheckResult;
+  const check = (over: Partial<CheckResult>): CheckResult => ({
+    id: "x/y",
+    category: "content-extraction",
+    title: "t",
+    description: "d",
+    status: CheckStatus.Pass,
+    score: 1,
+    weight: 1,
+    scoreDisplayMode: ScoreDisplayMode.Binary,
+    priority: CheckPriority.Medium,
+    impact: "",
+    fix: "",
+    ...over,
+  });
 
   it("is zero when nothing was gated", () => {
     expect(

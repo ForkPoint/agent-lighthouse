@@ -158,7 +158,7 @@ export class ContentWithoutClickthroughAudit extends Audit {
           'AI answer engines skip pages dominated by teaser content ("click to read more", "contact us to learn"). These pages provide no extractable answers, so agents will never surface your content in AI-generated responses. Provide substantive answers directly on the page.',
         code: '<!-- Replace "Download our guide to learn more" with: -->\n<h2>How It Works</h2>\n<p>Direct, substantive answer that AI agents can extract and cite.</p>',
       },
-      teaserPages[0].url,
+      teaserPages[0]?.url,
     );
   }
 }

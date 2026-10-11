@@ -95,13 +95,13 @@ function looksLikeHeading(el: AnyNode, $: CheerioAPI): FakeHeading | null {
 
   let styleHit = false;
   if (style) {
-    const sizeMatch = /font-size\s*:\s*(\d+(?:\.\d+)?)px/i.exec(style);
-    if (sizeMatch && parseFloat(sizeMatch[1]) >= MIN_FONT_SIZE_PX)
+    const size = /font-size\s*:\s*(\d+(?:\.\d+)?)px/i.exec(style)?.[1];
+    if (size !== undefined && parseFloat(size) >= MIN_FONT_SIZE_PX)
       styleHit = true;
 
-    const weightMatch = /font-weight\s*:\s*(\d+|bold|bolder)/i.exec(style);
-    if (weightMatch) {
-      const w = weightMatch[1].toLowerCase();
+    const weight = /font-weight\s*:\s*(\d+|bold|bolder)/i.exec(style)?.[1];
+    if (weight !== undefined) {
+      const w = weight.toLowerCase();
       if (w === "bold" || w === "bolder" || parseInt(w, 10) >= MIN_FONT_WEIGHT)
         styleHit = true;
     }
@@ -111,8 +111,8 @@ function looksLikeHeading(el: AnyNode, $: CheerioAPI): FakeHeading | null {
 
   return {
     tag,
-    className: className || undefined,
-    style: style || undefined,
+    ...(className && { className }),
+    ...(style && { style }),
     text,
   };
 }

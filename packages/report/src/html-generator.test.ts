@@ -82,7 +82,7 @@ describe("generateHtmlReport", () => {
       /rel="icon" type="image\/svg\+xml" href="([^"]+)"/,
     )?.[1];
     expect(favicon).toBeDefined();
-    const svg = decodeURIComponent(favicon!.split(",")[1]);
+    const svg = decodeURIComponent(favicon!.split(",")[1]!);
     expect(svg).toContain('viewBox="0 0 256 256"');
     expect(svg).toContain('transform="translate(-5.5 5)"');
     expect(svg).toContain('fill="#4f46e5"');

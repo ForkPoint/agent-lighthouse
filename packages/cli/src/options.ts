@@ -16,6 +16,15 @@ function isPageType(value: string): value is PageType {
 }
 
 /**
+ * A config-file value as it should read in an error message. The file is
+ * unvalidated JSON, so an object or array must print as JSON, not as
+ * "[object Object]".
+ */
+function describeConfigValue(value: unknown): string {
+  return typeof value === "string" ? value : JSON.stringify(value);
+}
+
+/**
  * Argument parsing, lifted out of `main.ts`.
  *
  * `main.ts` reads `process.argv` at module scope and calls `main()` on import,
@@ -205,7 +214,7 @@ export function parseCliOptions(
     pageType: pageTypeArg && isPageType(pageTypeArg) ? pageTypeArg : undefined,
     invalidPageType:
       pageTypeArg !== undefined && !isPageType(pageTypeArg)
-        ? String(pageTypeArg)
+        ? describeConfigValue(pageTypeArg)
         : undefined,
     ...(scope.success && scope.data.pages !== undefined
       ? { pages: scope.data.pages }
@@ -219,7 +228,7 @@ export function parseCliOptions(
     timeoutSeconds: timeoutValid
       ? Number(timeoutArg)
       : fileTimeoutValid
-        ? (fileTimeout as number | undefined)
+        ? fileTimeout
         : undefined,
     invalidTimeout:
       timeoutArg !== undefined && !timeoutValid
@@ -227,7 +236,7 @@ export function parseCliOptions(
         : args.includes("--timeout") && timeoutArg === undefined
           ? ""
           : !timeoutValid && !fileTimeoutValid
-            ? `${String(fileTimeout)} (config file)`
+            ? `${describeConfigValue(fileTimeout)} (config file)`
             : undefined,
   };
 }
@@ -252,7 +261,12 @@ export function resolveCommand(args: string[]): {
   const command = args[0];
   if (!command || command === "-h" || command === "--help")
     return { action: CliCommand.Help };
-  if (command === "audit") return { action: CliCommand.Audit, url: args[1] };
+  if (command === "audit") {
+    const url = args[1];
+    return url === undefined
+      ? { action: CliCommand.Audit }
+      : { action: CliCommand.Audit, url };
+  }
   if (!command.startsWith("-"))
     return { action: CliCommand.Audit, url: command };
   return { action: CliCommand.Audit };

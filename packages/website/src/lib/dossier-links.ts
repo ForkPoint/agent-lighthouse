@@ -74,8 +74,8 @@ export function resolveDossierLink(
     return withBase("policy/") + target.fragment;
 
   const dossier = /^docs\/evidence\/audits\/(.+)\.md$/.exec(target.path);
-  if (dossier && published.has(dossier[1]!))
-    return auditPath(dossier[1]!) + target.fragment;
+  if (dossier && published.has(dossier[1]))
+    return auditPath(dossier[1]) + target.fragment;
 
   return githubUrl(target);
 }

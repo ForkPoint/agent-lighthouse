@@ -111,9 +111,9 @@ function tallyRatings(nodes: object[]): RatingTally {
 
     total += usable;
     if (matchesAnyType(rec, PRODUCT_TYPES)) onProduct += usable;
-    if (rating && typeof rating === "object") counted.add(rating as object);
+    if (rating && typeof rating === "object") counted.add(rating);
     for (const r of asArray(reviews))
-      if (r && typeof r === "object") counted.add(r as object);
+      if (r && typeof r === "object") counted.add(r);
   }
 
   for (const node of nodes) {

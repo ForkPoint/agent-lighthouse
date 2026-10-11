@@ -207,7 +207,9 @@ async function audit(targetUrl?: string) {
       }
     : isSilent
       ? undefined
-      : createProgressRenderer({ tty: Boolean(process.stdout.isTTY) });
+      : // isTTY is typed boolean but is undefined at runtime when stdout is not a TTY.
+        // oxlint-disable-next-line typescript/no-unnecessary-type-conversion
+        createProgressRenderer({ tty: Boolean(process.stdout.isTTY) });
 
   // One NDJSON record per audit, appended as the scan runs so a crash still
   // leaves the trace up to the point it stopped. Truncated first: a trace that

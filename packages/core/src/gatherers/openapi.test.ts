@@ -184,7 +184,7 @@ describe("readOpenApiPaths", () => {
       'paths entry "/a" is null, not a path item object (+1 more)',
     ],
   ])("reports %s as malformed and names it", (_label, spec, found) => {
-    const reading = readOpenApiPaths(spec as Record<string, unknown>);
+    const reading = readOpenApiPaths(spec);
     expect(reading.kind).toBe("malformed");
     expect(reading.kind === "malformed" && reading.found).toBe(found);
   });

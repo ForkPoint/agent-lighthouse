@@ -15,14 +15,14 @@ describe("parseRobots", () => {
   it("parses a BOM-prefixed file (v1 returned zero groups)", () => {
     const groups = parseRobots("﻿User-agent: *\nDisallow: /private/");
     expect(groups).toHaveLength(1);
-    expect(groups[0].rules).toEqual([{ type: "disallow", path: "/private/" }]);
+    expect(groups[0]!.rules).toEqual([{ type: "disallow", path: "/private/" }]);
   });
   it("handles CRLF and comments", () => {
     const groups = parseRobots(
       "User-agent: GPTBot # openai\r\nDisallow: /a\r\n",
     );
-    expect(groups[0].userAgent).toBe("GPTBot");
-    expect(groups[0].rules[0].path).toBe("/a");
+    expect(groups[0]!.userAgent).toBe("GPTBot");
+    expect(groups[0]!.rules[0]!.path).toBe("/a");
   });
   it("merges repeated groups for the same user-agent (RFC 9309 §2.2.1)", () => {
     const body =

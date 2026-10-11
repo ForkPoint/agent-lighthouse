@@ -104,6 +104,8 @@ function buildGrid($: CheerioAPI, table: Element): Cell[][] {
     const cells = $(tr)
       .children("th, td")
       .toArray()
+      // `type` is domelementtype's string enum, installed twice; compare its value.
+      // oxlint-disable-next-line typescript/no-unsafe-enum-comparison
       .filter((cell): cell is Element => cell.type === "tag");
     for (const node of cells) {
       while (grid[rowIndex]?.[column] !== undefined) column += 1;
@@ -205,6 +207,8 @@ function diff(grid: Cell[][], reparsed: string[][]): string[] {
 
 /** True when the node is an element rather than text or a comment. */
 function isElement(node: AnyNode): node is Element {
+  // `type` is domelementtype's string enum, installed twice; compare its value.
+  // oxlint-disable-next-line typescript/no-unsafe-enum-comparison
   return node.type === "tag";
 }
 

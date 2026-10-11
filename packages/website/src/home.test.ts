@@ -62,7 +62,7 @@ describe.skipIf(!built)("the rendered landing page", () => {
     // Escaped, so the `<!-- Scanned: … -->` line is characters in the `<pre>`
     // and not a comment node the parser swallows.
     expect(page).toContain(
-      snippet.split("\n")[0]!.replace(/</g, "&lt;").replace(/>/g, "&gt;"),
+      snippet.split("\n")[0].replace(/</g, "&lt;").replace(/>/g, "&gt;"),
     );
     expect(page).toContain("&lt;!-- Scanned: https://example.com --&gt;");
     expect(page).toContain(BADGE_LINK);
@@ -118,13 +118,13 @@ describe.skipIf(!built)("the rendered landing page", () => {
     const page = home();
     const inline = [
       ...page.matchAll(/<script type="module">([\s\S]*?)<\/script>/g),
-    ].map((m) => ["inline", m[1]!] as const);
+    ].map((m) => ["inline", m[1]] as const);
     const external = [...page.matchAll(/<script[^>]*src="([^"]+)"/g)].map(
       (m) =>
         [
-          m[1]!,
+          m[1],
           readFileSync(
-            resolve(DIST, m[1]!.replace("/agent-lighthouse/", "")),
+            resolve(DIST, m[1].replace("/agent-lighthouse/", "")),
             "utf8",
           ),
         ] as const,
@@ -143,7 +143,7 @@ describe.skipIf(!built)("the rendered landing page", () => {
       );
       // Task 5's lesson: the corpus does not travel with the page.
       expect(code, `${where} carries a dossier id`).not.toContain(
-        auditPath(auditList()[0]!.id),
+        auditPath(auditList()[0].id),
       );
     }
   });

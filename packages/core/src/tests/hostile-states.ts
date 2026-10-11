@@ -188,7 +188,7 @@ function state(spec: StateSpec): HostileState {
         domain: "example.test",
         baseUrl: BASE_URL,
         fetch: async ({ url }) => fetchResult({ url, status: 404 }),
-        wafProtection: waf ?? undefined,
+        ...(waf !== null && { wafProtection: waf }),
         evidence: buildScanEvidence({
           requestedUrl: HOME_URL,
           homepageResult: spec.homepage,

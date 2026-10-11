@@ -65,7 +65,10 @@ export abstract class Audit {
     if (result.expected && result.expected.length > 5000) {
       result.expected = result.expected.slice(0, 4990) + "... (truncated)";
     }
-    return AuditResultSchema.parse(result);
+    // Zod types every optional key as `T | undefined`. Parsing never adds an
+    // absent key, and `result` is already an `AuditResult`, so the parsed value
+    // carries no explicit undefined that the interface would reject.
+    return AuditResultSchema.parse(result) as AuditResult;
   }
 
   /** Run the audit and return a result. */
@@ -84,7 +87,7 @@ export abstract class Audit {
       message,
       expected,
       found,
-      pageUrl,
+      ...(pageUrl !== undefined && { pageUrl }),
     };
   }
 
@@ -106,7 +109,7 @@ export abstract class Audit {
       message,
       expected,
       found,
-      pageUrl,
+      ...(pageUrl !== undefined && { pageUrl }),
     };
   }
 
@@ -128,13 +131,13 @@ export abstract class Audit {
     // showed the generic snippet from meta.guidance.code.
     const code =
       typeof recommendationOrPriority === "object" &&
-      typeof recommendationOrPriority.code === "string"
-        ? recommendationOrPriority.code
+      typeof recommendationOrPriority["code"] === "string"
+        ? recommendationOrPriority["code"]
         : undefined;
     const displayValue =
       typeof recommendationOrPriority === "object" &&
-      typeof recommendationOrPriority.displayValue === "string"
-        ? recommendationOrPriority.displayValue
+      typeof recommendationOrPriority["displayValue"] === "string"
+        ? recommendationOrPriority["displayValue"]
         : undefined;
 
     return {
@@ -146,8 +149,8 @@ export abstract class Audit {
       ...(displayValue ? { displayValue } : {}),
       ...(code ? { details: { code } } : {}),
       ...(remediation ? { remediation } : {}),
-      priority,
-      pageUrl,
+      ...(priority !== undefined && { priority }),
+      ...(pageUrl !== undefined && { pageUrl }),
     };
   }
 
@@ -169,13 +172,13 @@ export abstract class Audit {
     // showed the generic snippet from meta.guidance.code.
     const code =
       typeof recommendationOrPriority === "object" &&
-      typeof recommendationOrPriority.code === "string"
-        ? recommendationOrPriority.code
+      typeof recommendationOrPriority["code"] === "string"
+        ? recommendationOrPriority["code"]
         : undefined;
     const displayValue =
       typeof recommendationOrPriority === "object" &&
-      typeof recommendationOrPriority.displayValue === "string"
-        ? recommendationOrPriority.displayValue
+      typeof recommendationOrPriority["displayValue"] === "string"
+        ? recommendationOrPriority["displayValue"]
         : undefined;
 
     return {
@@ -187,8 +190,8 @@ export abstract class Audit {
       ...(displayValue ? { displayValue } : {}),
       ...(code ? { details: { code } } : {}),
       ...(remediation ? { remediation } : {}),
-      priority,
-      pageUrl,
+      ...(priority !== undefined && { priority }),
+      ...(pageUrl !== undefined && { pageUrl }),
     };
   }
 
@@ -215,6 +218,14 @@ export abstract class Audit {
         : rawExplanation;
     const expected = result.details?.expected ?? result.expected;
     const found = result.details?.found ?? result.found;
+    const code = result.details?.code ?? meta.guidance?.code;
+    // `docsUrl` and `effort` always come from meta, even when meta has none:
+    // an audit's own details never supply them.
+    const {
+      docsUrl: _docsUrl,
+      effort: _effort,
+      ...resultDetails
+    } = result.details ?? {};
 
     return {
       id: meta.id,
@@ -238,9 +249,9 @@ export abstract class Audit {
       // the one place a CheckResult is built from its meta.
       weight: isInformative ? 0 : meta.weight,
       scoreDisplayMode,
-      displayValue,
-      explanation,
-      pageUrl: result.pageUrl,
+      ...(displayValue !== undefined && { displayValue }),
+      ...(explanation !== undefined && { explanation }),
+      ...(result.pageUrl !== undefined && { pageUrl: result.pageUrl }),
 
       // UCP guidance extensions
       priority: result.priority ?? meta.defaultPriority,
@@ -252,22 +263,28 @@ export abstract class Audit {
 
       // Structured details
       details: {
-        ...result.details,
-        expected,
-        found,
-        code: result.details?.code ?? meta.guidance?.code,
-        docsUrl: meta.guidance?.docsUrl,
+        ...resultDetails,
+        ...(expected !== undefined && { expected }),
+        ...(found !== undefined && { found }),
+        ...(code !== undefined && { code }),
+        ...(meta.guidance?.docsUrl !== undefined && {
+          docsUrl: meta.guidance.docsUrl,
+        }),
         // The dossier behind this check, so a report reader can reach the
         // evidence without the audit declaring a second URL.
         evidenceUrl: evidenceUrl(meta.id),
-        effort: meta.guidance?.effort,
+        ...(meta.guidance?.effort !== undefined && {
+          effort: meta.guidance.effort,
+        }),
       },
-      tags: meta.guidance?.tags,
-      deprecated: meta.deprecated,
+      ...(meta.guidance?.tags !== undefined && { tags: meta.guidance.tags }),
+      ...(meta.deprecated !== undefined && { deprecated: meta.deprecated }),
 
       // v2 taxonomy provenance, carried alongside the weight it justifies.
-      evidenceGrade: meta.evidenceGrade,
-      tier: meta.tier,
+      ...(meta.evidenceGrade !== undefined && {
+        evidenceGrade: meta.evidenceGrade,
+      }),
+      ...(meta.tier !== undefined && { tier: meta.tier }),
     };
   }
 }

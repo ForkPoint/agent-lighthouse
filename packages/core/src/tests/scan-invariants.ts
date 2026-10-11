@@ -93,10 +93,7 @@ export function invariantViolations(
   // a synthetic state. The runner's unread-scan guard skips all 215 audits to
   // `na` before any audit runs. On a live scan this fires only if that guard
   // regresses or another path constructs an inconsistent report.
-  if (
-    validity.evidence[EvidenceKey.OriginReachable] === false &&
-    passes.length > 0
-  ) {
+  if (!validity.evidence[EvidenceKey.OriginReachable] && passes.length > 0) {
     violations.push(
       `origin unreachable but ${passes.length} check(s) passed, e.g. ${passes[0]!.id}`,
     );
@@ -111,8 +108,8 @@ export function invariantViolations(
   // regresses. Merging rules 3 and 4 would produce false failures on every
   // client-rendered site in the list.
   if (
-    validity.evidence[EvidenceKey.OriginReachable] === true &&
-    validity.evidence[EvidenceKey.RenderedBody] === false
+    validity.evidence[EvidenceKey.OriginReachable] &&
+    !validity.evidence[EvidenceKey.RenderedBody]
   ) {
     const blind = passes.filter((c) => READS_RENDERED_BODY.has(c.id));
     if (blind.length > 0) {
@@ -128,8 +125,8 @@ export function invariantViolations(
   // A report whose flag disagrees with its own evidence is unreadable either
   // way round.
   const expectedJudgeable =
-    validity.evidence[EvidenceKey.OriginReachable] === true &&
-    validity.evidence[EvidenceKey.UnblockedFetches] === true;
+    validity.evidence[EvidenceKey.OriginReachable] &&
+    validity.evidence[EvidenceKey.UnblockedFetches];
   if (validity.judgeable !== expectedJudgeable) {
     violations.push(
       `judgeable is ${validity.judgeable} but the evidence says ${expectedJudgeable}`,

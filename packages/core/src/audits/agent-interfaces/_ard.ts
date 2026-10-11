@@ -38,16 +38,17 @@ export const ARD_REQUIRED_TOP_LEVEL = [
   "entries",
 ] as const;
 
+/** Optional fields are undefined when the manifest entry omits them or leaves them blank. */
 export interface ArdEntry {
-  identifier?: string;
-  displayName?: string;
+  identifier?: string | undefined;
+  displayName?: string | undefined;
   /** IANA media type of the referenced artifact. */
-  type?: string;
+  type?: string | undefined;
   /** Remote reference. Mutually exclusive with inline `data`. */
-  url?: string;
+  url?: string | undefined;
   /** True when the entry embeds the artifact inline instead of linking it. */
   hasData: boolean;
-  description?: string;
+  description?: string | undefined;
   capabilities: string[];
   representativeQueries: string[];
   tags: string[];
@@ -55,7 +56,7 @@ export interface ArdEntry {
    * Optional ISO 8601 freshness marker. §4.2 defines this on the **entry**;
    * there is no root-level `updatedAt` in the schema.
    */
-  updatedAt?: string;
+  updatedAt?: string | undefined;
   /** Optional per-entry attestation extension (§4.2). Never a pass condition. */
   hasTrustManifest: boolean;
   /** Position in `entries`, used to label entries that name themselves poorly. */
@@ -218,6 +219,8 @@ export function readAiCatalog(ctx: CheckContext): ArdRead {
  * A single sentence explaining why the manifest could not be read, reusable in
  * every consuming audit's message.
  */
+// The switch is exhaustive over ArdRead; tsc (noImplicitReturns) proves every path returns.
+// oxlint-disable-next-line typescript/consistent-return
 export function describeFailure(read: Exclude<ArdRead, { ok: true }>): string {
   switch (read.reason) {
     case "absent":

@@ -14,8 +14,8 @@ describe("parseRobotsTxt", () => {
       "User-agent: GPTBot\nDisallow: /api/\nAllow: /",
     );
     expect(groups).toHaveLength(1);
-    expect(groups[0].userAgent).toBe("GPTBot");
-    expect(groups[0].rules).toEqual([
+    expect(groups[0]!.userAgent).toBe("GPTBot");
+    expect(groups[0]!.rules).toEqual([
       { type: "disallow", path: "/api/" },
       { type: "allow", path: "/" },
     ]);
@@ -27,15 +27,15 @@ describe("parseRobotsTxt", () => {
     );
     expect(groups).toHaveLength(2);
     expect(groups.map((g) => g.userAgent)).toEqual(["GPTBot", "CCBot"]);
-    expect(groups[0].rules).toEqual([{ type: "disallow", path: "/" }]);
-    expect(groups[1].rules).toEqual([{ type: "disallow", path: "/" }]);
+    expect(groups[0]!.rules).toEqual([{ type: "disallow", path: "/" }]);
+    expect(groups[1]!.rules).toEqual([{ type: "disallow", path: "/" }]);
   });
 
   it("parses crawl-delay and strips comments", () => {
     const groups = parseRobotsTxt(
       "User-agent: *  # wildcard\nCrawl-delay: 7\nDisallow: /admin/",
     );
-    expect(groups[0].crawlDelay).toBe(7);
+    expect(groups[0]!.crawlDelay).toBe(7);
   });
 
   it("discards stray directives that appear before any User-agent line", () => {
@@ -45,8 +45,8 @@ describe("parseRobotsTxt", () => {
       "Disallow: /admin/\nUser-agent: GPTBot\nDisallow: /api/",
     );
     expect(groups).toHaveLength(1);
-    expect(groups[0].userAgent).toBe("GPTBot");
-    expect(groups[0].rules).toEqual([{ type: "disallow", path: "/api/" }]);
+    expect(groups[0]!.userAgent).toBe("GPTBot");
+    expect(groups[0]!.rules).toEqual([{ type: "disallow", path: "/api/" }]);
   });
 
   it("skips lines that contain no colon character", () => {
@@ -55,7 +55,7 @@ describe("parseRobotsTxt", () => {
       "User-agent: GPTBot\nINVALID_NO_COLON_HERE\nDisallow: /",
     );
     expect(groups).toHaveLength(1);
-    expect(groups[0].rules).toEqual([{ type: "disallow", path: "/" }]);
+    expect(groups[0]!.rules).toEqual([{ type: "disallow", path: "/" }]);
   });
 
   it("ignores a Crawl-delay directive whose value is not a valid number", () => {
@@ -63,8 +63,8 @@ describe("parseRobotsTxt", () => {
     const groups = parseRobotsTxt(
       "User-agent: GPTBot\nCrawl-delay: notanumber\nDisallow: /api/",
     );
-    expect(groups[0].crawlDelay).toBeUndefined();
-    expect(groups[0].rules).toEqual([{ type: "disallow", path: "/api/" }]);
+    expect(groups[0]!.crawlDelay).toBeUndefined();
+    expect(groups[0]!.rules).toEqual([{ type: "disallow", path: "/api/" }]);
   });
 
   it("ignores unrecognised directives such as Sitemap:", () => {
@@ -74,8 +74,8 @@ describe("parseRobotsTxt", () => {
       "User-agent: *\nSitemap: https://example.com/sitemap.xml\nDisallow: /api/",
     );
     expect(groups).toHaveLength(1);
-    expect(groups[0].rules).toEqual([{ type: "disallow", path: "/api/" }]);
-    expect(groups[0].crawlDelay).toBeUndefined();
+    expect(groups[0]!.rules).toEqual([{ type: "disallow", path: "/api/" }]);
+    expect(groups[0]!.crawlDelay).toBeUndefined();
   });
 });
 

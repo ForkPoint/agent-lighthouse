@@ -77,6 +77,7 @@ describe("central audit index", () => {
 import { auditIndexFields, parseAuditReviews } from "./audit-index";
 import { ArticleSchemaAudit } from "#core/audits/structured-data/article-schema";
 import { AuditTier, PageType } from "#core/types";
+import { omit } from "#core/tests/omit";
 
 const reviewText = `# Review\n\n### example/check\n\n- **Scope / read:** Reads a\n  visible feature.\n- **Current aggregation / absence:** Absent is NA.\n- **Disposition:** Keep the feature guard.\n- **Tests:** Check missing input.\n`;
 
@@ -119,7 +120,7 @@ describe("audit index generation boundaries", () => {
 
   it("keeps unreviewed audits explicit and does not infer feature tags", () => {
     const entry = auditIndexFields(
-      { ...ArticleSchemaAudit.meta, guidance: undefined },
+      omit(ArticleSchemaAudit.meta, "guidance"),
       undefined,
     );
     expect(entry.features).toEqual([]);
@@ -133,9 +134,8 @@ describe("audit index generation boundaries", () => {
     };
     const entry = auditIndexFields(
       {
-        ...meta,
+        ...omit(meta, "applicablePageTypes"),
         pageTypes: [...meta.pageTypes],
-        applicablePageTypes: undefined,
       },
       undefined,
     );
@@ -154,7 +154,7 @@ describe("audit index generation boundaries", () => {
   it("never substitutes scored grade A for absent evidence metadata", () => {
     expect(() =>
       auditIndexFields(
-        { ...ArticleSchemaAudit.meta, evidenceGrade: undefined },
+        omit(ArticleSchemaAudit.meta, "evidenceGrade"),
         undefined,
       ),
     ).toThrow("Incomplete audit metadata");

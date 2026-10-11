@@ -74,7 +74,9 @@ async function main() {
           `FLAG ${url} words=${words} chars=${chars} strict=${strict}`,
         );
     } catch (e) {
-      console.log(`err ${url} ${e instanceof Error ? e.message : e}`);
+      console.log(
+        `err ${url} ${e instanceof Error ? e.message : JSON.stringify(e)}`,
+      );
       rows.push({
         url,
         status: 0,

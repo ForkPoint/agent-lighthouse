@@ -1,5 +1,4 @@
 import { describe, it, expect } from "vitest";
-import type { AuditMeta } from "./types";
 import { defaultConfig, filterConfig, CATEGORY_IDS } from "./audit-config";
 import type { AuditRegistration, ScanConfig } from "./audit-config";
 import { AuditTier } from "./types";
@@ -61,7 +60,7 @@ describe("filterConfig", () => {
     const experimental: AuditRegistration = {
       create: base[0]!.create,
       meta: {
-        ...(base[0]!.meta as AuditMeta),
+        ...base[0]!.meta,
         id: "machine-discovery/probe-x",
         tier: AuditTier.Experimental,
         weight: 0,

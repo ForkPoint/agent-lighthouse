@@ -166,15 +166,15 @@ describe.skipIf(!built)("rendered docs pages", () => {
     const middle = body(page("audit-architecture"));
     const adjacent = [...middle.matchAll(/<a\b[^>]*rel="(prev|next)"[^>]*>/g)];
     expect(adjacent).toHaveLength(2);
-    expect(adjacent[0]![0]).toContain(`href="${docPath("quickstart")}"`);
-    expect(adjacent[1]![0]).toContain(`href="${docPath("scoring")}"`);
+    expect(adjacent[0][0]).toContain(`href="${docPath("quickstart")}"`);
+    expect(adjacent[1][0]).toContain(`href="${docPath("scoring")}"`);
   });
 
   it("leaves no unresolved relative link in the prose", () => {
     for (const section of DOC_SECTIONS) {
       const hrefs = [
         ...article(page(section.slug)).matchAll(/href="([^"]+)"/g),
-      ].map((m) => m[1]!);
+      ].map((m) => m[1]);
       for (const href of hrefs) {
         expect(
           href,

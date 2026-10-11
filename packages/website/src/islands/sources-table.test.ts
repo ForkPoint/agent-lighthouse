@@ -140,7 +140,7 @@ describe("the registry on disk", () => {
 
   it("filters the real registry down by a type it actually contains", () => {
     const [first] = sourceTypes(raw.sources);
-    const matched = filterSources(raw.sources, "", first!);
+    const matched = filterSources(raw.sources, "", first);
 
     expect(matched.length).toBeGreaterThan(0);
     expect(matched.length).toBeLessThan(raw.sources.length);

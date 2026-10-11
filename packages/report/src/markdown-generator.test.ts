@@ -79,7 +79,7 @@ describe("generateMarkdownSummary", () => {
         cat({
           id: "agent-interfaces",
           name: "Agent Interfaces",
-          score: score as number,
+          score: score,
           assessedMass: 1,
           checks: [check()],
         }),

@@ -117,7 +117,7 @@ function assessShipping(offer: Record<string, unknown>): ShippingLeg {
     destination && typeof destination["addressCountry"] === "string"
       ? destination["addressCountry"]
       : typeof details["shippingDestination"] === "string"
-        ? (details["shippingDestination"] as string)
+        ? details["shippingDestination"]
         : undefined;
   if (!country) problems.push("shippingDestination carries no addressCountry");
 

@@ -45,7 +45,10 @@ export function createProgressNotifier(
       case "scan:done":
         send(event.fraction, true);
         break;
-      default:
+      // scan:start carries fraction 0, and a failed unit's progress is
+      // reported by the next unit:done or phase:done, so neither notifies.
+      case "scan:start":
+      case "unit:fail":
         break;
     }
   };

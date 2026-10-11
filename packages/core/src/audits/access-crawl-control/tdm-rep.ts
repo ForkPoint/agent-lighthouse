@@ -63,7 +63,7 @@ type FileVerdict =
   | { kind: "absent" }
   | { kind: "unparseable" }
   | { kind: "wrong-shape" }
-  | { kind: "valid"; reservations: string[]; policy?: string };
+  | { kind: "valid"; reservations: string[]; policy?: string | undefined };
 
 /**
  * Read the site-wide policy file.
@@ -111,13 +111,13 @@ function readPolicyFile(ctx: CheckContext): FileVerdict {
   const policy = entries
     .map((e) => e["tdm-policy"])
     .find((p) => typeof p === "string");
-  return { kind: "valid", reservations, policy: policy as string | undefined };
+  return { kind: "valid", reservations, policy: policy };
 }
 
 /** A `tdm-reservation` response header, which the CG report calls the preferred technique. */
 function readHeader(
   ctx: CheckContext,
-): { value: string; policy?: string } | undefined {
+): { value: string; policy?: string | undefined } | undefined {
   for (const page of ctx.pages) {
     const value = page.fetchResult?.headers?.[RESERVATION_HEADER];
     if (value?.trim()) {
@@ -133,8 +133,8 @@ function readHeader(
 /** Page-level `<meta name="tdm-reservation">`, collected across every page. */
 function readMeta(ctx: CheckContext): {
   values: string[];
-  policy?: string;
-  pageUrl?: string;
+  policy?: string | undefined;
+  pageUrl?: string | undefined;
 } {
   const values: string[] = [];
   let policy: string | undefined;

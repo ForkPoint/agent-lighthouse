@@ -163,7 +163,7 @@ export class OpenApiSchemasAudit extends Audit {
       if (isObject(responses)) {
         for (const resp of Object.values(responses)) {
           if (isObject(resp)) {
-            const content = (resp as Record<string, unknown>)["content"];
+            const content = resp["content"];
             if (isObject(content)) {
               for (const mediaType of Object.values(content)) {
                 if (isObject(mediaType) && mediaType["schema"]) {
