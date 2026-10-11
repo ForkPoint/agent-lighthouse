@@ -110,7 +110,8 @@ function parseCliArgs(argv: string[]): CliOptions {
     }
     const match = /^--([a-z-]+)=(.*)$/.exec(arg);
     if (!match) continue;
-    const [, name, val] = match;
+    // `(.*)` always participates in a match, so `val` is a string.
+    const [, name, val = ""] = match;
     switch (name) {
       case "limit":
         options.limit = Math.max(0, parseInt(val, 10) || 0);
@@ -204,11 +205,12 @@ Examples:
 interface TestSiteOutcome {
   domain: string;
   category: string;
-  skipped?: SkipReason;
+  skipped?: SkipReason | undefined;
   score?: number | null;
   scoreTier?: string | null;
-  evidence?: Record<EvidenceKey, boolean>;
-  unscoredReason?: string;
+  // Copied from `scanValidity`, which an unjudgeable report may lack.
+  evidence?: Record<EvidenceKey, boolean> | undefined;
+  unscoredReason?: string | undefined;
   statusCounts: Record<string, number>;
   violations: string[];
   durationMs: number;
@@ -335,9 +337,9 @@ async function main(): Promise<void> {
       let r = 0;
       while (added < options.limit && r < 1000) {
         for (const cat of categories) {
-          const list = byCategory.get(cat);
-          if (list && list[r]) {
-            selected.push(list[r]);
+          const entry = byCategory.get(cat)?.[r];
+          if (entry) {
+            selected.push(entry);
             added++;
             if (added >= options.limit) break;
           }
@@ -463,7 +465,7 @@ async function main(): Promise<void> {
             ? `${outcome.score}/100 (${outcome.scoreTier})`
             : `unscored (${outcome.unscoredReason ?? "gated"})`;
 
-        const countsDisplay = `${outcome.statusCounts.pass ?? 0} pass, ${outcome.statusCounts.warn ?? 0} warn, ${outcome.statusCounts.fail ?? 0} fail, ${outcome.statusCounts.na ?? 0} na`;
+        const countsDisplay = `${outcome.statusCounts["pass"] ?? 0} pass, ${outcome.statusCounts["warn"] ?? 0} warn, ${outcome.statusCounts["fail"] ?? 0} fail, ${outcome.statusCounts["na"] ?? 0} na`;
 
         if (outcome.violations.length === 0) {
           console.log(

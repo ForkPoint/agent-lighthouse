@@ -23,12 +23,12 @@ export function parseAuditReviews(markdown: string): Map<string, AuditReview> {
       throw new Error(`Invalid audit review heading: ${id}`);
     }
     if (reviews.has(id)) throw new Error(`Duplicate audit review: ${id}`);
-    const body = section.slice(newline + 1).split(/^#{1,2} /m)[0];
+    // `split` always yields at least one element.
+    const body = section.slice(newline + 1).split(/^#{1,2} /m)[0] ?? "";
     const fields = new Map<string, string>();
     const bullets = [...body.matchAll(/^- \*\*([^*]+):\*\*\s*/gm)];
-    for (let i = 0; i < bullets.length; i++) {
-      const match = bullets[i];
-      const key = match[1];
+    for (const [i, match] of bullets.entries()) {
+      const key = match[1] ?? "";
       if (fields.has(key))
         throw new Error(`Duplicate review field ${key}: ${id}`);
       fields.set(

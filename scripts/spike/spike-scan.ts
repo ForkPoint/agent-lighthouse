@@ -49,10 +49,10 @@ interface SiteResult {
   error?: string;
   score: number | null;
   waf?: {
-    provider?: string;
+    provider?: string | undefined;
     isBlocked: boolean;
-    statusCode?: number;
-    isRateLimit?: boolean;
+    statusCode?: number | undefined;
+    isRateLimit?: boolean | undefined;
   };
   pagesScanned: number;
   homepageWords?: number;

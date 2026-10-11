@@ -48,6 +48,11 @@ import {
 } from "#core/tests/fixture-io";
 import { CheckStatus, PageTypeSource } from "#core/types";
 
+/** Count one occurrence of `key`, starting a missing key at zero. */
+function bump(counts: Record<string, number>, key: string): void {
+  counts[key] = (counts[key] ?? 0) + 1;
+}
+
 function fixtureFetchResult(
   html: string,
   provenance: FixtureProvenance,
@@ -138,7 +143,7 @@ async function main() {
         contentLength: 0,
       }),
       evidence: allEvidenceMet(),
-      wafProtection: wafProtection ?? undefined,
+      ...(wafProtection != null && { wafProtection }),
     };
 
     const traces: any[] = [];
@@ -172,11 +177,11 @@ async function main() {
 
     for (const t of traces) {
       totalStats.totalAuditExecutions++;
-      totalStats.outcomes[t.outcome]++;
-      fixtureSummary.outcomeCounts[t.outcome]++;
+      bump(totalStats.outcomes, t.outcome);
+      bump(fixtureSummary.outcomeCounts, t.outcome);
 
-      totalStats.statuses[t.status]++;
-      fixtureSummary.statusCounts[t.status]++;
+      bump(totalStats.statuses, t.status);
+      bump(fixtureSummary.statusCounts, t.status);
 
       if (t.outcome === "error") {
         const errItem = {
@@ -238,7 +243,7 @@ async function main() {
   }
 
   const outputPath =
-    process.env.CORPUS_REPORT_PATH ??
+    process.env["CORPUS_REPORT_PATH"] ??
     path.join(process.cwd(), "reports", "corpus-audit-analysis.md");
 
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
@@ -249,16 +254,16 @@ async function main() {
 - **Total Corpus Fixtures Tested:** ${totalStats.fixtures}
 - **Total Audit Executions:** ${totalStats.totalAuditExecutions}
 - **Execution Outcomes:**
-  - **Ran:** ${totalStats.outcomes.ran}
-  - **Skipped (Page Type Consent):** ${totalStats.outcomes.skipped}
-  - **Gated (Evidence Missing):** ${totalStats.outcomes.gated}
-  - **Error (Exceptions/Schema Failures):** ${totalStats.outcomes.error}
+  - **Ran:** ${totalStats.outcomes["ran"]}
+  - **Skipped (Page Type Consent):** ${totalStats.outcomes["skipped"]}
+  - **Gated (Evidence Missing):** ${totalStats.outcomes["gated"]}
+  - **Error (Exceptions/Schema Failures):** ${totalStats.outcomes["error"]}
 - **Audit Verdict Breakdown:**
-  - **Pass:** ${totalStats.statuses.pass}
-  - **Warn:** ${totalStats.statuses.warn}
+  - **Pass:** ${totalStats.statuses["pass"]}
+  - **Warn:** ${totalStats.statuses["warn"]}
   - **Fail (Scored):** ${totalStats.scoredFails}
   - **Fail (Informative):** ${totalStats.informativeFails}
-  - **Not Applicable (N/A):** ${totalStats.statuses.na}
+  - **Not Applicable (N/A):** ${totalStats.statuses["na"]}
 
 ---
 
@@ -275,7 +280,7 @@ ${
 
 ### 2. Page Type Consent & Unscored (Informative) Isolation
 Under Phase 3 rules, detected page types (un-consented by explicit user flag) run audits with \`scoreDisplayMode: 'informative'\` (weight 0, score 0).
-- **Skipped Audits:** ${totalStats.outcomes.skipped} executions were correctly skipped because the fixture page type did not match the audit's declared \`pageTypes\`.
+- **Skipped Audits:** ${totalStats.outcomes["skipped"]} executions were correctly skipped because the fixture page type did not match the audit's declared \`pageTypes\`.
 - **Informative Fails:** ${totalStats.informativeFails} failures occurred on detected page types, but all were isolated to \`informative\` mode with \`weight: 0\`, ensuring site scores were not distorted without explicit user consent.
 
 ### 3. Potential False Positives & Anomaly Inspection (${totalStats.falsePositives.length} Flagged)

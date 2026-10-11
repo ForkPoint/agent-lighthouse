@@ -111,7 +111,7 @@ async function auditStore(
       return {
         url: targetUrl,
         status: StoreStatus.BotBlocked,
-        waf: wafName,
+        ...(wafName !== undefined && { waf: wafName }),
         score: report.overallScore,
         tier: report.scoreTier,
         report,
