@@ -28,7 +28,7 @@ function check(overrides: Partial<CheckResult> & { id: string }): CheckResult {
     category: "content-extraction",
     title: "A check",
     description: "A synthetic check.",
-    status: CheckStatus.Pass as CheckStatus,
+    status: CheckStatus.Pass,
     score: 1,
     weight: 1,
     scoreDisplayMode: ScoreDisplayMode.Binary,
@@ -120,9 +120,7 @@ describe("scan invariants", () => {
       // An array of objects is the shape that throws in `toCheckResult`, which
       // a unit test calling `audit.audit(ctx)` never reaches.
       const bad = check({ id: "a/bad" });
-      bad.details = { rows: [{ nested: true }] } as NonNullable<
-        CheckResult["details"]
-      >;
+      bad.details = { rows: [{ nested: true }] };
       expect(invariantViolations(report(), [bad])).toEqual([
         "1 check(s) rejected by CheckResultSchema, e.g. a/bad",
       ]);

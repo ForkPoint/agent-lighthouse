@@ -88,7 +88,7 @@ describe("NoNofollowAudit", () => {
   it("declines when no response can be attributed to this site", async () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new NoNofollowAudit();
-    const reached = await instance.audit(mockCheckContext(pages, rootFiles));
+    const reached = instance.audit(mockCheckContext(pages, rootFiles));
     expect(reached.status, "the same input reached is judged").not.toBe(
       CheckStatus.NotApplicable,
     );
@@ -108,7 +108,7 @@ describe("NoNofollowAudit", () => {
   // `requires` deliberately omits `rendered-body`: the meta tag and the header
   // this audit reads are served whole by a page whose body renders nothing.
   it("still judges a page that served no readable text", async () => {
-    const result = await new NoNofollowAudit().audit(shellSiteContext());
+    const result = new NoNofollowAudit().audit(shellSiteContext());
     expect(result.status).not.toBe(CheckStatus.NotApplicable);
   });
 });

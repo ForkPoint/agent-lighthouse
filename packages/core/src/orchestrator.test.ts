@@ -1049,7 +1049,7 @@ describe("readiness vitals — v2 id translation", () => {
         fix: "f",
         explanation: "e",
         details: {},
-      })) as unknown as AuditRunResult["checks"],
+      })),
       categories: [],
       overallScore: 50,
     });
@@ -1097,7 +1097,7 @@ describe("readiness vitals — v2 id translation", () => {
           explanation: "e",
           details: {},
         },
-      ] as unknown as AuditRunResult["checks"],
+      ],
       categories: [],
       overallScore: 50,
     });

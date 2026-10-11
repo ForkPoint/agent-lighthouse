@@ -36,13 +36,13 @@ describe("AiprefContentUsageDeclarationValidityAudit", () => {
   });
 
   it("is notApplicable when nothing declares a preference", async () => {
-    expect((await audit.audit(site("User-agent: *\nAllow: /\n"))).status).toBe(
+    expect(audit.audit(site("User-agent: *\nAllow: /\n")).status).toBe(
       CheckStatus.NotApplicable,
     );
   });
 
   it("collects declarations at file scope and inside a group", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       site(
         "Content-Usage: search=y\n\nUser-agent: GPTBot\nContent-Usage: train-ai=n\nAllow: /\n",
       ),
@@ -52,7 +52,7 @@ describe("AiprefContentUsageDeclarationValidityAudit", () => {
   });
 
   it("splits the leading path token before parsing the dictionary", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       site("User-agent: *\nAllow: /\nContent-Usage: /ai-ok/ train-ai=y\n"),
     );
     expect(result.status).toBe(CheckStatus.Pass);
@@ -60,7 +60,7 @@ describe("AiprefContentUsageDeclarationValidityAudit", () => {
   });
 
   it("fails an unknown category token", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       site("User-agent: *\nAllow: /\nContent-Usage: ai-input=n\n"),
     );
     expect(result.status).toBe(CheckStatus.Fail);
@@ -72,7 +72,7 @@ describe("AiprefContentUsageDeclarationValidityAudit", () => {
   // `yes` parses as a token, so only the vocabulary can catch it — and the
   // message has to say which directive it belongs to.
   it("fails a legacy Content-Signal value and names the syntax", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       site("User-agent: *\nAllow: /\nContent-Usage: train-ai=yes\n"),
     );
     expect(result.status).toBe(CheckStatus.Fail);
@@ -82,7 +82,7 @@ describe("AiprefContentUsageDeclarationValidityAudit", () => {
   });
 
   it("fails a declaration attached only to a disallowed path, naming the deciding rule", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       site(
         "User-agent: *\nDisallow: /private/\nContent-Usage: /private/ train-ai=y\n",
       ),
@@ -94,7 +94,7 @@ describe("AiprefContentUsageDeclarationValidityAudit", () => {
   });
 
   it("warns when a valid declaration sits beside an inert one", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       site(
         "User-agent: *\nDisallow: /private/\nContent-Usage: train-ai=n\nContent-Usage: /private/ search=y\n",
       ),
@@ -104,7 +104,7 @@ describe("AiprefContentUsageDeclarationValidityAudit", () => {
   });
 
   it("fails when robots.txt and the response header disagree for the same path", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       site("User-agent: *\nAllow: /\nContent-Usage: train-ai=n\n", {
         "content-usage": "train-ai=y",
       }),
@@ -116,7 +116,7 @@ describe("AiprefContentUsageDeclarationValidityAudit", () => {
   });
 
   it("warns when only the legacy Content-Signal directive is present", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       site("User-agent: *\nContent-Signal: ai-train=no\nAllow: /\n"),
     );
     expect(result.status).toBe(CheckStatus.Warn);
@@ -125,7 +125,7 @@ describe("AiprefContentUsageDeclarationValidityAudit", () => {
   });
 
   it("passes a valid, crawlable, consistent declaration", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       site("User-agent: *\nAllow: /\nContent-Usage: train-ai=n\n", {
         "content-usage": "train-ai=n",
       }),
@@ -141,7 +141,7 @@ describe("AiprefContentUsageDeclarationValidityAudit", () => {
   it("declines a Content-Usage header a bot wall answering 200 attached", async () => {
     const reached = site(undefined, { "content-usage": "train-ai=n" });
     expect(
-      (await audit.audit(reached)).status,
+      audit.audit(reached).status,
       "the same header reached is judged",
     ).toBe(CheckStatus.Pass);
 

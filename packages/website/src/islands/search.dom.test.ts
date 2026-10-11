@@ -196,8 +196,8 @@ describe("mountSearch", () => {
       "/agent-lighthouse/audits/access-crawl-control/llms-txt/",
       "/agent-lighthouse/docs/quickstart/",
     ]);
-    expect(results()[0]!.textContent).toContain("LLMs Txt");
-    expect(results()[0]!.textContent).toContain("Access & Crawl Control");
+    expect(results()[0].textContent).toContain("LLMs Txt");
+    expect(results()[0].textContent).toContain("Access & Crawl Control");
   });
 
   it("rebuilds the excerpt out of nodes, never out of the markup it was given", async () => {
@@ -213,7 +213,7 @@ describe("mountSearch", () => {
     trigger().click();
     await type("match");
 
-    const excerpt = results()[0]!.querySelector("p")!;
+    const excerpt = results()[0].querySelector("p")!;
     expect(excerpt.querySelector("mark")!.textContent).toBe("match");
     // The excerpt is the one HTML string Pagefind hands back. Its tags are
     // dropped rather than parsed: no element from it reaches the document.
@@ -262,7 +262,7 @@ describe("mountSearch", () => {
         await new Promise((resolve) => setTimeout(resolve, 30));
       return { results: [hit(`/audits/x/${term}/`, term, term)] as never };
     });
-    mountSearch(async () => ({ search }) as PagefindApi);
+    mountSearch(async () => ({ search }));
     trigger().click();
 
     input().value = "llms";
@@ -276,7 +276,7 @@ describe("mountSearch", () => {
     await new Promise((resolve) => setTimeout(resolve, 60));
     expect(status().textContent).toBe("1 result for “robots”.");
     expect(results()).toHaveLength(1);
-    expect(results()[0]!.getAttribute("href")).toBe(
+    expect(results()[0].getAttribute("href")).toBe(
       "/agent-lighthouse/audits/x/robots/",
     );
   });

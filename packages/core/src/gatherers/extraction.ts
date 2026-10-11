@@ -148,7 +148,7 @@ export function semanticText(html: string): Extracted {
     if (picked.text !== "") return extracted(picked);
   }
 
-  const bodyNode = $("body")[0] as Element | undefined;
+  const bodyNode = $("body")[0];
   const body = bodyNode ? withoutChrome($, bodyNode) : undefined;
 
   let largest: { clone: Cheerio<Element>; text: string } | undefined;

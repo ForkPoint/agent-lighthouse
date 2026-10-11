@@ -46,13 +46,12 @@ describe("ExtractorSurvivalRecallAudit", () => {
 
   it("is notApplicable when the page carries no key spans", async () => {
     expect(
-      (await audit.audit(page("<div>Nothing structured here at all.</div>")))
-        .status,
+      audit.audit(page("<div>Nothing structured here at all.</div>")).status,
     ).toBe(CheckStatus.NotApplicable);
   });
 
   it("passes when every key span survives both extractors", async () => {
-    const result = await audit.audit(page(article()));
+    const result = audit.audit(page(article()));
     expect(result.status).toBe(CheckStatus.Pass);
     expect(Number(result.details?.["recall"])).toBeGreaterThanOrEqual(0.9);
   });
@@ -60,7 +59,7 @@ describe("ExtractorSurvivalRecallAudit", () => {
   // Readability lifts an h1 that repeats the title out of the body and into
   // the article title. The title is still delivered, so the h1 survived.
   it("counts an h1 kept as Readability's article title as surviving", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       mockCheckContext([
         mockPageContext(
           "https://example.com/kettles",
@@ -75,7 +74,7 @@ describe("ExtractorSurvivalRecallAudit", () => {
   // A hidden panel is not on the page a reader sees, so its spans are not
   // facts an extractor lost.
   it("takes no key spans from a hidden dialog", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         article(
           `<div hidden role="dialog"><h2>Keyboard shortcuts</h2><p>Press the slash key to search every page. Press escape to close the panel.</p></div>`,
@@ -98,7 +97,7 @@ describe("ExtractorSurvivalRecallAudit", () => {
         "<dl><dt>Warranty term</dt><dd>Two years</dd></dl>" +
         "<p>A two litre copper kettle with a riveted handle.</p>",
     );
-    const result = await audit.audit(page(body, head));
+    const result = audit.audit(page(body, head));
     const kinds = result.details?.["spanKinds"] as string[];
     expect(kinds).toContain("h1");
     expect(kinds).toContain("caption");
@@ -121,26 +120,26 @@ describe("ExtractorSurvivalRecallAudit", () => {
       "@type": "WebPage",
       name,
     })}</script>`;
-    const result = await audit.audit(page(`${article()}<p>${name}</p>`, head));
+    const result = audit.audit(page(`${article()}<p>${name}</p>`, head));
     expect(result.status).not.toBe(CheckStatus.NotApplicable);
     expect(result.details?.["spanKinds"]).toContain("json-ld");
   });
 
   it("fails when a spec table lives in an aside, and names the ancestor chain", async () => {
     const body = `${article()}<aside class="related-specs"><table><caption>Specifications table</caption><tr><th>Capacity</th><td>2 litres</td></tr><tr><th>Material</th><td>Copper</td></tr></table></aside>`;
-    const result = await audit.audit(page(body));
+    const result = audit.audit(page(body));
     expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("aside.related-specs");
   });
 
   it("reports both extractors separately", async () => {
-    const result = await audit.audit(page(article()));
+    const result = audit.audit(page(article()));
     expect(result.details?.["readabilityRecall"]).toBeTypeOf("number");
     expect(result.details?.["aggressiveRecall"]).toBeTypeOf("number");
   });
 
   it("reports over-strip risk and boilerplate leakage without deciding the status", async () => {
-    const result = await audit.audit(page(article()));
+    const result = audit.audit(page(article()));
     expect(Number(result.details?.["textRatio"])).toBeGreaterThan(0);
     expect(Number(result.details?.["textRatio"])).toBeLessThanOrEqual(1);
   });
@@ -158,7 +157,7 @@ describe("ExtractorSurvivalRecallAudit", () => {
   it("declines when no response can be attributed to this site", async () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new ExtractorSurvivalRecallAudit();
-    const reached = await instance.audit(mockCheckContext(pages, rootFiles));
+    const reached = instance.audit(mockCheckContext(pages, rootFiles));
     expect(reached.status, "the same input reached is judged").not.toBe(
       CheckStatus.NotApplicable,
     );
@@ -180,7 +179,7 @@ describe("ExtractorSurvivalRecallAudit", () => {
   // A modifier class that mentions a blocklisted word is not that widget.
   // Firecrawl's selectors (`.banner`-style) name whole class tokens.
   it("does not drop a page wrapper whose class only contains a blocklisted word", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         `<div class="page-content page-content--banner-enabled">${article()}</div>`,
       ),
@@ -191,9 +190,7 @@ describe("ExtractorSurvivalRecallAudit", () => {
 
   // A drop rule that would delete most of the page matched the page, not a widget.
   it("never drops an element that holds most of the page's text", async () => {
-    const result = await audit.audit(
-      page(`<div class="banner">${article()}</div>`),
-    );
+    const result = audit.audit(page(`<div class="banner">${article()}</div>`));
     expect(result.details?.["aggressiveRecall"]).toBe(1);
   });
 
@@ -205,7 +202,7 @@ describe("ExtractorSurvivalRecallAudit", () => {
       url: "https://example.com/kettles",
       potentialAction: { target: "https://example.com/search?q={query}" },
     })}</script>`;
-    const result = await audit.audit(page(`${article()}${jsonLd}`));
+    const result = audit.audit(page(`${article()}${jsonLd}`));
     expect(result.status).toBe(CheckStatus.Pass);
     expect(result.details?.["spanKinds"]).not.toContain("json-ld");
   });
@@ -215,7 +212,7 @@ describe("ExtractorSurvivalRecallAudit", () => {
     "<h2>Warranty</h2><p>Every kettle carries a two year warranty against leaks and rust.</p>";
 
   it("keeps a block whose class merely contains a blocklisted word", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(article(`<div class="hero hero--promotional">${SPECS}</div>`)),
     );
     expect(result.details?.["aggressiveRecall"]).toBe(1);
@@ -223,7 +220,7 @@ describe("ExtractorSurvivalRecallAudit", () => {
 
   // True positive: a genuinely lossy page still fails, and names the culprit.
   it("still fails when facts sit in a block whose class token is a blocklisted word", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(article(`<div class="promo">${SPECS}</div>`)),
     );
     expect(result.status).toBe(CheckStatus.Fail);
@@ -232,7 +229,7 @@ describe("ExtractorSurvivalRecallAudit", () => {
   });
 
   it("still drops a block by id", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(article(`<div id="sidebar">${SPECS}</div>`)),
     );
     expect(result.status).toBe(CheckStatus.Fail);

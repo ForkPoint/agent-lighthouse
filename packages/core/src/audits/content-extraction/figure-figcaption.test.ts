@@ -74,7 +74,7 @@ describe("FigureFigcaptionAudit", () => {
   it("declines when no response can be attributed to this site", async () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new FigureFigcaptionAudit();
-    const reached = await instance.audit(mockCheckContext(pages, rootFiles));
+    const reached = instance.audit(mockCheckContext(pages, rootFiles));
     expect(reached.status, "the same input reached is judged").not.toBe(
       CheckStatus.NotApplicable,
     );
@@ -97,12 +97,12 @@ describe("FigureFigcaptionAudit", () => {
   it("declines a page that served no readable text", async () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new FigureFigcaptionAudit();
-    const rendered = await instance.audit(mockCheckContext(pages, rootFiles));
+    const rendered = instance.audit(mockCheckContext(pages, rootFiles));
     expect(rendered.status, "the same input rendered is judged").not.toBe(
       CheckStatus.NotApplicable,
     );
 
-    const shell = await instance.audit(shellSiteContext());
+    const shell = instance.audit(shellSiteContext());
     expect(shell.status).toBe(CheckStatus.NotApplicable);
   });
 });

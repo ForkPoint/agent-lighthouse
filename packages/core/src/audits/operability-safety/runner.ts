@@ -90,7 +90,7 @@ export async function runA11yForHtml(
       runScripts: "outside-only",
       pretendToBeVisual: true,
     });
-    const doc = dom.window.document as unknown as Document;
+    const doc = dom.window.document;
     const results = runRules(doc, ruleIds);
 
     const out: A11yPageResult = {};

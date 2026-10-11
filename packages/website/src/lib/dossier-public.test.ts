@@ -192,7 +192,7 @@ describe("publicDossier", () => {
       const { markdown } = publicDossier(
         `## Evidence\n\n### Signal: ${long} — grade B (x)\n\ntext\n`,
       );
-      const heading = /^### (.+)$/m.exec(markdown)![1]!;
+      const heading = /^### (.+)$/m.exec(markdown)![1];
       // The cut lands after "and"; a label must not end on a conjunction.
       expect(heading).not.toMatch(/\band\u2026$/);
       expect(heading.endsWith("\u2026")).toBe(true);
@@ -203,7 +203,7 @@ describe("publicDossier", () => {
       const { markdown } = publicDossier(
         `## Evidence\n\n### Signal: ${long} — grade B (x)\n\ntext\n`,
       );
-      const heading = /^### (.+)$/m.exec(markdown)![1]!;
+      const heading = /^### (.+)$/m.exec(markdown)![1];
       expect(heading.length).toBeLessThanOrEqual(61);
       expect(heading.endsWith("\u2026")).toBe(true);
     });
@@ -487,7 +487,7 @@ describe("publicDossier", () => {
           /<\/?[a-z][a-z0-9]*[ />]/,
         );
         for (const heading of markdown.matchAll(/^### (.+)$/gm)) {
-          longest = Math.max(longest, heading[1]!.length);
+          longest = Math.max(longest, heading[1].length);
         }
       }
       // The research names a signal in up to 175 characters. A label is shorter.

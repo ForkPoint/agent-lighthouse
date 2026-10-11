@@ -219,7 +219,7 @@ export function parseCliOptions(
     timeoutSeconds: timeoutValid
       ? Number(timeoutArg)
       : fileTimeoutValid
-        ? (fileTimeout as number | undefined)
+        ? fileTimeout
         : undefined,
     invalidTimeout:
       timeoutArg !== undefined && !timeoutValid

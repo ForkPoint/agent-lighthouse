@@ -160,7 +160,7 @@ function pageScopeText(record: Record<string, unknown>): string | undefined {
             ["inputUrls", "Input URLs"],
             ["unreadUrls", "Unread URLs"],
           ]) {
-            const urls = coverage[key!];
+            const urls = coverage[key];
             lines.push(
               `${label}: ${Array.isArray(urls) ? (urls.length ? list(urls, 100).map(text).join(", ") : "none") : "not recorded"}`,
             );

@@ -116,7 +116,7 @@ describe("UniqueMetaAudit", () => {
       1,
     );
     const instance = new UniqueMetaAudit();
-    const reached = await instance.audit(
+    const reached = instance.audit(
       mockCheckContext([...pages, second], rootFiles),
     );
     expect(reached.status, "the same input reached is judged").not.toBe(

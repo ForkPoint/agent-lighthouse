@@ -61,7 +61,7 @@ describe("dossier content", () => {
       const raw = readFileSync(resolve(DOSSIERS, `${id}.md`), "utf8");
       const front = /^---\n([\s\S]*?)\n---/.exec(raw);
       expect(front, id).not.toBeNull();
-      const block = front![1]!;
+      const block = front![1];
       for (const key of REQUIRED_KEYS) {
         expect(block.includes(key), `${id} missing ${key}`).toBe(true);
       }
@@ -71,11 +71,11 @@ describe("dossier content", () => {
   it("opens every dossier body with a human title, never the audit id", () => {
     for (const id of dossierIds()) {
       const raw = readFileSync(resolve(DOSSIERS, `${id}.md`), "utf8");
-      const audit = /^audit:\s*(\S+)/m.exec(raw)![1]!;
+      const audit = /^audit:\s*(\S+)/m.exec(raw)![1];
       const heading = /^#\s+(.+)$/m.exec(dossierBody(id));
       expect(heading, `${id} has no top-level heading`).not.toBeNull();
       expect(
-        heading![1]!.trim(),
+        heading![1].trim(),
         `${id} titles itself with its own id`,
       ).not.toBe(audit);
     }

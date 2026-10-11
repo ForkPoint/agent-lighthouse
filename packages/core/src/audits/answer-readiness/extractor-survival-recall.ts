@@ -144,7 +144,7 @@ function keySpans(page: PageContext): KeySpan[] {
     const body = $(heading)
       .nextUntil("h1, h2, h3")
       .toArray()
-      .map((el) => $(el as Element).text())
+      .map((el) => $(el).text())
       .join(" ");
     const opener = sentences(body).slice(0, 2).join(" ");
     if (opener.trim() !== "") push("section-opener", heading, opener);
@@ -186,7 +186,7 @@ function aggressiveText(html: string): string {
   $(AGGRESSIVE_TAGS).remove();
   const total = $("body").text().replace(/\s+/g, "").length;
   $("[class], [id]").each((_i, el) => {
-    const element = el as Element;
+    const element = el;
     if (!isAggressiveDropTarget(element)) return;
     const own = $(element).text().replace(/\s+/g, "").length;
     if (own > total * MOST_OF_PAGE) return;

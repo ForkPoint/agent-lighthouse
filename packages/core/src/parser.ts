@@ -150,7 +150,7 @@ const TEXT_VALUE_MAX = 200;
 
 /** Nearest ancestor element carrying `attr` (e.g. 'itemscope'), or null. */
 function nearestScope(node: AnyNode, attr: string): Element | null {
-  let p: AnyNode | null = node.parent as AnyNode | null;
+  let p: AnyNode | null = node.parent;
   while (p) {
     if (p.type === "tag" && attr in (p as Element).attribs) return p as Element;
     p = p.parent as AnyNode | null;
@@ -247,7 +247,7 @@ function parseMicrodataItem(
   $(el)
     .find("[itemprop]")
     .each((_, raw) => {
-      const propEl = raw as Element;
+      const propEl = raw;
       // Only properties whose nearest itemscope is THIS element belong here;
       // properties of nested items are captured when that item is recursed.
       if (nearestScope(propEl, "itemscope") !== el) return;
@@ -266,7 +266,7 @@ function parseMicrodataItem(
 export function extractMicrodata($: CheerioAPI): object[] {
   const items: object[] = [];
   $("[itemscope]").each((_, raw) => {
-    const el = raw as Element;
+    const el = raw;
     if (nearestScope(el, "itemscope")) return; // nested — handled by its parent item
     items.push(parseMicrodataItem($, el));
   });
@@ -280,7 +280,7 @@ function parseRdfaItem($: CheerioAPI, el: Element): Record<string, unknown> {
   $(el)
     .find("[property]")
     .each((_, raw) => {
-      const propEl = raw as Element;
+      const propEl = raw;
       if (nearestScope(propEl, "typeof") !== el) return;
       const name = firstTerm(propEl.attribs?.["property"]);
       if (!name) return;
@@ -297,7 +297,7 @@ function parseRdfaItem($: CheerioAPI, el: Element): Record<string, unknown> {
 export function extractRdfa($: CheerioAPI): object[] {
   const items: object[] = [];
   $("[typeof]").each((_, raw) => {
-    const el = raw as Element;
+    const el = raw;
     if (nearestScope(el, "typeof")) return; // nested — handled by its parent item
     items.push(parseRdfaItem($, el));
   });

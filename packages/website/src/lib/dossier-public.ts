@@ -205,7 +205,7 @@ function sections(markdown: string): Section[] {
     }
 
     if (run !== undefined) {
-      fence = { char: run[0]!, length: run.length };
+      fence = { char: run[0], length: run.length };
       body.push(line);
       continue;
     }
@@ -307,7 +307,7 @@ const DANGLING =
   /\s+(?:and|or|of|for|to|in|on|by|with|the|a|an|as|at|from|that|which|per|via)$/i;
 
 function shortSignal(name: string): string {
-  const head = name.split(CLAUSE_END)[0]!.trim() || name.trim();
+  const head = name.split(CLAUSE_END)[0].trim() || name.trim();
   if (head.length <= LABEL_CAP) return head;
   // Cut on a word boundary rather than mid-word, and never leave a trailing
   // comma dangling in front of the ellipsis.
@@ -532,7 +532,7 @@ function breakParagraph(line: string): string {
   let quoted = false;
   let ticks = false;
   for (let i = 0; i < line.length; i++) {
-    const ch = line[i]!;
+    const ch = line[i];
     buffer += ch;
     if (ch === "`") ticks = !ticks;
     if (ticks) continue;
@@ -594,7 +594,7 @@ function compact(body: string): string {
       continue;
     }
     if (run !== undefined) {
-      fence = { char: run[0]!, length: run.length };
+      fence = { char: run[0], length: run.length };
       out.push(line);
       continue;
     }
@@ -660,7 +660,7 @@ function promote(
       continue;
     }
     if (run !== undefined) {
-      fence = { char: run[0]!, length: run.length };
+      fence = { char: run[0], length: run.length };
       rest.push(line);
       continue;
     }
@@ -672,8 +672,8 @@ function promote(
     }
 
     const label = /^\*\*([^:*]+):\*\*\s*(.*)$/.exec(line);
-    if (label && labels.includes(label[1]!.trim())) {
-      taken.push({ signal, text: label[2]!.trim() });
+    if (label && labels.includes(label[1].trim())) {
+      taken.push({ signal, text: label[2].trim() });
       continue;
     }
     rest.push(line);
@@ -727,7 +727,7 @@ function promoteGrade(body: string): { promoted: string; rest: string } {
       continue;
     }
     if (run !== undefined) {
-      fence = { char: run[0]!, length: run.length };
+      fence = { char: run[0], length: run.length };
       rest.push(line);
       continue;
     }
@@ -737,13 +737,13 @@ function promoteGrade(body: string): { promoted: string; rest: string } {
       continue;
     }
     const grade = GRADE_LABEL.exec(line);
-    if (grade && grade[2]!.trim()) {
+    if (grade && grade[2].trim()) {
       // The source reads `**Grade: A** — this is a ratified standard …`, so the
       // reasoning is written to continue a sentence the page no longer prints.
-      const reasoning = grade[2]!.trim();
+      const reasoning = grade[2].trim();
       taken.push({
         signal,
-        text: reasoning[0]!.toUpperCase() + reasoning.slice(1),
+        text: reasoning[0].toUpperCase() + reasoning.slice(1),
       });
       continue;
     }

@@ -494,21 +494,20 @@ describe("weighted category score", () => {
 });
 
 describe("gatedMassShare — what the gate removed", () => {
-  const check = (over: Partial<CheckResult>): CheckResult =>
-    ({
-      id: "x/y",
-      category: "content-extraction",
-      title: "t",
-      description: "d",
-      status: CheckStatus.Pass,
-      score: 1,
-      weight: 1,
-      scoreDisplayMode: ScoreDisplayMode.Binary,
-      priority: CheckPriority.Medium,
-      impact: "",
-      fix: "",
-      ...over,
-    }) as CheckResult;
+  const check = (over: Partial<CheckResult>): CheckResult => ({
+    id: "x/y",
+    category: "content-extraction",
+    title: "t",
+    description: "d",
+    status: CheckStatus.Pass,
+    score: 1,
+    weight: 1,
+    scoreDisplayMode: ScoreDisplayMode.Binary,
+    priority: CheckPriority.Medium,
+    impact: "",
+    fix: "",
+    ...over,
+  });
 
   it("is zero when nothing was gated", () => {
     expect(

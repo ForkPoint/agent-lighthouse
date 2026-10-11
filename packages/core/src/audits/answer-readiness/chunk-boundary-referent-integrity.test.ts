@@ -37,20 +37,19 @@ describe("ChunkBoundaryReferentIntegrityAudit", () => {
 
   it("is notApplicable on a page with no h2 or h3", async () => {
     expect(
-      (await audit.audit(page("<p>Just prose about the copper kettle.</p>")))
-        .status,
+      audit.audit(page("<p>Just prose about the copper kettle.</p>")).status,
     ).toBe(CheckStatus.NotApplicable);
   });
 
   it("passes a page whose every section names its subject", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page([clean("Boiling"), clean("Descaling"), clean("Warranty")].join("")),
     );
     expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("flags a chunk that opens on a demonstrative with no referent", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         `${clean("Boiling")}${clean("Descaling")}${clean("Warranty")}<h2>Storage</h2><p>This means the copper kettle ${FILLER}</p>`,
       ),
@@ -59,7 +58,7 @@ describe("ChunkBoundaryReferentIntegrityAudit", () => {
   });
 
   it("does not flag the same opening when the heading word follows it", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         `${clean("Boiling")}<h2>Storage</h2><p>This storage step keeps the copper kettle ${FILLER}</p>`,
       ),
@@ -68,7 +67,7 @@ describe("ChunkBoundaryReferentIntegrityAudit", () => {
   });
 
   it("flags a forty-word chunk that never names the subject", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         `${clean("Boiling")}${clean("Descaling")}<h2>Storage</h2><p>${FILLER}</p>`,
       ),
@@ -77,13 +76,13 @@ describe("ChunkBoundaryReferentIntegrityAudit", () => {
   });
 
   it("counts positional references but not the words that merely look like them", async () => {
-    const flagged = await audit.audit(
+    const flagged = audit.audit(
       page(
         `${clean("Boiling")}<h2>Storage</h2><p>As described above, the copper kettle ${FILLER}</p>`,
       ),
     );
     expect(flagged.found).toContain("positionalRefs");
-    const notFlagged = await audit.audit(
+    const notFlagged = audit.audit(
       page(
         `${clean("Boiling")}<h2>Storage</h2><p>Above all the copper kettle ${FILLER}</p>`,
       ),
@@ -104,7 +103,7 @@ describe("ChunkBoundaryReferentIntegrityAudit", () => {
         1,
       ),
     ]);
-    const result = await audit.audit(ctx);
+    const result = audit.audit(ctx);
     expect(result.status).toBe(CheckStatus.Pass);
     expect((result.details!["entities"] as string[]).length).toBeGreaterThan(1);
   });
@@ -112,12 +111,12 @@ describe("ChunkBoundaryReferentIntegrityAudit", () => {
   it("fails below 0.8 passing chunks and passes above it", async () => {
     const broken = `<h2>Storage</h2><p>${FILLER}</p>`;
     // 4 clean of 5 -> 0.80 exactly, which is not below the floor.
-    const atFloor = await audit.audit(
+    const atFloor = audit.audit(
       page([clean("A"), clean("B"), clean("C"), clean("D"), broken].join("")),
     );
     expect(atFloor.status).not.toBe(CheckStatus.Fail);
     // 2 clean of 4 -> 0.50.
-    const below = await audit.audit(
+    const below = audit.audit(
       page(
         [clean("A"), clean("B"), broken, `<h2>Care</h2><p>${FILLER}</p>`].join(
           "",
@@ -128,7 +127,7 @@ describe("ChunkBoundaryReferentIntegrityAudit", () => {
   });
 
   it("quotes the offending sentence under its heading", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(`${clean("Boiling")}<h2>Storage</h2><p>${FILLER}</p>`),
     );
     expect(result.found).toContain("Storage");

@@ -119,7 +119,7 @@ export class AuthorPageAudit extends Audit {
         const authors = Array.isArray(author) ? author : [author];
         for (const a of authors) {
           if (typeof a === "object" && a !== null) {
-            const url = (a as Record<string, unknown>)["url"];
+            const url = a["url"];
             if (typeof url === "string" && url.startsWith("http")) {
               authorUrls.push(url);
             }

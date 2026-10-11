@@ -131,7 +131,7 @@ describe("audit type aliases", () => {
       scopeAudit(ctx, {
         ...ArticleSchemaAudit.meta,
         ...aliases,
-      } as typeof ArticleSchemaAudit.meta),
+      }),
     ).toThrow(/Conflicting page types/);
   });
 });

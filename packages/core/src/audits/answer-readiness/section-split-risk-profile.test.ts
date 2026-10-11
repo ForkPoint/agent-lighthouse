@@ -34,7 +34,7 @@ describe("SectionSplitRiskProfileAudit", () => {
   });
 
   it("is notApplicable on a page under one retrieval window", async () => {
-    expect((await audit.audit(page(section("Boiling", 100)))).status).toBe(
+    expect(audit.audit(page(section("Boiling", 100))).status).toBe(
       CheckStatus.NotApplicable,
     );
   });
@@ -43,27 +43,27 @@ describe("SectionSplitRiskProfileAudit", () => {
     const body = ["Boiling", "Descaling", "Warranty", "Storage"]
       .map((heading) => section(heading, 300))
       .join("");
-    const result = await audit.audit(page(body));
+    const result = audit.audit(page(body));
     expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("flags a section over 512 tokens as SPLIT with its headless tail count", async () => {
     const body = section("Boiling", 1600) + section("Descaling", 200);
-    const result = await audit.audit(page(body));
+    const result = audit.audit(page(body));
     expect(result.found).toContain("SPLIT");
     // ceil(tokens / 512) - 1 headless tails.
     expect(Number(result.details?.["worstSeverity"])).toBeGreaterThanOrEqual(2);
   });
 
   it("flags a long page with fewer than two h2 elements as BLOB", async () => {
-    const result = await audit.audit(page(`<p>${prose(900)}</p>`));
+    const result = audit.audit(page(`<p>${prose(900)}</p>`));
     expect(result.found).toContain("BLOB");
     expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("flags a section under 25 tokens as THIN", async () => {
     const body = section("Boiling", 700) + "<h2>Note</h2><p>Short.</p>";
-    const result = await audit.audit(page(body));
+    const result = audit.audit(page(body));
     expect(result.found).toContain("THIN");
   });
 
@@ -75,7 +75,7 @@ describe("SectionSplitRiskProfileAudit", () => {
         .map((h) => section(h, 300))
         .join("") +
       "<h3>Fast</h3><p>Boils in three minutes.</p><h2>Newsletter</h2><p>Sign up below.</p>";
-    const result = await audit.audit(page(body));
+    const result = audit.audit(page(body));
     expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("THIN");
   });
@@ -89,19 +89,19 @@ describe("SectionSplitRiskProfileAudit", () => {
     const body =
       section("Boiling", 200) +
       `<h2>Specifications</h2><table><tr><th>Model</th><th>Capacity</th><th>Body</th></tr>${rows}</table>`;
-    const result = await audit.audit(page(body));
+    const result = audit.audit(page(body));
     expect(result.found).toContain("ATOMIC-SPLIT");
   });
 
   it("reports headingDistance as the one actionable number", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(section("Boiling", 700) + section("Descaling", 200)),
     );
     expect(Number(result.details?.["headingDistance"])).toBeGreaterThan(0);
   });
 
   it("scores the share of body tokens living inside the window", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(section("Boiling", 1600) + section("Descaling", 200)),
     );
     const score = Number(result.details?.["score"]);
@@ -112,7 +112,7 @@ describe("SectionSplitRiskProfileAudit", () => {
   // Real BPE counts, never chars / 4.
   it("counts tokens with the o200k tokenizer", async () => {
     const text = prose(600);
-    const result = await audit.audit(
+    const result = audit.audit(
       page(`<h2>Boiling</h2><p>${text}</p><h2>Care</h2><p>${prose(200)}</p>`),
     );
     const reported = Number((result.details!["sectionTokens"] as string[])[0]);

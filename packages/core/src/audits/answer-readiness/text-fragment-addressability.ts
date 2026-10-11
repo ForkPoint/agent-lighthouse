@@ -183,7 +183,7 @@ function candidates(page: PageContext): Candidate[] {
 
   $("h2, h3").each((_i, heading) => {
     if (notRendered($, heading)) return;
-    const span = answerAfter(page, heading as Element);
+    const span = answerAfter(page, heading);
     if (span === undefined) return;
     add(
       `first sentence after "${normalize($(heading).text()).slice(0, 60)}"`,

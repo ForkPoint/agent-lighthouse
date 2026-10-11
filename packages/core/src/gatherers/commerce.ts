@@ -133,13 +133,13 @@ export function productRegion($: CheerioAPI): Cheerio<Element> {
   if (heading.length > 0 && priced.length > 0) {
     const ancestors = new Set(heading.parents().toArray());
     for (const node of [priced[0]!, ...priced.parents().toArray()]) {
-      if (ancestors.has(node)) return $(node) as Cheerio<Element>;
+      if (ancestors.has(node)) return $(node);
     }
   }
 
   const main = $("main").first();
-  if (main.length > 0) return main as Cheerio<Element>;
-  return $("body") as Cheerio<Element>;
+  if (main.length > 0) return main;
+  return $("body");
 }
 
 /**

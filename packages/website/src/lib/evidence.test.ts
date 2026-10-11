@@ -29,7 +29,7 @@ describe("the registry reader", () => {
 
     expect(registry.accessed).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(registry.sources.length).toBeGreaterThan(500);
-    expect(registry.sources[0]!.id.length).toBeGreaterThan(0);
+    expect(registry.sources[0].id.length).toBeGreaterThan(0);
   });
 });
 
@@ -71,7 +71,7 @@ describe("the policy source", () => {
    */
   it("leaves no relative link unresolved", () => {
     const hrefs = [...readPolicySource().matchAll(/\]\(([^)]+)\)/g)].map(
-      (match) => match[1]!,
+      (match) => match[1],
     );
     expect(hrefs.length, "the policy has no links to check").toBeGreaterThan(0);
 

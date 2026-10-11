@@ -73,7 +73,7 @@ describe.skipIf(!built)("rendered /policy/", () => {
 
   it("resolves the one relative link the policy carries", () => {
     const hrefs = [...article(html()).matchAll(/href="([^"]+)"/g)].map(
-      (match) => match[1]!,
+      (match) => match[1],
     );
 
     expect(hrefs.length, "the policy renders no links at all").toBeGreaterThan(
@@ -128,7 +128,7 @@ describe.skipIf(!built)("rendered /sources/", () => {
     const pills = [
       ...html().matchAll(/<button[^>]*data-filter="type"[^>]*>/g),
     ].map((m) => m[0]);
-    const values = pills.map((pill) => /data-value="([^"]+)"/.exec(pill)![1]!);
+    const values = pills.map((pill) => /data-value="([^"]+)"/.exec(pill)![1]);
 
     expect(values).toEqual([
       "all",
@@ -233,13 +233,13 @@ describe.skipIf(!built)("rendered /sources/", () => {
     const rendered = html();
     const inline = [
       ...rendered.matchAll(/<script type="module">([\s\S]*?)<\/script>/g),
-    ].map((m) => ["inline", m[1]!] as const);
+    ].map((m) => ["inline", m[1]] as const);
     const external = [...rendered.matchAll(/<script[^>]*src="([^"]+)"/g)].map(
       (m) =>
         [
-          m[1]!,
+          m[1],
           readFileSync(
-            resolve(DIST, m[1]!.replace("/agent-lighthouse/", "")),
+            resolve(DIST, m[1].replace("/agent-lighthouse/", "")),
             "utf8",
           ),
         ] as const,

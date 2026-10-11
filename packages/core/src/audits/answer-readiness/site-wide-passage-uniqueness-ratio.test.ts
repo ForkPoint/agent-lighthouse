@@ -64,7 +64,7 @@ describe("SiteWidePassageUniquenessRatioAudit", () => {
       { url: "https://example.com/a", sentences: own("alpha") },
       { url: "https://example.com/b", sentences: own("bravo") },
     ]);
-    expect((await audit.audit(ctx)).status).toBe(CheckStatus.NotApplicable);
+    expect(audit.audit(ctx).status).toBe(CheckStatus.NotApplicable);
   });
 
   it("calls a sentence boilerplate on three pages but not on two", async () => {
@@ -79,9 +79,7 @@ describe("SiteWidePassageUniquenessRatioAudit", () => {
       },
       { url: "https://example.com/c", sentences: own("charlie") },
     ]);
-    expect((await audit.audit(onTwo)).details?.["boilerplateSentences"]).toBe(
-      0,
-    );
+    expect(audit.audit(onTwo).details?.["boilerplateSentences"]).toBe(0);
 
     const onThree = site([
       {
@@ -97,9 +95,7 @@ describe("SiteWidePassageUniquenessRatioAudit", () => {
         sentences: [...own("charlie"), SHARED[0]!],
       },
     ]);
-    expect((await audit.audit(onThree)).details?.["boilerplateSentences"]).toBe(
-      1,
-    );
+    expect(audit.audit(onThree).details?.["boilerplateSentences"]).toBe(1);
   });
 
   // On a large crawl the floor of three stops being the binding number.
@@ -108,7 +104,7 @@ describe("SiteWidePassageUniquenessRatioAudit", () => {
       url: `https://example.com/p${i}`,
       sentences: own(`seed${i}`, 3),
     }));
-    const result = await audit.audit(site(pages));
+    const result = audit.audit(site(pages));
     expect(result.details?.["boilerplateThresholdPages"]).toBe(4);
   });
 
@@ -125,7 +121,7 @@ describe("SiteWidePassageUniquenessRatioAudit", () => {
         sentences: [...SHARED, ...own("delta", 1)],
       },
     ]);
-    const result = await audit.audit(ctx);
+    const result = audit.audit(ctx);
     expect(result.status).toBe(CheckStatus.Warn);
     expect(result.details?.["lowUniquenessPages"]).toEqual([
       expect.stringContaining("https://example.com/thin"),
@@ -146,7 +142,7 @@ describe("SiteWidePassageUniquenessRatioAudit", () => {
       },
       { url: "https://example.com/z", sentences: own("zulu", 20) },
     ]);
-    const result = await audit.audit(ctx);
+    const result = audit.audit(ctx);
     expect(result.status).toBe(CheckStatus.Fail);
     expect(result.details?.["nearDuplicateClusters"]).toBe(1);
     expect(result.details?.["unresolvedClusters"]).toBe(1);
@@ -166,7 +162,7 @@ describe("SiteWidePassageUniquenessRatioAudit", () => {
       },
       { url: "https://example.com/z", sentences: own("zulu", 20) },
     ]);
-    const result = await audit.audit(ctx);
+    const result = audit.audit(ctx);
     expect(result.status).not.toBe(CheckStatus.Fail);
     expect(result.details?.["nearDuplicateClusters"]).toBe(1);
     expect(result.details?.["unresolvedClusters"]).toBe(0);
@@ -185,7 +181,7 @@ describe("SiteWidePassageUniquenessRatioAudit", () => {
       },
       { url: "https://example.com/z", sentences: own("zulu", 20) },
     ]);
-    const result = await audit.audit(ctx);
+    const result = audit.audit(ctx);
     const worst = result.details?.["worstClusters"] as string[];
     expect(worst).toHaveLength(1);
     expect(worst[0]).toContain("https://example.com/a");
@@ -201,7 +197,7 @@ describe("SiteWidePassageUniquenessRatioAudit", () => {
       { url: "https://example.com/b", sentences: own("bravo", 20) },
       { url: "https://example.com/c", sentences: own("charlie", 20) },
     ]);
-    const result = await audit.audit(ctx);
+    const result = audit.audit(ctx);
     expect(result.status).toBe(CheckStatus.Pass);
     expect(result.details?.["nearDuplicateClusters"]).toBe(0);
   });

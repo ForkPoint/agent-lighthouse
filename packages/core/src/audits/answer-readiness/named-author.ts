@@ -142,7 +142,7 @@ export class NamedAuthorAudit extends Audit {
             typeof a === "string"
               ? a
               : typeof a === "object" && a !== null
-                ? asString((a as Record<string, unknown>)["name"])
+                ? asString(a["name"])
                 : "";
           const lower = name.trim().toLowerCase();
           if (lower && !GENERIC_AUTHOR_NAMES.has(lower)) {

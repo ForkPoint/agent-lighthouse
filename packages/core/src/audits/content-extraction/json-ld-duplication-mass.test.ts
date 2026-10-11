@@ -37,9 +37,7 @@ describe("JsonLdDuplicationMassAudit", () => {
   });
 
   it("is notApplicable on a page with no JSON-LD", async () => {
-    expect((await audit.audit(page(""))).status).toBe(
-      CheckStatus.NotApplicable,
-    );
+    expect(audit.audit(page("")).status).toBe(CheckStatus.NotApplicable);
   });
 
   // The wave's only non-scored audit: it reports a cost, it does not accuse.
@@ -53,7 +51,7 @@ describe("JsonLdDuplicationMassAudit", () => {
   });
 
   it("reports a small Organization block without a finding", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         block({
           "@context": "https://schema.org",
@@ -73,7 +71,7 @@ describe("JsonLdDuplicationMassAudit", () => {
       "@id": "https://example.com/kettles#product",
       name: "Copper kettle",
     };
-    const result = await audit.audit(page(`${block(node)}${block(node)}`));
+    const result = audit.audit(page(`${block(node)}${block(node)}`));
     expect(Number(result.details?.["duplicateNodes"])).toBe(1);
     expect(result.found).toContain("Product");
   });
@@ -81,7 +79,7 @@ describe("JsonLdDuplicationMassAudit", () => {
   // A bare {"@id"} is a reference to one entity, the linked-data way to avoid
   // declaring it twice. Two references are not two declarations.
   it("does not count reference-only nodes as duplicates", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         block({
           "@context": "https://schema.org",
@@ -115,7 +113,7 @@ describe("JsonLdDuplicationMassAudit", () => {
       "@id": "https://example.com/#org",
       name: "Kettle Co",
     };
-    const result = await audit.audit(page(`${block(node)}${block(node)}`));
+    const result = audit.audit(page(`${block(node)}${block(node)}`));
     expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("declared twice");
     expect(result.message).not.toMatch(/^0 tokens/);
@@ -123,7 +121,7 @@ describe("JsonLdDuplicationMassAudit", () => {
 
   it("reports an articleBody that repeats text already in the DOM", async () => {
     const body = ARTICLE_BODY.repeat(3);
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         block({
           "@context": "https://schema.org",
@@ -142,7 +140,7 @@ describe("JsonLdDuplicationMassAudit", () => {
   });
 
   it("ignores a long string that does not appear in the DOM", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         block({
           "@context": "https://schema.org",
@@ -157,7 +155,7 @@ describe("JsonLdDuplicationMassAudit", () => {
   });
 
   it("states the cost in the dossier terms", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         block({
           "@context": "https://schema.org",
@@ -173,7 +171,7 @@ describe("JsonLdDuplicationMassAudit", () => {
 
   it("never fails", async () => {
     const body = ARTICLE_BODY.repeat(10);
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         block({
           "@context": "https://schema.org",

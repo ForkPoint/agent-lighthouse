@@ -62,7 +62,7 @@ const CALL_RE = /\b(?:registerTool|registerTools|provideContext)\s*\(/g;
 function callBodies(source: string): string[] {
   const bodies: string[] = [];
   for (const match of source.matchAll(CALL_RE)) {
-    const start = match.index! + match[0].length;
+    const start = match.index + match[0].length;
     let depth = 1;
     let i = start;
     for (; i < source.length && depth > 0; i++) {

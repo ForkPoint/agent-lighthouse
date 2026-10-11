@@ -63,7 +63,7 @@ function report(over: Partial<ScanReport> = {}): ScanReport {
     scannedAt: "2026-01-01T00:00:00.000Z",
     durationMs: 12_340,
     ...over,
-  } as ScanReport;
+  };
 }
 
 beforeEach(() => {

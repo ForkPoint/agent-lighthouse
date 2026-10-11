@@ -138,7 +138,7 @@ describe("ServerResponsivenessAudit", () => {
   it("declines when no response can be attributed to this site", async () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new ServerResponsivenessAudit();
-    const reached = await instance.audit(mockCheckContext(pages, rootFiles));
+    const reached = instance.audit(mockCheckContext(pages, rootFiles));
     expect(reached.status, "the same input reached is judged").not.toBe(
       CheckStatus.NotApplicable,
     );
@@ -168,9 +168,7 @@ describe("ServerResponsivenessAudit", () => {
   // `requires` deliberately omits `rendered-body`: TTFB is measured from the
   // response, and a shell answers as fast or as slow as anything else.
   it("still judges a page that served no readable text", async () => {
-    const result = await new ServerResponsivenessAudit().audit(
-      shellSiteContext(),
-    );
+    const result = new ServerResponsivenessAudit().audit(shellSiteContext());
     expect(result.status).not.toBe(CheckStatus.NotApplicable);
   });
 });

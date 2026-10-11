@@ -7,7 +7,6 @@ import { GptbotAudit } from "./gptbot";
 import { AnthropicAudit } from "./anthropic-ai";
 import { SensitivePathsAudit } from "./sensitive-paths";
 import type { Audit } from "#core/audit";
-import type { AuditResult } from "#core/types";
 import {
   mockCheckContext,
   mockFetchResult,
@@ -161,7 +160,7 @@ async function runAll(): Promise<Record<string, Record<string, Row>>> {
   for (const { id, audit } of AUDITS) {
     const perFixture: Record<string, Row> = {};
     for (const fixture of FIXTURES) {
-      const result = (await audit.audit(contextFor(fixture))) as AuditResult;
+      const result = await audit.audit(contextFor(fixture));
       const check = audit.toCheckResult(result);
       // `evidenceUrl` joins docsUrl/effort as framework-derived metadata: it is
       // a pure function of the audit id, not scan output, so it is excluded

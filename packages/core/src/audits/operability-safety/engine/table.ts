@@ -112,12 +112,12 @@ export function getScope(el: Cell | VNode): boolean | string {
   const tableGrid = toGrid(findUp(cell, "table") as unknown as Table);
   const pos = getCellPosition(cell, tableGrid)!;
   const headerRow = (tableGrid[pos.y] ?? []).every(
-    (node) => (node as Cell).nodeName.toUpperCase() === "TH",
+    (node) => node.nodeName.toUpperCase() === "TH",
   );
   if (headerRow) return "col";
   const headerCol = tableGrid
     .map((col) => col[pos.x])
-    .every((node) => node && (node as Cell).nodeName.toUpperCase() === "TH");
+    .every((node) => node && node.nodeName.toUpperCase() === "TH");
   if (headerCol) return "row";
   return "auto";
 }
@@ -204,7 +204,7 @@ function traverseForHeaders(
   headers = (headers || []).concat(cells.filter(predicate));
   cells.forEach((tableCell) => {
     (toVNode(tableCell) as unknown as Record<string, Cell[]>)[property] =
-      headers as Cell[];
+      headers;
   });
   return headers;
 }
@@ -260,10 +260,10 @@ export function traverse(
     | undefined;
   if (Array.isArray(startPos)) {
     cb = tableGrid as (cell: Cell) => boolean | void;
-    grid = startPos as Cell[][];
+    grid = startPos;
     pos = { x: 0, y: 0 };
   } else {
-    pos = startPos as { x: number; y: number };
+    pos = startPos;
     grid = tableGrid as Cell[][];
     cb = callback as (cell: Cell) => boolean | void;
   }
@@ -322,6 +322,9 @@ export function isDataTable(node: Table): boolean {
     const row = rows[ri];
     if (!row) continue;
     for (let cellIndex = 0; cellIndex < row.cells.length; cellIndex++) {
+      // The cast adds the layout fields a live DOM cell carries; tsgolint
+      // reads the widening as a no-op.
+      // oxlint-disable-next-line typescript/no-unnecessary-type-assertion
       const cell = row.cells[cellIndex] as
         | (Cell & {
             offsetWidth?: number;

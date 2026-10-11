@@ -35,7 +35,7 @@ export function parseAuditReviews(markdown: string): Map<string, AuditReview> {
         key,
         body
           .slice(
-            match.index! + match[0].length,
+            match.index + match[0].length,
             bullets[i + 1]?.index ?? body.length,
           )
           .replace(/\s+/g, " ")

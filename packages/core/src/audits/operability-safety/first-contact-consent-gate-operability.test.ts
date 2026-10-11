@@ -43,25 +43,25 @@ describe("FirstContactConsentGateOperabilityAudit", () => {
   });
 
   it("is notApplicable when no consent manager is detected", async () => {
-    const result = await audit.audit(page(ARTICLE, ""));
+    const result = audit.audit(page(ARTICLE, ""));
     expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("reports an action cost when the content is behind a well-built gate", async () => {
-    const result = await audit.audit(page(`${DIALOG}${ARTICLE}`));
+    const result = audit.audit(page(`${DIALOG}${ARTICLE}`));
     expect(result.status).toBe(CheckStatus.Pass);
     expect(result.details?.["actionCost"]).toBe(1);
     expect(result.found).toContain("OneTrust");
   });
 
   it("names the missing main entity when an interstitial replaces the content", async () => {
-    const result = await audit.audit(page(DIALOG));
+    const result = audit.audit(page(DIALOG));
     expect(result.message).toContain("main");
     expect(result.details?.["contentBehindGate"]).toBe(false);
   });
 
   it("reports a dialog whose root is a cross-origin iframe as unreachable", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         `<iframe id="onetrust-banner-sdk" src="https://consent.example.net/gate"></iframe>${ARTICLE}`,
       ),
@@ -71,7 +71,7 @@ describe("FirstContactConsentGateOperabilityAudit", () => {
   });
 
   it("reports main content hidden from the accessibility tree while the gate is open", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         `${DIALOG}<main aria-hidden="true"><article><p>Body</p></article></main>`,
       ),
@@ -81,8 +81,8 @@ describe("FirstContactConsentGateOperabilityAudit", () => {
 
   // One click to reject is the cheapest gate; a preferences journey costs two.
   it("counts one click to reject, and two when reject hides behind preferences", async () => {
-    const cheap = await audit.audit(page(`${DIALOG}${ARTICLE}`));
-    const costly = await audit.audit(
+    const cheap = audit.audit(page(`${DIALOG}${ARTICLE}`));
+    const costly = audit.audit(
       page(
         `<div id="onetrust-banner-sdk" role="dialog" aria-label="Cookie preferences">
            <button id="onetrust-accept-btn-handler">Accept all cookies</button>

@@ -40,8 +40,8 @@ export function resolveDocLink(
     return withBase("sources/") + target.fragment;
 
   const dossier = /^docs\/evidence\/audits\/(.+)\.md$/.exec(target.path);
-  if (dossier && published.has(dossier[1]!))
-    return auditPath(dossier[1]!) + target.fragment;
+  if (dossier && published.has(dossier[1]))
+    return auditPath(dossier[1]) + target.fragment;
 
   // The README also links a section of itself (`#-quickstart`); a bare fragment
   // is not a relative path, so `repoTarget` has already returned it untouched.

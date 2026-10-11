@@ -59,7 +59,7 @@ function overall(traces: Trace[]): {
   let mass = 0;
   const dropped: string[] = [];
   for (const [cat, list] of byCat) {
-    const m = (CATEGORY_MASS as Record<string, number>)[cat] ?? 0;
+    const m = CATEGORY_MASS[cat] ?? 0;
     if (m <= 0) continue;
     const cs = categoryScore(list);
     if (cs === null) {

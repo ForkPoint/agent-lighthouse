@@ -923,7 +923,7 @@ describe("flattenJsonLd", () => {
   });
 
   it("handles a top-level array block", () => {
-    const flat = flattenJsonLd([[{ "@type": "A" }] as unknown as object]);
+    const flat = flattenJsonLd([[{ "@type": "A" }]]);
     expect(flat).toHaveLength(1);
     expect((flat[0] as Record<string, unknown>)["@type"]).toBe("A");
   });
@@ -977,7 +977,7 @@ describe("topLevelJsonLd", () => {
   });
   it("expands top-level arrays", () => {
     const tops = topLevelJsonLd([
-      [{ "@type": "FAQPage" }, { "@type": "WebSite" }] as unknown as object,
+      [{ "@type": "FAQPage" }, { "@type": "WebSite" }],
     ]);
     expect(tops).toHaveLength(2);
   });

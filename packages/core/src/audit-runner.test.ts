@@ -616,7 +616,7 @@ describe("scan-error explanations", () => {
   it("handles a thrown non-Error", async () => {
     const stub = await stubFor((() => {
       throw "just a string";
-    }) as () => never);
+    });
     expect(stub.explanation).toBe("Audit failed to run: just a string");
   });
 });

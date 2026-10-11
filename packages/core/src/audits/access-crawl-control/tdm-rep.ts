@@ -111,7 +111,7 @@ function readPolicyFile(ctx: CheckContext): FileVerdict {
   const policy = entries
     .map((e) => e["tdm-policy"])
     .find((p) => typeof p === "string");
-  return { kind: "valid", reservations, policy: policy as string | undefined };
+  return { kind: "valid", reservations, policy: policy };
 }
 
 /** A `tdm-reservation` response header, which the CG report calls the preferred technique. */

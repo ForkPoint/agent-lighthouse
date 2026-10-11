@@ -82,8 +82,7 @@ const autocompleteMatch: MatchFn = (_node, vNode) => {
   const autocomplete = vNode.attr("autocomplete");
   if (!autocomplete || sanitize(autocomplete) === "") return false;
   const nodeName = vNode.props.nodeName;
-  if (["textarea", "input", "select"].includes(nodeName) === false)
-    return false;
+  if (!["textarea", "input", "select"].includes(nodeName)) return false;
   const ariaReadonly = vNode.attr("aria-readonly") || "false";
   if (vNode.hasAttr("readonly") || ariaReadonly.toLowerCase() === "true")
     return false;
@@ -164,12 +163,9 @@ const noExplicitNameRequiredMatch: MatchFn = (_node, vNode) => {
 };
 
 const labelMatch: MatchFn = (_node, vNode) => {
-  if (vNode.props.nodeName !== "input" || vNode.hasAttr("type") === false)
-    return true;
+  if (vNode.props.nodeName !== "input" || !vNode.hasAttr("type")) return true;
   const type = (vNode.attr("type") || "").toLowerCase();
-  return (
-    ["hidden", "image", "button", "submit", "reset"].includes(type) === false
-  );
+  return !["hidden", "image", "button", "submit", "reset"].includes(type);
 };
 
 const noNamingMethodMatch: MatchFn = (_node, vNode) => {

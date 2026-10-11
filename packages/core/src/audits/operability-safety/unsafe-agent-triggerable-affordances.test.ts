@@ -40,12 +40,12 @@ describe("UnsafeAgentTriggerableAffordancesAudit", () => {
   });
 
   it("passes a page with no state-verb link", async () => {
-    const result = await audit.audit(page('<a href="/products">Products</a>'));
+    const result = audit.audit(page('<a href="/products">Products</a>'));
     expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("fails a GET link that deletes something", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page('<a href="/?action=delete&id=7">Delete</a>'),
     );
     expect(result.status).toBe(CheckStatus.Fail);
@@ -53,7 +53,7 @@ describe("UnsafeAgentTriggerableAffordancesAudit", () => {
   });
 
   it("accepts the same link behind a confirmation attribute", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         '<a href="/?action=delete&id=7" data-turbo-confirm="Are you sure?">Delete</a>',
       ),
@@ -63,14 +63,14 @@ describe("UnsafeAgentTriggerableAffordancesAudit", () => {
 
   // rel=nofollow is the documented minimum mitigation for this exact case.
   it('accepts the same link marked rel="nofollow"', async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page('<a href="/?action=delete&id=7" rel="nofollow">Delete</a>'),
     );
     expect(result.status).toBe(CheckStatus.Pass);
   });
 
   it("accepts the same URL when it is submitted by a POST form", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         '<form method="post" action="/?action=delete&id=7"><button>Delete</button></form>',
       ),
@@ -79,12 +79,12 @@ describe("UnsafeAgentTriggerableAffordancesAudit", () => {
   });
 
   it("fails a bare /logout link on the path-pattern arm", async () => {
-    const result = await audit.audit(page('<a href="/logout">Sign out</a>'));
+    const result = audit.audit(page('<a href="/logout">Sign out</a>'));
     expect(result.status).toBe(CheckStatus.Fail);
   });
 
   it("fails an add-to-cart GET link", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page('<a href="/add-to-cart?sku=1">Add to cart</a>'),
     );
     expect(result.status).toBe(CheckStatus.Fail);
@@ -92,7 +92,7 @@ describe("UnsafeAgentTriggerableAffordancesAudit", () => {
 
   // A GET form is replayable from the query string, but it is at least a form.
   it("warns rather than fails on a GET form with a state-verb action", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         '<form method="get" action="/unsubscribe"><button>Unsubscribe</button></form>',
       ),
@@ -101,7 +101,7 @@ describe("UnsafeAgentTriggerableAffordancesAudit", () => {
   });
 
   it("still reports a disallowed path and says the mitigation is partial", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         '<a href="/logout">Sign out</a>',
         "User-agent: *\nDisallow: /logout\n",
@@ -117,7 +117,7 @@ describe("UnsafeAgentTriggerableAffordancesAudit", () => {
     const ctx = page('<a href="/?action=delete&id=7">Delete</a>');
     const spy = vi.fn(async () => mockFetchResult("", 200));
     ctx.fetch = spy;
-    await audit.audit(ctx);
+    audit.audit(ctx);
     expect(spy).not.toHaveBeenCalled();
   });
 
@@ -135,7 +135,7 @@ describe("UnsafeAgentTriggerableAffordancesAudit", () => {
   it("declines when no response can be attributed to this site", async () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new UnsafeAgentTriggerableAffordancesAudit();
-    const reached = await instance.audit(mockCheckContext(pages, rootFiles));
+    const reached = instance.audit(mockCheckContext(pages, rootFiles));
     expect(reached.status, "the same input reached is judged").not.toBe(
       CheckStatus.NotApplicable,
     );
@@ -159,12 +159,12 @@ describe("UnsafeAgentTriggerableAffordancesAudit", () => {
   it("declines a page that served no readable text", async () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new UnsafeAgentTriggerableAffordancesAudit();
-    const rendered = await instance.audit(mockCheckContext(pages, rootFiles));
+    const rendered = instance.audit(mockCheckContext(pages, rootFiles));
     expect(rendered.status, "the same input rendered is judged").not.toBe(
       CheckStatus.NotApplicable,
     );
 
-    const shell = await instance.audit(shellSiteContext());
+    const shell = instance.audit(shellSiteContext());
     expect(shell.status).toBe(CheckStatus.NotApplicable);
   });
 });

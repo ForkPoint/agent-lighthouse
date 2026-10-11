@@ -121,7 +121,7 @@ function hasAncestorIn($: CheerioAPI, el: Element, set: Set<Element>): boolean {
   return $(el)
     .parents()
     .toArray()
-    .some((parent) => set.has(parent as Element));
+    .some((parent) => set.has(parent));
 }
 
 /** Boundary markers on the region itself or on an ancestor. */

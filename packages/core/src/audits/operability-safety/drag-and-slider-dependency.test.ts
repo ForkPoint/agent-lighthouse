@@ -32,7 +32,7 @@ describe("DragAndSliderDependencyAudit", () => {
   });
 
   it("accepts a range input paired with a numeric input in the same group", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         '<fieldset><label for="p">Max price</label><input id="p" type="range" min="0" max="500"><input type="number" min="0" max="500"></fieldset>',
       ),
@@ -42,7 +42,7 @@ describe("DragAndSliderDependencyAudit", () => {
   });
 
   it("flags a lone range input and names the missing numeric input", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         '<fieldset><label for="p">Max price</label><input id="p" type="range"></fieldset>',
       ),
@@ -54,7 +54,7 @@ describe("DragAndSliderDependencyAudit", () => {
 
   // Two different defects with two different fixes, so they are counted apart.
   it("reports a role=slider missing aria-valuenow on its own arm", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         '<fieldset><div role="slider" aria-label="Max price"></div><input type="number"></fieldset>',
       ),
@@ -65,7 +65,7 @@ describe("DragAndSliderDependencyAudit", () => {
   });
 
   it("accepts a complete role=slider paired with a select", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         '<fieldset><div role="slider" aria-label="Max price" aria-valuenow="100" aria-valuemin="0" aria-valuemax="500"></div><select><option>100</option></select></fieldset>',
       ),
@@ -75,7 +75,7 @@ describe("DragAndSliderDependencyAudit", () => {
   });
 
   it("flags a drag-to-reorder list on a checkout path", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(DRAG_LIST, "https://example.com/checkout/seats"),
     );
     expect(result.details?.["dragLists"]).toBe(1);
@@ -83,14 +83,14 @@ describe("DragAndSliderDependencyAudit", () => {
 
   // The same markup off a task-critical path costs an agent nothing.
   it("does not flag the same list on a blog path", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(DRAG_LIST, "https://example.com/blog/seat-tips"),
     );
     expect(result.details?.["dragLists"]).toBe(0);
   });
 
   it("accepts the same checkout list once move buttons are present", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         '<ul class="items"><li draggable="true"><span>Seat 12A</span><button aria-label="Move up">↑</button><button aria-label="Move down">↓</button></li></ul>',
         "https://example.com/checkout/seats",
@@ -100,7 +100,7 @@ describe("DragAndSliderDependencyAudit", () => {
   });
 
   it("flags a drop zone with no file input anywhere near it", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page('<div class="file-drop">Drop your CV here</div>'),
     );
     expect(result.details?.["dropZones"]).toBe(1);
@@ -108,7 +108,7 @@ describe("DragAndSliderDependencyAudit", () => {
   });
 
   it("flags a carousel whose only next/prev affordance is a swipe handler", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         '<div class="carousel" ontouchstart="swipe()"><div class="slide">One</div></div>',
       ),
@@ -117,9 +117,7 @@ describe("DragAndSliderDependencyAudit", () => {
   });
 
   it("is notApplicable when the page carries none of the four constructs", async () => {
-    const result = await audit.audit(
-      page('<p>Just prose.</p><a href="/x">Link</a>'),
-    );
+    const result = audit.audit(page('<p>Just prose.</p><a href="/x">Link</a>'));
     expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 

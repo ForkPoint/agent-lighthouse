@@ -61,7 +61,7 @@ export function extractProductFieldVerification(
     b ? FieldStatus.Found : FieldStatus.Missing;
 
   const hasGtin = ["gtin", "gtin8", "gtin12", "gtin13", "gtin14"].some((k) =>
-    has(product![k]),
+    has(product[k]),
   );
   const sku =
     has(product["sku"]) ||

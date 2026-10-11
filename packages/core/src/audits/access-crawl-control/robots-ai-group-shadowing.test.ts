@@ -116,7 +116,7 @@ describe("RobotsAiGroupShadowingAudit", () => {
   it("declines when no response can be attributed to this site", async () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new RobotsAiGroupShadowingAudit();
-    const reached = await instance.audit(mockCheckContext(pages, rootFiles));
+    const reached = instance.audit(mockCheckContext(pages, rootFiles));
     expect(reached.status, "the same input reached is judged").not.toBe(
       CheckStatus.NotApplicable,
     );
@@ -143,7 +143,7 @@ describe("RobotsAiGroupShadowingAudit", () => {
       200,
       "text/plain",
     );
-    const result = await new RobotsAiGroupShadowingAudit().audit(
+    const result = new RobotsAiGroupShadowingAudit().audit(
       shellSiteContext(undefined, { "/robots.txt": robots }),
     );
     expect(result.status).toBe(CheckStatus.Pass);

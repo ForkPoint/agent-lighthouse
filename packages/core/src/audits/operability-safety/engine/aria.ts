@@ -303,7 +303,7 @@ export function validateAttrValue(
         attrInfo.values.includes(value.toLowerCase())
       );
     case "nmtokens":
-      list = tokenList(value as string);
+      list = tokenList(value);
       return list.reduce(
         (result: boolean, token: string) =>
           result && attrInfo.values.includes(token),
@@ -415,7 +415,7 @@ export function getOwnedVirtual(virtualNode: VNode): VNode[] {
   if (virtualNode.hasAttr("aria-owns")) {
     const owns = idrefs(virtualNode.actualNode, "aria-owns")
       .filter((element) => !!element)
-      .map((element) => getNodeFromTree(element as AnyNode));
+      .map((element) => getNodeFromTree(element));
     const uniqueOwns = owns.filter((own, index) => owns.indexOf(own) === index);
     const nativeChildren = children.filter(
       (child) => !uniqueOwns.includes(child),
@@ -476,10 +476,10 @@ export function getAccessibleRefs(node: VNode | AnyNode): AnyNode[] {
     documentElement?: AnyNode;
   };
 
-  let idRefs = idRefsByRoot.get(root as unknown as object);
+  let idRefs = idRefsByRoot.get(root);
   if (!idRefs) {
     idRefs = new Map();
-    idRefsByRoot.set(root as unknown as object, idRefs);
+    idRefsByRoot.set(root, idRefs);
     const refAttrs = Object.keys(ariaAttrs).filter((attr) => {
       const { type } = ariaAttrs[attr];
       return idRefsRegex.test(type);

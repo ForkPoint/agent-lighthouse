@@ -41,7 +41,7 @@ describe("PreambleTaxTokensBeforeTheFirstContentTokenAudit", () => {
   });
 
   it("passes when the main content starts immediately", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         "<title>Mugs</title>",
         `<main><h1>Mugs</h1><p>${prose(30)}</p></main>`,
@@ -55,7 +55,7 @@ describe("PreambleTaxTokensBeforeTheFirstContentTokenAudit", () => {
       ".selector-name{color:#ffffff;background:#000000;padding:12px}".repeat(
         1200,
       );
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         `<style>${css}</style>`,
         `<main><h1>Mugs</h1><p>${prose(30)}</p></main>`,
@@ -67,7 +67,7 @@ describe("PreambleTaxTokensBeforeTheFirstContentTokenAudit", () => {
 
   it("names the largest pre-content node with its token cost and line", async () => {
     const css = ".selector-name{color:#ffffff}".repeat(1200);
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         `\n<style>${css}</style>`,
         `<main><h1>Mugs</h1><p>${prose(30)}</p></main>`,
@@ -79,7 +79,7 @@ describe("PreambleTaxTokensBeforeTheFirstContentTokenAudit", () => {
 
   it("warns between 2000 and 10000 preamble tokens", async () => {
     const css = ".selector-name{color:#ffffff}".repeat(400);
-    const result = await audit.audit(
+    const result = audit.audit(
       page(
         `<style>${css}</style>`,
         `<main><h1>Mugs</h1><p>${prose(30)}</p></main>`,
@@ -91,9 +91,7 @@ describe("PreambleTaxTokensBeforeTheFirstContentTokenAudit", () => {
   });
 
   it("reports the offset as a share of the whole document", async () => {
-    const result = await audit.audit(
-      page("", `<main><p>${prose(30)}</p></main>`),
-    );
+    const result = audit.audit(page("", `<main><p>${prose(30)}</p></main>`));
     const share = Number(result.details?.["preambleShare"]);
     expect(share).toBeGreaterThanOrEqual(0);
     expect(share).toBeLessThanOrEqual(1);
@@ -105,14 +103,12 @@ describe("PreambleTaxTokensBeforeTheFirstContentTokenAudit", () => {
     // A body the parsed page does not correspond to: nothing to locate.
     ctx.pages[0]!.fetchResult.body =
       "<html><body><p>Different document entirely.</p></body></html>";
-    const result = await audit.audit(ctx);
+    const result = audit.audit(ctx);
     expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("is notApplicable when no main content can be extracted", async () => {
-    const result = await audit.audit(
-      page("", '<nav><a href="/">Home</a></nav>'),
-    );
+    const result = audit.audit(page("", '<nav><a href="/">Home</a></nav>'));
     expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
@@ -130,7 +126,7 @@ describe("PreambleTaxTokensBeforeTheFirstContentTokenAudit", () => {
   it("declines when no response can be attributed to this site", async () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new PreambleTaxTokensBeforeTheFirstContentTokenAudit();
-    const reached = await instance.audit(mockCheckContext(pages, rootFiles));
+    const reached = instance.audit(mockCheckContext(pages, rootFiles));
     expect(reached.status, "the same input reached is judged").not.toBe(
       CheckStatus.NotApplicable,
     );

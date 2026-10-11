@@ -199,7 +199,7 @@ function parseFlags(argv: string[]): Record<FlagName, number> {
     }
     values[name] = value;
   }
-  return values as Record<FlagName, number>;
+  return values;
 }
 
 const FLAGS = parseFlags(process.argv.slice(2));

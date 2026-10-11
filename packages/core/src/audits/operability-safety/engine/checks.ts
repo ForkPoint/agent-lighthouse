@@ -206,7 +206,7 @@ const ariaValidAttrValue: EvaluateFn = function (_node, options, virtualNode) {
           ?.value !== "false" &&
         getAriaValue(virtualNode, "aria-selected", { lowercase: true })
           ?.value !== "false" &&
-        hasPopup === false
+        !hasPopup
       );
     },
     "aria-current": (validValue) => {
@@ -320,7 +320,7 @@ const ariaErrormessage: EvaluateFn = function (_node, options, virtualNode) {
   };
 
   if (opts.indexOf(errorMessageAttr as string) === -1 && hasAttr) {
-    this.data(tokenList(errorMessageAttr as string));
+    this.data(tokenList(errorMessageAttr));
     return validateAttrValueLocal(errorMessageAttr as string);
   }
   return true;
@@ -352,7 +352,7 @@ const ariaAllowedAttr: EvaluateFn = function (_node, options, virtualNode) {
   const invalid: string[] = [];
   const role = getRole(virtualNode);
   let allowed = allowedAttr(role);
-  const opts = options as Record<string, unknown>;
+  const opts = options;
   if (Array.isArray(opts[role as string])) {
     allowed = uniqueArray(opts[role as string] as string[], allowed);
   }
@@ -497,7 +497,7 @@ const ariaRequiredAttr: EvaluateFn = function (
   const role = getExplicitRole(virtualNode);
   const attrs = virtualNode.attrNames;
   let requiredAttrs = requiredAttr(role);
-  const opts = options as Record<string, unknown>;
+  const opts = options;
   if (Array.isArray(opts[role as string])) {
     requiredAttrs = uniqueArray(
       opts[role as string] as string[],
@@ -668,10 +668,10 @@ function getMissingContext(
 const ariaOwnsIndexByRoot = new WeakMap<object, Map<string, AnyNode[]>>();
 
 function getAriaOwnsIndex(root: AnyNode): Map<string, AnyNode[]> {
-  const cached = ariaOwnsIndexByRoot.get(root as unknown as object);
+  const cached = ariaOwnsIndexByRoot.get(root);
   if (cached) return cached;
   const idx = new Map<string, AnyNode[]>();
-  ariaOwnsIndexByRoot.set(root as unknown as object, idx);
+  ariaOwnsIndexByRoot.set(root, idx);
   const scope = root as unknown as {
     querySelectorAll?: (s: string) => ArrayLike<AnyNode>;
   };
@@ -701,10 +701,7 @@ function getAriaOwners(element: AnyNode): AnyNode[] | null {
   let el: {
     getAttribute?: (a: string) => string | null;
     parentElement?: AnyNode | null;
-  } | null = element as unknown as {
-    getAttribute?: (a: string) => string | null;
-    parentElement?: AnyNode | null;
-  };
+  } | null = element;
   while (el) {
     const id = el.getAttribute ? el.getAttribute("id") : null;
     if (id) {
@@ -792,7 +789,7 @@ const duplicateIdAfter: AfterFn = function (results) {
 
 const autocompleteValid: EvaluateFn = function (_node, options, virtualNode) {
   const autocomplete = virtualNode.attr("autocomplete") || "";
-  return isValidAutocomplete(autocomplete, options as Record<string, never>);
+  return isValidAutocomplete(autocomplete, options);
 };
 
 // ── keyboard ─────────────────────────────────────────────────────
@@ -974,11 +971,7 @@ const tdHeadersAttr: EvaluateFn = function (node) {
     headers.forEach((headerId) => {
       if (cellId && headerId === cellId) badCells[selfRef].add(cell);
       else if (!cellRoleById[headerId]) badCells[notInTable].add(cell);
-      else if (
-        !["columnheader", "rowheader"].includes(
-          cellRoleById[headerId] as string,
-        )
-      )
+      else if (!["columnheader", "rowheader"].includes(cellRoleById[headerId]))
         badCells[notTh].add(cell);
     });
   });

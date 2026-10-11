@@ -123,7 +123,7 @@ function surveyPage(page: PageContext): Gate | null {
   ).each((_i, node) => {
     if (!isElement(node)) return;
     const attribs = node.attribs ?? {};
-    const name = accessibleName(node, $ as never);
+    const name = accessibleName(node, $);
     const marker = `${name} ${attribs["id"] ?? ""} ${attribs["class"] ?? ""} ${attribs["value"] ?? ""}`;
     const inDialog =
       DIALOG_ROOT.test(marker) ||

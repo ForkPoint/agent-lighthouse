@@ -115,7 +115,7 @@ async function scanOne(t: { url: string; kind: string }): Promise<SiteResult> {
     ]++;
     res.status[tr.status] = (res.status[tr.status] ?? 0) + 1;
     if (READS_PAGES.has(tr.id)) {
-      const s = tr.status as CheckStatus;
+      const s = tr.status;
       res.claimedWithoutPages[s] = (res.claimedWithoutPages[s] ?? 0) + 1;
       if (s !== CheckStatus.NotApplicable) res.claimIds.push(`${s}:${tr.id}`);
     }

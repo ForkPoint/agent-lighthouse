@@ -29,14 +29,14 @@ describe("TableMarkdownRoundTripLossAudit", () => {
   });
 
   it("is notApplicable when the main content carries no data table", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page("<p>Prose only.</p><table><tr><td>one</td></tr></table>"),
     );
     expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("passes a clean two-column table with zero loss", async () => {
-    const result = await audit.audit(page(CLEAN));
+    const result = audit.audit(page(CLEAN));
     expect(result.status).toBe(CheckStatus.Pass);
     expect(result.details?.["lostCells"]).toBe(0);
     expect(result.details?.["score"]).toBe(1);
@@ -44,7 +44,7 @@ describe("TableMarkdownRoundTripLossAudit", () => {
 
   // GFM has no colspan: the second column it headed comes back empty.
   it("reports a spanned header by coordinate and cell text", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(`<table>
         <tr><th colspan="2">Revenue</th><th>Region</th></tr>
         <tr><td>2025</td><td>2026</td><td>EMEA</td></tr>
@@ -57,7 +57,7 @@ describe("TableMarkdownRoundTripLossAudit", () => {
   });
 
   it("fails a table with no header cell and two numeric columns", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(`<table>
         <tr><td>2024</td><td>1200</td><td>Berlin</td></tr>
         <tr><td>2025</td><td>1450</td><td>Lisbon</td></tr>
@@ -72,7 +72,7 @@ describe("TableMarkdownRoundTripLossAudit", () => {
   });
 
   it("fails a table whose currency lives only in the caption", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(`<table>
         <caption>Monthly price in $</caption>
         <tr><th>Plan</th><th>Price</th></tr>
@@ -88,7 +88,7 @@ describe("TableMarkdownRoundTripLossAudit", () => {
   });
 
   it("reports a paragraph or list inside a cell", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(`<table>
         <tr><th>Plan</th><th>What you get</th></tr>
         <tr><td>Team</td><td><ul><li>Ten seats</li><li>Audit log</li></ul></td></tr>
@@ -101,7 +101,7 @@ describe("TableMarkdownRoundTripLossAudit", () => {
   });
 
   it("reports a row whose cell count differs from the header", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(`<table>
         <tr><th>Plan</th><th>Price</th><th>Region</th></tr>
         <tr><td>Starter</td><td>29 USD</td></tr>
@@ -115,7 +115,7 @@ describe("TableMarkdownRoundTripLossAudit", () => {
   });
 
   it("scores tables with zero loss over all main-content tables", async () => {
-    const result = await audit.audit(
+    const result = audit.audit(
       page(`${CLEAN}<table>
         <tr><th colspan="2">Revenue</th></tr>
         <tr><td>2025</td><td>2026</td></tr>
