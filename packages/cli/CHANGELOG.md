@@ -1,5 +1,16 @@
 # @forkpoint/agent-lighthouse
 
+## 7.0.1
+
+### Patch Changes
+
+- ad20912: Print an object or array `timeout` or `pageType` from the config file as JSON
+  in the error message, instead of `[object Object]`.
+- Updated dependencies [ad20912]
+- Updated dependencies [ad20912]
+  - @forkpoint/agent-lighthouse-core@7.0.1
+  - @forkpoint/agent-lighthouse-report@7.0.1
+
 ## 7.0.0
 
 ### Major Changes
