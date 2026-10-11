@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { invariantViolations, READS_RENDERED_BODY } from "./scan-invariants";
-import { TAG_SCAN_ERROR, TAG_SKIPPED_NO_EVIDENCE } from "#core/constants";
+import {
+  TAG_SCAN_ERROR,
+  TAG_SKIPPED_NO_EVIDENCE,
+  TAG_SKIPPED_SCAN_BUDGET,
+} from "#core/constants";
 import type { CheckResult, ScanReport, ScanValidity } from "#core/types";
 import {
   CheckPriority,
@@ -243,6 +247,43 @@ describe("scan invariants", () => {
         }),
       });
       expect(invariantViolations(unscored, halfGated)).toEqual([]);
+    });
+
+    // The nightly corpus scan found nine sites whose budget ran out with half
+    // the mass unassessed and nothing gated: the orchestrator rightly withheld
+    // the score, and this rule reported it as a violation.
+    const budgetCut = (share: number) => [
+      check({ id: "a/ran", weight: 1 - share }),
+      check({
+        id: "a/cut",
+        status: CheckStatus.NotApplicable,
+        score: 0,
+        weight: share,
+        tags: [TAG_SKIPPED_SCAN_BUDGET],
+      }),
+    ];
+    const withheld = report({
+      overallScore: null,
+      scoreTier: null,
+      scanValidity: validity({
+        unscoredReason: "The scan budget of 180 s ran out.",
+      }),
+    });
+
+    it("stays quiet when the scan budget cut most of the mass", () => {
+      expect(invariantViolations(withheld, budgetCut(0.5))).toEqual([]);
+    });
+
+    it("fires on a score the budget's cut forbids", () => {
+      expect(invariantViolations(report(), budgetCut(0.5))).toEqual([
+        "scored 60 on a scan that must be unscored (judgeable true, 0% of mass gated, 50% cut by the scan budget)",
+      ]);
+    });
+
+    it("fires on a score withheld when the budget cut too little", () => {
+      expect(invariantViolations(withheld, budgetCut(0.2))).toEqual([
+        "withheld a score from a judgeable scan with only 0% of mass gated, 20% cut by the scan budget",
+      ]);
     });
   });
 
