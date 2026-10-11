@@ -688,10 +688,14 @@ export function classifyPage(
   if (hasJsonLdType(structuredData, ["Article", "NewsArticle", "BlogPosting"]))
     article.push("article-schema-hint");
 
+  // A collection page often declares one Product, with an AggregateOffer and
+  // rating, beside its grid. Schema alone does not outrank a grid of cards;
+  // Open Graph and the page's own buy controls do.
+  const grid = category.includes("product-grid");
   const strongProduct = product.some(
     (s) =>
       s === "product-open-graph" ||
-      s === "product-schema-primary" ||
+      (s === "product-schema-primary" && !grid) ||
       s === "purchase-controls",
   );
   const strongArticle = article.some((s) => s !== "article-schema-hint");
@@ -710,7 +714,7 @@ export function classifyPage(
   // related items stays a product page.
   if (strongProduct)
     return result(PageType.Product, ClassificationConfidence.Strong, product);
-  if (category.includes("product-grid"))
+  if (grid)
     return result(PageType.Category, ClassificationConfidence.Hint, category);
   if (product.length > 0)
     return result(PageType.Product, ClassificationConfidence.Hint, product);
@@ -888,8 +892,12 @@ const ADD_TO_CART_SELECTOR =
 const SECONDARY_REGION =
   /recommend|related|recently|upsell|up-sell|cross-?sell|also-(?:like|bought|viewed)|you-may|carousel|slider|swiper|slick/i;
 
+/**
+ * The walk stops below `<main>` and `<body>`: a theme class such as
+ * `has-slider` on a page-wide wrapper says nothing about one region.
+ */
 function inSecondaryRegion($: CheerioAPI, el: Element): boolean {
-  return [el, ...$(el).parents().toArray()].some(
+  return [el, ...$(el).parentsUntil("main, body").toArray()].some(
     (node) =>
       node.tagName === "aside" ||
       SECONDARY_REGION.test(

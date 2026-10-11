@@ -197,6 +197,31 @@ describe("classification evidence", () => {
       ),
     ).toMatchObject({ type: "product", signals: ["product-open-graph"] });
   });
+  it("keeps a grid with one collection-level Product schema a category", () => {
+    // A collection page often declares one Product with an AggregateOffer.
+    const schema =
+      '<script type="application/ld+json">{"@type":"Product","name":"Shoes","offers":{"@type":"AggregateOffer","lowPrice":20,"highPrice":90}}</script>';
+    expect(
+      evidence(
+        "/collections/shoes",
+        `${schema}<main><div class="product-grid">${["a", "b", "c", "d", "e", "f"].map(tile).join("")}</div></main>`,
+      ),
+    ).toMatchObject({
+      type: PageType.Category,
+      signals: ["listing-url-hint", "product-grid"],
+    });
+  });
+  it("ignores a slider class on the page-wide body", () => {
+    expect(
+      evidence(
+        "/shirt",
+        '<body class="template-product has-slider"><main><h1>Shirt</h1><span class="price">20</span><button class="add-to-cart-btn">Add</button></main></body>',
+      ),
+    ).toMatchObject({
+      type: PageType.Product,
+      signals: ["purchase-controls"],
+    });
+  });
   it("counts a card once, not once per part that repeats its class", () => {
     // Two tiles match the card selector six times: still two cards, no grid.
     expect(
