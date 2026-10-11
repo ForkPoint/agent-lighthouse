@@ -252,7 +252,12 @@ export function resolveCommand(args: string[]): {
   const command = args[0];
   if (!command || command === "-h" || command === "--help")
     return { action: CliCommand.Help };
-  if (command === "audit") return { action: CliCommand.Audit, url: args[1] };
+  if (command === "audit") {
+    const url = args[1];
+    return url === undefined
+      ? { action: CliCommand.Audit }
+      : { action: CliCommand.Audit, url };
+  }
   if (!command.startsWith("-"))
     return { action: CliCommand.Audit, url: command };
   return { action: CliCommand.Audit };

@@ -104,6 +104,8 @@ export function hydrateReport(row: PersistedScanRow): ScanReport {
     )
     .slice(0, 10);
 
+  const createdAt =
+    row.createdAt instanceof Date ? row.createdAt.toISOString() : row.createdAt;
   const report: ScanReport = {
     scanId: row.id,
     url: row.url,
@@ -126,18 +128,18 @@ export function hydrateReport(row: PersistedScanRow): ScanReport {
       (row.completedAt instanceof Date
         ? row.completedAt.toISOString()
         : row.completedAt) ?? "",
-    createdAt:
-      (row.createdAt instanceof Date
-        ? row.createdAt.toISOString()
-        : row.createdAt) ?? undefined,
+    ...(createdAt != null && { createdAt }),
     durationMs: row.durationMs ?? 0,
-    previousScore: row.previousScore ?? undefined,
-    scoreDelta: row.scoreDelta ?? undefined,
-    readinessScore: row.readinessScore ?? undefined,
-    readinessVitals: row.readinessVitals ?? undefined,
-    productFields: row.productFields ?? undefined,
-    originEvidence: row.originEvidence ?? undefined,
-    conditions: row.conditions ?? undefined,
+    // A stored null means the field was never recorded: the report omits it.
+    ...(row.previousScore != null && { previousScore: row.previousScore }),
+    ...(row.scoreDelta != null && { scoreDelta: row.scoreDelta }),
+    ...(row.readinessScore != null && { readinessScore: row.readinessScore }),
+    ...(row.readinessVitals != null && {
+      readinessVitals: row.readinessVitals,
+    }),
+    ...(row.productFields != null && { productFields: row.productFields }),
+    ...(row.originEvidence != null && { originEvidence: row.originEvidence }),
+    ...(row.conditions != null && { conditions: row.conditions }),
   };
 
   report.summary = generateScanSummary(report);
