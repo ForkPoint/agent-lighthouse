@@ -205,6 +205,9 @@ Write for a reader, not for a researcher:
   Lint is type-aware (oxlint-tsgolint) and reads each file's nearest
   `tsconfig.json`, hence `scripts/tsconfig.json`. `no-unsafe-type-assertion`
   and the `no-unsafe-*` family are off for now because of their volume.
+  cli, mcp and report read core's types from its built `dist`, so run
+  `pnpm build` before `pnpm lint`; without it, every core type reads as an
+  error type.
 - Prettier for formatting: `pnpm format`.
 - Inside `packages/core/src`, import another core module as `#core/<path>`
   (`import { CheckStatus } from "#core/types"`), not with a climbing `../`
@@ -235,8 +238,8 @@ All ten, in order:
 pnpm build && pnpm test && pnpm typecheck && pnpm lint && pnpm check:dossiers && pnpm check:requires && pnpm check:audit-map && pnpm check:enums && pnpm check:retired-names && pnpm check:package-types
 ```
 
-`check:dossiers`, `check:requires` and `check:package-types` read the _built_
-packages, so `pnpm build` has to run first. Watch for stale build artifacts: an untracked `.js` or `.d.ts` under
+`check:dossiers`, `check:requires`, `check:package-types` and the type-aware
+`lint` read the _built_ packages, so `pnpm build` has to run first. Watch for stale build artifacts: an untracked `.js` or `.d.ts` under
 `packages/*/src/` shadows its source in vitest and turns a red suite green.
 
 Add a changeset for anything a user would notice. The bump follows what a
