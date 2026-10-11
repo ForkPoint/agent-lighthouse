@@ -114,7 +114,8 @@ export class AuthorSchemaAudit extends Audit {
       ...authorFromArticles,
     ];
 
-    if (allPersons.length === 0) {
+    const [firstPerson] = allPersons;
+    if (!firstPerson) {
       return this.fail(
         "No Person (author) schema found.",
         "Person schema with name, jobTitle, sameAs, and affiliation.",
@@ -140,7 +141,7 @@ export class AuthorSchemaAudit extends Audit {
       const bestMissing = hasProps(best, requiredProps).length;
       const currentMissing = hasProps(p, requiredProps).length;
       return currentMissing < bestMissing ? p : best;
-    }, allPersons[0]);
+    }, firstPerson);
 
     const missing = hasProps(bestPerson, requiredProps);
     const complete = missing.length === 0;

@@ -5,9 +5,10 @@ import {
   DEFAULT_ORIGIN_CACHE_TTL_MS,
   DEFAULT_ORIGIN_CACHE_MAX_ENTRIES,
 } from "./constants";
+/** Read from `ScanOptions`, whose fields may be passed as `undefined`. */
 export interface OriginCacheOptions {
-  bypassOriginCache?: boolean;
-  headers?: Record<string, string>;
+  bypassOriginCache?: boolean | undefined;
+  headers?: Record<string, string> | undefined;
 }
 
 export interface OriginEvidence {

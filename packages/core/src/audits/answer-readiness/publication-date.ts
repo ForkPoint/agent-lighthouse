@@ -154,7 +154,7 @@ export class PublicationDateAudit extends Audit {
           "AI generative engines use visible publication dates as a freshness signal when ranking content sources. Undated content is deprioritized because agents cannot determine whether the information is current, especially for topics where recency matters like technology, regulations, or market data.",
         code: '<p>Published: <time datetime="2025-01-15">January 15, 2025</time></p>',
       },
-      contentPages[0].url,
+      contentPages[0]?.url,
     );
   }
 }

@@ -553,7 +553,7 @@ function getOwnedRoles(
     } else if (role || hasGlobalAriaOrFocusable) {
       const attr =
         globalAriaAttr || (vNode.hasAttr("tabindex") ? "tabindex" : undefined);
-      ownedRoles.push({ role, attr, vNode });
+      ownedRoles.push({ role, vNode, ...(attr !== undefined && { attr }) });
     }
   }
   return ownedRoles;
@@ -727,9 +727,9 @@ const ariaRequiredParent: EvaluateFn = function (node, options, virtualNode) {
   if (!missingParents) return true;
   const owners = getAriaOwners(node);
   if (owners) {
-    for (let i = 0, l = owners.length; i < l; i++) {
+    for (const owner of owners) {
       missingParents = getMissingContext(
-        getNodeFromTree(owners[i]),
+        getNodeFromTree(owner),
         ownGroupRoles,
         missingParents,
         true,
@@ -930,7 +930,8 @@ const tdHeadersAttrMessageKeys = [
   "cell-header-not-th",
   "header-refs-self",
   "empty-hdrs",
-];
+] as const;
+type TdHeadersAttrMessageKey = (typeof tdHeadersAttrMessageKeys)[number];
 const tdHeadersAttr: EvaluateFn = function (node) {
   const [notInTable, notTh, selfRef, emptyHdrs] = tdHeadersAttrMessageKeys;
   const tableNode = node as unknown as {
@@ -940,8 +941,10 @@ const tdHeadersAttr: EvaluateFn = function (node) {
   const cellRoleById: Record<string, string | null> = {};
   for (let rowIndex = 0; rowIndex < tableNode.rows.length; rowIndex++) {
     const row = tableNode.rows[rowIndex];
+    if (!row) continue;
     for (let cellIndex = 0; cellIndex < row.cells.length; cellIndex++) {
       const cell = row.cells[cellIndex];
+      if (!cell) continue;
       cells.push(cell);
       const cellId = (
         cell as unknown as { getAttribute: (a: string) => string | null }
@@ -949,7 +952,7 @@ const tdHeadersAttr: EvaluateFn = function (node) {
       if (cellId) cellRoleById[cellId] = getRole(cell);
     }
   }
-  const badCells: Record<string, Set<AnyNode>> = {
+  const badCells: Record<TdHeadersAttrMessageKey, Set<AnyNode>> = {
     [selfRef]: new Set(),
     [notInTable]: new Set(),
     [notTh]: new Set(),
@@ -1103,7 +1106,8 @@ const metaRefresh: EvaluateFn = function (_node, options, virtualNode) {
     maxDelay?: number;
   };
   const content = (virtualNode.attr("content") || "").trim();
-  const [redirectStr] = content.split(separatorRegex);
+  // `split` always yields at least one element; the fallback only satisfies the type.
+  const redirectStr = content.split(separatorRegex)[0] ?? "";
   if (!validRedirectNumRegex.test(redirectStr)) return true;
   const redirectDelay = parseFloat(redirectStr);
   this.data({ redirectDelay });

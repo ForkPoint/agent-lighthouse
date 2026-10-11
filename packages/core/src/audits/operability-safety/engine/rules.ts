@@ -117,7 +117,7 @@ const autocompleteMatch: MatchFn = (_node, vNode) => {
 const nestedInteractiveMatch: MatchFn = (_node, vNode) => {
   const role = getRole(vNode);
   if (!role) return false;
-  return !!ariaRoles[role].childrenPresentational;
+  return !!ariaRoles[role]?.childrenPresentational;
 };
 
 const dataTableLargeMatch: MatchFn = (node) => {
@@ -125,9 +125,9 @@ const dataTableLargeMatch: MatchFn = (node) => {
     const tableArray = toArray(node as never);
     return (
       tableArray.length >= 3 &&
-      tableArray[0].length >= 3 &&
-      tableArray[1].length >= 3 &&
-      tableArray[2].length >= 3
+      (tableArray[0]?.length ?? 0) >= 3 &&
+      (tableArray[1]?.length ?? 0) >= 3 &&
+      (tableArray[2]?.length ?? 0) >= 3
     );
   }
   return false;
@@ -539,11 +539,13 @@ function runCheck(
   node: AnyNode,
   vNode: VNode,
 ): RawCheckResult {
-  const def: CheckDef = checks[checkId];
+  const def: CheckDef | undefined = checks[checkId];
   const builder = new CheckBuilder();
   let result: boolean | undefined;
   try {
-    result = def.evaluate.call(builder, node, def.options ?? {}, vNode);
+    // An unknown check id leaves the result undetermined, as a throwing check does.
+    if (def)
+      result = def.evaluate.call(builder, node, def.options ?? {}, vNode);
   } catch {
     result = undefined;
   }
@@ -554,6 +556,16 @@ function runCheck(
     vNode,
     node,
   };
+}
+
+/** Read a check result that the per-node loop stored for every check id. */
+function checkResultOf(
+  byCheck: Record<string, RawCheckResult>,
+  checkId: string,
+): RawCheckResult {
+  const raw = byCheck[checkId];
+  if (!raw) throw new Error(`No result recorded for check ${checkId}`);
+  return raw;
 }
 
 type GroupStatus = Exclude<RuleStatus, typeof RuleStatus.Inapplicable>;
@@ -642,23 +654,24 @@ export function runRule(rule: RuleDef, doc: Document): RuleResult {
 
   // Apply `after` reducers (operate across all nodes for a given check).
   for (const cid of checkIds) {
-    const after = checks[cid].after;
+    const after = checks[cid]?.after;
     if (!after) continue;
     const list = perNode.map((p) => ({
-      data: p.byCheck[cid].data,
-      result: p.byCheck[cid].result,
+      data: checkResultOf(p.byCheck, cid).data,
+      result: checkResultOf(p.byCheck, cid).result,
     }));
     const reduced = after(list);
     // duplicate-id-after FILTERS; unique-frame-title-after rewrites results in
     // place. Map results back by reference, and drop nodes removed by filtering.
     const kept = new Set(reduced);
     let ri = 0;
-    for (let i = 0; i < perNode.length; i++) {
+    for (const [i, p] of perNode.entries()) {
       const entry = list[i];
-      if (kept.has(entry)) {
-        perNode[i].byCheck[cid].result = entry.result;
+      const raw = checkResultOf(p.byCheck, cid);
+      if (entry && kept.has(entry)) {
+        raw.result = entry.result;
       } else {
-        perNode[i].byCheck[cid]._removed = true;
+        raw._removed = true;
       }
     }
     void ri;
@@ -672,13 +685,16 @@ export function runRule(rule: RuleDef, doc: Document): RuleResult {
   for (const p of perNode) {
     // A node removed by an `after` filter is dropped entirely.
     const removed = checkIds.some(
-      (cid) => (p.byCheck[cid] as { _removed?: boolean })._removed,
+      (cid) =>
+        (checkResultOf(p.byCheck, cid) as { _removed?: boolean })._removed,
     );
     if (removed) continue;
 
-    const allRes = rule.all.map((cid) => p.byCheck[cid].result);
-    const anyRes = rule.any.map((cid) => p.byCheck[cid].result);
-    const noneRes = rule.none.map((cid) => p.byCheck[cid].result);
+    const allRes = rule.all.map((cid) => checkResultOf(p.byCheck, cid).result);
+    const anyRes = rule.any.map((cid) => checkResultOf(p.byCheck, cid).result);
+    const noneRes = rule.none.map(
+      (cid) => checkResultOf(p.byCheck, cid).result,
+    );
     const status = combine(
       allStatus(allRes),
       anyStatus(anyRes),

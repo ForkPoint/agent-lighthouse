@@ -57,8 +57,11 @@ export class SequentialHeadingsAudit extends Audit {
       if (headings.length >= 2) hasEnoughHeadings = true;
       let hasSkip = false;
       for (let i = 1; i < headings.length; i++) {
-        const prev = headings[i - 1].level;
-        const curr = headings[i].level;
+        const prevHeading = headings[i - 1];
+        const currHeading = headings[i];
+        if (!prevHeading || !currHeading) continue;
+        const prev = prevHeading.level;
+        const curr = currHeading.level;
         // A skip occurs when a heading goes deeper by more than 1 level
         if (curr > prev + 1) {
           hasSkip = true;

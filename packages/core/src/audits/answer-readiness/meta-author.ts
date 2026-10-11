@@ -52,7 +52,7 @@ export class MetaAuthorAudit extends Audit {
         `Meta author is set to "${author}".`,
         "meta[author] with a non-empty person or organisation name",
         author,
-        page.url,
+        page?.url,
       );
     }
 

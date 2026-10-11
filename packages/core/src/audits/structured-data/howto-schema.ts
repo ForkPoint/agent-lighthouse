@@ -34,8 +34,8 @@ function hasSequentialNumberedHeadings(page: PageContext): boolean {
   let seqCount = 0;
   let expectedNum = 1;
   for (const h of headings) {
-    const match = h.match(/^(?:step\s+)?(\d+)[.):\s]/i);
-    if (match && parseInt(match[1], 10) === expectedNum) {
+    const stepNumber = h.match(/^(?:step\s+)?(\d+)[.):\s]/i)?.[1];
+    if (stepNumber !== undefined && parseInt(stepNumber, 10) === expectedNum) {
       seqCount++;
       expectedNum++;
     }

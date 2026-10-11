@@ -166,7 +166,7 @@ export async function collectSitemapEntries(
     signal?: AbortSignal;
     fallbackRoots?: string[];
     /** Limit sitemap evidence to a mounted site, before applying sample caps. */
-    siteRootUrl?: string;
+    siteRootUrl?: string | undefined;
   } = {},
 ): Promise<SitemapTree> {
   const maxChildren = opts.maxChildren ?? DEFAULT_MAX_CHILDREN;
@@ -430,12 +430,14 @@ export const NO_SITEMAP = "No readable sitemap found.";
 
 export type SitemapReadResult =
   | { kind: "absent"; reason: string; incomplete?: true }
-  | { kind: "empty"; reason: string; result?: FetchResult }
-  | { kind: "malformed"; reason: string; result?: FetchResult }
+  // `result` is undefined when no conventional sitemap path answered 200 and
+  // the sitemap was reached another way (e.g. through robots.txt).
+  | { kind: "empty"; reason: string; result?: FetchResult | undefined }
+  | { kind: "malformed"; reason: string; result?: FetchResult | undefined }
   | {
       kind: "readable";
       tree: SitemapTree;
-      result?: FetchResult;
+      result?: FetchResult | undefined;
       defects: string[];
     };
 

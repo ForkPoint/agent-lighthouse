@@ -140,7 +140,7 @@ export class ProgressTracker {
       phase,
       completed: this.completedUnits,
       total: this.totalUnits,
-      label,
+      ...(label !== undefined && { label }),
       ...this.stamp(),
     });
   }

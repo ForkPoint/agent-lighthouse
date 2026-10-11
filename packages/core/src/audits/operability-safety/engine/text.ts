@@ -142,8 +142,8 @@ function nativeSelectValue(node: VNode): string {
   if (!isNativeSelect(vNode)) return "";
   const options = qsa(vNode, "option");
   const selectedOptions = options.filter((option) => option.props.selected);
-  if (!selectedOptions.length && options.length)
-    selectedOptions.push(options[0]);
+  const firstOption = options[0];
+  if (!selectedOptions.length && firstOption) selectedOptions.push(firstOption);
   return (
     selectedOptions.map((option) => visibleVirtual(option)).join(" ") || ""
   );
@@ -165,8 +165,9 @@ function ariaListboxValue(node: VNode, context: AccContext): string {
       getRole(owned) === "option" &&
       getAriaValue(owned, "aria-selected")?.value === "true",
   );
-  if (selected.length === 0) return "";
-  return accessibleTextVirtual(selected[0], context);
+  const [firstSelected] = selected;
+  if (!firstSelected) return "";
+  return accessibleTextVirtual(firstSelected, context);
 }
 
 function ariaComboboxValue(node: VNode, context: AccContext): string {
@@ -644,21 +645,27 @@ export function isValidAutocomplete(
   }
 
   if (!looseTyped) {
+    const sectionTerm = autocompleteTerms[0];
     if (
-      autocompleteTerms[0].length > 8 &&
-      autocompleteTerms[0].substr(0, 8) === "section-"
+      sectionTerm !== undefined &&
+      sectionTerm.length > 8 &&
+      sectionTerm.substr(0, 8) === "section-"
     ) {
       autocompleteTerms.shift();
     }
-    if (locations.includes(autocompleteTerms[0])) autocompleteTerms.shift();
-    if (qualifiers.includes(autocompleteTerms[0])) {
+    const locationTerm = autocompleteTerms[0];
+    if (locationTerm !== undefined && locations.includes(locationTerm))
+      autocompleteTerms.shift();
+    const qualifierTerm = autocompleteTerms[0];
+    if (qualifierTerm !== undefined && qualifiers.includes(qualifierTerm)) {
       autocompleteTerms.shift();
       standaloneTerms = [];
     }
     if (autocompleteTerms.length !== 1) return false;
   }
 
-  const purposeTerm = autocompleteTerms[autocompleteTerms.length - 1];
+  const purposeTerm = autocompleteTerms.at(-1);
+  if (purposeTerm === undefined) return false;
   if (ignoredValues.includes(purposeTerm)) return undefined;
   return (
     standaloneTerms.includes(purposeTerm) ||

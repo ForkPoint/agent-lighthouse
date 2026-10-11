@@ -67,7 +67,7 @@ export class OgImageAltAudit extends Audit {
         `og:image:alt is "${ogImageAlt}".`,
         "og:image:alt with descriptive alt text when og:image is set",
         ogImageAlt,
-        page.url,
+        page?.url,
       );
     }
 

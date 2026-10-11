@@ -184,15 +184,15 @@ function firstTerm(raw: string | undefined): string {
 function propValue($: CheerioAPI, el: Element): string {
   /* v8 ignore next -- domhandler elements always have `attribs`; the `?? {}` guard is unreachable. */
   const a = el.attribs ?? {};
-  if (a.content) return a.content;
+  if (a["content"]) return a["content"];
   /* v8 ignore next -- tag elements always have a `name`; the `?? ''` guard is unreachable. */
   switch ((el.name ?? "").toLowerCase()) {
     case "meta":
-      return a.content ?? "";
+      return a["content"] ?? "";
     case "a":
     case "link":
     case "area":
-      return a.href ?? "";
+      return a["href"] ?? "";
     case "img":
     case "audio":
     case "video":
@@ -200,15 +200,15 @@ function propValue($: CheerioAPI, el: Element): string {
     case "iframe":
     case "embed":
     case "track":
-      return a.src ?? "";
+      return a["src"] ?? "";
     case "object":
-      return a.data ?? "";
+      return a["data"] ?? "";
     case "data":
     case "meter":
-      return a.value ?? "";
+      return a["value"] ?? "";
     case "time":
       return (
-        a.datetime ??
+        a["datetime"] ??
         $(el).text().replace(/\s+/g, " ").trim().slice(0, TEXT_VALUE_MAX)
       );
     default:
@@ -239,7 +239,7 @@ function parseMicrodataItem(
   el: Element,
 ): Record<string, unknown> {
   const obj: Record<string, unknown> = {};
-  const itemtype = el.attribs?.itemtype;
+  const itemtype = el.attribs?.["itemtype"];
   if (itemtype) {
     obj["@context"] = "https://schema.org";
     obj["@type"] = termsFromType(itemtype);
@@ -251,7 +251,7 @@ function parseMicrodataItem(
       // Only properties whose nearest itemscope is THIS element belong here;
       // properties of nested items are captured when that item is recursed.
       if (nearestScope(propEl, "itemscope") !== el) return;
-      const name = propEl.attribs?.itemprop;
+      const name = propEl.attribs?.["itemprop"];
       if (!name) return;
       /* v8 ignore next 2 -- domhandler elements always have `attribs`; the `?? {}` guard is unreachable. */
       const value =
@@ -275,14 +275,14 @@ export function extractMicrodata($: CheerioAPI): object[] {
 
 function parseRdfaItem($: CheerioAPI, el: Element): Record<string, unknown> {
   const obj: Record<string, unknown> = { "@context": "https://schema.org" };
-  const typeName = el.attribs?.typeof;
+  const typeName = el.attribs?.["typeof"];
   if (typeName) obj["@type"] = termsFromType(typeName);
   $(el)
     .find("[property]")
     .each((_, raw) => {
       const propEl = raw as Element;
       if (nearestScope(propEl, "typeof") !== el) return;
-      const name = firstTerm(propEl.attribs?.property);
+      const name = firstTerm(propEl.attribs?.["property"]);
       if (!name) return;
       /* v8 ignore next 2 -- domhandler elements always have `attribs`; the `?? {}` guard is unreachable. */
       const value =
@@ -417,6 +417,16 @@ export function getWordCount($: CheerioAPI): number {
   return text.split(/\s+/).filter(Boolean).length;
 }
 
+/** `{ [key]: value }` when the attribute is present, `{}` when it is absent. */
+function optionalAttr<K extends string>(
+  key: K,
+  value: string | undefined,
+): Partial<Record<K, string>> {
+  const out: Partial<Record<K, string>> = {};
+  if (value !== undefined) out[key] = value;
+  return out;
+}
+
 export function extractImages($: CheerioAPI): Array<{
   src: string;
   alt: string;
@@ -451,16 +461,17 @@ export function extractImages($: CheerioAPI): Array<{
       // Whether the alt attribute is present at all. Distinguishes an
       // intentionally empty `alt=""` (decorative) from a missing attribute.
       hasAlt: alt !== undefined,
-      width: $(el).attr("width") ?? undefined,
-      height: $(el).attr("height") ?? undefined,
-      loading: $(el).attr("loading") ?? undefined,
-      role: $(el).attr("role") ?? undefined,
-      ariaHidden: $(el).attr("aria-hidden") ?? undefined,
+      // An absent attribute adds no key.
+      ...optionalAttr("width", $(el).attr("width")),
+      ...optionalAttr("height", $(el).attr("height")),
+      ...optionalAttr("loading", $(el).attr("loading")),
+      ...optionalAttr("role", $(el).attr("role")),
+      ...optionalAttr("ariaHidden", $(el).attr("aria-hidden")),
       // The accname 1.1 text-alternative sources that outrank `alt`, plus the
       // `title` fallback HTML-AAM maps below it.
-      ariaLabel: $(el).attr("aria-label") ?? undefined,
-      ariaLabelledby: $(el).attr("aria-labelledby") ?? undefined,
-      title: $(el).attr("title") ?? undefined,
+      ...optionalAttr("ariaLabel", $(el).attr("aria-label")),
+      ...optionalAttr("ariaLabelledby", $(el).attr("aria-labelledby")),
+      ...optionalAttr("title", $(el).attr("title")),
     });
   });
   return images;
@@ -518,7 +529,7 @@ export function extractForms($: CheerioAPI): Array<{
           name: $(inputEl).attr("name") ?? "",
           type:
             tagName === "input" ? ($(inputEl).attr("type") ?? "text") : tagName,
-          label,
+          ...(label !== undefined && { label }),
           required: $(inputEl).attr("required") !== undefined,
         });
       });
@@ -581,10 +592,10 @@ export function extractScripts($: CheerioAPI): Array<{
     const src = $(el).attr("src") ?? undefined;
     const type = $(el).attr("type") ?? undefined;
     scripts.push({
-      src,
+      ...(src !== undefined && { src }),
       async: $(el).attr("async") !== undefined,
       defer: $(el).attr("defer") !== undefined,
-      type,
+      ...(type !== undefined && { type }),
       isModule: type === "module",
       noModule: $(el).attr("nomodule") !== undefined,
       inline: src === undefined,

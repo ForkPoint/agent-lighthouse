@@ -132,7 +132,8 @@ export class MetaDescriptionAudit extends Audit {
     const expected =
       "meta[description] with 50-300 characters, written as prose, describing this page";
 
-    if (desc && len >= 50 && len <= 300) {
+    // A description implies a page; the `page` test only narrows the type.
+    if (page && desc && len >= 50 && len <= 300) {
       // Quality half, absorbed from v1 9.11. Both criteria are Google's own
       // ("not long strings of keywords"; "accurately describes the page"), both
       // are falsifiable, and neither can do worse than warn.

@@ -34,7 +34,11 @@ export function getAllCells(tableElm: Table): Cell[] {
   const cells: Cell[] = [];
   for (let r = 0; r < tableElm.rows.length; r++) {
     const row = tableElm.rows[r];
-    for (let c = 0; c < row.cells.length; c++) cells.push(row.cells[c]);
+    if (!row) continue;
+    for (let c = 0; c < row.cells.length; c++) {
+      const cell = row.cells[c];
+      if (cell) cells.push(cell);
+    }
   }
   return cells;
 }
@@ -43,21 +47,25 @@ function toGridImpl(node: Table): Cell[][] {
   const table: Cell[][] = [];
   const rows = node.rows;
   for (let i = 0; i < rows.length; i++) {
-    const cells = rows[i].cells;
+    const row = rows[i];
+    if (!row) continue;
+    const cells = row.cells;
     table[i] = table[i] || [];
     let columnIndex = 0;
     for (let j = 0; j < cells.length; j++) {
-      for (let colSpan = 0; colSpan < cells[j].colSpan; colSpan++) {
-        const rowspanAttr = cells[j].getAttribute("rowspan");
+      const cell = cells[j];
+      if (!cell) continue;
+      for (let colSpan = 0; colSpan < cell.colSpan; colSpan++) {
+        const rowspanAttr = cell.getAttribute("rowspan");
         const rowspanValue =
           parseInt(rowspanAttr as string, 10) === 0 ||
-          (cells[j] as unknown as { rowspan?: number }).rowspan === 0
+          (cell as unknown as { rowspan?: number }).rowspan === 0
             ? rows.length
-            : cells[j].rowSpan;
+            : cell.rowSpan;
         for (let rowSpan = 0; rowSpan < rowspanValue; rowSpan++) {
-          table[i + rowSpan] = table[i + rowSpan] || [];
-          while (table[i + rowSpan][columnIndex]) columnIndex++;
-          table[i + rowSpan][columnIndex] = cells[j];
+          const gridRow = (table[i + rowSpan] ??= []);
+          while (gridRow[columnIndex]) columnIndex++;
+          gridRow[columnIndex] = cell;
         }
         columnIndex++;
       }
@@ -75,8 +83,9 @@ function getCellPositionImpl(
 ): { x: number; y: number } | undefined {
   if (!tableGrid) tableGrid = toGrid(findUp(cell, "table") as unknown as Table);
   for (let rowIndex = 0; rowIndex < tableGrid.length; rowIndex++) {
-    if (tableGrid[rowIndex]) {
-      const index = tableGrid[rowIndex].indexOf(cell);
+    const gridRow = tableGrid[rowIndex];
+    if (gridRow) {
+      const index = gridRow.indexOf(cell);
       if (index !== -1) return { x: index, y: rowIndex };
     }
   }
@@ -102,7 +111,7 @@ export function getScope(el: Cell | VNode): boolean | string {
 
   const tableGrid = toGrid(findUp(cell, "table") as unknown as Table);
   const pos = getCellPosition(cell, tableGrid)!;
-  const headerRow = tableGrid[pos.y].every(
+  const headerRow = (tableGrid[pos.y] ?? []).every(
     (node) => (node as Cell).nodeName.toUpperCase() === "TH",
   );
   if (headerRow) return "col";
@@ -158,7 +167,8 @@ function traverseForHeaders(
     headerType === HeaderType.Row ? "_rowHeaders" : "_colHeaders";
   const predicate =
     headerType === HeaderType.Row ? isRowHeader : isColumnHeader;
-  const startCell = tableGrid[position.y][position.x];
+  const startCell = tableGrid[position.y]?.[position.x];
+  if (!startCell) return [];
 
   const colspan = startCell.colSpan - 1;
   const rowspanAttr = startCell.getAttribute("rowspan");
@@ -178,7 +188,7 @@ function traverseForHeaders(
   const cells: Cell[] = [];
   for (let row = rowStart; row >= rowEnd && !headers; row--) {
     for (let col = colStart; col >= colEnd; col--) {
-      const cell = tableGrid[row] ? tableGrid[row][col] : undefined;
+      const cell = tableGrid[row]?.[col];
       if (!cell) continue;
       const vNode = toVNode(cell) as unknown as Record<
         string,
@@ -222,9 +232,7 @@ function traverseTable(
     grid: Cell[][],
   ) => boolean | void,
 ): Cell[] {
-  const cell = tableGrid[position.y]
-    ? tableGrid[position.y][position.x]
-    : undefined;
+  const cell = tableGrid[position.y]?.[position.x];
   if (!cell) return [];
   if (typeof callback === "function") {
     if (callback(cell, position, tableGrid) === true) return [cell];
@@ -303,7 +311,7 @@ export function isDataTable(node: Table): boolean {
   if (el.tHead || el.tFoot || el.caption) return true;
 
   for (let ci = 0; ci < el.children.length; ci++) {
-    if (el.children[ci].nodeName.toUpperCase() === "COLGROUP") return true;
+    if (el.children[ci]?.nodeName.toUpperCase() === "COLGROUP") return true;
   }
 
   let cells = 0;
@@ -312,13 +320,17 @@ export function isDataTable(node: Table): boolean {
   let hasBorder = false;
   for (let ri = 0; ri < rowLength; ri++) {
     const row = rows[ri];
+    if (!row) continue;
     for (let cellIndex = 0; cellIndex < row.cells.length; cellIndex++) {
-      const cell = row.cells[cellIndex] as Cell & {
-        offsetWidth?: number;
-        clientWidth?: number;
-        offsetHeight?: number;
-        clientHeight?: number;
-      };
+      const cell = row.cells[cellIndex] as
+        | (Cell & {
+            offsetWidth?: number;
+            clientWidth?: number;
+            offsetHeight?: number;
+            clientHeight?: number;
+          })
+        | undefined;
+      if (!cell) continue;
       if (cell.nodeName.toUpperCase() === "TH") return true;
       if (
         !hasBorder &&
@@ -351,13 +363,11 @@ export function isDataTable(node: Table): boolean {
   if (el.getElementsByTagName("table").length) return false;
   if (rowLength < 2) return false;
 
+  // ceil(n / 2) < n for every n >= 2, so the sample row always exists here.
   const sampleRow = rows[Math.ceil(rowLength / 2)];
-  if (
-    sampleRow.cells.length === 1 &&
-    (sampleRow.cells[0] as Cell).colSpan === 1
-  )
+  if (sampleRow?.cells.length === 1 && sampleRow.cells[0]?.colSpan === 1)
     return false;
-  if (sampleRow.cells.length >= 5) return true;
+  if (sampleRow && sampleRow.cells.length >= 5) return true;
   if (hasBorder) return true;
 
   const view = el.ownerDocument.defaultView;

@@ -103,6 +103,6 @@ export function extractProductFieldVerification(
         ? FieldStatus.Partial
         : FieldStatus.Missing,
     reviewCount: st(reviewCount),
-    sourceUrl,
+    ...(sourceUrl !== undefined && { sourceUrl }),
   };
 }

@@ -37,7 +37,7 @@ export type A11yPageResult = Record<string, A11yRuleResult>;
 // limiter, not a correctness lock.
 const MAX_CONCURRENT_A11Y = Math.max(
   1,
-  Number(process.env.A11Y_CONCURRENCY ?? 3),
+  Number(process.env["A11Y_CONCURRENCY"] ?? 3),
 );
 let activeA11y = 0;
 const a11yQueue: Array<() => void> = [];

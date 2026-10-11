@@ -62,7 +62,7 @@ export function parseRobotsFile(body: string): RobotsFile {
       groups.push({
         userAgent: agent,
         rules: [...rules],
-        crawlDelay,
+        ...(crawlDelay !== undefined && { crawlDelay }),
         ...(otherDirectives.length
           ? { otherDirectives: [...otherDirectives] }
           : {}),

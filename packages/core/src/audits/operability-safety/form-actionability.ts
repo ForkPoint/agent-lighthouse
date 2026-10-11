@@ -135,10 +135,8 @@ function isStandardAutocomplete(value: string): boolean {
         !t.startsWith("section-") &&
         !AUTOCOMPLETE_QUALIFIERS.has(t),
     );
-  return (
-    tokens.length > 0 &&
-    STANDARD_AUTOCOMPLETE_TOKENS.has(tokens[tokens.length - 1])
-  );
+  const purpose = tokens.at(-1);
+  return purpose !== undefined && STANDARD_AUTOCOMPLETE_TOKENS.has(purpose);
 }
 
 /**

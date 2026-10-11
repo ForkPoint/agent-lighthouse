@@ -84,7 +84,7 @@ export class ServerRenderedAudit extends Audit {
           `All ${total} fetched page(s) serve their content in the HTML response.`,
           expected,
           found,
-          pages[0].url,
+          pages[0]?.url,
         ),
         { pagesChecked: total, renderedPages: renderedCount },
       );
@@ -104,7 +104,7 @@ export class ServerRenderedAudit extends Audit {
           expected,
           found,
           failGuidance,
-          pages[0].url,
+          pages[0]?.url,
         ),
         { pagesChecked: total, renderedPages: 0, emptyPages },
       );
