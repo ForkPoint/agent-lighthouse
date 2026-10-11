@@ -1,5 +1,14 @@
 # @forkpoint/agent-lighthouse-mcp
 
+## 7.0.1
+
+### Patch Changes
+
+- Updated dependencies [ad20912]
+- Updated dependencies [ad20912]
+  - @forkpoint/agent-lighthouse-core@7.0.1
+  - @forkpoint/agent-lighthouse-report@7.0.1
+
 ## 7.0.0
 
 ### Major Changes

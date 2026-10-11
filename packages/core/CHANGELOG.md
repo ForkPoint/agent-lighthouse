@@ -1,5 +1,16 @@
 # @forkpoint/agent-lighthouse-core
 
+## 7.0.1
+
+### Patch Changes
+
+- ad20912: Stop printing `[object Object]` into evidence when a site publishes a malformed
+  non-string value. `openapi-exists` names the string version when `openapi` is
+  an object beside a string `swagger`. `mcp-discovery` reads an object UCP
+  `version` as unversioned. `json-ld-duplication-mass` names a duplicated node
+  with an object `@type` as `node`.
+- ad20912: `ScanOptions` fields and `FetchOptions.signal` now accept an explicit `undefined`, which means the same as leaving the option out. Callers compiled with `exactOptionalPropertyTypes` can forward optional values without spreading them conditionally. No runtime behaviour changes.
+
 ## 7.0.0
 
 ### Major Changes
