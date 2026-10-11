@@ -624,6 +624,18 @@ describe("--timeout from the config file", () => {
     expect(text.invalidTimeout).toBe("soon (config file)");
   });
 
+  it("prints an object config value as JSON, not [object Object]", () => {
+    const timeout = parseCliOptions([], "https://a.test", {
+      timeout: { seconds: 30 } as unknown as number,
+    });
+    expect(timeout.invalidTimeout).toBe('{"seconds":30} (config file)');
+
+    const pageType = parseCliOptions([], "https://a.test", {
+      pageType: { type: "product" } as unknown as PageType,
+    });
+    expect(pageType.invalidPageType).toBe('{"type":"product"}');
+  });
+
   it("lets a valid flag stand in for a bad config value", () => {
     const o = parseCliOptions(["--timeout", "30"], "https://a.test", {
       timeout: -5,
