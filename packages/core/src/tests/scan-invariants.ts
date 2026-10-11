@@ -1,7 +1,11 @@
 import { defaultConfig } from "#core/audit-config";
-import { TAG_SCAN_ERROR } from "#core/constants";
+import { TAG_SCAN_ERROR, TAG_SKIPPED_SCAN_BUDGET } from "#core/constants";
 import { CheckResultSchema } from "#core/schemas";
-import { gatedMassShare, GATED_MASS_UNSCORED_THRESHOLD } from "#core/scorer";
+import {
+  gatedMassShare,
+  GATED_MASS_UNSCORED_THRESHOLD,
+  skippedMassShare,
+} from "#core/scorer";
 import type { CheckResult, ScanReport } from "#core/types";
 import { CheckStatus, EvidenceKey } from "#core/types";
 
@@ -138,19 +142,29 @@ export function invariantViolations(
   // rather than from the orchestrator's own `allChecks`. Because both call
   // `gatedMassShare` against the same threshold, the only disagreement it can
   // catch is a report whose categories no longer hold the checks that were
-  // scored.
+  // scored. The scan budget's cut counts with the gate's, as it does there:
+  // 30% gated and 30% cut by the budget leaves 60% of the mass unassessed.
   const gatedShare = gatedMassShare(checks);
+  const budgetShare = skippedMassShare(checks, TAG_SKIPPED_SCAN_BUDGET);
   const mustBeUnscored =
-    !validity.judgeable || gatedShare > GATED_MASS_UNSCORED_THRESHOLD;
+    !validity.judgeable ||
+    gatedShare > GATED_MASS_UNSCORED_THRESHOLD ||
+    (budgetShare > 0 &&
+      gatedShare + budgetShare > GATED_MASS_UNSCORED_THRESHOLD);
+  const unassessed =
+    `${Math.round(gatedShare * 100)}% of mass gated` +
+    (budgetShare > 0
+      ? `, ${Math.round(budgetShare * 100)}% cut by the scan budget`
+      : "");
   if (mustBeUnscored && report.overallScore !== null) {
     violations.push(
       `scored ${report.overallScore} on a scan that must be unscored ` +
-        `(judgeable ${validity.judgeable}, ${Math.round(gatedShare * 100)}% of mass gated)`,
+        `(judgeable ${validity.judgeable}, ${unassessed})`,
     );
   }
   if (!mustBeUnscored && report.overallScore === null) {
     violations.push(
-      `withheld a score from a judgeable scan with only ${Math.round(gatedShare * 100)}% of mass gated`,
+      `withheld a score from a judgeable scan with only ${unassessed}`,
     );
   }
 
