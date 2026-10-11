@@ -453,14 +453,13 @@ describe("buildReportView", () => {
   });
 
   it("fills defaults for optional report fields", () => {
-    const v = buildReportView(
-      report([cat({ id: "agent-interfaces" })], {
-        summary: undefined,
-        readinessVitals: undefined,
-        readinessScore: undefined,
-        overallScore: 55,
-      }),
-    );
+    const {
+      summary: _summary,
+      readinessVitals: _vitals,
+      readinessScore: _readiness,
+      ...bare
+    } = report([cat({ id: "agent-interfaces" })], { overallScore: 55 });
+    const v = buildReportView(bare);
     expect(v.summary).toBe("");
     expect(v.vitals).toEqual({
       commerce: 0,

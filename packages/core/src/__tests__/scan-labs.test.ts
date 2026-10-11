@@ -25,12 +25,12 @@ import { allEvidenceMet } from "#core/scan-evidence";
 import { CheckStatus } from "#core/types";
 
 const IS_LABS_ENABLED = Boolean(
-  process.env.NEXT_PUBLIC_LABS_URL || process.env.LABS_PORT,
+  process.env["NEXT_PUBLIC_LABS_URL"] || process.env["LABS_PORT"],
 );
 const LABS_URL =
-  process.env.NEXT_PUBLIC_LABS_URL ||
-  (process.env.LABS_PORT
-    ? `http://localhost:${process.env.LABS_PORT}`
+  process.env["NEXT_PUBLIC_LABS_URL"] ||
+  (process.env["LABS_PORT"]
+    ? `http://localhost:${process.env["LABS_PORT"]}`
     : "http://localhost:7200");
 
 // ── Known exceptions ────────────────────────────────────────────

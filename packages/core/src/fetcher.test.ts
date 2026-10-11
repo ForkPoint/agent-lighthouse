@@ -256,7 +256,7 @@ describe("fetcher.fetch — basic auth from URL", () => {
     const fetcher = createFetcher();
     await fetcher.fetch({ url: "https://example.com" });
 
-    const headers = mockRequest.mock.calls[0][1]?.headers as Record<
+    const headers = mockRequest.mock.calls[0]![1]?.headers as Record<
       string,
       string
     >;
@@ -394,7 +394,7 @@ describe("fetcher.fetch — request headers", () => {
       headers: { authorization: "Bearer stale" },
     });
 
-    const headers = mockRequest.mock.calls[0][1]?.headers as Record<
+    const headers = mockRequest.mock.calls[0]![1]?.headers as Record<
       string,
       string
     >;
@@ -413,7 +413,7 @@ describe("fetcher.fetch — request headers", () => {
     const fetcher = createFetcher({ headers: { "X-Scan-Id": "abc" } });
     await fetcher.fetch({ url: "https://example.com" });
 
-    const headers = mockRequest.mock.calls[0][1]?.headers as Record<
+    const headers = mockRequest.mock.calls[0]![1]?.headers as Record<
       string,
       string
     >;
@@ -477,7 +477,7 @@ describe("fetcher.fetch — request headers", () => {
     const fetcher = createFetcher();
     await fetcher.fetch({ url: "https://example.com" });
 
-    const callHeaders = mockRequest.mock.calls[0][1]?.headers as Record<
+    const callHeaders = mockRequest.mock.calls[0]![1]?.headers as Record<
       string,
       string
     >;
@@ -496,7 +496,7 @@ describe("fetcher.fetch — request configuration", () => {
     const fetcher = createFetcher();
     await fetcher.fetch({ url: "https://example.com", timeout: 5000 });
 
-    const callOptions = mockRequest.mock.calls[0][1] as any;
+    const callOptions = mockRequest.mock.calls[0]![1] as any;
     expect(callOptions.signal).toBeDefined();
   });
 });
@@ -516,7 +516,7 @@ describe("fetcher.fetch — body and headers edge cases", () => {
       body: "raw",
     });
 
-    const callHeaders = mockRequest.mock.calls[0][1]?.headers as Record<
+    const callHeaders = mockRequest.mock.calls[0]![1]?.headers as Record<
       string,
       string
     >;

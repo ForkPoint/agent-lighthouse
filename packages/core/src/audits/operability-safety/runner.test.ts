@@ -41,7 +41,7 @@ describe("runA11yForHtml", () => {
   it("reports failing-node targets for violations", async () => {
     const bad = await runA11yForHtml(noTitle, "https://nodes.test/", RULES);
     expect(bad["aria-roles"]?.nodes.length).toBeGreaterThan(0);
-    expect(typeof bad["aria-roles"]?.nodes[0].target).toBe("string");
+    expect(typeof bad["aria-roles"]?.nodes[0]!.target).toBe("string");
   });
 
   it("returns an empty map without throwing on unparseable input", async () => {

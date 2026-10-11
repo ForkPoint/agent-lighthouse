@@ -317,7 +317,7 @@ describe("runScan — the evidence gate", () => {
     expect(gated.every((c) => c.status === CheckStatus.NotApplicable)).toBe(
       true,
     );
-    expect(gated[0].explanation).toContain("Not assessed");
+    expect(gated[0]!.explanation).toContain("Not assessed");
   });
 
   it("still reports the shell itself: server-rendered is never gated", async () => {
@@ -574,7 +574,7 @@ describe("runScan — the scan budget", () => {
 
     expect(cut.length).toBeGreaterThan(0);
     expect(cut.every((c) => c.status === CheckStatus.NotApplicable)).toBe(true);
-    expect(cut[0].explanation).toContain("The scan budget of 200 ms ran out.");
+    expect(cut[0]!.explanation).toContain("The scan budget of 200 ms ran out.");
     expect(report.conditions?.budget).toMatchObject({
       limitMs: 200,
       exhausted: true,
@@ -1521,7 +1521,7 @@ describe("runScan — v7 article scope", () => {
         checks.find((c) => c.id === "content-extraction/language-attribute")
           ?.status,
       ).toBe(CheckStatus.Pass);
-      expect(report.pagesScanned[0].classification?.type).toBe(
+      expect(report.pagesScanned[0]!.classification?.type).toBe(
         PageType.General,
       );
     },
@@ -1555,7 +1555,7 @@ describe("runScan — v7 article scope", () => {
         confidence: ClassificationConfidence.Strong,
         signals: [declared ? "declared:article" : "article-open-graph"],
       });
-      expect(report.pagesScanned[0].classification).toEqual(
+      expect(report.pagesScanned[0]!.classification).toEqual(
         report.conditions?.pageType,
       );
     },
@@ -1624,9 +1624,9 @@ describe("runScan — selected page evidence and mixed scope", () => {
       (c) => c.id === "structured-data/article-schema",
     )!;
     expect(check.coverage?.inputUrls).toEqual([declared]);
-    expect(check.advisoryResults?.[0].coverage?.inputUrls).toEqual([url]);
+    expect(check.advisoryResults?.[0]!.coverage?.inputUrls).toEqual([url]);
     const auditTrace = traces.find((t) => t.id === check.id)!;
-    expect(auditTrace.advisoryResults?.[0].status).toBe(CheckStatus.Fail);
+    expect(auditTrace.advisoryResults?.[0]!.status).toBe(CheckStatus.Fail);
     // Tracker completion counts both executed and skipped registrations.
     const done = events.filter(
       (e) =>

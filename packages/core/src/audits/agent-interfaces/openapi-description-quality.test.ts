@@ -96,7 +96,7 @@ describe("OpenApiDescriptionQualityAudit", () => {
     expect(result.status).toBe(CheckStatus.Warn);
     expect(result.score).toBe(0.5);
     expect(result.found).toContain("2/3");
-    expect(result.details?.missingDescriptions).toEqual([
+    expect(result.details?.["missingDescriptions"]).toEqual([
       "GET /search param 'limit'",
     ]);
   });
@@ -124,7 +124,7 @@ describe("OpenApiDescriptionQualityAudit", () => {
     expect(result.status).toBe(CheckStatus.Fail);
     expect(result.score).toBe(0);
     expect(result.priority).toBe(CheckPriority.High);
-    expect(result.details?.missingDescriptions).toHaveLength(3);
+    expect(result.details?.["missingDescriptions"]).toHaveLength(3);
   });
 
   it("truncates the missing list to 10 items", () => {
@@ -141,7 +141,7 @@ describe("OpenApiDescriptionQualityAudit", () => {
     );
     const result = audit.audit(ctx);
     expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.details?.missingDescriptions).toHaveLength(10);
+    expect(result.details?.["missingDescriptions"]).toHaveLength(10);
     expect(result.message).toContain("and 3 more");
   });
 });

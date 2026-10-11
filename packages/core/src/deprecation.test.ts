@@ -9,6 +9,7 @@ import {
   EvidenceGrade,
   ScoreDisplayMode,
 } from "./types";
+import { omit } from "#core/tests/omit";
 
 const NOTICE = {
   notice: "No consumer reads this signal.",
@@ -64,11 +65,10 @@ describe("deprecation notice flow", () => {
   it("toCheckResult leaves deprecated undefined for normal audits", () => {
     class NormalAudit extends DeprecatedAudit {
       static override meta: AuditMeta = {
-        ...DeprecatedAudit.meta,
+        ...omit(DeprecatedAudit.meta, "deprecated"),
         id: "operability-safety/normal-thing",
         scoreDisplayMode: ScoreDisplayMode.Binary,
         weight: 1.0,
-        deprecated: undefined,
       };
     }
     const check = new NormalAudit().toCheckResult({

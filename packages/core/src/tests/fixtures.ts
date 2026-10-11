@@ -2,6 +2,7 @@ import type { CheckContext } from "#core/check-context";
 import type { FetchOptions, FetchResult } from "#core/fetcher";
 import { buildScanEvidence } from "#core/scan-evidence";
 import { mockPageContext } from "#core/__tests__/test-utils";
+import { omit } from "./omit";
 
 const BASE_URL = "https://example.test";
 
@@ -22,11 +23,10 @@ const unreachable: FetchResult = {
 /** Any URL an audit asks for, answered 404. Never a network call. */
 const notFound = (options: FetchOptions): Promise<FetchResult> =>
   Promise.resolve({
-    ...unreachable,
+    ...omit(unreachable, "error"),
     url: options.url,
     finalUrl: options.url,
     status: 404,
-    error: undefined,
   });
 
 /**

@@ -119,7 +119,7 @@ describe("classifyResponse", () => {
 
 describe("probeUaParity", () => {
   function recorder(answer: (o: FetchOptions) => FetchResult) {
-    const seen: Array<{ url: string; ua?: string }> = [];
+    const seen: Array<{ url: string; ua?: string | undefined }> = [];
     return {
       seen,
       fetch: async (o: FetchOptions) => {

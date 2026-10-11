@@ -195,8 +195,8 @@ describe("extractHeadLinks", () => {
     const links = extractHeadLinks($);
     // canonical + body alternate = 2 (stylesheet and preload are filtered out)
     expect(links).toHaveLength(2);
-    expect(links[0].href).toBe("/page");
-    expect(links[1].href).toBe("/page.md");
+    expect(links[0]!.href).toBe("/page");
+    expect(links[1]!.href).toBe("/page.md");
   });
 });
 
@@ -248,7 +248,7 @@ describe("extractHeadings", () => {
     const html = `<html><body><h1>  Spaced Out  </h1></body></html>`;
     const $ = parseHtml(html);
     const headings = extractHeadings($);
-    expect(headings[0].text).toBe("Spaced Out");
+    expect(headings[0]!.text).toBe("Spaced Out");
   });
 
   it("returns empty array when no headings exist", () => {
@@ -285,31 +285,31 @@ describe("extractImages", () => {
     const $ = parseHtml(html);
     const images = extractImages($);
     expect(images).toHaveLength(1);
-    expect(images[0].src).toBe("/photo.jpg");
-    expect(images[0].alt).toBe("Photo");
-    expect(images[0].width).toBeUndefined();
-    expect(images[0].height).toBeUndefined();
-    expect(images[0].loading).toBeUndefined();
-    expect(images[0].role).toBeUndefined();
+    expect(images[0]!.src).toBe("/photo.jpg");
+    expect(images[0]!.alt).toBe("Photo");
+    expect(images[0]!.width).toBeUndefined();
+    expect(images[0]!.height).toBeUndefined();
+    expect(images[0]!.loading).toBeUndefined();
+    expect(images[0]!.role).toBeUndefined();
   });
 
   it("defaults src and alt to empty string when missing", () => {
     const html = `<html><body><img></body></html>`;
     const $ = parseHtml(html);
     const images = extractImages($);
-    expect(images[0].src).toBe("");
-    expect(images[0].alt).toBe("");
-    expect(images[0].hasAlt).toBe(false);
+    expect(images[0]!.src).toBe("");
+    expect(images[0]!.alt).toBe("");
+    expect(images[0]!.hasAlt).toBe(false);
   });
 
   it('distinguishes a present empty alt="" from a missing alt attribute', () => {
     const html = `<html><body><img src="/a.png" alt=""><img src="/b.png"></body></html>`;
     const $ = parseHtml(html);
     const images = extractImages($);
-    expect(images[0].alt).toBe("");
-    expect(images[0].hasAlt).toBe(true);
-    expect(images[1].alt).toBe("");
-    expect(images[1].hasAlt).toBe(false);
+    expect(images[0]!.alt).toBe("");
+    expect(images[0]!.hasAlt).toBe(true);
+    expect(images[1]!.alt).toBe("");
+    expect(images[1]!.hasAlt).toBe(false);
   });
 
   it("extracts multiple images", () => {
@@ -337,8 +337,8 @@ describe("extractForms", () => {
     const $ = parseHtml(html);
     const forms = extractForms($);
     expect(forms).toHaveLength(1);
-    expect(forms[0].action).toBe("/submit");
-    expect(forms[0].method).toBe("POST");
+    expect(forms[0]!.action).toBe("/submit");
+    expect(forms[0]!.method).toBe("POST");
   });
 
   it("extracts inputs with name, type, required", () => {
@@ -350,13 +350,13 @@ describe("extractForms", () => {
     </body></html>`;
     const $ = parseHtml(html);
     const forms = extractForms($);
-    expect(forms[0].inputs).toHaveLength(2);
-    expect(forms[0].inputs[0]).toMatchObject({
+    expect(forms[0]!.inputs).toHaveLength(2);
+    expect(forms[0]!.inputs[0]).toMatchObject({
       name: "name",
       type: "text",
       required: true,
     });
-    expect(forms[0].inputs[1]).toMatchObject({
+    expect(forms[0]!.inputs[1]).toMatchObject({
       name: "age",
       type: "number",
       required: false,
@@ -372,7 +372,7 @@ describe("extractForms", () => {
     </body></html>`;
     const $ = parseHtml(html);
     const forms = extractForms($);
-    expect(forms[0].inputs[0].label).toBe("Email Address");
+    expect(forms[0]!.inputs[0]!.label).toBe("Email Address");
   });
 
   it("sets label to undefined when no matching label exists", () => {
@@ -383,7 +383,7 @@ describe("extractForms", () => {
     </body></html>`;
     const $ = parseHtml(html);
     const forms = extractForms($);
-    expect(forms[0].inputs[0].label).toBeUndefined();
+    expect(forms[0]!.inputs[0]!.label).toBeUndefined();
   });
 
   it("defaults method to GET if missing", () => {
@@ -394,14 +394,14 @@ describe("extractForms", () => {
     </body></html>`;
     const $ = parseHtml(html);
     const forms = extractForms($);
-    expect(forms[0].method).toBe("GET");
+    expect(forms[0]!.method).toBe("GET");
   });
 
   it("defaults action to empty string if missing", () => {
     const html = `<html><body><form><input name="x"></form></body></html>`;
     const $ = parseHtml(html);
     const forms = extractForms($);
-    expect(forms[0].action).toBe("");
+    expect(forms[0]!.action).toBe("");
   });
 
   it("extracts select and textarea elements", () => {
@@ -413,12 +413,15 @@ describe("extractForms", () => {
     </body></html>`;
     const $ = parseHtml(html);
     const forms = extractForms($);
-    expect(forms[0].inputs).toHaveLength(2);
-    expect(forms[0].inputs[0]).toMatchObject({
+    expect(forms[0]!.inputs).toHaveLength(2);
+    expect(forms[0]!.inputs[0]).toMatchObject({
       name: "country",
       type: "select",
     });
-    expect(forms[0].inputs[1]).toMatchObject({ name: "bio", type: "textarea" });
+    expect(forms[0]!.inputs[1]).toMatchObject({
+      name: "bio",
+      type: "textarea",
+    });
   });
 
   it("defaults input type to text when not specified", () => {
@@ -427,7 +430,7 @@ describe("extractForms", () => {
     </body></html>`;
     const $ = parseHtml(html);
     const forms = extractForms($);
-    expect(forms[0].inputs[0].type).toBe("text");
+    expect(forms[0]!.inputs[0]!.type).toBe("text");
   });
 });
 
@@ -590,10 +593,10 @@ describe("extractScripts", () => {
     </head><body></body></html>`;
     const $ = parseHtml(html);
     const scripts = extractScripts($);
-    expect(scripts[0].inline).toBe(false);
-    expect(scripts[0].src).toBe("/external.js");
-    expect(scripts[1].inline).toBe(true);
-    expect(scripts[1].src).toBeUndefined();
+    expect(scripts[0]!.inline).toBe(false);
+    expect(scripts[0]!.src).toBe("/external.js");
+    expect(scripts[1]!.inline).toBe(true);
+    expect(scripts[1]!.src).toBeUndefined();
   });
 
   it("returns empty array when no scripts exist", () => {
@@ -605,8 +608,8 @@ describe("extractScripts", () => {
     const html = `<html><head><script src="/plain.js"></script></head><body></body></html>`;
     const $ = parseHtml(html);
     const scripts = extractScripts($);
-    expect(scripts[0].async).toBe(false);
-    expect(scripts[0].defer).toBe(false);
+    expect(scripts[0]!.async).toBe(false);
+    expect(scripts[0]!.defer).toBe(false);
   });
 
   it("detects noModule attribute", () => {
@@ -1605,8 +1608,8 @@ describe("parser — value-rule and attribute-absent branches", () => {
     </body></html>`;
     const $ = parseHtml(html);
     const forms = extractForms($);
-    expect(forms[0].inputs[0].label).toBeUndefined();
-    expect(forms[0].inputs[0].name).toBe("");
+    expect(forms[0]!.inputs[0]!.label).toBeUndefined();
+    expect(forms[0]!.inputs[0]!.name).toBe("");
   });
 
   it("extractInternalLinks: skips anchors whose href attribute is empty", () => {

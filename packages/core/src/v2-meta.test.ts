@@ -225,7 +225,7 @@ describe("meta → CheckResult pass-through", () => {
 
     const { skipped } = planAudits(ctx, config);
     expect(skipped).toHaveLength(1);
-    expect(skipped[0].evidenceGrade).toBe(EvidenceGrade.A);
-    expect(skipped[0].tier).toBe(AuditTier.Scored);
+    expect(skipped[0]!.evidenceGrade).toBe(EvidenceGrade.A);
+    expect(skipped[0]!.tier).toBe(AuditTier.Scored);
   });
 });

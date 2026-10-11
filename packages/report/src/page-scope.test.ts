@@ -230,10 +230,10 @@ it("keeps the existing missing-pages fallback for old report readers", () => {
 
 it("lists only audits whose population differs from a full-sample pass", () => {
   const r = report();
+  const { advisoryResults: _advisory, ...single } = check;
   const plain: CheckResult = {
-    ...check,
+    ...single,
     id: "content-extraction/plain-pass",
-    advisoryResults: undefined,
     coverage: {
       provenance: CoverageProvenance.All,
       selectedUrls: [declared],

@@ -232,7 +232,7 @@ describe("Audit.toCheckResult", () => {
     expect(c.details?.found).toBe("d-found");
     expect(c.details?.code).toBe("d-code");
     expect(c.details?.docsUrl).toBe("https://docs.example.com");
-    expect(c.details?.effort).toBe(FixEffort.Easy);
+    expect(c.details?.["effort"]).toBe(FixEffort.Easy);
     expect(c.tags).toEqual(["tag-a", "tag-b"]);
   });
 
@@ -288,7 +288,7 @@ describe("Audit.toCheckResult", () => {
     expect(c.details?.found).toBe("top-found"); // no details → result.found
     expect(c.details?.code).toBeUndefined(); // no details, no guidance
     expect(c.details?.docsUrl).toBeUndefined();
-    expect(c.details?.effort).toBeUndefined();
+    expect(c.details?.["effort"]).toBeUndefined();
     expect(c.priority).toBe(CheckPriority.High); // no result.priority → meta.defaultPriority
     expect(c.impact).toBe("Description fallback"); // no guidance → meta.description
     expect(c.fix).toBe("No fix instructions available.");

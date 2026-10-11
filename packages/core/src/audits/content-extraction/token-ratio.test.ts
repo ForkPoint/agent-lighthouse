@@ -124,7 +124,7 @@ describe("TokenRatioAudit", () => {
     expect(d["style"]).toBeGreaterThan(0);
     expect(d["comment"]).toBeGreaterThan(0);
     expect(
-      d["script"] + d["style"] + d["comment"] + d["text"] + d["structure"],
+      d["script"]! + d["style"]! + d["comment"]! + d["text"]! + d["structure"]!,
     ).toBe(d["deliveredTokens"]);
   });
 
