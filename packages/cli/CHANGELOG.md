@@ -1,5 +1,13 @@
 # @forkpoint/agent-lighthouse
 
+## 7.1.0
+
+### Patch Changes
+
+- Updated dependencies [676a9c3]
+  - @forkpoint/agent-lighthouse-core@7.1.0
+  - @forkpoint/agent-lighthouse-report@7.1.0
+
 ## 7.0.1
 
 ### Patch Changes
