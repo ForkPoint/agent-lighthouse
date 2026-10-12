@@ -1,3 +1,9 @@
+import {
+  AuditTier,
+  CheckStatus,
+  ScoreDisplayMode,
+  type ScanReport,
+} from "@forkpoint/agent-lighthouse-core/contracts";
 import { badgeColor } from "./badge-generator";
 
 /**
@@ -83,6 +89,14 @@ function asRecord(value: unknown): Record<string, unknown> | undefined {
     : undefined;
 }
 
+/** Check current report field names without trusting the uploaded values. */
+function reportField(
+  record: Record<string, unknown>,
+  key: keyof ScanReport,
+): unknown {
+  return record[key];
+}
+
 /** A finite number, or nothing — `NaN` and `Infinity` are not scores. */
 function asNumber(value: unknown): number | undefined {
   return typeof value === "number" && Number.isFinite(value)
@@ -115,7 +129,7 @@ function pageScopeText(record: Record<string, unknown>): string | undefined {
   const list = (value: unknown, max = 300): unknown[] =>
     Array.isArray(value) ? value.slice(0, max) : [];
   const text = (value: unknown) => asText(value) ?? "not recorded";
-  for (const raw of list(record["pagesScanned"])) {
+  for (const raw of list(reportField(record, "pagesScanned"))) {
     const page = asRecord(raw);
     const c = asRecord(page?.["classification"]);
     if (page && c)
@@ -124,7 +138,7 @@ function pageScopeText(record: Record<string, unknown>): string | undefined {
         `Signals: ${list(c["signals"], 20).map(text).join("; ")}`,
       );
   }
-  for (const raw of list(record["pageAttempts"])) {
+  for (const raw of list(reportField(record, "pageAttempts"))) {
     const a = asRecord(raw);
     if (a)
       lines.push(
@@ -132,7 +146,10 @@ function pageScopeText(record: Record<string, unknown>): string | undefined {
       );
   }
   let auditCount = 0;
-  for (const category of list(record["categories"], MAX_CATEGORIES)) {
+  for (const category of list(
+    reportField(record, "categories"),
+    MAX_CATEGORIES,
+  )) {
     for (const raw of list(asRecord(category)?.["checks"])) {
       if (++auditCount > 300) break;
       const check = asRecord(raw);
@@ -145,11 +162,11 @@ function pageScopeText(record: Record<string, unknown>): string | undefined {
         if (!coverage && index === 0) continue;
         const advisory =
           index > 0 ||
-          a["scoreDisplayMode"] === "informative" ||
-          a["tier"] === "informative" ||
-          a["tier"] === "experimental";
+          a["scoreDisplayMode"] === ScoreDisplayMode.Informative ||
+          a["tier"] === AuditTier.Informative ||
+          a["tier"] === AuditTier.Experimental;
         lines.push(
-          `\n[${text(check["id"])}] ${text(a["status"])} — ${advisory ? "Advisory — not scored" : a["status"] === "na" ? "Not assessed" : "Primary result"}`,
+          `\n[${text(check["id"])}] ${text(a["status"])} — ${advisory ? "Advisory — not scored" : a["status"] === CheckStatus.NotApplicable ? "Not assessed" : "Primary result"}`,
         );
         if (a["explanation"]) lines.push(text(a["explanation"]));
         if (a["displayValue"]) lines.push(text(a["displayValue"]));
@@ -182,7 +199,7 @@ function pageScopeText(record: Record<string, unknown>): string | undefined {
 /**
  * Reduce a parsed report to what the viewer shows.
  *
- * The field names are `ScanReport`'s, read from `packages/core/src/types.ts`:
+ * The field names are `ScanReport`'s, read from the core `contracts` entry:
  * `url`, `domain`, `overallScore`, `scoreTier`, `categories[].name`,
  * `categories[].checks`, `pagesScanned`, `durationMs`. `targetUrl` and `pages`
  * are accepted too — the page this one replaces guessed those names, and a
@@ -201,17 +218,16 @@ export function summarize(report: unknown): ReportSummary {
     );
   }
 
-  const unscored = record["overallScore"] === null;
-  const score = asNumber(record["overallScore"]);
+  const unscored = reportField(record, "overallScore") === null;
+  const score = asNumber(reportField(record, "overallScore"));
   if (score === undefined && !unscored) {
     throw new ReportShapeError(
       "That JSON file has no numeric overallScore, so it is not an Agent Lighthouse report.",
     );
   }
 
-  const rawCategories = Array.isArray(record["categories"])
-    ? record["categories"]
-    : [];
+  const categoryField = reportField(record, "categories");
+  const rawCategories = Array.isArray(categoryField) ? categoryField : [];
   const categories: CategorySummary[] = [];
   for (const entry of rawCategories) {
     const category = asRecord(entry);
@@ -230,22 +246,23 @@ export function summarize(report: unknown): ReportSummary {
     });
   }
 
+  // Legacy aliases stay outside the current ScanReport key contract.
   const pages =
-    count(record["pagesScanned"]) ||
-    count(record["pagesData"]) ||
+    count(reportField(record, "pagesScanned")) ||
+    count(reportField(record, "pagesData")) ||
     count(record["pages"]);
-  const duration = asNumber(record["durationMs"]) ?? 0;
+  const duration = asNumber(reportField(record, "durationMs")) ?? 0;
 
   const scope = pageScopeText(record);
   return {
     ...(scope ? { pageScopeText: scope } : {}),
     url:
-      asText(record["url"]) ??
+      asText(reportField(record, "url")) ??
       asText(record["targetUrl"]) ??
-      asText(record["domain"]) ??
+      asText(reportField(record, "domain")) ??
       "Unnamed target",
     score: unscored || score === undefined ? null : asScore(score),
-    tier: asText(record["scoreTier"]) ?? "",
+    tier: asText(reportField(record, "scoreTier")) ?? "",
     pages,
     durationMs: Math.max(0, Math.round(duration)),
     categories,

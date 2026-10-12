@@ -1,5 +1,6 @@
 import {
   CATEGORY_IDS,
+  isPageType,
   PAGE_TYPES,
   PageScopeOptionsSchema,
   type PageOverride,
@@ -10,10 +11,6 @@ import {
 
 /** Every value `--page-type` accepts, in the order the help text lists them. */
 export const PAGE_TYPE_IDS: readonly PageType[] = PAGE_TYPES;
-
-function isPageType(value: string): value is PageType {
-  return (PAGE_TYPE_IDS as readonly string[]).includes(value);
-}
 
 /**
  * A config-file value as it should read in an error message. The file is

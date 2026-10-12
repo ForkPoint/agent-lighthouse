@@ -43,6 +43,27 @@ Use `buildReportView(report)` from the report package if you need its prepared r
 
 The [package guide](./packages.md) explains the other entry points.
 
+## Read reports in browser code
+
+The root entry loads the scanner, which needs Node.js. Browser code that reads a saved report can import the `contracts` entry instead. It has no dependencies:
+
+```ts
+import {
+  getScoreTier,
+  SCORE_TIER_LABELS,
+  type ScanReport,
+} from "@forkpoint/agent-lighthouse-core/contracts";
+
+function headline(report: ScanReport): string {
+  if (report.overallScore === null) return "Not scored";
+  return SCORE_TIER_LABELS[getScoreTier(report.overallScore)];
+}
+```
+
+The entry carries the report types (`ScanReport`, `CheckResult` and the rest), the values they use (`CheckStatus`, `PageType`, `ScoreTier`, `EvidenceKey` and others), category IDs and names, and the coverage tags that say why a check did not run. The root entry exports the same values, and both entries return the same objects.
+
+Take each category's weight from the report, in `categories[].weight`. That is the weight the scan used. The root entry's `CATEGORY_MASS` describes the version you installed, which can differ from the version that wrote an older report.
+
 ## Declare page purpose in v7
 
 Use a declaration when you know the page's purpose. Leave it out when you want detection.
@@ -54,7 +75,7 @@ const report = await runScan("https://example.com/guide", {
 });
 ```
 
-The supported types are `homepage`, `category`, `product`, `article`, `unknown`, and legacy `content`. `content` means general/unknown, not article. Invalid types and malformed override URLs fail before the scan starts. A target declaration takes precedence over a matching entry in `pages`.
+The supported types are `homepage`, `category`, `product`, `article`, and `general`. Invalid types and malformed override URLs fail before the scan starts. A target declaration takes precedence over a matching entry in `pages`.
 
 Read each check's optional `coverage` and `advisoryResults`. Keep nested advisory findings out of score calculations and audit counts. `pagesScanned[].classification` explains purpose; `pageAttempts` preserves failed reads. `buildReportView(report).pageScope` prepares the same data for a display. Saved older reports keep these fields absent.
 

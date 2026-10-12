@@ -1,4 +1,17 @@
-import { ScoreTier } from "./types";
+import { SCORE_TIER_LABELS, ScoreTier } from "./contracts";
+
+// Coverage tags, category names and score tiers are part of a saved report,
+// so they live in `contracts.ts`. Re-exported for core modules and the root
+// entry.
+export {
+  CATEGORY_NAMES,
+  getScoreTier,
+  SCORE_TIER_LABELS,
+  TAG_SCAN_ERROR,
+  TAG_SKIPPED_NO_EVIDENCE,
+  TAG_SKIPPED_PAGE_TYPE,
+  TAG_SKIPPED_SCAN_BUDGET,
+} from "./contracts";
 
 // ── Scan Limits ────────────────────────────────────────────────
 
@@ -30,32 +43,11 @@ export const MAX_CONCURRENT_REQUESTS = 10;
 export const SCANNER_USER_AGENT =
   "AgentLighthouse/1.0 (+https://github.com/ForkPoint/agent-lighthouse)";
 
-// ── Coverage tags ──────────────────────────────────────────────
-
-export const TAG_SKIPPED_PAGE_TYPE = "skipped:page-type";
-export const TAG_SCAN_ERROR = "scan-error";
-/** An audit the scan could not feed: it needs evidence this scan never got. */
-export const TAG_SKIPPED_NO_EVIDENCE = "skipped:no-evidence";
-/** An audit the scan never started: its wall-clock budget ran out first. */
-export const TAG_SKIPPED_SCAN_BUDGET = "skipped:scan-budget";
-
 // ── Scoring ────────────────────────────────────────────────────
 
 // Category weights are no longer hand-tuned percentages. A category's share of
 // the overall score is its *evidence mass* — the summed weight of its
 // registered audits — derived in `audit-config.ts` as `CATEGORY_MASS` (spec §4).
-
-/** Display names for the 8 v2 categories. */
-export const CATEGORY_NAMES: Record<string, string> = {
-  "access-crawl-control": "Access & Crawl Control",
-  "content-extraction": "Content Extraction",
-  "machine-discovery": "Machine Discovery",
-  "structured-data": "Structured Data",
-  "answer-readiness": "Answer Readiness",
-  "agent-interfaces": "Agent Interfaces",
-  "agentic-commerce": "Agentic Commerce",
-  "operability-safety": "Agent Operability & Safety",
-};
 
 export const READINESS_WEIGHTS = {
   commerce: 0.4,
@@ -63,20 +55,6 @@ export const READINESS_WEIGHTS = {
   botAccessibility: 0.2,
   technical: 0.15,
 } as const;
-
-export function getScoreTier(score: number): ScoreTier {
-  if (score >= 90) return ScoreTier.AgentReady;
-  if (score >= 70) return ScoreTier.PartiallyReady;
-  if (score >= 50) return ScoreTier.NeedsWork;
-  return ScoreTier.NotReady;
-}
-
-export const SCORE_TIER_LABELS: Record<ScoreTier, string> = {
-  [ScoreTier.AgentReady]: "Agent Ready",
-  [ScoreTier.PartiallyReady]: "Partially Ready",
-  [ScoreTier.NeedsWork]: "Needs Work",
-  [ScoreTier.NotReady]: "Not Ready",
-};
 
 export function getTierLabel(tier: string | null): string {
   if (tier && tier in SCORE_TIER_LABELS) {

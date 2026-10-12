@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { getScoreTier } from "@forkpoint/agent-lighthouse-core/contracts";
 import {
   BADGE_BANDS,
   BADGE_LINK,
@@ -61,7 +62,14 @@ describe("docs/badge.md", () => {
         color: row[3],
         meaning: row[4],
       })),
-    ).toEqual([...BADGE_BANDS]);
+    ).toEqual(BADGE_BANDS.map(({ tier: _tier, ...band }) => band));
+  });
+
+  it("matches core's score tiers at every band edge", () => {
+    for (const band of BADGE_BANDS) {
+      expect(getScoreTier(band.min), `${band.min}`).toBe(band.tier);
+      expect(getScoreTier(band.max), `${band.max}`).toBe(band.tier);
+    }
   });
 
   it("publishes the exact snippet the generator produces", () => {

@@ -5,10 +5,15 @@
  * contract, restated here as code so the page and the doc cannot drift: the
  * bands are a single exported table that the page renders and the test pins.
  *
- * It imports nothing — no core, no registry, no fetch. Everything it needs is
+ * Its only import is core's dependency-free `contracts` entry, for the score
+ * tier limits — no scanner, no registry, no fetch. Everything else it needs is
  * a number and a URL the visitor typed, and every DOM node it writes is built
  * with `createElement`/`textContent`, never from an HTML string.
  */
+import {
+  getScoreTier,
+  ScoreTier,
+} from "@forkpoint/agent-lighthouse-core/contracts";
 
 /** One row of `docs/badge.md`'s score table. */
 export interface BadgeBand {
@@ -16,6 +21,8 @@ export interface BadgeBand {
   min: number;
   /** The highest score in the band. */
   max: number;
+  /** The core score tier the band shows. Core owns the limits. */
+  tier: ScoreTier;
   /** The shields.io colour, without the `#`. */
   color: string;
   /** The label `docs/badge.md` gives the band. */
@@ -23,17 +30,41 @@ export interface BadgeBand {
 }
 
 /**
- * The bands, highest first — the order `badgeColor` walks them in and the order
- * the page renders them in. Sorted descending so the lookup is a first match
- * rather than a chain of hand-written comparisons that can disagree with this
- * table.
+ * One display band per core tier, in the order the page renders them.
+ * The type checker requires a row for every tier.
  */
-export const BADGE_BANDS: readonly BadgeBand[] = [
-  { min: 90, max: 100, color: "22c55e", meaning: "Agent-ready" },
-  { min: 70, max: 89, color: "4f46e5", meaning: "Good" },
-  { min: 50, max: 69, color: "f59e0b", meaning: "Needs work" },
-  { min: 0, max: 49, color: "ef4444", meaning: "Blocked" },
-];
+const BANDS_BY_TIER = {
+  [ScoreTier.AgentReady]: {
+    min: 90,
+    max: 100,
+    tier: ScoreTier.AgentReady,
+    color: "22c55e",
+    meaning: "Agent-ready",
+  },
+  [ScoreTier.PartiallyReady]: {
+    min: 70,
+    max: 89,
+    tier: ScoreTier.PartiallyReady,
+    color: "4f46e5",
+    meaning: "Good",
+  },
+  [ScoreTier.NeedsWork]: {
+    min: 50,
+    max: 69,
+    tier: ScoreTier.NeedsWork,
+    color: "f59e0b",
+    meaning: "Needs work",
+  },
+  [ScoreTier.NotReady]: {
+    min: 0,
+    max: 49,
+    tier: ScoreTier.NotReady,
+    color: "ef4444",
+    meaning: "Blocked",
+  },
+} satisfies Record<ScoreTier, BadgeBand>;
+
+export const BADGE_BANDS: readonly BadgeBand[] = Object.values(BANDS_BY_TIER);
 
 /** Where the badge links, exactly as `docs/badge.md` writes it. */
 export const BADGE_LINK = "https://github.com/ForkPoint/agent-lighthouse";
@@ -58,11 +89,8 @@ export function clampScore(value: number): number {
 
 /** The shields.io colour for a score, per `docs/badge.md`'s table. */
 export function badgeColor(score: number): string {
-  const clamped = clampScore(score);
-  // `BADGE_BANDS` is descending and its last band starts at 0, so the fallback
-  // is unreachable for a clamped score; it is there so the return type is a
-  // string rather than `string | undefined`.
-  return BADGE_BANDS.find((band) => clamped >= band.min)?.color ?? "ef4444";
+  const tier = getScoreTier(clampScore(score));
+  return BANDS_BY_TIER[tier].color;
 }
 
 /** The shields.io image URL for a score — the form `docs/badge.md` publishes. */
