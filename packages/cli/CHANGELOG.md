@@ -1,5 +1,17 @@
 # @forkpoint/agent-lighthouse
 
+## 7.1.1
+
+### Patch Changes
+
+- d5287b1: Reject malformed, non-finite, missing, and out-of-range CLI score thresholds before scanning. Keep zero thresholds valid. Guard tier and recommendation lookups against inherited object keys.
+
+  Keep the latest selected report in the website viewer, announce unscored reports clearly, and show manual-copy guidance when clipboard support is unavailable.
+
+- Updated dependencies [d5287b1]
+  - @forkpoint/agent-lighthouse-core@7.1.1
+  - @forkpoint/agent-lighthouse-report@7.1.1
+
 ## 7.1.0
 
 ### Patch Changes
