@@ -3,8 +3,10 @@ import {
   CheckStatus,
   ScoreDisplayMode,
   type ScanReport,
+  getScoreTier,
+  ScoreTier,
 } from "@forkpoint/agent-lighthouse-core/contracts";
-import { badgeColor } from "./badge-generator";
+import { clampScore } from "./badge-generator";
 
 /**
  * The report inspector's client half.
@@ -269,23 +271,17 @@ export function summarize(report: unknown): ReportSummary {
   };
 }
 
-/**
- * The colour a score is written in.
- *
- * Derived from `badgeColor` rather than from a second set of thresholds, so the
- * number the viewer shows in green is the number the badge generator would put
- * a green badge on.
- */
-const TONE: Record<string, string> = {
-  "22c55e": "text-emerald-400",
-  "4f46e5": "text-accent",
-  f59e0b: "text-amber-300",
-  ef4444: "text-red-400",
+/** One viewer colour per published score tier. */
+const TONE: Record<ScoreTier, string> = {
+  [ScoreTier.AgentReady]: "text-emerald-400",
+  [ScoreTier.PartiallyReady]: "text-accent",
+  [ScoreTier.NeedsWork]: "text-amber-300",
+  [ScoreTier.NotReady]: "text-red-400",
 };
 
 /** The Tailwind text colour for a score, following the published bands. */
 export function scoreClass(score: number): string {
-  return TONE[badgeColor(score)] ?? "text-body";
+  return TONE[getScoreTier(clampScore(score))];
 }
 
 /** Seconds, to one decimal, from a duration in milliseconds. */
@@ -479,13 +475,16 @@ export function mountReportViewer(): void {
     status.textContent = message;
   };
 
+  let request = 0;
   const show = async (file: File | undefined): Promise<void> => {
     if (!file) return;
+    const current = ++request;
     say(`Reading ${file.name}…`);
     let summary: ReportSummary;
     try {
       summary = await readReport(file);
     } catch (error) {
+      if (current !== request) return;
       output.hidden = true;
       output.replaceChildren();
       // Only this module's own message is shown. A `TypeError` from somewhere
@@ -499,10 +498,13 @@ export function mountReportViewer(): void {
       return;
     }
 
+    if (current !== request) return;
     output.replaceChildren(renderSummary(summary));
     output.hidden = false;
     say(
-      `Showing ${file.name}: ${summary.url} scored ${summary.score} out of 100.`,
+      summary.score === null
+        ? `Showing ${file.name}: ${summary.url} is not scored.`
+        : `Showing ${file.name}: ${summary.url} scored ${summary.score} out of 100.`,
     );
     // Optional-chained because it is genuinely optional: jsdom has no layout and
     // so no `scrollIntoView`. No `behavior` is passed, which leaves the choice

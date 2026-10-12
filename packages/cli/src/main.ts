@@ -144,6 +144,8 @@ async function audit(targetUrl?: string) {
   // Keep the NDJSON stream clean: scanner logs also go to stderr.
   if (progressJson) logger.level = LogLevel.Silent;
 
+  const assertions = parseCategoryAssertions(args, fileConfig);
+
   const presetName = opts.presetName;
   const preset = getPreset(presetName);
 
@@ -474,7 +476,7 @@ async function audit(targetUrl?: string) {
   // Per-category Assertions
   const failed = failedAssertion(
     view.groups.flatMap((g) => g.categories),
-    parseCategoryAssertions(args, fileConfig),
+    assertions,
   );
   if (failed) {
     console.error(

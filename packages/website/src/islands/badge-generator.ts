@@ -168,8 +168,14 @@ export function mountBadgeGenerator(): void {
       // Feature-detected rather than assumed: the Clipboard API needs a secure
       // context, and a reader on plain http would otherwise get an unhandled
       // rejection and no explanation.
+      if (!navigator.clipboard) {
+        if (status)
+          status.textContent =
+            "Clipboard support is unavailable — select the snippet and copy it.";
+        return;
+      }
       void navigator.clipboard
-        ?.writeText(markdown.textContent ?? "")
+        .writeText(markdown.textContent ?? "")
         .then(() => {
           if (status)
             status.textContent = "Badge markdown copied to the clipboard.";

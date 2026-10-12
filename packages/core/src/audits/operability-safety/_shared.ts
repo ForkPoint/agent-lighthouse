@@ -116,7 +116,10 @@ export abstract class A11yBackedAudit extends Audit {
  */
 export const A11Y_RULES: string[] = [];
 
-export function defineA11yAudit(spec: A11yAuditSpec): typeof Audit {
+export function defineA11yAudit(spec: A11yAuditSpec): {
+  new (): Audit;
+  readonly meta: AuditMeta;
+} {
   /* v8 ignore next */
   for (const r of spec.rules) if (!A11Y_RULES.includes(r)) A11Y_RULES.push(r);
   return class extends A11yBackedAudit {

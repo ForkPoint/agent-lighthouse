@@ -254,3 +254,32 @@ it("renders uploaded scope text as text, never markup", async () => {
     "Page scope and coverage",
   );
 });
+
+describe("latest report selection", () => {
+  it.each([false, true])(
+    "ignores a late read (failure: %s)",
+    async (failure) => {
+      let resolve!: (value: string) => void;
+      let reject!: (error: Error) => void;
+      const pending = new Promise<string>((ok, bad) => {
+        resolve = ok;
+        reject = bad;
+      });
+      const old = jsonFile("", "old.json");
+      Object.defineProperty(old, "text", { value: () => pending });
+      await choose(old);
+      await choose(jsonFile(JSON.stringify(REPORT), "new.json"));
+      if (failure) reject(new Error("late failure"));
+      else resolve(JSON.stringify({ ...REPORT, url: "https://old.example" }));
+      await new Promise((ok) => setTimeout(ok, 0));
+      expect(status()).toContain("Showing new.json");
+      expect(output().hidden).toBe(false);
+      expect(output().textContent).not.toContain("https://old.example");
+    },
+  );
+  it("announces an unscored report", async () => {
+    await choose(jsonFile(JSON.stringify({ ...REPORT, overallScore: null })));
+    expect(status()).toContain("not scored");
+    expect(status()).not.toContain("null");
+  });
+});

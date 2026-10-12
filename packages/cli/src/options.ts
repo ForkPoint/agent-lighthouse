@@ -145,6 +145,29 @@ export function isValidUrl(url: string): boolean {
   }
 }
 
+/** Validate both CLI text and numeric config thresholds before a scan starts. */
+function scoreThreshold(
+  value: unknown,
+  source: string,
+  fromFlag = false,
+): number {
+  const number =
+    fromFlag && typeof value === "string" && value.trim() !== ""
+      ? Number(value)
+      : value;
+  if (
+    typeof number !== "number" ||
+    !Number.isFinite(number) ||
+    number < 0 ||
+    number > 100
+  ) {
+    throw new Error(
+      `Invalid score threshold for ${source}: ${describeConfigValue(value) ?? "missing"}. Expected a finite number from 0 to 100.`,
+    );
+  }
+  return number;
+}
+
 /**
  * Resolve every option from argv and the config file.
  *
@@ -157,7 +180,24 @@ export function parseCliOptions(
   fileConfig: FileConfig = {},
 ): CliOptions {
   const categories = splitList(getArgValue(args, "", "--categories"));
+  // Validate every occurrence before applying getArgValue's existing precedence.
+  // Otherwise one valid flag can hide a malformed or missing repeated value.
+  for (const [index, arg] of args.entries()) {
+    if (arg === "--min-score") {
+      scoreThreshold(args[index + 1], "--min-score", true);
+    } else if (arg.startsWith("--min-score=")) {
+      scoreThreshold(arg.slice("--min-score=".length), "--min-score", true);
+    }
+  }
   const minScoreArg = getArgValue(args, "", "--min-score");
+  const hasMinScoreFlag = args.some(
+    (arg) => arg === "--min-score" || arg.startsWith("--min-score="),
+  );
+  const minScore = hasMinScoreFlag
+    ? scoreThreshold(minScoreArg, "--min-score", true)
+    : fileConfig.minScore !== undefined
+      ? scoreThreshold(fileConfig.minScore, "minScore (config file)")
+      : 0;
   const pageTypeFlag = getArgValue(args, "", "--page-type");
   const hasPageTypeFlag = args.some(
     (arg) => arg === "--page-type" || arg.startsWith("--page-type="),
@@ -192,7 +232,7 @@ export function parseCliOptions(
     presetName: (getArgValue(args, "-p", "--preset") ||
       fileConfig.preset ||
       PresetName.Full) as PresetName,
-    minScore: minScoreArg ? Number(minScoreArg) : (fileConfig.minScore ?? 0),
+    minScore,
     outputDir:
       getArgValue(args, "-d", "--output-dir") ||
       fileConfig.outputDir ||
@@ -281,14 +321,30 @@ export function parseCategoryAssertions(
   args: string[],
   fileConfig: FileConfig & { assertCategories?: Record<string, number> } = {},
 ): Record<string, number> {
+  const configuredAssertions: unknown = fileConfig.assertCategories;
+  if (
+    configuredAssertions !== undefined &&
+    (typeof configuredAssertions !== "object" ||
+      configuredAssertions === null ||
+      Array.isArray(configuredAssertions))
+  ) {
+    throw new Error(
+      "Invalid assertCategories (config file): expected an object of category thresholds.",
+    );
+  }
   const out: Record<string, number> = {
     ...fileConfig.assertCategories,
   };
 
   const record = (pair: string | undefined) => {
-    if (!pair) return;
-    const [catId, min] = pair.split(":");
-    if (catId && min) out[catId] = Number(min);
+    const parts = pair?.split(":") ?? [];
+    const [catId, min] = parts;
+    if (parts.length !== 2 || !catId?.trim()) {
+      throw new Error(
+        "Invalid score threshold for --assert-category. Expected category:threshold.",
+      );
+    }
+    out[catId] = scoreThreshold(min, "--assert-category", true);
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -296,6 +352,12 @@ export function parseCategoryAssertions(
     if (arg.startsWith("--assert-category="))
       record(arg.slice("--assert-category=".length));
     else if (arg === "--assert-category") record(args[i + 1]);
+  }
+  for (const [category, value] of Object.entries(out)) {
+    out[category] = scoreThreshold(
+      value,
+      `assertCategories.${category} (config file)`,
+    );
   }
   return out;
 }

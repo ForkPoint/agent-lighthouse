@@ -266,3 +266,22 @@ describe("v7 scope preview", () => {
     ).not.toThrow();
   });
 });
+
+it.each([
+  [-1, "text-red-400"],
+  [0, "text-red-400"],
+  [49, "text-red-400"],
+  [49.5, "text-amber-300"],
+  [50, "text-amber-300"],
+  [69, "text-amber-300"],
+  [69.5, "text-accent"],
+  [70, "text-accent"],
+  [89, "text-accent"],
+  [89.5, "text-emerald-400"],
+  [90, "text-emerald-400"],
+  [101, "text-emerald-400"],
+  [NaN, "text-red-400"],
+  [Infinity, "text-red-400"],
+])("maps score %s to the current viewer class", (score, tone) => {
+  expect(scoreClass(score)).toBe(tone);
+});

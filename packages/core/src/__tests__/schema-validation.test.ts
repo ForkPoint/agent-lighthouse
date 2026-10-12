@@ -83,37 +83,23 @@ describe("Audit Schema Validation (All 183+ Audits)", () => {
 
         it(`[${meta.id}] ${meta.title} - result schema`, async () => {
           const instance = reg.create();
-          try {
-            const auditResult = await instance.audit(ctx);
-            // toCheckResult internally calls this.validate() which uses AuditResultSchema
-            const checkResult = instance.toCheckResult(auditResult);
+          const auditResult = await instance.audit(ctx);
+          // toCheckResult internally calls this.validate() which uses AuditResultSchema
+          const checkResult = instance.toCheckResult(auditResult);
 
-            // Validate the final flattened CheckResult
-            const checkValidation = CheckResultSchema.safeParse(checkResult);
-            if (!checkValidation.success) {
-              console.error(
-                `CheckResult schema error in ${meta.id}:`,
-                checkValidation.error.format(),
-              );
-            }
-            expect(checkValidation.success).toBe(true);
-
-            // Double check raw AuditResult with safeParse
-            const validation = AuditResultSchema.safeParse(auditResult);
-            expect(validation.success).toBe(true);
-          } catch (err: any) {
-            // If it's a ZodError, it means our built-in validation caught it
-            // If it's a TypeError/other, it's a bug in the audit logic
-            if (err.name === "ZodError") {
-              console.error(`Result schema error in ${meta.id}:`, err.format());
-              throw err;
-            }
-            // Some audits might naturally fail on empty context, but they shouldn't throw TypeErrors
-            if (err instanceof TypeError) {
-              console.error(`Logic error in ${meta.id}:`, err);
-              throw err;
-            }
+          // Validate the final flattened CheckResult
+          const checkValidation = CheckResultSchema.safeParse(checkResult);
+          if (!checkValidation.success) {
+            console.error(
+              `CheckResult schema error in ${meta.id}:`,
+              checkValidation.error.format(),
+            );
           }
+          expect(checkValidation.success).toBe(true);
+
+          // Double check raw AuditResult with safeParse
+          const validation = AuditResultSchema.safeParse(auditResult);
+          expect(validation.success).toBe(true);
         });
       }
     });

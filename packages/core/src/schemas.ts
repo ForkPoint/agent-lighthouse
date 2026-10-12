@@ -18,6 +18,13 @@ import {
 export const CheckStatusSchema = z.enum(CheckStatus);
 export const CheckPrioritySchema = z.enum(CheckPriority);
 
+const DetailValueSchema = z.union([
+  z.string().max(10000),
+  z.number(),
+  z.boolean(),
+  z.array(z.string().max(1000)).max(100),
+]);
+
 export const AuditResultSchema = z.object({
   status: CheckStatusSchema,
   score: z.number().min(0).max(1),
@@ -39,14 +46,7 @@ export const AuditResultSchema = z.object({
     // objects would let an audit smuggle unbounded payloads into the JSON
     // report. A bounded array of strings is allowed because audits report
     // named sets (which crawlers, which endpoints) as lists.
-    .catchall(
-      z.union([
-        z.string().max(10000),
-        z.number(),
-        z.boolean(),
-        z.array(z.string().max(1000)).max(100),
-      ]),
-    )
+    .catchall(DetailValueSchema)
     .optional(),
   pageUrl: z
     .string()
@@ -181,14 +181,7 @@ const CheckAssessmentSchema = z.object({
     })
     // Same rule as AuditResultSchema: structured evidence survives, nested
     // payloads do not.
-    .catchall(
-      z.union([
-        z.string().max(10000),
-        z.number(),
-        z.boolean(),
-        z.array(z.string().max(1000)).max(100),
-      ]),
-    )
+    .catchall(DetailValueSchema)
     .optional(),
   tags: z.array(z.string().max(50)).max(20).optional(),
   deprecated: DeprecationNoticeSchema.optional(),

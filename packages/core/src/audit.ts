@@ -39,20 +39,34 @@ export abstract class Audit {
    */
   private static splitRecommendation(
     value?: { priority: CheckPriority; [key: string]: unknown } | string,
-  ): { priority: CheckPriority | undefined; remediation: string | undefined } {
+  ): {
+    priority?: CheckPriority | undefined;
+    remediation?: string | undefined;
+    code?: string | undefined;
+    displayValue?: string | undefined;
+  } {
     if (value === undefined)
       return { priority: undefined, remediation: undefined };
     if (typeof value === "string") {
-      const known = Audit.PRIORITY_MAP[value];
+      const known = Object.hasOwn(Audit.PRIORITY_MAP, value)
+        ? Audit.PRIORITY_MAP[value]
+        : undefined;
       return known
         ? { priority: known, remediation: undefined }
         : { priority: undefined, remediation: value };
     }
     return {
-      priority: Audit.PRIORITY_MAP[value.priority] ?? value.priority,
+      priority: Object.hasOwn(Audit.PRIORITY_MAP, value.priority)
+        ? Audit.PRIORITY_MAP[value.priority]
+        : value.priority,
       remediation:
         typeof value["description"] === "string"
           ? value["description"]
+          : undefined,
+      code: typeof value["code"] === "string" ? value["code"] : undefined,
+      displayValue:
+        typeof value["displayValue"] === "string"
+          ? value["displayValue"]
           : undefined,
     };
   }
@@ -122,23 +136,8 @@ export abstract class Audit {
       { priority: CheckPriority; [key: string]: unknown } | string,
     pageUrl?: string,
   ): AuditResult {
-    const { priority, remediation } = Audit.splitRecommendation(
-      recommendationOrPriority,
-    );
-
-    // A recommendation object may also carry a fix snippet computed from what
-    // this scan actually found. It used to be dropped here, so every report
-    // showed the generic snippet from meta.guidance.code.
-    const code =
-      typeof recommendationOrPriority === "object" &&
-      typeof recommendationOrPriority["code"] === "string"
-        ? recommendationOrPriority["code"]
-        : undefined;
-    const displayValue =
-      typeof recommendationOrPriority === "object" &&
-      typeof recommendationOrPriority["displayValue"] === "string"
-        ? recommendationOrPriority["displayValue"]
-        : undefined;
+    const { priority, remediation, code, displayValue } =
+      Audit.splitRecommendation(recommendationOrPriority);
 
     return {
       status: CheckStatus.Warn,
@@ -163,23 +162,8 @@ export abstract class Audit {
       { priority: CheckPriority; [key: string]: unknown } | string,
     pageUrl?: string,
   ): AuditResult {
-    const { priority, remediation } = Audit.splitRecommendation(
-      recommendationOrPriority,
-    );
-
-    // A recommendation object may also carry a fix snippet computed from what
-    // this scan actually found. It used to be dropped here, so every report
-    // showed the generic snippet from meta.guidance.code.
-    const code =
-      typeof recommendationOrPriority === "object" &&
-      typeof recommendationOrPriority["code"] === "string"
-        ? recommendationOrPriority["code"]
-        : undefined;
-    const displayValue =
-      typeof recommendationOrPriority === "object" &&
-      typeof recommendationOrPriority["displayValue"] === "string"
-        ? recommendationOrPriority["displayValue"]
-        : undefined;
+    const { priority, remediation, code, displayValue } =
+      Audit.splitRecommendation(recommendationOrPriority);
 
     return {
       status: CheckStatus.Fail,

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
   mountBadgeGenerator,
   badgeMarkdown,
@@ -113,6 +113,9 @@ describe("mountBadgeGenerator", () => {
     // outside a secure context.
     expect(navigator.clipboard).toBeUndefined();
     expect(() => el<HTMLButtonElement>("#badge-copy").click()).not.toThrow();
+    expect(el("#badge-copy-status").textContent).toContain(
+      "select the snippet and copy it",
+    );
   });
 
   it("does nothing at all on a page without the panel", () => {
@@ -120,3 +123,21 @@ describe("mountBadgeGenerator", () => {
     expect(() => mountBadgeGenerator()).not.toThrow();
   });
 });
+
+afterEach(() => vi.unstubAllGlobals());
+it.each([false, true])(
+  "reports clipboard write result (rejected: %s)",
+  async (rejected) => {
+    const writeText = vi.fn(() =>
+      rejected ? Promise.reject(new Error("denied")) : Promise.resolve(),
+    );
+    vi.stubGlobal("navigator", { clipboard: { writeText } });
+    mountBadgeGenerator();
+    el<HTMLButtonElement>("#badge-copy").click();
+    await new Promise((ok) => setTimeout(ok, 0));
+    expect(writeText).toHaveBeenCalledWith(el("#badge-markdown").textContent);
+    expect(el("#badge-copy-status").textContent).toContain(
+      rejected ? "select the snippet and copy it" : "copied to the clipboard",
+    );
+  },
+);

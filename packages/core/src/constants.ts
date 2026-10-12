@@ -57,7 +57,7 @@ export const READINESS_WEIGHTS = {
 } as const;
 
 export function getTierLabel(tier: string | null): string {
-  if (tier && tier in SCORE_TIER_LABELS) {
+  if (tier && Object.hasOwn(SCORE_TIER_LABELS, tier)) {
     return SCORE_TIER_LABELS[tier as ScoreTier];
   }
   return "N/A";

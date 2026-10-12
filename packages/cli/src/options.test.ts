@@ -238,17 +238,16 @@ describe("parseCliOptions", () => {
   });
 
   // Number("") is 0, so an empty --min-score must not read as "score 0 is fine".
-  it("keeps the config minScore when --min-score is given no value", () => {
-    const o = parseCliOptions(["--min-score"], "https://a.test", {
-      minScore: 60,
-    });
-    expect(o.minScore).toBe(60);
+  it("rejects a missing minimum even when config supplies one", () => {
+    expect(() =>
+      parseCliOptions(["--min-score"], undefined, { minScore: 80 }),
+    ).toThrow(/threshold/i);
   });
 
-  it("produces NaN for a non-numeric --min-score rather than guessing", () => {
-    expect(
-      parseCliOptions(["--min-score=abc"], "https://a.test").minScore,
-    ).toBeNaN();
+  it("rejects a non-numeric minimum", () => {
+    expect(() => parseCliOptions(["--min-score=abc"], undefined)).toThrow(
+      /threshold/i,
+    );
   });
 });
 
@@ -344,14 +343,16 @@ describe("parseCategoryAssertions", () => {
     expect(fileConfig.assertCategories).toEqual({ "structured-data": 50 });
   });
 
-  it("ignores a pair with no threshold", () => {
-    expect(
+  it("rejects a pair with no threshold", () => {
+    expect(() =>
       parseCategoryAssertions(["--assert-category", "structured-data"]),
-    ).toEqual({});
+    ).toThrow(/threshold/i);
   });
 
-  it("ignores a trailing flag with no value", () => {
-    expect(parseCategoryAssertions(["--assert-category"])).toEqual({});
+  it("rejects a trailing flag with no value", () => {
+    expect(() => parseCategoryAssertions(["--assert-category"])).toThrow(
+      /threshold/i,
+    );
   });
 
   it("returns an empty object when the flag is absent", () => {
@@ -695,5 +696,98 @@ describe("v7 manual page declarations", () => {
       { id: "pass", title: "Pass", status: CheckStatus.Pass },
     ];
     expect(selectDebugChecks(checks, "fails")).toEqual([checks[0]]);
+  });
+});
+
+describe("score threshold validation", () => {
+  it.each(["abc", "", " ", "NaN", "Infinity", "-1", "101", "80:90"])(
+    "rejects invalid thresholds %j",
+    (value) => {
+      expect(() =>
+        parseCliOptions([`--min-score=${value}`], "https://example.com"),
+      ).toThrow(/threshold/i);
+      expect(() =>
+        parseCategoryAssertions([`--assert-category=structured-data:${value}`]),
+      ).toThrow(/threshold/i);
+    },
+  );
+  it.each(["--min-score", "--min-score="])(
+    "rejects missing minimum %s",
+    (flag) => {
+      expect(() =>
+        parseCliOptions([flag, "--silent"], "https://example.com"),
+      ).toThrow(/threshold/i);
+    },
+  );
+  it.each([
+    "--assert-category",
+    "--assert-category=",
+    "--assert-category=structured-data",
+    "--assert-category=:50",
+  ])("rejects missing category pair %s", (flag) => {
+    expect(() => parseCategoryAssertions([flag, "--silent"])).toThrow(
+      /threshold/i,
+    );
+  });
+  it.each([NaN, Infinity, -1, 101, "50", null, true, {}])(
+    "rejects invalid config threshold %j",
+    (value) => {
+      expect(() =>
+        parseCliOptions([], "https://example.com", {
+          minScore: value as number,
+        }),
+      ).toThrow(/threshold/i);
+      expect(() =>
+        parseCategoryAssertions([], {
+          assertCategories: { "structured-data": value as number },
+        }),
+      ).toThrow(/threshold/i);
+    },
+  );
+  it.each([0, 50.5, 100])("preserves valid threshold %s", (value) => {
+    expect(parseCliOptions([`--min-score=${value}`], undefined).minScore).toBe(
+      value,
+    );
+    expect(
+      parseCategoryAssertions([`--assert-category=structured-data:${value}`]),
+    ).toEqual({ "structured-data": value });
+  });
+});
+
+describe("review threshold boundaries", () => {
+  it.each([50, true, null, [], [50], "", "structured-data:80"])(
+    "rejects invalid assertion config shape %j",
+    (assertCategories) => {
+      expect(() =>
+        parseCategoryAssertions([], {
+          assertCategories: assertCategories as never,
+        }),
+      ).toThrow(/assertCategories.*object/i);
+    },
+  );
+  it.each([
+    ["--min-score=80", "--min-score=abc"],
+    ["--min-score=80", "--min-score"],
+    ["--min-score=80", "--min-score="],
+    ["--min-score=80", "--min-score", "--silent"],
+    ["--min-score=80", "--min-score", "101"],
+    ["--min-score", "abc", "--min-score=80"],
+    ["--min-score", "--silent", "--min-score=80"],
+  ])("validates every minimum occurrence %j", (...args) => {
+    expect(() => parseCliOptions(args, undefined)).toThrow(/threshold/i);
+  });
+  it.each([
+    { args: ["--min-score=0", "--min-score=100"], expected: 0 },
+    { args: ["--min-score", "50", "--min-score", "80"], expected: 50 },
+    { args: ["--min-score", "50", "--min-score=80"], expected: 80 },
+  ])(
+    "keeps existing precedence for valid repeats $args",
+    ({ args, expected }) => {
+      expect(parseCliOptions(args, undefined).minScore).toBe(expected);
+    },
+  );
+  it("allows omitted and empty assertion maps", () => {
+    expect(parseCategoryAssertions([])).toEqual({});
+    expect(parseCategoryAssertions([], { assertCategories: {} })).toEqual({});
   });
 });

@@ -45,11 +45,11 @@ export interface ScanConfig {
 
 // ── Helper ──────────────────────────────────────────────────────
 
-type AuditClass = typeof Audit;
+type AuditClass = { new (): Audit; readonly meta: AuditMeta };
 
 function reg(AuditClass: AuditClass): AuditRegistration {
   return {
-    create: () => new (AuditClass as unknown as new () => Audit)(),
+    create: () => new AuditClass(),
     meta: AuditClass.meta,
   };
 }

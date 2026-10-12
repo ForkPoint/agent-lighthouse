@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { AuditMeta, AuditResult } from "./types";
+import { getTierLabel } from "./constants";
 import { Audit } from "./audit";
 import type { CheckContext } from "./check-context";
 import {
@@ -7,6 +8,7 @@ import {
   CheckStatus,
   FixEffort,
   ScoreDisplayMode,
+  ScoreTier,
 } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -413,4 +415,31 @@ describe("Audit.fail / Audit.warn — the fourth argument", () => {
     expect(r.priority).toBe(CheckPriority.High);
     expect(r.remediation).toBe("Add a canonical.");
   });
+});
+
+describe("own lookup keys", () => {
+  it.each(["toString", "constructor", "__proto__", "unknown"])(
+    "rejects inherited key %s",
+    (key) => {
+      expect(getTierLabel(key)).toBe("N/A");
+      const audit = new WithGuidanceAudit();
+      for (const result of [
+        audit.callWarn("m", "e", "f", key),
+        audit.callFail("m", "e", "f", key),
+      ]) {
+        expect(result.priority).toBeUndefined();
+        expect(audit.toCheckResult(result).fix).toBe(key);
+      }
+    },
+  );
+});
+
+it.each([
+  [ScoreTier.AgentReady, "Agent Ready"],
+  [ScoreTier.PartiallyReady, "Partially Ready"],
+  [ScoreTier.NeedsWork, "Needs Work"],
+  [ScoreTier.NotReady, "Not Ready"],
+  [null, "N/A"],
+])("keeps tier label %s", (tier, label) => {
+  expect(getTierLabel(tier)).toBe(label);
 });
