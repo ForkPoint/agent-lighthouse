@@ -45,6 +45,11 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
     },
+    "./contracts": {
+      "types": "./dist/contracts.d.ts",
+      "import": "./dist/contracts.mjs",
+      "require": "./dist/contracts.js"
+    },
     "./migration-map.json": "./migration-map.json"
   },
   "imports": {
@@ -79,6 +84,7 @@
     "@types/domhandler": "^3.1.0",
     "@types/jsdom": "^30.0.0",
     "@types/node": "^22.10.5",
+    "esbuild": "^0.27.7",
     "tsup": "^8.3.5",
     "typescript": "~7.0.2",
     "vitest": "^5.0.3"

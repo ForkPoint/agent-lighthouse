@@ -8,5 +8,5 @@
   },
   "exclude": ["src/**/*.test.ts", "src/__tests__/**", "src/tests/**"],
   "include": [],
-  "files": ["src/index.ts"]
+  "files": ["src/index.ts", "src/contracts.ts"]
 }

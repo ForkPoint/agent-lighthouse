@@ -1,37 +1,9 @@
+import { type WafProtection, WafProvider } from "./contracts";
 import type { FetchResult } from "./fetcher";
 
-export const WafProvider = {
-  Akamai: "akamai",
-  Cloudflare: "cloudflare",
-  Datadome: "datadome",
-  Perimeterx: "perimeterx",
-  Imperva: "imperva",
-  Kasada: "kasada",
-  AwsWaf: "aws-waf",
-  GenericWaf: "generic-waf",
-  ConnectionDrop: "connection-drop",
-  RateLimited: "rate-limited",
-} as const;
-
-export type WafProvider = (typeof WafProvider)[keyof typeof WafProvider];
-
-export interface WafProtection {
-  isBlocked: boolean;
-  provider?: WafProvider;
-  name: string;
-  reason: string;
-  statusCode?: number;
-  /**
-   * The scan was throttled, not refused.
-   *
-   * An HTTP 429 says "too many requests", which is a statement about this
-   * scan's request rate and not about who the site admits. An audit that
-   * cannot tell the two apart must not report a bot wall on the strength of
-   * one — a storefront that serves GPTBot perfectly well would be told its
-   * firewall is blocking AI crawlers.
-   */
-  isRateLimit?: boolean;
-}
+// A report carries the verdict, so its shape lives in `contracts.ts`.
+export { WafProvider };
+export type { WafProtection };
 
 /** How the scan should describe a throttled response. */
 function rateLimited(statusCode: number): WafProtection {

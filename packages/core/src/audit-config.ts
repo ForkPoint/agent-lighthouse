@@ -1,6 +1,9 @@
 import type { AuditMeta } from "./types";
 import type { Audit } from "./audit";
-import { CATEGORY_NAMES } from "./constants";
+import { CATEGORY_NAMES, Category } from "./contracts";
+
+// The published category list lives in `contracts.ts`.
+export { CATEGORY_IDS } from "./contracts";
 
 import { ACCESS_CRAWL_CONTROL_AUDITS } from "./audits/access-crawl-control";
 import { CONTENT_EXTRACTION_AUDITS } from "./audits/content-extraction";
@@ -58,23 +61,27 @@ function reg(AuditClass: AuditClass): AuditRegistration {
  * category `index.ts` registry so the registry has exactly one source of
  * truth — adding an audit to a category folder registers it here.
  *
- * Order here is registry order, which is what a raw scan iterates. The report's
- * display order is owned by `SECTION_GROUPS` / `CATEGORY_ORDER` in
- * `@forkpoint/agent-lighthouse-report`'s `sections.ts`, which groups the
- * categories into sections; the two lists are not required to agree.
+ * Keyed by `Category`, so the type checker rejects a category that is
+ * missing here or missing from `contracts.ts`. Order is `CATEGORY_IDS`, which
+ * is what a raw scan iterates. The report's display order is owned by
+ * `SECTION_GROUPS` / `CATEGORY_ORDER` in `@forkpoint/agent-lighthouse-report`'s
+ * `sections.ts`, which groups the categories into sections; the two lists are
+ * not required to agree.
  */
+const AUDITS_BY_CATEGORY: Record<Category, readonly AuditClass[]> = {
+  [Category.AccessCrawlControl]: ACCESS_CRAWL_CONTROL_AUDITS,
+  [Category.ContentExtraction]: CONTENT_EXTRACTION_AUDITS,
+  [Category.MachineDiscovery]: MACHINE_DISCOVERY_AUDITS,
+  [Category.StructuredData]: STRUCTURED_DATA_AUDITS,
+  [Category.AnswerReadiness]: ANSWER_READINESS_AUDITS,
+  [Category.AgentInterfaces]: AGENT_INTERFACES_AUDITS,
+  [Category.AgenticCommerce]: AGENTIC_COMMERCE_AUDITS,
+  [Category.OperabilitySafety]: OPERABILITY_SAFETY_AUDITS,
+};
+
 const CATEGORY_AUDITS: ReadonlyArray<
-  readonly [id: string, audits: readonly AuditClass[]]
-> = [
-  ["access-crawl-control", ACCESS_CRAWL_CONTROL_AUDITS],
-  ["content-extraction", CONTENT_EXTRACTION_AUDITS],
-  ["machine-discovery", MACHINE_DISCOVERY_AUDITS],
-  ["structured-data", STRUCTURED_DATA_AUDITS],
-  ["answer-readiness", ANSWER_READINESS_AUDITS],
-  ["agent-interfaces", AGENT_INTERFACES_AUDITS],
-  ["agentic-commerce", AGENTIC_COMMERCE_AUDITS],
-  ["operability-safety", OPERABILITY_SAFETY_AUDITS],
-];
+  readonly [id: Category, audits: readonly AuditClass[]]
+> = Object.values(Category).map((id) => [id, AUDITS_BY_CATEGORY[id]]);
 
 /**
  * Evidence mass per category: Σ of the member audits' weights (spec §4).
@@ -84,6 +91,9 @@ const CATEGORY_AUDITS: ReadonlyArray<
  * audit between categories moves its mass with it and nothing else changes.
  * Categories made entirely of informative/experimental audits have mass 0 and
  * cannot move the overall score.
+ *
+ * Not part of the `contracts` entry: it describes the installed registry, and
+ * a saved report carries the mass it was scored with.
  */
 export const CATEGORY_MASS: Record<string, number> = Object.fromEntries(
   CATEGORY_AUDITS.map(([id, audits]) => [
@@ -107,11 +117,6 @@ export const defaultConfig: ScanConfig = {
     ]),
   ),
 };
-
-/** Every registered category id, in canonical report order. */
-export const CATEGORY_IDS: readonly string[] = CATEGORY_AUDITS.map(
-  ([id]) => id,
-);
 
 /**
  * Narrow a scan to a subset of the registry.

@@ -44,12 +44,16 @@ it("exposes usable declarations to ESM and CommonJS consumers without workspace 
     }
     const consumer = `
 import { runScan, defineConfig, PageScopeOptionsSchema, ScannedPageSchema, PageAttemptSchema, type ScanOptions, type AuditCoverage } from "@forkpoint/agent-lighthouse-core";
+import { getScoreTier, ScoreTier, isPageType, type ScanReport, type PageType } from "@forkpoint/agent-lighthouse-core/contracts";
 import { generateHtmlReport, buildReportView, formatPageScope, formatAuditScope } from "@forkpoint/agent-lighthouse-report";
 import { auditWebsite } from "@forkpoint/agent-lighthouse-mcp";
 import "@forkpoint/agent-lighthouse";
 const options: ScanOptions = { timeoutMs: 1000, pageType: "article", pages: [{ url: "https://example.com/product", pageType: "product" }] };
 const scan = runScan("https://example.com", options);
 scan.then(report => {
+  const saved: ScanReport = report;
+  const tier: ScoreTier | null = saved.overallScore === null ? null : getScoreTier(saved.overallScore);
+  void tier;
   generateHtmlReport(report);
   const scope = buildReportView(report).pageScope;
   if (scope) {
@@ -64,6 +68,15 @@ scan.then(report => {
 PageScopeOptionsSchema.parse(options);
 void auditWebsite("https://example.com", { pageType: "article", pages: options.pages });
 void defineConfig;
+const rawType: unknown = "article";
+if (isPageType(rawType)) {
+  const pageType: PageType = rawType;
+  void pageType;
+}
+// @ts-expect-error contracts preserve the supported page types
+const invalidType: PageType = "author";
+// @ts-expect-error score bands require a number
+getScoreTier("90");
 // @ts-expect-error the URL must be a string
 runScan(1);
 // @ts-expect-error author is not a supported page purpose
@@ -99,6 +112,11 @@ void auditWebsite("https://example.com", { pageType: "author" });
     // Run the built exports as well as compiling their declarations. No network.
     const runtime = `
 const oldPage = { url: "https://example.com/", pageType: "content" };
+for (const name of Object.keys(contracts)) {
+  if (core[name] !== contracts[name]) throw new Error("Contracts export differs from root: " + name);
+}
+if (contracts.getScoreTier(90) !== contracts.ScoreTier.AgentReady) throw new Error("Contracts score tier unavailable");
+if (!contracts.isPageType("article") || contracts.isPageType("author")) throw new Error("Contracts page type guard failed");
 if (core.ScannedPageSchema.parse(oldPage).pageType !== "general") throw new Error("Pre-v7 page type not read as general");
 if (core.PageScopeOptionsSchema.safeParse({ pageType: "author" }).success) throw new Error("Invalid purpose accepted");
 const scope = { pages: [{ url: oldPage.url, pageType: "article", classification: { type: "article", source: "detected", confidence: "hint", signals: ["article-url-hint"] } }], audits: [] };
@@ -108,6 +126,7 @@ if (typeof mcp.auditWebsite !== "function") throw new Error("MCP export absent")
     for (const mode of ["cjs", "mjs"]) {
       const imports = [
         ["core", "@forkpoint/agent-lighthouse-core"],
+        ["contracts", "@forkpoint/agent-lighthouse-core/contracts"],
         ["report", "@forkpoint/agent-lighthouse-report"],
         ["mcp", "@forkpoint/agent-lighthouse-mcp"],
       ]

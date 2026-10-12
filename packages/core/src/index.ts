@@ -103,6 +103,7 @@ export {
 export { extractProductFieldVerification } from "./product-fields";
 
 // Types & Schemas
+export * from "./contracts";
 export * from "./types";
 export * from "./constants";
 export { skippedMassShare } from "./scorer";

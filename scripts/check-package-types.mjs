@@ -7,7 +7,8 @@
  *
  * - `node10` resolution. The declarations import core modules as `#core/*`
  *   (see CLAUDE.md, Style), a package `imports` map that `moduleResolution:
- *   node10` cannot read. TypeScript 7 no longer offers node10, and
+ *   node10` cannot read. node10 also ignores `exports`, so it cannot see a
+ *   subpath entry such as core's `./contracts`. TypeScript 7 no longer offers node10, and
  *   `node16`, `nodenext` and `bundler` resolve the map.
  * - `FalseCJS`. One `index.d.ts` serves both the CJS and the ESM entry. An
  *   ESM consumer sees CommonJS-shaped types; named imports still type-check.
@@ -55,7 +56,10 @@ for (const name of PACKAGES) {
     .filter(
       (p) =>
         !IGNORED_KINDS.has(p.kind) &&
-        !IGNORED_RESOLUTIONS.has(p.resolutionOption),
+        !IGNORED_RESOLUTIONS.has(p.resolutionOption) &&
+        // Entry-point problems (a subpath such as `./contracts` that node10
+        // cannot see, because it ignores `exports`) name the resolution here.
+        !IGNORED_RESOLUTIONS.has(p.resolutionKind),
     );
   if (problems.length === 0) {
     console.log(`ok   packages/${name}`);
