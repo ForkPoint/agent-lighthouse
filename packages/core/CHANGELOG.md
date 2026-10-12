@@ -1,5 +1,11 @@
 # @forkpoint/agent-lighthouse-core
 
+## 7.1.0
+
+### Minor Changes
+
+- 676a9c3: Add a dependency-free `@forkpoint/agent-lighthouse-core/contracts` entry for browser code to read saved reports. It exports report types, constants, and score-tier helpers. Existing root imports remain compatible, and both entries share the same objects.
+
 ## 7.0.1
 
 ### Patch Changes
