@@ -4,21 +4,20 @@ import type {
   BrowserSnapshots,
 } from "./contracts";
 import {
+  DOM_WORK_LIMITS,
   DocumentState,
   EvidenceSource,
-  SNAPSHOT_LIMITS,
   ScoreDisplayMode,
   TAG_SCAN_ERROR,
   TAG_SKIPPED_NO_EVIDENCE,
   TAG_SKIPPED_PAGE_TYPE,
   TAG_SKIPPED_SCAN_BUDGET,
 } from "./contracts";
-import type { CheerioAPI } from "cheerio";
-import { isTag, type AnyNode } from "domhandler";
 import type { ScanConfig } from "./audit-config";
 import type { CheckContext, PageContext } from "./check-context";
 import type { ScanOptions } from "./orchestrator";
 import { runAudits } from "./audit-runner";
+import { DomWorkLimitError } from "./dom-work";
 import { parsePageContext } from "./page-context";
 import { buildSnapshotEvidence } from "./scan-evidence";
 import { BrowserAssessmentSchema, snapshotUrlKey } from "./schemas";
@@ -93,11 +92,16 @@ export async function assessBrowserSnapshots(
     } catch (error) {
       if (signal?.aborted) throw error;
       const message = error instanceof Error ? error.message : String(error);
+      // A work limit is a stated scanner bound, not a failure of the capture.
+      const reason =
+        error instanceof DomWorkLimitError
+          ? message
+          : `Snapshot assessment failed: ${message}`;
       for (const auditId of eligibleAuditIds)
         result.missingEvidence.push({
           auditId,
           pageUrl: snapshot.requestedUrl,
-          reason: `Snapshot assessment failed: ${message}`.slice(0, 5000),
+          reason: reason.slice(0, 5000),
         });
     }
   }
@@ -128,32 +132,6 @@ function emptyAssessment(
   };
 }
 
-/**
- * DOM audits climb ancestors for each element, so their cost grows with the sum
- * of element depths. A capture over either limit gets no verdict rather than
- * stalling the scan. The walk itself is linear and stops at the first excess.
- */
-function exceedsDomWork($: CheerioAPI): string | undefined {
-  const root = $.root().get(0);
-  if (!root) return undefined;
-  const stack: Array<[AnyNode, number]> = root.children.map((node) => [
-    node,
-    1,
-  ]);
-  let steps = 0;
-  while (stack.length) {
-    const [node, depth] = stack.pop()!;
-    if (!isTag(node)) continue;
-    if (depth > SNAPSHOT_LIMITS.maxDomDepth)
-      return `The snapshot DOM nests deeper than ${SNAPSHOT_LIMITS.maxDomDepth} elements. A browser parser cannot produce it, so it is not assessed.`;
-    steps += depth;
-    if (steps > SNAPSHOT_LIMITS.maxDomAncestorSteps)
-      return "The snapshot DOM exceeds the structural work limit. It is not assessed.";
-    for (const child of node.children) stack.push([child, depth + 1]);
-  }
-  return undefined;
-}
-
 type CaptureResult = Pick<BrowserAssessment, "findings" | "missingEvidence">;
 
 /** One capture, validated on its own so a bad value fails only this capture. */
@@ -182,13 +160,12 @@ async function assessCapture(
   const forcedType = options.pages?.find(
     (page) => snapshotUrlKey(page.url) === snapshotUrlKey(pageUrl),
   )?.pageType;
-  const parsed = parsePageContext(pageUrl, html, forcedType);
-  const tooDeep = exceedsDomWork(parsed.$);
-  if (tooDeep) {
-    for (const auditId of eligibleAuditIds)
-      result.missingEvidence.push({ auditId, pageUrl, reason: tooDeep });
-    return result;
-  }
+  const parsed = parsePageContext(
+    pageUrl,
+    html,
+    forcedType,
+    DOM_WORK_LIMITS.snapshotAncestorSteps,
+  );
   const page: PageContext = {
     ...parsed,
     evidenceSource: EvidenceSource.BrowserSnapshot,

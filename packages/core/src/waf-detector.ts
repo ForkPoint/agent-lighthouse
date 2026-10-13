@@ -21,10 +21,13 @@ function rateLimited(statusCode: number): WafProtection {
 /**
  * Analyzes fetch results (homepage, root files, extra pages) to determine
  * if the target website is behind a bot protection wall or WAF that drops
- * or challenges automated AI agents.
+ * or challenges automated AI agents. Detection reads response evidence only,
+ * never the target's hostname.
+ *
+ * @param _targetUrl Kept for the public signature; no verdict depends on it.
  */
 export function detectWafProtection(
-  targetUrl: string,
+  _targetUrl: string,
   homepageResult: FetchResult | null,
   rootFiles: Record<string, FetchResult>,
   scannedPagesCount: number,
@@ -184,7 +187,7 @@ export function detectWafProtection(
     // Check if domain or headers match Akamai
     const headers = homepageResult.headers || {};
     const server = (headers["server"] || "").toLowerCase();
-    if (server.includes("akamaighost") || targetUrl.includes("gucci.com")) {
+    if (server.includes("akamaighost")) {
       return {
         isBlocked: true,
         provider: WafProvider.Akamai,

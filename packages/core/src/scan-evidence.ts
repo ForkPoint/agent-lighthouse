@@ -36,6 +36,7 @@ export interface ScanEvidence {
 }
 
 export interface ScanEvidenceInput {
+  pageAnalysisErrors?: Record<string, string>;
   requestedUrl: string;
   homepageResult: FetchResult;
   pages: PageContext[];
@@ -259,6 +260,20 @@ export function buildScanEvidence(input: ScanEvidenceInput): ScanEvidence {
       input.pages.length === 0
         ? "The scan fetched no pages."
         : "No fetched page of any type served readable text.";
+  }
+
+  if (
+    input.pages.length === 0 &&
+    input.pageAnalysisErrors &&
+    Object.keys(input.pageAnalysisErrors).length
+  ) {
+    const failures = Object.entries(input.pageAnalysisErrors)
+      .map(([url, reason]) => `${url}: ${reason}`)
+      .join(" ")
+      .slice(0, 2000);
+    const reason = `No fetched page was available for DOM analysis. ${failures}`;
+    reasons[EvidenceKey.RenderedBody] = reason;
+    reasons[EvidenceKey.SampleAdequate] = reason;
   }
 
   return {

@@ -1,7 +1,7 @@
+import { parseBoundedHtml } from "./dom-work";
 import type { DomPageContext } from "./check-context";
 import type { PageType } from "./contracts";
 import {
-  parseHtml,
   extractJsonLd,
   extractMicrodata,
   extractRdfa,
@@ -11,13 +11,17 @@ import {
   declaredPageClassification,
 } from "./parser";
 
-/** Parse inert HTML using the same extraction and classification for both sources. */
+/**
+ * Parse inert HTML using the same extraction and classification for both sources.
+ * Throws `DomWorkLimitError` when the page exceeds the DOM work limits.
+ */
 export function parsePageContext(
   url: string,
   html: string,
   forcedType?: PageType,
+  maxAncestorSteps?: number,
 ): DomPageContext {
-  const $ = parseHtml(html);
+  const $ = parseBoundedHtml(html, maxAncestorSteps);
   const jsonLd = extractJsonLd($);
   const structuredData = [...jsonLd, ...extractMicrodata($), ...extractRdfa($)];
   const meta = extractMetaTags($);

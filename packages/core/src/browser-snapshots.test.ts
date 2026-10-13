@@ -1,3 +1,4 @@
+import { parseHtml } from "./parser";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { FetchResult } from "./fetcher";
 import { runScan } from "./orchestrator";
@@ -13,6 +14,7 @@ import {
   EvidenceSource,
   CheckStatus,
   SNAPSHOT_LIMITS,
+  DOM_WORK_LIMITS,
 } from "./contracts";
 import type { BrowserSnapshot, BrowserSnapshots } from "./contracts";
 import { runAudits, planAudits } from "./audit-runner";
@@ -416,19 +418,28 @@ describe("browser snapshot scan boundary", () => {
   it("reads deeply nested snapshot text in linear time", () => {
     const depth = 8000;
     const deep = `<html><body>${"<div>".repeat(depth)}${text}${"</div>".repeat(depth)}</body></html>`;
-    const page = parsePageContext(url, deep) as PageContext;
+    const page = {
+      url,
+      pageType: PageType.General,
+      $: parseHtml(deep),
+    } as PageContext;
     const started = performance.now();
     const evidence = buildSnapshotEvidence([page]);
     expect(performance.now() - started).toBeLessThan(1000);
     expect(evidence.renderedByPage[url]).toBe(true);
     const hidden = `<html><body>${"<div>".repeat(depth)}<div hidden>${text}</div>${"</div>".repeat(depth)}</body></html>`;
     expect(
-      buildSnapshotEvidence([parsePageContext(url, hidden) as PageContext])
-        .renderedByPage[url],
+      buildSnapshotEvidence([
+        {
+          url,
+          pageType: PageType.General,
+          $: parseHtml(hidden),
+        } as PageContext,
+      ]).renderedByPage[url],
     ).toBe(false);
   });
   it("gives no verdict for DOM deeper than a browser parser builds", async () => {
-    const depth = SNAPSHOT_LIMITS.maxDomDepth + 10;
+    const depth = DOM_WORK_LIMITS.maxDepth + 10;
     const started = performance.now();
     const report = await runScan(url, {
       ...options,
@@ -443,7 +454,7 @@ describe("browser snapshot scan boundary", () => {
     expect(assessment.findings).toEqual([]);
     expect(
       assessment.missingEvidence.every((m) =>
-        m.reason.includes(`deeper than ${SNAPSHOT_LIMITS.maxDomDepth}`),
+        m.reason.includes(`deeper than ${DOM_WORK_LIMITS.maxDepth}`),
       ),
     ).toBe(true);
     expect(assessment.missingEvidence).toHaveLength(6);

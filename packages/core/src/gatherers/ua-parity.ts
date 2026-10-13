@@ -1,7 +1,8 @@
 import { cacheOwner } from "./cache-owner";
 import type { FetchOptions, FetchResult } from "#core/fetcher";
 import { isSafeUrl } from "#core/fetcher";
-import { parseHtml, getMainContentText } from "#core/parser";
+import { getMainContentText } from "#core/parser";
+import { parseBoundedHtml } from "#core/dom-work";
 
 /**
  * The AI crawlers whose published User-Agent strings can actually be sent.
@@ -106,7 +107,7 @@ const ANUBIS_MARKERS = [
 
 function mainText(body: string): string {
   if (!body.trim()) return "";
-  return getMainContentText(parseHtml(body));
+  return getMainContentText(parseBoundedHtml(body));
 }
 
 /**

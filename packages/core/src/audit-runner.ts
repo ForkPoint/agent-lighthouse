@@ -340,6 +340,18 @@ function gateExplanation(
   unmet: EvidenceKey[],
 ): string {
   const reasons = unmet.map((key) => ctx.evidence.reasons[key]).filter(Boolean);
+  const types = auditPageTypes(meta);
+  const analysisErrors = (ctx.pageAttempts ?? [])
+    .filter((page) => !types?.length || types.includes(page.pageType))
+    .flatMap((page) =>
+      ctx.pageAnalysisErrors?.[page.url]
+        ? [`${page.url}: ${ctx.pageAnalysisErrors[page.url]}`]
+        : [],
+    );
+  if (analysisErrors.length)
+    reasons.push(
+      `DOM analysis limits: ${analysisErrors.join(" ").slice(0, 2000)}`,
+    );
 
   if (unmet.includes(EvidenceKey.SampleAdequate) && reasons.length === 0) {
     const wanted = auditPageTypes(meta)?.join("/") || undefined;

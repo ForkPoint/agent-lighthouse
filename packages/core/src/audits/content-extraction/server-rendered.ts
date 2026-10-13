@@ -55,6 +55,23 @@ export class ServerRenderedAudit extends Audit {
   audit(ctx: CheckContext): AuditResult {
     const pages = ctx.pages ?? [];
 
+    if (
+      pages.length === 0 &&
+      ctx.pageAnalysisErrors &&
+      Object.keys(ctx.pageAnalysisErrors).length
+    ) {
+      return this.notApplicable(
+        `No HTTP page was available for DOM analysis. ${Object.entries(
+          ctx.pageAnalysisErrors,
+        )
+          .map(([url, reason]) => `${url}: ${reason}`)
+          .join(" ")
+          .slice(0, 2000)}`,
+        "Every fetched page serves > 50 words or > 200 characters of readable text",
+        "No page analysed within the DOM work limits",
+      );
+    }
+
     if (pages.length === 0) {
       return this.notApplicable(
         "The scan fetched no page, so there is no served HTML to judge.",

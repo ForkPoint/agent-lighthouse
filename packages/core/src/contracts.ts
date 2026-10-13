@@ -545,13 +545,26 @@ export const SNAPSHOT_LIMITS = {
   maxHtmlBytes: 2 * 1024 * 1024,
   maxTotalHtmlBytes: 6 * 1024 * 1024,
   maxUrlLength: 2048,
+} as const;
+
+/**
+ * DOM analysis limits for HTTP pages and browser snapshots. DOM audits climb
+ * ancestors for each element, so their cost grows with the sum of element
+ * depths: 8,000 nested elements (64M steps) took over 100 s.
+ */
+export const DOM_WORK_LIMITS = {
   /** Chromium's HTML parser stops nesting at 512, so a parsed page cannot be deeper. */
-  maxDomDepth: 512,
+  maxDepth: 512,
   /**
-   * Sum of element depths. DOM audits climb ancestors per element, so this
-   * bounds their work: 8,000 nested elements (64M steps) took over 100 s.
+   * Raw-markup nesting checked before parsing. The parser itself is quadratic
+   * in depth (20,000 levels took 1.7 s), so this stops it starting at all.
+   * It sits above maxDepth because a markup scan only approximates the tree.
    */
-  maxDomAncestorSteps: 1_000_000,
+  maxMarkupDepth: 2048,
+  /** Summed element depth for a served page: room for 30,000+ element pages. */
+  httpAncestorSteps: 3_000_000,
+  /** Summed element depth for one uploaded capture; up to six run per scan. */
+  snapshotAncestorSteps: 1_000_000,
 } as const;
 
 /** All capture metadata is asserted by the client, not verified by the server. */

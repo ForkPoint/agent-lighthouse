@@ -113,3 +113,7 @@ The most valuable premise in the category — whether meaningful content exists 
 ## Browser snapshot boundary
 
 This audit is not eligible for snapshot analysis. It reads actual HTTP-derived content and evidence. Readable browser-rendered HTML cannot make this audit pass, satisfy its HTTP access requirements, or change the crawler score. The separate browser assessment can report supported DOM observations even when this audit fails or server access is blocked. See [Browser-rendered snapshot assessment](../../../architecture/browser-snapshots.md).
+
+## DOM analysis limits
+
+The shared page parser bounds raw markup nesting before parsing, then DOM depth and total ancestor work before extraction and classification. The limits are in `DOM_WORK_LIMITS`. An HTTP response can arrive successfully while its DOM exceeds these analysis limits. Such a page does not enter this audit. If no HTTP page remains available for analysis, the audit returns `notApplicable` with the analysis-limit reason. It does not report a JavaScript shell, a blocked request, or a missing HTTP response. The report keeps the actual HTTP status in the page attempt and keeps other usable pages.
