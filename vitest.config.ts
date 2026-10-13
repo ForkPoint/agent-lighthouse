@@ -45,6 +45,10 @@ export default defineConfig({
     alias: {
       // Before the root key: an alias matches by prefix, so the root entry
       // would otherwise turn the subpath into `src/index.ts/contracts`.
+      "@forkpoint/agent-lighthouse-core/schemas": resolve(
+        __dirname,
+        "packages/core/src/schemas.ts",
+      ),
       "@forkpoint/agent-lighthouse-core/contracts": resolve(
         __dirname,
         "packages/core/src/contracts.ts",

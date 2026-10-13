@@ -83,6 +83,8 @@ The description promises to catch 'content formatted as styled divs instead of s
 
 ## Implementation deviations
 
+Browser snapshots provide serialized markup observations only. The browser assessment uses informative display and weight 0. It does not extend the dossier's crawler scoring claim to browser task success. Truncated, redacted, and still-loading captures produce missing-evidence records rather than verdicts.
+
 ### Hidden regions and keycaps (2026-10-06)
 
 The mechanism is list content that collapses into prose when the page becomes
@@ -142,3 +144,11 @@ All three audits carry grade **B** off the same signal, so nothing here is a str
 - **The pseudo-list detector is heuristic and deliberately conservative, but it is not proof against a false failure.** It requires ≥3 siblings and either a shared class with short text or a leading bullet/number, so a 2-item div list and a grid of long-form cards are invisible to it, and it errs toward under-reporting. Two rules bound the over-count: only the outermost match in a subtree is counted, so a nested card grid cannot multiply into one defect per card; and the table and select families are skipped, so a data table is never reported as a list that should have been a `<ul>`. What remains is a genuine residual risk in the other direction: a repeated short-text card or tile layout that is a legitimate component and not a list at all still counts once against the ratio, and on a page with no semantic list of its own that is enough to fail. The bound is one count per layout, not zero.
 - **ARIA-substituted structure is not credited.** The shared counter-evidence notes that a div carrying `role="list"`/`role="listitem"` maps to the same accessibility-tree nodes; the merged audit does not treat those roles as semantic markup, because the markdown/extraction consumers in the same evidence (trafilatura, Readability, Cloudflare's converter) read tags, not roles.
 - **Definition _quality_ is not judged.** 6.13's optional fix suggested gating on glossary intent (a glossary heading, `DefinedTerm` JSON-LD, repeated "X is …" constructs). That is not implemented: `<dl>` pairing is checked, its subject matter is not.
+
+## Limits
+
+### Browser snapshot evidence
+
+The snapshot path reuses this audit on each complete, unredacted, non-loading DOM capture that carries readable text. It reports the original static verdict as an unscored browser finding. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. The source and page URL accompany every finding. Existing implementation limits still apply.
+
+The individual evidence review and limits appear in [Browser-rendered snapshot assessment](../../../architecture/browser-snapshots.md#supported-audit-inventory). The explicit eligibility record lives in `packages/core/src/snapshot-eligibility.ts`. Original crawler grades, tiers, and weights stay unchanged.

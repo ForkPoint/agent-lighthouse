@@ -1,3 +1,4 @@
+import { formatBrowserAssessment } from "./browser-assessment";
 import {
   isInformative,
   AuditTier,
@@ -361,6 +362,8 @@ export function generateHtmlReport(report: ScanReport): string {
         </div>
       </div>
     </header>
+    ${view.browserAssessment ? `<section aria-label="Browser agent assessment" class="mb-8 p-6 rounded-2xl border border-slate-700 bg-slate-900 text-slate-200"><h2 class="text-lg font-bold mb-3">Browser agent assessment</h2><pre class="text-xs whitespace-pre-wrap break-words">${escapeHtml(formatBrowserAssessment(view.browserAssessment))}</pre></section>` : ""}
+
 
     ${
       view.wafProtection?.isBlocked

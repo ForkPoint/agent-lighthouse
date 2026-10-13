@@ -14,7 +14,10 @@ import type { PageContext } from "./check-context";
 import { PAGE_TYPES, EvidenceKey } from "./types";
 import type { PageType } from "./types";
 import type { WafProtection } from "./waf-detector";
+import { hiddenFromReaders, readerHidingMarker } from "./dom-visibility";
 import { getRenderedText } from "./parser";
+import type { CheerioAPI } from "cheerio";
+import { isTag, isText, type AnyNode } from "domhandler";
 import { registrableOf } from "./gatherers/domains";
 
 export type { EvidenceKey };
@@ -184,10 +187,41 @@ function unblockedFetches(
  * Chinese or Japanese page counts a handful of words; the character branch is
  * what stops the gate silencing every CJK site.
  */
-export function pageRendersText(page: PageContext): boolean {
-  const text = getRenderedText(page.$);
+export function pageRendersText(page: Pick<PageContext, "$">): boolean {
+  return textIsReadable(getRenderedText(page.$));
+}
+
+function textIsReadable(text: string): boolean {
   const wordCount = text.split(/\s+/).filter(Boolean).length;
   return wordCount > 50 || text.length > 200;
+}
+
+const NON_CONTENT = new Set(["script", "style", "noscript", "template"]);
+
+/**
+ * Body text minus content hidden from readers, read from the shared DOM without
+ * mutating or re-parsing it. A hidden element prunes its whole subtree, so the
+ * walk is linear: deep nesting in a supplied snapshot cannot stall the scan.
+ */
+function visibleRenderedText($: CheerioAPI): string {
+  const body = $("body").get(0);
+  if (!body || hiddenFromReaders($, body)) return "";
+  const parts: string[] = [];
+  // An explicit stack: a deeply nested multi-megabyte snapshot must not overflow recursion.
+  const stack: AnyNode[] = [...body.children].reverse();
+  while (stack.length) {
+    const node = stack.pop()!;
+    if (isText(node)) parts.push(node.data);
+    else if (
+      isTag(node) &&
+      !NON_CONTENT.has(node.name) &&
+      // Ancestors were checked on the way down, so the element alone decides.
+      !readerHidingMarker($(node), node.name.toLowerCase())
+    )
+      for (let i = node.children.length - 1; i >= 0; i--)
+        stack.push(node.children[i]!);
+  }
+  return parts.join("").replace(/\s+/g, " ").trim();
 }
 
 export function buildScanEvidence(input: ScanEvidenceInput): ScanEvidence {
@@ -389,5 +423,40 @@ export function evidenceForPages(
       }),
     ),
     usablePageTypes: new Set(readable.map((p) => p.pageType)),
+  };
+}
+
+/** DOM readability only. No snapshot can satisfy HTTP evidence keys. */
+export function buildSnapshotEvidence(pages: PageContext[]): ScanEvidence {
+  const renderedByPage = Object.fromEntries(
+    pages.map((page) => {
+      return [page.url, textIsReadable(visibleRenderedText(page.$))];
+    }),
+  );
+  const readable = pages.filter((page) => renderedByPage[page.url]);
+  return {
+    met: {
+      [EvidenceKey.OriginReachable]: false,
+      [EvidenceKey.UnblockedFetches]: false,
+      [EvidenceKey.RenderedBody]: readable.length > 0,
+      [EvidenceKey.SampleAdequate]: readable.length > 0,
+    },
+    reasons: {
+      [EvidenceKey.OriginReachable]:
+        "A supplied snapshot does not prove HTTP access.",
+      [EvidenceKey.UnblockedFetches]:
+        "A supplied snapshot does not prove an unblocked server fetch.",
+      ...(readable.length
+        ? {}
+        : {
+            [EvidenceKey.RenderedBody]:
+              "The snapshot carries no readable static text.",
+            [EvidenceKey.SampleAdequate]:
+              "No supplied snapshot carries readable static text.",
+          }),
+    },
+    renderedByPage,
+    usablePageTypes: new Set(readable.map((page) => page.pageType)),
+    judgeable: false,
   };
 }

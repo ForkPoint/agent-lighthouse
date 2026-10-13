@@ -109,3 +109,7 @@ The most valuable premise in the category — whether meaningful content exists 
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 - 2026-08-26 — text metric split; see Implementation deviations.
 - 2026-08-26 — judgement widened from the homepage to every fetched page; see Implementation deviations.
+
+## Browser snapshot boundary
+
+This audit is not eligible for snapshot analysis. It reads actual HTTP-derived content and evidence. Readable browser-rendered HTML cannot make this audit pass, satisfy its HTTP access requirements, or change the crawler score. The separate browser assessment can report supported DOM observations even when this audit fails or server access is blocked. See [Browser-rendered snapshot assessment](../../../architecture/browser-snapshots.md).

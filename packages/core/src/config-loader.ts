@@ -1,3 +1,4 @@
+import type { BrowserSnapshots } from "./contracts";
 import type { PageType, PageOverride } from "./types";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -8,6 +9,8 @@ export const OUTPUT_FORMATS = ["terminal", "html", "json", "md"] as const;
 export type OutputFormat = (typeof OUTPUT_FORMATS)[number];
 
 export interface AgentLighthouseConfig {
+  /** Optional versioned DOM input, validated by the scan engine. */
+  snapshots?: BrowserSnapshots;
   /** Target URL (if not supplied via CLI) */
   url?: string;
   /** Explicit target declaration; legacy content means general/unknown. */

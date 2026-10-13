@@ -2,7 +2,9 @@ import {
   CATEGORY_IDS,
   isPageType,
   PAGE_TYPES,
+  BrowserSnapshotsSchema,
   PageScopeOptionsSchema,
+  type BrowserSnapshots,
   type PageOverride,
   PresetName,
   type PageType,
@@ -39,6 +41,7 @@ export const DEFAULT_TRACE_FILE = "agent-lighthouse-trace.ndjson";
 
 /** The subset of a config file that the flags override. */
 export interface FileConfig {
+  snapshots?: BrowserSnapshots;
   url?: string;
   pageType?: PageType;
   pages?: PageOverride[] | null;
@@ -51,6 +54,9 @@ export interface FileConfig {
 }
 
 export interface CliOptions {
+  snapshots?: BrowserSnapshots;
+  /** Validation message for a config `snapshots` block that failed its schema. */
+  invalidSnapshots?: string;
   url: string | undefined;
   configPath: string | undefined;
   presetName: PresetName;
@@ -209,6 +215,11 @@ export function parseCliOptions(
     pageType: pageTypeArg,
     pages: fileConfig.pages,
   });
+  // Parsed apart from page scope so each failure names the setting at fault.
+  const snapshots =
+    fileConfig.snapshots === undefined
+      ? undefined
+      : BrowserSnapshotsSchema.safeParse(fileConfig.snapshots);
   const timeoutArg = getArgValue(args, "", "--timeout");
   // Number("") is 0, and 0 means "no budget", so a bare --timeout must not
   // read as "run without a budget"; it is refused like any other bad value.
@@ -253,6 +264,10 @@ export function parseCliOptions(
       pageTypeArg !== undefined && !isPageType(pageTypeArg)
         ? describeConfigValue(pageTypeArg)
         : undefined,
+    ...(snapshots?.success ? { snapshots: snapshots.data } : {}),
+    ...(snapshots && !snapshots.success
+      ? { invalidSnapshots: snapshots.error.message }
+      : {}),
     ...(scope.success && scope.data.pages !== undefined
       ? { pages: scope.data.pages }
       : {}),

@@ -1,3 +1,5 @@
+import { EvidenceSource } from "./contracts";
+import { SNAPSHOT_AUDITS, isSnapshotAudit } from "./snapshot-eligibility";
 import type {
   CheckResult,
   CategoryResult,
@@ -228,8 +230,18 @@ export function scopeAudit(
   return null;
 }
 
+function requirements(
+  ctx: CheckContext,
+  meta: AuditMeta,
+): readonly EvidenceKey[] {
+  // planAudits stubs every ineligible audit first, so a snapshot audit always has an entry.
+  return ctx.evidenceSource === EvidenceSource.BrowserSnapshot
+    ? (SNAPSHOT_AUDITS[meta.id]?.requires ?? [])
+    : (meta.requires ?? []);
+}
+
 function unmetRequirements(ctx: CheckContext, meta: AuditMeta): EvidenceKey[] {
-  return (meta.requires ?? []).filter((key) => !ctx.evidence.met[key]);
+  return requirements(ctx, meta).filter((key) => !ctx.evidence.met[key]);
 }
 
 export interface PlannedAssessment {
@@ -254,7 +266,7 @@ function planAssessment(
       (!types?.length || types.includes(p.pageType)) &&
       (provenance === CoverageProvenance.All || p.source === provenance),
   );
-  const needsText = meta.requires?.some(
+  const needsText = requirements(ctx, meta).some(
     (k) => k === EvidenceKey.RenderedBody || k === EvidenceKey.SampleAdequate,
   );
   const inputs =
@@ -361,10 +373,17 @@ export function planAudits(
   const runnable: RunnableAudit[] = [];
   const skipped: CheckResult[] = [];
 
-  const unread = !scanReadTheSite(ctx.evidence);
-  const unreadWhy = unread
-    ? `Not assessed: ${unreadSiteReason(ctx.evidence)}`
-    : "";
+  const snapshotMode = ctx.evidenceSource === EvidenceSource.BrowserSnapshot;
+  // A snapshot is an attributable DOM artifact, never a successful HTTP response.
+  // Only individually reviewed audits below may consume it; HTTP bits remain false.
+  const unread = snapshotMode
+    ? ctx.pages.length === 0
+    : !scanReadTheSite(ctx.evidence);
+  const unreadWhy = !unread
+    ? ""
+    : snapshotMode
+      ? "Not assessed: no browser snapshot was supplied."
+      : `Not assessed: ${unreadSiteReason(ctx.evidence)}`;
   for (const cat of config.categories) {
     const regs = config.audits[cat.id] ?? [];
     for (const registration of regs) {
@@ -388,6 +407,16 @@ export function planAudits(
         continue;
       }
       const reg = { ...registration, meta };
+      if (snapshotMode && !isSnapshotAudit(meta.id)) {
+        skipped.push(
+          stubCheck(
+            meta,
+            TAG_SKIPPED_NO_EVIDENCE,
+            "Not assessed: this audit requires evidence beyond a supplied DOM snapshot.",
+          ),
+        );
+        continue;
+      }
       if (unread) {
         skipped.push(stubCheck(reg.meta, TAG_SKIPPED_NO_EVIDENCE, unreadWhy));
         continue;

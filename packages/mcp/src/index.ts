@@ -8,7 +8,7 @@ import { buildReportView } from "@forkpoint/agent-lighthouse-report";
  */
 export async function auditWebsite(
   url: string,
-  options?: Pick<ScanOptions, "pageType" | "pages">,
+  options?: Pick<ScanOptions, "pageType" | "pages" | "snapshots">,
 ) {
   const report =
     options === undefined
@@ -23,6 +23,9 @@ export async function auditWebsite(
     ...(view.unscoredReason ? { unscoredReason: view.unscoredReason } : {}),
     durationMs: view.durationMs,
     ...(view.pageScope ? { pageScope: view.pageScope } : {}),
+    ...(view.browserAssessment
+      ? { browserAssessment: view.browserAssessment }
+      : {}),
     categories: view.groups.flatMap((g) =>
       g.categories.map((c) => ({
         name: c.name,

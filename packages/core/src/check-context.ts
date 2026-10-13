@@ -9,12 +9,11 @@ import type {
 import type { FetchOptions, FetchResult } from "./fetcher";
 import type { A11yPageResult } from "./audits/operability-safety/runner";
 
-export interface PageContext {
+export interface DomPageContext {
   url: string;
   pageType: PageType;
   pageTypeSource?: PageTypeSource;
   classification?: PageClassification;
-  fetchResult: FetchResult;
   $: CheerioAPI;
   /** Parsed JSON-LD blocks only (used by JSON-LD-specific audits). */
   jsonLd: object[];
@@ -40,7 +39,16 @@ export interface PageContext {
   a11yResults?: A11yPageResult;
 }
 
+/** HTTP page contexts carry real response evidence. Snapshot pages guard this read. */
+export interface PageContext extends DomPageContext {
+  fetchResult: FetchResult;
+  evidenceSource?: import("./contracts").EvidenceSource;
+}
+
 export interface CheckContext {
+  /** Absent means the existing HTTP execution path. */
+  evidenceSource?: import("./contracts").EvidenceSource;
+
   rootFiles: Record<string, FetchResult>;
   pages: PageContext[];
   /** Includes failed fetches omitted from parsed pages. */

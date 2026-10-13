@@ -31,6 +31,7 @@ import {
 import { tierMarker } from "./tier-marker";
 import {
   buildReportView,
+  formatBrowserAssessment,
   generateHtmlReport,
   generateMarkdownSummary,
 } from "@forkpoint/agent-lighthouse-report";
@@ -73,6 +74,7 @@ function usage(): never {
 Options:
   -p, --preset <name>          Audit preset (ecommerce, saas, content, quick, full) [default: full]
   -c, --config <path>          Path to configuration file (e.g. agent-lighthouse.config.json)
+                               Config accepts optional versioned "snapshots" DOM input.
   --debug-audit <id|fails>     Print deep diagnostic breakdown for a specific audit ID
                                (e.g. structured-data/faqpage-schema) or all fails
   --trace [path]               Write one NDJSON record per audit — outcome, status, score,
@@ -175,6 +177,10 @@ async function audit(targetUrl?: string) {
     );
     process.exit(1);
   }
+  if (opts.invalidSnapshots) {
+    console.error(`Invalid snapshots in config: ${opts.invalidSnapshots}`);
+    process.exit(1);
+  }
   if (opts.invalidPageScope) {
     console.error(`Invalid page declarations: ${opts.invalidPageScope}`);
     process.exit(1);
@@ -225,6 +231,7 @@ async function audit(targetUrl?: string) {
 
   const report = await runScan(url, {
     onEvent,
+    ...(opts.snapshots !== undefined ? { snapshots: opts.snapshots } : {}),
     ...(categories ? { categories } : {}),
     ...(pageType ? { pageType } : {}),
     ...(opts.pages !== undefined ? { pages: opts.pages } : {}),
@@ -318,6 +325,9 @@ async function audit(targetUrl?: string) {
         `${extra} additional advisory populations. Use --debug-audit <id> for URLs and findings.\n`,
       );
     }
+
+    if (view.browserAssessment)
+      console.log(`\n${formatBrowserAssessment(view.browserAssessment)}\n`);
 
     console.log(`\x1b[1m📊 CATEGORIES:\x1b[0m`);
     for (const group of view.groups) {

@@ -67,6 +67,18 @@ describe.skipIf(!built)("built contracts entry", () => {
     for (const input of inputs) expect(input).toMatch(/^dist\/[^/]+\.mjs$/);
   });
 
+  it("bundles snapshot input and report schemas for the browser without scanner dependencies", async () => {
+    const inputs = await browserInputs(
+      `export { BrowserSnapshotsSchema, BrowserAssessmentSchema, ScanReportSchema } from "@forkpoint/agent-lighthouse-core/schemas";`,
+    );
+    expect(inputs.length).toBeGreaterThan(0);
+    expect(
+      inputs.some((input) =>
+        /orchestrator|fetcher|cheerio|jsdom|undici/.test(input),
+      ),
+    ).toBe(false);
+  });
+
   it("fails the same check on the root entry, so the check can fail", async () => {
     // The root entry carries the scanner. If this stops throwing, the browser
     // build above has stopped proving anything.

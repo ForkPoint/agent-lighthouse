@@ -50,7 +50,12 @@
       "import": "./dist/contracts.mjs",
       "require": "./dist/contracts.js"
     },
-    "./migration-map.json": "./migration-map.json"
+    "./migration-map.json": "./migration-map.json",
+    "./schemas": {
+      "types": "./dist/schemas.d.ts",
+      "import": "./dist/schemas.mjs",
+      "require": "./dist/schemas.js"
+    }
   },
   "imports": {
     "#core/*": {

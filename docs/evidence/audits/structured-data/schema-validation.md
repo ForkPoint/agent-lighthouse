@@ -70,3 +70,15 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - Adoption of the format is at web scale: JSON-LD extracted from 833.8M URLs across 11.6M domains in the October 2024 Common Crawl — https://webdatacommons.org/structureddata/2024-12/stats/stats.html (verified 2026-08-21)
 
 **Counter-evidence:** The spec does **not** require `@type`. JSON-LD 1.1 §9.2 defines a node object purely by the absence of `@value`/`@list`/`@set`; `@type` is optional and a typeless nested map is a legitimate property value that conforming processors read as such. Google supports Microdata on equal terms, where `<div itemscope itemprop="offers">` without `itemtype` is idiomatic and valid. The audit's assertion that blocks missing `@type` are "silently ignored by every schema consumer, including Google, ChatGPT plugins, and RAG pipelines" is therefore false for nested nodes — the graded mechanism holds only for top-level entity blocks. The "RAG pipelines" half of the claim is separately unsupported: in a controlled fetch test a price present only in JSON-LD was retrieved by 0 of 5 systems (ChatGPT, Claude, Gemini, Perplexity, Google AI Mode) — https://www.searchviu.com/en/schema-markup-and-ai-in-2025-what-chatgpt-claude-perplexity-gemini-really-see/ (verified 2026-08-21)
+
+## Limits
+
+### Browser snapshot evidence
+
+The snapshot path reuses this audit on each complete, unredacted, non-loading DOM capture that carries readable text. It reports the original static verdict as an unscored browser finding. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. The source and page URL accompany every finding. Existing implementation limits still apply.
+
+The individual evidence review and limits appear in [Browser-rendered snapshot assessment](../../../architecture/browser-snapshots.md#supported-audit-inventory). The explicit eligibility record lives in `packages/core/src/snapshot-eligibility.ts`. Original crawler grades, tiers, and weights stay unchanged.
+
+## Implementation deviations
+
+Browser snapshots provide serialized markup observations only. The browser assessment uses informative display and weight 0. It does not extend the dossier's crawler scoring claim to browser task success. Truncated, redacted, and still-loading captures produce missing-evidence records rather than verdicts.

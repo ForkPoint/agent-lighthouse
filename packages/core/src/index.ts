@@ -123,3 +123,9 @@ export {
   ACP_LINK_TYPES,
 } from "./audits/agentic-commerce/acp-policy-link-surface";
 export type { AcpLinkType } from "./audits/agentic-commerce/acp-policy-link-surface";
+
+export {
+  SNAPSHOT_AUDITS,
+  SNAPSHOT_EVIDENCE_LIMITS,
+} from "./snapshot-eligibility";
+export type { DomPageContext } from "./check-context";

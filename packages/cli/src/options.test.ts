@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   CATEGORY_IDS,
+  CaptureSource,
+  DocumentState,
   CheckStatus,
   LEGACY_PAGE_TYPES,
   PageType,
@@ -789,5 +791,35 @@ describe("review threshold boundaries", () => {
   it("allows omitted and empty assertion maps", () => {
     expect(parseCategoryAssertions([])).toEqual({});
     expect(parseCategoryAssertions([], { assertCategories: {} })).toEqual({});
+  });
+});
+
+describe("browser snapshot config", () => {
+  it("preserves valid input and reports unsupported versions", () => {
+    const snapshots = {
+      version: 1 as const,
+      pages: [
+        {
+          requestedUrl: "https://shop.test/",
+          capturedUrl: "https://shop.test/",
+          html: "<p>Captured page</p>",
+          capturedAt: "2026-10-13T10:00:00Z",
+          captureSource: CaptureSource.CurrentTab,
+          collector: { name: "fixture", version: "1" },
+          documentState: DocumentState.Complete,
+          truncation: { truncated: false },
+          redaction: { redacted: false, fields: [] },
+        },
+      ],
+    };
+    expect(
+      parseCliOptions([], "https://shop.test/", { snapshots }).snapshots,
+    ).toEqual(snapshots);
+    const invalid = parseCliOptions([], "https://shop.test/", {
+      snapshots: { ...snapshots, version: 2 } as never,
+    });
+    expect(invalid.invalidSnapshots).toBeTruthy();
+    expect(invalid.invalidPageScope).toBeUndefined();
+    expect(invalid.snapshots).toBeUndefined();
   });
 });

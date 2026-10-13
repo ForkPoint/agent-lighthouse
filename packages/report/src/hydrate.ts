@@ -20,6 +20,7 @@ import { generateScanSummary } from "./summary";
  * import) so this lib stays client-safe and pure.
  */
 export interface PersistedScanRow {
+  browserAssessment?: ScanReport["browserAssessment"] | null;
   id: string;
   url: string;
   domain: string;
@@ -107,6 +108,9 @@ export function hydrateReport(row: PersistedScanRow): ScanReport {
   const createdAt =
     row.createdAt instanceof Date ? row.createdAt.toISOString() : row.createdAt;
   const report: ScanReport = {
+    ...(row.browserAssessment != null && {
+      browserAssessment: row.browserAssessment,
+    }),
     scanId: row.id,
     url: row.url,
     domain: row.domain,

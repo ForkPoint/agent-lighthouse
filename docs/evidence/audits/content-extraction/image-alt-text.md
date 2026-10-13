@@ -161,3 +161,15 @@ rests on the accessibility-tree mechanism alone, which carries it.
   resolves no specificity and no media queries. Skipping on its answer would
   also drop images a desktop-viewport agent does see. Exact resolution waits
   for the headless tier.
+
+## Limits
+
+### Browser snapshot evidence
+
+The snapshot path reuses this audit on each complete, unredacted, non-loading DOM capture that carries readable text. It reports the original static verdict as an unscored browser finding. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. The source and page URL accompany every finding. Existing implementation limits still apply.
+
+The individual evidence review and limits appear in [Browser-rendered snapshot assessment](../../../architecture/browser-snapshots.md#supported-audit-inventory). The explicit eligibility record lives in `packages/core/src/snapshot-eligibility.ts`. Original crawler grades, tiers, and weights stay unchanged.
+
+## Implementation deviations
+
+Browser snapshots provide serialized markup observations only. The browser assessment uses informative display and weight 0. It does not extend the dossier's crawler scoring claim to browser task success. Truncated, redacted, and still-loading captures produce missing-evidence records rather than verdicts.

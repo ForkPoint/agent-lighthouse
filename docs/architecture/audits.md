@@ -713,3 +713,7 @@ These hold in `main` today:
   and drifts.
 - **Gate every URL taken from scanned content with `isSafeUrl()`.** Test suites
   `vi.mock` the fetcher and stub it; no test performs real DNS.
+
+## Browser snapshot evidence
+
+The optional snapshot path reuses this audit engine. It keeps crawler evidence and browser DOM evidence separate. See [Browser-rendered snapshot assessment](browser-snapshots.md) for the public contract, the six reviewed audit IDs, evidence gates, coverage, serialization limits, and compatibility proof. Snapshot findings never enter crawler scoring.

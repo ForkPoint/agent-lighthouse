@@ -24,3 +24,5 @@ export type {
   AuditScopeView,
   AssessmentView,
 } from "./page-scope";
+
+export { formatBrowserAssessment } from "./browser-assessment";

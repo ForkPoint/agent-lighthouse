@@ -6,6 +6,9 @@ import type {
 } from "@forkpoint/agent-lighthouse-core";
 import {
   CATEGORY_MASS,
+  CaptureSource,
+  DocumentState,
+  EvidenceSource,
   AttemptOutcome,
   CheckPriority,
   CheckStatus,
@@ -265,5 +268,52 @@ describe("v7 tool declarations", () => {
       },
     ];
     expect(summarise(r).pageScope?.attempts).toEqual(r.pageAttempts);
+  });
+});
+
+describe("browser snapshot tool contract", () => {
+  it("advertises and validates input and preserves the separate output", () => {
+    const snapshots = {
+      version: 1 as const,
+      pages: [
+        {
+          requestedUrl: "https://shop.test/",
+          capturedUrl: "https://shop.test/",
+          html: "<p>Captured page</p>",
+          capturedAt: "2026-10-13T10:00:00Z",
+          captureSource: CaptureSource.CurrentTab,
+          collector: { name: "fixture", version: "1" },
+          documentState: DocumentState.Complete,
+          truncation: { truncated: false },
+          redaction: { redacted: false, fields: [] },
+        },
+      ],
+    };
+    expect(pageOptions({ snapshots }).snapshots).toEqual(snapshots);
+    expect(AUDIT_TOOL.inputSchema.properties.snapshots).toHaveProperty(
+      "properties.version.const",
+      1,
+    );
+    expect(() =>
+      pageOptions({ snapshots: { ...snapshots, version: 2 } }),
+    ).toThrow();
+    const { html: _html, ...capture } = snapshots.pages[0]!;
+    const r = report({
+      browserAssessment: {
+        version: 1,
+        evidenceSource: EvidenceSource.BrowserSnapshot,
+        score: null,
+        unscoredReason: "No browser scoring denominator.",
+        captures: [capture],
+        findings: [],
+        coverage: { eligibleAuditIds: [], eligible: 0, assessed: 0 },
+        missingEvidence: [],
+        notEligible: [],
+        limits: ["No action success proof"],
+      },
+    });
+    const summary = buildAuditSummary(r, buildReportView(r));
+    expect(summary.browserAssessment).toEqual(r.browserAssessment);
+    expect(summary.overallScore).toBe(r.overallScore);
   });
 });

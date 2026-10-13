@@ -1,5 +1,6 @@
 import {
-  PageScopeOptionsSchema,
+  SnapshotScanOptionsSchema,
+  browserSnapshotsJsonSchema,
   PageTypeSchema,
 } from "@forkpoint/agent-lighthouse-core";
 import type { ScanReport } from "@forkpoint/agent-lighthouse-core";
@@ -21,6 +22,7 @@ export const AUDIT_TOOL = {
   inputSchema: {
     type: "object",
     properties: {
+      snapshots: browserSnapshotsJsonSchema(),
       url: {
         type: "string",
         description:
@@ -53,6 +55,7 @@ export const AUDIT_TOOL = {
 type ReportView = ReturnType<typeof buildReportView>;
 
 export interface AuditSummary {
+  browserAssessment?: ScanReport["browserAssessment"];
   url: string;
   /** Null when the scan obtained too little evidence to judge the site. */
   overallScore: number | null;
@@ -96,6 +99,9 @@ export function buildAuditSummary(
   view: ReportView,
 ): AuditSummary {
   return {
+    ...(view.browserAssessment !== undefined && {
+      browserAssessment: view.browserAssessment,
+    }),
     url: report.url,
     overallScore: view.overallScore,
     scoreTier: view.scoreTier,
@@ -143,5 +149,5 @@ export function targetUrl(args: Record<string, unknown> | undefined): string {
 
 /** Use the same validator as the SDK and CLI config. */
 export function pageOptions(args: Record<string, unknown> | undefined) {
-  return PageScopeOptionsSchema.parse(args ?? {});
+  return SnapshotScanOptionsSchema.parse(args ?? {});
 }

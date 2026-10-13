@@ -214,14 +214,23 @@ export function notRendered($: CheerioAPI, el: AnyNode): boolean {
  * still reaches it, and Readability keeps it.
  */
 export function hiddenFromReaders($: CheerioAPI, el: AnyNode): boolean {
-  return anyAncestor(
-    $,
-    el,
-    ($n, tag) =>
-      $n.attr("hidden") !== undefined ||
-      ($n.attr("aria-hidden") ?? "").trim().toLowerCase() === "true" ||
-      unrenderedMarker($n, tag) ||
-      declaredValue($n.attr("style") ?? "", HidingProperty.Visibility)
-        ?.value === "hidden",
+  return anyAncestor($, el, readerHidingMarker);
+}
+
+/**
+ * The `hiddenFromReaders` test for one element alone, ignoring ancestors. A
+ * top-down walk that prunes hidden subtrees needs only this, which keeps it
+ * linear in the node count instead of node count times depth.
+ */
+export function readerHidingMarker(
+  $n: ReturnType<CheerioAPI>,
+  tag: string,
+): boolean {
+  return (
+    $n.attr("hidden") !== undefined ||
+    ($n.attr("aria-hidden") ?? "").trim().toLowerCase() === "true" ||
+    unrenderedMarker($n, tag) ||
+    declaredValue($n.attr("style") ?? "", HidingProperty.Visibility)?.value ===
+      "hidden"
   );
 }

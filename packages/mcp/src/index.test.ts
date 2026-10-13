@@ -1,8 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { ScanReport } from "@forkpoint/agent-lighthouse-core";
 import {
+  CaptureSource,
   CATEGORY_MASS,
   CheckPriority,
+  DocumentState,
+  EvidenceSource,
   CheckStatus,
   PageType,
   ScoreDisplayMode,
@@ -122,6 +125,44 @@ describe("auditWebsite", () => {
       impact: "impact",
       fix: "fix",
     });
+  });
+
+  it("passes snapshots to the scan and returns the browser assessment", async () => {
+    const browserAssessment: NonNullable<ScanReport["browserAssessment"]> = {
+      version: 1,
+      evidenceSource: EvidenceSource.BrowserSnapshot,
+      score: null,
+      unscoredReason: "No browser scoring denominator.",
+      captures: [],
+      findings: [],
+      coverage: { eligibleAuditIds: [], eligible: 0, assessed: 0 },
+      missingEvidence: [],
+      notEligible: [],
+      limits: ["No action success proof"],
+    };
+    runScan.mockResolvedValue(report({ browserAssessment }));
+    const snapshots = {
+      version: 1 as const,
+      pages: [
+        {
+          requestedUrl: "https://shop.test/",
+          capturedUrl: "https://shop.test/",
+          html: "<p>Captured page</p>",
+          capturedAt: "2026-10-13T10:00:00Z",
+          captureSource: CaptureSource.CurrentTab,
+          collector: { name: "fixture", version: "1" },
+          documentState: DocumentState.Complete,
+          truncation: { truncated: false },
+          redaction: { redacted: false, fields: [] },
+        },
+      ],
+    };
+    const result = await auditWebsite("https://shop.test/", { snapshots });
+    expect(runScan).toHaveBeenCalledWith(
+      "https://shop.test/",
+      expect.objectContaining({ snapshots }),
+    );
+    expect(result.browserAssessment).toEqual(browserAssessment);
   });
 
   it("propagates a scan failure rather than returning a partial result", async () => {

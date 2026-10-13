@@ -1,4 +1,7 @@
-import { PageScopeOptionsSchema } from "./schemas";
+import { SnapshotScanOptionsSchema, snapshotUrlKey } from "./schemas";
+import type { BrowserSnapshots } from "./contracts";
+import { parsePageContext } from "./page-context";
+import { assessBrowserSnapshots } from "./browser-snapshots";
 import type { Dispatcher } from "undici";
 import type { PageOverride, ScanReport, ScanConditions } from "./types";
 import {
@@ -18,16 +21,7 @@ import {
   computeOriginCacheKey,
   shouldBypassOriginCache,
 } from "./origin-cache";
-import {
-  parseHtml,
-  extractJsonLd,
-  extractMicrodata,
-  extractRdfa,
-  extractMetaTags,
-  extractHeadLinks,
-  classifyPage,
-  declaredPageClassification,
-} from "./parser";
+import { declaredPageClassification } from "./parser";
 import type { CheckContext, PageContext } from "./check-context";
 import { defaultConfig, filterConfig } from "./audit-config";
 import {
@@ -70,6 +64,8 @@ import {
  * it: callers forward optional CLI flags and parsed MCP arguments as they are.
  */
 export interface ScanOptions {
+  /** Versioned, untrusted DOM snapshots associated with the target or declared pages. */
+  snapshots?: BrowserSnapshots | undefined;
   onEvent?: ((event: ScanEvent) => void) | undefined;
   pages?: PageOverride[] | null | undefined;
   /** Explicitly declared page type for the target URL. */
@@ -222,7 +218,20 @@ export async function runScan(
   url: string,
   options?: ScanOptions,
 ): Promise<ScanReport> {
-  PageScopeOptionsSchema.parse(options ?? {});
+  const input = SnapshotScanOptionsSchema.parse(options ?? {});
+  if (input.snapshots) {
+    const allowed = new Set(
+      [url, ...(input.pages ?? []).map((page) => page.url)].map(snapshotUrlKey),
+    );
+    for (const page of input.snapshots.pages) {
+      if (!allowed.has(snapshotUrlKey(page.requestedUrl)))
+        throw new Error(
+          `Snapshot requestedUrl is not the scan target or a supplied page: ${page.requestedUrl}`,
+        );
+    }
+    // Use validated, copied values throughout the scan; caller mutations cannot change evidence.
+    options = { ...options, snapshots: input.snapshots };
+  }
   const limitMs = options?.timeoutMs ?? SCAN_TIMEOUT_MS;
   // A negative or NaN budget would silently mean "no budget" and then fail
   // the report schema, which wants `limitMs` non-negative. Refuse it here.
@@ -464,34 +473,13 @@ async function scanWithinBudget(
     .map((r, i) => ({ result: r, url: allPageUrls[i]!, index: i }))
     .filter((p) => p.result.status === 200 && p.result.body)
     .map((p) => {
-      const $ = parseHtml(p.result.body);
-      const jsonLd = extractJsonLd($);
-      const structuredData = [
-        ...jsonLd,
-        ...extractMicrodata($),
-        ...extractRdfa($),
-      ];
-      const meta = extractMetaTags($);
       const isFirstPage = p.index === 0;
       const forcedType =
         (isFirstPage && options?.pageType ? options.pageType : undefined) ??
         overrideTypeByKey.get(p.url.replace(/\/$/, ""));
-      const classification = forcedType
-        ? declaredPageClassification(forcedType)
-        : classifyPage(p.url, $, structuredData, meta);
+      const parsed = parsePageContext(p.url, p.result.body, forcedType);
       tracker.unitDone(p.url);
-      return {
-        url: p.url,
-        pageType: classification.type,
-        pageTypeSource: classification.source,
-        classification,
-        fetchResult: p.result,
-        $,
-        jsonLd,
-        structuredData,
-        meta,
-        headLinks: extractHeadLinks($),
-      };
+      return { ...parsed, fetchResult: p.result };
     });
 
   // Run bounded jsdom a11y pass on up to A11Y_MAX_PAGES pages
@@ -877,6 +865,28 @@ async function scanWithinBudget(
     conditions,
   };
 
+  // Snapshot execution has its own contexts, caches, evidence gates and denominator.
+  // It occurs after crawler assembly and cannot alter any crawler report fields.
+  if (options?.snapshots) {
+    report.browserAssessment = await assessBrowserSnapshots(
+      options.snapshots,
+      config,
+      {
+        ...options,
+        pages: [
+          ...(options.pageType
+            ? [{ url: displayUrl, pageType: options.pageType }]
+            : []),
+          ...(options.pages ?? []).filter(
+            (page) =>
+              !options.pageType ||
+              snapshotUrlKey(page.url) !== snapshotUrlKey(displayUrl),
+          ),
+        ],
+      },
+      signal,
+    );
+  }
   report.summary = generateScanSummary(report);
   tracker.unitDone();
   tracker.phaseDone();

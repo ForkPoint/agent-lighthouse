@@ -97,6 +97,7 @@ export interface CoverageView {
 }
 
 export interface ReportView {
+  browserAssessment?: ScanReport["browserAssessment"];
   url: string;
   domain: string;
   /** Null when the scan saw too little to judge the site. Never rendered as 0. */
@@ -315,6 +316,9 @@ export function buildReportView(
   };
 
   return {
+    ...(report.browserAssessment !== undefined && {
+      browserAssessment: report.browserAssessment,
+    }),
     url: report.url,
     domain: report.domain,
     overallScore: report.overallScore,

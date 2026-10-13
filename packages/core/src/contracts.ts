@@ -477,6 +477,8 @@ export interface ScanReport {
     cached: boolean;
   };
   conditions?: ScanConditions;
+  /** Client-supplied DOM findings; never part of crawler scoring. */
+  browserAssessment?: BrowserAssessment;
 }
 
 export interface ScanConditions {
@@ -514,4 +516,86 @@ export interface ScanConditions {
     /** Audits reported `na` because the budget ran out before they started. */
     skippedCount: number;
   };
+}
+
+// ── Browser snapshots ──────────────────────────────────────────
+
+export const CaptureSource = {
+  CurrentTab: "current-tab",
+  FreshBrowser: "fresh-browser",
+} as const;
+export type CaptureSource = (typeof CaptureSource)[keyof typeof CaptureSource];
+
+export const DocumentState = {
+  Loading: "loading",
+  Interactive: "interactive",
+  Complete: "complete",
+} as const;
+export type DocumentState = (typeof DocumentState)[keyof typeof DocumentState];
+
+export const EvidenceSource = {
+  Http: "http",
+  BrowserSnapshot: "browser-snapshot",
+} as const;
+export type EvidenceSource =
+  (typeof EvidenceSource)[keyof typeof EvidenceSource];
+
+export const SNAPSHOT_LIMITS = {
+  maxPages: 6,
+  maxHtmlBytes: 2 * 1024 * 1024,
+  maxTotalHtmlBytes: 6 * 1024 * 1024,
+  maxUrlLength: 2048,
+  /** Chromium's HTML parser stops nesting at 512, so a parsed page cannot be deeper. */
+  maxDomDepth: 512,
+  /**
+   * Sum of element depths. DOM audits climb ancestors per element, so this
+   * bounds their work: 8,000 nested elements (64M steps) took over 100 s.
+   */
+  maxDomAncestorSteps: 1_000_000,
+} as const;
+
+/** All capture metadata is asserted by the client, not verified by the server. */
+export interface SnapshotCapture {
+  requestedUrl: string;
+  capturedUrl: string;
+  capturedAt: string;
+  captureSource: CaptureSource;
+  collector: { name: string; version: string };
+  documentState: DocumentState;
+  truncation: { truncated: boolean; originalBytes?: number | undefined };
+  redaction: { redacted: boolean; fields: string[] };
+}
+export interface BrowserSnapshot extends SnapshotCapture {
+  html: string;
+}
+export interface BrowserSnapshots {
+  version: 1;
+  pages: BrowserSnapshot[];
+}
+export interface BrowserFinding {
+  evidenceSource: typeof EvidenceSource.BrowserSnapshot;
+  pageUrl: string;
+  captureSource: CaptureSource;
+  check: CheckResult;
+}
+export interface BrowserAssessment {
+  version: 1;
+  evidenceSource: typeof EvidenceSource.BrowserSnapshot;
+  score: null;
+  unscoredReason: string;
+  captures: SnapshotCapture[];
+  findings: BrowserFinding[];
+  coverage: {
+    /** Exact audited inventory after category/tier filters. */
+    eligibleAuditIds: string[];
+    /** Eligible audit/page pairs, including captures with missing evidence. */
+    eligible: number;
+    /** Completed audit/page pairs, including legitimate not-applicable results. */
+    assessed: number;
+  };
+  /** Eligible audits without a verdict on one capture, with the reason. */
+  missingEvidence: Array<{ auditId: string; pageUrl: string; reason: string }>;
+  /** Audits snapshots cannot assess, listed once per assessment rather than once per capture. */
+  notEligible: Array<{ auditIds: string[]; reason: string }>;
+  limits: string[];
 }
