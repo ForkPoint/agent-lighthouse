@@ -30,8 +30,8 @@ rename Elixir to an unrelated cosmetics brand.
 Each shop has a source URL, an evidence status, and the last direct fetch result.
 Evidence statuses distinguish reviewed primary pages, captured commerce pages,
 documented services, and indexed-only leads. A successful fetch alone does not
-prove a working checkout. The 687 mapped links returned 483 readable pages;
-204 had access limits, response walls, shells, or fetch failures. A readable
+prove a working checkout. The 687 mapped links returned 480 readable pages;
+207 had access limits, response walls, shells, or fetch failures. A readable
 page can still contain no purchase controls. These are link counts, not brand
 counts. No purchase or account action was tested.
 
@@ -88,6 +88,77 @@ ground truth. A product card in a header does not prove a PDP. Article Open
 Graph metadata alone does not prove an article. Editorial indexes do not count
 as product listings. Unresolved means the bounded crawl found no supported
 page. It does not prove that the site lacks that page type.
+
+## Three examples per shop and page role
+
+```bash
+node --import tsx scripts/discover-shop-page-links.mjs
+node scripts/check-shop-page-links.mjs
+```
+
+`shop-page-links.json` stores up to three distinct PLP, PDP, and Article examples
+for each mapped shop URL. Each example links to captured bytes, provenance,
+its discovery source, and the observed content signals. A complete shop entry
+has nine examples. A partial entry records the missing count for each role.
+The three directory exceptions remain separate; they do not become fake shops.
+
+The pass reuses existing captures, follows page links, and checks sitemap
+locations. Official indexed URLs supply further discovery leads. A URL pattern
+or search title does not establish a page role. The crawler must inspect readable
+content before it adds the URL to a role. It excludes transport walls, account
+routes, test hosts, policy pages, and repeated regional or tracking variants.
+Editorial pages require article signals or a specific editorial route with a
+primary heading and substantial prose. Editorial indexes do not count as PLPs.
+
+The script uses `SHOP_PAGE_BUDGET` to bound further probes per shop. The default
+is 36. The resumable records under `reports/brand-corpus/shop-page-links/` retain
+attempts and sitemap sources. Indexed leads under `shop-page-searches/` retain
+their weaker status until content inspection. Gaps do not prove page absence.
+The validator checks complete shop coverage, unique role URLs, consistent
+completion counts, and the SHA-256 of every exported capture.
+Attached content reviews must match the exported capture, hash, and role.
+
+`SHOP_PAGE_OFFLINE=1` limits inspection to saved captures and forces a zero
+network probe budget. The pass still reads page content before it assigns a
+role; an older classifier result of `general` does not exclude a saved page.
+A later live pass does not reuse an incomplete offline record as a finished
+network search. Complete nine-link sets can reuse their captured evidence.
+Article inspection accepts common content containers such as `maincontent`,
+`main`, `role=main`, and `.blog-post`. Independent reviewed labels bind to a
+capture hash. Nike listing pages can establish a PLP through at least three
+distinct priced cards in their named product grid. An empty commerce category
+does not become an Article because its template declares Article markup.
+Recipe indexes and archive pages do not supply individual Article examples.
+Reviewed exclusions also reject Diesel's editorial index and Dainese's course
+directory. An exclusion uses `Other` in `page-link-reviews.json`; it does not
+fill a requested role. Regional versions of these two templates stay excluded.
+
+The exported directory keeps an `inspectionRecord` link and an observation
+summary for each shop. Full attempts remain in the resumable records under
+`reports/brand-corpus/shop-page-links/`. Crawl delays pace requests to an origin;
+they do not turn an allowed path into a refusal. Validate pacing without network
+requests with `node --import tsx scripts/check-corpus-crawl-pacing.mjs`.
+
+Functional query values remain in the exported URLs. Category selectors such
+as `cgid` and product selectors such as `pid` must match the capture. The pass
+removes known tracking values only. An explicit shop link can establish a
+related editorial host; that host can supply Article pages only.
+When a mapped shop uses another domain, the supplied brand domain can also
+supply Article examples. `mappedBrandEditorialDomain` records this source.
+Its pages do not supply PLP or PDP examples for the separate shop. The `it.com`
+case uses only the exact brand host; arbitrary tenant domains remain excluded.
+
+Browser captures retain their own `captureMode`. A reviewed ASICS listing
+records a classifier mismatch in `page-link-reviews.json`. A browser response
+wall remains a wall. The pass does not bypass rate limits or access controls.
+`scripts/render-shop-page-gaps.mjs` renders readable candidates for missing
+roles in a separate browser session. It stops each domain after an access
+wall or browser error. A 404 or 410 stops that URL, not the whole domain. A
+later successful read of the same URL can resolve a recorded browser error.
+The helper checks robots rules before navigation. It accepts a cross-domain
+redirect only when the shop verification capture documents that host pair.
+Browser discovery also checks cached pages on the brand's owned domains. It
+includes editorial, baby-talk, bb-world, and demonerosso article routes.
 
 `packages/core/test-data/sites/brand-pages.json` is the compact reusable URL
 index. The JSON index supports review outside the repository. The full raw

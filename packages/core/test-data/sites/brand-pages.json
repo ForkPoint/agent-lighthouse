@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-13T21:40:36.893Z",
+  "generatedAt": "2026-10-14T06:45:44.115Z",
   "summary": {
     "inputRows": 18030,
     "uniqueDomains": 684,
@@ -15,16 +15,17 @@
         "online-shop-closing": 1
       },
       "shopEvidence": {
-        "official-indexed-shop": 359,
+        "official-indexed-shop": 350,
         "captured-commerce-evidence": 270,
-        "primary-source-reviewed": 54,
+        "primary-source-reviewed": 59,
+        "official-shop-source-reviewed": 4,
         "documented-shop-access-unconfirmed": 1,
         "documented-commerce-service": 3
       },
       "verification": {
-        "accessible-page": 483,
-        "pagesWithCommerceText": 296,
-        "access-limited-or-failed": 204
+        "accessible-page": 480,
+        "pagesWithCommerceText": 292,
+        "access-limited-or-failed": 207
       }
     },
     "pageRoles": {
@@ -678,15 +679,21 @@
       },
       "shops": [
         {
-          "url": "https://dev.acmetools.com/",
-          "sourceUrl": "https://dev.acmetools.com/",
-          "status": "official-indexed-shop",
-          "relation": "same-domain-indexed",
-          "checkedAt": "2026-10-13T21:18:29.797Z",
-          "sourceTitle": "Acme Tools - Best Online Tool Store - FREE Shipping Orders $199+",
+          "url": "https://www.acmetools.com/",
+          "sourceUrl": "https://www.acmetools.com/shop-stools/",
+          "status": "official-shop-source-reviewed",
+          "relation": "same-domain-primary-source",
+          "checkedAt": "2026-10-14T06:32:49.529Z",
           "verification": {
-            "skipped": "robots-refused"
-          }
+            "url": "https://www.acmetools.com/",
+            "finalUrl": "https://www.acmetools.com/",
+            "status": 403,
+            "capturedAt": "2026-10-14T06:32:13.661Z",
+            "kind": "wall",
+            "fixture": "reports/brand-corpus/captures/acmetools.com/17484c31a65c40ae.html.gz",
+            "provenance": "reports/brand-corpus/captures/acmetools.com/17484c31a65c40ae.json"
+          },
+          "note": "Primary public shop. Prior indexed lead used a development or test host."
         }
       ],
       "machineShopCandidates": [],
@@ -10475,19 +10482,14 @@
       },
       "shops": [
         {
-          "url": "https://stores.bata.com/bata-shoes-sandals-store-in-gmada-aerocity-rupnagar",
-          "sourceUrl": "https://stores.bata.com/bata-shoes-sandals-store-in-gmada-aerocity-rupnagar",
-          "status": "official-indexed-shop",
-          "relation": "same-domain-indexed",
-          "checkedAt": "2026-10-13T21:19:09.017Z",
-          "sourceTitle": "Buy Shoes, Footwear & Accessories in Gmada Aerocity, Sahibzada Ajit Singh Nagar | Bata",
+          "url": "https://www.bata.com/",
+          "sourceUrl": "https://www.bata.com/",
+          "status": "primary-source-reviewed",
+          "relation": "same-domain-primary-source",
+          "checkedAt": "2026-10-14T06:35:04.106Z",
           "verification": {
-            "finalUrl": "https://stores.bata.com/bata-shoes-sandals-store-in-gmada-aerocity-rupnagar",
-            "status": 403,
-            "capturedAt": "2026-10-13T21:35:24.849Z",
-            "kind": "wall",
-            "fixture": "reports/brand-corpus/captures/bata.com/9a11bbdf99178783.html.gz",
-            "provenance": "reports/brand-corpus/captures/bata.com/9a11bbdf99178783.json"
+            "url": "https://www.bata.com/",
+            "skipped": "robots-unavailable: Stream closed with error code NGHTTP2_INTERNAL_ERROR (ERR_HTTP2_STREAM_ERROR)"
           }
         }
       ],
@@ -52857,22 +52859,16 @@
       },
       "shops": [
         {
-          "url": "https://eshop-ccuat.hkcsl.com/en_HK/UAT_IT",
-          "sourceUrl": "https://eshop-ccuat.hkcsl.com/en_HK/UAT_IT",
-          "status": "official-indexed-shop",
-          "relation": "same-domain-indexed",
-          "checkedAt": "2026-10-13T21:22:01.226Z",
-          "sourceTitle": "UAT_IT| csl online shop",
+          "url": "https://eshop.hkcsl.com/en_HK/home",
+          "sourceUrl": "https://www.hkcsl.com/en/",
+          "status": "official-shop-source-reviewed",
+          "relation": "same-domain-primary-source",
+          "checkedAt": "2026-10-14T06:32:49.529Z",
           "verification": {
-            "finalUrl": "https://eshop-ccuat.hkcsl.com/en_HK/UAT_IT",
-            "status": 200,
-            "capturedAt": "2026-10-13T21:35:48.639Z",
-            "kind": "page",
-            "title": "UAT_IT| csl online shop",
-            "fixture": "reports/brand-corpus/captures/hkcsl.com/9d53a1e486e562f5.html.gz",
-            "provenance": "reports/brand-corpus/captures/hkcsl.com/9d53a1e486e562f5.json",
-            "commerceSignals": []
-          }
+            "url": "https://eshop.hkcsl.com/en_HK/home",
+            "skipped": "robots-refused"
+          },
+          "note": "Primary public shop. Prior indexed lead used a development or test host."
         }
       ],
       "machineShopCandidates": [
@@ -62315,23 +62311,30 @@
       },
       "shops": [
         {
-          "url": "https://www.kenwoodworld.com/de-at/online-shop-informationen",
-          "sourceUrl": "https://www.kenwoodworld.com/de-at/online-shop-informationen",
-          "status": "official-indexed-shop",
-          "relation": "same-domain-indexed",
-          "checkedAt": "2026-10-13T21:22:44.366Z",
-          "sourceTitle": "Online-Shop Informationen | Kenwood AT",
+          "url": "https://www.kenwoodworld.com/de-at",
+          "sourceUrl": "https://www.kenwoodworld.com/de-at",
+          "status": "primary-source-reviewed",
+          "relation": "same-domain-primary-source",
+          "checkedAt": "2026-10-14T06:35:04.106Z",
           "verification": {
-            "finalUrl": "https://www.kenwoodworld.com/de-at/online-shop-informationen",
+            "url": "https://www.kenwoodworld.com/de-at",
+            "finalUrl": "https://www.kenwoodworld.com/de-at",
             "status": 200,
-            "capturedAt": "2026-10-13T21:35:54.413Z",
+            "capturedAt": "2026-10-14T06:33:49.714Z",
             "kind": "page",
-            "title": "Online-Shop Informationen | Kenwood AT",
-            "fixture": "reports/brand-corpus/captures/kenwoodworld.com/5e85b00af5115647.html.gz",
-            "provenance": "reports/brand-corpus/captures/kenwoodworld.com/5e85b00af5115647.json",
-            "commerceSignals": [
-              "In den Warenkorb"
-            ]
+            "fixture": "reports/brand-corpus/captures/kenwoodworld.com/54eef64b4bf0e482.html.gz",
+            "provenance": "reports/brand-corpus/captures/kenwoodworld.com/54eef64b4bf0e482.json",
+            "classification": {
+              "type": "homepage",
+              "source": "detected",
+              "confidence": "strong",
+              "signals": [
+                "locale-root"
+              ]
+            },
+            "pageType": "Homepage",
+            "title": "Kenwood AT | Startseite",
+            "h1": ""
           }
         }
       ],
@@ -65106,24 +65109,16 @@
       },
       "shops": [
         {
-          "url": "https://staging-deleg-sfcc.lacoste.com/id/en/online-exclusive/",
-          "sourceUrl": "https://staging-deleg-sfcc.lacoste.com/id/en/online-exclusive/",
-          "status": "official-indexed-shop",
-          "relation": "same-domain-indexed",
-          "checkedAt": "2026-10-13T21:22:53.090Z",
-          "sourceTitle": "Buy Original Online Exclusive Collection | Lacoste Indonesia | Salesforce Commerce Cloud | 6.0.0",
+          "url": "https://www.lacoste.com/id/en/",
+          "sourceUrl": "https://www.lacoste.com/id/en/lacoste-faq.html",
+          "status": "official-shop-source-reviewed",
+          "relation": "same-domain-primary-source",
+          "checkedAt": "2026-10-14T06:32:49.529Z",
           "verification": {
-            "finalUrl": "https://staging-deleg-sfcc.lacoste.com/id/en/online-exclusive/",
-            "status": 200,
-            "capturedAt": "2026-10-13T21:35:56.197Z",
-            "kind": "page",
-            "title": "Buy Original Online Exclusive Collection | Lacoste Indonesia | Salesforce Commerce Cloud | 6.0.0",
-            "fixture": "reports/brand-corpus/captures/lacoste.com/8374a0920a75d568.html.gz",
-            "provenance": "reports/brand-corpus/captures/lacoste.com/8374a0920a75d568.json",
-            "commerceSignals": [
-              "shopping bag"
-            ]
-          }
+            "url": "https://www.lacoste.com/id/en/",
+            "skipped": "robots-refused"
+          },
+          "note": "Primary public shop. Prior indexed lead used a development or test host."
         }
       ],
       "machineShopCandidates": [],
@@ -70249,21 +70244,19 @@
       },
       "shops": [
         {
-          "url": "https://stores.lolaliza.com/en_BE/lolaliza-wijnegem-shopping-center",
-          "sourceUrl": "https://stores.lolaliza.com/en_BE/lolaliza-wijnegem-shopping-center",
-          "status": "official-indexed-shop",
-          "relation": "same-domain-indexed",
-          "checkedAt": "2026-10-13T21:23:11.171Z",
-          "sourceTitle": "LolaLiza Wijnegem (Shopping)",
+          "url": "https://www.lolaliza.com/",
+          "sourceUrl": "https://www.lolaliza.com/",
+          "status": "primary-source-reviewed",
+          "relation": "same-domain-primary-source",
+          "checkedAt": "2026-10-14T06:35:04.106Z",
           "verification": {
-            "finalUrl": "https://stores.lolaliza.com/en_BE/lolaliza-wijnegem-shopping-center",
+            "url": "https://www.lolaliza.com/",
+            "finalUrl": "https://www.lolaliza.com/",
             "status": 200,
-            "capturedAt": "2026-10-13T21:35:59.044Z",
-            "kind": "page",
-            "title": "LolaLiza Wijnegem (Shopping)",
-            "fixture": "reports/brand-corpus/captures/lolaliza.com/ffb5af760db37b33.html.gz",
-            "provenance": "reports/brand-corpus/captures/lolaliza.com/ffb5af760db37b33.json",
-            "commerceSignals": []
+            "capturedAt": "2026-10-14T06:33:49.075Z",
+            "kind": "shell",
+            "fixture": "reports/brand-corpus/captures/lolaliza.com/81a47492c583915d.html.gz",
+            "provenance": "reports/brand-corpus/captures/lolaliza.com/81a47492c583915d.json"
           }
         }
       ],
@@ -78646,15 +78639,29 @@
       },
       "shops": [
         {
-          "url": "https://stg.mo-online.com/pt/home/",
-          "sourceUrl": "https://stg.mo-online.com/pt/home/",
-          "status": "official-indexed-shop",
-          "relation": "same-domain-indexed",
-          "checkedAt": "2026-10-13T21:23:42.106Z",
-          "sourceTitle": "MO Online | Roupa Mulher, Homem, Criança e Bebé",
+          "url": "https://mo-online.com/pt/home/",
+          "sourceUrl": "https://mo-online.com/pt/politicas/politica-de-privacidade/",
+          "status": "official-shop-source-reviewed",
+          "relation": "same-domain-primary-source",
+          "checkedAt": "2026-10-14T06:32:49.529Z",
           "verification": {
-            "skipped": "robots-refused"
-          }
+            "url": "https://mo-online.com/pt/home/",
+            "finalUrl": "https://mo-online.com/pt/home/",
+            "status": 200,
+            "capturedAt": "2026-10-14T06:32:13.560Z",
+            "kind": "page",
+            "fixture": "reports/brand-corpus/captures/mo-online.com/526121630ed500c2.html.gz",
+            "provenance": "reports/brand-corpus/captures/mo-online.com/526121630ed500c2.json",
+            "classification": {
+              "type": "general",
+              "source": "detected",
+              "confidence": "unknown",
+              "signals": []
+            },
+            "title": "MO Online | Roupa Mulher, Homem, Criança e Bebé",
+            "h1": "Exclusivo Online"
+          },
+          "note": "Primary public shop. Prior indexed lead used a development or test host."
         }
       ],
       "machineShopCandidates": [],
@@ -85915,23 +85922,30 @@
       },
       "shops": [
         {
-          "url": "https://stores.patagonia.com/shop/11840/dicks-sporting-goods",
-          "sourceUrl": "https://stores.patagonia.com/shop/11840/dicks-sporting-goods",
-          "status": "official-indexed-shop",
-          "relation": "same-domain-indexed",
-          "checkedAt": "2026-10-13T21:24:16.507Z",
-          "sourceTitle": "DICK'S Sporting Goods 26330",
+          "url": "https://www.patagonia.com/",
+          "sourceUrl": "https://www.patagonia.com/",
+          "status": "primary-source-reviewed",
+          "relation": "same-domain-primary-source",
+          "checkedAt": "2026-10-14T06:35:04.106Z",
           "verification": {
-            "finalUrl": "https://stores.patagonia.com/shop/11840/dicks-sporting-goods",
+            "url": "https://www.patagonia.com/",
+            "finalUrl": "https://www.patagonia.com/",
             "status": 200,
-            "capturedAt": "2026-10-13T21:36:08.102Z",
+            "capturedAt": "2026-10-14T06:33:49.894Z",
             "kind": "page",
-            "title": "DICK'S Sporting Goods 26330",
-            "fixture": "reports/brand-corpus/captures/patagonia.com/3963b3ab05cb228f.html.gz",
-            "provenance": "reports/brand-corpus/captures/patagonia.com/3963b3ab05cb228f.json",
-            "commerceSignals": [
-              "Checkout"
-            ]
+            "fixture": "reports/brand-corpus/captures/patagonia.com/6bf061565a7caea9.html.gz",
+            "provenance": "reports/brand-corpus/captures/patagonia.com/6bf061565a7caea9.json",
+            "classification": {
+              "type": "homepage",
+              "source": "detected",
+              "confidence": "strong",
+              "signals": [
+                "root-path"
+              ]
+            },
+            "pageType": "Homepage",
+            "title": "Hang Tight! Routing to checkout...",
+            "h1": ""
           }
         }
       ],
@@ -95856,23 +95870,14 @@
       },
       "shops": [
         {
-          "url": "https://stores.saloncentric.com/ca/riverside/6030",
-          "sourceUrl": "https://stores.saloncentric.com/ca/riverside/6030",
-          "status": "official-indexed-shop",
-          "relation": "same-domain-indexed",
-          "checkedAt": "2026-10-13T21:24:58.722Z",
-          "sourceTitle": "SalonCentric | Beauty Supply Store in Riverside, CA",
+          "url": "https://www.saloncentric.com/",
+          "sourceUrl": "https://www.saloncentric.com/",
+          "status": "primary-source-reviewed",
+          "relation": "same-domain-primary-source",
+          "checkedAt": "2026-10-14T06:35:04.106Z",
           "verification": {
-            "finalUrl": "https://stores.saloncentric.com/ca/riverside/6030",
-            "status": 200,
-            "capturedAt": "2026-10-13T21:36:13.192Z",
-            "kind": "page",
-            "title": "SalonCentric | Beauty Supply Store in Riverside, CA",
-            "fixture": "reports/brand-corpus/captures/saloncentric.com/0f604f79a29b8956.html.gz",
-            "provenance": "reports/brand-corpus/captures/saloncentric.com/0f604f79a29b8956.json",
-            "commerceSignals": [
-              "checkout"
-            ]
+            "url": "https://www.saloncentric.com/",
+            "skipped": "crawl-delay"
           }
         }
       ],

@@ -25,6 +25,8 @@ const brands = JSON.parse(
   fs.readFileSync("packages/core/test-data/sites/brands.json", "utf8"),
 ).brands;
 const fetcher = createFetcher({ maxConcurrent: 12 });
+const requestTimes = new Map();
+const pacing = new Map();
 const token = SCANNER_USER_AGENT.split("/")[0].toLowerCase();
 const robots = new Map();
 const pageKinds = {
@@ -43,29 +45,49 @@ const patterns = {
 async function permitted(url) {
   const u = new URL(url);
   if (!robots.has(u.origin)) {
-    const r = await fetcher.fetch({
-      url: `${u.origin}/robots.txt`,
-      timeout: 10000,
-    });
-    robots.set(
-      u.origin,
-      r.status === 200
-        ? { groups: parseRobots(r.body) }
-        : {
-            groups: [],
-            refused: [401, 403, 429].includes(r.status),
-            error: r.error,
-          },
-    );
+    const loading = fetcher
+      .fetch({
+        url: `${u.origin}/robots.txt`,
+        timeout: 10000,
+      })
+      .then((r) => {
+        requestTimes.set(u.origin, Date.now());
+        return r.status === 200
+          ? { groups: parseRobots(r.body) }
+          : {
+              groups: [],
+              refused: [401, 403, 429].includes(r.status),
+              error: r.error,
+            };
+      });
+    robots.set(u.origin, loading);
   }
-  const r = robots.get(u.origin);
+  const r = await robots.get(u.origin);
   if (r.refused) return "robots-refused";
   if (r.error) return `robots-unavailable: ${r.error}`;
-  if (groupsForBot(r.groups, token).some((g) => (g.crawlDelay ?? 0) > 0))
-    return "crawl-delay";
-  return isPathAllowed(r.groups, token, u.pathname + u.search)
-    ? undefined
-    : "robots-disallow";
+  if (!isPathAllowed(r.groups, token, u.pathname + u.search))
+    return "robots-disallow";
+  // A crawl delay permits a path with a wait. It does not forbid the site.
+  const delay =
+    Math.max(
+      0,
+      ...groupsForBot(r.groups, token).map((g) => g.crawlDelay ?? 0),
+    ) * 1000;
+  if (!Number.isFinite(delay)) return "crawl-delay-unbounded";
+  if (delay > 0) {
+    const turn = (pacing.get(u.origin) ?? Promise.resolve()).then(async () => {
+      const ready = (requestTimes.get(u.origin) ?? 0) + delay;
+      while (Date.now() < ready)
+        await new Promise((resolve) =>
+          setTimeout(resolve, Math.min(60000, ready - Date.now())),
+        );
+      requestTimes.set(u.origin, Date.now());
+      return undefined;
+    });
+    pacing.set(u.origin, turn);
+    await turn;
+  }
+  return undefined;
 }
 async function capture(url, domain) {
   const skipped = await permitted(url);
