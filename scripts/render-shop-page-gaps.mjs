@@ -21,7 +21,9 @@ function identity(url) {
       .replace(/^\/(?:[a-z]{2}(?:[-_][a-z]{2})?)(?=\/|$)/, "") +
     [...parsed.searchParams]
       .filter(([key]) =>
-        /^(id|pid|sku|articleid|article_id|cid|cgid|aid|q)$/i.test(key),
+        /^(id|pid|sku|articleid|article_id|storyid|post|cid|cgid|aid|q)$/i.test(
+          key,
+        ),
       )
       .map(([key, value]) => `${key}=${value}`)
       .join("&")

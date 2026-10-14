@@ -70,7 +70,7 @@ for (const shop of data.shops) {
         throw new Error(`Exported URL does not match its capture: ${page.url}`);
       for (const [key, value] of capturedUrl.searchParams) {
         if (
-          /^(id|pid|productid|product_id|sku|item_id|articleid|article_id|cid|cat|category|categoryid|cgid|collection|q)$/i.test(
+          /^(id|pid|productid|product_id|sku|item_id|articleid|article_id|storyid|post|cid|cat|category|categoryid|cgid|collection|q)$/i.test(
             key,
           ) &&
           url.searchParams.get(key) !== value

@@ -145,6 +145,30 @@ if (fs.existsSync(root)) {
     for (const page of result.attempts ?? []) remember(page);
   }
 }
+// Manual reviews must remain discoverable even when no earlier run selected them.
+for (const review of reviewed.values()) {
+  const provenance = review.fixture.replace(/\.html\.gz$/, ".json");
+  if (!fs.existsSync(review.fixture) || !fs.existsSync(provenance)) continue;
+  const metadata = JSON.parse(fs.readFileSync(provenance, "utf8"));
+  const capturedHash = createHash("sha256")
+    .update(gunzipSync(fs.readFileSync(review.fixture)))
+    .digest("hex");
+  if (capturedHash !== review.sha256) continue;
+  if (
+    metadata.status !== 200 ||
+    metadata.kind !== "page" ||
+    metadata.sha256 !== review.sha256
+  )
+    continue;
+  remember({
+    url: metadata.requestedUrl ?? metadata.url,
+    finalUrl: metadata.url,
+    status: metadata.status,
+    kind: metadata.kind,
+    fixture: review.fixture,
+    provenance,
+  });
+}
 const browserRoot = "reports/brand-corpus/browser-captures";
 const browserCheckedAt = new Map();
 const browserObservations = new Map();
@@ -495,7 +519,7 @@ async function discover(brand, shop) {
   if (fs.existsSync(filename)) {
     const previous = JSON.parse(fs.readFileSync(filename, "utf8"));
     if (
-      previous.discoveryVersion === 12 &&
+      previous.discoveryVersion === 26 &&
       (!needsMappedBrandEditorial ||
         previous.mappedBrandEditorialDomain === brand.domain) &&
       hasCurrentContentReviews(previous) &&
@@ -609,7 +633,7 @@ async function discover(brand, shop) {
             .replace(/^\/(?:[a-z]{2}(?:[-_][a-z]{2})?)(?=\/|$)/, "")) +
         [...new URL(canonical).searchParams]
           .filter(([key]) =>
-            /^(id|pid|productid|product_id|sku|item_id|articleid|article_id|cid|cat|category|categoryid|cgid|collection|q)$/i.test(
+            /^(id|pid|productid|product_id|sku|item_id|articleid|article_id|storyid|post|cid|cat|category|categoryid|cgid|collection|q)$/i.test(
               key,
             ),
           )
@@ -806,7 +830,7 @@ async function discover(brand, shop) {
       break;
   }
   const result = {
-    discoveryVersion: 12,
+    discoveryVersion: 26,
     contentReviewRevision: reviewedRevisions.get(brand.domain),
     mappedBrandEditorialDomain: needsMappedBrandEditorial
       ? brand.domain
