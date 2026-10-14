@@ -53,6 +53,8 @@ export interface CheckContext {
   pages: PageContext[];
   /** Includes failed fetches omitted from parsed pages. */
   pageAttempts?: PageAttempt[];
+  /** Successful HTTP responses whose DOM exceeded the analysis work limits. */
+  pageAnalysisErrors?: Record<string, string>;
   domain: string;
   baseUrl: string;
   /**

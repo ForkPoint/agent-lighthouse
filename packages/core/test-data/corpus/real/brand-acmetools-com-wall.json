@@ -1,0 +1,33 @@
+{
+  "url": "https://www.acmetools.com/",
+  "requestedUrl": "https://acmetools.com/",
+  "capturedAt": "2026-10-13T20:54:25.618Z",
+  "sha256": "091d48391e287dc70a34f3d649ce05d472a58f634a26bbffdb1ca0294c08cea3",
+  "status": 403,
+  "kind": "wall",
+  "headers": {
+    "date": "Tue, 13 Oct 2026 20:54:25 GMT",
+    "content-type": "text/html; charset=UTF-8",
+    "cache-control": "private, max-age=0, no-store, no-cache, must-revalidate, post-check=0, pre-check=0",
+    "expires": "Thu, 01 Jan 1970 00:00:01 GMT",
+    "referrer-policy": "same-origin",
+    "x-frame-options": "SAMEORIGIN",
+    "strict-transport-security": "max-age=15552000; includeSubDomains; preload",
+    "expect-ct": "max-age=86400, enforce",
+    "x-content-type-options": "nosniff",
+    "x-xss-protection": "1; mode=block",
+    "server": "cloudflare",
+    "cf-ray": "a4a13d4a6c5a263a-SOF"
+  },
+  "contentType": "text/html; charset=UTF-8",
+  "ttfbMs": 503,
+  "totalMs": 503,
+  "contentLength": 4551,
+  "redirectChain": [
+    {
+      "status": 301,
+      "from": "https://acmetools.com/",
+      "to": "https://www.acmetools.com/"
+    }
+  ]
+}

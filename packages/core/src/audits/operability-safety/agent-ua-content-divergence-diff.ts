@@ -9,7 +9,8 @@ import {
   type UaProbe,
 } from "#core/gatherers/ua-parity";
 import { INSTRUCTION_LEXICON } from "./invisible-instruction-scan";
-import { parseHtml, extractJsonLd, getMainContentText } from "#core/parser";
+import { extractJsonLd, getMainContentText } from "#core/parser";
+import { parseBoundedHtml } from "#core/dom-work";
 import {
   AuditTier,
   CheckPriority,
@@ -80,7 +81,7 @@ function stable(value: unknown): string {
 
 /** Every JSON-LD block in a document, order-independent and digit-blind. */
 function jsonLdFingerprint(body: string): string {
-  return extractJsonLd(parseHtml(body)).map(stable).sort().join("|");
+  return extractJsonLd(parseBoundedHtml(body)).map(stable).sort().join("|");
 }
 
 /** Words present in one variant and missing from the other, longest first. */
@@ -189,7 +190,7 @@ Disallow: /members/`,
         controlSimilarity.set(url, 1);
         continue;
       }
-      const controlText = getMainContentText(parseHtml(control.body));
+      const controlText = getMainContentText(parseBoundedHtml(control.body));
       controlSimilarity.set(url, jaccard(words(baseline), words(controlText)));
     }
 

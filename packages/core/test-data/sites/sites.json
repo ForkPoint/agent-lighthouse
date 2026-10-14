@@ -1,2510 +1,4108 @@
 [
   {
-    "domain": "aaplimg.com",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "abc.net.au",
-    "source": "tranco",
-    "category": "news",
-    "rankBucket": 0
-  },
-  {
-    "domain": "accor.com",
-    "source": "tranco",
-    "category": "travel",
-    "rankBucket": 0
-  },
-  {
-    "domain": "acehotel.com",
-    "source": "tranco",
-    "category": "local",
-    "rankBucket": 0
-  },
-  {
-    "domain": "admin.ch",
-    "source": "tranco",
-    "category": "government",
-    "rankBucket": 0
-  },
-  {
-    "domain": "agoda.com",
-    "source": "tranco",
-    "category": "travel",
-    "rankBucket": 0
-  },
-  {
-    "domain": "ai-sdk.vercel.app",
+    "domain": "1800lighting.com",
     "source": "seed",
-    "category": "tenant",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "airbnb.com",
-    "source": "tranco",
-    "category": "marketplace",
-    "rankBucket": 0,
-    "tier": "smoke"
-  },
-  {
-    "domain": "airtable.com",
-    "source": "tranco",
-    "category": "saas",
-    "rankBucket": 0,
-    "tier": "smoke"
-  },
-  {
-    "domain": "akadns.net",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "akamai.net",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "akamaiedge.net",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "alibaba.com",
-    "source": "tranco",
-    "category": "marketplace",
-    "rankBucket": 0
-  },
-  {
-    "domain": "aliexpress.com",
-    "source": "tranco",
-    "category": "marketplace",
-    "rankBucket": 0
-  },
-  {
-    "domain": "aljazeera.com",
-    "source": "tranco",
-    "category": "news",
-    "rankBucket": 0
-  },
-  {
-    "domain": "allbirds.com",
-    "source": "tranco",
-    "category": "storefront",
-    "rankBucket": 0,
-    "tier": "smoke"
-  },
-  {
-    "domain": "allbirds.myshopify.com",
+    "domain": "1800petmeds.com",
     "source": "seed",
-    "category": "tenant",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "allegro.pl",
-    "source": "tranco",
-    "category": "marketplace",
-    "rankBucket": 0
-  },
-  {
-    "domain": "aloyoga.com",
-    "source": "tranco",
-    "category": "storefront",
-    "rankBucket": 0
-  },
-  {
-    "domain": "amazon.com",
-    "source": "tranco",
-    "category": "marketplace",
-    "rankBucket": 0
-  },
-  {
-    "domain": "amazonaws.com",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "angular.dev",
-    "source": "tranco",
-    "category": "docs",
-    "rankBucket": 0
-  },
-  {
-    "domain": "answer.ai",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "apnews.com",
-    "source": "tranco",
-    "category": "news",
-    "rankBucket": 0
-  },
-  {
-    "domain": "apple-dns.net",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "apple.com",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "arstechnica.com",
-    "source": "tranco",
-    "category": "news",
-    "rankBucket": 0
-  },
-  {
-    "domain": "asahi.com",
-    "source": "tranco",
-    "category": "news",
-    "rankBucket": 0
-  },
-  {
-    "domain": "asana.com",
-    "source": "tranco",
-    "category": "saas",
-    "rankBucket": 0,
-    "tier": "smoke"
-  },
-  {
-    "domain": "askubuntu.com",
-    "source": "tranco",
-    "category": "forum",
-    "rankBucket": 0
-  },
-  {
-    "domain": "astro-docs.netlify.app",
+    "domain": "aarons.com",
     "source": "seed",
-    "category": "tenant",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "atlassian.com",
-    "source": "tranco",
-    "category": "saas",
-    "rankBucket": 0
-  },
-  {
-    "domain": "australia.gov.au",
-    "source": "tranco",
-    "category": "government",
-    "rankBucket": 0,
-    "tier": "smoke"
-  },
-  {
-    "domain": "awaytravel.com",
-    "source": "tranco",
-    "category": "storefront",
-    "rankBucket": 0
-  },
-  {
-    "domain": "azure.com",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "bahn.de",
-    "source": "tranco",
-    "category": "travel",
-    "rankBucket": 0,
-    "tier": "smoke"
-  },
-  {
-    "domain": "bankofamerica.com",
-    "source": "tranco",
-    "category": "bank",
-    "rankBucket": 0,
-    "tier": "smoke"
-  },
-  {
-    "domain": "barclays.co.uk",
-    "source": "tranco",
-    "category": "bank",
-    "rankBucket": 0,
-    "tier": "smoke"
-  },
-  {
-    "domain": "barrys.com",
-    "source": "tranco",
-    "category": "local",
-    "rankBucket": 0
-  },
-  {
-    "domain": "bbc.co.uk",
-    "source": "tranco",
-    "category": "news",
-    "rankBucket": 0
-  },
-  {
-    "domain": "beardbrand.com",
-    "source": "tranco",
-    "category": "storefront",
-    "rankBucket": 0
-  },
-  {
-    "domain": "belgium.be",
-    "source": "tranco",
-    "category": "government",
-    "rankBucket": 0
-  },
-  {
-    "domain": "bing.com",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "bloomberg.com",
-    "source": "tranco",
-    "category": "news",
-    "rankBucket": 0
-  },
-  {
-    "domain": "blueland.com",
-    "source": "tranco",
-    "category": "storefront",
-    "rankBucket": 0
-  },
-  {
-    "domain": "bnpparibas.com",
-    "source": "tranco",
-    "category": "bank",
-    "rankBucket": 0
-  },
-  {
-    "domain": "bol.com",
-    "source": "tranco",
-    "category": "marketplace",
-    "rankBucket": 0
-  },
-  {
-    "domain": "bombas.com",
-    "source": "tranco",
-    "category": "storefront",
-    "rankBucket": 0
-  },
-  {
-    "domain": "bondvet.com",
-    "source": "tranco",
-    "category": "local",
-    "rankBucket": 0
-  },
-  {
-    "domain": "booking.com",
-    "source": "tranco",
-    "category": "marketplace",
-    "rankBucket": 0
-  },
-  {
-    "domain": "britishairways.com",
-    "source": "tranco",
-    "category": "travel",
-    "rankBucket": 0
-  },
-  {
-    "domain": "brooklinen.com",
-    "source": "tranco",
-    "category": "storefront",
-    "rankBucket": 0,
-    "tier": "smoke"
-  },
-  {
-    "domain": "bruvi.com",
+    "domain": "abacus.coop",
     "source": "seed",
-    "category": "storefront",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "bun.sh",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0,
-    "tier": "smoke"
-  },
-  {
-    "domain": "bund.de",
-    "source": "tranco",
-    "category": "government",
-    "rankBucket": 0
-  },
-  {
-    "domain": "cal.com",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "calendly.com",
-    "source": "tranco",
-    "category": "saas",
-    "rankBucket": 0
-  },
-  {
-    "domain": "canada.ca",
-    "source": "tranco",
-    "category": "government",
-    "rankBucket": 0
-  },
-  {
-    "domain": "capitalone.com",
-    "source": "tranco",
-    "category": "bank",
-    "rankBucket": 0
-  },
-  {
-    "domain": "casper.com",
-    "source": "tranco",
-    "category": "storefront",
-    "rankBucket": 0
-  },
-  {
-    "domain": "cdc.gov",
-    "source": "tranco",
-    "category": "government",
-    "rankBucket": 0,
-    "tier": "smoke"
-  },
-  {
-    "domain": "cedars-sinai.org",
-    "source": "tranco",
-    "category": "health",
-    "rankBucket": 0
-  },
-  {
-    "domain": "chase.com",
-    "source": "tranco",
-    "category": "bank",
-    "rankBucket": 0
-  },
-  {
-    "domain": "chateaumarmont.com",
-    "source": "tranco",
-    "category": "local",
-    "rankBucket": 0
-  },
-  {
-    "domain": "chipotle.com",
-    "source": "tranco",
-    "category": "local",
-    "rankBucket": 0,
-    "tier": "smoke"
-  },
-  {
-    "domain": "chubbiesshorts.com",
-    "source": "tranco",
-    "category": "storefront",
-    "rankBucket": 0
-  },
-  {
-    "domain": "citi.com",
-    "source": "tranco",
-    "category": "bank",
-    "rankBucket": 0
-  },
-  {
-    "domain": "clerk.com",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "clevelandclinic.org",
-    "source": "tranco",
-    "category": "health",
-    "rankBucket": 0
-  },
-  {
-    "domain": "clickup.com",
-    "source": "tranco",
-    "category": "saas",
-    "rankBucket": 0
-  },
-  {
-    "domain": "cloud.microsoft",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "cloudflare.com",
-    "source": "tranco",
-    "category": "saas",
-    "rankBucket": 0
-  },
-  {
-    "domain": "cloudfront.net",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "cnn.com",
-    "source": "tranco",
-    "category": "news",
-    "rankBucket": 0
-  },
-  {
-    "domain": "cohere.com",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "colourpop.com",
-    "source": "tranco",
-    "category": "storefront",
-    "rankBucket": 0
-  },
-  {
-    "domain": "commbank.com.au",
-    "source": "tranco",
-    "category": "bank",
-    "rankBucket": 0
-  },
-  {
-    "domain": "community.home-assistant.io",
+    "domain": "abcdaconstrucao.com.br",
     "source": "seed",
-    "category": "forum",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "community.openai.com",
+    "domain": "acmetools.com",
     "source": "seed",
-    "category": "forum",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "community.spiceworks.com",
+    "domain": "acnestudios.com",
     "source": "seed",
-    "category": "forum",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "convex.dev",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "cooley.com",
-    "source": "tranco",
-    "category": "local",
-    "rankBucket": 0
-  },
-  {
-    "domain": "corriere.it",
-    "source": "tranco",
-    "category": "news",
-    "rankBucket": 0
-  },
-  {
-    "domain": "counterculturecoffee.com",
-    "source": "tranco",
-    "category": "local",
-    "rankBucket": 0
-  },
-  {
-    "domain": "credit-agricole.fr",
-    "source": "tranco",
-    "category": "bank",
-    "rankBucket": 0
-  },
-  {
-    "domain": "cursor.com",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "datadoghq.com",
-    "source": "tranco",
-    "category": "saas",
-    "rankBucket": 0
-  },
-  {
-    "domain": "db.com",
-    "source": "tranco",
-    "category": "bank",
-    "rankBucket": 0
-  },
-  {
-    "domain": "dbs.com.sg",
-    "source": "tranco",
-    "category": "bank",
-    "rankBucket": 0
-  },
-  {
-    "domain": "deathwishcoffee.com",
-    "source": "tranco",
-    "category": "storefront",
-    "rankBucket": 0
-  },
-  {
-    "domain": "deno.com",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "developer.android.com",
+    "domain": "acquadiparma.com",
     "source": "seed",
-    "category": "docs",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "developer.apple.com",
+    "domain": "adidas.com",
     "source": "seed",
-    "category": "docs",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "adolfodominguez.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "advocare.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "aeropostale.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "aesop.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "agatha.fr",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "ahorramas.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "aigle.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "akrs.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "alanui.it",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "alexanderwang.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "aliceandolivia.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "alinea.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "allivet.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "allsaints.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "altardstate.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "altrarunning.com",
+    "source": "seed",
+    "category": "brand",
     "rankBucket": 100,
     "tier": "smoke"
   },
   {
-    "domain": "developer.chrome.com",
-    "source": "crux",
-    "category": "docs",
-    "rankBucket": 0,
-    "tier": "smoke"
-  },
-  {
-    "domain": "developer.mozilla.org",
+    "domain": "amartfurniture.com.au",
     "source": "seed",
-    "category": "docs",
-    "rankBucket": 100
-  },
-  {
-    "domain": "developers.cloudflare.com",
-    "source": "crux",
-    "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "digicert.com",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "digital.gov",
-    "source": "tranco",
-    "category": "government",
-    "rankBucket": 0
-  },
-  {
-    "domain": "discourse.mozilla.org",
-    "source": "seed",
-    "category": "forum",
-    "rankBucket": 100
-  },
-  {
-    "domain": "discuss.python.org",
-    "source": "seed",
-    "category": "forum",
+    "category": "brand",
     "rankBucket": 100,
     "tier": "smoke"
   },
   {
-    "domain": "discuss.pytorch.org",
+    "domain": "amend.com.br",
     "source": "seed",
-    "category": "forum",
-    "rankBucket": 100,
-    "tier": "smoke"
-  },
-  {
-    "domain": "dishoom.com",
-    "source": "tranco",
-    "category": "local",
-    "rankBucket": 0
-  },
-  {
-    "domain": "docs.astro.build",
-    "source": "seed",
-    "category": "docs",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "docs.aws.amazon.com",
+    "domain": "amplifon.com",
     "source": "seed",
-    "category": "docs",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "docs.djangoproject.com",
+    "domain": "andromaco.com",
     "source": "seed",
-    "category": "docs",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "docs.docker.com",
+    "domain": "animalis.com",
     "source": "seed",
-    "category": "docs",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "docs.flutter.dev",
+    "domain": "anitadongre.com",
     "source": "seed",
-    "category": "docs",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "docs.github.com",
+    "domain": "annsummers.com",
     "source": "seed",
-    "category": "docs",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "docs.gitlab.com",
+    "domain": "anntaylor.com",
     "source": "seed",
-    "category": "docs",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "docs.npmjs.com",
+    "domain": "aosmith.com",
     "source": "seed",
-    "category": "docs",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "docs.oracle.com",
+    "domain": "araujo.com.br",
     "source": "seed",
-    "category": "docs",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "docs.perplexity.ai",
+    "domain": "ardene.com",
     "source": "seed",
-    "category": "exemplar",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "docs.python.org",
+    "domain": "ariat.com",
     "source": "seed",
-    "category": "docs",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "docs.rs",
-    "source": "tranco",
-    "category": "docs",
-    "rankBucket": 0
-  },
-  {
-    "domain": "docs.stripe.com",
+    "domain": "aritzia.com",
     "source": "seed",
-    "category": "docs",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "docusign.com",
-    "source": "tranco",
-    "category": "saas",
-    "rankBucket": 0
-  },
-  {
-    "domain": "dollarshaveclub.com",
-    "source": "tranco",
-    "category": "storefront",
-    "rankBucket": 0
-  },
-  {
-    "domain": "domaincontrol.com",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "dominiqueansel.com",
-    "source": "tranco",
-    "category": "local",
-    "rankBucket": 0
-  },
-  {
-    "domain": "doubleclick.net",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "drizzle.team",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "dropbox.com",
-    "source": "tranco",
-    "category": "saas",
-    "rankBucket": 0
-  },
-  {
-    "domain": "dub.co",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "dw.com",
-    "source": "tranco",
-    "category": "news",
-    "rankBucket": 0
-  },
-  {
-    "domain": "dzen.ru",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "ebay.com",
-    "source": "tranco",
-    "category": "marketplace",
-    "rankBucket": 0
-  },
-  {
-    "domain": "ec.europa.eu",
+    "domain": "arlo.com",
     "source": "seed",
-    "category": "government",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "economist.com",
-    "source": "tranco",
-    "category": "news",
-    "rankBucket": 0
-  },
-  {
-    "domain": "ehdbsduvsddhbhbsd.blogspot.com",
-    "source": "crux",
-    "category": "tenant",
-    "rankBucket": 0
-  },
-  {
-    "domain": "elevenlabs.io",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "elpais.com",
-    "source": "tranco",
-    "category": "news",
-    "rankBucket": 0
-  },
-  {
-    "domain": "epa.gov",
-    "source": "tranco",
-    "category": "government",
-    "rankBucket": 0
-  },
-  {
-    "domain": "etsy.com",
-    "source": "tranco",
-    "category": "marketplace",
-    "rankBucket": 0
-  },
-  {
-    "domain": "europa.eu",
-    "source": "tranco",
-    "category": "government",
-    "rankBucket": 0
-  },
-  {
-    "domain": "eurostar.com",
-    "source": "tranco",
-    "category": "travel",
-    "rankBucket": 0
-  },
-  {
-    "domain": "ezviz7.com",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "facebook.github.io",
+    "domain": "art.com",
     "source": "seed",
-    "category": "tenant",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "fashionnova.com",
-    "source": "tranco",
-    "category": "storefront",
-    "rankBucket": 0
-  },
-  {
-    "domain": "fastly.net",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "figma.com",
-    "source": "tranco",
-    "category": "saas",
-    "rankBucket": 0
-  },
-  {
-    "domain": "finnair.com",
-    "source": "tranco",
-    "category": "travel",
-    "rankBucket": 0
-  },
-  {
-    "domain": "flipkart.com",
-    "source": "tranco",
-    "category": "marketplace",
-    "rankBucket": 0
-  },
-  {
-    "domain": "fly.io",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "forum.arduino.cc",
+    "domain": "asics.com",
     "source": "seed",
-    "category": "forum",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "forum.freecodecamp.org",
+    "domain": "asteribeauty.com",
     "source": "seed",
-    "category": "forum",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "forum.gitlab.com",
+    "domain": "astonmartinf1.com",
     "source": "seed",
-    "category": "forum",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "forum.obsidian.md",
+    "domain": "atleticodemadrid.com",
     "source": "seed",
-    "category": "forum",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "forums.macrumors.com",
+    "domain": "att.com",
     "source": "seed",
-    "category": "forum",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "forums.swift.org",
+    "domain": "autoshack.com",
     "source": "seed",
-    "category": "forum",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "forums.unrealengine.com",
+    "domain": "aw-lab.com",
     "source": "seed",
-    "category": "forum",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "france24.com",
-    "source": "tranco",
-    "category": "news",
-    "rankBucket": 0
-  },
-  {
-    "domain": "fsfsdfssf.blogspot.com",
-    "source": "crux",
-    "category": "tenant",
-    "rankBucket": 0
-  },
-  {
-    "domain": "ft.com",
-    "source": "tranco",
-    "category": "news",
-    "rankBucket": 0
-  },
-  {
-    "domain": "gandi.net",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "gatsby-starter-blog.netlify.app",
+    "domain": "azadea.com",
     "source": "seed",
-    "category": "tenant",
-    "rankBucket": 100,
-    "tier": "smoke"
-  },
-  {
-    "domain": "github.com",
-    "source": "tranco",
-    "category": "saas",
-    "rankBucket": 0
-  },
-  {
-    "domain": "gitlab.com",
-    "source": "tranco",
-    "category": "saas",
-    "rankBucket": 0
-  },
-  {
-    "domain": "globo.com",
-    "source": "tranco",
-    "category": "news",
-    "rankBucket": 0
-  },
-  {
-    "domain": "glossier.com",
-    "source": "tranco",
-    "category": "storefront",
-    "rankBucket": 0
-  },
-  {
-    "domain": "go.dev",
-    "source": "tranco",
-    "category": "docs",
-    "rankBucket": 0
-  },
-  {
-    "domain": "goo.gl",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "google.com",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "google.github.io",
-    "source": "seed",
-    "category": "tenant",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "googleapis.com",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "googledomains.com",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "googlesyndication.com",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "googletagmanager.com",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "googleusercontent.com",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "googlevideo.com",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "gov.br",
-    "source": "tranco",
-    "category": "government",
-    "rankBucket": 0
-  },
-  {
-    "domain": "gov.pl",
-    "source": "tranco",
-    "category": "government",
-    "rankBucket": 0
-  },
-  {
-    "domain": "gov.scot",
-    "source": "tranco",
-    "category": "government",
-    "rankBucket": 0
-  },
-  {
-    "domain": "gov.sg",
-    "source": "tranco",
-    "category": "government",
-    "rankBucket": 0
-  },
-  {
-    "domain": "gov.uk",
-    "source": "tranco",
-    "category": "government",
-    "rankBucket": 0
-  },
-  {
-    "domain": "gov.wales",
-    "source": "tranco",
-    "category": "government",
-    "rankBucket": 0
-  },
-  {
-    "domain": "government.nl",
-    "source": "tranco",
-    "category": "government",
-    "rankBucket": 0
-  },
-  {
-    "domain": "gsk.com",
-    "source": "tranco",
-    "category": "health",
-    "rankBucket": 0
-  },
-  {
-    "domain": "gtld-servers.net",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "gvt1.com",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "gymshark.com",
-    "source": "tranco",
-    "category": "storefront",
-    "rankBucket": 0
-  },
-  {
-    "domain": "hawksmoor.com",
+    "domain": "ba-sh.com",
     "source": "seed",
-    "category": "local",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "healthline.com",
-    "source": "tranco",
-    "category": "health",
-    "rankBucket": 0
-  },
-  {
-    "domain": "help.notion.site",
+    "domain": "babolat.com",
     "source": "seed",
-    "category": "tenant",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "hicloudcam.com",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "hiutdenim.co.uk",
+    "domain": "baccarat.com",
     "source": "seed",
-    "category": "storefront",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "hono.dev",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "hono.pages.dev",
+    "domain": "bader.de",
     "source": "seed",
-    "category": "tenant",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "hostelworld.com",
-    "source": "tranco",
-    "category": "travel",
-    "rankBucket": 0
-  },
-  {
-    "domain": "hsbc.co.uk",
-    "source": "tranco",
-    "category": "bank",
-    "rankBucket": 0
-  },
-  {
-    "domain": "hubspot.com",
-    "source": "tranco",
-    "category": "saas",
-    "rankBucket": 0
-  },
-  {
-    "domain": "hugeinc.com",
-    "source": "tranco",
-    "category": "local",
-    "rankBucket": 0
-  },
-  {
-    "domain": "icloud.com",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "ihg.com",
-    "source": "tranco",
-    "category": "travel",
-    "rankBucket": 0
-  },
-  {
-    "domain": "ikea.com",
-    "source": "tranco",
-    "category": "marketplace",
-    "rankBucket": 0,
-    "tier": "smoke"
-  },
-  {
-    "domain": "india.gov.in",
-    "source": "tranco",
-    "category": "government",
-    "rankBucket": 0
-  },
-  {
-    "domain": "ing.com",
-    "source": "tranco",
-    "category": "bank",
-    "rankBucket": 0
-  },
-  {
-    "domain": "inngest.com",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "instrument.com",
-    "source": "tranco",
-    "category": "local",
-    "rankBucket": 0
-  },
-  {
-    "domain": "intelligentsia.com",
-    "source": "tranco",
-    "category": "local",
-    "rankBucket": 0
-  },
-  {
-    "domain": "intercom.com",
-    "source": "tranco",
-    "category": "saas",
-    "rankBucket": 0
-  },
-  {
-    "domain": "intesasanpaolo.com",
-    "source": "tranco",
-    "category": "bank",
-    "rankBucket": 0
-  },
-  {
-    "domain": "irs.gov",
-    "source": "tranco",
-    "category": "government",
-    "rankBucket": 0
-  },
-  {
-    "domain": "japantimes.co.jp",
-    "source": "tranco",
-    "category": "news",
-    "rankBucket": 0
-  },
-  {
-    "domain": "jd.com",
-    "source": "tranco",
-    "category": "marketplace",
-    "rankBucket": 0
-  },
-  {
-    "domain": "jnj.com",
-    "source": "tranco",
-    "category": "health",
-    "rankBucket": 0
-  },
-  {
-    "domain": "joesstonecrab.com",
-    "source": "tranco",
-    "category": "local",
-    "rankBucket": 0
-  },
-  {
-    "domain": "kaiserpermanente.org",
-    "source": "tranco",
-    "category": "health",
-    "rankBucket": 0
-  },
-  {
-    "domain": "kayak.com",
-    "source": "tranco",
-    "category": "travel",
-    "rankBucket": 0,
-    "tier": "smoke"
-  },
-  {
-    "domain": "kirkland.com",
-    "source": "tranco",
-    "category": "local",
-    "rankBucket": 0
-  },
-  {
-    "domain": "kubernetes.io",
-    "source": "tranco",
-    "category": "docs",
-    "rankBucket": 0
-  },
-  {
-    "domain": "kyliecosmetics.com",
-    "source": "tranco",
-    "category": "storefront",
-    "rankBucket": 0
-  },
-  {
-    "domain": "laravel.com",
-    "source": "tranco",
-    "category": "docs",
-    "rankBucket": 0
-  },
-  {
-    "domain": "learn.microsoft.com",
-    "source": "crux",
-    "category": "docs",
-    "rankBucket": 0
-  },
-  {
-    "domain": "learn.notion.site",
+    "domain": "balenciaga.com",
     "source": "seed",
-    "category": "tenant",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "lemonde.fr",
-    "source": "tranco",
-    "category": "news",
-    "rankBucket": 0
-  },
-  {
-    "domain": "levainbakery.com",
-    "source": "tranco",
-    "category": "local",
-    "rankBucket": 0
-  },
-  {
-    "domain": "linear.app",
-    "source": "tranco",
-    "category": "saas",
-    "rankBucket": 0
-  },
-  {
-    "domain": "linkedin.com",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "liquiddeath.com",
-    "source": "tranco",
-    "category": "storefront",
-    "rankBucket": 0
-  },
-  {
-    "domain": "live.com",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "liveblocks.io",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "livezwc44.blogspot.com",
-    "source": "crux",
-    "category": "tenant",
-    "rankBucket": 0
-  },
-  {
-    "domain": "llmstxt.org",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "lloydsbank.com",
-    "source": "tranco",
-    "category": "bank",
-    "rankBucket": 0
-  },
-  {
-    "domain": "lobste.rs",
-    "source": "tranco",
-    "category": "forum",
-    "rankBucket": 0
-  },
-  {
-    "domain": "loom.com",
-    "source": "tranco",
-    "category": "saas",
-    "rankBucket": 0
-  },
-  {
-    "domain": "lowes.com",
-    "source": "tranco",
-    "category": "marketplace",
-    "rankBucket": 0
-  },
-  {
-    "domain": "magicspoon.com",
-    "source": "tranco",
-    "category": "storefront",
-    "rankBucket": 0
-  },
-  {
-    "domain": "magnoliabakery.com",
-    "source": "tranco",
-    "category": "local",
-    "rankBucket": 0
-  },
-  {
-    "domain": "mail.ru",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "mailchimp.com",
-    "source": "tranco",
-    "category": "saas",
-    "rankBucket": 0
-  },
-  {
-    "domain": "mathoverflow.net",
-    "source": "tranco",
-    "category": "forum",
-    "rankBucket": 0
-  },
-  {
-    "domain": "medicare.gov",
-    "source": "tranco",
-    "category": "government",
-    "rankBucket": 0
-  },
-  {
-    "domain": "medlineplus.gov",
-    "source": "tranco",
-    "category": "health",
-    "rankBucket": 0,
-    "tier": "smoke"
-  },
-  {
-    "domain": "mejuri.com",
-    "source": "tranco",
-    "category": "storefront",
-    "rankBucket": 0
-  },
-  {
-    "domain": "mercadolibre.com",
-    "source": "tranco",
-    "category": "marketplace",
-    "rankBucket": 0
-  },
-  {
-    "domain": "merck.com",
-    "source": "tranco",
-    "category": "health",
-    "rankBucket": 0
-  },
-  {
-    "domain": "meta.discourse.org",
+    "domain": "balmain.com",
     "source": "seed",
-    "category": "forum",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "metalab.com",
+    "domain": "banfield.com",
     "source": "seed",
-    "category": "local",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "microsoft.com",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "microsoft.github.io",
+    "domain": "barbequesgalore.com.au",
     "source": "seed",
-    "category": "tenant",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "microsoftonline.com",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "mintlify.com",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "miro.com",
-    "source": "tranco",
-    "category": "saas",
-    "rankBucket": 0
-  },
-  {
-    "domain": "mistral.ai",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "modelcontextprotocol.io",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "monday.com",
-    "source": "tranco",
-    "category": "saas",
-    "rankBucket": 0
-  },
-  {
-    "domain": "monzo.com",
-    "source": "tranco",
-    "category": "bank",
-    "rankBucket": 0
-  },
-  {
-    "domain": "mountsinai.org",
-    "source": "tranco",
-    "category": "health",
-    "rankBucket": 0
-  },
-  {
-    "domain": "mpdwc94.blogspot.com",
-    "source": "crux",
-    "category": "tenant",
-    "rankBucket": 0
-  },
-  {
-    "domain": "mrjancko3.blogspot.com",
-    "source": "crux",
-    "category": "tenant",
-    "rankBucket": 0
-  },
-  {
-    "domain": "mypdftools.pages.dev",
-    "source": "crux",
-    "category": "tenant",
-    "rankBucket": 0
-  },
-  {
-    "domain": "n26.com",
-    "source": "tranco",
-    "category": "bank",
-    "rankBucket": 0
-  },
-  {
-    "domain": "nab.com.au",
-    "source": "tranco",
-    "category": "bank",
-    "rankBucket": 0
-  },
-  {
-    "domain": "nasa.gov",
-    "source": "tranco",
-    "category": "government",
-    "rankBucket": 0
-  },
-  {
-    "domain": "natwest.com",
-    "source": "tranco",
-    "category": "bank",
-    "rankBucket": 0
-  },
-  {
-    "domain": "netflix.github.io",
+    "domain": "barbour.com",
     "source": "seed",
-    "category": "tenant",
-    "rankBucket": 100,
-    "tier": "smoke"
-  },
-  {
-    "domain": "newegg.com",
-    "source": "tranco",
-    "category": "marketplace",
-    "rankBucket": 0
-  },
-  {
-    "domain": "news.ycombinator.com",
-    "source": "crux",
-    "category": "forum",
-    "rankBucket": 0
-  },
-  {
-    "domain": "next-blog-starter.vercel.app",
-    "source": "seed",
-    "category": "tenant",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "nextjs-commerce.vercel.app",
+    "domain": "basic-fit.com",
     "source": "seed",
-    "category": "tenant",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "nhs.uk",
-    "source": "tranco",
-    "category": "government",
-    "rankBucket": 0
-  },
-  {
-    "domain": "nih.gov",
-    "source": "tranco",
-    "category": "government",
-    "rankBucket": 0
-  },
-  {
-    "domain": "nodejs.org",
-    "source": "tranco",
-    "category": "docs",
-    "rankBucket": 0
-  },
-  {
-    "domain": "notion.so",
-    "source": "tranco",
-    "category": "saas",
-    "rankBucket": 0
-  },
-  {
-    "domain": "novartis.com",
-    "source": "tranco",
-    "category": "health",
-    "rankBucket": 0
-  },
-  {
-    "domain": "npr.org",
-    "source": "tranco",
-    "category": "news",
-    "rankBucket": 0
-  },
-  {
-    "domain": "ntp.org",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "numpy.readthedocs.io",
+    "domain": "bassettfurniture.com",
     "source": "seed",
-    "category": "tenant",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "nuxt.com",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "nytimes.com",
-    "source": "tranco",
-    "category": "news",
-    "rankBucket": 0
-  },
-  {
-    "domain": "nyulangone.org",
-    "source": "tranco",
-    "category": "health",
-    "rankBucket": 0
-  },
-  {
-    "domain": "nzherald.co.nz",
-    "source": "tranco",
-    "category": "news",
-    "rankBucket": 0
-  },
-  {
-    "domain": "ocbc.com",
-    "source": "tranco",
-    "category": "bank",
-    "rankBucket": 0
-  },
-  {
-    "domain": "oebb.at",
-    "source": "tranco",
-    "category": "travel",
-    "rankBucket": 0
-  },
-  {
-    "domain": "office.com",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "office.net",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "okta.com",
-    "source": "tranco",
-    "category": "saas",
-    "rankBucket": 0
-  },
-  {
-    "domain": "otto.de",
-    "source": "tranco",
-    "category": "marketplace",
-    "rankBucket": 0
-  },
-  {
-    "domain": "pentagram.com",
-    "source": "tranco",
-    "category": "local",
-    "rankBucket": 0
-  },
-  {
-    "domain": "pfizer.com",
-    "source": "tranco",
-    "category": "health",
-    "rankBucket": 0
-  },
-  {
-    "domain": "physics.stackexchange.com",
+    "domain": "bata.com",
     "source": "seed",
-    "category": "forum",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "pinecone.io",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "pizzeriabianco.com",
+    "domain": "bathandbodyworks.com",
     "source": "seed",
-    "category": "local",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "platformer.substack.com",
+    "domain": "bcf.com.au",
     "source": "seed",
-    "category": "tenant",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "beaba.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "beautybrands.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "bebitalia.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "beldona.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "belk.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "belkin.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "benbridge.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "benefitcosmetics.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "berluti.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "berninastores.ch",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "bestseller.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "bimbaylola.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "biologique-recherche.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "bipa.at",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "bissell.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "blackriflecoffee.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "blancheporte.fr",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "bloomingdales.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "blumarine.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "bmw.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "bofrost.es",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "bofrost.it",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "boggi.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "bogner.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "bolle-safety.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "boohooman.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "bootbarn.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "boots.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "boots.ie",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "boscolo.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "bose.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "bottegaveneta.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "bottegaverde.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "bouxavenue.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "bowerswilkins.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "boxlunch.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "brambleberry.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "brooksbrothers.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "brooksbrothers.eu",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "brooksrunning.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "brownsshoes.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "brucknertruck.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "brunellocucinelli.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "bucherer.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "bugaboo.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "buildabear.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "bulgari.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "burton.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "bushnell.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "bymalenebirger.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "cacaushow.com.br",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "cakebread.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "callawaygolf.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "calvinklein.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "calvinklein.us",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "camelbak.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "camomillaitalia.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "campagnolo.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "campingworld.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "canon.be",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "canon.no",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "canyon.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "capeunionmart.co.za",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "cardfactory.co.uk",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "caroll.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "carrefour.be",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "carrefour.com.tw",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "carrefour.it",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "carrera.com.br",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "carters.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "cartier.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "casaviva.es",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "caseking.de",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "cashconverters.es",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "castore.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "cavenders.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "cci-ammunition.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "ccmhockey.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "celine.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "celio.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "charleskeith.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "chiccousa.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "childrensplace.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "chloe.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "christopherward.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "christysports.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "chromehearts.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "cic.cl",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "cisalfasport.it",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "citizenwatch.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "citybeach.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "claudiepierlot.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "coach.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "coin.it",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "colehaan.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "coleman.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "colmar.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "columbia.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "conair.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "converse.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "coopertire.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "cortefiel.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "cosmoprofbeauty.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "cottonclub.nl",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "cottontraders.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "courir.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "cpcompany.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "cpooutlets.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "cricut.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "crocs.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "crocs.com.sg",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "crosscall.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "cruzverde.com.co",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "cuisinart.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "cvsciences.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "cyamoda.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "cybex-online.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "dainese.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "dartagnan.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "davidyurman.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "dayspring.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "deciem.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "delonghi.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "deseretbook.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "desigual.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "diadora.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "dickies.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "diesel.co.jp",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "diesel.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "dietdirect.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "dior.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "dittopatterns.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "dolcegabbana.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "drmartens.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "drunkelephant.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "dsquared2.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "duluthtrading.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "dunelondon.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "dunhill.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "dunlopsports.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "dwr.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "eileenfisher.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "elemis.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "elixir.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "elpalaciodehierro.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "eminenceorganics.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "emp.de",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "encuentromoda.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "engelhorn.de",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "eresparis.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "etam.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "ethanallen.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "etos.nl",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "etro.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "ets.org",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "everythingbutwater.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "fabianafilippi.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "factorie.com.au",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "factory54.co.il",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "farmaciasahumada.cl",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "fatboy.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "federalpremium.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "fendi.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "fenwick.co.uk",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "ferco.com.gt",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "ferguson.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "ferrari.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "filippa-k.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "fiorucci.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "firefoxbikes.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "flooranddecor.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "flos.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "foxracing.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "franciskurkdjian.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "fraserhart.co.uk",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "fraserway.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "frederiqueconstant.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "fresh.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "frette.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "fujifilm.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "funko.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "furla.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "furniturevillage.co.uk",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "gamestop.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "ganni.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "gant.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "gardena.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "georgjensen.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "gianvitorossi.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "gifi.fr",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "giovanniraspini.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "givenchy.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "gnc.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "gocco.es",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "goldengoose.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "golftown.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "gonzalezbyass.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "goodyear.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "graff.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "gregorypacks.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "guerlain.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "guess.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "guess.eu",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "hackett.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "haier-europe.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "haier.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "halfords.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "hallmark.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "hallmark.nl",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "hannaandersson.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "hardrock.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "harmontblaine.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "hawkersco.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "hazorfim.co.il",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "heartsonfire.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "heathrow.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "hebe.pl",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "helmutlang.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "helzberg.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "hema.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "hema.nl",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "hermanmiller.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "herno.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "herocycles.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "heydude.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "hickoryfarms.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "hkcsl.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "hobbycraft.co.uk",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "hoka.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "homa.pt",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "homemakers.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "honda.com.au",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "honest.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "horizonhobby.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "hotelchocolat.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "hottopic.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "hudabeauty.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "hugoboss.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "hummel.net",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "hunkemoller.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "hush-uk.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "iceland.co.uk",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "ikks.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "illy.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "imamma.it",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "indigo.ca",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "inno.be",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "interceramic.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "interface.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "irobot.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "iroparis.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "it.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "izilbeauty.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "jabra.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "jack-wolfskin.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "jackjones.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "jacquemus.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "jacuzzi.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "jamesavery.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "janieandjack.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "jbc.be",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "jcrew.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "jilsander.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "jimmychoo.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "jinius.com.cy",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "joann.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "johnnyseeds.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "johnnywas.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "joma-sport.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "joolz.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "jrcigars.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "jules.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "juniorcouture.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "justfoodfordogs.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "kaltire.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "karenmillen.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "kask.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "katespade.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "kellywearstler.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "kendrascott.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "kenwoodworld.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "kenzo.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "keter.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "kevinmurphy.com.au",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "khaadi.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "kingliving.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "kiwoko.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "kjus.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "kneipp.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "knoll.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "kregtool.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "kusmitea.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "lac.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "lacoste.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "ladoublej.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "lanebryant.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "laprairie.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "laurastar.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "lebonmarche.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "lecreuset.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "legami.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "legendarywhitetails.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "leinsterrugby.ie",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "leonidas.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "lesliespool.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "libertylondon.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "lifestylesports.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "lightingnewyork.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "lillypulitzer.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "lipault-usa.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "liujo.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "livingedge.com.au",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "livingproof.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "llbean.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "ln-cc.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "loccitane.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "loewe.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "loft.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "logitech.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "logitechg.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "lolaliza.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "longchamp.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "loropiana.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "loungefly.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "lovable.it",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "lucardi.nl",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "luckybrand.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "lululemon.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "lumens.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "luzdalua.com.br",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "mackenzie-childs.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "macpac.co.nz",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "macpac.com.au",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "madewell.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "magasin.dk",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "mahou-sanmiguel.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "maison-alaia.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "maisonbirks.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "maisonmargiela.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "maje.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "mancity.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "manyavar.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "marcjacobs.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "mariagalland.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "marksandspencer.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "marksandspencer.in",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "marni.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "marshall.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "martinguitar.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "marykay.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "masai.net",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "mattressfirm.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "maytronics.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "mclaren.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "mcmworldwide.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "mediaworld.it",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "medicalert.org",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "meierdutch.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "merlenorman.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "merrell.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "michaelhill.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "michaelkors.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "milwaukeetool.com.au",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "missoni.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "mo-online.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "modechoc.ca",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "moleskine.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "monnalisa.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "monoprix.fr",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "montblanc.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "mouawad.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "mountainhardwear.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "mtngshoes.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "mudbay.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "multicoisas.com.br",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "multiopticas.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "muuto.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "mvmt.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "nambe.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "nameit.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "narscosmetics.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "nativeshoes.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "naturabisse.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "naturesmenu.co.uk",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "naty.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "netgear.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "neuhauschocolates.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "newbalance.co.uk",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "newbalance.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "nfm.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "nicandzoe.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "nicolishop.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "nike.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "normanloveconfections.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "nyxcosmetics.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "off---white.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "oliviaburton.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "only.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "opticauniversitaria.es",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "optus.com.au",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "orvis.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "ovs.it",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "pacsun.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "pandora.net",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "parfois.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "partycity.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "patagonia.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "patriziapepe.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "paulandshark.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "paulaschoice.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "paulstuart.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "pcrichard.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "peacocks.co.uk",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "pedroshoes.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "pendleton-usa.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "pepejeans.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "perduefarms.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "perthairport.com.au",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "petit-bateau.fr",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "petmeds.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "petsmart.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "pgatoursuperstore.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "picard.fr",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "picture-organic-clothing.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "pikolinos.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "pingodoce.pt",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "pinko.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "playmobil.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "plein.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "polo-motorrad.com",
+    "source": "seed",
+    "category": "brand",
     "rankBucket": 100
   },
   {
     "domain": "popsockets.com",
-    "source": "tranco",
-    "category": "storefront",
-    "rankBucket": 0
-  },
-  {
-    "domain": "postgresql.org",
-    "source": "tranco",
-    "category": "docs",
-    "rankBucket": 0
-  },
-  {
-    "domain": "posthog.com",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0,
-    "tier": "smoke"
-  },
-  {
-    "domain": "priceline.com",
-    "source": "tranco",
-    "category": "travel",
-    "rankBucket": 0
-  },
-  {
-    "domain": "prisma.io",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "pv-cdn.net",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "pytorch.org",
-    "source": "tranco",
-    "category": "docs",
-    "rankBucket": 0
-  },
-  {
-    "domain": "qantas.com",
-    "source": "tranco",
-    "category": "travel",
-    "rankBucket": 0
-  },
-  {
-    "domain": "quora.com",
-    "source": "tranco",
-    "category": "forum",
-    "rankBucket": 0
-  },
-  {
-    "domain": "rakuten.co.jp",
-    "source": "tranco",
-    "category": "marketplace",
-    "rankBucket": 0
-  },
-  {
-    "domain": "ramotion.com",
-    "source": "tranco",
-    "category": "local",
-    "rankBucket": 0
-  },
-  {
-    "domain": "rbc.com",
-    "source": "tranco",
-    "category": "bank",
-    "rankBucket": 0
-  },
-  {
-    "domain": "react.dev",
-    "source": "tranco",
-    "category": "docs",
-    "rankBucket": 0
-  },
-  {
-    "domain": "reddit.com",
-    "source": "tranco",
-    "category": "forum",
-    "rankBucket": 0
-  },
-  {
-    "domain": "redis.io",
-    "source": "tranco",
-    "category": "docs",
-    "rankBucket": 0
-  },
-  {
-    "domain": "remix-run.pages.dev",
     "source": "seed",
-    "category": "tenant",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "render.com",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "renfe.com",
-    "source": "tranco",
-    "category": "travel",
-    "rankBucket": 0
-  },
-  {
-    "domain": "replicate.com",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "requests.readthedocs.io",
+    "domain": "prana.com",
     "source": "seed",
-    "category": "tenant",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "resend.com",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "reuters.com",
-    "source": "tranco",
-    "category": "news",
-    "rankBucket": 0
-  },
-  {
-    "domain": "roblox.com",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "roche.com",
-    "source": "tranco",
-    "category": "health",
-    "rankBucket": 0
-  },
-  {
-    "domain": "rothys.com",
-    "source": "tranco",
-    "category": "storefront",
-    "rankBucket": 0
-  },
-  {
-    "domain": "rte.ie",
-    "source": "tranco",
-    "category": "news",
-    "rankBucket": 0
-  },
-  {
-    "domain": "rtpkhu100.pages.dev",
-    "source": "crux",
-    "category": "tenant",
-    "rankBucket": 0
-  },
-  {
-    "domain": "ruggable.com",
-    "source": "tranco",
-    "category": "storefront",
-    "rankBucket": 0
-  },
-  {
-    "domain": "russanddaughters.com",
-    "source": "tranco",
-    "category": "local",
-    "rankBucket": 0
-  },
-  {
-    "domain": "rust-lang.org",
-    "source": "tranco",
-    "category": "docs",
-    "rankBucket": 0
-  },
-  {
-    "domain": "ryanair.com",
-    "source": "tranco",
-    "category": "travel",
-    "rankBucket": 0
-  },
-  {
-    "domain": "salesforce.com",
-    "source": "tranco",
-    "category": "saas",
-    "rankBucket": 0
-  },
-  {
-    "domain": "sanofi.com",
-    "source": "tranco",
-    "category": "health",
-    "rankBucket": 0
-  },
-  {
-    "domain": "santander.com",
-    "source": "tranco",
-    "category": "bank",
-    "rankBucket": 0
-  },
-  {
-    "domain": "scotiabank.com",
-    "source": "tranco",
-    "category": "bank",
-    "rankBucket": 0
-  },
-  {
-    "domain": "sentry.io",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "serverfault.com",
-    "source": "tranco",
-    "category": "forum",
-    "rankBucket": 0
-  },
-  {
-    "domain": "service-public.fr",
-    "source": "tranco",
-    "category": "government",
-    "rankBucket": 0
-  },
-  {
-    "domain": "sharepoint.com",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "shein.com",
-    "source": "tranco",
-    "category": "marketplace",
-    "rankBucket": 0
-  },
-  {
-    "domain": "shopify.com",
-    "source": "tranco",
-    "category": "saas",
-    "rankBucket": 0
-  },
-  {
-    "domain": "skadden.com",
-    "source": "tranco",
-    "category": "local",
-    "rankBucket": 0
-  },
-  {
-    "domain": "skype.com",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "skyscanner.net",
-    "source": "tranco",
-    "category": "travel",
-    "rankBucket": 0
-  },
-  {
-    "domain": "slack.com",
-    "source": "tranco",
-    "category": "saas",
-    "rankBucket": 0
-  },
-  {
-    "domain": "smh.com.au",
-    "source": "tranco",
-    "category": "news",
-    "rankBucket": 0
-  },
-  {
-    "domain": "snowflake.com",
-    "source": "tranco",
-    "category": "saas",
-    "rankBucket": 0
-  },
-  {
-    "domain": "societegenerale.com",
-    "source": "tranco",
-    "category": "bank",
-    "rankBucket": 0
-  },
-  {
-    "domain": "soulcycle.com",
+    "domain": "predatornutrition.com",
     "source": "seed",
-    "category": "local",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "spiegel.de",
-    "source": "tranco",
-    "category": "news",
-    "rankBucket": 0
-  },
-  {
-    "domain": "spotify.com",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "spotify.github.io",
+    "domain": "premierleague.com",
     "source": "seed",
-    "category": "tenant",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "square.github.io",
+    "domain": "puma.com",
     "source": "seed",
-    "category": "tenant",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "stackoverflow.com",
-    "source": "tranco",
-    "category": "forum",
-    "rankBucket": 0
-  },
-  {
-    "domain": "stanfordhealthcare.org",
-    "source": "tranco",
-    "category": "health",
-    "rankBucket": 0
-  },
-  {
-    "domain": "starlingbank.com",
-    "source": "tranco",
-    "category": "bank",
-    "rankBucket": 0
-  },
-  {
-    "domain": "stratechery.substack.com",
+    "domain": "pupa.it",
     "source": "seed",
-    "category": "tenant",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "stripe.com",
-    "source": "tranco",
-    "category": "saas",
-    "rankBucket": 0
-  },
-  {
-    "domain": "stumptowncoffee.com",
-    "source": "tranco",
-    "category": "local",
-    "rankBucket": 0
-  },
-  {
-    "domain": "supabase.com",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "superuser.com",
-    "source": "tranco",
-    "category": "forum",
-    "rankBucket": 0
-  },
-  {
-    "domain": "svelte.dev",
-    "source": "tranco",
-    "category": "docs",
-    "rankBucket": 0
-  },
-  {
-    "domain": "sweetgreen.com",
-    "source": "tranco",
-    "category": "local",
-    "rankBucket": 0,
-    "tier": "smoke"
-  },
-  {
-    "domain": "tailwindcss.com",
-    "source": "tranco",
-    "category": "docs",
-    "rankBucket": 0
-  },
-  {
-    "domain": "tanstack.com",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "taobao.com",
-    "source": "tranco",
-    "category": "marketplace",
-    "rankBucket": 0
-  },
-  {
-    "domain": "target.com",
-    "source": "tranco",
-    "category": "marketplace",
-    "rankBucket": 0
-  },
-  {
-    "domain": "tartinebakery.com",
-    "source": "tranco",
-    "category": "local",
-    "rankBucket": 0
-  },
-  {
-    "domain": "tattly.com",
-    "source": "tranco",
-    "category": "storefront",
-    "rankBucket": 0
-  },
-  {
-    "domain": "td.com",
-    "source": "tranco",
-    "category": "bank",
-    "rankBucket": 0
-  },
-  {
-    "domain": "temu.com",
-    "source": "tranco",
-    "category": "marketplace",
-    "rankBucket": 0
-  },
-  {
-    "domain": "tentree.com",
-    "source": "tranco",
-    "category": "storefront",
-    "rankBucket": 0
-  },
-  {
-    "domain": "theatlantic.com",
-    "source": "tranco",
-    "category": "news",
-    "rankBucket": 0
-  },
-  {
-    "domain": "theguardian.com",
-    "source": "tranco",
-    "category": "news",
-    "rankBucket": 0
-  },
-  {
-    "domain": "thehindu.com",
-    "source": "tranco",
-    "category": "news",
-    "rankBucket": 0
-  },
-  {
-    "domain": "thehoxton.com",
-    "source": "tranco",
-    "category": "local",
-    "rankBucket": 0
-  },
-  {
-    "domain": "thetrainline.com",
-    "source": "tranco",
-    "category": "travel",
-    "rankBucket": 0
-  },
-  {
-    "domain": "theverge.com",
-    "source": "tranco",
-    "category": "news",
-    "rankBucket": 0
-  },
-  {
-    "domain": "together.ai",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "trafficmanager.net",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "trenitalia.com",
-    "source": "tranco",
-    "category": "travel",
-    "rankBucket": 0
-  },
-  {
-    "domain": "trigger.dev",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "ttkm-789bet.pages.dev",
-    "source": "crux",
-    "category": "tenant",
-    "rankBucket": 0
-  },
-  {
-    "domain": "turso.tech",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "twilio.com",
-    "source": "tranco",
-    "category": "saas",
-    "rankBucket": 0
-  },
-  {
-    "domain": "typeform.com",
-    "source": "tranco",
-    "category": "saas",
-    "rankBucket": 0
-  },
-  {
-    "domain": "typescriptlang.org",
-    "source": "tranco",
-    "category": "docs",
-    "rankBucket": 0
-  },
-  {
-    "domain": "uber.github.io",
+    "domain": "rag-bone.com",
     "source": "seed",
-    "category": "tenant",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "ubs.com",
-    "source": "tranco",
-    "category": "bank",
-    "rankBucket": 0
-  },
-  {
-    "domain": "uclahealth.org",
-    "source": "tranco",
-    "category": "health",
-    "rankBucket": 0
-  },
-  {
-    "domain": "ui.shadcn.com",
+    "domain": "ralphlauren.com",
     "source": "seed",
-    "category": "exemplar",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "upstash.com",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "usa.gov",
-    "source": "tranco",
-    "category": "government",
-    "rankBucket": 0
-  },
-  {
-    "domain": "usbank.com",
-    "source": "tranco",
-    "category": "bank",
-    "rankBucket": 0
-  },
-  {
-    "domain": "users.rust-lang.org",
+    "domain": "rawlings.com",
     "source": "seed",
-    "category": "forum",
+    "category": "brand",
     "rankBucket": 100
   },
   {
-    "domain": "ustwo.com",
-    "source": "tranco",
-    "category": "local",
-    "rankBucket": 0
+    "domain": "rebelsport.com.au",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "velasca.com",
-    "source": "tranco",
-    "category": "storefront",
-    "rankBucket": 0
+    "domain": "redkap.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "vercel.com",
-    "source": "tranco",
-    "category": "saas",
-    "rankBucket": 0
+    "domain": "redwingshoes.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "viarail.ca",
-    "source": "tranco",
-    "category": "travel",
-    "rankBucket": 0
+    "domain": "remington.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "vinted.com",
-    "source": "tranco",
-    "category": "marketplace",
-    "rankBucket": 0
+    "domain": "renecaovilla.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "vite.dev",
-    "source": "tranco",
-    "category": "docs",
-    "rankBucket": 0
+    "domain": "renspets.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "vitest.dev",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
+    "domain": "renuar.co.il",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "vuejs.org",
-    "source": "tranco",
-    "category": "docs",
-    "rankBucket": 0
+    "domain": "reverie.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "vueling.com",
-    "source": "tranco",
-    "category": "travel",
-    "rankBucket": 0
+    "domain": "revolutionbeauty.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "w3.org",
-    "source": "tranco",
-    "category": "docs",
-    "rankBucket": 0
+    "domain": "rituals.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "walgreens.com",
-    "source": "tranco",
-    "category": "health",
-    "rankBucket": 0
+    "domain": "rmwilliams.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "walmart.com",
-    "source": "tranco",
-    "category": "marketplace",
-    "rankBucket": 0
+    "domain": "rmwilliams.com.au",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "warbyparker.com",
-    "source": "tranco",
-    "category": "storefront",
-    "rankBucket": 0
+    "domain": "robertocavalli.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "washingtonpost.com",
-    "source": "tranco",
-    "category": "news",
-    "rankBucket": 0
+    "domain": "roche-bobois.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "wayfair.com",
-    "source": "tranco",
-    "category": "marketplace",
-    "rankBucket": 0
+    "domain": "rockwestcomposites.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "weaviate.io",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
+    "domain": "roots.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "webflow.com",
-    "source": "tranco",
-    "category": "saas",
-    "rankBucket": 0
+    "domain": "rosenthal.de",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "webmd.com",
-    "source": "tranco",
-    "category": "health",
-    "rankBucket": 0
+    "domain": "rougegorge.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "wellsfargo.com",
-    "source": "tranco",
-    "category": "bank",
-    "rankBucket": 0
+    "domain": "rsca.be",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "whitehouse.gov",
-    "source": "tranco",
-    "category": "government",
-    "rankBucket": 0
+    "domain": "rubbermaid.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "who.int",
-    "source": "tranco",
-    "category": "health",
-    "rankBucket": 0,
-    "tier": "smoke"
+    "domain": "rw-co.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "wikipedia.org",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
+    "domain": "ryk.cl",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "windows.net",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
+    "domain": "saksoff5th.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "windowsupdate.com",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
+    "domain": "sallybeauty.co.uk",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "wordpress.org",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
+    "domain": "sallybeauty.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "work.co",
-    "source": "tranco",
-    "category": "local",
-    "rankBucket": 0
+    "domain": "saloncentric.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "wyndhamhotels.com",
-    "source": "tranco",
-    "category": "travel",
-    "rankBucket": 0
+    "domain": "samsonite.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "yonotv-now.pages.dev",
-    "source": "crux",
-    "category": "tenant",
-    "rankBucket": 0
+    "domain": "sandro-paris.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "youtu.be",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
+    "domain": "sanitastroesch.ch",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "youtube.com",
-    "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
+    "domain": "santonishoes.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "zapier.com",
-    "source": "tranco",
-    "category": "exemplar",
-    "rankBucket": 0
+    "domain": "sapphireonline.pk",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "zendesk.com",
-    "source": "tranco",
-    "category": "saas",
-    "rankBucket": 0
+    "domain": "sarenza.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "zingermans.com",
-    "source": "tranco",
-    "category": "local",
-    "rankBucket": 0
+    "domain": "saucony.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   },
   {
-    "domain": "zoom.us",
-    "source": "tranco",
-    "category": "saas",
-    "rankBucket": 0
+    "domain": "scarpamondo.it",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "scholastic.ca",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "scholastic.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "scottsmiraclegro.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "scs.co.uk",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "seabags.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "seedheritage.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "sees.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "sergiorossi.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "sesderma.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "sharkninja.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "shiseido.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "shoeby.nl",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "shoecarnival.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "shoeshowmega.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "shopcuup.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "shoplc.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "signaturehardware.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "silkn.eu",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "silmaasema.fi",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "silverjeans.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "sisley-paris.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "skechers.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "skinbetter.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "smartwool.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "smith-wesson.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "smithoptics.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "smythson.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "solostove.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "soniarykiel.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "sonos.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "sony.com.au",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "sorel.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "sova.se",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "spacenk.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "sportinglife.ca",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "sportscheck.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "stance.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "steelseries.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "stefanoricci.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "stellamccartney.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "stockmann.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "stokke.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "stoneisland.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "stonewallkitchen.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "stroilioro.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "stuartweitzman.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "suitsupply.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "sundayred.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "supercheapauto.com.au",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "superdry.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "surlatable.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "swarovski.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "swatch.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "sweatybetty.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "t2tea.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "tagheuer.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "takko.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "talbots.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "tamaris.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "tatcha.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "tate.org.uk",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "taylormadegolf.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "teamtownsports.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "technogym.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "tecnifibre.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "tennis-point.de",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "teoxane.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "the1916company.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "theattico.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "thekineticgroup.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "thekooples.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "theory.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "thereformation.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "thesting.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "theworks.co.uk",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "thomassabo.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "tiffany.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "tigerofsweden.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "tillys.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "timberland.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "tissotwatches.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "titan.co.in",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "titleist.co.uk",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "titlenine.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "tjc.co.uk",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "tomfordfashion.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "tommy.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "torfs.be",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "torqeedo.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "torrid.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "tourneau.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "tous.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "toysrus.ca",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "toysrus.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "traeger.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "travelonbags.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "tricot.cl",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "triumph.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "truereligion.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "tts-group.co.uk",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "tumi.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "twinset.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "tyndaleusa.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "ubisoft.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "underarmour.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "undiz.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "uniformadvantage.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "unode50.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "upbound.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "urbanbarn.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "urbandecay.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "urbanelectric.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "valextra.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "vallen.com.mx",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "vans.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "vari.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "veja-store.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "versace.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "vfc.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "vibram.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "vidaxl.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "vilebrequin.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "villeroy-boch.at",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "villeroy-boch.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "villeroy-boch.fr",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "vince.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "vineyardvines.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "vinfastauto.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "viviennewestwood.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "vosker.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "warnerrecords.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "warrior.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "weathertech.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "weber.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "welkoop.nl",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "westmarine.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "whatgoesaroundnyc.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "whittard.co.uk",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "wolford.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "womensecret.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "woodlanddirect.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "worldmarket.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "yellowkorner.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "yeti.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "yogademocracy.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "yza.mx",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "zeit-sprachen.de",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "zoskinhealth.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
+  },
+  {
+    "domain": "zwilling.com",
+    "source": "seed",
+    "category": "brand",
+    "rankBucket": 100
   }
 ]

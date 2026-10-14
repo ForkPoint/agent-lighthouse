@@ -1,3 +1,4 @@
+import { DomWorkLimitError } from "./dom-work";
 import { SnapshotScanOptionsSchema, snapshotUrlKey } from "./schemas";
 import type { BrowserSnapshots } from "./contracts";
 import { parsePageContext } from "./page-context";
@@ -469,17 +470,26 @@ async function scanWithinBudget(
     allPageResults.filter((r) => r.status === 200 && r.body).length,
   );
 
+  const pageAnalysisErrors: Record<string, string> = {};
   const pages: PageContext[] = allPageResults
     .map((r, i) => ({ result: r, url: allPageUrls[i]!, index: i }))
     .filter((p) => p.result.status === 200 && p.result.body)
-    .map((p) => {
+    .flatMap((p) => {
       const isFirstPage = p.index === 0;
       const forcedType =
         (isFirstPage && options?.pageType ? options.pageType : undefined) ??
         overrideTypeByKey.get(p.url.replace(/\/$/, ""));
-      const parsed = parsePageContext(p.url, p.result.body, forcedType);
-      tracker.unitDone(p.url);
-      return { ...parsed, fetchResult: p.result };
+      try {
+        const parsed = parsePageContext(p.url, p.result.body, forcedType);
+        tracker.unitDone(p.url);
+        return [{ ...parsed, fetchResult: p.result }];
+      } catch (error) {
+        if (!(error instanceof DomWorkLimitError)) throw error;
+        // A local work limit is not a refused HTTP request or missing site markup.
+        pageAnalysisErrors[p.url] = error.message;
+        tracker.unitFail(p.url, error.message);
+        return [];
+      }
     });
 
   // Run bounded jsdom a11y pass on up to A11Y_MAX_PAGES pages
@@ -514,7 +524,8 @@ async function scanWithinBudget(
     url,
     pageResult,
     rootFiles,
-    pages.length,
+    allPageResults.filter((result) => result.status === 200 && result.body)
+      .length,
   );
 
   const evidence = buildScanEvidence({
@@ -523,6 +534,7 @@ async function scanWithinBudget(
     pages,
     rootFiles,
     wafProtection: wafProtection ?? null,
+    ...(Object.keys(pageAnalysisErrors).length ? { pageAnalysisErrors } : {}),
   });
 
   const pageAttempts = allPageResults
@@ -551,6 +563,7 @@ async function scanWithinBudget(
     pages.find((page) => page.url === displayUrl),
   );
   const ctx: CheckContext = {
+    ...(Object.keys(pageAnalysisErrors).length ? { pageAnalysisErrors } : {}),
     pageAttempts,
     targetUrl: displayUrl,
     rootFiles,

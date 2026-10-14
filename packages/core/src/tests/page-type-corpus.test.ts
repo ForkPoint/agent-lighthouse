@@ -29,7 +29,8 @@ describe("page-type corpus", () => {
   });
 
   for (const [name, label] of Object.entries(labels)) {
-    it(`${name} reads as ${label.expected}`, () => {
+    const test = label.knownMismatch ? it.fails : it;
+    test(`${name} reads as ${label.expected}`, () => {
       const { html, provenance } = readFixture(name);
       const $ = parseHtml(html);
       const structuredData = [

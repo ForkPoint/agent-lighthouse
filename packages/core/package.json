@@ -82,6 +82,7 @@
     "domhandler": "^6.0.1",
     "gpt-tokenizer": "^4.0.0",
     "jsdom": "^30.1.1",
+    "parse5-htmlparser2-tree-adapter": "^7.1.0",
     "undici": "^8.11.2",
     "zod": "^4.6.5"
   },

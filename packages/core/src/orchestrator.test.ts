@@ -55,7 +55,7 @@ vi.mock("./fetcher", async (importOriginal) => {
 // Avoid spinning up jsdom for every page; the orchestrator only needs
 // a resolved result object.
 vi.mock("./audits/operability-safety/runner", () => ({
-  runA11yForHtml: async () => ({}),
+  runA11yForHtml: vi.fn(async () => ({})),
   A11Y_RULES: [],
 }));
 
@@ -70,6 +70,8 @@ import { runScan, READINESS_VITAL_IDS } from "./orchestrator";
 import type { ScanEvent } from "./progress";
 import { defaultConfig } from "./audit-config";
 import { SCAN_TIMEOUT_MS } from "./constants";
+import { DOM_WORK_LIMITS } from "./contracts";
+import { runA11yForHtml } from "./audits/operability-safety/runner";
 import { runAudits } from "./audit-runner";
 import type { AuditRunResult } from "./audit-runner";
 
@@ -1634,5 +1636,66 @@ describe("runScan — selected page evidence and mixed scope", () => {
         e.phase === PhaseId.Audits,
     );
     expect(done).toHaveLength(checks.length);
+  });
+});
+
+describe("runScan — DOM work limits", () => {
+  const text = "Readable HTTP content with useful facts. ".repeat(20);
+  const deepHtml = `<html><body>${"<div>".repeat(DOM_WORK_LIMITS.maxDepth + 10)}<p>${text}</p>${"</div>".repeat(DOM_WORK_LIMITS.maxDepth + 10)}</body></html>`;
+
+  it("skips deep HTTP DOM analysis before a11y and keeps real HTTP evidence", async () => {
+    const url = "https://example.com/";
+    const response = ok(url, deepHtml);
+    response.headers["server"] = "akamaighost";
+    h.map.set(url, response);
+    vi.mocked(runA11yForHtml).mockClear();
+    const report = await runScan(url, {
+      categories: ["content-extraction"],
+      timeoutMs: 0,
+    });
+    expect(report.pagesScanned).toEqual([]);
+    expect(vi.mocked(runA11yForHtml)).not.toHaveBeenCalled();
+    expect(report.pageAttempts).toMatchObject([
+      { url, outcome: AttemptOutcome.Unread, status: 200 },
+    ]);
+    expect(report.scanValidity?.evidence[EvidenceKey.OriginReachable]).toBe(
+      true,
+    );
+    expect(report.scanValidity?.evidence[EvidenceKey.UnblockedFetches]).toBe(
+      true,
+    );
+    expect(report.wafProtection?.isBlocked).not.toBe(true);
+    expect(report.overallScore).toBeNull();
+    expect(report.scanValidity?.reasons[EvidenceKey.RenderedBody]).toContain(
+      `deeper than ${DOM_WORK_LIMITS.maxDepth}`,
+    );
+    const server = report.categories
+      .flatMap((category) => category.checks)
+      .find((check) => check.id === "content-extraction/server-rendered");
+    expect(server?.status).toBe(CheckStatus.NotApplicable);
+    expect(server?.explanation).toContain("analysis limit");
+  });
+
+  it("keeps usable HTTP pages when one declared page exceeds the DOM limits", async () => {
+    const url = "https://example.com/";
+    const article = "https://example.com/article";
+    set(url, `<html><body><h1>Home</h1><p>${text}</p></body></html>`);
+    set(article, deepHtml);
+    const report = await runScan(url, {
+      pages: [{ url: article, pageType: PageType.Article }],
+      categories: ["answer-readiness", "content-extraction"],
+      timeoutMs: 0,
+    });
+    expect(report.pagesScanned.map((page) => page.url)).toEqual([url]);
+    expect(
+      report.pageAttempts?.find((page) => page.url === article),
+    ).toMatchObject({ outcome: AttemptOutcome.Unread, status: 200 });
+    const namedAuthor = report.categories
+      .flatMap((category) => category.checks)
+      .find((check) => check.id === "answer-readiness/named-author");
+    expect(namedAuthor?.status).toBe(CheckStatus.NotApplicable);
+    expect(namedAuthor?.explanation).toContain("analysis limit");
+    expect(namedAuthor?.coverage?.unreadUrls).toContain(article);
+    expect(report.scanValidity?.evidence[EvidenceKey.RenderedBody]).toBe(true);
   });
 });

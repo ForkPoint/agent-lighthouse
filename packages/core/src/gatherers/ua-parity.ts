@@ -1,7 +1,8 @@
 import { cacheOwner } from "./cache-owner";
 import type { FetchOptions, FetchResult } from "#core/fetcher";
 import { isSafeUrl } from "#core/fetcher";
-import { parseHtml, getMainContentText } from "#core/parser";
+import { getMainContentText } from "#core/parser";
+import { DomWorkLimitError, parseBoundedHtml } from "#core/dom-work";
 
 /**
  * The AI crawlers whose published User-Agent strings can actually be sent.
@@ -106,7 +107,7 @@ const ANUBIS_MARKERS = [
 
 function mainText(body: string): string {
   if (!body.trim()) return "";
-  return getMainContentText(parseHtml(body));
+  return getMainContentText(parseBoundedHtml(body));
 }
 
 /**
@@ -145,12 +146,26 @@ export function classifyResponse(
     };
   }
 
-  const baselineText = mainText(baseline.body);
-  const probeText = mainText(probe.body);
+  // Header and status verdicts need no DOM. A body over the DOM work limits
+  // must not discard them, so its limit error waits for the text comparison.
+  let limitError: DomWorkLimitError | undefined;
+  const boundedText = (body: string): string => {
+    try {
+      return mainText(body);
+    } catch (error) {
+      if (!(error instanceof DomWorkLimitError)) throw error;
+      limitError ??= error;
+      return "";
+    }
+  };
+  const baselineText = boundedText(baseline.body);
+  const probeText = boundedText(probe.body);
   // No baseline text means no denominator; a ratio of 1 says "no shortfall
   // measured" rather than inventing a division by zero.
   const textRatio =
-    baselineText.length === 0 ? 1 : probeText.length / baselineText.length;
+    limitError || baselineText.length === 0
+      ? 1
+      : probeText.length / baselineText.length;
   const done = (blockClass: BlockClass, evidence: string) => ({
     blockClass,
     textRatio,
@@ -181,6 +196,7 @@ export function classifyResponse(
   if (probe.error || probe.status === 0) {
     return done(BlockClass.TransportError, probe.error ?? "no response");
   }
+  if (probe.status === 200 && limitError) throw limitError;
   if (probe.status === 200 && textRatio < SOFT_BLOCK_RATIO) {
     return done(
       BlockClass.SoftBlock,

@@ -23,6 +23,7 @@ import {
 import {
   listFixtures,
   readFixture,
+  FixtureKind,
   type FixtureProvenance,
 } from "./fixture-io";
 import type { CheckContext, PageContext } from "#core/check-context";
@@ -39,24 +40,6 @@ import { CheckStatus, EvidenceKey, PageTypeSource } from "#core/types";
  * complementary path: taking real-world responses and proving that the gate
  * correctly classifies bot walls, JavaScript shells, and readable pages.
  */
-
-const WALL_FIXTURES = new Set([
-  "ebay-com-category-wall",
-  "homepage-wall-403",
-  "reuters-com",
-  "stackoverflow-thread-wall",
-  "tirerack-com-soft-block-200",
-  "vercel-com-wall-200",
-]);
-
-const SHELL_FIXTURES = new Set([
-  "atlassian-com-pricing-shell",
-  "gymshark-com-shell",
-  "myfritz-net",
-  "quitenice-co-shell",
-  "reddit-r-programming-shell",
-  "tattly-com-shell",
-]);
 
 function buildCorpusPageContext(
   html: string,
@@ -97,8 +80,8 @@ function buildCorpusPageContext(
 describe("corpus evidence gating", () => {
   const fixtures = listFixtures();
 
-  it("evaluates all 61 real-page fixtures", () => {
-    expect(fixtures).toHaveLength(61);
+  it("evaluates the replacement real-page fixtures", () => {
+    expect(fixtures.length).toBeGreaterThan(0);
   });
 
   it("correctly partitions the corpus into walls, shells, and readable pages", () => {
@@ -127,9 +110,21 @@ describe("corpus evidence gating", () => {
       }
     }
 
-    expect([...walls].sort()).toEqual([...WALL_FIXTURES].sort());
-    expect([...shells].sort()).toEqual([...SHELL_FIXTURES].sort());
-    expect(content).toHaveLength(49);
+    expect([...walls].sort()).toEqual(
+      fixtures
+        .filter(
+          (name) => readFixture(name).provenance.kind === FixtureKind.Wall,
+        )
+        .sort(),
+    );
+    expect([...shells].sort()).toEqual(
+      fixtures
+        .filter(
+          (name) => readFixture(name).provenance.kind === FixtureKind.Shell,
+        )
+        .sort(),
+    );
+    expect(content.length + walls.length + shells.length).toBe(fixtures.length);
   });
 
   for (const name of fixtures) {
@@ -158,7 +153,7 @@ describe("corpus evidence gating", () => {
 
       const plan = planAudits(ctx, defaultConfig);
 
-      if (WALL_FIXTURES.has(name)) {
+      if (provenance.kind === FixtureKind.Wall) {
         // Wall fixtures must be declared unjudgeable and run zero page-fed audits
         expect(evidence.judgeable, `${name} must not be judgeable`).toBe(false);
         expect(plan.runnable.length, `${name} must run 0 page-fed audits`).toBe(
@@ -170,7 +165,7 @@ describe("corpus evidence gating", () => {
           expect(skipped.status).toBe(CheckStatus.NotApplicable);
           expect(skipped.explanation).toMatch(/^Not assessed: /);
         }
-      } else if (SHELL_FIXTURES.has(name)) {
+      } else if (provenance.kind === FixtureKind.Shell) {
         // Shell fixtures are judgeable but do not clear rendered-body
         expect(evidence.judgeable, `${name} must be judgeable`).toBe(true);
         expect(

@@ -4,7 +4,8 @@ import type { CheckContext } from "#core/check-context";
 import type { FetchResult } from "#core/fetcher";
 
 import { probeSecurityUrl } from "#core/gatherers/security";
-import { parseHtml, extractJsonLd, allJsonLdNodes } from "#core/parser";
+import { extractJsonLd, allJsonLdNodes } from "#core/parser";
+import { parseBoundedHtml } from "#core/dom-work";
 import { weightForGrade } from "#core/scorer";
 import {
   AuditTier,
@@ -70,7 +71,7 @@ function mintCanary(): string {
 function isNoindex(result: FetchResult, html: string): boolean {
   const header = result.headers["x-robots-tag"] ?? "";
   if (/noindex/i.test(header)) return true;
-  const $ = parseHtml(html);
+  const $ = parseBoundedHtml(html);
   return $('meta[name="robots"], meta[name="googlebot"]')
     .toArray()
     .some((el) => {
@@ -80,7 +81,7 @@ function isNoindex(result: FetchResult, html: string): boolean {
 
 /** Every string value anywhere inside the page's JSON-LD blocks. */
 function jsonLdStrings(html: string): string[] {
-  const nodes = allJsonLdNodes(extractJsonLd(parseHtml(html)));
+  const nodes = allJsonLdNodes(extractJsonLd(parseBoundedHtml(html)));
   const out: string[] = [];
   const walk = (value: unknown): void => {
     if (typeof value === "string") out.push(value);
@@ -94,7 +95,7 @@ function jsonLdStrings(html: string): string[] {
 
 /** Which sinks of one response echoed the canary back. */
 function sinksFor(html: string, canary: string): Sink[] {
-  const $ = parseHtml(html);
+  const $ = parseBoundedHtml(html);
   const found: Sink[] = [];
 
   if ($("title").text().includes(canary)) found.push(Sink.Title);
