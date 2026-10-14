@@ -1,7 +1,8 @@
+import * as cheerio from "cheerio";
 import type { CheerioAPI } from "cheerio";
 import { isTag, type AnyNode } from "domhandler";
+import { adapter } from "parse5-htmlparser2-tree-adapter";
 import { DOM_WORK_LIMITS } from "./contracts";
-import { parseHtml } from "./parser";
 
 /** Analysis cannot safely feed this DOM to ancestor-walking consumers. */
 export class DomWorkLimitError extends Error {
@@ -11,119 +12,49 @@ export class DomWorkLimitError extends Error {
   }
 }
 
-/** Elements that never hold children. */
-const VOID = new Set([
-  "area",
-  "base",
-  "br",
-  "col",
-  "embed",
-  "hr",
-  "img",
-  "input",
-  "keygen",
-  "link",
-  "meta",
-  "param",
-  "source",
-  "track",
-  "wbr",
-  "frame",
-]);
+const depthLimitMessage = `The page DOM nests deeper than ${DOM_WORK_LIMITS.maxDepth} elements. It exceeds the analysis limit.`;
 
 /**
- * Elements a same-kind start tag closes, or that the parser keeps from
- * nesting: `<p><p>`, `<li><li>`, `<a><a>` and repeated `<body>` never deepen
- * the tree. Leaving them out keeps the scan from over-counting real pages.
+ * parse5's tree adapter with a depth check on every insertion. The parser
+ * itself walks its open-element stack for each tag, so a deep page costs
+ * quadratic time before any check after the parse could run. Checking the
+ * tree as parse5 builds it uses the parser's own rules (raw text, foreign
+ * content, implied end tags) and stops at the first element past the limit.
  */
-const NON_NESTING = new Set([
-  "a",
-  "body",
-  "caption",
-  "colgroup",
-  "dd",
-  "dt",
-  "head",
-  "html",
-  "li",
-  "optgroup",
-  "option",
-  "p",
-  "rb",
-  "rp",
-  "rt",
-  "rtc",
-  "tbody",
-  "td",
-  "tfoot",
-  "th",
-  "thead",
-  "tr",
-]);
-
-/** Elements whose content the tokenizer reads as text, up to the matching end tag. */
-const RAW_TEXT = new Set([
-  "iframe",
-  "noembed",
-  "noframes",
-  "plaintext",
-  "script",
-  "style",
-  "textarea",
-  "title",
-  "xmp",
-]);
-
-const FOREIGN = new Set(["svg", "math"]);
-
-const TAG = /<!--[\s\S]*?(?:-->|$)|<(\/?)([a-zA-Z][^\s/>]*)[^>]*?(\/?)>/g;
-
-/**
- * Approximate the parser's open-element stack over raw markup in linear time.
- * An end tag closes the unclosed children above its match, as the parser does,
- * so sloppy markup does not drift upward. `/>` self-closes only inside SVG or
- * MathML, because `<div/>` opens a div in HTML.
- */
-export function assertMarkupDepth(
-  html: string,
-  limit: number = DOM_WORK_LIMITS.maxMarkupDepth,
-): void {
-  const stack: string[] = [];
-  const open = new Map<string, number>();
-  let foreign = 0;
-  let lower: string | undefined; // Lower-cased once, on the first raw-text element.
-  TAG.lastIndex = 0;
-  for (let match = TAG.exec(html); match; match = TAG.exec(html)) {
-    const [, closing, rawName, selfClosing] = match;
-    if (rawName === undefined) continue; // A comment.
-    const name = rawName.toLowerCase();
-    if (closing) {
-      if (!open.get(name)) continue;
-      while (stack.length) {
-        const top = stack.pop()!;
-        open.set(top, open.get(top)! - 1);
-        if (FOREIGN.has(top)) foreign--;
-        if (top === name) break;
-      }
-      continue;
-    }
-    if (RAW_TEXT.has(name)) {
-      lower ??= html.toLowerCase();
-      const end = lower.indexOf(`</${name}`, TAG.lastIndex);
-      if (end === -1) return;
-      TAG.lastIndex = end;
-      continue;
-    }
-    if (VOID.has(name) || NON_NESTING.has(name)) continue;
-    if (selfClosing && foreign > 0) continue;
-    stack.push(name);
-    open.set(name, (open.get(name) ?? 0) + 1);
-    if (FOREIGN.has(name)) foreign++;
-    if (stack.length > limit)
-      throw new DomWorkLimitError(
-        `The page markup nests deeper than ${limit} elements. It exceeds the analysis limit.`,
-      );
-  }
+function depthBoundedAdapter(): typeof adapter {
+  const depths = new WeakMap<object, number>();
+  // parse5 attaches a template's content fragment before the template itself
+  // enters the tree, so the fragment reads its depth from the template later.
+  const templates = new WeakMap<object, object>();
+  const depthOf = (node: object): number => {
+    const known = depths.get(node);
+    if (known !== undefined) return known;
+    const template = templates.get(node);
+    return template ? (depths.get(template) ?? 0) : 0;
+  };
+  const place = (parent: object, child: AnyNode): void => {
+    const depth = depthOf(parent) + 1;
+    if (isTag(child) && depth > DOM_WORK_LIMITS.maxDepth)
+      throw new DomWorkLimitError(depthLimitMessage);
+    depths.set(child, depth);
+  };
+  return {
+    ...adapter,
+    appendChild(parent, child) {
+      place(parent, child);
+      adapter.appendChild(parent, child);
+    },
+    insertBefore(parent, child, reference) {
+      place(parent, child);
+      adapter.insertBefore(parent, child, reference);
+    },
+    // Template content is a separate fragment; it inherits the template's depth
+    // so nested templates cannot restart the count.
+    setTemplateContent(template, content) {
+      templates.set(content, template);
+      adapter.setTemplateContent(template, content);
+    },
+  };
 }
 
 /** Bound DOM work before extraction, classification or audits. Linear, and stops at the first excess. */
@@ -142,9 +73,7 @@ export function assertDomWork(
     const [node, depth] = stack.pop()!;
     if (!isTag(node)) continue;
     if (depth > DOM_WORK_LIMITS.maxDepth)
-      throw new DomWorkLimitError(
-        `The page DOM nests deeper than ${DOM_WORK_LIMITS.maxDepth} elements. It exceeds the analysis limit.`,
-      );
+      throw new DomWorkLimitError(depthLimitMessage);
     steps += depth;
     if (steps > maxAncestorSteps)
       throw new DomWorkLimitError(
@@ -155,15 +84,15 @@ export function assertDomWork(
 }
 
 /**
- * Parse untrusted HTML within the DOM work limits: a raw-markup check first,
- * because parsing itself is quadratic in depth, then the exact tree check.
+ * Parse untrusted HTML within the DOM work limits: depth while parse5 builds
+ * the tree, because parsing itself is quadratic in depth, then total ancestor
+ * work on the finished tree.
  */
 export function parseBoundedHtml(
   html: string,
   maxAncestorSteps: number = DOM_WORK_LIMITS.httpAncestorSteps,
 ): CheerioAPI {
-  assertMarkupDepth(html);
-  const $ = parseHtml(html);
+  const $ = cheerio.load(html, { treeAdapter: depthBoundedAdapter() });
   assertDomWork($, maxAncestorSteps);
   return $;
 }

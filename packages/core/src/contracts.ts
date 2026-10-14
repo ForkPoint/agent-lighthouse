@@ -555,12 +555,6 @@ export const SNAPSHOT_LIMITS = {
 export const DOM_WORK_LIMITS = {
   /** Chromium's HTML parser stops nesting at 512, so a parsed page cannot be deeper. */
   maxDepth: 512,
-  /**
-   * Raw-markup nesting checked before parsing. The parser itself is quadratic
-   * in depth (20,000 levels took 1.7 s), so this stops it starting at all.
-   * It sits above maxDepth because a markup scan only approximates the tree.
-   */
-  maxMarkupDepth: 2048,
   /** Summed element depth for a served page: room for 30,000+ element pages. */
   httpAncestorSteps: 3_000_000,
   /** Summed element depth for one uploaded capture; up to six run per scan. */

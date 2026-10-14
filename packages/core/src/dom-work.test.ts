@@ -1,12 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { parseHtml } from "./parser";
 import { parsePageContext } from "./page-context";
-import {
-  assertDomWork,
-  assertMarkupDepth,
-  DomWorkLimitError,
-  parseBoundedHtml,
-} from "./dom-work";
+import { assertDomWork, DomWorkLimitError, parseBoundedHtml } from "./dom-work";
 import { DOM_WORK_LIMITS } from "./contracts";
 
 const nest = (open: string, close: string, n: number, inner = "Details") =>
@@ -42,22 +37,46 @@ describe("shared DOM analysis work limits", () => {
   });
 });
 
-describe("raw markup depth before parsing", () => {
-  const over = DOM_WORK_LIMITS.maxMarkupDepth + 10;
-  it("stops deep nesting before the quadratic parse starts", () => {
-    // A 5 MB body can nest about a million levels; parsing 20,000 took 1.7 s.
-    const html = nest("<div>", "</div>", 1_000_000);
+describe("depth checked while parse5 builds the tree", () => {
+  const over = DOM_WORK_LIMITS.maxDepth + 10;
+  const timed = (html: string) => {
     const started = performance.now();
-    expect(() => parseBoundedHtml(html)).toThrow("markup nests deeper");
-    expect(performance.now() - started).toBeLessThan(500);
+    let error: unknown;
+    try {
+      parseBoundedHtml(html);
+    } catch (caught) {
+      error = caught;
+    }
+    return { error, ms: performance.now() - started };
+  };
+  it("stops deep nesting before the quadratic parse runs on", () => {
+    // A 5 MB body can nest about a million levels; parsing 20,000 took 1.7 s.
+    const { error, ms } = timed(nest("<div>", "</div>", 1_000_000));
+    expect(error).toBeInstanceOf(DomWorkLimitError);
+    expect(ms).toBeLessThan(500);
+  });
+  it("stays linear on unterminated tags", () => {
+    const { error, ms } = timed("<div ".repeat(20_000));
+    expect(error).toBeUndefined();
+    expect(ms).toBeLessThan(500);
+  });
+  it("nests HTML elements inside SVG <style>, as the parser does", () => {
+    const { error, ms } = timed(`<svg><style>${"<div>".repeat(20_000)}`);
+    expect(error).toBeInstanceOf(DomWorkLimitError);
+    expect(ms).toBeLessThan(500);
   });
   it("treats <div/> as an open div, as HTML does", () => {
-    expect(() => assertMarkupDepth(nest("<div/>", "", over))).toThrow(
+    expect(() => parseBoundedHtml(nest("<div/>", "", over))).toThrow(
       DomWorkLimitError,
     );
   });
   it.each([
     ["unclosed paragraphs", nest("<p>", "", 20_000)],
+    ["paragraphs that close open inline children", "<p><span>x".repeat(3000)],
+    [
+      "tags inside a quoted attribute",
+      `<div title="${"<div>".repeat(3000)}"></div>`,
+    ],
     ["unclosed list items", `<ul>${"<li>item".repeat(20_000)}</ul>`],
     ["unclosed table cells", `<table>${"<tr><td>x".repeat(20_000)}</table>`],
     ["repeated anchors", "<a href=x>link".repeat(20_000)],
@@ -73,6 +92,16 @@ describe("raw markup depth before parsing", () => {
     ["tags inside script text", `<script>${"<div>".repeat(20_000)}</script>`],
     ["tags inside comments", `<!--${"<div>".repeat(20_000)}-->`],
   ])("does not over-count %s", (_, html) => {
-    expect(() => assertMarkupDepth(html)).not.toThrow();
+    expect(() => parseBoundedHtml(html)).not.toThrow();
+  });
+  it("carries template depth into its content", () => {
+    expect(() => parseBoundedHtml("<template>".repeat(over))).toThrow(
+      DomWorkLimitError,
+    );
+  });
+  it("builds the same tree as the unbounded parser", () => {
+    const html =
+      "<p>a<span>b<p>c</p><template><div>t</div></template><svg><style>s</style></svg>";
+    expect(parseBoundedHtml(html).html()).toBe(parseHtml(html).html());
   });
 });

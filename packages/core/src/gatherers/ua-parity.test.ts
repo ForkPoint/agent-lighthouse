@@ -9,6 +9,8 @@ import {
   CONTROL_UA,
 } from "./ua-parity";
 import { mockFetchResult } from "#core/__tests__/test-utils";
+import { DOM_WORK_LIMITS } from "#core/contracts";
+import { DomWorkLimitError } from "#core/dom-work";
 import type { FetchOptions, FetchResult } from "#core/fetcher";
 
 // isSafeUrl performs a real DNS lookup before the gatherer probes a URL it read
@@ -54,6 +56,22 @@ describe("classifyResponse", () => {
 
   // Precedence matters: a 403 that also carries cf-mitigated is a challenge,
   // not the ambiguous opaque block, and the operator's remedy differs.
+  it("keeps header verdicts when the probe body exceeds the DOM work limits", () => {
+    const deep = "<div>".repeat(DOM_WORK_LIMITS.maxDepth + 100);
+    const c = classifyResponse(
+      ok(),
+      res(403, { "cf-mitigated": "challenge" }, deep),
+    );
+    expect(c.blockClass).toBe("cf-challenge");
+  });
+
+  it("still refuses a text comparison over the DOM work limits", () => {
+    const deep = "<div>".repeat(DOM_WORK_LIMITS.maxDepth + 100);
+    expect(() => classifyResponse(ok(), res(200, {}, deep))).toThrow(
+      DomWorkLimitError,
+    );
+  });
+
   it("classifies cf-mitigated as a Cloudflare challenge ahead of the status", () => {
     const c = classifyResponse(ok(), res(403, { "cf-mitigated": "challenge" }));
     expect(c.blockClass).toBe("cf-challenge");
