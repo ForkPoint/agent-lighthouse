@@ -1,0 +1,43 @@
+{
+  "url": "https://www.amartfurniture.com.au/",
+  "requestedUrl": "https://amartfurniture.com.au/",
+  "capturedAt": "2026-10-13T20:54:37.889Z",
+  "sha256": "527158087002f8ad5aa299d3cf08d4cba6132f728ec8596cec236c57ac8bdfe0",
+  "status": 200,
+  "kind": "page",
+  "headers": {
+    "date": "Tue, 13 Oct 2026 20:54:37 GMT",
+    "content-type": "text/html; charset=utf-8",
+    "cache-control": "no-cache",
+    "content-security-policy-report-only": "default-src 'self'; script-src 'self' 'unsafe-inline' * https://*.optimizely.com https://optimizely.s3.amazonaws.com https://cdn-assets-prod.s3.amazonaws.com; style-src 'self' 'unsafe-inline' * https://*.optimizely.com; img-src 'self' data: https: https://cdn.optimizely.com; font-src 'self' data: https: https://*.optimizely.com; connect-src 'self' * https://*.optimizely.com https://logx.optimizely.com wss://*.optimizely.com; media-src 'self' *; object-src 'none'; base-uri 'self'; form-action 'self' https://*.cardinalcommerce.com https://www.facebook.com; frame-src 'self' https://*.cardinalcommerce.com https://pay.google.com https://widget.trustpilot.com https://apps.mypurecloud.com.au https://*.afterpay.com https://www.youtube.com https://player.vimeo.com https://maps.google.com https://www.googletagmanager.com https://*.doubleclick.net https://gum.criteo.com https://*.adsrvr.org https://ct.pinterest.com https://www.facebook.com https://a30402040484.cdn.optimizely.com https://a30402040484.cdn-pci.optimizely.com; frame-ancestors 'none'; report-uri /csp-report; report-to csp-endpoint",
+    "link": "<https://res.cloudinary.com/hkhlakvcp/raw/upload/v1791920147/media/00D5i000007EZuhEAG/theme-supplement_css_6abe87.css>; rel=preload; as=style; nopush",
+    "referrer-policy": "strict-origin-when-cross-origin",
+    "reporting-endpoints": "csp-endpoint=\"/csp-report\"",
+    "set-cookie": "sc_token=eyJfcmFpbHMiOnsibWVzc2FnZSI6ImV5SjBiMnRsYmlJNklqYzBZVEpqTUdaa0xUUTVaRGt0TkRBMk9TMDVNMk0yTFdNNU5UazVZekF3T1dabVppSXNJbXh2WjJkbFpGOXBiaUk2Wm1Gc2MyVjkiLCJleHAiOm51bGwsInB1ciI6ImNvb2tpZS5zY190b2tlbiJ9fQ%3D%3D--b815934659370bd72ec452699eefc5621203c1ed; domain=www.amartfurniture.com.au; path=/; expires=Sat, 13 Oct 2046 20:54:37 GMT; httponly; samesite=lax; secure\nstore_connect_session=7bf530623f4abcf7a779f70fc49aed1b; path=/; secure; httponly; samesite=lax",
+    "strict-transport-security": "max-age=63072000; includeSubDomains",
+    "vary": "Accept,Accept-Encoding",
+    "via": "1.1 spaces-router (0068daa889ed)",
+    "x-content-type-options": "nosniff",
+    "x-frame-options": "SAMEORIGIN",
+    "x-permitted-cross-domain-policies": "none",
+    "x-powered-by": "StoreConnect",
+    "x-request-id": "293d1dd9-9f48-e52f-b117-0e9448e3edb7",
+    "x-runtime": "0.558626",
+    "x-xss-protection": "0",
+    "cf-cache-status": "DYNAMIC",
+    "server": "cloudflare",
+    "cf-ray": "a4a13d876abbd2d9-SOF",
+    "alt-svc": "h3=\":443\"; ma=86400"
+  },
+  "contentType": "text/html; charset=utf-8",
+  "ttfbMs": 2469,
+  "totalMs": 2883,
+  "contentLength": 318565,
+  "redirectChain": [
+    {
+      "status": 301,
+      "from": "https://amartfurniture.com.au/",
+      "to": "https://www.amartfurniture.com.au/"
+    }
+  ]
+}

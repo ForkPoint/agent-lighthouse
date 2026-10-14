@@ -13,11 +13,6 @@ import {
   type SiteEntry,
   SiteSource,
 } from "./site-list";
-import {
-  excludedDomains,
-  type CorpusStatus,
-  CorpusState,
-} from "./corpus-status";
 
 const sites: SiteEntry[] = JSON.parse(
   readFileSync(resolve(__dirname, "../../test-data/sites/sites.json"), "utf8"),
@@ -26,124 +21,26 @@ const seedFile: SeedFile = JSON.parse(
   readFileSync(resolve(__dirname, "../../test-data/sites/seeds.json"), "utf8"),
 );
 
-describe("the site list", () => {
-  it("holds enough sites to be worth scanning, and few enough to finish in an hour", () => {
-    expect(sites.length).toBeGreaterThanOrEqual(250);
-    expect(sites.length).toBeLessThanOrEqual(500);
-  });
-
-  it("gives every category at least 10 domains", () => {
-    const counts = new Map<string, number>();
-    for (const s of sites)
-      counts.set(s.category, (counts.get(s.category) ?? 0) + 1);
-    for (const [category, n] of counts) {
-      if (category === "unknown") continue;
-      expect(n, category).toBeGreaterThanOrEqual(10);
-    }
-  });
-
-  it("marks two smoke domains per seeded category that has two ok seeds", () => {
-    const statusPath = resolve(__dirname, "../../test-data/sites/status.json");
-    const status: CorpusStatus = JSON.parse(readFileSync(statusPath, "utf8"));
-    const smoke = sites.filter((s) => s.tier === "smoke");
-    const perCategory = new Map<string, number>();
-    for (const s of smoke) {
-      perCategory.set(s.category, (perCategory.get(s.category) ?? 0) + 1);
-    }
-    // A category whose seeds the runners cannot scan (every news seed
-    // disallows AI crawlers in robots.txt) has no smoke domain rather than a
-    // smoke domain the smoke run skips.
-    for (const [category, { domains }] of Object.entries(seedFile.categories)) {
-      const ok = domains.filter(
-        (d) => status.domains[d]?.state === CorpusState.Ok,
-      );
-      const want = Math.min(2, ok.length);
-      expect(perCategory.get(category) ?? 0, category).toBe(want);
-    }
-    expect(perCategory.has("unknown")).toBe(false);
-  });
-
-  it("carries no unseeded domain the status file calls dead or blocked", () => {
-    const statusPath = resolve(__dirname, "../../test-data/sites/status.json");
-    const status: CorpusStatus = JSON.parse(readFileSync(statusPath, "utf8"));
-    const excluded = excludedDomains(status, {});
-    // A seeded domain keeps its ranked source when a ranked list carries it,
-    // so `source` cannot tell a seed from a slice entry; the seed file can.
-    const seeded = readSeeds(seedFile).categoryOf;
-    for (const s of sites) {
-      if (seeded.has(s.domain)) continue;
-      expect(excluded.has(s.domain), s.domain).toBe(false);
-    }
-  });
-
-  it("marks only domains the status file calls ok as smoke", () => {
-    const statusPath = resolve(__dirname, "../../test-data/sites/status.json");
-    const status: CorpusStatus = JSON.parse(readFileSync(statusPath, "utf8"));
-    for (const s of sites) {
-      if (s.tier !== "smoke") continue;
-      expect(status.domains[s.domain]?.state, s.domain).toBe("ok");
-    }
-  });
-
-  it("carries a bare hostname per entry, never a URL", () => {
-    // Every entry, not a leading slice: the first thousand are all Tranco,
-    // which already ships bare hostnames, so a slice would never reach the
-    // CrUX rows that arrive as `https://example.com` and need stripping.
-    for (const site of sites) {
-      expect(site.domain, site.domain).not.toMatch(/^https?:\/\//);
-      expect(site.domain, site.domain).toMatch(HOSTNAME);
-    }
-  });
-
-  it("lists each domain once", () => {
+describe("the brand site list", () => {
+  it("contains each supplied brand domain exactly once", () => {
+    const brands = JSON.parse(
+      readFileSync(
+        resolve(__dirname, "../../test-data/sites/brands.json"),
+        "utf8",
+      ),
+    ) as { brands: Array<{ domain: string }> };
+    expect(sites.map((s) => s.domain)).toEqual(
+      brands.brands.map((b) => b.domain).sort((a, b) => a.localeCompare(b)),
+    );
     expect(new Set(sites.map((s) => s.domain)).size).toBe(sites.length);
-  });
-
-  it("reaches past storefronts, which is the point of building it", () => {
-    const categories = new Set(sites.map((s) => s.category));
-    categories.delete("unknown");
-    expect(categories.size).toBeGreaterThanOrEqual(6);
-  });
-
-  it("draws on both ranked sources, not just the first one read", () => {
-    const sources = new Set(sites.map((s) => s.source));
-    expect(sources).toContain("tranco");
-    expect(sources).toContain("crux");
-  });
-
-  it("never claims a ranked source for a domain that was only seeded", () => {
-    // A seed carry-over stamped `tranco` would be scanned as a top-ranked site.
-    const seeded = sites.filter((s) => s.source === SiteSource.Seed);
-    expect(seeded.length).toBeGreaterThan(0);
-    for (const site of seeded) {
-      expect(site.category, site.domain).not.toBe("unknown");
+    for (const site of sites) {
+      expect(site.domain).toMatch(HOSTNAME);
+      expect(site.source).toBe(SiteSource.Seed);
+      expect(site.category).toBe("brand");
     }
-  });
-
-  it("spreads entries over rank buckets so a top slice selects a slice", () => {
-    // The bucket once had width equal to the limit, which put all 1913 entries
-    // in bucket 0 and turned `rankBucket < 5000` into "everything". This checks
-    // the committed artefact only — the generator-level guard is in the
-    // buildSiteList block, because a width change leaves this file's buckets
-    // looking plausible until someone regenerates.
-    const buckets = new Set(sites.map((s) => s.rankBucket));
-    expect(buckets.size).toBeGreaterThan(1);
-    const head = sites.filter((s) => s.rankBucket < BUCKET_WIDTH);
-    expect(head.length).toBeGreaterThan(0);
-    expect(head.length).toBeLessThan(sites.length);
-  });
-
-  it("ranks seed carry-overs below every domain that made the cut", () => {
-    const ranked = sites.filter((s) => s.source !== SiteSource.Seed);
-    const worstRanked = Math.max(...ranked.map((s) => s.rankBucket));
-    for (const site of sites.filter((s) => s.source === SiteSource.Seed)) {
-      expect(site.rankBucket, site.domain).toBeGreaterThan(worstRanked);
-    }
-  });
-
-  it("is ordered by domain, so a regeneration diffs to real changes only", () => {
-    const domains = sites.map((s) => s.domain);
-    expect(domains).toEqual([...domains].sort((a, b) => a.localeCompare(b)));
+    expect([...readSeeds(seedFile).categoryOf.keys()].sort()).toEqual(
+      sites.map((s) => s.domain).sort(),
+    );
   });
 });
 

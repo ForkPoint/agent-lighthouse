@@ -7,6 +7,8 @@ export interface PageTypeLabel {
   expected: PageType;
   /** Also fetched live by the smoke test, which re-checks the type only. */
   live?: boolean;
+  /** A reviewed capture proves a current classifier defect. */
+  knownMismatch?: boolean;
   why: string;
 }
 
