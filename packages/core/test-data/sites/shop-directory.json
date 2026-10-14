@@ -87,11 +87,7 @@
             "title": "Apoquel Chewable (oclacitinib chewable tablet) - Allergy Itch Relief Chewable Tablets for Dogs - 3.6 mg - 1 Count | 1800PetMeds",
             "fixture": "reports/brand-corpus/captures/1800petmeds.com/43edebb96b6cbfd2.html.gz",
             "provenance": "reports/brand-corpus/captures/1800petmeds.com/43edebb96b6cbfd2.json",
-            "commerceSignals": [
-              "checkout",
-              "Add to Cart",
-              "Add To Cart"
-            ]
+            "commerceSignals": ["checkout", "Add to Cart", "Add To Cart"]
           }
         }
       ],
@@ -156,9 +152,7 @@
             "title": "Cricut Explore 5 Bundle + Curs d'Iniciació de Regal",
             "fixture": "reports/brand-corpus/captures/abacus.coop/aa8d7fc5f6cc385d.html.gz",
             "provenance": "reports/brand-corpus/captures/abacus.coop/aa8d7fc5f6cc385d.json",
-            "commerceSignals": [
-              "Comprar"
-            ]
+            "commerceSignals": ["Comprar"]
           }
         }
       ],
@@ -199,9 +193,7 @@
             "title": "CATÁLOGO - AMOSTRAS/EXPOSITORES/CATA - ILUMINAÇÃO - ABC da Construção",
             "fixture": "reports/brand-corpus/captures/abcdaconstrucao.com.br/af212531773ad50b.html.gz",
             "provenance": "reports/brand-corpus/captures/abcdaconstrucao.com.br/af212531773ad50b.json",
-            "commerceSignals": [
-              "comprar"
-            ]
+            "commerceSignals": ["comprar"]
           }
         }
       ],
@@ -485,9 +477,7 @@
             "title": "Von Dutch | Aéropostale Collection | Girls & Guys Clothing | Aéropostale",
             "fixture": "reports/brand-corpus/captures/aeropostale.com/3448b85d46d632f7.html.gz",
             "provenance": "reports/brand-corpus/captures/aeropostale.com/3448b85d46d632f7.json",
-            "commerceSignals": [
-              "checkout"
-            ]
+            "commerceSignals": ["checkout"]
           }
         }
       ],
@@ -593,9 +583,7 @@
             "title": "Plátanos y uvas venta online | Ahorramas Supermercado online",
             "fixture": "reports/brand-corpus/captures/ahorramas.com/47a63a9ccc9f5987.html.gz",
             "provenance": "reports/brand-corpus/captures/ahorramas.com/47a63a9ccc9f5987.json",
-            "commerceSignals": [
-              "comprar"
-            ]
+            "commerceSignals": ["comprar"]
           }
         }
       ],
@@ -718,10 +706,7 @@
             "title": "Alanui Official Store | Luxury Knitwear Made in Italy",
             "fixture": "reports/brand-corpus/captures/alanui.it/1422a2dee2bf5882.html.gz",
             "provenance": "reports/brand-corpus/captures/alanui.it/1422a2dee2bf5882.json",
-            "commerceSignals": [
-              "Shopping bag",
-              "shopping bag"
-            ]
+            "commerceSignals": ["Shopping bag", "shopping bag"]
           }
         }
       ],
@@ -762,9 +747,7 @@
             "title": "silk layered cami shirt top",
             "fixture": "reports/brand-corpus/captures/alexanderwang.com/2d3b759e0dd43e16.html.gz",
             "provenance": "reports/brand-corpus/captures/alexanderwang.com/2d3b759e0dd43e16.json",
-            "commerceSignals": [
-              "Add to Bag"
-            ]
+            "commerceSignals": ["Add to Bag"]
           }
         }
       ],
@@ -857,10 +840,7 @@
             "title": "Buy Purina Pro Plan Ha Hydrolyzed Dog Food | Allivet",
             "fixture": "reports/brand-corpus/captures/allivet.com/7e9e829d20ab8889.html.gz",
             "provenance": "reports/brand-corpus/captures/allivet.com/7e9e829d20ab8889.json",
-            "commerceSignals": [
-              "checkout",
-              "Add to cart"
-            ]
+            "commerceSignals": ["checkout", "Add to cart"]
           }
         }
       ],
@@ -969,10 +949,7 @@
             "title": "E-Gift Card 25 | Altra Running US",
             "fixture": "reports/brand-corpus/captures/altrarunning.com/d1f5104c6a0b108e.html.gz",
             "provenance": "reports/brand-corpus/captures/altrarunning.com/d1f5104c6a0b108e.json",
-            "commerceSignals": [
-              "Add to Cart",
-              "checkout"
-            ]
+            "commerceSignals": ["Add to Cart", "checkout"]
           }
         }
       ],
@@ -1013,9 +990,7 @@
             "title": "GREY DETROIT FABRIC 3 Seater with 2 Inbuilt Electric Recliners with Drop Down Table and Battery | Amart Furniture",
             "fixture": "reports/brand-corpus/captures/amartfurniture.com.au/b33db57caa2edd04.html.gz",
             "provenance": "reports/brand-corpus/captures/amartfurniture.com.au/b33db57caa2edd04.json",
-            "commerceSignals": [
-              "Add to Cart"
-            ]
+            "commerceSignals": ["Add to Cart"]
           }
         }
       ],
@@ -1056,9 +1031,7 @@
             "title": "",
             "fixture": "reports/brand-corpus/captures/amend.com.br/9343c408dfec6dbc.html.gz",
             "provenance": "reports/brand-corpus/captures/amend.com.br/9343c408dfec6dbc.json",
-            "commerceSignals": [
-              "Comprar"
-            ]
+            "commerceSignals": ["Comprar"]
           }
         }
       ],
@@ -1173,9 +1146,7 @@
             "title": "Nutrivia Nature Plus - Croquettes Naturelles au Saumon Frais pour Chien de Toutes Races - 3Kg | Animalis",
             "fixture": "reports/brand-corpus/captures/animalis.com/bc61dd06b090d238.html.gz",
             "provenance": "reports/brand-corpus/captures/animalis.com/bc61dd06b090d238.json",
-            "commerceSignals": [
-              "Ajouter au panier"
-            ]
+            "commerceSignals": ["Ajouter au panier"]
           }
         }
       ],
@@ -1216,9 +1187,7 @@
             "title": "Buy Designer Bandhan Handwoven Benarasi Silk Saree - Yellow Online for Women from Anita Dongre 8909300633890",
             "fixture": "reports/brand-corpus/captures/anitadongre.com/459eeae39b84f146.html.gz",
             "provenance": "reports/brand-corpus/captures/anitadongre.com/459eeae39b84f146.json",
-            "commerceSignals": [
-              "Add To Cart"
-            ]
+            "commerceSignals": ["Add To Cart"]
           }
         }
       ],
@@ -1259,11 +1228,7 @@
             "title": "Lace-Up Stick-On Padded Bra - Black | Ann Summers",
             "fixture": "reports/brand-corpus/captures/annsummers.com/993405cb3c8220d2.html.gz",
             "provenance": "reports/brand-corpus/captures/annsummers.com/993405cb3c8220d2.json",
-            "commerceSignals": [
-              "Add to Bag",
-              "checkout",
-              "Buy Now"
-            ]
+            "commerceSignals": ["Add to Bag", "checkout", "Buy Now"]
           }
         }
       ],
@@ -1304,9 +1269,7 @@
             "title": "",
             "fixture": "reports/brand-corpus/captures/anntaylor.com/fcc01c533ee61cd2.html.gz",
             "provenance": "reports/brand-corpus/captures/anntaylor.com/fcc01c533ee61cd2.json",
-            "commerceSignals": [
-              "checkout"
-            ]
+            "commerceSignals": ["checkout"]
           }
         }
       ],
@@ -1425,10 +1388,7 @@
             "title": "The AirPuff™ Vest Arctic Eclipse | Ardene Canada",
             "fixture": "reports/brand-corpus/captures/ardene.com/075395d3ffcb9930.html.gz",
             "provenance": "reports/brand-corpus/captures/ardene.com/075395d3ffcb9930.json",
-            "commerceSignals": [
-              "checkout",
-              "Add to bag"
-            ]
+            "commerceSignals": ["checkout", "Add to bag"]
           }
         }
       ],
@@ -1469,9 +1429,7 @@
             "title": "Why Shop on Ariat.com? | Ariat",
             "fixture": "reports/brand-corpus/captures/ariat.com/a5abbdc8c2b2dd83.html.gz",
             "provenance": "reports/brand-corpus/captures/ariat.com/a5abbdc8c2b2dd83.json",
-            "commerceSignals": [
-              "checkout"
-            ]
+            "commerceSignals": ["checkout"]
           }
         }
       ],
@@ -1749,11 +1707,7 @@
             "title": "COMPRAR Camiseta match hombre 1ª equipación 26/27 ONLINE | Tienda oficial del Atlético de Madrid",
             "fixture": "reports/brand-corpus/captures/atleticodemadrid.com/2a71717fa6bcd649.html.gz",
             "provenance": "reports/brand-corpus/captures/atleticodemadrid.com/2a71717fa6bcd649.json",
-            "commerceSignals": [
-              "comprar",
-              "COMPRAR",
-              "Añadir al carrito"
-            ]
+            "commerceSignals": ["comprar", "COMPRAR", "Añadir al carrito"]
           }
         }
       ],
@@ -1794,9 +1748,7 @@
             "title": "iPhone 18 Pro: Prices, Colors, Specs, Features | AT&T",
             "fixture": "reports/brand-corpus/captures/att.com/d9987dab12ae5cd6.html.gz",
             "provenance": "reports/brand-corpus/captures/att.com/d9987dab12ae5cd6.json",
-            "commerceSignals": [
-              "Checkout"
-            ]
+            "commerceSignals": ["Checkout"]
           }
         }
       ],
@@ -1912,9 +1864,7 @@
             "title": "Shop Domyos Online | Fitness Equipment & Clothing | Azadea Kuwait",
             "fixture": "reports/brand-corpus/captures/azadea.com/f42756518f0fb0da.html.gz",
             "provenance": "reports/brand-corpus/captures/azadea.com/f42756518f0fb0da.json",
-            "commerceSignals": [
-              "shopping bag"
-            ]
+            "commerceSignals": ["shopping bag"]
           }
         }
       ],
@@ -1955,9 +1905,7 @@
             "title": "Sextoy Ona Marron // ba&sh FR",
             "fixture": "reports/brand-corpus/captures/ba-sh.com/645e477a5ed6e413.html.gz",
             "provenance": "reports/brand-corpus/captures/ba-sh.com/645e477a5ed6e413.json",
-            "commerceSignals": [
-              "Ajouter au panier"
-            ]
+            "commerceSignals": ["Ajouter au panier"]
           }
         }
       ],
@@ -2037,10 +1985,7 @@
             "title": "Mille Nuits Glass | Baccarat Bulgaria",
             "fixture": "reports/brand-corpus/captures/baccarat.com/005225cd22462a8c.html.gz",
             "provenance": "reports/brand-corpus/captures/baccarat.com/005225cd22462a8c.json",
-            "commerceSignals": [
-              "Shopping Bag",
-              "Add to bag"
-            ]
+            "commerceSignals": ["Shopping Bag", "Add to bag"]
           }
         }
       ],
@@ -2081,9 +2026,7 @@
             "title": "Damen - Pullover mit streckendem Strukturstrick - lindgrün meliert",
             "fixture": "reports/brand-corpus/captures/bader.de/f7cdec826e57ad6d.html.gz",
             "provenance": "reports/brand-corpus/captures/bader.de/f7cdec826e57ad6d.json",
-            "commerceSignals": [
-              "In den Warenkorb"
-            ]
+            "commerceSignals": ["In den Warenkorb"]
           }
         }
       ],
@@ -2158,9 +2101,7 @@
             "title": "T-shirt Balmain Paris brodé noir - Femme | BALMAIN",
             "fixture": "reports/brand-corpus/captures/balmain.com/694e302b5b313b6b.html.gz",
             "provenance": "reports/brand-corpus/captures/balmain.com/694e302b5b313b6b.json",
-            "commerceSignals": [
-              "Ajouter au panier"
-            ]
+            "commerceSignals": ["Ajouter au panier"]
           }
         }
       ],
@@ -2201,9 +2142,7 @@
             "title": "Banfield Shop | Simparica Trio® Chewables for dogs",
             "fixture": "reports/brand-corpus/captures/banfield.com/6dfd3471c5631be4.html.gz",
             "provenance": "reports/brand-corpus/captures/banfield.com/6dfd3471c5631be4.json",
-            "commerceSignals": [
-              "checkout"
-            ]
+            "commerceSignals": ["checkout"]
           }
         }
       ],
@@ -2354,10 +2293,7 @@
             "title": "Corinna Slope Arm Swivel Glider Chair | Bassett Furniture",
             "fixture": "reports/brand-corpus/captures/bassettfurniture.com/22bef3ce7a9313fa.html.gz",
             "provenance": "reports/brand-corpus/captures/bassettfurniture.com/22bef3ce7a9313fa.json",
-            "commerceSignals": [
-              "Buy now",
-              "Add to Cart"
-            ]
+            "commerceSignals": ["Buy now", "Add to Cart"]
           }
         }
       ],
@@ -2439,9 +2375,7 @@
             "title": "Hey There, Pumpkin Wallflowers Fragrance Refill | Bath & Body Works",
             "fixture": "reports/brand-corpus/captures/bathandbodyworks.com/912209c33103712e.html.gz",
             "provenance": "reports/brand-corpus/captures/bathandbodyworks.com/912209c33103712e.json",
-            "commerceSignals": [
-              "Add to bag"
-            ]
+            "commerceSignals": ["Add to bag"]
           }
         }
       ],
@@ -2516,9 +2450,7 @@
             "title": "Babycook Neo® Gris Minéral | Cuiseur Béaba Bébé",
             "fixture": "reports/brand-corpus/captures/beaba.com/66019669af14391e.html.gz",
             "provenance": "reports/brand-corpus/captures/beaba.com/66019669af14391e.json",
-            "commerceSignals": [
-              "Ajouter au panier"
-            ]
+            "commerceSignals": ["Ajouter au panier"]
           }
         }
       ],
@@ -2559,10 +2491,7 @@
             "title": "Redken One United Multi-Benefit All-In-One Treatment - 5 oz | Beauty Brands",
             "fixture": "reports/brand-corpus/captures/beautybrands.com/9b72dbb8803220df.html.gz",
             "provenance": "reports/brand-corpus/captures/beautybrands.com/9b72dbb8803220df.json",
-            "commerceSignals": [
-              "Shopping Bag",
-              "Add to cart"
-            ]
+            "commerceSignals": ["Shopping Bag", "Add to cart"]
           }
         }
       ],
@@ -2760,9 +2689,7 @@
             "title": "Shop Gifts | Ben Bridge Jeweler",
             "fixture": "reports/brand-corpus/captures/benbridge.com/01fd038c8eecffa4.html.gz",
             "provenance": "reports/brand-corpus/captures/benbridge.com/01fd038c8eecffa4.json",
-            "commerceSignals": [
-              "Add to Bag"
-            ]
+            "commerceSignals": ["Add to Bag"]
           }
         }
       ],
@@ -3011,9 +2938,7 @@
             "title": "Sérum Vivant - Sérum correcteur des imperfections persistantes | Biologique Recherche",
             "fixture": "reports/brand-corpus/captures/biologique-recherche.com/ef1dd21724c50776.html.gz",
             "provenance": "reports/brand-corpus/captures/biologique-recherche.com/ef1dd21724c50776.json",
-            "commerceSignals": [
-              "Ajouter au panier"
-            ]
+            "commerceSignals": ["Ajouter au panier"]
           }
         }
       ],
@@ -3168,9 +3093,7 @@
             "title": "Blouse à lavallière manches longues, à carreaux, bordeaux / rose | Blancheporte",
             "fixture": "reports/brand-corpus/captures/blancheporte.fr/3a1ea6495d6ab2dd.html.gz",
             "provenance": "reports/brand-corpus/captures/blancheporte.fr/3a1ea6495d6ab2dd.json",
-            "commerceSignals": [
-              "Ajouter au panier"
-            ]
+            "commerceSignals": ["Ajouter au panier"]
           }
         }
       ],
@@ -3309,10 +3232,7 @@
             "title": "Pizza Jamón y champiñones 01791 - Pizzas | Bofrost",
             "fixture": "reports/brand-corpus/captures/bofrost.es/67e3ad3650cfb7e8.html.gz",
             "provenance": "reports/brand-corpus/captures/bofrost.es/67e3ad3650cfb7e8.json",
-            "commerceSignals": [
-              "Comprar",
-              "comprar"
-            ]
+            "commerceSignals": ["Comprar", "comprar"]
           }
         }
       ],
@@ -3353,9 +3273,7 @@
             "title": "Dolce Bonet 15898 - Torte e Dessert | Bofrost",
             "fixture": "reports/brand-corpus/captures/bofrost.it/d4f61b53d4e9f340.html.gz",
             "provenance": "reports/brand-corpus/captures/bofrost.it/d4f61b53d4e9f340.json",
-            "commerceSignals": [
-              "Aggiungi al carrello"
-            ]
+            "commerceSignals": ["Aggiungi al carrello"]
           }
         }
       ],
@@ -3558,11 +3476,7 @@
             "title": "Cody James Men's America 250 Freedom Exotic Pirarucu Western Boots - Broad Square Toe BECJSP26L11 | Boot Barn",
             "fixture": "reports/brand-corpus/captures/bootbarn.com/b69e3ee81403f9db.html.gz",
             "provenance": "reports/brand-corpus/captures/bootbarn.com/b69e3ee81403f9db.json",
-            "commerceSignals": [
-              "Add to cart",
-              "Add to Cart",
-              "checkout"
-            ]
+            "commerceSignals": ["Add to cart", "Add to Cart", "checkout"]
           }
         }
       ],
@@ -3603,9 +3517,7 @@
             "title": "Shop Shop By Brand Fashion Collection Online | Saudi Arabia",
             "fixture": "reports/brand-corpus/captures/boots.com/2993cdab24d525f6.html.gz",
             "provenance": "reports/brand-corpus/captures/boots.com/2993cdab24d525f6.json",
-            "commerceSignals": [
-              "Buy Now"
-            ]
+            "commerceSignals": ["Buy Now"]
           }
         }
       ],
@@ -3725,12 +3637,7 @@
             "title": "Shop QuietComfort Headphones (2nd Gen)\n        | Bose",
             "fixture": "reports/brand-corpus/captures/bose.com/6a0df2b8fae11f56.html.gz",
             "provenance": "reports/brand-corpus/captures/bose.com/6a0df2b8fae11f56.json",
-            "commerceSignals": [
-              "Buy now",
-              "Add to Cart",
-              "BUY NOW",
-              "checkout"
-            ]
+            "commerceSignals": ["Buy now", "Add to Cart", "BUY NOW", "checkout"]
           }
         }
       ],
@@ -3846,11 +3753,7 @@
             "title": "2 pack heavy flow modal period pants | Black | Boux Avenue UK",
             "fixture": "reports/brand-corpus/captures/bouxavenue.com/e487d35c8ef25f96.html.gz",
             "provenance": "reports/brand-corpus/captures/bouxavenue.com/e487d35c8ef25f96.json",
-            "commerceSignals": [
-              "Shopping Bag",
-              "Add to cart",
-              "Add to bag"
-            ]
+            "commerceSignals": ["Shopping Bag", "Add to cart", "Add to bag"]
           }
         }
       ],
@@ -4262,11 +4165,7 @@
             "title": "Bugaboo Kangaroo stroller desert taupe sun canopy, desert taupe fabrics, black base | Bugaboo",
             "fixture": "reports/brand-corpus/captures/bugaboo.com/46f76bdce4b1a132.html.gz",
             "provenance": "reports/brand-corpus/captures/bugaboo.com/46f76bdce4b1a132.json",
-            "commerceSignals": [
-              "Add to cart",
-              "shopping cart",
-              "shopping bag"
-            ]
+            "commerceSignals": ["Add to cart", "shopping cart", "shopping bag"]
           }
         }
       ],
@@ -4375,11 +4274,7 @@
             "title": "Women's [ak]® Helium Power Grid™ Base Layer Crewneck 2025",
             "fixture": "reports/brand-corpus/captures/burton.com/a41e07cab3d00b0d.html.gz",
             "provenance": "reports/brand-corpus/captures/burton.com/a41e07cab3d00b0d.json",
-            "commerceSignals": [
-              "Add to Bag",
-              "checkout",
-              "Checkout"
-            ]
+            "commerceSignals": ["Add to Bag", "checkout", "Checkout"]
           }
         }
       ],
@@ -4420,10 +4315,7 @@
             "title": "Binocular Pack - Vault Modular Optics | Bushnell",
             "fixture": "reports/brand-corpus/captures/bushnell.com/17a29f76ca0c0cfa.html.gz",
             "provenance": "reports/brand-corpus/captures/bushnell.com/17a29f76ca0c0cfa.json",
-            "commerceSignals": [
-              "Add to Bag",
-              "checkout"
-            ]
+            "commerceSignals": ["Add to Bag", "checkout"]
           }
         }
       ],
@@ -4464,9 +4356,7 @@
             "title": "By Malene Birger - Official online store",
             "fixture": "reports/brand-corpus/captures/bymalenebirger.com/5d6e050e4b7bf970.html.gz",
             "provenance": "reports/brand-corpus/captures/bymalenebirger.com/5d6e050e4b7bf970.json",
-            "commerceSignals": [
-              "checkout"
-            ]
+            "commerceSignals": ["checkout"]
           }
         }
       ],
@@ -4507,9 +4397,7 @@
             "title": "Lata de Biscoitos Tradicionais Sortidos 265g | Loja Cacau Show",
             "fixture": "reports/brand-corpus/captures/cacaushow.com.br/c0413220dfe47d4e.html.gz",
             "provenance": "reports/brand-corpus/captures/cacaushow.com.br/c0413220dfe47d4e.json",
-            "commerceSignals": [
-              "Adicionar ao carrinho"
-            ]
+            "commerceSignals": ["Adicionar ao carrinho"]
           }
         }
       ],
@@ -4698,9 +4586,7 @@
             "title": "Company History | Official Site of CamelBak Europe",
             "fixture": "reports/brand-corpus/captures/camelbak.com/59dcbea77897c03f.html.gz",
             "provenance": "reports/brand-corpus/captures/camelbak.com/59dcbea77897c03f.json",
-            "commerceSignals": [
-              "checkout"
-            ]
+            "commerceSignals": ["checkout"]
           }
         }
       ],
@@ -4741,10 +4627,7 @@
             "title": "Gift Card - Donna - Camomilla Italia®",
             "fixture": "reports/brand-corpus/captures/camomillaitalia.com/1813e819e7591575.html.gz",
             "provenance": "reports/brand-corpus/captures/camomillaitalia.com/1813e819e7591575.json",
-            "commerceSignals": [
-              "aggiungi al carrello",
-              "Aggiungi al carrello"
-            ]
+            "commerceSignals": ["aggiungi al carrello", "Aggiungi al carrello"]
           }
         }
       ],
@@ -5012,9 +4895,7 @@
             "title": "Buy Flatpack Halloween Boo Box for GBP 2.49 | Card Factory UK",
             "fixture": "reports/brand-corpus/captures/cardfactory.co.uk/e4ef017a4aca20c2.html.gz",
             "provenance": "reports/brand-corpus/captures/cardfactory.co.uk/e4ef017a4aca20c2.json",
-            "commerceSignals": [
-              "Add to basket"
-            ]
+            "commerceSignals": ["Add to basket"]
           }
         }
       ],
@@ -5195,9 +5076,7 @@
             "title": "Carros",
             "fixture": "reports/brand-corpus/captures/carrera.com.br/af8abf870b95a744.html.gz",
             "provenance": "reports/brand-corpus/captures/carrera.com.br/af8abf870b95a744.json",
-            "commerceSignals": [
-              "Comprar"
-            ]
+            "commerceSignals": ["Comprar"]
           }
         }
       ],
@@ -5277,9 +5156,7 @@
             "title": "Cartier Love luxury jewellery collection - Cartier",
             "fixture": "reports/brand-corpus/captures/cartier.com/7c9e8517b2a1e521.html.gz",
             "provenance": "reports/brand-corpus/captures/cartier.com/7c9e8517b2a1e521.json",
-            "commerceSignals": [
-              "add to bag"
-            ]
+            "commerceSignals": ["add to bag"]
           }
         }
       ],
@@ -5320,9 +5197,7 @@
             "title": "Tarros - Casa Viva",
             "fixture": "reports/brand-corpus/captures/casaviva.es/471965a8903592b7.html.gz",
             "provenance": "reports/brand-corpus/captures/casaviva.es/471965a8903592b7.json",
-            "commerceSignals": [
-              "comprar"
-            ]
+            "commerceSignals": ["comprar"]
           }
         }
       ],
@@ -5402,10 +5277,7 @@
             "title": "Videojuegos y consolas de segunda mano | Mejores precios",
             "fixture": "reports/brand-corpus/captures/cashconverters.es/c72d2ccd4593428b.html.gz",
             "provenance": "reports/brand-corpus/captures/cashconverters.es/c72d2ccd4593428b.json",
-            "commerceSignals": [
-              "Comprar",
-              "comprar"
-            ]
+            "commerceSignals": ["Comprar", "comprar"]
           }
         }
       ],
@@ -5514,9 +5386,7 @@
             "title": "CCI Ammunition",
             "fixture": "reports/brand-corpus/captures/cci-ammunition.com/fa84bda161fa66bf.html.gz",
             "provenance": "reports/brand-corpus/captures/cci-ammunition.com/fa84bda161fa66bf.json",
-            "commerceSignals": [
-              "Buy Now"
-            ]
+            "commerceSignals": ["Buy Now"]
           }
         }
       ],
@@ -5547,9 +5417,7 @@
             "title": "Secret Minis Next Gen - CCM Hockey",
             "fixture": "reports/brand-corpus/captures/ccmhockey.com/3838f164474a1889.html.gz",
             "provenance": "reports/brand-corpus/captures/ccmhockey.com/3838f164474a1889.json",
-            "commerceSignals": [
-              "Add to bag"
-            ]
+            "commerceSignals": ["Add to bag"]
           }
         }
       ],
@@ -5702,10 +5570,7 @@
             "title": "OneFit Max ClearTex All-in-One Car Seat - Energy | Chicco",
             "fixture": "reports/brand-corpus/captures/chiccousa.com/9f80eb4b18a44c53.html.gz",
             "provenance": "reports/brand-corpus/captures/chiccousa.com/9f80eb4b18a44c53.json",
-            "commerceSignals": [
-              "checkout",
-              "Add to Cart"
-            ]
+            "commerceSignals": ["checkout", "Add to Cart"]
           }
         }
       ],
@@ -5827,9 +5692,7 @@
             "title": "C60 Trident Pro 300 | Christopher Ward",
             "fixture": "reports/brand-corpus/captures/christopherward.com/64bf6dddf8dbabc4.html.gz",
             "provenance": "reports/brand-corpus/captures/christopherward.com/64bf6dddf8dbabc4.json",
-            "commerceSignals": [
-              "Add to bag"
-            ]
+            "commerceSignals": ["Add to bag"]
           }
         }
       ],
@@ -5942,10 +5805,7 @@
             "title": "Opening An Account",
             "fixture": "reports/brand-corpus/captures/cic.cl/edf579a1a9623fea.html.gz",
             "provenance": "reports/brand-corpus/captures/cic.cl/edf579a1a9623fea.json",
-            "commerceSignals": [
-              "Checkout",
-              "checkout"
-            ]
+            "commerceSignals": ["Checkout", "checkout"]
           }
         }
       ],
@@ -5986,9 +5846,7 @@
             "title": "Jeans Levi's 314 Shaping Straight L32 W 19631-0279 | Cisalfa Sport",
             "fixture": "reports/brand-corpus/captures/cisalfasport.it/4a4baad005700705.html.gz",
             "provenance": "reports/brand-corpus/captures/cisalfasport.it/4a4baad005700705.json",
-            "commerceSignals": [
-              "Aggiungi al carrello"
-            ]
+            "commerceSignals": ["Aggiungi al carrello"]
           }
         }
       ],
@@ -6075,9 +5933,7 @@
             "title": "Shop Promotions Online - FREE* Shipping & Easy Returns - City Beach United States",
             "fixture": "reports/brand-corpus/captures/citybeach.com/2436193f7dd58ee1.html.gz",
             "provenance": "reports/brand-corpus/captures/citybeach.com/2436193f7dd58ee1.json",
-            "commerceSignals": [
-              "Add to Bag"
-            ]
+            "commerceSignals": ["Add to Bag"]
           }
         }
       ],
@@ -6159,10 +6015,7 @@
             "title": "Coach® Singapore Official Store | Designer Bags, Wallets, Clothing & Shoes",
             "fixture": "reports/brand-corpus/captures/coach.com/dd32904189398fca.html.gz",
             "provenance": "reports/brand-corpus/captures/coach.com/dd32904189398fca.json",
-            "commerceSignals": [
-              "Buy Now",
-              "Add to Cart"
-            ]
+            "commerceSignals": ["Buy Now", "Add to Cart"]
           }
         }
       ],
@@ -6203,9 +6056,7 @@
             "title": "Copripiumino in cotone percalle a righe - Coin.it | Coin Ecom",
             "fixture": "reports/brand-corpus/captures/coin.it/c6bcf62130b7747f.html.gz",
             "provenance": "reports/brand-corpus/captures/coin.it/c6bcf62130b7747f.json",
-            "commerceSignals": [
-              "Aggiungi al carrello"
-            ]
+            "commerceSignals": ["Aggiungi al carrello"]
           }
         }
       ],
@@ -6246,11 +6097,7 @@
             "title": "Men's ØriginalGrand Remastered Waterproof Chukka Boots in Brown | Cole Haan",
             "fixture": "reports/brand-corpus/captures/colehaan.com/6b1d810fff97cdc1.html.gz",
             "provenance": "reports/brand-corpus/captures/colehaan.com/6b1d810fff97cdc1.json",
-            "commerceSignals": [
-              "Add To Bag",
-              "checkout",
-              "Checkout"
-            ]
+            "commerceSignals": ["Add To Bag", "checkout", "Checkout"]
           }
         }
       ],
@@ -6330,9 +6177,7 @@
             "title": "Men's Autumn-weight stretch jacket in NAVY BLUE | Colmar",
             "fixture": "reports/brand-corpus/captures/colmar.com/70af1116f7c8696a.html.gz",
             "provenance": "reports/brand-corpus/captures/colmar.com/70af1116f7c8696a.json",
-            "commerceSignals": [
-              "Add to Cart"
-            ]
+            "commerceSignals": ["Add to Cart"]
           }
         }
       ],
@@ -6562,9 +6407,7 @@
             "title": "Buy Online & Pick Up In Store | CosmoProf",
             "fixture": "reports/brand-corpus/captures/cosmoprofbeauty.com/1b614cdd535721fb.html.gz",
             "provenance": "reports/brand-corpus/captures/cosmoprofbeauty.com/1b614cdd535721fb.json",
-            "commerceSignals": [
-              "checkout"
-            ]
+            "commerceSignals": ["checkout"]
           }
         }
       ],
@@ -6721,9 +6564,7 @@
             "title": "Brown Eco-Chrome R Mixed Re-Colour Goggle Jacket | CPC ROW Online Store",
             "fixture": "reports/brand-corpus/captures/cpcompany.com/227feafa0de19338.html.gz",
             "provenance": "reports/brand-corpus/captures/cpcompany.com/227feafa0de19338.json",
-            "commerceSignals": [
-              "Add to Cart"
-            ]
+            "commerceSignals": ["Add to Cart"]
           }
         }
       ],
@@ -6883,9 +6724,7 @@
             "title": "Logo Icon",
             "fixture": "reports/brand-corpus/captures/crocs.com.sg/1138ffe0c3ce674f.html.gz",
             "provenance": "reports/brand-corpus/captures/crocs.com.sg/1138ffe0c3ce674f.json",
-            "commerceSignals": [
-              "Add to Cart"
-            ]
+            "commerceSignals": ["Add to Cart"]
           }
         }
       ],
@@ -6926,9 +6765,7 @@
             "title": "PROTECTION EN VERRE TREMPÉ : Parfaitement adapté\n– Crosscall",
             "fixture": "reports/brand-corpus/captures/crosscall.com/bd3b10c9691ca35b.html.gz",
             "provenance": "reports/brand-corpus/captures/crosscall.com/bd3b10c9691ca35b.json",
-            "commerceSignals": [
-              "Ajouter au panier"
-            ]
+            "commerceSignals": ["Ajouter au panier"]
           }
         }
       ],
@@ -7050,11 +6887,7 @@
             "title": "Natural CBD Oil Products | Pure CBD Hemp Extract | +PlusCBD Oil",
             "fixture": "reports/brand-corpus/captures/cvsciences.com/2e6e2718648e2e95.html.gz",
             "provenance": "reports/brand-corpus/captures/cvsciences.com/2e6e2718648e2e95.json",
-            "commerceSignals": [
-              "Add To Cart",
-              "Shopping Cart",
-              "Checkout"
-            ]
+            "commerceSignals": ["Add To Cart", "Shopping Cart", "Checkout"]
           }
         },
         {
@@ -7117,9 +6950,7 @@
             "title": "Playera Jack Blanca",
             "fixture": "reports/brand-corpus/captures/cyamoda.com/74de5768c0381b90.html.gz",
             "provenance": "reports/brand-corpus/captures/cyamoda.com/74de5768c0381b90.json",
-            "commerceSignals": [
-              "Comprar"
-            ]
+            "commerceSignals": ["Comprar"]
           }
         }
       ],
@@ -7201,9 +7032,7 @@
             "title": "D-AIR SKI 2 EVO - UNISEX SKI AIRBAG - RACING USE | 2026 | Dainese",
             "fixture": "reports/brand-corpus/captures/dainese.com/93ec3b4a59a7ff5c.html.gz",
             "provenance": "reports/brand-corpus/captures/dainese.com/93ec3b4a59a7ff5c.json",
-            "commerceSignals": [
-              "shopping bag"
-            ]
+            "commerceSignals": ["shopping bag"]
           }
         }
       ],
@@ -7324,10 +7153,7 @@
             "title": "DaySpring Christian Community & Shopping | Hallmark",
             "fixture": "reports/brand-corpus/captures/dayspring.com/10d6f8a171f0fa01.html.gz",
             "provenance": "reports/brand-corpus/captures/dayspring.com/10d6f8a171f0fa01.json",
-            "commerceSignals": [
-              "Add to cart",
-              "Shopping bag"
-            ]
+            "commerceSignals": ["Add to cart", "Shopping bag"]
           }
         }
       ],
@@ -7368,10 +7194,7 @@
             "title": "The Ordinary | Clinical Formulations with Integrity",
             "fixture": "reports/brand-corpus/captures/deciem.com/60cd90e2383f30df.html.gz",
             "provenance": "reports/brand-corpus/captures/deciem.com/60cd90e2383f30df.json",
-            "commerceSignals": [
-              "checkout",
-              "Add to Cart"
-            ]
+            "commerceSignals": ["checkout", "Add to Cart"]
           }
         }
       ],
@@ -7487,9 +7310,7 @@
             "title": "Desigual Official UK · Shop Original Clothes Online #NewDesigual",
             "fixture": "reports/brand-corpus/captures/desigual.com/46d1e7cdbf3910a2.html.gz",
             "provenance": "reports/brand-corpus/captures/desigual.com/46d1e7cdbf3910a2.json",
-            "commerceSignals": [
-              "Buy now"
-            ]
+            "commerceSignals": ["Buy now"]
           }
         }
       ],
@@ -7571,9 +7392,7 @@
             "title": "Dickies Official Site | Durable Workwear and Apparel Since 1922 US",
             "fixture": "reports/brand-corpus/captures/dickies.com/40ff323bce53714e.html.gz",
             "provenance": "reports/brand-corpus/captures/dickies.com/40ff323bce53714e.json",
-            "commerceSignals": [
-              "checkout"
-            ]
+            "commerceSignals": ["checkout"]
           }
         }
       ],
@@ -7614,11 +7433,7 @@
             "title": "Product page: what you can see/do",
             "fixture": "reports/brand-corpus/captures/diesel.co.jp/fe88d77c830b8cc8.html.gz",
             "provenance": "reports/brand-corpus/captures/diesel.co.jp/fe88d77c830b8cc8.json",
-            "commerceSignals": [
-              "checkout",
-              "ADD TO BAG",
-              "shopping cart"
-            ]
+            "commerceSignals": ["checkout", "ADD TO BAG", "shopping cart"]
           }
         }
       ],
@@ -7659,9 +7474,7 @@
             "title": "Diesel® US Official Site | Denim Jeans, Jackets, Shoes & Bags",
             "fixture": "reports/brand-corpus/captures/diesel.com/0c9d77d1b2d391f8.html.gz",
             "provenance": "reports/brand-corpus/captures/diesel.com/0c9d77d1b2d391f8.json",
-            "commerceSignals": [
-              "Shopping Bag"
-            ]
+            "commerceSignals": ["Shopping Bag"]
           }
         }
       ],
@@ -7702,10 +7515,7 @@
             "title": "Protein Meal Replacement Shakes | 15g Protein, 100 Cal – Diet Direct",
             "fixture": "reports/brand-corpus/captures/dietdirect.com/5baa30df557350ef.html.gz",
             "provenance": "reports/brand-corpus/captures/dietdirect.com/5baa30df557350ef.json",
-            "commerceSignals": [
-              "Add to cart",
-              "checkout"
-            ]
+            "commerceSignals": ["Add to cart", "checkout"]
           }
         }
       ],
@@ -7896,10 +7706,7 @@
             "title": "Digital Gift Cards: Perfect for Any Occasion | Drunk Elephant",
             "fixture": "reports/brand-corpus/captures/drunkelephant.com/5a1255bcec94f13d.html.gz",
             "provenance": "reports/brand-corpus/captures/drunkelephant.com/5a1255bcec94f13d.json",
-            "commerceSignals": [
-              "checkout",
-              "Add to Bag"
-            ]
+            "commerceSignals": ["checkout", "Add to Bag"]
           }
         }
       ],
@@ -8015,9 +7822,7 @@
             "title": "Evienne Black, Leather Lace-Up Chunky Trainers | Dune London",
             "fixture": "reports/brand-corpus/captures/dunelondon.com/36a844656a6954ba.html.gz",
             "provenance": "reports/brand-corpus/captures/dunelondon.com/36a844656a6954ba.json",
-            "commerceSignals": [
-              "Add to Bag"
-            ]
+            "commerceSignals": ["Add to Bag"]
           }
         }
       ],
@@ -8096,11 +7901,7 @@
             "title": "Custom Shop\n  \n  \n   – Dunlop Sports Canada",
             "fixture": "reports/brand-corpus/captures/dunlopsports.com/73c4e746700d95d9.html.gz",
             "provenance": "reports/brand-corpus/captures/dunlopsports.com/73c4e746700d95d9.json",
-            "commerceSignals": [
-              "checkout",
-              "Checkout",
-              "Buy now"
-            ]
+            "commerceSignals": ["checkout", "Checkout", "Buy now"]
           }
         }
       ],
@@ -8223,10 +8024,7 @@
             "title": "The Ultimate Beauty Advent Calendar | 25 Piece Gift Set",
             "fixture": "reports/brand-corpus/captures/elemis.com/11169153abd4252d.html.gz",
             "provenance": "reports/brand-corpus/captures/elemis.com/11169153abd4252d.json",
-            "commerceSignals": [
-              "Shopping bag",
-              "Add to bag"
-            ]
+            "commerceSignals": ["Shopping bag", "Add to bag"]
           }
         }
       ],
@@ -8325,9 +8123,7 @@
             "title": "Eminence Organic Skin Care | #1 in Professional Organic Skin Care",
             "fixture": "reports/brand-corpus/captures/eminenceorganics.com/b78e6a1d47400833.html.gz",
             "provenance": "reports/brand-corpus/captures/eminenceorganics.com/b78e6a1d47400833.json",
-            "commerceSignals": [
-              "Add to Basket"
-            ]
+            "commerceSignals": ["Add to Basket"]
           }
         }
       ],
@@ -8368,9 +8164,7 @@
             "title": "Wonka merch - buy official merchandise at EMP",
             "fixture": "reports/brand-corpus/captures/emp.de/d2db36afd32280f1.html.gz",
             "provenance": "reports/brand-corpus/captures/emp.de/d2db36afd32280f1.json",
-            "commerceSignals": [
-              "Checkout"
-            ]
+            "commerceSignals": ["Checkout"]
           }
         }
       ],
@@ -8411,9 +8205,7 @@
             "title": "CHAQUETA POLIPIEL BOLSILLOS | ENCUENTROMODA | ENCUENTRO",
             "fixture": "reports/brand-corpus/captures/encuentromoda.com/7ff96fccce7f3b36.html.gz",
             "provenance": "reports/brand-corpus/captures/encuentromoda.com/7ff96fccce7f3b36.json",
-            "commerceSignals": [
-              "Añadir al carrito"
-            ]
+            "commerceSignals": ["Añadir al carrito"]
           }
         }
       ],
@@ -8635,10 +8427,7 @@
             "title": "CROPPED LEATHER JACKET WITH STUDS | Leather Clothing | ETRO",
             "fixture": "reports/brand-corpus/captures/etro.com/a65da6ef69c9f4f1.html.gz",
             "provenance": "reports/brand-corpus/captures/etro.com/a65da6ef69c9f4f1.json",
-            "commerceSignals": [
-              "Shopping Bag",
-              "Checkout"
-            ]
+            "commerceSignals": ["Shopping Bag", "Checkout"]
           }
         }
       ],
@@ -8679,9 +8468,7 @@
             "title": "Chemistry (5246)",
             "fixture": "reports/brand-corpus/captures/ets.org/c5bf7c0a90074c71.html.gz",
             "provenance": "reports/brand-corpus/captures/ets.org/c5bf7c0a90074c71.json",
-            "commerceSignals": [
-              "Add to Cart"
-            ]
+            "commerceSignals": ["Add to Cart"]
           }
         }
       ],
@@ -8722,10 +8509,7 @@
             "title": "Gift Cards | Everything But Water",
             "fixture": "reports/brand-corpus/captures/everythingbutwater.com/0a18e706b8bf4095.html.gz",
             "provenance": "reports/brand-corpus/captures/everythingbutwater.com/0a18e706b8bf4095.json",
-            "commerceSignals": [
-              "checkout",
-              "Add To Bag"
-            ]
+            "commerceSignals": ["checkout", "Add To Bag"]
           }
         }
       ],
@@ -8807,10 +8591,7 @@
             "title": "Men’s Grey Notion Boxy Cropped Short Sleeve Shirt | Factorie Australia",
             "fixture": "reports/brand-corpus/captures/factorie.com.au/5f4ade4eb081d291.html.gz",
             "provenance": "reports/brand-corpus/captures/factorie.com.au/5f4ade4eb081d291.json",
-            "commerceSignals": [
-              "Add To Bag",
-              "Buy Now"
-            ]
+            "commerceSignals": ["Add To Bag", "Buy Now"]
           }
         }
       ],
@@ -8933,10 +8714,7 @@
             "title": "Buy Little Lebow Grasshopper Green? Discover all colours | Fatboy",
             "fixture": "reports/brand-corpus/captures/fatboy.com/f5da4ec792b47d09.html.gz",
             "provenance": "reports/brand-corpus/captures/fatboy.com/f5da4ec792b47d09.json",
-            "commerceSignals": [
-              "Add to Cart",
-              "shopping bag"
-            ]
+            "commerceSignals": ["Add to Cart", "shopping bag"]
           }
         }
       ],
@@ -8977,9 +8755,7 @@
             "title": "Buy Berger Elite Hunter 7mm Backcountry Ammo | 195 Grain, 3000 FPS | Federal",
             "fixture": "reports/brand-corpus/captures/federalpremium.com/41cdf4b82d721933.html.gz",
             "provenance": "reports/brand-corpus/captures/federalpremium.com/41cdf4b82d721933.json",
-            "commerceSignals": [
-              "Add to Cart"
-            ]
+            "commerceSignals": ["Add to Cart"]
           }
         }
       ],
@@ -9169,9 +8945,7 @@
             "title": "Ferrari® Official Store: luxury fashion & Replica collection",
             "fixture": "reports/brand-corpus/captures/ferrari.com/195b958739aaa3ef.html.gz",
             "provenance": "reports/brand-corpus/captures/ferrari.com/195b958739aaa3ef.json",
-            "commerceSignals": [
-              "SHOPPING BAG"
-            ]
+            "commerceSignals": ["SHOPPING BAG"]
           }
         }
       ],
@@ -9212,10 +8986,7 @@
             "title": "View all | Men | FILIPPA K",
             "fixture": "reports/brand-corpus/captures/filippa-k.com/793555d6abedf441.html.gz",
             "provenance": "reports/brand-corpus/captures/filippa-k.com/793555d6abedf441.json",
-            "commerceSignals": [
-              "Add to bag",
-              "shopping bag"
-            ]
+            "commerceSignals": ["Add to bag", "shopping bag"]
           }
         }
       ],
@@ -9256,9 +9027,7 @@
             "title": "Street Angels Relaxed T-Shirt",
             "fixture": "reports/brand-corpus/captures/fiorucci.com/da5b837c62b1630a.html.gz",
             "provenance": "reports/brand-corpus/captures/fiorucci.com/da5b837c62b1630a.json",
-            "commerceSignals": [
-              "Add to Bag"
-            ]
+            "commerceSignals": ["Add to Bag"]
           }
         }
       ],
@@ -9299,11 +9068,7 @@
             "title": "Breeze\n – Firefox Life",
             "fixture": "reports/brand-corpus/captures/firefoxbikes.com/01de0c140c06c669.html.gz",
             "provenance": "reports/brand-corpus/captures/firefoxbikes.com/01de0c140c06c669.json",
-            "commerceSignals": [
-              "checkout",
-              "Add to cart",
-              "BUY NOW"
-            ]
+            "commerceSignals": ["checkout", "Add to cart", "BUY NOW"]
           }
         }
       ],
@@ -9426,10 +9191,7 @@
             "title": "V3 RS Founders Helmet",
             "fixture": "reports/brand-corpus/captures/foxracing.com/02a280b377650967.html.gz",
             "provenance": "reports/brand-corpus/captures/foxracing.com/02a280b377650967.json",
-            "commerceSignals": [
-              "Add to Cart",
-              "checkout"
-            ]
+            "commerceSignals": ["Add to Cart", "checkout"]
           }
         }
       ],
@@ -9509,9 +9271,7 @@
             "title": "18ct Gold 1.33ct Yellow Lab Grown Diamond Ring",
             "fixture": "reports/brand-corpus/captures/fraserhart.co.uk/47e55652c6a7c828.html.gz",
             "provenance": "reports/brand-corpus/captures/fraserhart.co.uk/47e55652c6a7c828.json",
-            "commerceSignals": [
-              "Add to Cart"
-            ]
+            "commerceSignals": ["Add to Cart"]
           }
         }
       ],
@@ -9552,9 +9312,7 @@
             "title": "Shop RV Parts Online | Fraserway RV – Fraserway RV Parts",
             "fixture": "reports/brand-corpus/captures/fraserway.com/9d5eb2b3a7e76578.html.gz",
             "provenance": "reports/brand-corpus/captures/fraserway.com/9d5eb2b3a7e76578.json",
-            "commerceSignals": [
-              "Add to cart"
-            ]
+            "commerceSignals": ["Add to cart"]
           }
         }
       ],
@@ -9670,10 +9428,7 @@
             "title": "Oblique Jacquard Duvet Cover | Frette",
             "fixture": "reports/brand-corpus/captures/frette.com/78233d2e045b3ff7.html.gz",
             "provenance": "reports/brand-corpus/captures/frette.com/78233d2e045b3ff7.json",
-            "commerceSignals": [
-              "Shopping Bag",
-              "Add to Cart"
-            ]
+            "commerceSignals": ["Shopping Bag", "Add to Cart"]
           }
         }
       ],
@@ -9756,9 +9511,7 @@
             "title": "Pop! Yourself Gift Vouchers | Funko",
             "fixture": "reports/brand-corpus/captures/funko.com/e82a833d986d2a48.html.gz",
             "provenance": "reports/brand-corpus/captures/funko.com/e82a833d986d2a48.json",
-            "commerceSignals": [
-              "Add to Cart"
-            ]
+            "commerceSignals": ["Add to Cart"]
           }
         }
       ],
@@ -9833,10 +9586,7 @@
             "title": "Shop the AW25 Trends\n\n\n- Furniture Village",
             "fixture": "reports/brand-corpus/captures/furniturevillage.co.uk/b9f053ce6bd119c0.html.gz",
             "provenance": "reports/brand-corpus/captures/furniturevillage.co.uk/b9f053ce6bd119c0.json",
-            "commerceSignals": [
-              "Add to basket",
-              "checkout"
-            ]
+            "commerceSignals": ["Add to basket", "checkout"]
           }
         }
       ],
@@ -9952,9 +9702,7 @@
             "title": "Gant x Yale Car Coat Gant BLACK BROWN | Official GANT Store",
             "fixture": "reports/brand-corpus/captures/gant.com/947d3ede8db80c64.html.gz",
             "provenance": "reports/brand-corpus/captures/gant.com/947d3ede8db80c64.json",
-            "commerceSignals": [
-              "Add to bag"
-            ]
+            "commerceSignals": ["Add to bag"]
           }
         }
       ],
@@ -9995,9 +9743,7 @@
             "title": "Условия за доставка",
             "fixture": "reports/brand-corpus/captures/gardena.com/447bee6ea17eca59.html.gz",
             "provenance": "reports/brand-corpus/captures/gardena.com/447bee6ea17eca59.json",
-            "commerceSignals": [
-              "buy now"
-            ]
+            "commerceSignals": ["buy now"]
           }
         }
       ],
@@ -10079,9 +9825,7 @@
             "title": "Sandals and Mules LUMIÈRE Black | Gianvito Rossi",
             "fixture": "reports/brand-corpus/captures/gianvitorossi.com/07cab7868bb8b8c6.html.gz",
             "provenance": "reports/brand-corpus/captures/gianvitorossi.com/07cab7868bb8b8c6.json",
-            "commerceSignals": [
-              "Add to Cart"
-            ]
+            "commerceSignals": ["Add to Cart"]
           }
         }
       ],
@@ -10200,10 +9944,7 @@
             "title": "Asymmetric sweater in wool and cashmere in - cobalt blue - BW90XA4ZVV-467 | Givenchy",
             "fixture": "reports/brand-corpus/captures/givenchy.com/a5e6a92d3a8b42f7.html.gz",
             "provenance": "reports/brand-corpus/captures/givenchy.com/a5e6a92d3a8b42f7.json",
-            "commerceSignals": [
-              "Add to Bag",
-              "checkout"
-            ]
+            "commerceSignals": ["Add to Bag", "checkout"]
           }
         }
       ],
@@ -10283,10 +10024,7 @@
             "title": "Moda online para Recién Nacido, Bebé e Infantil | Gocco",
             "fixture": "reports/brand-corpus/captures/gocco.es/09dc861cd1048c4b.html.gz",
             "provenance": "reports/brand-corpus/captures/gocco.es/09dc861cd1048c4b.json",
-            "commerceSignals": [
-              "comprar",
-              "Comprar"
-            ]
+            "commerceSignals": ["comprar", "Comprar"]
           }
         }
       ],
@@ -10395,9 +10133,7 @@
             "title": "Bienvenido | Tienda González Byass",
             "fixture": "reports/brand-corpus/captures/gonzalezbyass.com/454a02a61fd8745a.html.gz",
             "provenance": "reports/brand-corpus/captures/gonzalezbyass.com/454a02a61fd8745a.json",
-            "commerceSignals": [
-              "Añadir al carrito"
-            ]
+            "commerceSignals": ["Añadir al carrito"]
           }
         }
       ],
@@ -10557,10 +10293,7 @@
             "title": "GIFTS ⋅ GUERLAIN Saudi Arabia",
             "fixture": "reports/brand-corpus/captures/guerlain.com/46d2c95f8a8a80dd.html.gz",
             "provenance": "reports/brand-corpus/captures/guerlain.com/46d2c95f8a8a80dd.json",
-            "commerceSignals": [
-              "shopping bag",
-              "Buy Now"
-            ]
+            "commerceSignals": ["shopping bag", "Buy Now"]
           }
         }
       ],
@@ -10837,10 +10570,7 @@
             "title": "Snowball Fight! Musical Snowmen Plush With Motion, 10\" - Interactive Stuffed Animals | Hallmark",
             "fixture": "reports/brand-corpus/captures/hallmark.com/a32cad826892bf9a.html.gz",
             "provenance": "reports/brand-corpus/captures/hallmark.com/a32cad826892bf9a.json",
-            "commerceSignals": [
-              "Add to cart",
-              "Shopping bag"
-            ]
+            "commerceSignals": ["Add to cart", "Shopping bag"]
           }
         }
       ],
@@ -10961,9 +10691,7 @@
             "title": "Hard Rock x Cult Icons Mural Boxy Oversized Tee in Gunmetal Gray | \n    Online Rock Shop",
             "fixture": "reports/brand-corpus/captures/hardrock.com/d11f12ecdb4ede85.html.gz",
             "provenance": "reports/brand-corpus/captures/hardrock.com/d11f12ecdb4ede85.json",
-            "commerceSignals": [
-              "Add to Bag"
-            ]
+            "commerceSignals": ["Add to Bag"]
           }
         }
       ],
@@ -11004,10 +10732,7 @@
             "title": "Camicia Uomo popeline peach con nastro Regular Fit bianco BIANCO | Harmont & Blaine",
             "fixture": "reports/brand-corpus/captures/harmontblaine.com/21bf1bd6dc1d36cf.html.gz",
             "provenance": "reports/brand-corpus/captures/harmontblaine.com/21bf1bd6dc1d36cf.json",
-            "commerceSignals": [
-              "checkout",
-              "Aggiungi al carrello"
-            ]
+            "commerceSignals": ["checkout", "Aggiungi al carrello"]
           }
         }
       ],
@@ -11130,9 +10855,7 @@
             "title": "DREAM HEART PENDANT NECKLACE - LARGE | Hearts on Fire",
             "fixture": "reports/brand-corpus/captures/heartsonfire.com/b0eefa40cb801df7.html.gz",
             "provenance": "reports/brand-corpus/captures/heartsonfire.com/b0eefa40cb801df7.json",
-            "commerceSignals": [
-              "Add to Bag"
-            ]
+            "commerceSignals": ["Add to Bag"]
           }
         }
       ],
@@ -11292,9 +11015,7 @@
             "title": "0.25 Carat Diamond Engagement Rings",
             "fixture": "reports/brand-corpus/captures/helzberg.com/b45fe0c28b65bd6d.html.gz",
             "provenance": "reports/brand-corpus/captures/helzberg.com/b45fe0c28b65bd6d.json",
-            "commerceSignals": [
-              "shopping cart"
-            ]
+            "commerceSignals": ["shopping cart"]
           }
         }
       ],
@@ -11417,10 +11138,7 @@
             "title": "Embody Gaming Chair | Gaming Chairs | Herman Miller Gaming",
             "fixture": "reports/brand-corpus/captures/hermanmiller.com/088c42796a4a7d8f.html.gz",
             "provenance": "reports/brand-corpus/captures/hermanmiller.com/088c42796a4a7d8f.json",
-            "commerceSignals": [
-              "Add to Basket",
-              "checkout"
-            ]
+            "commerceSignals": ["Add to Basket", "checkout"]
           }
         }
       ],
@@ -11461,9 +11179,7 @@
             "title": "Official Herno® Boutique: Clothing for Women, Men & Kids",
             "fixture": "reports/brand-corpus/captures/herno.com/7bf57d489f2e45d0.html.gz",
             "provenance": "reports/brand-corpus/captures/herno.com/7bf57d489f2e45d0.json",
-            "commerceSignals": [
-              "shopping bag"
-            ]
+            "commerceSignals": ["shopping bag"]
           }
         }
       ],
@@ -11584,11 +11300,7 @@
             "title": "12 Days of Charcuterie Advent Calendar | Hickory Farms",
             "fixture": "reports/brand-corpus/captures/hickoryfarms.com/21df5e15ecc83030.html.gz",
             "provenance": "reports/brand-corpus/captures/hickoryfarms.com/21df5e15ecc83030.json",
-            "commerceSignals": [
-              "Add to cart",
-              "Add to Cart",
-              "checkout"
-            ]
+            "commerceSignals": ["Add to cart", "Add to Cart", "checkout"]
           }
         }
       ],
@@ -11902,9 +11614,7 @@
             "title": "E-flite E-flite Micro Boeing 787 Dreamliner Twin 30mm EDF BNF Basic with AS3X and SAFE Select | Horizon Hobby",
             "fixture": "reports/brand-corpus/captures/horizonhobby.com/140eb4bb603b35d6.html.gz",
             "provenance": "reports/brand-corpus/captures/horizonhobby.com/140eb4bb603b35d6.json",
-            "commerceSignals": [
-              "In den Warenkorb"
-            ]
+            "commerceSignals": ["In den Warenkorb"]
           }
         }
       ],
@@ -12020,11 +11730,7 @@
             "title": "Easy Bake Duo Loose Powder\n – Huda Beauty",
             "fixture": "reports/brand-corpus/captures/hudabeauty.com/f70a00ef999e294f.html.gz",
             "provenance": "reports/brand-corpus/captures/hudabeauty.com/f70a00ef999e294f.json",
-            "commerceSignals": [
-              "Add to Bag",
-              "Buy now",
-              "checkout"
-            ]
+            "commerceSignals": ["Add to Bag", "Buy now", "checkout"]
           }
         }
       ],
@@ -12099,10 +11805,7 @@
             "title": "hummel KEEPER W BOXY PIPING CREWNECK - ROCK RIDGE | hummel.net",
             "fixture": "reports/brand-corpus/captures/hummel.net/6b43e315b7274a53.html.gz",
             "provenance": "reports/brand-corpus/captures/hummel.net/6b43e315b7274a53.json",
-            "commerceSignals": [
-              "shopping Cart",
-              "Add to cart"
-            ]
+            "commerceSignals": ["shopping Cart", "Add to cart"]
           }
         }
       ],
@@ -12218,9 +11921,7 @@
             "title": "Online Food Shopping | Iceland Groceries",
             "fixture": "reports/brand-corpus/captures/iceland.co.uk/c869a2618b10bbc7.html.gz",
             "provenance": "reports/brand-corpus/captures/iceland.co.uk/c869a2618b10bbc7.json",
-            "commerceSignals": [
-              "Checkout"
-            ]
+            "commerceSignals": ["Checkout"]
           }
         }
       ],
@@ -12261,9 +11962,7 @@
             "title": "Blouson en Jacquard fleuri Femme IKKS",
             "fixture": "reports/brand-corpus/captures/ikks.com/6827b44f4f1dc36a.html.gz",
             "provenance": "reports/brand-corpus/captures/ikks.com/6827b44f4f1dc36a.json",
-            "commerceSignals": [
-              "Ajouter au panier"
-            ]
+            "commerceSignals": ["Ajouter au panier"]
           }
         }
       ],
@@ -12382,10 +12081,7 @@
             "title": "The Original Indigo Faux Fur Throw | Indigo",
             "fixture": "reports/brand-corpus/captures/indigo.ca/08032341a1f2d07d.html.gz",
             "provenance": "reports/brand-corpus/captures/indigo.ca/08032341a1f2d07d.json",
-            "commerceSignals": [
-              "Checkout",
-              "Add to Bag"
-            ]
+            "commerceSignals": ["Checkout", "Add to Bag"]
           }
         }
       ],
@@ -12487,10 +12183,7 @@
             "title": "Create Custom Flooring with Carpet Tiles & Area Rugs by FLOR",
             "fixture": "reports/brand-corpus/captures/interface.com/4b032f2768a1d654.html.gz",
             "provenance": "reports/brand-corpus/captures/interface.com/4b032f2768a1d654.json",
-            "commerceSignals": [
-              "checkout",
-              "Buy Now"
-            ]
+            "commerceSignals": ["checkout", "Buy Now"]
           }
         }
       ],
@@ -12534,10 +12227,7 @@
             "title": "Roomba® Plus 415 Combo Robot Vac + AutoWash™ Dock | Slim Design",
             "fixture": "reports/brand-corpus/captures/irobot.com/c58741ed731ddd62.html.gz",
             "provenance": "reports/brand-corpus/captures/irobot.com/c58741ed731ddd62.json",
-            "commerceSignals": [
-              "Add to Cart",
-              "checkout"
-            ]
+            "commerceSignals": ["Add to Cart", "checkout"]
           }
         }
       ],
@@ -12578,9 +12268,7 @@
             "title": "IRO COLLECTION AUTOMNE HIVER 2025 | BLAZER OVERSIZE",
             "fixture": "reports/brand-corpus/captures/iroparis.com/0627d945aad42e73.html.gz",
             "provenance": "reports/brand-corpus/captures/iroparis.com/0627d945aad42e73.json",
-            "commerceSignals": [
-              "Ajouter au panier"
-            ]
+            "commerceSignals": ["Ajouter au panier"]
           }
         }
       ],
@@ -12658,10 +12346,7 @@
             "title": "Shop Aker Fassi Revive & Glow Ritual Online | IZIL Beauty UAE",
             "fixture": "reports/brand-corpus/captures/izilbeauty.com/8028e46acd71ae08.html.gz",
             "provenance": "reports/brand-corpus/captures/izilbeauty.com/8028e46acd71ae08.json",
-            "commerceSignals": [
-              "Add to Bag",
-              "ADD TO CART"
-            ]
+            "commerceSignals": ["Add to Bag", "ADD TO CART"]
           }
         }
       ],
@@ -12702,9 +12387,7 @@
             "title": "Jabra Enhance Select Hearing Aids - Buy Online",
             "fixture": "reports/brand-corpus/captures/jabra.com/b36c9b22615ceb2a.html.gz",
             "provenance": "reports/brand-corpus/captures/jabra.com/b36c9b22615ceb2a.json",
-            "commerceSignals": [
-              "Checkout"
-            ]
+            "commerceSignals": ["Checkout"]
           }
         }
       ],
@@ -12735,9 +12418,7 @@
             "title": "FLEECE GLOVE K Warm fleece gloves kids Purple | JACK WOLFSKIN",
             "fixture": "reports/brand-corpus/captures/jack-wolfskin.com/4d29669ad377dab1.html.gz",
             "provenance": "reports/brand-corpus/captures/jack-wolfskin.com/4d29669ad377dab1.json",
-            "commerceSignals": [
-              "shopping Cart"
-            ]
+            "commerceSignals": ["shopping Cart"]
           }
         }
       ],
@@ -12853,9 +12534,7 @@
             "title": "Shop Chemicals and Accessories | Jacuzzi® UK",
             "fixture": "reports/brand-corpus/captures/jacuzzi.com/ccc4ed53be4cbb7a.html.gz",
             "provenance": "reports/brand-corpus/captures/jacuzzi.com/ccc4ed53be4cbb7a.json",
-            "commerceSignals": [
-              "Buy Now"
-            ]
+            "commerceSignals": ["Buy Now"]
           }
         }
       ],
@@ -12896,9 +12575,7 @@
             "title": "State Seal of Texas Charm in Sterling Silver",
             "fixture": "reports/brand-corpus/captures/jamesavery.com/6e87f2b8ba027676.html.gz",
             "provenance": "reports/brand-corpus/captures/jamesavery.com/6e87f2b8ba027676.json",
-            "commerceSignals": [
-              "Add to Cart"
-            ]
+            "commerceSignals": ["Add to Cart"]
           }
         }
       ],
@@ -13021,11 +12698,7 @@
             "title": "Deals | J.Crew Factory",
             "fixture": "reports/brand-corpus/captures/jcrew.com/56b2894ccee9b5bf.html.gz",
             "provenance": "reports/brand-corpus/captures/jcrew.com/56b2894ccee9b5bf.json",
-            "commerceSignals": [
-              "Shopping Bag",
-              "checkout",
-              "Add to Bag"
-            ]
+            "commerceSignals": ["Shopping Bag", "checkout", "Add to Bag"]
           }
         }
       ],
@@ -13212,9 +12885,7 @@
             "title": "Shakespeare – Fall-Planted - Onion Sets | Johnny's Selected Seeds",
             "fixture": "reports/brand-corpus/captures/johnnyseeds.com/6fb82c4932d9348b.html.gz",
             "provenance": "reports/brand-corpus/captures/johnnyseeds.com/6fb82c4932d9348b.json",
-            "commerceSignals": [
-              "Add to Cart"
-            ]
+            "commerceSignals": ["Add to Cart"]
           }
         }
       ],
@@ -13322,9 +12993,7 @@
             "title": "Joolz Official Webshop - Positive Design | Strollers and accessories",
             "fixture": "reports/brand-corpus/captures/joolz.com/08c59f5bde50dc13.html.gz",
             "provenance": "reports/brand-corpus/captures/joolz.com/08c59f5bde50dc13.json",
-            "commerceSignals": [
-              "Shopping cart"
-            ]
+            "commerceSignals": ["Shopping cart"]
           }
         }
       ],
@@ -13443,9 +13112,7 @@
             "title": "Gift Card Gift Card | Junior Couture",
             "fixture": "reports/brand-corpus/captures/juniorcouture.com/cdb3fee327cc4327.html.gz",
             "provenance": "reports/brand-corpus/captures/juniorcouture.com/cdb3fee327cc4327.json",
-            "commerceSignals": [
-              "Add to Bag"
-            ]
+            "commerceSignals": ["Add to Bag"]
           }
         }
       ],
@@ -13486,9 +13153,7 @@
             "title": "Pantry Fresh Beef & Russet Potato Dog Food\n – JustFoodForDogs",
             "fixture": "reports/brand-corpus/captures/justfoodfordogs.com/f29dbba28669382d.html.gz",
             "provenance": "reports/brand-corpus/captures/justfoodfordogs.com/f29dbba28669382d.json",
-            "commerceSignals": [
-              "Add to cart"
-            ]
+            "commerceSignals": ["Add to cart"]
           }
         }
       ],
@@ -13684,9 +13349,7 @@
             "title": "Timbra | Kelly Wearstler",
             "fixture": "reports/brand-corpus/captures/kellywearstler.com/78eb87ad32804198.html.gz",
             "provenance": "reports/brand-corpus/captures/kellywearstler.com/78eb87ad32804198.json",
-            "commerceSignals": [
-              "Add to cart"
-            ]
+            "commerceSignals": ["Add to cart"]
           }
         }
       ],
@@ -13727,9 +13390,7 @@
             "title": "Kendra Scott Official | Jewelry, Personalized Gifts & Watches",
             "fixture": "reports/brand-corpus/captures/kendrascott.com/3dc5b3f727064e46.html.gz",
             "provenance": "reports/brand-corpus/captures/kendrascott.com/3dc5b3f727064e46.json",
-            "commerceSignals": [
-              "checkout"
-            ]
+            "commerceSignals": ["checkout"]
           }
         }
       ],
@@ -13773,9 +13434,7 @@
               "type": "homepage",
               "source": "detected",
               "confidence": "strong",
-              "signals": [
-                "locale-root"
-              ]
+              "signals": ["locale-root"]
             },
             "pageType": "Homepage",
             "title": "Kenwood AT | Startseite",
@@ -13868,10 +13527,7 @@
             "title": "Shop Keter | Keter UK",
             "fixture": "reports/brand-corpus/captures/keter.com/13fe64ad22a914e0.html.gz",
             "provenance": "reports/brand-corpus/captures/keter.com/13fe64ad22a914e0.json",
-            "commerceSignals": [
-              "CHECKOUT",
-              "Buy now"
-            ]
+            "commerceSignals": ["CHECKOUT", "Buy now"]
           }
         }
       ],
@@ -13912,9 +13568,7 @@
             "title": "NIGHT.SHIFT",
             "fixture": "reports/brand-corpus/captures/kevinmurphy.com.au/9ee4517230b93175.html.gz",
             "provenance": "reports/brand-corpus/captures/kevinmurphy.com.au/9ee4517230b93175.json",
-            "commerceSignals": [
-              "Checkout"
-            ]
+            "commerceSignals": ["Checkout"]
           }
         }
       ],
@@ -13955,9 +13609,7 @@
             "title": "Khaadi United States | Official Online Store",
             "fixture": "reports/brand-corpus/captures/khaadi.com/cb2d8bf686d4f639.html.gz",
             "provenance": "reports/brand-corpus/captures/khaadi.com/cb2d8bf686d4f639.json",
-            "commerceSignals": [
-              "Checkout"
-            ]
+            "commerceSignals": ["Checkout"]
           }
         }
       ],
@@ -14039,10 +13691,7 @@
             "title": "Bloob Cepillo Carda Autolimpiante para perros",
             "fixture": "reports/brand-corpus/captures/kiwoko.com/47f9d5bab94454ec.html.gz",
             "provenance": "reports/brand-corpus/captures/kiwoko.com/47f9d5bab94454ec.json",
-            "commerceSignals": [
-              "Añadir al carrito",
-              "Comprar"
-            ]
+            "commerceSignals": ["Añadir al carrito", "Comprar"]
           }
         }
       ],
@@ -14163,9 +13812,7 @@
             "title": "Womb Chair and Ottoman, Standard | Knoll",
             "fixture": "reports/brand-corpus/captures/knoll.com/70d6fb62262b67c4.html.gz",
             "provenance": "reports/brand-corpus/captures/knoll.com/70d6fb62262b67c4.json",
-            "commerceSignals": [
-              "Add to Cart"
-            ]
+            "commerceSignals": ["Add to Cart"]
           }
         }
       ],
@@ -14206,9 +13853,7 @@
             "title": "Kreg 20V Jigsaw - Barrel Grip Cordless Jigsaw | KregTool.com Official Store",
             "fixture": "reports/brand-corpus/captures/kregtool.com/c43e714cb785dfb6.html.gz",
             "provenance": "reports/brand-corpus/captures/kregtool.com/c43e714cb785dfb6.json",
-            "commerceSignals": [
-              "Add to Cart"
-            ]
+            "commerceSignals": ["Add to Cart"]
           }
         }
       ],
@@ -14249,9 +13894,7 @@
             "title": "Calendrier de l'avent 2026 - Thés et infusions | Kusmi Tea",
             "fixture": "reports/brand-corpus/captures/kusmitea.com/c16b7b8ea01efc0d.html.gz",
             "provenance": "reports/brand-corpus/captures/kusmitea.com/c16b7b8ea01efc0d.json",
-            "commerceSignals": [
-              "Ajouter au panier"
-            ]
+            "commerceSignals": ["Ajouter au panier"]
           }
         }
       ],
@@ -14292,9 +13935,7 @@
             "title": "Shop By Brands | LAC",
             "fixture": "reports/brand-corpus/captures/lac.com/861c6f21cd1c8c3c.html.gz",
             "provenance": "reports/brand-corpus/captures/lac.com/861c6f21cd1c8c3c.json",
-            "commerceSignals": [
-              "Add to Cart"
-            ]
+            "commerceSignals": ["Add to Cart"]
           }
         }
       ],
@@ -14416,11 +14057,7 @@
             "title": "Open-Front Fair Isle Cardigan | LaneBryant",
             "fixture": "reports/brand-corpus/captures/lanebryant.com/0c724181a2715761.html.gz",
             "provenance": "reports/brand-corpus/captures/lanebryant.com/0c724181a2715761.json",
-            "commerceSignals": [
-              "checkout",
-              "Checkout",
-              "Add to Bag"
-            ]
+            "commerceSignals": ["checkout", "Checkout", "Add to Bag"]
           }
         }
       ],
@@ -14659,9 +14296,7 @@
             "title": "Legendary Non-Typical Series Long Sleeve T-Shirt | 100% Heavyweight Cotton",
             "fixture": "reports/brand-corpus/captures/legendarywhitetails.com/90240c93a74eac5b.html.gz",
             "provenance": "reports/brand-corpus/captures/legendarywhitetails.com/90240c93a74eac5b.json",
-            "commerceSignals": [
-              "Add to Cart"
-            ]
+            "commerceSignals": ["Add to Cart"]
           }
         }
       ],
@@ -14891,9 +14526,7 @@
             "title": "Franklin Restoration Bell 1 Light 5 inch Matte Black Mini Pendant Ceiling Light in Incandescent, Seedy, Franklin Restoration",
             "fixture": "reports/brand-corpus/captures/lightingnewyork.com/e90c79a9617b94be.html.gz",
             "provenance": "reports/brand-corpus/captures/lightingnewyork.com/e90c79a9617b94be.json",
-            "commerceSignals": [
-              "Add to Cart"
-            ]
+            "commerceSignals": ["Add to Cart"]
           }
         }
       ],
@@ -15002,9 +14635,7 @@
             "title": "Flare jeans with scarf colour light denim | Liu Jo",
             "fixture": "reports/brand-corpus/captures/liujo.com/35e731ed144f44ac.html.gz",
             "provenance": "reports/brand-corpus/captures/liujo.com/35e731ed144f44ac.json",
-            "commerceSignals": [
-              "Shopping Bag"
-            ]
+            "commerceSignals": ["Shopping Bag"]
           }
         }
       ],
@@ -15132,10 +14763,7 @@
             "title": "Boat and Tote®, Open-Top | Tote Bags | L.L.Bean International",
             "fixture": "reports/brand-corpus/captures/llbean.com/e584d2b67a64cb5c.html.gz",
             "provenance": "reports/brand-corpus/captures/llbean.com/e584d2b67a64cb5c.json",
-            "commerceSignals": [
-              "Shopping Bag",
-              "Add to Bag"
-            ]
+            "commerceSignals": ["Shopping Bag", "Add to Bag"]
           }
         }
       ],
@@ -15297,9 +14925,7 @@
             "title": "",
             "fixture": "reports/brand-corpus/captures/loft.com/9feeb70c8010abd7.html.gz",
             "provenance": "reports/brand-corpus/captures/loft.com/9feeb70c8010abd7.json",
-            "commerceSignals": [
-              "CHECKOUT"
-            ]
+            "commerceSignals": ["CHECKOUT"]
           }
         }
       ],
@@ -15340,9 +14966,7 @@
             "title": "Logitech MX Vertical Ergonomic Wireless Mouse",
             "fixture": "reports/brand-corpus/captures/logitech.com/ae3b5ee421e95aac.html.gz",
             "provenance": "reports/brand-corpus/captures/logitech.com/ae3b5ee421e95aac.json",
-            "commerceSignals": [
-              "Add to cart"
-            ]
+            "commerceSignals": ["Add to cart"]
           }
         }
       ],
@@ -15383,9 +15007,7 @@
             "title": "Logitech G RS50 System: Direct Drive Sim Racing Steering Wheel Bundle",
             "fixture": "reports/brand-corpus/captures/logitechg.com/051bf397ebe6906f.html.gz",
             "provenance": "reports/brand-corpus/captures/logitechg.com/051bf397ebe6906f.json",
-            "commerceSignals": [
-              "Add to cart"
-            ]
+            "commerceSignals": ["Add to cart"]
           }
         }
       ],
@@ -15588,9 +15210,7 @@
             "title": "Reggiseno con Ferretto Fancy Mesh in tulle, corallo | Lovable",
             "fixture": "reports/brand-corpus/captures/lovable.it/2e57d848fc903cea.html.gz",
             "provenance": "reports/brand-corpus/captures/lovable.it/2e57d848fc903cea.json",
-            "commerceSignals": [
-              "Aggiungi al carrello"
-            ]
+            "commerceSignals": ["Aggiungi al carrello"]
           }
         }
       ],
@@ -15672,9 +15292,7 @@
             "title": "Men's & Women's Corduroy Clothing & Accessories | Lucky Brand",
             "fixture": "reports/brand-corpus/captures/luckybrand.com/27f11820dca45c8b.html.gz",
             "provenance": "reports/brand-corpus/captures/luckybrand.com/27f11820dca45c8b.json",
-            "commerceSignals": [
-              "Add to Cart"
-            ]
+            "commerceSignals": ["Add to Cart"]
           }
         }
       ],
@@ -15832,9 +15450,7 @@
             "title": "MacKenzie-Childs | Bubblegum Pink Check Tree Dish",
             "fixture": "reports/brand-corpus/captures/mackenzie-childs.com/6de1273d502f1374.html.gz",
             "provenance": "reports/brand-corpus/captures/mackenzie-childs.com/6de1273d502f1374.json",
-            "commerceSignals": [
-              "Add to Bag"
-            ]
+            "commerceSignals": ["Add to Bag"]
           }
         }
       ],
@@ -15867,10 +15483,7 @@
             "title": "Macpac Men's Uber Light Down Jacket ♺\n | Macpac",
             "fixture": "reports/brand-corpus/captures/macpac.co.nz/0fc1a6e0006565d3.html.gz",
             "provenance": "reports/brand-corpus/captures/macpac.co.nz/0fc1a6e0006565d3.json",
-            "commerceSignals": [
-              "Checkout",
-              "Add to bag"
-            ]
+            "commerceSignals": ["Checkout", "Add to bag"]
           }
         }
       ],
@@ -15911,10 +15524,7 @@
             "title": "Macpac Men's Uber Light Down Jacket ♺\n | Macpac",
             "fixture": "reports/brand-corpus/captures/macpac.com.au/16451d340e7b26de.html.gz",
             "provenance": "reports/brand-corpus/captures/macpac.com.au/16451d340e7b26de.json",
-            "commerceSignals": [
-              "Checkout",
-              "Add to bag"
-            ]
+            "commerceSignals": ["Checkout", "Add to bag"]
           }
         }
       ],
@@ -15955,9 +15565,7 @@
             "title": "Men's Sale: Jeans, Shirts and Clothing | Madewell",
             "fixture": "reports/brand-corpus/captures/madewell.com/651c0f71da0e8084.html.gz",
             "provenance": "reports/brand-corpus/captures/madewell.com/651c0f71da0e8084.json",
-            "commerceSignals": [
-              "Add to Bag"
-            ]
+            "commerceSignals": ["Add to Bag"]
           }
         }
       ],
@@ -16073,9 +15681,7 @@
             "title": "ALAÏA ROBE FLUIDE EN JERSEY NOIR ALAIA | ALAÏA FR",
             "fixture": "reports/brand-corpus/captures/maison-alaia.com/5e07cc57b6a2899a.html.gz",
             "provenance": "reports/brand-corpus/captures/maison-alaia.com/5e07cc57b6a2899a.json",
-            "commerceSignals": [
-              "Ajouter au panier"
-            ]
+            "commerceSignals": ["Ajouter au panier"]
           }
         }
       ],
@@ -16106,10 +15712,7 @@
             "title": "Shop Online Cartier Watches Collections",
             "fixture": "reports/brand-corpus/captures/maisonbirks.com/5a07d76535583f95.html.gz",
             "provenance": "reports/brand-corpus/captures/maisonbirks.com/5a07d76535583f95.json",
-            "commerceSignals": [
-              "buy now",
-              "Checkout"
-            ]
+            "commerceSignals": ["buy now", "Checkout"]
           }
         }
       ],
@@ -16150,9 +15753,7 @@
             "title": "Yellow | MM6 Official",
             "fixture": "reports/brand-corpus/captures/maisonmargiela.com/81dd1db48a5efed0.html.gz",
             "provenance": "reports/brand-corpus/captures/maisonmargiela.com/81dd1db48a5efed0.json",
-            "commerceSignals": [
-              "checkout"
-            ]
+            "commerceSignals": ["checkout"]
           }
         }
       ],
@@ -16275,10 +15876,7 @@
             "title": "Buy Sapphire Blue Sequins Embroidered Indo Western Online in Singapore, Germany, Netherlands, or Worldwide @Manyavar - Indo Western for Men",
             "fixture": "reports/brand-corpus/captures/manyavar.com/f0157ff99259d083.html.gz",
             "provenance": "reports/brand-corpus/captures/manyavar.com/f0157ff99259d083.json",
-            "commerceSignals": [
-              "checkout",
-              "Add to Cart"
-            ]
+            "commerceSignals": ["checkout", "Add to Cart"]
           }
         }
       ],
@@ -16353,9 +15951,7 @@
             "title": "920 Source d'Énergie Gentle Caressing Exfoliator | Maria Galland Paris",
             "fixture": "reports/brand-corpus/captures/mariagalland.com/96ab6dada4633288.html.gz",
             "provenance": "reports/brand-corpus/captures/mariagalland.com/96ab6dada4633288.json",
-            "commerceSignals": [
-              "checkout"
-            ]
+            "commerceSignals": ["checkout"]
           }
         }
       ],
@@ -16396,9 +15992,7 @@
             "title": "The Beauty Advent Calendar 2026 - Saving 82% by M&S",
             "fixture": "reports/brand-corpus/captures/marksandspencer.com/8a0ddcbcdb324f26.html.gz",
             "provenance": "reports/brand-corpus/captures/marksandspencer.com/8a0ddcbcdb324f26.json",
-            "commerceSignals": [
-              "Add to bag"
-            ]
+            "commerceSignals": ["Add to bag"]
           }
         }
       ],
@@ -16480,10 +16074,7 @@
             "title": "New In Women | Marni official online store",
             "fixture": "reports/brand-corpus/captures/marni.com/35aa45e558ec008b.html.gz",
             "provenance": "reports/brand-corpus/captures/marni.com/35aa45e558ec008b.json",
-            "commerceSignals": [
-              "shopping bag",
-              "checkout"
-            ]
+            "commerceSignals": ["shopping bag", "checkout"]
           }
         }
       ],
@@ -16565,10 +16156,7 @@
             "title": "Authentic Acoustic Lifespan® 2.0 Guitar Strings Phosphor Bronze | Martin Guitar",
             "fixture": "reports/brand-corpus/captures/martinguitar.com/e1ffb32ac281c7cf.html.gz",
             "provenance": "reports/brand-corpus/captures/martinguitar.com/e1ffb32ac281c7cf.json",
-            "commerceSignals": [
-              "Add to Cart",
-              "Add to cart"
-            ]
+            "commerceSignals": ["Add to Cart", "Add to cart"]
           }
         }
       ],
@@ -16609,10 +16197,7 @@
             "title": "TimeWise® Antioxidant Moisturizer | Mary Kay",
             "fixture": "reports/brand-corpus/captures/marykay.com/46c42726c8ef8756.html.gz",
             "provenance": "reports/brand-corpus/captures/marykay.com/46c42726c8ef8756.json",
-            "commerceSignals": [
-              "Add To Bag",
-              "shopping cart"
-            ]
+            "commerceSignals": ["Add To Bag", "shopping cart"]
           }
         }
       ],
@@ -16653,9 +16238,7 @@
             "title": "Tylvora Wool Jacket - Masai | Official Brand Site",
             "fixture": "reports/brand-corpus/captures/masai.net/4027e68758f7d419.html.gz",
             "provenance": "reports/brand-corpus/captures/masai.net/4027e68758f7d419.json",
-            "commerceSignals": [
-              "Add to bag"
-            ]
+            "commerceSignals": ["Add to bag"]
           }
         }
       ],
@@ -16730,9 +16313,7 @@
             "title": "Maytronics Dolphin Robotic Pool Cleaners Parts Store | Maytronics",
             "fixture": "reports/brand-corpus/captures/maytronics.com/60e3771d337e26b4.html.gz",
             "provenance": "reports/brand-corpus/captures/maytronics.com/60e3771d337e26b4.json",
-            "commerceSignals": [
-              "Add to Cart"
-            ]
+            "commerceSignals": ["Add to Cart"]
           }
         }
       ],
@@ -16848,10 +16429,7 @@
             "title": "Girmi shop: scopri tutti i prodotti in Offerta | MediaWorld",
             "fixture": "reports/brand-corpus/captures/mediaworld.it/192be8a977259304.html.gz",
             "provenance": "reports/brand-corpus/captures/mediaworld.it/192be8a977259304.json",
-            "commerceSignals": [
-              "Aggiungi al carrello",
-              "COMPRAR"
-            ]
+            "commerceSignals": ["Aggiungi al carrello", "COMPRAR"]
           }
         }
       ],
@@ -16892,10 +16470,7 @@
             "title": "Classic Medical ID Bracelet | MedicAlert Foundation",
             "fixture": "reports/brand-corpus/captures/medicalert.org/a5b1fc0f0dd16cb4.html.gz",
             "provenance": "reports/brand-corpus/captures/medicalert.org/a5b1fc0f0dd16cb4.json",
-            "commerceSignals": [
-              "Checkout",
-              "Add to Cart"
-            ]
+            "commerceSignals": ["Checkout", "Add to Cart"]
           }
         }
       ],
@@ -16970,9 +16545,7 @@
             "title": "Glycolic Acid Rejuvenating Pads | Merle Norman",
             "fixture": "reports/brand-corpus/captures/merlenorman.com/d0c6bd6f1f21c665.html.gz",
             "provenance": "reports/brand-corpus/captures/merlenorman.com/d0c6bd6f1f21c665.json",
-            "commerceSignals": [
-              "Add To Bag"
-            ]
+            "commerceSignals": ["Add To Bag"]
           }
         }
       ],
@@ -17059,9 +16632,7 @@
             "title": "Michael Hill | Search Result Suggestions",
             "fixture": "reports/brand-corpus/captures/michaelhill.com/b57466db798b46e7.html.gz",
             "provenance": "reports/brand-corpus/captures/michaelhill.com/b57466db798b46e7.json",
-            "commerceSignals": [
-              "Checkout"
-            ]
+            "commerceSignals": ["Checkout"]
           }
         }
       ],
@@ -17306,10 +16877,7 @@
             "title": "Smart Writing Set Black | Moleskine",
             "fixture": "reports/brand-corpus/captures/moleskine.com/7b41d119192e1dfa.html.gz",
             "provenance": "reports/brand-corpus/captures/moleskine.com/7b41d119192e1dfa.json",
-            "commerceSignals": [
-              "Add to bag",
-              "Shopping Bag"
-            ]
+            "commerceSignals": ["Add to bag", "Shopping Bag"]
           }
         }
       ],
@@ -17350,11 +16918,7 @@
             "title": "New Collection, Clothing, Online Shop - Monnalisa",
             "fixture": "reports/brand-corpus/captures/monnalisa.com/82fa7e6d242a6e79.html.gz",
             "provenance": "reports/brand-corpus/captures/monnalisa.com/82fa7e6d242a6e79.json",
-            "commerceSignals": [
-              "shopping bag",
-              "checkout",
-              "buy now"
-            ]
+            "commerceSignals": ["shopping bag", "checkout", "buy now"]
           }
         }
       ],
@@ -17575,9 +17139,7 @@
             "title": "Mud Bay Gift Cards",
             "fixture": "reports/brand-corpus/captures/mudbay.com/a4c3c798a7650cda.html.gz",
             "provenance": "reports/brand-corpus/captures/mudbay.com/a4c3c798a7650cda.json",
-            "commerceSignals": [
-              "Add to cart"
-            ]
+            "commerceSignals": ["Add to cart"]
           }
         }
       ],
@@ -17651,10 +17213,7 @@
             "title": "Multiópticas: gafas mó, lentillas multilens y audífonos Multisound",
             "fixture": "reports/brand-corpus/captures/multiopticas.com/61882af8b5c0c2ae.html.gz",
             "provenance": "reports/brand-corpus/captures/multiopticas.com/61882af8b5c0c2ae.json",
-            "commerceSignals": [
-              "comprar",
-              "COMPRAR"
-            ]
+            "commerceSignals": ["comprar", "COMPRAR"]
           }
         }
       ],
@@ -17736,9 +17295,7 @@
             "title": "Legacy Slim in Panther Black | Men's Dress Watches | MVMT",
             "fixture": "reports/brand-corpus/captures/mvmt.com/1c040f3a5966cbbd.html.gz",
             "provenance": "reports/brand-corpus/captures/mvmt.com/1c040f3a5966cbbd.json",
-            "commerceSignals": [
-              "Add to cart"
-            ]
+            "commerceSignals": ["Add to cart"]
           }
         }
       ],
@@ -17779,10 +17336,7 @@
             "title": "",
             "fixture": "reports/brand-corpus/captures/nambe.com/267e519617e56258.html.gz",
             "provenance": "reports/brand-corpus/captures/nambe.com/267e519617e56258.json",
-            "commerceSignals": [
-              "Buy Now",
-              "Add to Bag"
-            ]
+            "commerceSignals": ["Buy Now", "Add to Bag"]
           }
         }
       ],
@@ -17849,9 +17403,7 @@
             "title": "Orgasm Vault | NARS",
             "fixture": "reports/brand-corpus/captures/narscosmetics.com/c2c9dd59297901ad.html.gz",
             "provenance": "reports/brand-corpus/captures/narscosmetics.com/c2c9dd59297901ad.json",
-            "commerceSignals": [
-              "Add to Bag"
-            ]
+            "commerceSignals": ["Add to Bag"]
           }
         }
       ],
@@ -17923,9 +17475,7 @@
             "title": "Diamond Extreme Serum – Colección Diamond Extreme – Natura Bissé",
             "fixture": "reports/brand-corpus/captures/naturabisse.com/491c2dbdf5fe4bd2.html.gz",
             "provenance": "reports/brand-corpus/captures/naturabisse.com/491c2dbdf5fe4bd2.json",
-            "commerceSignals": [
-              "Add to cart"
-            ]
+            "commerceSignals": ["Add to cart"]
           }
         }
       ],
@@ -18003,9 +17553,7 @@
             "title": "Baby Bath Foam\n – NatyAB",
             "fixture": "reports/brand-corpus/captures/naty.com/69a159f5aeab87dc.html.gz",
             "provenance": "reports/brand-corpus/captures/naty.com/69a159f5aeab87dc.json",
-            "commerceSignals": [
-              "shopping Cart"
-            ]
+            "commerceSignals": ["shopping Cart"]
           }
         }
       ],
@@ -18046,9 +17594,7 @@
             "title": "Orbi Wall Mount Kit - Shop Online – NETGEAR",
             "fixture": "reports/brand-corpus/captures/netgear.com/bc2c5ce91dd38258.html.gz",
             "provenance": "reports/brand-corpus/captures/netgear.com/bc2c5ce91dd38258.json",
-            "commerceSignals": [
-              "Add To Cart"
-            ]
+            "commerceSignals": ["Add To Cart"]
           }
         }
       ],
@@ -18089,9 +17635,7 @@
             "title": "Online chocolate shop: buy your chocolates online | Neuhaus Chocolates | Inventor of the Belgian Praline",
             "fixture": "reports/brand-corpus/captures/neuhauschocolates.com/9b2079d9620e84f6.html.gz",
             "provenance": "reports/brand-corpus/captures/neuhauschocolates.com/9b2079d9620e84f6.json",
-            "commerceSignals": [
-              "checkout"
-            ]
+            "commerceSignals": ["checkout"]
           }
         }
       ],
@@ -18241,10 +17785,7 @@
             "title": "31\" Berkeley Boot Jean | NIC+ZOE",
             "fixture": "reports/brand-corpus/captures/nicandzoe.com/7f1a4aacfef65a67.html.gz",
             "provenance": "reports/brand-corpus/captures/nicandzoe.com/7f1a4aacfef65a67.json",
-            "commerceSignals": [
-              "Add to Cart",
-              "Checkout"
-            ]
+            "commerceSignals": ["Add to Cart", "Checkout"]
           }
         }
       ],
@@ -18367,10 +17908,7 @@
             "title": "Chocolate Truffles Gift Box\n\n    – Norman Love Confections",
             "fixture": "reports/brand-corpus/captures/normanloveconfections.com/1562d6613176b080.html.gz",
             "provenance": "reports/brand-corpus/captures/normanloveconfections.com/1562d6613176b080.json",
-            "commerceSignals": [
-              "Add to cart",
-              "checkout"
-            ]
+            "commerceSignals": ["Add to cart", "checkout"]
           }
         }
       ],
@@ -18484,11 +18022,7 @@
             "title": "Olivia Burton London |",
             "fixture": "reports/brand-corpus/captures/oliviaburton.com/7fc61b8a2e3ee40e.html.gz",
             "provenance": "reports/brand-corpus/captures/oliviaburton.com/7fc61b8a2e3ee40e.json",
-            "commerceSignals": [
-              "checkout",
-              "Shopping Bag",
-              "Checkout"
-            ]
+            "commerceSignals": ["checkout", "Shopping Bag", "Checkout"]
           }
         }
       ],
@@ -18689,9 +18223,7 @@
             "title": "Giacca imbottita verde trapuntata con bottoni PIOMBO da Donna | OVS",
             "fixture": "reports/brand-corpus/captures/ovs.it/3375ca9eec612da5.html.gz",
             "provenance": "reports/brand-corpus/captures/ovs.it/3375ca9eec612da5.json",
-            "commerceSignals": [
-              "checkout"
-            ]
+            "commerceSignals": ["checkout"]
           }
         }
       ],
@@ -18732,11 +18264,7 @@
             "title": "Ris-k Java Triangle Bikini Top | Pacsun",
             "fixture": "reports/brand-corpus/captures/pacsun.com/0b80edc0a315857d.html.gz",
             "provenance": "reports/brand-corpus/captures/pacsun.com/0b80edc0a315857d.json",
-            "commerceSignals": [
-              "Checkout",
-              "Add to Bag",
-              "add to bag"
-            ]
+            "commerceSignals": ["Checkout", "Add to Bag", "add to bag"]
           }
         }
       ],
@@ -18852,11 +18380,7 @@
             "title": "Construction Party Cake Topper - \n          \n            Birthday Party\n           \n          | Party City",
             "fixture": "reports/brand-corpus/captures/partycity.com/80dffa2a7e2a203d.html.gz",
             "provenance": "reports/brand-corpus/captures/partycity.com/80dffa2a7e2a203d.json",
-            "commerceSignals": [
-              "checkout",
-              "Add to cart",
-              "Add to Cart"
-            ]
+            "commerceSignals": ["checkout", "Add to cart", "Add to Cart"]
           }
         }
       ],
@@ -18900,9 +18424,7 @@
               "type": "homepage",
               "source": "detected",
               "confidence": "strong",
-              "signals": [
-                "root-path"
-              ]
+              "signals": ["root-path"]
             },
             "pageType": "Homepage",
             "title": "Hang Tight! Routing to checkout...",
@@ -18954,9 +18476,7 @@
             "title": "Zebra print wrap midi dress | Patterned | Patrizia Pepe",
             "fixture": "reports/brand-corpus/captures/patriziapepe.com/5b4e93778c8a4027.html.gz",
             "provenance": "reports/brand-corpus/captures/patriziapepe.com/5b4e93778c8a4027.json",
-            "commerceSignals": [
-              "shopping bag"
-            ]
+            "commerceSignals": ["shopping bag"]
           }
         }
       ],
@@ -19077,9 +18597,7 @@
             "title": "Nor'easter Overcoat",
             "fixture": "reports/brand-corpus/captures/paulstuart.com/e68f3bbc65234b51.html.gz",
             "provenance": "reports/brand-corpus/captures/paulstuart.com/e68f3bbc65234b51.json",
-            "commerceSignals": [
-              "Add to Bag"
-            ]
+            "commerceSignals": ["Add to Bag"]
           }
         }
       ],
@@ -19229,10 +18747,7 @@
             "title": "Women's Plaid 49er Jacket | Pendleton",
             "fixture": "reports/brand-corpus/captures/pendleton-usa.com/65ffd99149165047.html.gz",
             "provenance": "reports/brand-corpus/captures/pendleton-usa.com/65ffd99149165047.json",
-            "commerceSignals": [
-              "Add to Bag",
-              "Shopping bag"
-            ]
+            "commerceSignals": ["Add to Bag", "Shopping bag"]
           }
         }
       ],
@@ -19542,9 +19057,7 @@
             "title": "Surgelés Picard - Livraison Produits surgelés à domicile",
             "fixture": "reports/brand-corpus/captures/picard.fr/022429bea8b5b04b.html.gz",
             "provenance": "reports/brand-corpus/captures/picard.fr/022429bea8b5b04b.json",
-            "commerceSignals": [
-              "Ajouter au panier"
-            ]
+            "commerceSignals": ["Ajouter au panier"]
           }
         }
       ],
@@ -19585,9 +19098,7 @@
             "title": "Polaire homme zippée PMBTON ZIP FLEECE\n – Picture",
             "fixture": "reports/brand-corpus/captures/picture-organic-clothing.com/f0b873ba0b61786e.html.gz",
             "provenance": "reports/brand-corpus/captures/picture-organic-clothing.com/f0b873ba0b61786e.json",
-            "commerceSignals": [
-              "Ajouter au panier"
-            ]
+            "commerceSignals": ["Ajouter au panier"]
           }
         }
       ],
@@ -19669,9 +19180,7 @@
             "title": "Queijo Flamengo Fatiado Terra Nostra | Pingo Doce",
             "fixture": "reports/brand-corpus/captures/pingodoce.pt/c61e2b23ec8956bc.html.gz",
             "provenance": "reports/brand-corpus/captures/pingodoce.pt/c61e2b23ec8956bc.json",
-            "commerceSignals": [
-              "comprar"
-            ]
+            "commerceSignals": ["comprar"]
           }
         }
       ],
@@ -19702,9 +19211,7 @@
             "title": "Borsa media a tracolla Love Bag Puff Maxi Quilt | Pinko",
             "fixture": "reports/brand-corpus/captures/pinko.com/b170c22f8c87d350.html.gz",
             "provenance": "reports/brand-corpus/captures/pinko.com/b170c22f8c87d350.json",
-            "commerceSignals": [
-              "Aggiungi al carrello"
-            ]
+            "commerceSignals": ["Aggiungi al carrello"]
           }
         }
       ],
@@ -19745,9 +19252,7 @@
             "title": "Web Shop | PLAYMOBIL",
             "fixture": "reports/brand-corpus/captures/playmobil.com/97de13e6ae29ef4a.html.gz",
             "provenance": "reports/brand-corpus/captures/playmobil.com/97de13e6ae29ef4a.json",
-            "commerceSignals": [
-              "Add to cart"
-            ]
+            "commerceSignals": ["Add to cart"]
           }
         }
       ],
@@ -19827,9 +19332,7 @@
             "title": "Jewelry & Accessories Shop | Premium Brands at POLO",
             "fixture": "reports/brand-corpus/captures/polo-motorrad.com/504daf07df73c428.html.gz",
             "provenance": "reports/brand-corpus/captures/polo-motorrad.com/504daf07df73c428.json",
-            "commerceSignals": [
-              "Shopping cart"
-            ]
+            "commerceSignals": ["Shopping cart"]
           }
         }
       ],
@@ -19870,11 +19373,7 @@
             "title": "Tortoise — MagSafe Low-Pro Grip & Stand | Low-Pro Grip | PopSockets",
             "fixture": "reports/brand-corpus/captures/popsockets.com/1be669afb007f114.html.gz",
             "provenance": "reports/brand-corpus/captures/popsockets.com/1be669afb007f114.json",
-            "commerceSignals": [
-              "Add to Cart",
-              "Add To Cart",
-              "Buy Now"
-            ]
+            "commerceSignals": ["Add to Cart", "Add To Cart", "Buy Now"]
           }
         }
       ],
@@ -20031,9 +19530,7 @@
             "title": "PUMA Outlet | Official PUMA Outlet Online | Clearance Deals | Puma Greece",
             "fixture": "reports/brand-corpus/captures/puma.com/ead1b5b4ff0672ff.html.gz",
             "provenance": "reports/brand-corpus/captures/puma.com/ead1b5b4ff0672ff.json",
-            "commerceSignals": [
-              "Shopping Cart"
-            ]
+            "commerceSignals": ["Shopping Cart"]
           }
         }
       ],
@@ -20188,11 +19685,7 @@
             "title": "Rawlings MLB Team MLB T-Ball Backpack | Youth Baseball Gear Bag | Rawlings",
             "fixture": "reports/brand-corpus/captures/rawlings.com/e85252c5658cf1c4.html.gz",
             "provenance": "reports/brand-corpus/captures/rawlings.com/e85252c5658cf1c4.json",
-            "commerceSignals": [
-              "Add to Cart",
-              "Checkout",
-              "BUY NOW"
-            ]
+            "commerceSignals": ["Add to Cart", "Checkout", "BUY NOW"]
           }
         }
       ],
@@ -20267,9 +19760,7 @@
             "title": "Men's Workwear & Uniforms | Red Kap® | Red Kap®",
             "fixture": "reports/brand-corpus/captures/redkap.com/c1bd286439005f7b.html.gz",
             "provenance": "reports/brand-corpus/captures/redkap.com/c1bd286439005f7b.json",
-            "commerceSignals": [
-              "Checkout"
-            ]
+            "commerceSignals": ["Checkout"]
           }
         }
       ],
@@ -20310,9 +19801,7 @@
             "title": "Red Wing Heritage Europe | Official Store",
             "fixture": "reports/brand-corpus/captures/redwingshoes.com/a3803275efa45977.html.gz",
             "provenance": "reports/brand-corpus/captures/redwingshoes.com/a3803275efa45977.json",
-            "commerceSignals": [
-              "Buy Now"
-            ]
+            "commerceSignals": ["Buy Now"]
           }
         }
       ],
@@ -20353,9 +19842,7 @@
             "title": "Buy Core-Lokt Tipped 7mm Backcountry Ammo | 175 Grain, 3125 FPS | Remington",
             "fixture": "reports/brand-corpus/captures/remington.com/e0c938540ee48ca1.html.gz",
             "provenance": "reports/brand-corpus/captures/remington.com/e0c938540ee48ca1.json",
-            "commerceSignals": [
-              "Add to Cart"
-            ]
+            "commerceSignals": ["Add to Cart"]
           }
         }
       ],
@@ -20396,11 +19883,7 @@
             "title": "Rene Caovilla® Official | Italian Jewel Shoes for Women",
             "fixture": "reports/brand-corpus/captures/renecaovilla.com/abddbd5067eebf44.html.gz",
             "provenance": "reports/brand-corpus/captures/renecaovilla.com/abddbd5067eebf44.json",
-            "commerceSignals": [
-              "checkout",
-              "shopping bag",
-              "Add to Bag"
-            ]
+            "commerceSignals": ["checkout", "shopping bag", "Add to Bag"]
           }
         }
       ],
@@ -20441,9 +19924,7 @@
             "title": "Shop All - Ren's Pets",
             "fixture": "reports/brand-corpus/captures/renspets.com/4a2a4904aef97efd.html.gz",
             "provenance": "reports/brand-corpus/captures/renspets.com/4a2a4904aef97efd.json",
-            "commerceSignals": [
-              "Add to Cart"
-            ]
+            "commerceSignals": ["Add to Cart"]
           }
         }
       ],
@@ -20484,9 +19965,7 @@
             "title": "ג'קט נפוליאון פיו | רנואר",
             "fixture": "reports/brand-corpus/captures/renuar.co.il/4e765b975771c2a2.html.gz",
             "provenance": "reports/brand-corpus/captures/renuar.co.il/4e765b975771c2a2.json",
-            "commerceSignals": [
-              "ADD TO CART"
-            ]
+            "commerceSignals": ["ADD TO CART"]
           }
         }
       ],
@@ -20527,9 +20006,7 @@
             "title": "R600™/R650™ Remote Replacement Parts Package\n – Reverie Sleep",
             "fixture": "reports/brand-corpus/captures/reverie.com/bd1a8c757fd02b29.html.gz",
             "provenance": "reports/brand-corpus/captures/reverie.com/bd1a8c757fd02b29.json",
-            "commerceSignals": [
-              "Add to cart"
-            ]
+            "commerceSignals": ["Add to cart"]
           }
         }
       ],
@@ -20570,10 +20047,7 @@
             "title": "LED Face Mask: Revolution Pro Miracle Silicone Technology\n – Revolution Beauty",
             "fixture": "reports/brand-corpus/captures/revolutionbeauty.com/2fbf681c81b2ff6e.html.gz",
             "provenance": "reports/brand-corpus/captures/revolutionbeauty.com/2fbf681c81b2ff6e.json",
-            "commerceSignals": [
-              "checkout",
-              "Add to cart"
-            ]
+            "commerceSignals": ["checkout", "Add to cart"]
           }
         }
       ],
@@ -20655,11 +20129,7 @@
             "title": "Men's New Arrivals | New Clothes & Boots For Men United States | R.M.Williams®️️",
             "fixture": "reports/brand-corpus/captures/rmwilliams.com/31574ec64519e4f3.html.gz",
             "provenance": "reports/brand-corpus/captures/rmwilliams.com/31574ec64519e4f3.json",
-            "commerceSignals": [
-              "Shopping bag",
-              "shopping bag",
-              "Buy now"
-            ]
+            "commerceSignals": ["Shopping bag", "shopping bag", "Buy now"]
           }
         }
       ],
@@ -20903,11 +20373,7 @@
             "title": "Rosenthal Online Shop: Exclusive porcelain & modern designs",
             "fixture": "reports/brand-corpus/captures/rosenthal.de/4d85070150e0689f.html.gz",
             "provenance": "reports/brand-corpus/captures/rosenthal.de/4d85070150e0689f.json",
-            "commerceSignals": [
-              "Add to cart",
-              "Checkout",
-              "Add to Cart"
-            ]
+            "commerceSignals": ["Add to cart", "Checkout", "Add to Cart"]
           }
         }
       ],
@@ -21065,10 +20531,7 @@
             "title": "Women’s Long-Sleeve Merino-Blend Mock-Neck Sweater\n – RW&CO",
             "fixture": "reports/brand-corpus/captures/rw-co.com/e787d80c6ae9cf8d.html.gz",
             "provenance": "reports/brand-corpus/captures/rw-co.com/e787d80c6ae9cf8d.json",
-            "commerceSignals": [
-              "Add to bag",
-              "checkout"
-            ]
+            "commerceSignals": ["Add to bag", "checkout"]
           }
         }
       ],
@@ -21109,9 +20572,7 @@
             "title": "Sites-RyK-Site",
             "fixture": "reports/brand-corpus/captures/ryk.cl/419600c99efb3c4a.html.gz",
             "provenance": "reports/brand-corpus/captures/ryk.cl/419600c99efb3c4a.json",
-            "commerceSignals": [
-              "comprar"
-            ]
+            "commerceSignals": ["comprar"]
           }
         }
       ],
@@ -21172,10 +20633,7 @@
             "title": "Wella Professionals Invigo Nutri Enrich Conditioner 200ml | Hair Conditioner | Sally Beauty",
             "fixture": "reports/brand-corpus/captures/sallybeauty.co.uk/384c6e7602c6c442.html.gz",
             "provenance": "reports/brand-corpus/captures/sallybeauty.co.uk/384c6e7602c6c442.json",
-            "commerceSignals": [
-              "add to basket",
-              "Add to Basket"
-            ]
+            "commerceSignals": ["add to basket", "Add to Basket"]
           }
         }
       ],
@@ -21330,9 +20788,7 @@
             "title": "Sandro Sitio Oficial | Colección Otoño/Invierno 26",
             "fixture": "reports/brand-corpus/captures/sandro-paris.com/c7c82108481350cf.html.gz",
             "provenance": "reports/brand-corpus/captures/sandro-paris.com/c7c82108481350cf.json",
-            "commerceSignals": [
-              "Comprar"
-            ]
+            "commerceSignals": ["Comprar"]
           }
         }
       ],
@@ -21455,11 +20911,7 @@
             "title": "A-Line Shirt 2PCSTFASV99S Sapphire PK",
             "fixture": "reports/brand-corpus/captures/sapphireonline.pk/aea781fddd34ab50.html.gz",
             "provenance": "reports/brand-corpus/captures/sapphireonline.pk/aea781fddd34ab50.json",
-            "commerceSignals": [
-              "Shopping bag",
-              "Add to Bag",
-              "Checkout"
-            ]
+            "commerceSignals": ["Shopping bag", "Add to Bag", "Checkout"]
           }
         }
       ],
@@ -21655,11 +21107,7 @@
             "title": "Books, Resources, & Programs | Scholastic Education",
             "fixture": "reports/brand-corpus/captures/scholastic.com/5fc0942b02ab01d5.html.gz",
             "provenance": "reports/brand-corpus/captures/scholastic.com/5fc0942b02ab01d5.json",
-            "commerceSignals": [
-              "Shopping cart",
-              "Shopping Cart",
-              "CHECKOUT"
-            ]
+            "commerceSignals": ["Shopping cart", "Shopping Cart", "CHECKOUT"]
           }
         }
       ],
@@ -21735,9 +21183,7 @@
             "title": "Sofa Sale | Discounted Sofas for Every Home | poltronesofà at ScS",
             "fixture": "reports/brand-corpus/captures/scs.co.uk/b88d4d16c403c61c.html.gz",
             "provenance": "reports/brand-corpus/captures/scs.co.uk/b88d4d16c403c61c.json",
-            "commerceSignals": [
-              "Checkout"
-            ]
+            "commerceSignals": ["Checkout"]
           }
         }
       ],
@@ -21778,9 +21224,7 @@
             "title": "Heritage Aello Large Tote | Limited Edition | Sea Bags",
             "fixture": "reports/brand-corpus/captures/seabags.com/623d78c506c72311.html.gz",
             "provenance": "reports/brand-corpus/captures/seabags.com/623d78c506c72311.json",
-            "commerceSignals": [
-              "Add to cart"
-            ]
+            "commerceSignals": ["Add to cart"]
           }
         }
       ],
@@ -21821,9 +21265,7 @@
             "title": "eGift card – Seed Heritage AU",
             "fixture": "reports/brand-corpus/captures/seedheritage.com/67680006bdb625e8.html.gz",
             "provenance": "reports/brand-corpus/captures/seedheritage.com/67680006bdb625e8.json",
-            "commerceSignals": [
-              "Add to bag"
-            ]
+            "commerceSignals": ["Add to bag"]
           }
         }
       ],
@@ -21898,10 +21340,7 @@
             "title": "Beak Peep Toe Pump - Black | Sergio Rossi",
             "fixture": "reports/brand-corpus/captures/sergiorossi.com/178cae7ccc442a1a.html.gz",
             "provenance": "reports/brand-corpus/captures/sergiorossi.com/178cae7ccc442a1a.json",
-            "commerceSignals": [
-              "Shopping bag",
-              "shopping bag"
-            ]
+            "commerceSignals": ["Shopping bag", "shopping bag"]
           }
         }
       ],
@@ -21942,10 +21381,7 @@
             "title": "Collection | Sesderma",
             "fixture": "reports/brand-corpus/captures/sesderma.com/8d352ec18919c0ea.html.gz",
             "provenance": "reports/brand-corpus/captures/sesderma.com/8d352ec18919c0ea.json",
-            "commerceSignals": [
-              "Add to Cart",
-              "shopping cart"
-            ]
+            "commerceSignals": ["Add to Cart", "shopping cart"]
           }
         }
       ],
@@ -22027,10 +21463,7 @@
             "title": "Ultimune Power Infusing Antioxidant Face Serum | Shiseido",
             "fixture": "reports/brand-corpus/captures/shiseido.com/653d61678adf33cc.html.gz",
             "provenance": "reports/brand-corpus/captures/shiseido.com/653d61678adf33cc.json",
-            "commerceSignals": [
-              "Add to cart",
-              "Add to Bag"
-            ]
+            "commerceSignals": ["Add to cart", "Add to Bag"]
           }
         }
       ],
@@ -22112,9 +21545,7 @@
             "title": "Black Friday Shoe Deals for the Whole Family | Shoe Carnival",
             "fixture": "reports/brand-corpus/captures/shoecarnival.com/3366678ebbb3d98b.html.gz",
             "provenance": "reports/brand-corpus/captures/shoecarnival.com/3366678ebbb3d98b.json",
-            "commerceSignals": [
-              "Add to Cart"
-            ]
+            "commerceSignals": ["Add to Cart"]
           }
         }
       ],
@@ -22189,9 +21620,7 @@
             "title": "CUUP E-Gift Cards |\n    CUUP",
             "fixture": "reports/brand-corpus/captures/shopcuup.com/f19f4a5ebfa0fb28.html.gz",
             "provenance": "reports/brand-corpus/captures/shopcuup.com/f19f4a5ebfa0fb28.json",
-            "commerceSignals": [
-              "Add To Bag"
-            ]
+            "commerceSignals": ["Add To Bag"]
           }
         }
       ],
@@ -22232,11 +21661,7 @@
             "title": "Luxoro AAA Tanzanite and I2 Diamond 2.00 ctw Helix Nebula Ring in 10K White Gold (Size 10.0)",
             "fixture": "reports/brand-corpus/captures/shoplc.com/dea41a61007b21cc.html.gz",
             "provenance": "reports/brand-corpus/captures/shoplc.com/dea41a61007b21cc.json",
-            "commerceSignals": [
-              "Buy Now",
-              "Add To Cart",
-              "Checkout"
-            ]
+            "commerceSignals": ["Buy Now", "Add To Cart", "Checkout"]
           }
         }
       ],
@@ -22473,10 +21898,7 @@
             "title": "Skechers Slip-ins: Contour Foam",
             "fixture": "reports/brand-corpus/captures/skechers.com/cceec7cf2cf92bde.html.gz",
             "provenance": "reports/brand-corpus/captures/skechers.com/cceec7cf2cf92bde.json",
-            "commerceSignals": [
-              "Add to Cart",
-              "CHECKOUT"
-            ]
+            "commerceSignals": ["Add to Cart", "CHECKOUT"]
           }
         }
       ],
@@ -22551,10 +21973,7 @@
             "title": "Smartwool Gift Card 25",
             "fixture": "reports/brand-corpus/captures/smartwool.com/24d370c88452d39b.html.gz",
             "provenance": "reports/brand-corpus/captures/smartwool.com/24d370c88452d39b.json",
-            "commerceSignals": [
-              "Add to Cart",
-              "checkout"
-            ]
+            "commerceSignals": ["Add to Cart", "checkout"]
           }
         }
       ],
@@ -22624,11 +22043,7 @@
             "title": "Gift Card | Gift Card | Smith Optics",
             "fixture": "reports/brand-corpus/captures/smithoptics.com/8bf6f60cd4ce0ef6.html.gz",
             "provenance": "reports/brand-corpus/captures/smithoptics.com/8bf6f60cd4ce0ef6.json",
-            "commerceSignals": [
-              "shopping cart",
-              "Add to cart",
-              "checkout"
-            ]
+            "commerceSignals": ["shopping cart", "Add to cart", "checkout"]
           }
         }
       ],
@@ -22669,10 +22084,7 @@
             "title": "2027 Soho Weekly Diary in Ludlow in Dark Cherry | Smythson United Kingdom",
             "fixture": "reports/brand-corpus/captures/smythson.com/967b02a23a20a3ff.html.gz",
             "provenance": "reports/brand-corpus/captures/smythson.com/967b02a23a20a3ff.json",
-            "commerceSignals": [
-              "Add to bag",
-              "checkout"
-            ]
+            "commerceSignals": ["Add to bag", "checkout"]
           }
         }
       ],
@@ -22788,9 +22200,7 @@
             "title": "Sonos Beam Ultra: The TV Soundbar with Dolby Atmos",
             "fixture": "reports/brand-corpus/captures/sonos.com/4fffcfa82ad58fbc.html.gz",
             "provenance": "reports/brand-corpus/captures/sonos.com/4fffcfa82ad58fbc.json",
-            "commerceSignals": [
-              "Add to basket"
-            ]
+            "commerceSignals": ["Add to basket"]
           }
         }
       ],
@@ -22831,9 +22241,7 @@
             "title": "Sony's Official Merchandise | Sony Online",
             "fixture": "reports/brand-corpus/captures/sony.com.au/e1c58cfee97a0bda.html.gz",
             "provenance": "reports/brand-corpus/captures/sony.com.au/e1c58cfee97a0bda.json",
-            "commerceSignals": [
-              "Buy Now"
-            ]
+            "commerceSignals": ["Buy Now"]
           }
         }
       ],
@@ -23070,9 +22478,7 @@
             "title": "Flash Sale – Stance US",
             "fixture": "reports/brand-corpus/captures/stance.com/5ee4b691404fba53.html.gz",
             "provenance": "reports/brand-corpus/captures/stance.com/5ee4b691404fba53.json",
-            "commerceSignals": [
-              "checkout"
-            ]
+            "commerceSignals": ["checkout"]
           }
         }
       ],
@@ -23152,9 +22558,7 @@
             "title": "Carbon fibre and crocodile leather riding helmet | Stefano Ricci",
             "fixture": "reports/brand-corpus/captures/stefanoricci.com/b9bef74f6b011e69.html.gz",
             "provenance": "reports/brand-corpus/captures/stefanoricci.com/b9bef74f6b011e69.json",
-            "commerceSignals": [
-              "Add to cart"
-            ]
+            "commerceSignals": ["Add to cart"]
           }
         }
       ],
@@ -23427,9 +22831,7 @@
             "title": "Stuart Weitzman® Store: Women's Designer Shoes & Bags",
             "fixture": "reports/brand-corpus/captures/stuartweitzman.com/fc89e6a055761566.html.gz",
             "provenance": "reports/brand-corpus/captures/stuartweitzman.com/fc89e6a055761566.json",
-            "commerceSignals": [
-              "shopping bag"
-            ]
+            "commerceSignals": ["shopping bag"]
           }
         }
       ],
@@ -23584,9 +22986,7 @@
             "title": "mens Shirt Shop T-shirt in Princedom Blue Marl | Superdry UK",
             "fixture": "reports/brand-corpus/captures/superdry.com/921028b4ce275047.html.gz",
             "provenance": "reports/brand-corpus/captures/superdry.com/921028b4ce275047.json",
-            "commerceSignals": [
-              "Add to bag"
-            ]
+            "commerceSignals": ["Add to bag"]
           }
         }
       ],
@@ -23782,10 +23182,7 @@
             "title": "Digital Gift Cards | T2 Tea AU",
             "fixture": "reports/brand-corpus/captures/t2tea.com/90e1dc25128fbc87.html.gz",
             "provenance": "reports/brand-corpus/captures/t2tea.com/90e1dc25128fbc87.json",
-            "commerceSignals": [
-              "Add To Bag",
-              "checkout"
-            ]
+            "commerceSignals": ["Add To Bag", "checkout"]
           }
         }
       ],
@@ -23906,9 +23303,7 @@
             "title": "Store Reopenings | Talbots",
             "fixture": "reports/brand-corpus/captures/talbots.com/0e97566ad67f3e1d.html.gz",
             "provenance": "reports/brand-corpus/captures/talbots.com/0e97566ad67f3e1d.json",
-            "commerceSignals": [
-              "checkout"
-            ]
+            "commerceSignals": ["checkout"]
           }
         }
       ],
@@ -23949,9 +23344,7 @@
             "title": "Sneaker - white 8-83706-45-190: Buy Tamaris Wide sneakers online!",
             "fixture": "reports/brand-corpus/captures/tamaris.com/ea83207241f43b72.html.gz",
             "provenance": "reports/brand-corpus/captures/tamaris.com/ea83207241f43b72.json",
-            "commerceSignals": [
-              "Add to Cart"
-            ]
+            "commerceSignals": ["Add to Cart"]
           }
         }
       ],
@@ -23992,9 +23385,7 @@
             "title": "E-Gift Card | Tatcha",
             "fixture": "reports/brand-corpus/captures/tatcha.com/5ed406c640fab663.html.gz",
             "provenance": "reports/brand-corpus/captures/tatcha.com/5ed406c640fab663.json",
-            "commerceSignals": [
-              "Add to Bag"
-            ]
+            "commerceSignals": ["Add to Bag"]
           }
         }
       ],
@@ -24035,10 +23426,7 @@
             "title": "The High Street | Books | Tate Shop | Tate",
             "fixture": "reports/brand-corpus/captures/tate.org.uk/e413f787e511ba33.html.gz",
             "provenance": "reports/brand-corpus/captures/tate.org.uk/e413f787e511ba33.json",
-            "commerceSignals": [
-              "Add to cart",
-              "Add to basket"
-            ]
+            "commerceSignals": ["Add to cart", "Add to basket"]
           }
         }
       ],
@@ -24222,10 +23610,7 @@
             "title": "Memories Faded Wipe Trainingsjacke Herren - dunkelgrün\n | Tennis-Point",
             "fixture": "reports/brand-corpus/captures/tennis-point.de/fcc6383b3b8554c4.html.gz",
             "provenance": "reports/brand-corpus/captures/tennis-point.de/fcc6383b3b8554c4.json",
-            "commerceSignals": [
-              "Checkout",
-              "In den Warenkorb"
-            ]
+            "commerceSignals": ["Checkout", "In den Warenkorb"]
           }
         }
       ],
@@ -24266,9 +23651,7 @@
             "title": "Full range | Teoxane",
             "fixture": "reports/brand-corpus/captures/teoxane.com/2a61568a66557fbc.html.gz",
             "provenance": "reports/brand-corpus/captures/teoxane.com/2a61568a66557fbc.json",
-            "commerceSignals": [
-              "Add to cart"
-            ]
+            "commerceSignals": ["Add to cart"]
           }
         }
       ],
@@ -24350,10 +23733,7 @@
             "title": "''L'altra di Milano'' sky blue shoulder bag | THE ATTICO®",
             "fixture": "reports/brand-corpus/captures/theattico.com/ebd6050e47157968.html.gz",
             "provenance": "reports/brand-corpus/captures/theattico.com/ebd6050e47157968.json",
-            "commerceSignals": [
-              "shopping cart",
-              "checkout"
-            ]
+            "commerceSignals": ["shopping cart", "checkout"]
           }
         }
       ],
@@ -24394,9 +23774,7 @@
             "title": "CCI Ammunition",
             "fixture": "reports/brand-corpus/captures/thekineticgroup.com/fa84bda161fa66bf.html.gz",
             "provenance": "reports/brand-corpus/captures/thekineticgroup.com/fa84bda161fa66bf.json",
-            "commerceSignals": [
-              "Buy Now"
-            ]
+            "commerceSignals": ["Buy Now"]
           }
         }
       ],
@@ -24704,9 +24082,7 @@
             "title": "Vidder Wool Coat | Tiger Of Sweden",
             "fixture": "reports/brand-corpus/captures/tigerofsweden.com/1a33ab37f586f3e6.html.gz",
             "provenance": "reports/brand-corpus/captures/tigerofsweden.com/1a33ab37f586f3e6.json",
-            "commerceSignals": [
-              "Add to bag"
-            ]
+            "commerceSignals": ["Add to bag"]
           }
         }
       ],
@@ -24820,9 +24196,7 @@
             "title": "| Tissot® India",
             "fixture": "reports/brand-corpus/captures/tissotwatches.com/7e2465f10cdb829f.html.gz",
             "provenance": "reports/brand-corpus/captures/tissotwatches.com/7e2465f10cdb829f.json",
-            "commerceSignals": [
-              "Add to Cart"
-            ]
+            "commerceSignals": ["Add to Cart"]
           }
         }
       ],
@@ -24982,10 +24356,7 @@
             "title": "Maestro Collection- 9K Yellow Gold Graduated Fancy Necklace (Size - 20), Gold Wt. 7.50 Gms",
             "fixture": "reports/brand-corpus/captures/tjc.co.uk/8e43124890940e73.html.gz",
             "provenance": "reports/brand-corpus/captures/tjc.co.uk/8e43124890940e73.json",
-            "commerceSignals": [
-              "Checkout",
-              "checkout"
-            ]
+            "commerceSignals": ["Checkout", "checkout"]
           }
         }
       ],
@@ -25026,9 +24397,7 @@
             "title": "TOMFORD.com | TOM FORD Fashion",
             "fixture": "reports/brand-corpus/captures/tomfordfashion.com/fdc53a6c2c072cd9.html.gz",
             "provenance": "reports/brand-corpus/captures/tomfordfashion.com/fdc53a6c2c072cd9.json",
-            "commerceSignals": [
-              "shopping cart"
-            ]
+            "commerceSignals": ["shopping cart"]
           }
         }
       ],
@@ -25069,10 +24438,7 @@
             "title": "Buckle Belt Double Breasted Trench Coat | WW0WW51569PLI | Tommy Hilfiger® Bulgaria",
             "fixture": "reports/brand-corpus/captures/tommy.com/039a0a386e9ecbfa.html.gz",
             "provenance": "reports/brand-corpus/captures/tommy.com/039a0a386e9ecbfa.json",
-            "commerceSignals": [
-              "Add to cart",
-              "CHECKOUT"
-            ]
+            "commerceSignals": ["Add to cart", "CHECKOUT"]
           }
         }
       ],
@@ -25273,9 +24639,7 @@
             "title": "TOUS",
             "fixture": "reports/brand-corpus/captures/tous.com/1e03ea24b74b9be3.html.gz",
             "provenance": "reports/brand-corpus/captures/tous.com/1e03ea24b74b9be3.json",
-            "commerceSignals": [
-              "Shopping bag"
-            ]
+            "commerceSignals": ["Shopping bag"]
           }
         }
       ],
@@ -25316,9 +24680,7 @@
             "title": "Home | Toys R Us Canada",
             "fixture": "reports/brand-corpus/captures/toysrus.ca/9c9fe9708b60d60c.html.gz",
             "provenance": "reports/brand-corpus/captures/toysrus.ca/9c9fe9708b60d60c.json",
-            "commerceSignals": [
-              "checkout"
-            ]
+            "commerceSignals": ["checkout"]
           }
         }
       ],
@@ -25359,10 +24721,7 @@
             "title": "VTech Busy Learners Activity Cube - Interactive Educational Toy with M\n – Toys\"R\"Us",
             "fixture": "reports/brand-corpus/captures/toysrus.com/91fca41be0ee7c67.html.gz",
             "provenance": "reports/brand-corpus/captures/toysrus.com/91fca41be0ee7c67.json",
-            "commerceSignals": [
-              "checkout",
-              "Add to cart"
-            ]
+            "commerceSignals": ["checkout", "Add to cart"]
           }
         }
       ],
@@ -25444,9 +24803,7 @@
             "title": "Buy Anti-Theft Boho 2 Compartment Phone Crossbody for USD 44.00 | Travelon Bags",
             "fixture": "reports/brand-corpus/captures/travelonbags.com/923fdd011622846c.html.gz",
             "provenance": "reports/brand-corpus/captures/travelonbags.com/923fdd011622846c.json",
-            "commerceSignals": [
-              "Shopping Bag"
-            ]
+            "commerceSignals": ["Shopping Bag"]
           }
         }
       ],
@@ -25487,9 +24844,7 @@
             "title": "Exclusivo online | Tricot.cl",
             "fixture": "reports/brand-corpus/captures/tricot.cl/841adf1008162078.html.gz",
             "provenance": "reports/brand-corpus/captures/tricot.cl/841adf1008162078.json",
-            "commerceSignals": [
-              "comprar"
-            ]
+            "commerceSignals": ["comprar"]
           }
         }
       ],
@@ -25606,10 +24961,7 @@
             "title": "Buy Natural Rubber Toddler Fruit & Veg Chewables | TTS",
             "fixture": "reports/brand-corpus/captures/tts-group.co.uk/82d7699c35729535.html.gz",
             "provenance": "reports/brand-corpus/captures/tts-group.co.uk/82d7699c35729535.json",
-            "commerceSignals": [
-              "Add to cart",
-              "Add to basket"
-            ]
+            "commerceSignals": ["Add to cart", "Add to basket"]
           }
         }
       ],
@@ -25684,10 +25036,7 @@
             "title": "Gift Card | Twinset Milano",
             "fixture": "reports/brand-corpus/captures/twinset.com/efea8cdd240c81b8.html.gz",
             "provenance": "reports/brand-corpus/captures/twinset.com/efea8cdd240c81b8.json",
-            "commerceSignals": [
-              "checkout",
-              "shopping bag"
-            ]
+            "commerceSignals": ["checkout", "shopping bag"]
           }
         }
       ],
@@ -25871,9 +25220,7 @@
             "title": "Nursing Shoes and Medical Footwear | Buy Online | Uniform Advantage",
             "fixture": "reports/brand-corpus/captures/uniformadvantage.com/500717e9f74749cd.html.gz",
             "provenance": "reports/brand-corpus/captures/uniformadvantage.com/500717e9f74749cd.json",
-            "commerceSignals": [
-              "Buy Now"
-            ]
+            "commerceSignals": ["Buy Now"]
           }
         }
       ],
@@ -26010,9 +25357,7 @@
             "title": "RAC® para amueblar y equipar rentando con opción a compra",
             "fixture": "reports/brand-corpus/captures/upbound.com/33df9a26fb6c04c1.html.gz",
             "provenance": "reports/brand-corpus/captures/upbound.com/33df9a26fb6c04c1.json",
-            "commerceSignals": [
-              "comprar"
-            ]
+            "commerceSignals": ["comprar"]
           }
         }
       ],
@@ -26159,11 +25504,7 @@
             "title": "Leather Luxury Customised Glasses Case with Lanyard | Valextra",
             "fixture": "reports/brand-corpus/captures/valextra.com/1ac342cd049842ad.html.gz",
             "provenance": "reports/brand-corpus/captures/valextra.com/1ac342cd049842ad.json",
-            "commerceSignals": [
-              "shopping bag",
-              "Shopping Cart",
-              "add to cart"
-            ]
+            "commerceSignals": ["shopping bag", "Shopping Cart", "add to cart"]
           }
         }
       ],
@@ -26204,9 +25545,7 @@
             "title": "Pickup order",
             "fixture": "reports/brand-corpus/captures/vallen.com.mx/70218d7a18fd5f4c.html.gz",
             "provenance": "reports/brand-corpus/captures/vallen.com.mx/70218d7a18fd5f4c.json",
-            "commerceSignals": [
-              "comprar"
-            ]
+            "commerceSignals": ["comprar"]
           }
         }
       ],
@@ -26281,10 +25620,7 @@
             "title": "Electric Standing Desk 60x30 with TechTrack™ | Sit-Stand Adjustable Desk | Vari",
             "fixture": "reports/brand-corpus/captures/vari.com/b2bcd4051bf0fcae.html.gz",
             "provenance": "reports/brand-corpus/captures/vari.com/b2bcd4051bf0fcae.json",
-            "commerceSignals": [
-              "shopping cart",
-              "Add To Cart"
-            ]
+            "commerceSignals": ["shopping cart", "Add To Cart"]
           }
         }
       ],
@@ -26325,10 +25661,7 @@
             "title": "VEJA – Official Website | Sneakers for Men, Women, and Kids\n    \n    | VEJA",
             "fixture": "reports/brand-corpus/captures/veja-store.com/107880deed28b397.html.gz",
             "provenance": "reports/brand-corpus/captures/veja-store.com/107880deed28b397.json",
-            "commerceSignals": [
-              "Shopping Bag",
-              "Add to cart"
-            ]
+            "commerceSignals": ["Shopping Bag", "Add to cart"]
           }
         }
       ],
@@ -26443,9 +25776,7 @@
             "title": "FiveFingers: The Original Barefoot Toe Shoes | Vibram",
             "fixture": "reports/brand-corpus/captures/vibram.com/b7d96d68ff3a690e.html.gz",
             "provenance": "reports/brand-corpus/captures/vibram.com/b7d96d68ff3a690e.json",
-            "commerceSignals": [
-              "CHECKOUT"
-            ]
+            "commerceSignals": ["CHECKOUT"]
           }
         }
       ],
@@ -26663,9 +25994,7 @@
             "title": "Reversible Shearling Car Coat in Coats | Vince",
             "fixture": "reports/brand-corpus/captures/vince.com/5802855a6faa9cc7.html.gz",
             "provenance": "reports/brand-corpus/captures/vince.com/5802855a6faa9cc7.json",
-            "commerceSignals": [
-              "Add to Bag"
-            ]
+            "commerceSignals": ["Add to Bag"]
           }
         }
       ],
@@ -26791,11 +26120,7 @@
             "title": "Mini Bas Relief Pearl Choker",
             "fixture": "reports/brand-corpus/captures/viviennewestwood.com/103bd155b655d592.html.gz",
             "provenance": "reports/brand-corpus/captures/viviennewestwood.com/103bd155b655d592.json",
-            "commerceSignals": [
-              "Add to Bag",
-              "Checkout",
-              "Shopping bag"
-            ]
+            "commerceSignals": ["Add to Bag", "Checkout", "Shopping bag"]
           }
         }
       ],
@@ -26836,9 +26161,7 @@
             "title": "VKX: Efficient Solar-Powered Cellular Security Camera | VOSKER",
             "fixture": "reports/brand-corpus/captures/vosker.com/daf6d5ed4b0120bd.html.gz",
             "provenance": "reports/brand-corpus/captures/vosker.com/daf6d5ed4b0120bd.json",
-            "commerceSignals": [
-              "Add to Cart"
-            ]
+            "commerceSignals": ["Add to Cart"]
           }
         }
       ],
@@ -26879,11 +26202,7 @@
             "title": "CONFESSIONS II - Grindr Exxxclusive Picture Disc\n – Warner Records",
             "fixture": "reports/brand-corpus/captures/warnerrecords.com/b8791a56da8f9091.html.gz",
             "provenance": "reports/brand-corpus/captures/warnerrecords.com/b8791a56da8f9091.json",
-            "commerceSignals": [
-              "Checkout",
-              "checkout",
-              "Add To Cart"
-            ]
+            "commerceSignals": ["Checkout", "checkout", "Add To Cart"]
           }
         }
       ],
@@ -26999,10 +26318,7 @@
             "title": "Buy Weber Works Caddy with Tray Lid | Weber® Official | Weber IE",
             "fixture": "reports/brand-corpus/captures/weber.com/a707444d3b35b3ae.html.gz",
             "provenance": "reports/brand-corpus/captures/weber.com/a707444d3b35b3ae.json",
-            "commerceSignals": [
-              "Shopping Cart",
-              "Add to Cart"
-            ]
+            "commerceSignals": ["Shopping Cart", "Add to Cart"]
           }
         }
       ],
@@ -27084,10 +26400,7 @@
             "title": "SIMRAD NSS9 evo3S Multifunction Display with US C-MAP Charts",
             "fixture": "reports/brand-corpus/captures/westmarine.com/f00c8481f78f8e59.html.gz",
             "provenance": "reports/brand-corpus/captures/westmarine.com/f00c8481f78f8e59.json",
-            "commerceSignals": [
-              "ADD TO CART",
-              "Add to Cart"
-            ]
+            "commerceSignals": ["ADD TO CART", "Add to Cart"]
           }
         }
       ],
@@ -27128,10 +26441,7 @@
             "title": "Pre-Owned Blue Topaz Labyrinth Earrings QLJ9TN2OBB000",
             "fixture": "reports/brand-corpus/captures/whatgoesaroundnyc.com/abf2072b10bc7d26.html.gz",
             "provenance": "reports/brand-corpus/captures/whatgoesaroundnyc.com/abf2072b10bc7d26.json",
-            "commerceSignals": [
-              "Add to Cart",
-              "checkout"
-            ]
+            "commerceSignals": ["Add to Cart", "checkout"]
           }
         }
       ],
@@ -27172,11 +26482,7 @@
             "title": "Hot Chocolate Advent Calendar\n – Whittard of Chelsea",
             "fixture": "reports/brand-corpus/captures/whittard.co.uk/d1e67b31a7b05d08.html.gz",
             "provenance": "reports/brand-corpus/captures/whittard.co.uk/d1e67b31a7b05d08.json",
-            "commerceSignals": [
-              "checkout",
-              "Checkout",
-              "Add to bag"
-            ]
+            "commerceSignals": ["checkout", "Checkout", "Add to bag"]
           }
         }
       ],
@@ -27333,9 +26639,7 @@
             "title": "New & Trending Home Decor & Furniture - World Market",
             "fixture": "reports/brand-corpus/captures/worldmarket.com/6801ff6c8dc5c68d.html.gz",
             "provenance": "reports/brand-corpus/captures/worldmarket.com/6801ff6c8dc5c68d.json",
-            "commerceSignals": [
-              "Add to Cart"
-            ]
+            "commerceSignals": ["Add to Cart"]
           }
         }
       ],
@@ -27417,9 +26721,7 @@
             "title": "Shop by Colour — Seafoam & Sea View | Turquoise | YETI®\n – YETI UK LIMITED",
             "fixture": "reports/brand-corpus/captures/yeti.com/0d702ffd9b6e249c.html.gz",
             "provenance": "reports/brand-corpus/captures/yeti.com/0d702ffd9b6e249c.json",
-            "commerceSignals": [
-              "Add to bag"
-            ]
+            "commerceSignals": ["Add to bag"]
           }
         }
       ],
@@ -27501,9 +26803,7 @@
             "title": "Alina Levonorgestrel 1.5Mg 1 Tab",
             "fixture": "reports/brand-corpus/captures/yza.mx/7f25f607504148e6.html.gz",
             "provenance": "reports/brand-corpus/captures/yza.mx/7f25f607504148e6.json",
-            "commerceSignals": [
-              "comprar"
-            ]
+            "commerceSignals": ["comprar"]
           }
         }
       ],
@@ -27619,10 +26919,7 @@
             "title": "Official ZWILLING J.A. HENCKELS Store | Shop Cutlery, Cookware, Flatware and Kitchen Tools",
             "fixture": "reports/brand-corpus/captures/zwilling.com/acde4e9507f0b0e7.html.gz",
             "provenance": "reports/brand-corpus/captures/zwilling.com/acde4e9507f0b0e7.json",
-            "commerceSignals": [
-              "Checkout",
-              "checkout"
-            ]
+            "commerceSignals": ["Checkout", "checkout"]
           }
         }
       ],

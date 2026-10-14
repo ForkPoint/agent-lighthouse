@@ -1,8 +1,5 @@
 {
-  "smoke": [
-    "altrarunning.com",
-    "amartfurniture.com.au"
-  ],
+  "smoke": ["altrarunning.com", "amartfurniture.com.au"],
   "categories": {
     "brand": {
       "why": "User-supplied company domains; shop and page roles require live verification.",
