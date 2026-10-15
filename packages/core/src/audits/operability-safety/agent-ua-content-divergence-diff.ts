@@ -10,7 +10,7 @@ import {
 } from "#core/gatherers/ua-parity";
 import { INSTRUCTION_LEXICON } from "./invisible-instruction-scan";
 import { extractJsonLd, getMainContentText } from "#core/parser";
-import { parseBoundedHtml } from "#core/dom-work";
+import { DomWorkLimitError, parseBoundedHtml } from "#core/dom-work";
 import {
   AuditTier,
   CheckPriority,
@@ -82,6 +82,16 @@ function stable(value: unknown): string {
 /** Every JSON-LD block in a document, order-independent and digit-blind. */
 function jsonLdFingerprint(body: string): string {
   return extractJsonLd(parseBoundedHtml(body)).map(stable).sort().join("|");
+}
+
+/** `fn`'s result, or undefined when a body exceeds the DOM work limits. */
+function withinLimits<T>(fn: () => T): T | undefined {
+  try {
+    return fn();
+  } catch (error) {
+    if (!(error instanceof DomWorkLimitError)) throw error;
+    return undefined;
+  }
 }
 
 /** Words present in one variant and missing from the other, longest first. */
@@ -182,6 +192,7 @@ Disallow: /members/`,
     // One control fetch per URL: a site that serves an unknown bot the same
     // reduced page is running bot management, which is not agent branching.
     const controlSimilarity = new Map<string, number>();
+    const controlOverLimit: string[] = [];
     for (const url of new Set(comparable.map((probe) => probe.url))) {
       const baseline =
         comparable.find((probe) => probe.url === url)?.baselineText ?? "";
@@ -190,11 +201,21 @@ Disallow: /members/`,
         controlSimilarity.set(url, 1);
         continue;
       }
-      const controlText = getMainContentText(parseBoundedHtml(control.body));
+      const controlText = withinLimits(() =>
+        getMainContentText(parseBoundedHtml(control.body)),
+      );
+      // An unreadable control arm is treated like a missing one: no bot
+      // management is shown, so the crawler comparisons stand on their own.
+      if (controlText === undefined) {
+        controlOverLimit.push(url);
+        controlSimilarity.set(url, 1);
+        continue;
+      }
       controlSimilarity.set(url, jaccard(words(baseline), words(controlText)));
     }
 
     const divergences: Divergence[] = [];
+    const overLimit: string[] = [];
     const noise: string[] = [];
 
     for (const probe of comparable) {
@@ -216,10 +237,18 @@ Disallow: /members/`,
         continue;
       }
 
-      if (
-        jsonLdFingerprint(probe.probeBody) !==
-        jsonLdFingerprint(probe.baselineBody)
-      ) {
+      // A body over the DOM work limits cannot be compared. Only this
+      // comparison is dropped; the others keep their verdicts.
+      const sameJsonLd = withinLimits(
+        () =>
+          jsonLdFingerprint(probe.probeBody) ===
+          jsonLdFingerprint(probe.baselineBody),
+      );
+      if (sameJsonLd === undefined) {
+        overLimit.push(`${probe.token} on ${probe.url}`);
+        continue;
+      }
+      if (!sameJsonLd) {
         divergences.push({
           token: probe.token,
           url: probe.url,
@@ -252,10 +281,27 @@ Disallow: /members/`,
       });
     }
 
+    const assessed = comparable.length - overLimit.length;
+    const overLimitNote =
+      overLimit.length > 0
+        ? `over the DOM work limits, not compared: ${overLimit.join(", ")}`
+        : "";
+    if (assessed === 0) {
+      return this.notApplicable(
+        "No crawler response could be compared within the DOM work limits.",
+        "A browser response and at least one crawler response to compare",
+        [overLimitNote, blockedNote].filter(Boolean).join("; "),
+      );
+    }
+
     const expected =
       "Every AI-crawler UA served the same main content and JSON-LD as a browser";
     const notes = [
       blockedNote,
+      overLimitNote,
+      controlOverLimit.length > 0
+        ? `control response over the DOM work limits, bot management not checked: ${controlOverLimit.join(", ")}`
+        : "",
       noise.length > 0
         ? `${noise.join(", ")} saw a reduced page the unrecognised control bot saw too — bot management, not UA branching`
         : "",
@@ -270,13 +316,13 @@ Disallow: /members/`,
       );
       return {
         ...this.fail(
-          `${divergences.length} of ${comparable.length} crawler responses differ from the browser response.`,
+          `${divergences.length} of ${assessed} crawler responses differ from the browser response.`,
           expected,
           [...lines, ...notes].join(" | "),
           `Serve one document to every User-Agent; ${worst.token} currently gets a different page.`,
         ),
         details: {
-          comparableProbes: comparable.length,
+          comparableProbes: assessed,
           divergentProbes: divergences.length,
           worstSimilarity: Number(worst.similarity.toFixed(2)),
           divergences: lines.slice(0, 100).map((line) => line.slice(0, 1000)),
@@ -288,15 +334,14 @@ Disallow: /members/`,
 
     return {
       ...this.pass(
-        `All ${comparable.length} crawler responses match the browser response.`,
+        `All ${assessed} crawler responses match the browser response.`,
         expected,
-        [
-          `${comparable.length} crawler responses match the browser copy`,
-          ...notes,
-        ].join("; "),
+        [`${assessed} crawler responses match the browser copy`, ...notes].join(
+          "; ",
+        ),
       ),
       details: {
-        comparableProbes: comparable.length,
+        comparableProbes: assessed,
         divergentProbes: 0,
         blocked: blocked.map((p) => `${p.token} ${p.blockClass}`),
         botManagement: noise,

@@ -8,6 +8,7 @@ import {
 import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
 import { BASELINE_UA, CONTROL_UA } from "#core/gatherers/ua-parity";
 import type { CheckContext } from "#core/check-context";
+import { DOM_WORK_LIMITS } from "#core/contracts";
 import type { FetchOptions, FetchResult } from "#core/fetcher";
 import {
   AuditTier,
@@ -192,6 +193,42 @@ describe("AgentUaContentDivergenceDiffAudit", () => {
       }),
     );
     expect(result.status).toBe(CheckStatus.Pass);
+  });
+
+  describe("bodies over the DOM work limits", () => {
+    const deep = "<div>".repeat(DOM_WORK_LIMITS.maxDepth + 100);
+
+    it("drops only the crawler comparison that exceeds the limits", async () => {
+      const reduced = doc(WORDS.slice(0, 10).join(" "));
+      const result = await audit.audit(
+        site({
+          agent: reduced,
+          perUa: (ua) =>
+            ua.includes("GPTBot")
+              ? mockFetchResult(deep, 404, "text/html")
+              : undefined,
+        }),
+      );
+      expect(result.status).toBe(CheckStatus.Fail);
+      expect(result.found).toContain("not compared: gptbot on");
+      expect(result.found).not.toContain("gptbot on https://example.com/:");
+      expect(result.details?.["comparableProbes"]).toBeGreaterThan(0);
+    });
+
+    it("is notApplicable when every crawler comparison exceeds the limits", async () => {
+      const result = await audit.audit(
+        site({ agent: mockFetchResult(deep, 404, "text/html") }),
+      );
+      expect(result.status).toBe(CheckStatus.NotApplicable);
+      expect(result.found).toContain("over the DOM work limits");
+    });
+
+    it("keeps crawler verdicts when the control response exceeds the limits", async () => {
+      const reduced = doc(WORDS.slice(0, 10).join(" "));
+      const result = await audit.audit(site({ agent: reduced, control: deep }));
+      expect(result.status).toBe(CheckStatus.Fail);
+      expect(result.found).toContain("bot management not checked");
+    });
   });
 
   it("is notApplicable when no probe returns a readable page", async () => {

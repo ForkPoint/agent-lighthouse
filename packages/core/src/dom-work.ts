@@ -1,6 +1,6 @@
 import * as cheerio from "cheerio";
 import type { CheerioAPI } from "cheerio";
-import { isTag, type AnyNode } from "domhandler";
+import { hasChildren, isTag, type AnyNode } from "domhandler";
 import { adapter } from "parse5-htmlparser2-tree-adapter";
 import { DOM_WORK_LIMITS } from "./contracts";
 
@@ -71,7 +71,13 @@ export function assertDomWork(
   let steps = 0;
   while (stack.length) {
     const [node, depth] = stack.pop()!;
-    if (!isTag(node)) continue;
+    if (!isTag(node)) {
+      // Template content lives in a document fragment. Traverse it without
+      // counting the fragment as an element, matching the parser depth guard.
+      if (hasChildren(node))
+        for (const child of node.children) stack.push([child, depth]);
+      continue;
+    }
     if (depth > DOM_WORK_LIMITS.maxDepth)
       throw new DomWorkLimitError(depthLimitMessage);
     steps += depth;

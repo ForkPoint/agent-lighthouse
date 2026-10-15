@@ -7,6 +7,7 @@ import {
   BASELINE_UA,
   sharedControlProbe,
   CONTROL_UA,
+  BlockClass,
 } from "./ua-parity";
 import { mockFetchResult } from "#core/__tests__/test-utils";
 import { DOM_WORK_LIMITS } from "#core/contracts";
@@ -209,6 +210,65 @@ describe("probeUaParity", () => {
     );
     expect(probes[0]).toMatchObject({ baselineStatus: 200, probeStatus: 403 });
     expect(probes[0]!.blockClass).toBe("opaque-403");
+  });
+});
+
+describe.each([false, true])("DOM limit isolation (cached: %s)", (cached) => {
+  const urls = ["https://example.com/", "https://example.com/next"];
+  const tokens = ["gptbot", "oai-searchbot", "claudebot"];
+  const deep = "<div>".repeat(DOM_WORK_LIMITS.maxDepth + 100);
+
+  it.each([false, true])(
+    "keeps other verdicts with an excessive baseline: %s",
+    async (deepBaseline) => {
+      const fetch = vi.fn(async (o: FetchOptions) => {
+        if (o.url === urls[0]) {
+          if (o.userAgent === BASELINE_UA)
+            return deepBaseline ? res(200, {}, deep) : ok();
+          if (o.userAgent?.includes("GPTBot")) return res(403);
+          if (o.userAgent?.includes("OAI-SearchBot")) return res(200, {}, deep);
+          return res(429);
+        }
+        return ok();
+      });
+      const ctx = { fetch };
+      const run = () =>
+        cached
+          ? sharedUaProbes(ctx, urls, tokens)
+          : probeUaParity(fetch, urls, tokens);
+      const probes = await run();
+      expect(
+        probes.map(({ url, token, blockClass }) => ({
+          url,
+          token,
+          blockClass,
+        })),
+      ).toEqual([
+        { url: urls[0], token: tokens[0], blockClass: BlockClass.Opaque403 },
+        { url: urls[0], token: tokens[2], blockClass: BlockClass.RateLimited },
+        ...tokens.map((token) => ({
+          url: urls[1],
+          token,
+          blockClass: BlockClass.Ok,
+        })),
+      ]);
+      expect(fetch).toHaveBeenCalledTimes(8);
+      if (cached) {
+        expect(await run()).toEqual(probes);
+        expect(fetch).toHaveBeenCalledTimes(8);
+      }
+    },
+  );
+
+  it("keeps unrelated errors visible", async () => {
+    const fetch = async () => {
+      throw new Error("unexpected fetch failure");
+    };
+    await expect(
+      cached
+        ? sharedUaProbes({ fetch }, urls, tokens)
+        : probeUaParity(fetch, urls, tokens),
+    ).rejects.toThrow("unexpected fetch failure");
   });
 });
 
