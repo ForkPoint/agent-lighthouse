@@ -8,6 +8,35 @@ const nest = (open: string, close: string, n: number, inner = "Details") =>
   `<html><body>${open.repeat(n)}${inner}${close.repeat(n)}</body></html>`;
 
 describe("shared DOM analysis work limits", () => {
+  it.each([
+    DOM_WORK_LIMITS.httpAncestorSteps,
+    DOM_WORK_LIMITS.snapshotAncestorSteps,
+  ])("counts template content toward the %i ancestor budget", (limit) => {
+    const content = nest("<div>", "</div>", 100, "<i></i>".repeat(40_000));
+    expect(() => parseBoundedHtml(content, limit)).toThrow(
+      "structural work limit",
+    );
+    expect(() =>
+      parseBoundedHtml(`<template>${content}</template>`, limit),
+    ).toThrow("structural work limit");
+  });
+
+  it("does not count a template fragment as an extra element level", () => {
+    expect(() =>
+      parseBoundedHtml(
+        `<body><template>${"<div>".repeat(509)}${"</div>".repeat(509)}</template>`,
+      ),
+    ).not.toThrow();
+  });
+
+  it("rejects template content one level past the depth limit", () => {
+    expect(() =>
+      parseBoundedHtml(
+        `<body><template>${"<div>".repeat(510)}${"</div>".repeat(510)}</template>`,
+      ),
+    ).toThrow(`deeper than ${DOM_WORK_LIMITS.maxDepth}`);
+  });
+
   it("accepts ordinary pages", () => {
     expect(() =>
       parseBoundedHtml("<main><h1>Details</h1><p>Useful content</p></main>"),

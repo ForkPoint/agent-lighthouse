@@ -206,6 +206,16 @@ export function classifyResponse(
   return done(BlockClass.Ok, `HTTP ${probe.status}`);
 }
 
+/** A local DOM limit excludes only this comparison, not other probe results. */
+function classifyWithinLimits(baseline: FetchResult, probe: FetchResult) {
+  try {
+    return classifyResponse(baseline, probe);
+  } catch (error) {
+    if (!(error instanceof DomWorkLimitError)) throw error;
+    return undefined;
+  }
+}
+
 /**
  * Fetch each URL once as a browser, then once per crawler token, and classify
  * the difference.
@@ -241,7 +251,8 @@ export async function probeUaParity(
         followRedirects: true,
         signal: opts.signal,
       });
-      const verdict = classifyResponse(baseline, probe);
+      const verdict = classifyWithinLimits(baseline, probe);
+      if (!verdict) continue;
       probes.push({
         url,
         token: agent.token,
@@ -332,12 +343,14 @@ export async function sharedUaProbes(
             followRedirects: true,
             signal: opts.signal,
           });
+          const verdict = classifyWithinLimits(baselineResult, probe);
+          if (!verdict) return undefined;
           return {
             url,
             token: agent.token,
             baselineStatus: baselineResult.status,
             probeStatus: probe.status,
-            ...classifyResponse(baselineResult, probe),
+            ...verdict,
           };
         })();
         cache.probes.set(key, pending);
