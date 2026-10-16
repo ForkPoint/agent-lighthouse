@@ -6,7 +6,6 @@ describe("getPreset", () => {
     "uses the full scan for %s",
     (name) => {
       expect(getPreset(name)).toBe(PRESETS.full);
-      expect(getPreset(name).maxPages).toBeUndefined();
       expect(getPreset(name).categoryFilter).toBeUndefined();
     },
   );
@@ -20,13 +19,6 @@ describe("getPreset", () => {
   ] as const)("accepts %s in mixed case", (name) => {
     expect(getPreset(name)).toBe(PRESETS[name]);
     expect(getPreset(name.toUpperCase())).toBe(PRESETS[name]);
-  });
-
-  it("limits only the quick preset to one page", () => {
-    expect(getPreset("quick").maxPages).toBe(1);
-    for (const name of ["ecommerce", "saas", "content", "full"]) {
-      expect(getPreset(name).maxPages).toBeUndefined();
-    }
   });
 
   it.each(["ecommerce", "saas", "content"] as const)(

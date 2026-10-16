@@ -15,8 +15,6 @@ export {
 
 // ── Scan Limits ────────────────────────────────────────────────
 
-export const DEFAULT_SCAN_LIMIT = 1;
-export const MAX_PAGES_PER_SCAN = 1; // Single-page scan unit
 export const ORIGIN_EVIDENCE_VERSION = "v1";
 export const DEFAULT_ORIGIN_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 /**

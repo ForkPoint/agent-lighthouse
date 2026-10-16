@@ -126,7 +126,7 @@ export class ProgressTracker {
     });
   }
 
-  /** Correct the current phase's unit total (e.g. discovery finds pages mid-phase). */
+  /** Correct the current phase's unit total (e.g. a gateway page adds its target mid-phase). */
   setPhaseTotal(totalUnits: number): void {
     this.totalUnits = Math.max(this.completedUnits, totalUnits);
   }

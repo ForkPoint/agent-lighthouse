@@ -34,7 +34,7 @@ All metadata comes from the client. The engine does not verify who captured a pa
 - Maximum HTML size: 2,097,152 UTF-8 bytes per page.
 - Maximum HTML batch size: 6,291,456 UTF-8 bytes.
 - Maximum URL length: 2,048 characters. Only absolute HTTP(S) URLs without credentials qualify.
-- `requestedUrl` must match the scan target or an explicit `options.pages[].url` declaration. Auto-discovered pages do not authorize extra snapshot associations.
+- `requestedUrl` must match the scan target or an explicit `options.pages[].url` declaration. Other scanned pages, such as a gateway target, do not authorize extra snapshot associations.
 - `capturedUrl` must match `requestedUrl` after URL normalization and fragment removal. Path, query, scheme, and origin must match. A redirected capture needs a new scan of its captured URL. Snapshot metadata never proves a redirect.
 - Collector name and version: 1–100 nonblank characters each.
 - Capture time: a valid ISO date and time with a timezone. The engine sets no freshness window. The report exposes the claimed capture time.

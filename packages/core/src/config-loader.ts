@@ -15,7 +15,7 @@ export interface AgentLighthouseConfig {
   url?: string;
   /** Explicit target declaration; legacy content means general/unknown. */
   pageType?: PageType;
-  /** Exact page declarations, within the scan page budget. */
+  /** Exact page declarations, read as pages next to the target URL. */
   pages?: PageOverride[] | null;
   /** Audit preset profile */
   preset?: PresetName;
@@ -29,8 +29,6 @@ export interface AgentLighthouseConfig {
   output?: Array<OutputFormat>;
   /** Output directory for reports */
   outputDir?: string;
-  /** Maximum number of pages to discover & scan */
-  maxPages?: number;
   /** Scan budget in seconds; 0 disables it. The flag `--timeout` overrides it. */
   timeout?: number;
 }
