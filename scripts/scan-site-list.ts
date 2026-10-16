@@ -1,20 +1,11 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { runScan } from "#core/index";
-import { boundedDispatcher, createFetcher } from "#core/fetcher";
-import {
-  parseRobots,
-  groupsForBot,
-  isBlanketBlocked,
-} from "#core/gatherers/robots";
-import { SCANNER_USER_AGENT } from "#core/constants";
-import { AI_CRAWLER_UAS } from "#core/gatherers/ua-parity";
+import { boundedDispatcher } from "#core/fetcher";
 import { invariantViolations } from "#core/tests/scan-invariants";
 import { excludedDomains, type CorpusStatus } from "#core/tests/corpus-status";
 import type { SiteEntry } from "#core/tests/site-list";
-import type { FetchResult } from "#core/fetcher";
 import type { EvidenceKey } from "#core/types";
-import { SkipReason } from "./lib/scan-outcomes";
+import { scanDomain, scanLocation } from "./lib/live-scan";
 
 /**
  * Scan a window of the site list and assert what a scan may claim.
@@ -32,10 +23,10 @@ import { SkipReason } from "./lib/scan-outcomes";
  * its own throttling. Those flags pace the job between sites; `--connections`
  * is what bounds the burst inside one scan, which is what a per-IP WAF counts.
  *
- * These are not our sites. The scanner itself ignores `robots.txt` — a site
- * owner scanning their own site is entitled to — but this job is an uninvited
- * visitor, so it reads `robots.txt` first and leaves a site alone when the file
- * tells it to.
+ * This job tests the scanner; it is not a crawler. A site's `robots.txt` does
+ * not decide whether it is scanned. A WAF block still ends a scan, and the
+ * report says so. The pacing above is what keeps the job from hammering an
+ * origin.
  */
 
 /**
@@ -61,39 +52,11 @@ const EXIT = {
   crashed: 6,
 } as const;
 
-/** The `robots.txt` product token for {@link SCANNER_USER_AGENT}. */
-const BOT_TOKEN = SCANNER_USER_AGENT.split("/")[0]!.toLowerCase();
-
-/**
- * Every product token this job's requests will carry.
- *
- * The scan does not only fetch as itself. The UA-parity gatherer re-fetches
- * sampled pages as GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, Claude-User
- * and PerplexityBot, so a publisher who wrote `User-agent: GPTBot` /
- * `Disallow: /` and nothing else would see GPTBot traffic from this job while
- * its own robots group was never read: `groupsForBot(..., 'agentlighthouse')`
- * returns nothing, and nothing is not a refusal.
- *
- * This job is an uninvited visitor sending seven user agents. If the file says
- * no to any one of them, it leaves the site alone. That is coarser than
- * suppressing one probe, and it is the granularity this script has: the probes
- * are issued deep inside `runScan`, which offers no per-token switch.
- */
-const PROBED_TOKENS: readonly string[] = [
-  BOT_TOKEN,
-  ...AI_CRAWLER_UAS.map((u) => u.token),
-];
-
-/**
- * Why a site produced no scan. Kept apart from a violation: a site we chose not
- * to scan says nothing about the scanner.
- */
-
 interface SiteOutcome {
   domain: string;
   category: string;
-  /** Present instead of a scan when the site was left alone. */
-  skipped?: SkipReason;
+  /** Set when `https://<domain>` was unreachable and another origin was scanned. */
+  scannedUrl?: string;
   /**
    * The report's own evidence map. What the invariants are stated over, and the
    * only thing about the site the summary records beyond its status counts —
@@ -113,9 +76,12 @@ interface Summary {
   /** False when the deadline, a signal or a crash ended the run early. */
   complete: boolean;
   windowOffset: number;
+  /** Two-letter country the requests left from, when the lookup worked. */
+  scanLocation?: string;
   planned: number;
   scanned: number;
-  skipped: number;
+  /** Sites reached only through the `www` or `http` fallback. */
+  originFallbacks: number;
   /** Sites in the window the run never got to. Non-zero means it ran out of time. */
   unreached: number;
   violations: number;
@@ -162,7 +128,7 @@ const DEFAULTS = {
   "allow-partial": 0,
   /** 1 to scan domains `status.json` calls dead. */
   "include-dead": 0,
-  /** 1 to scan domains `status.json` calls blocked by robots. */
+  /** 1 to scan domains `status.json` calls blocked. */
   "include-blocked": 0,
 } as const;
 
@@ -278,57 +244,6 @@ function windowOf<T>(all: T[], size: number, offset: number): T[] {
     : [...head, ...all.slice(0, size - head.length)];
 }
 
-// ── robots.txt ─────────────────────────────────────────────────
-
-type RobotsVerdict =
-  { scan: true; robotsTxt: FetchResult } | { scan: false; reason: SkipReason };
-
-/**
- * Whether `robots.txt` lets this job scan the site at all.
- *
- * Only a blanket disallow stops the run on rules. A file that forbids one path
- * is a request about that path, and the scanner does not choose its page sample
- * from the parts of a site an operator fences off; a `Disallow: /` is the
- * operator saying the whole origin is closed to us.
- *
- * A `Crawl-delay` also stops it. The directive asks for a request rate, and
- * nothing outside `runScan` can space out the ~40 requests it issues — so the
- * only honest answer to an operator who asked for a rate is to leave the site
- * alone rather than to read the line and ignore it.
- *
- * 401, 403 and 429 on `robots.txt` are refusals, not silence: the origin is
- * turning away this exact user agent, and following that with ~40 more requests
- * is the behaviour a WAF exists to stop. Every other failure — 404, 5xx, a
- * connection error — lets the scan proceed. Most origins simply have no file,
- * and absence is not consent withheld.
- */
-async function robotsVerdict(domain: string): Promise<RobotsVerdict> {
-  const result = await createFetcher({
-    dispatcher,
-    maxConcurrent: CONNECTIONS,
-  }).fetch({
-    url: `https://${domain}/robots.txt`,
-  });
-  if (result.status === 401 || result.status === 403 || result.status === 429) {
-    return { scan: false, reason: SkipReason.RobotsRefused };
-  }
-  // Handed to `runScan` either way, so the one file an operator watches is
-  // requested once per site instead of twice.
-  if (result.error || result.status !== 200 || !result.body) {
-    return { scan: true, robotsTxt: result };
-  }
-
-  const parsed = parseRobots(result.body);
-  for (const token of PROBED_TOKENS) {
-    const groups = groupsForBot(parsed, token);
-    if (isBlanketBlocked(groups, token))
-      return { scan: false, reason: SkipReason.RobotsDisallow };
-    if (groups.some((g) => (g.crawlDelay ?? 0) > 0))
-      return { scan: false, reason: SkipReason.CrawlDelay };
-  }
-  return { scan: true, robotsTxt: result };
-}
-
 // ── Scanning one site ──────────────────────────────────────────
 
 async function scanOne(site: SiteEntry): Promise<SiteOutcome> {
@@ -342,18 +257,11 @@ async function scanOne(site: SiteEntry): Promise<SiteOutcome> {
   };
 
   try {
-    const verdict = await robotsVerdict(site.domain);
-    if (!verdict.scan) {
-      base.skipped = verdict.reason;
-      base.durationMs = Date.now() - started;
-      return base;
-    }
-
-    const report = await runScan(`https://${site.domain}`, {
+    const { report, originFallback } = await scanDomain(site.domain, {
       dispatcher,
       maxConcurrent: CONNECTIONS,
-      robotsTxt: verdict.robotsTxt,
     });
+    if (originFallback) base.scannedUrl = originFallback.to;
     const checks = report.categories.flatMap((c) => c.checks);
 
     for (const check of checks) {
@@ -406,6 +314,8 @@ async function main(): Promise<void> {
   const windowStart =
     all.length === 0 ? 0 : ((offset % all.length) + all.length) % all.length;
 
+  const location = await scanLocation();
+  console.log(`[scan-site-list] scan location: ${location ?? "unknown"}`);
   const startedAt = new Date();
   const startedMs = Date.now();
   const queue = [...planned];
@@ -427,9 +337,10 @@ async function main(): Promise<void> {
       startedAt: startedAt.toISOString(),
       complete,
       windowOffset: windowStart,
+      ...(location !== undefined && { scanLocation: location }),
       planned: planned.length,
-      scanned: outcomes.filter((o) => !o.skipped).length,
-      skipped: outcomes.filter((o) => o.skipped).length,
+      scanned: outcomes.length,
+      originFallbacks: outcomes.filter((o) => o.scannedUrl).length,
       unreached: planned.length - outcomes.length,
       violations: outcomes.filter((o) => o.violations.length > 0).length,
       outcomes,
@@ -462,7 +373,9 @@ async function main(): Promise<void> {
       // Deliberately no score, here or in the summary.
       const verdict = outcome.violations.length
         ? "VIOLATION"
-        : (outcome.skipped ?? "ok");
+        : outcome.scannedUrl
+          ? `ok via ${outcome.scannedUrl}`
+          : "ok";
       console.log(
         `[${outcomes.length}/${planned.length}] ${site.domain}: ${verdict}`,
       );
@@ -480,12 +393,12 @@ async function main(): Promise<void> {
   }
 
   const broken = outcomes.filter((o) => o.violations.length > 0);
-  const skipped = outcomes.filter((o) => o.skipped).length;
+  const fallbacks = outcomes.filter((o) => o.scannedUrl).length;
   const unreached = planned.length - outcomes.length;
 
   console.log(
     `\nwindow ${windowStart}..+${planned.length} of ${all.length}: ` +
-      `${outcomes.length - skipped} scanned, ${skipped} skipped by robots.txt, ` +
+      `${outcomes.length} scanned, ${fallbacks} through an origin fallback, ` +
       `${unreached} not reached, ${broken.length} with violations`,
   );
   for (const outcome of broken.slice(0, 10)) {

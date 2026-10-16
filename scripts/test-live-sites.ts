@@ -11,37 +11,26 @@
  *   pnpm test:live --category=storefront --limit=5
  *   pnpm test:live --domain=lobste.rs
  *   pnpm test:live --domains=theguardian.com,stripe.com,bbc.com
+ *
+ * This runner tests the scanner; it is not a crawler. A site's robots.txt does
+ * not decide whether it is scanned. A WAF block still ends a scan, and the
+ * report says so.
  */
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { runScan } from "#core/index";
-import { boundedDispatcher, createFetcher } from "#core/fetcher";
-import {
-  parseRobots,
-  groupsForBot,
-  isBlanketBlocked,
-} from "#core/gatherers/robots";
-import { SCANNER_USER_AGENT } from "#core/constants";
-import { AI_CRAWLER_UAS } from "#core/gatherers/ua-parity";
+import { boundedDispatcher } from "#core/fetcher";
 import { invariantViolations } from "#core/tests/scan-invariants";
 import type { SiteEntry } from "#core/tests/site-list";
-import type { FetchResult } from "#core/fetcher";
 import type { EvidenceKey } from "#core/types";
 import { excludedDomains, type CorpusStatus } from "#core/tests/corpus-status";
-import { SkipReason } from "./lib/scan-outcomes";
 import { SiteSource } from "#core/tests/site-list";
+import { scanDomain, scanLocation, startRequestLog } from "./lib/live-scan";
 
 const SITES_PATH = path.resolve(
   process.cwd(),
   "packages/core/test-data/sites/sites.json",
 );
-
-const BOT_TOKEN = SCANNER_USER_AGENT.split("/")[0]!.toLowerCase();
-const PROBED_TOKENS: readonly string[] = [
-  BOT_TOKEN,
-  ...AI_CRAWLER_UAS.map((u) => u.token),
-];
 
 interface CliOptions {
   limit: number;
@@ -53,7 +42,7 @@ interface CliOptions {
   outPath: string;
   verbose: boolean;
   help: boolean;
-  ignoreRobots: boolean;
+  requestLog?: string;
   stratified: boolean;
   shuffle: boolean;
   loop: number;
@@ -71,7 +60,6 @@ function parseCliArgs(argv: string[]): CliOptions {
     outPath: path.resolve(process.cwd(), "reports/live-sites-test.json"),
     verbose: false,
     help: false,
-    ignoreRobots: false,
     stratified: false,
     shuffle: false,
     loop: 1,
@@ -86,10 +74,6 @@ function parseCliArgs(argv: string[]): CliOptions {
     }
     if (arg === "--verbose" || arg === "-v") {
       options.verbose = true;
-      continue;
-    }
-    if (arg === "--ignore-robots") {
-      options.ignoreRobots = true;
       continue;
     }
     if (arg === "--stratified" || arg === "-s") {
@@ -153,6 +137,9 @@ function parseCliArgs(argv: string[]): CliOptions {
       case "out":
         options.outPath = path.resolve(process.cwd(), val.trim());
         break;
+      case "request-log":
+        options.requestLog = path.resolve(process.cwd(), val.trim());
+        break;
       case "tier":
         if (val.trim().toLowerCase() !== "smoke") {
           console.error(`--tier accepts "smoke", got "${val}"`);
@@ -184,11 +171,11 @@ Options:
   --stratified, -s    Sample evenly across all available site categories
   --tier=smoke        Only the smoke tier: two seeded sites per category, about five minutes
   --include-dead      Also scan domains status.json calls dead
-  --include-blocked   Also scan domains status.json calls blocked (robots)
+  --include-blocked   Also scan domains status.json calls blocked
   --loop=<n>          Repeat the selection n times (default: 1)
   --shuffle, -r       Shuffle the pool before selecting
-  --ignore-robots     Proceed with scan even if third-party robots.txt disallows crawlers
   --out=<path>        Output JSON file path (default: reports/live-sites-test.json)
+  --request-log=<path> Append every HTTP request of the run to a JSON-lines file
   --verbose, -v       Print detailed per-check breakdown
   --help, -h          Show this help message
 
@@ -196,7 +183,7 @@ Examples:
   pnpm test:live --limit=3
   pnpm test:live --stratified --limit=30 --concurrency=4
   pnpm test:live --category=storefront --limit=5 --concurrency=2
-  pnpm test:live --domain=theguardian.com --ignore-robots
+  pnpm test:live --domain=theguardian.com --request-log=reports/requests.jsonl
   pnpm test:live --domain=theguardian.com --verbose
   pnpm test:live --tier=smoke --limit=100 --concurrency=4
 `);
@@ -205,7 +192,8 @@ Examples:
 interface TestSiteOutcome {
   domain: string;
   category: string;
-  skipped?: SkipReason | undefined;
+  /** Set when `https://<domain>` was unreachable and another origin was scanned. */
+  scannedUrl?: string;
   score?: number | null;
   scoreTier?: string | null;
   // Copied from `scanValidity`, which an unjudgeable report may lack.
@@ -220,9 +208,12 @@ interface TestReportSummary {
   startedAt: string;
   completedAt: string;
   durationMs: number;
+  /** Two-letter country the requests left from, when the lookup worked. */
+  scanLocation?: string;
   totalPlanned: number;
   scanned: number;
-  skipped: number;
+  /** Sites reached only through the `www` or `http` fallback. */
+  originFallbacks: number;
   violationsCount: number;
   averageDurationMs: number;
   averageScore: number | null;
@@ -270,6 +261,11 @@ async function main(): Promise<void> {
     );
   }
   if (options.tier) console.log(`Tier: ${options.tier} (${pool.length} sites)`);
+  const location = await scanLocation();
+  console.log(`Scan location: ${location ?? "unknown"}`);
+  const stopRequestLog = options.requestLog
+    ? startRequestLog(options.requestLog)
+    : undefined;
   const grandStartTime = Date.now();
   const allOutcomes: TestSiteOutcome[] = [];
   let totalViolations = 0;
@@ -369,48 +365,6 @@ async function main(): Promise<void> {
 
     const dispatcher = boundedDispatcher(options.concurrency);
 
-    async function checkRobots(domain: string): Promise<{
-      scan: boolean;
-      reason?: SkipReason;
-      robotsTxt?: FetchResult;
-    }> {
-      try {
-        const result = await createFetcher({
-          dispatcher,
-          maxConcurrent: options.concurrency,
-        }).fetch({
-          url: `https://${domain}/robots.txt`,
-        });
-
-        if (
-          result.status === 401 ||
-          result.status === 403 ||
-          result.status === 429
-        ) {
-          return { scan: false, reason: SkipReason.RobotsRefused };
-        }
-
-        if (result.error || result.status !== 200 || !result.body) {
-          return { scan: true, robotsTxt: result };
-        }
-
-        const parsed = parseRobots(result.body);
-        for (const token of PROBED_TOKENS) {
-          const groups = groupsForBot(parsed, token);
-          if (isBlanketBlocked(groups, token)) {
-            return { scan: false, reason: SkipReason.RobotsDisallow };
-          }
-          if (groups.some((g) => (g.crawlDelay ?? 0) > 0)) {
-            return { scan: false, reason: SkipReason.CrawlDelay };
-          }
-        }
-
-        return { scan: true, robotsTxt: result };
-      } catch {
-        return { scan: true };
-      }
-    }
-
     async function scanSingleSite(
       site: SiteEntry,
       index: number,
@@ -427,23 +381,11 @@ async function main(): Promise<void> {
       const prefix = `[${index + 1}/${selected.length}] ${site.domain} (${site.category})`;
 
       try {
-        let robotsTxtResult: FetchResult | undefined;
-        if (!options.ignoreRobots) {
-          const robots = await checkRobots(site.domain);
-          if (!robots.scan) {
-            outcome.skipped = robots.reason;
-            outcome.durationMs = Date.now() - started;
-            console.log(`⚪ ${prefix}: SKIPPED (robots.txt: ${robots.reason})`);
-            return outcome;
-          }
-          robotsTxtResult = robots.robotsTxt;
-        }
-
-        const report = await runScan(`https://${site.domain}`, {
+        const { report, originFallback } = await scanDomain(site.domain, {
           dispatcher,
           maxConcurrent: options.concurrency,
-          robotsTxt: robotsTxtResult,
         });
+        if (originFallback) outcome.scannedUrl = originFallback.to;
 
         outcome.score = report.overallScore;
         outcome.scoreTier = report.scoreTier;
@@ -467,9 +409,10 @@ async function main(): Promise<void> {
 
         const countsDisplay = `${outcome.statusCounts["pass"] ?? 0} pass, ${outcome.statusCounts["warn"] ?? 0} warn, ${outcome.statusCounts["fail"] ?? 0} fail, ${outcome.statusCounts["na"] ?? 0} na`;
 
+        const via = outcome.scannedUrl ? ` | via ${outcome.scannedUrl}` : "";
         if (outcome.violations.length === 0) {
           console.log(
-            `✅ ${prefix}: ${scoreDisplay} | ${countsDisplay} | ${durationSec}s | OK`,
+            `✅ ${prefix}: ${scoreDisplay} | ${countsDisplay} | ${durationSec}s${via} | OK`,
           );
         } else {
           console.log(
@@ -526,8 +469,9 @@ async function main(): Promise<void> {
     }
   }
 
+  stopRequestLog?.();
   const totalDurationMs = Date.now() - grandStartTime;
-  const scannedOutcomes = allOutcomes.filter((o) => !o.skipped);
+  const scannedOutcomes = allOutcomes;
 
   const scores = scannedOutcomes
     .map((o) => o.score)
@@ -550,9 +494,10 @@ async function main(): Promise<void> {
     startedAt: new Date(grandStartTime).toISOString(),
     completedAt: new Date().toISOString(),
     durationMs: totalDurationMs,
+    ...(location !== undefined && { scanLocation: location }),
     totalPlanned: allOutcomes.length,
     scanned: scannedOutcomes.length,
-    skipped: allOutcomes.length - scannedOutcomes.length,
+    originFallbacks: allOutcomes.filter((o) => o.scannedUrl).length,
     violationsCount: totalViolations,
     averageDurationMs: avgDurationMs,
     averageScore: avgScore,
@@ -572,7 +517,8 @@ async function main(): Promise<void> {
     `Total Planned:       ${summary.totalPlanned} across ${options.loop} round(s)`,
   );
   console.log(`Successfully Scanned:${summary.scanned}`);
-  console.log(`Skipped (robots):    ${summary.skipped}`);
+  console.log(`Origin fallbacks:    ${summary.originFallbacks}`);
+  console.log(`Scan location:       ${summary.scanLocation ?? "unknown"}`);
   console.log(`Invariant Violations:${summary.violationsCount}`);
   if (summary.averageScore !== null) {
     console.log(`Average Score:       ${summary.averageScore}/100`);
