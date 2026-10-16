@@ -213,10 +213,10 @@ function unblockedFetches(
         }
       : { met: false, reason: `${waf.name} refused the scan: ${waf.reason}.` };
   }
-  if (homepageResult.status === 429) {
+  if (homepageResult.status === 429 || homepageResult.status === 428) {
     return {
       met: false,
-      reason: "The homepage answered HTTP 429: the scan was throttled.",
+      reason: `The homepage answered HTTP ${homepageResult.status}: the scan was throttled.`,
     };
   }
   return { met: true };

@@ -11,9 +11,8 @@ function rateLimited(statusCode: number): WafProtection {
     isBlocked: true,
     isRateLimit: true,
     provider: WafProvider.RateLimited,
-    name: "Rate limit (HTTP 429)",
-    reason:
-      "The site answered HTTP 429 — too many requests. The scan asked for pages faster than this origin allows, so it saw no content. This says nothing about whether AI agents are welcome; re-run the scan after a pause.",
+    name: `Rate limit (HTTP ${statusCode})`,
+    reason: `The site answered HTTP ${statusCode} — too many requests. The scan asked for pages faster than this origin allows, so it saw no content. This says nothing about whether AI agents are welcome; re-run the scan after a pause.`,
     statusCode,
   };
 }
@@ -103,6 +102,9 @@ export function detectWafProtection(
   // every provider serves 429 for rate limiting and the provider branches
   // below would each report it as that provider's bot challenge.
   if (homepageResult?.status === 429) return rateLimited(429);
+  // An empty 428 is a burst limit, not a precondition the scan could meet.
+  if (homepageResult?.status === 428 && !homepageResult.body)
+    return rateLimited(428);
 
   // 2. Vendor evidence, read from every response that is not a 429. A
   // challenge on one response outranks a throttle on another: the challenge

@@ -153,7 +153,14 @@ const A11Y_MAX_PAGES = Math.max(
   Number(process.env["SCANNER_A11Y_MAX_PAGES"] ?? 3),
 );
 
-/** How long to wait before the single 429 retry when no `Retry-After` says. */
+/**
+ * Statuses that mean "too many requests" and earn one retry. 428 is what some
+ * apex redirectors answer once a burst from one IP passes their limit, with an
+ * empty body; a request a few seconds later passes.
+ */
+const THROTTLE_STATUSES = new Set([428, 429]);
+
+/** How long to wait before the single throttle retry when no `Retry-After` says. */
 const RATE_LIMIT_BACKOFF_MS = 5_000;
 /** A `Retry-After` longer than this is the site telling us to come back later. */
 const MAX_RETRY_AFTER_MS = 30_000;
@@ -175,7 +182,7 @@ function unsentResult(url: string, error: string): FetchResult {
 }
 
 /**
- * Fetch a page, retrying once on HTTP 429.
+ * Fetch a page, retrying once on a throttle (HTTP 429, or 428 from a burst limit).
  */
 async function fetchPageWithRetry(
   fetcher: { fetch: (options: FetchOptions) => Promise<FetchResult> },
@@ -184,7 +191,7 @@ async function fetchPageWithRetry(
   cancel?: AbortSignal,
 ): Promise<FetchResult> {
   const first = await fetcher.fetch({ url, signal: fetchSignal });
-  if (first.status !== 429) return first;
+  if (!THROTTLE_STATUSES.has(first.status)) return first;
 
   const header = Number(first.headers["retry-after"]);
   const waitMs =
@@ -194,7 +201,7 @@ async function fetchPageWithRetry(
 
   logger.debug(
     { url, waitMs },
-    `[orchestrator] Page answered 429; retrying once in ${waitMs}ms`,
+    `[orchestrator] Page answered ${first.status}; retrying once in ${waitMs}ms`,
   );
   // The wait ends early when either signal fires, and is skipped when one
   // already has: an aborted signal never dispatches `abort` again, and the

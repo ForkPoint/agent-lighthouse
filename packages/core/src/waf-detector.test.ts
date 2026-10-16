@@ -333,6 +333,21 @@ describe("detectWafProtection", () => {
       expect(waf?.isRateLimit).toBeUndefined();
     });
 
+    it("reports an empty 428 on the homepage as a burst limit", () => {
+      expect(onHomepage({ status: 428 }, 0)).toMatchObject({
+        provider: "rate-limited",
+        isRateLimit: true,
+        statusCode: 428,
+        name: "Rate limit (HTTP 428)",
+      });
+    });
+
+    it("does not read a 428 with a body as a throttle", () => {
+      expect(
+        onHomepage({ status: 428, body: "Precondition required" }, 0),
+      ).toBeNull();
+    });
+
     it("tells the operator to re-run rather than to change their firewall", () => {
       expect(onHomepage({ status: 429 })?.reason).toMatch(/re-run/i);
     });

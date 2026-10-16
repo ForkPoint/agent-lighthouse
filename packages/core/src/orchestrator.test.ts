@@ -1787,3 +1787,35 @@ describe("runScan — gateway root", () => {
     expect(fetched).toHaveLength(2);
   });
 });
+
+describe("runScan — burst-limit 428 on the homepage", () => {
+  const url = "https://example.com/";
+  const FULL_HTML = `<html><body><main><h1>Kettles</h1><p>${"copper kettle ".repeat(60)}</p></main></body></html>`;
+  const throttled = (): FetchResult => ({
+    ...notFound(url),
+    status: 428,
+    headers: { "retry-after": "1" },
+  });
+
+  it("retries the homepage once and reads it when the limit has passed", async () => {
+    h.map.set(url, throttled());
+    setTimeout(() => set(url, FULL_HTML), 200);
+
+    const report = await runScan(url);
+
+    expect(report.pageAttempts?.[0]).toMatchObject({ url, status: 200 });
+    expect(report.overallScore).not.toBeNull();
+  });
+
+  it("reports a throttle, not a refusal, when the retry is limited too", async () => {
+    h.map.set(url, throttled());
+
+    const report = await runScan(url);
+
+    expect(report.wafProtection).toMatchObject({
+      isRateLimit: true,
+      statusCode: 428,
+    });
+    expect(report.scanValidity?.unscoredReason).toContain("throttled");
+  });
+});
