@@ -15,7 +15,8 @@ import {
   TAG_SKIPPED_SCAN_BUDGET,
 } from "./constants";
 import { logger } from "./logger";
-import { createFetcher, splitCredentials } from "./fetcher";
+import { createFetcher, isSafeUrl, splitCredentials } from "./fetcher";
+import { gatewayTarget } from "./gateway";
 import {
   OriginCache,
   defaultOriginCache,
@@ -23,7 +24,11 @@ import {
   shouldBypassOriginCache,
 } from "./origin-cache";
 import { declaredPageClassification } from "./parser";
-import type { CheckContext, PageContext } from "./check-context";
+import type {
+  CheckContext,
+  DomPageContext,
+  PageContext,
+} from "./check-context";
 import { defaultConfig, filterConfig } from "./audit-config";
 import {
   planAudits,
@@ -451,8 +456,47 @@ async function scanWithinBudget(
     });
   }
 
+  // Parse the requested page once, here, so the gateway check below and
+  // Phase 2b share one DOM instead of parsing a large page twice.
+  const firstForcedType =
+    options?.pageType ?? overrideTypeByKey.get(displayUrl.replace(/\/$/, ""));
+  let firstParse:
+    { page: DomPageContext } | { error: DomWorkLimitError } | undefined;
+  if (pageResult.status === 200 && pageResult.body) {
+    try {
+      firstParse = {
+        page: parsePageContext(displayUrl, pageResult.body, firstForcedType),
+      };
+    } catch (error) {
+      if (!(error instanceof DomWorkLimitError)) throw error;
+      firstParse = { error };
+    }
+  }
+
+  // A gateway page (no readable text, a same-origin meta refresh or canonical
+  // to the real homepage) is kept as scanned, and its target is read as one
+  // more page, so the scan judges the site behind it. One hop, never a chain.
+  const gatewayUrls: string[] = [];
+  const gatewayCandidate =
+    firstParse && "page" in firstParse
+      ? gatewayTarget(firstParse.page, pageResult.finalUrl || url)
+      : undefined;
+  if (
+    gatewayCandidate !== undefined &&
+    !overrideTypeByKey.has(gatewayCandidate.replace(/\/$/, "")) &&
+    (await isSafeUrl(gatewayCandidate))
+  ) {
+    logger.debug(
+      { from: displayUrl, to: gatewayCandidate },
+      "[orchestrator] Requested page is a gateway; reading its target",
+    );
+    gatewayUrls.push(gatewayCandidate);
+    tracker.setPhaseTotal(2 + overrideUrls.length);
+  }
+
+  const extraUrls = [...gatewayUrls, ...overrideUrls];
   const extraResults = await Promise.all(
-    overrideUrls.map((pageUrl) =>
+    extraUrls.map((pageUrl) =>
       fetcher.fetch({ url: pageUrl, signal: fetchSignal }).then((result) => {
         tracker.unitDone(pageUrl);
         return result;
@@ -462,7 +506,7 @@ async function scanWithinBudget(
   tracker.phaseDone();
 
   const allPageResults = [pageResult, ...extraResults];
-  const allPageUrls = [displayUrl, ...overrideUrls];
+  const allPageUrls = [displayUrl, ...extraUrls];
 
   // ── Phase 2b: Parse pages + bounded jsdom a11y pass ─────────
   tracker.phaseStart(
@@ -476,6 +520,16 @@ async function scanWithinBudget(
     .filter((p) => p.result.status === 200 && p.result.body)
     .flatMap((p) => {
       const isFirstPage = p.index === 0;
+      if (isFirstPage && firstParse) {
+        if ("error" in firstParse) {
+          // A local work limit is not a refused HTTP request or missing site markup.
+          pageAnalysisErrors[p.url] = firstParse.error.message;
+          tracker.unitFail(p.url, firstParse.error.message);
+          return [];
+        }
+        tracker.unitDone(p.url);
+        return [{ ...firstParse.page, fetchResult: p.result }];
+      }
       const forcedType =
         (isFirstPage && options?.pageType ? options.pageType : undefined) ??
         overrideTypeByKey.get(p.url.replace(/\/$/, ""));
