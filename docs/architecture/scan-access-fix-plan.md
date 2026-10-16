@@ -2,16 +2,16 @@
 
 Status: 2026-10-16.
 
-| Fix | State                  | Where                                                                       |
-| :-- | :--------------------- | :-------------------------------------------------------------------------- |
-| F1  | Harness part in review | PR #143 (`www` then `http` fallback in the corpus runners)                  |
-| F2  | In review              | PR #144                                                                     |
-| F3  | In review              | PR #144                                                                     |
-| F4  | In review              | PR #143 (both corpus runners, nightly job included)                         |
-| F5  | In review              | Request log in PR #143; RC13 cause found and fixed in PR #144               |
-| F6  | In review              | Location and `Accept-Language` in PR #143; redirect-loop wording in PR #144 |
-| F7  | Merged                 | PR #140 (`c97cf1d1`)                                                        |
-| F8  | In review              | PR #144                                                                     |
+| Fix | State                 | Where                                                                       |
+| :-- | :-------------------- | :-------------------------------------------------------------------------- |
+| F1  | Merged (harness part) | PR #143 (`1b38a27a`) (`www` then `http` fallback in the corpus runners)     |
+| F2  | Merged                | PR #144 (`8eb98ae0`)                                                        |
+| F3  | Merged                | PR #144 (`8eb98ae0`)                                                        |
+| F4  | Merged                | PR #143 (both corpus runners, nightly job included)                         |
+| F5  | Merged                | Request log in PR #143; RC13 cause found and fixed in PR #144               |
+| F6  | Merged                | Location and `Accept-Language` in PR #143; redirect-loop wording in PR #144 |
+| F7  | Merged                | PR #140 (`c97cf1d1`)                                                        |
+| F8  | Merged                | PR #144 (`8eb98ae0`)                                                        |
 
 Decisions taken while implementing:
 
