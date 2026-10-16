@@ -111,7 +111,6 @@ export { generateScanSummary } from "./summary";
 export { budgetReason, formatBudget } from "./audit-runner";
 export * from "./schemas";
 export * from "./url-utils";
-export * from "./presets";
 export * from "./config-loader";
 export * from "./origin-cache";
 export { detectWafProtection, WafProvider } from "./waf-detector";

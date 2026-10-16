@@ -232,8 +232,8 @@ The five page types are `homepage`, `category`, `product`, `article` and
 `general`. `article` means an editorial page: a post, news story or guide that
 carries author and date obligations. `general` means every other page: about,
 FAQ, help, contact, policy and landing pages. Three other names use the word
-"content" and are not page types: the `content` scan preset, the `content`
-readiness vital, and the `content-extraction` audit category. Write "article
+"content" and are not page types: the removed `content` scan preset, the
+`content` readiness vital, and the `content-extraction` audit category. Write "article
 page" or "general page" in audit copy and dossiers, never "content page".
 
 The runner canonicalizes `applicablePageTypes` on a metadata copy. It accepts the

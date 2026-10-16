@@ -7,7 +7,6 @@ import {
   isInformative,
   formatBudget,
   loadConfigFile,
-  getPreset,
   logger,
   CATEGORY_IDS,
   type ScanEvent,
@@ -72,7 +71,6 @@ function usage(): never {
   agent-lighthouse audit <url> [options]
 
 Options:
-  -p, --preset <name>          Audit preset (ecommerce, saas, content, quick, full) [default: full]
   -c, --config <path>          Path to configuration file (e.g. agent-lighthouse.config.json)
                                Config accepts optional versioned "snapshots" DOM input.
   --debug-audit <id|fails>     Print deep diagnostic breakdown for a specific audit ID
@@ -107,7 +105,6 @@ Options:
 
 Examples:
   npx @forkpoint/agent-lighthouse https://yourstore.com
-  npx @forkpoint/agent-lighthouse https://yourstore.com --preset ecommerce
   npx @forkpoint/agent-lighthouse https://yourstore.com --debug-audit structured-data/faqpage-schema
   npx @forkpoint/agent-lighthouse https://staging.yourstore.com --min-score 85
 `);
@@ -147,9 +144,6 @@ async function audit(targetUrl?: string) {
   if (progressJson) logger.level = LogLevel.Silent;
 
   const assertions = parseCategoryAssertions(args, fileConfig);
-
-  const presetName = opts.presetName;
-  const preset = getPreset(presetName);
 
   const {
     categories,
@@ -198,11 +192,17 @@ async function audit(targetUrl?: string) {
     process.exit(1);
   }
 
+  // Removed in 8.0.0. A preset never changed which audits ran or how they
+  // scored, so ignoring it changes no result; failing would break CI scripts.
+  if (opts.presetIgnored && !isSilent && !progressJson) {
+    console.error(
+      '\x1b[33mWarning: --preset and the config key "preset" were removed and do nothing. Use --categories to narrow a scan.\x1b[0m',
+    );
+  }
+
   if (!isSilent) {
     printBanner();
-    console.log(
-      `Auditing \x1b[1m${url}\x1b[0m using \x1b[36m${preset.name}\x1b[0m preset ...\n`,
-    );
+    console.log(`Auditing \x1b[1m${url}\x1b[0m ...\n`);
   }
 
   // Progress: --progress-json streams raw ScanEvents as NDJSON to stderr (kept
@@ -258,7 +258,7 @@ async function audit(targetUrl?: string) {
         : `\x1b[1mOVERALL AGENT READINESS:\x1b[0m \x1b[1m${view.overallScore}/100\x1b[0m (${view.scoreTier?.toUpperCase()})`,
     );
     console.log(
-      `Target: ${report.url} | Preset: ${preset.name} | Pages: ${view.pagesScanned.length} | Duration: ${(view.durationMs / 1000).toFixed(1)}s`,
+      `Target: ${report.url} | Pages: ${view.pagesScanned.length} | Duration: ${(view.durationMs / 1000).toFixed(1)}s`,
     );
     if (view.conditions) {
       const cond = view.conditions;

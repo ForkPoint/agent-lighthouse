@@ -78,8 +78,8 @@ describe("loadConfigFile", () => {
     ".agent-lighthouserc.json",
     ".agent-lighthouserc",
   ])("discovers %s in the working directory", (name) => {
-    write(name, JSON.stringify({ preset: "ecommerce" }));
-    expect(loadConfigFile()).toEqual({ preset: "ecommerce" });
+    write(name, JSON.stringify({ minScore: 80 }));
+    expect(loadConfigFile()).toEqual({ minScore: 80 });
   });
 
   it("prefers agent-lighthouse.config.json over the rc files", () => {
@@ -120,7 +120,6 @@ describe("loadConfigFile", () => {
       "agent-lighthouse.config.json",
       JSON.stringify({
         url: "https://shop.test",
-        preset: "ecommerce",
         categories: ["agent-interfaces"],
         minScore: 75,
         assertCategories: { "agent-interfaces": 80 },
@@ -130,7 +129,6 @@ describe("loadConfigFile", () => {
     );
     expect(loadConfigFile()).toMatchObject({
       url: "https://shop.test",
-      preset: "ecommerce",
       categories: ["agent-interfaces"],
       minScore: 75,
       assertCategories: { "agent-interfaces": 80 },

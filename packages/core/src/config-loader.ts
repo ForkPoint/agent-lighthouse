@@ -2,7 +2,6 @@ import type { BrowserSnapshots } from "./contracts";
 import type { PageType, PageOverride } from "./types";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import type { PresetName } from "./presets";
 
 export const OUTPUT_FORMATS = ["terminal", "html", "json", "md"] as const;
 
@@ -17,8 +16,6 @@ export interface AgentLighthouseConfig {
   pageType?: PageType;
   /** Exact page declarations, read as pages next to the target URL. */
   pages?: PageOverride[] | null;
-  /** Audit preset profile */
-  preset?: PresetName;
   /** Categories to execute (default: all) */
   categories?: string[];
   /** Minimum score threshold (0-100) to fail CI */
