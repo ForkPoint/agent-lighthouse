@@ -74,10 +74,12 @@ control, which is a different defect from one that serves the file and
 mislabels it. `access-crawl-control/robots-directives` owns what robots.txt says when it
 is there.
 
-**The redirect cap is the fetcher's five, not the sketch's three.** The fetcher
+**The redirect cap is the fetcher's, not the sketch's three.** The fetcher
 refuses a redirect that leaves public address space and reports the final URL;
 its hop limit is shared by every audit and is not worth a second code path.
-Between three hops and five, no origin's answer for a missing `.txt` changes.
+The limit was five and is twenty since 2026-10-16, the number browsers
+follow. A missing `.txt` that redirects more than three times is rare, and
+its final answer is what the probe grades either way.
 
 **Evidence hygiene.** All three sources are IndexNow documentation and support
 the key-file mechanism. The AI-consumer link in the FAQ is a vendor claim, as

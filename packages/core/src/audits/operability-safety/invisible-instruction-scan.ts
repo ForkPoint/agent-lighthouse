@@ -144,8 +144,45 @@ export function deltaE76(a: string, b: string): number | undefined {
 // ── Style resolution ──────────────────────────────────────────
 
 /**
- * Every declaration block that could apply to this element: its own inline
- * style plus any scanned rule whose selector matches it.
+ * Per-page memo for the hiding checks.
+ *
+ * Every text element used to re-test each of its ancestors against every CSS
+ * rule: text nodes x depth x rules, 8-11 s on a large storefront page with
+ * the event loop blocked for every parallel scan. Each element is now judged
+ * once, and only rules that can hide anything are matched at all.
+ */
+interface HidingCache {
+  /** Rules whose declarations carry a hiding declaration, in source order. */
+  rules: CssRule[];
+  /** The elements each rule's selector matches, built on first use. */
+  matched: Map<CssRule, Set<unknown>>;
+  /** The first hiding label on the element itself; null when none. */
+  own: Map<unknown, string | null>;
+  /** Whether any ancestor hides the element's subtree. */
+  hiddenAbove: Map<unknown, boolean>;
+}
+
+function hidingCache(rules: CssRule[]): HidingCache {
+  return {
+    // @media print hides text from the screen reader's user only when printing;
+    // it is not a technique for hiding text from a browsing human. A rule with
+    // no hiding declaration cannot change any verdict below.
+    rules: rules.filter(
+      (rule) =>
+        !rule.atRule?.startsWith("media print") &&
+        HIDING_DECLARATIONS.some(({ pattern }) =>
+          pattern.test(rule.declarations),
+        ),
+    ),
+    matched: new Map(),
+    own: new Map(),
+    hiddenAbove: new Map(),
+  };
+}
+
+/**
+ * Every declaration block that could hide this element: its own inline style
+ * plus any hiding rule whose selector matches it.
  *
  * No cascade and no specificity: the question is whether *any* rule hides the
  * element, and the matched selector is reported so a human can adjudicate.
@@ -153,16 +190,12 @@ export function deltaE76(a: string, b: string): number | undefined {
 function declarationsFor(
   page: PageContext,
   el: unknown,
-  rules: CssRule[],
-  matchCache: Map<CssRule, Set<unknown>>,
+  cache: HidingCache,
 ): string[] {
   const $ = page.$;
   const blocks: string[] = [$el($, el).attr("style") ?? ""];
-  for (const rule of rules) {
-    // @media print hides text from the screen reader's user only when printing;
-    // it is not a technique for hiding text from a browsing human.
-    if (rule.atRule?.startsWith("media print")) continue;
-    let matched = matchCache.get(rule);
+  for (const rule of cache.rules) {
+    let matched = cache.matched.get(rule);
     if (!matched) {
       matched = new Set<unknown>();
       const target = matched;
@@ -174,11 +207,52 @@ function declarationsFor(
         // A selector cheerio cannot compile matches nothing rather than throwing
         // the whole audit away.
       }
-      matchCache.set(rule, matched);
+      cache.matched.set(rule, matched);
     }
     if (matched.has(el)) blocks.push(rule.declarations);
   }
   return blocks.filter(Boolean);
+}
+
+/** The first hiding declaration on the element itself, judged once. */
+function ownHidingLabel(
+  page: PageContext,
+  el: unknown,
+  cache: HidingCache,
+): string | undefined {
+  let label = cache.own.get(el);
+  if (label === undefined) {
+    label = null;
+    search: for (const block of declarationsFor(page, el, cache)) {
+      for (const { pattern, label: name } of HIDING_DECLARATIONS) {
+        if (pattern.test(block)) {
+          label = name;
+          break search;
+        }
+      }
+    }
+    cache.own.set(el, label);
+  }
+  return label ?? undefined;
+}
+
+/** Whether an ancestor hides the subtree, judged once per element. */
+function hiddenByAncestor(
+  page: PageContext,
+  el: unknown,
+  cache: HidingCache,
+): boolean {
+  const known = cache.hiddenAbove.get(el);
+  if (known !== undefined) return known;
+  const parent = (el as { parent?: { type?: string } | null }).parent;
+  const hidden =
+    parent !== null &&
+    parent !== undefined &&
+    parent.type !== "root" &&
+    (ownHidingLabel(page, parent, cache) !== undefined ||
+      hiddenByAncestor(page, parent, cache));
+  cache.hiddenAbove.set(el, hidden);
+  return hidden;
 }
 
 function $el($: PageContext["$"], el: unknown) {
@@ -234,7 +308,7 @@ async function survey(ctx: CheckContext): Promise<Survey> {
     const $ = page.$;
     const css = await collectPageCss(ctx, page);
     result.crossOrigin += css.skippedCrossOrigin.length;
-    const matchCache = new Map<CssRule, Set<unknown>>();
+    const cache = hidingCache(css.rules);
 
     $("body *").each((_, el) => {
       const $e = $(el);
@@ -251,7 +325,7 @@ async function survey(ctx: CheckContext): Promise<Survey> {
       if (!text) return;
       result.textNodesSeen += 1;
 
-      const technique = hidingTechnique(page, el, css.rules, matchCache);
+      const technique = hidingTechnique(page, el, cache);
       if (!technique) return;
 
       const hits = INSTRUCTION_LEXICON.filter((re) => re.test(text)).length;
@@ -271,28 +345,17 @@ async function survey(ctx: CheckContext): Promise<Survey> {
 function hidingTechnique(
   page: PageContext,
   el: unknown,
-  rules: CssRule[],
-  matchCache: Map<CssRule, Set<unknown>>,
+  cache: HidingCache,
 ): string | undefined {
   const $e = $el(page.$, el);
   if ($e.attr("hidden") !== undefined) return "hidden attribute";
   if (($e.attr("aria-hidden") ?? "").toLowerCase() === "true")
     return 'aria-hidden="true"';
 
+  const own = ownHidingLabel(page, el, cache);
+  if (own) return own;
   // An ancestor hiding the subtree hides this text too.
-  for (const block of declarationsFor(page, el, rules, matchCache)) {
-    for (const { pattern, label } of HIDING_DECLARATIONS) {
-      if (pattern.test(block)) return label;
-    }
-  }
-  const $hiddenAncestor = $e.parents().filter((_i, parent) => {
-    for (const block of declarationsFor(page, parent, rules, matchCache)) {
-      for (const { pattern } of HIDING_DECLARATIONS)
-        if (pattern.test(block)) return true;
-    }
-    return false;
-  });
-  if ($hiddenAncestor.length > 0) return "hidden ancestor";
+  if (hiddenByAncestor(page, el, cache)) return "hidden ancestor";
 
   const color = ownColor(page, el);
   const background = color

@@ -129,6 +129,21 @@ describe("HydrationPayloadShareAudit", () => {
     expect(result.message).toMatch(/\d+(\.\d+)?% of the main-content/);
   });
 
+  // The scan cuts a payload at 512 KiB. A cut inside a string literal made the
+  // old regex restart at every later quote: 41 s on one real flight payload.
+  it("reads a literal the 512 KiB cut leaves open, in linear time", () => {
+    const body = ARTICLE.repeat(6);
+    const entry = `\\"k\\":\\"${ARTICLE}\\",`;
+    const literal = entry.repeat(Math.ceil(700_000 / entry.length));
+    const started = performance.now();
+    const result = run(
+      `<main><article>${body}</article></main><script>self.__next_f.push([1,"${literal}"])</script>`,
+    );
+    expect(performance.now() - started).toBeLessThan(2_000);
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("duplicat");
+  });
+
   it("passes a small payload that duplicates nothing", () => {
     const blob = JSON.stringify({
       props: { pageProps: { sku: "AB-1", variants: "q".repeat(2_000) } },

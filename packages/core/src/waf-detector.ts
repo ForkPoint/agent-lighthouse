@@ -111,6 +111,10 @@ export function detectWafProtection(
   // is why the scan saw nothing.
   const answered = allResults.filter((res) => res.status !== 429);
   for (const res of answered) {
+    const wall = challengeRoute(res);
+    if (wall) return wall;
+  }
+  for (const res of answered) {
     const wall = vendorWall(res, scannedPagesCount);
     if (wall) return wall;
   }
@@ -171,6 +175,51 @@ export function detectWafProtection(
   }
 
   return null;
+}
+
+/**
+ * Challenge routes that storefront platforms redirect a refused client to.
+ * The route is the proof: its page may answer 200 with a script-only
+ * challenge, or 404 with the shop's own error page around the vendor script,
+ * and neither reads as a block from its status or text.
+ */
+const CHALLENGE_ROUTES: ReadonlyArray<{
+  path: RegExp;
+  provider: WafProvider;
+  name: string;
+  reason: string;
+}> = [
+  {
+    path: /\/PX-Show(?:$|[/?])/i,
+    provider: WafProvider.Perimeterx,
+    name: "HUMAN / PerimeterX Bot Defense",
+    reason: "redirected to the PerimeterX challenge route",
+  },
+  {
+    path: /\/DDUser-Challenge(?:$|[/?])/i,
+    provider: WafProvider.Datadome,
+    name: "DataDome Bot Protection",
+    reason: "redirected to the DataDome challenge route",
+  },
+];
+
+/** A wall proven by the URL the redirect chain ended on. */
+function challengeRoute(res: FetchResult): WafProtection | null {
+  let path: string;
+  try {
+    path = new URL(res.finalUrl || res.url).pathname;
+  } catch {
+    return null;
+  }
+  const route = CHALLENGE_ROUTES.find((r) => r.path.test(path));
+  if (!route) return null;
+  return {
+    isBlocked: true,
+    provider: route.provider,
+    name: route.name,
+    reason: route.reason,
+    statusCode: res.status,
+  };
 }
 
 /**

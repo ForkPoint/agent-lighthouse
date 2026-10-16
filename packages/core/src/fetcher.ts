@@ -7,6 +7,7 @@ import {
 } from "./constants";
 import { isPrivateIp } from "./url-utils";
 import { logger } from "./logger";
+import { RedirectCookieJar } from "./redirect-cookies";
 import { HttpMethod } from "./types";
 
 export async function isSafeUrl(url: string): Promise<boolean> {
@@ -35,8 +36,12 @@ export async function isSafeUrl(url: string): Promise<boolean> {
  */
 const noRedirectAgent = new Agent();
 
-/** How many hops a redirect chain may take before we give up. */
-export const MAX_REDIRECTS = 5;
+/**
+ * How many hops a redirect chain may take before we give up. The Fetch
+ * standard follows 20, and so do browsers; some storefronts need 6 or more
+ * to set a locale cookie and land on the homepage.
+ */
+export const MAX_REDIRECTS = 20;
 /** Statuses that carry a Location a client is expected to follow. */
 const REDIRECT_STATUS = new Set([301, 302, 303, 307, 308]);
 
@@ -345,6 +350,9 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
       let hops = 0;
       const redirectChain: Array<{ status: number; from: string; to: string }> =
         [];
+      // Cookies set along this chain are sent back on its later hops, as a
+      // browser does; without them some sites redirect until the hop limit.
+      const cookieJar = new RedirectCookieJar();
 
       while (
         // This option is constant; response and hops bound the redirect loop.
@@ -389,6 +397,7 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
         }
 
         await response.body.dump();
+        cookieJar.store(response.headers["set-cookie"], currentUrl);
 
         // 303 always continues as a GET without a body; 301 and 302 do the same
         // for a POST, as every browser does. 307 and 308 keep both.
@@ -410,9 +419,23 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
         currentUrl = next;
         hops += 1;
 
+        let hopHeaders = reqHeaders;
+        const cookies = cookieJar.header(currentUrl);
+        if (cookies) {
+          hopHeaders = { ...reqHeaders };
+          const callerCookie = Object.entries(reqHeaders).find(
+            ([name]) => name.toLowerCase() === "cookie",
+          )?.[1];
+          setHeader(
+            hopHeaders,
+            "Cookie",
+            callerCookie ? `${callerCookie}; ${cookies}` : cookies,
+          );
+        }
+
         response = await request(currentUrl, {
           method: currentMethod,
-          headers: reqHeaders,
+          headers: hopHeaders,
           ...(currentBody !== undefined && { body: currentBody }),
           signal,
           dispatcher,

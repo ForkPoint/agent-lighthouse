@@ -22,7 +22,12 @@ vi.mock("node:dns/promises", () => ({
 
 import { request } from "undici";
 import dns from "node:dns/promises";
-import { createFetcher, isSafeUrl, splitCredentials } from "./fetcher";
+import {
+  createFetcher,
+  isSafeUrl,
+  MAX_REDIRECTS,
+  splitCredentials,
+} from "./fetcher";
 import { HttpMethod } from "./types";
 
 const mockRequest = vi.mocked(request);
@@ -643,7 +648,7 @@ describe("fetcher.fetch — body and headers edge cases", () => {
     mockRequest.mockClear();
     await fetcher.fetch({ url: "https://example.com/a" });
     // The original request plus MAX_REDIRECTS hops.
-    expect(mockRequest).toHaveBeenCalledTimes(6);
+    expect(mockRequest).toHaveBeenCalledTimes(MAX_REDIRECTS + 1);
   });
 
   it("ignores header values that are neither a string nor an array", async () => {
@@ -883,8 +888,8 @@ describe("createFetcher redirect handling", () => {
     expect(mockRequest).toHaveBeenCalledTimes(1);
   });
 
-  it("stops after five hops and returns the last response", async () => {
-    for (let i = 0; i < 6; i += 1) {
+  it("stops after MAX_REDIRECTS hops and returns the last response", async () => {
+    for (let i = 0; i <= MAX_REDIRECTS; i += 1) {
       mockRequest.mockResolvedValueOnce(
         mockResponse(302, "", { location: `/hop-${i + 1}` }) as never,
       );
@@ -898,9 +903,70 @@ describe("createFetcher redirect handling", () => {
       url: "https://example.com/hop-0",
     });
 
-    expect(mockRequest).toHaveBeenCalledTimes(6);
+    expect(mockRequest).toHaveBeenCalledTimes(MAX_REDIRECTS + 1);
     expect(result.status).toBe(302);
-    expect(result.finalUrl).toBe("https://example.com/hop-5");
+    expect(result.finalUrl).toBe(
+      `https://example.com/hop-${String(MAX_REDIRECTS)}`,
+    );
+  });
+
+  // Some storefronts redirect until the cookie they set comes back. Without
+  // it the chain ran to the hop limit and the scan read no page.
+  it("sends cookies set on one hop back on the next hops of the chain", async () => {
+    mockLookup.mockResolvedValue({ address: "93.184.216.34", family: 4 });
+    mockRequest
+      .mockResolvedValueOnce(
+        mockResponse(302, "", {
+          location: "https://www.example.com/locale",
+          "set-cookie": [
+            "session=abc; Path=/; Domain=example.com; Secure",
+            "tracking=1; Domain=other.test",
+          ] as unknown as string,
+        }) as never,
+      )
+      .mockResolvedValueOnce(
+        mockResponse(302, "", {
+          location: "/en/",
+          "set-cookie": "locale=en; Path=/",
+        }) as never,
+      )
+      .mockResolvedValueOnce(mockResponse(200, "<html>home</html>") as never);
+
+    const result = await createFetcher().fetch({
+      url: "https://example.com/",
+    });
+
+    expect(result.status).toBe(200);
+    const cookieOf = (call: number) =>
+      (mockRequest.mock.calls[call]![1]!.headers as Record<string, string>)[
+        "Cookie"
+      ];
+    expect(cookieOf(0)).toBeUndefined();
+    expect(cookieOf(1)).toBe("session=abc");
+    expect(cookieOf(2)).toBe("session=abc; locale=en");
+  });
+
+  it("starts every fetch with an empty cookie jar", async () => {
+    mockLookup.mockResolvedValue({ address: "93.184.216.34", family: 4 });
+    mockRequest
+      .mockResolvedValueOnce(
+        mockResponse(302, "", {
+          location: "/b",
+          "set-cookie": "session=abc; Path=/",
+        }) as never,
+      )
+      .mockResolvedValueOnce(mockResponse(200, "") as never)
+      .mockResolvedValueOnce(mockResponse(200, "") as never);
+
+    const fetcher = createFetcher();
+    await fetcher.fetch({ url: "https://example.com/a" });
+    await fetcher.fetch({ url: "https://example.com/b" });
+
+    const headers = mockRequest.mock.calls[2]![1]?.headers as Record<
+      string,
+      string
+    >;
+    expect(headers["Cookie"]).toBeUndefined();
   });
 
   it("continues a redirected POST as a GET without the body", async () => {

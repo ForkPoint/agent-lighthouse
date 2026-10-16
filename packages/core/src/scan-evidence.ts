@@ -133,7 +133,7 @@ const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
  * this module does not import the network layer, which tests replace. A test
  * pins the two together.
  */
-export const FETCHER_REDIRECT_LIMIT = 5;
+export const FETCHER_REDIRECT_LIMIT = 20;
 
 /**
  * A fetch error fit for one line of a report. OpenSSL errors arrive as a
