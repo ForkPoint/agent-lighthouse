@@ -12,6 +12,10 @@ Status: 2026-10-16.
 | F6  | Merged                | Location and `Accept-Language` in PR #143; redirect-loop wording in PR #144 |
 | F7  | Merged                | PR #140 (`c97cf1d1`)                                                        |
 | F8  | Merged                | PR #144 (`8eb98ae0`)                                                        |
+| F9  | Proposed              | `packages/core/src/fetcher.ts` (cookies across redirect hops)               |
+| F10 | Proposed              | `hydration-payload-share.ts` (linear string scan)                           |
+| F11 | Proposed              | `invisible-instruction-scan.ts` (memoise the hidden verdict)                |
+| F12 | Proposed              | `waf-detector.ts` (challenge redirect targets)                              |
 
 Decisions taken while implementing:
 
@@ -304,9 +308,8 @@ browser and checked for challenge markers.
   certificate that does not match the apex (RC7), and 1 by a redirect loop.
 - `challenge-platform` in a 200 page is the Cloudflare background script on a
   normal page. It is not a block and must not become a detector marker.
-- Not measured: sitemap pages that single audits sample
-  (`packages/core/src/gatherers/sampled-pages.ts`) and that answer 403. They
-  read as unread pages, not as a block. A request log (F5) would count them.
+- Sitemap pages that single audits sample and that answer 403 are measured
+  in the full run on main below.
 
 ## F7 corpus check
 
@@ -314,3 +317,121 @@ Of the 684 corpus roots, 1 is a gateway by the F7 rule. The hop works there,
 but the target is a client-rendered shell: 5 server-rendered words, the rest
 inside scripts. The scan of the target alone is unscored on main too, so the
 unscored result is correct and not caused by F7.
+
+## Full corpus run on main
+
+Run of 2026-10-16 on `8eb98ae0` (F1-F8 merged), all 684 sites, concurrency 6,
+scan location BG, with the request log (140,267 requests).
+
+| Measure                | Value                                                   |
+| :--------------------- | :------------------------------------------------------ |
+| Scanned                | 684 (0 invariant violations)                            |
+| Origin fallbacks       | 53                                                      |
+| Scored                 | 443 (earlier runs: 390)                                 |
+| Unscored, now scored   | 53                                                      |
+| Scored, now unscored   | 12                                                      |
+| Unscored, WAF verdict  | 179 (Cloudflare 82, Akamai 58, PerimeterX 17, other 22) |
+| Unscored, other reason | 62                                                      |
+
+The 12 that lost their score:
+
+- 4 ran out of the 180 s budget, and 1 timed out on the homepage. All 5 fall
+  inside an event-loop stall (RC18).
+- 3 hit a bot wall that let them in on the earlier run (RC16).
+- 2 hit a cookie redirect loop (RC17).
+- 1 got the Akamai location block page (F8 works as designed).
+- 1 answered HTTP 500 once; it answers 200 now.
+
+The 62 other unscored sites:
+
+| Reason                                  | Sites | Verdict                                                                                                                    |
+| :-------------------------------------- | ----: | :------------------------------------------------------------------------------------------------------------------------- |
+| Evidence mass below the floor           |    12 | Not yet checked. The homepage answers 2xx without rendered text. One answers HTTP 202, which can be an AWS WAF challenge   |
+| Scan budget ran out                     |    11 | Scanner bug (RC18). Single requests take 78-92 s only because the event loop is blocked                                    |
+| Connection drop, timeout, HTTP/2 reset  |    12 | Correct. Seven reset the HTTP/2 stream for the scanner user agent only; a browser user agent gets an answer                |
+| Redirect loop or redirect limit         |     9 | Scanner bug (RC17). Seven of seven sampled loops end with a cookie jar                                                     |
+| Redirect to another site                |     6 | Site issue (RC10). Geo redirects from the scan location                                                                    |
+| Homepage HTTP 401, 404, 409, 500 or 503 |     8 | Two are a PerimeterX challenge redirect that ends on a 404 (RC19). One is a geo redirect to a 404. The rest are site state |
+| HTTP 429                                |     4 | Correct. Throttle                                                                                                          |
+
+### RC17. Cookies are dropped between redirect hops
+
+The fetcher walks redirects itself (`fetcher.ts`, the loop after the first
+`request`). It sends no cookies. Some storefronts set a session or locale
+cookie on the first hop and redirect until the cookie comes back. Without it
+they loop.
+
+Proof: `curl -L` without a cookie jar loops on all 7 sampled sites. With
+`-c`/`-b` all 7 end on HTTP 200: 5 on the homepage, 2 on a DataDome challenge
+page. 2 of the 7 need 6 hops, one more than `MAX_REDIRECTS` (5).
+
+### RC18. Synchronous audit work blocks the event loop
+
+The request log shows 5 windows of 66-92 s in which no request started or
+ended in any of the 6 parallel scans. Every budget overrun and every homepage
+timeout of the run falls in such a window. Three requests that were in
+flight ended within 2 ms of each other when one window closed.
+
+CPU profiles of single scans name two causes:
+
+- `unescapedStrings` in
+  `packages/core/src/audits/content-extraction/hydration-payload-share.ts`.
+  The scan cuts a payload at 512 KiB. When the cut falls inside a string
+  literal, the regex `/"((?:[^"\\]|\\.)*)"/g` finds no closing quote and
+  restarts at every later quote. On one RSC flight payload this takes 41 s
+  and returns no strings at all. The same payload uncut takes 2 ms.
+- `hidingTechnique` in
+  `packages/core/src/audits/operability-safety/invisible-instruction-scan.ts`.
+  For every text element it re-tests every ancestor against every CSS rule.
+  Busy streaks of 8-11 s per page.
+
+### RC19. A challenge redirect that ends on an error page
+
+Two storefronts redirect the scanner to their platform's PerimeterX challenge
+route (`PX-Show`), which answers HTTP 404. The scan reports "HTTP 404, fetched
+no pages". A browser user agent gets the same chain, so the block is real,
+but the provider is not named. The DataDome route `DDUser-Challenge` behaves
+the same way once cookies are kept (RC17).
+
+### Sampled pages that answer 403
+
+62 scored sites saw at least one HTTP 403 for the scanner user agent. On every
+site checked, the homepage answered 200. The 403s fall on root files,
+`/.well-known/` paths, hreflang alternates and sampled pages. They are read as
+absent or unread, which is correct. One site answered 403 to 408 of 530
+requests, nearly all hreflang alternates: the scan fetches every alternate,
+which is a request-volume question, not a verdict error.
+
+### F9. Keep cookies across redirect hops (RC17, 9 sites)
+
+Keep a cookie jar for one redirect chain only. Send back what the chain set,
+scoped by host and path. Never share it across fetches or scans, so no state
+leaks between requests. Raise `MAX_REDIRECTS` to match browsers (the Fetch
+standard follows 20) and keep `FETCHER_REDIRECT_LIMIT` pinned to it. Test with
+a stub server that loops until its cookie returns.
+
+### F10. Scan payload strings in linear time (RC18)
+
+Replace the regex in `unescapedStrings` with a single forward pass. An
+unterminated literal at the cut is read up to the cut instead of being lost.
+Test with a 512 KiB payload cut inside a literal and a time bound.
+
+### F11. Memoise the hidden verdict per element (RC18)
+
+Cache "this element hides its subtree" per element, so each ancestor is
+tested once per page and not once per text node below it. Test on a deep tree
+with many text nodes and a time bound.
+
+### F12. Name challenge redirect targets (RC19, 2 sites)
+
+When the final URL of the homepage chain is a known challenge route
+(`PX-Show`, `DDUser-Challenge`), report the provider instead of the bare
+status.
+
+### Order
+
+1. F10 and F11 first. They decide whether the scan finishes at all, and they
+   also slow every parallel scan in a corpus run.
+2. F9, then rescan the 9 loop sites.
+3. F12 after F9, because F9 changes where those chains end.
+4. Check the 12 evidence-mass sites by hand before proposing anything.
