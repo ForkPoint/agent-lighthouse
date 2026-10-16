@@ -10,6 +10,8 @@ import { mockPageContext, mockFetchResult } from "./__tests__/test-utils";
 import type { FetchResult } from "./fetcher";
 import type { PageContext } from "./check-context";
 import { detectWafProtection, WafProvider } from "./waf-detector";
+import { MAX_REDIRECTS } from "./fetcher";
+import { FETCHER_REDIRECT_LIMIT } from "./scan-evidence";
 import { EvidenceKey, PageType } from "./types";
 
 /** A homepage fetch result, overridable field by field. */
@@ -494,6 +496,78 @@ describe("scanReadTheSite", () => {
     });
     expect(scanReadTheSite(evidence)).toBe(false);
     expect(unreadSiteReason(evidence)).toContain("different site");
+  });
+});
+
+describe("scan-evidence: unreachable homepage reasons", () => {
+  const reason = (overrides: Partial<FetchResult>) =>
+    build({ homepageResult: homepage(overrides) }).reasons[
+      EvidenceKey.OriginReachable
+    ];
+
+  it("keeps a one-line error as it is", () => {
+    expect(reason({ status: 0, error: "certificate has expired" })).toBe(
+      "The homepage could not be fetched: certificate has expired.",
+    );
+  });
+
+  it("reduces a multi-line OpenSSL dump to its failure", () => {
+    expect(
+      reason({
+        status: 0,
+        error:
+          "802167ED01000000:error:0A000410:SSL routines:ssl3_read_bytes:ssl/tls alert handshake failure:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:918:SSL alert number 40\n",
+      }),
+    ).toBe(
+      "The homepage could not be fetched: TLS error, ssl/tls alert handshake failure.",
+    );
+  });
+
+  it("names a redirect loop", () => {
+    const a = "https://example.com/";
+    const b = "https://example.com/bg/";
+    expect(
+      reason({
+        status: 302,
+        redirectChain: [
+          { status: 302, from: a, to: b },
+          { status: 302, from: b, to: a },
+          { status: 302, from: a, to: b },
+          { status: 302, from: b, to: a },
+          { status: 302, from: a, to: b },
+        ],
+      }),
+    ).toBe("The homepage redirects in a loop (HTTP 302 after 5 redirects).");
+  });
+
+  it("keeps the plain status when the chain ended before the hop limit", () => {
+    expect(
+      reason({
+        status: 307,
+        redirectChain: [
+          {
+            status: 301,
+            from: "https://example.com/",
+            to: "https://www.example.com/",
+          },
+        ],
+      }),
+    ).toBe("The homepage answered HTTP 307.");
+  });
+
+  it("uses the fetcher's own hop limit", () => {
+    expect(FETCHER_REDIRECT_LIMIT).toBe(MAX_REDIRECTS);
+  });
+
+  it("names the redirect limit for a chain that never repeats", () => {
+    const hops = Array.from({ length: 5 }, (_, i) => ({
+      status: 301,
+      from: `https://example.com/${i}`,
+      to: `https://example.com/${i + 1}`,
+    }));
+    expect(reason({ status: 301, redirectChain: hops })).toBe(
+      "The homepage answered HTTP 301 after 5 redirects, the most the scan follows.",
+    );
   });
 });
 

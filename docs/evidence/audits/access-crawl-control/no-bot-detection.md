@@ -94,6 +94,23 @@ scan read is named in a pass, because no wall was observed and the page was
 read. The `wafProtection` branch, which carries the A grade, is unchanged.
 Script-`src` scoping and a UA probe are still open items from the review above.
 
+- 2026-10-16 — the shared WAF detector judges the wall from the pages the
+  scan read. A live run over 684 corpus sites found 12 sites reported as walled
+  although the homepage answered 200 and was read: a 403 S3 `AccessDenied`
+  document for a missing `/.well-known/` file read as Akamai, a Cloudflare rule
+  on one sitemap or `/agents.md`, an Imperva path named in `robots.txt`, and
+  the DataDome tag on an open page. Root files now count only when the homepage
+  itself failed. A vendor marker counts only with a refusal status or on a page
+  with no readable text, and "access denied" names Akamai only beside an
+  Akamai header. A 200 Akamai page titled "Access Denied" with no readable
+  text, which one site served to every client as a geo block, is now a wall.
+  A challenge on the homepage is named before a 429 on a root file, and a
+  vendor's own challenge before a bare Cloudflare 403. DNS, refused-port, TLS,
+  certificate and connect-timeout failures are no longer reported as a bot
+  wall; the evidence gate reports them as an unreachable homepage. The A-grade
+  branch still reads observed blocking; these corrections make the observation
+  match the fetch the scan made.
+
 - 2026-10-06 — the shared WAF detector no longer treats the
   `challenges.cloudflare.com` hostname as proof of an access wall. A live fetch
   of a storefront returned HTTP 200 with the storefront HTML and a

@@ -36,7 +36,7 @@ export async function isSafeUrl(url: string): Promise<boolean> {
 const noRedirectAgent = new Agent();
 
 /** How many hops a redirect chain may take before we give up. */
-const MAX_REDIRECTS = 5;
+export const MAX_REDIRECTS = 5;
 /** Statuses that carry a Location a client is expected to follow. */
 const REDIRECT_STATUS = new Set([301, 302, 303, 307, 308]);
 
