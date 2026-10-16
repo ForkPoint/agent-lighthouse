@@ -1,7 +1,30 @@
 # Scan access fix plan
 
-Status: 2026-10-16. F7 is merged (PR #140, `c97cf1d1`). F1 to F6 and F8 are
-proposed; no code is changed for them yet.
+Status: 2026-10-16.
+
+| Fix | State                  | Where                                                                       |
+| :-- | :--------------------- | :-------------------------------------------------------------------------- |
+| F1  | Harness part in review | PR #143 (`www` then `http` fallback in the corpus runners)                  |
+| F2  | In review              | PR #144                                                                     |
+| F3  | In review              | PR #144                                                                     |
+| F4  | In review              | PR #143 (both corpus runners, nightly job included)                         |
+| F5  | In review              | Request log in PR #143; RC13 cause found and fixed in PR #144               |
+| F6  | In review              | Location and `Accept-Language` in PR #143; redirect-loop wording in PR #144 |
+| F7  | Merged                 | PR #140 (`c97cf1d1`)                                                        |
+| F8  | In review              | PR #144                                                                     |
+
+Decisions taken while implementing:
+
+- F1 stays out of the scanner. The CLI accepts only absolute URLs (`isValidUrl`)
+  and `normalizeUrl` has no caller, so a bare domain never reaches the scan; a
+  URL the user typed is scanned as typed, as a browser would load it. The
+  corpus runners own the fallback, because the corpus lists bare domains. No
+  `www` hint in the core message: it would need a request to another host.
+- F5 found RC13's cause. Two corpus sites sit behind the same AWS-hosted apex
+  redirector. Scanned at the same time, their root-file bursts pass its
+  per-IP limit and it answers an empty HTTP 428 to every request, the homepage
+  included. Scanned alone, they pass. An empty 428 on the homepage is now a
+  throttle with one retry, like 429.
 
 ## Source
 
