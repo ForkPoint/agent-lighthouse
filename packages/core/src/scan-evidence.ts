@@ -126,6 +126,31 @@ function reachedTheRequestedSite(
   };
 }
 
+const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
+
+/**
+ * The fetcher's hop limit (`MAX_REDIRECTS` in `fetcher.ts`), repeated here so
+ * this module does not import the network layer, which tests replace. A test
+ * pins the two together.
+ */
+export const FETCHER_REDIRECT_LIMIT = 5;
+
+/**
+ * A fetch error fit for one line of a report. OpenSSL errors arrive as a
+ * multi-line dump with library paths; the first line names the failure.
+ */
+function errorSummary(error: string): string {
+  const first = error.split(/\r?\n/)[0]!.trim();
+  // "802167ED01000000:error:0A000410:SSL routines:ssl3_read_bytes:<reason>:<file>:<line>"
+  const openssl = /^[0-9A-F]+:error:[0-9A-F]+:SSL routines:[^:]*:([^:]+)/i.exec(
+    first,
+  );
+  return (openssl ? `TLS error, ${openssl[1]!.trim()}` : first).replace(
+    /\.$/,
+    "",
+  );
+}
+
 function originReachable(
   requestedUrl: string,
   result: FetchResult,
@@ -133,7 +158,23 @@ function originReachable(
   if (result.error) {
     return {
       met: false,
-      reason: `The homepage could not be fetched: ${result.error}.`,
+      reason: `The homepage could not be fetched: ${errorSummary(result.error)}.`,
+    };
+  }
+  if (
+    REDIRECT_STATUSES.has(result.status) &&
+    (result.redirectChain?.length ?? 0) >= FETCHER_REDIRECT_LIMIT
+  ) {
+    // The fetcher stops after its hop limit and returns the last redirect.
+    const chain = result.redirectChain!;
+    // A loop visits some URL twice along the chain.
+    const path = [chain[0]!.from, ...chain.map((hop) => hop.to)];
+    const loops = new Set(path).size < path.length;
+    return {
+      met: false,
+      reason: loops
+        ? `The homepage redirects in a loop (HTTP ${result.status} after ${chain.length} redirects).`
+        : `The homepage answered HTTP ${result.status} after ${chain.length} redirects, the most the scan follows.`,
     };
   }
   if (result.status < 200 || result.status > 299) {
@@ -172,10 +213,10 @@ function unblockedFetches(
         }
       : { met: false, reason: `${waf.name} refused the scan: ${waf.reason}.` };
   }
-  if (homepageResult.status === 429) {
+  if (homepageResult.status === 429 || homepageResult.status === 428) {
     return {
       met: false,
-      reason: "The homepage answered HTTP 429: the scan was throttled.",
+      reason: `The homepage answered HTTP ${homepageResult.status}: the scan was throttled.`,
     };
   }
   return { met: true };

@@ -135,7 +135,11 @@ describe("detectWafProtection", () => {
 
   describe("Akamai", () => {
     it("detects a 403 access-denied page", () => {
-      const waf = onHomepage({ status: 403, body: "Access Denied" });
+      const waf = onHomepage({
+        status: 403,
+        headers: { server: "AkamaiGHost" },
+        body: "Access Denied",
+      });
       expect(waf).toMatchObject({ provider: "akamai", isBlocked: true });
       expect(waf?.reason).toContain("403");
     });
@@ -187,14 +191,88 @@ describe("detectWafProtection", () => {
   });
 
   describe("root files", () => {
-    it("detects a wall on a root file when the homepage looks clean", () => {
+    // The verdict is about the pages the scan read. One walled or missing
+    // root file beside a homepage that answered and was read is not a wall.
+    it("ignores a walled root file when the homepage was read", () => {
       const waf = detectWafProtection(
         URL,
         result({ body: "<html>Shop</html>" }),
-        { "/robots.txt": result({ headers: { "x-datadome": "protected" } }) },
+        {
+          "/robots.txt": result({
+            status: 403,
+            headers: { "x-datadome": "protected" },
+          }),
+        },
         3,
       );
+      expect(waf).toBeNull();
+    });
+
+    it("reads root files to explain a homepage that failed", () => {
+      const waf = detectWafProtection(
+        URL,
+        result({ status: 0, error: "read ECONNRESET" }),
+        {
+          "/robots.txt": result({
+            status: 403,
+            headers: { "x-datadome": "protected" },
+          }),
+        },
+        0,
+      );
       expect(waf?.provider).toBe("datadome");
+    });
+
+    it("ignores S3 AccessDenied documents for missing well-known files", () => {
+      const denied = result({
+        status: 403,
+        headers: { server: "AmazonS3" },
+        body: '<?xml version="1.0"?><Error><Code>AccessDenied</Code><Message>Access Denied</Message></Error>',
+      });
+      const waf = detectWafProtection(
+        URL,
+        result({ body: "<html>Shop</html>" }),
+        {
+          "/.well-known/api-catalog": denied,
+          "/.well-known/security.txt": denied,
+        },
+        3,
+      );
+      expect(waf).toBeNull();
+    });
+
+    it("ignores a Cloudflare path rule on one root file", () => {
+      const waf = detectWafProtection(
+        URL,
+        result({
+          headers: { server: "cloudflare" },
+          body: "<html>Shop</html>",
+        }),
+        {
+          "/sitemap.xml": result({
+            status: 403,
+            headers: { server: "cloudflare", "cf-ray": "abc" },
+            body: "<title>Attention Required! | Cloudflare</title>",
+          }),
+        },
+        3,
+      );
+      expect(waf).toBeNull();
+    });
+
+    it("ignores an Imperva path named inside robots.txt", () => {
+      const waf = detectWafProtection(
+        URL,
+        result({ body: "<html>Shop</html>" }),
+        {
+          "/robots.txt": result({
+            contentType: "text/plain",
+            body: "User-agent: *\nDisallow: /_Incapsula_Resource\n",
+          }),
+        },
+        3,
+      );
+      expect(waf).toBeNull();
     });
 
     it("returns null when neither the homepage nor a root file is walled", () => {
@@ -231,14 +309,43 @@ describe("detectWafProtection", () => {
       }
     });
 
-    it("reports a 429 on a root file, not only on the homepage", () => {
+    it("reports a 429 on a root file when the homepage failed", () => {
       const waf = detectWafProtection(
         URL,
-        result({ body: "<html>Shop</html>" }),
+        result({ status: 404 }),
         { "/robots.txt": result({ status: 429 }) },
-        3,
+        0,
       );
       expect(waf?.isRateLimit).toBe(true);
+    });
+
+    it("names the challenge, not a root-file throttle, when the homepage is walled", () => {
+      const waf = detectWafProtection(
+        URL,
+        result({
+          status: 403,
+          headers: { server: "cloudflare", "cf-mitigated": "challenge" },
+        }),
+        { "/llms.txt": result({ status: 429 }) },
+        0,
+      );
+      expect(waf).toMatchObject({ provider: "cloudflare" });
+      expect(waf?.isRateLimit).toBeUndefined();
+    });
+
+    it("reports an empty 428 on the homepage as a burst limit", () => {
+      expect(onHomepage({ status: 428 }, 0)).toMatchObject({
+        provider: "rate-limited",
+        isRateLimit: true,
+        statusCode: 428,
+        name: "Rate limit (HTTP 428)",
+      });
+    });
+
+    it("does not read a 428 with a body as a throttle", () => {
+      expect(
+        onHomepage({ status: 428, body: "Precondition required" }, 0),
+      ).toBeNull();
     });
 
     it("tells the operator to re-run rather than to change their firewall", () => {
@@ -256,6 +363,140 @@ describe("detectWafProtection", () => {
     const waf = onHomepage({ headers: { "cf-mitigated": "challenge" } });
     expect(waf?.name).toBeTruthy();
     expect(waf?.reason).toBeTruthy();
+  });
+
+  describe("vendor markers on readable pages", () => {
+    const READABLE = `<html><head><title>Shop</title></head><body><main><h1>Kitchen</h1><p>${"Copper pans and kettles for every kitchen. ".repeat(12)}</p></main></body></html>`;
+
+    it("does not read the DataDome tag on a readable 200 as a wall", () => {
+      expect(
+        onHomepage({
+          headers: { "x-datadome": "protected" },
+          body: READABLE.replace(
+            "</head>",
+            '<script src="https://js.datadome.co/tags.js"></script></head>',
+          ),
+        }),
+      ).toBeNull();
+    });
+
+    it("detects DataDome on a refusal or its captcha page", () => {
+      expect(
+        onHomepage({ status: 403, headers: { "x-datadome": "protected" } })
+          ?.provider,
+      ).toBe("datadome");
+      expect(
+        onHomepage({
+          body: "<script>var dd={'host':'geo.captcha-delivery.com'}</script>",
+        })?.provider,
+      ).toBe("datadome");
+    });
+
+    it("does not read the Imperva script on a readable 200 as a wall", () => {
+      expect(
+        onHomepage({
+          body: READABLE.replace(
+            "</head>",
+            '<script src="/_Incapsula_Resource?SWJIYLWA=abc"></script></head>',
+          ),
+        }),
+      ).toBeNull();
+    });
+
+    it("detects the Imperva interstitial", () => {
+      expect(
+        onHomepage({
+          body: '<html><body><iframe src="/_Incapsula_Resource?CWUDNSAI=1"></iframe></body></html>',
+        })?.provider,
+      ).toBe("imperva");
+    });
+
+    it("names PerimeterX when its challenge is served through Cloudflare", () => {
+      expect(
+        onHomepage(
+          {
+            status: 403,
+            headers: { server: "cloudflare", "cf-ray": "abc" },
+            body: '<div id="px-captcha"></div>',
+          },
+          0,
+        )?.provider,
+      ).toBe("perimeterx");
+    });
+  });
+
+  describe("Akamai block page served with HTTP 200", () => {
+    const geoBlock = {
+      status: 200,
+      headers: { server: "AkamaiGHost", "akamai-request-bc": "[a=1]" },
+      body: "<html><head><title>Access Denied</title></head><body><h1>Access Denied</h1><p>This site is not accessible from your current location.</p></body></html>",
+    };
+
+    it("detects it and names the location refusal", () => {
+      const waf = onHomepage(geoBlock);
+      expect(waf).toMatchObject({
+        isBlocked: true,
+        provider: "akamai",
+        statusCode: 200,
+      });
+      expect(waf?.reason).toContain("location");
+    });
+
+    it("detects it when a logo description and contact line add text", () => {
+      const waf = onHomepage({
+        ...geoBlock,
+        body: `<html><head><title>Access Denied</title></head><body><svg><title>Store logo</title><desc>Dark square with the initials of the store inside. The bottom left corner has four green dots.</desc></svg><h1>Access Denied</h1><p>This site is not accessible from your current location. If you believe this is an error or need immediate assistance, please contact us.</p></body></html>`,
+      });
+      expect(waf?.provider).toBe("akamai");
+    });
+
+    it("does not flag a readable Akamai page that mentions access denied", () => {
+      expect(
+        onHomepage({
+          status: 200,
+          headers: { server: "AkamaiGHost" },
+          body: `<html><head><title>Help</title></head><body><p>${"If you see access denied, sign in again and retry. ".repeat(10)}</p></body></html>`,
+        }),
+      ).toBeNull();
+    });
+
+    it("does not name Akamai for a 403 access-denied page without an Akamai header", () => {
+      const waf = onHomepage(
+        {
+          status: 403,
+          headers: { server: "AmazonS3" },
+          body: "<Error><Code>AccessDenied</Code><Message>Access Denied</Message></Error>",
+        },
+        0,
+      );
+      expect(waf?.provider).toBe("generic-waf");
+    });
+  });
+
+  describe("connection failures that are not a wall", () => {
+    it.each([
+      "certificate has expired",
+      "Hostname/IP does not match certificate's altnames: Host: shop.test",
+      "802167ED01000000:error:0A000410:SSL routines:ssl3_read_bytes:ssl/tls alert handshake failure",
+      "connect ECONNREFUSED 192.0.2.1:443",
+      "getaddrinfo ENOTFOUND shop.test",
+      "Connect Timeout Error (attempted address: shop.test:443, timeout: 10000ms)",
+    ])("returns null for %p", (error) => {
+      expect(onHomepage({ status: 0, error }, 0)).toBeNull();
+    });
+
+    it("still reports a reset after connect as a dropped connection", () => {
+      expect(
+        onHomepage(
+          {
+            status: 0,
+            error:
+              "Stream closed with error code NGHTTP2_INTERNAL_ERROR (ERR_HTTP2_STREAM_ERROR)",
+          },
+          0,
+        )?.provider,
+      ).toBe("connection-drop");
+    });
   });
 
   describe("corpus edge cases & false positive prevention", () => {
