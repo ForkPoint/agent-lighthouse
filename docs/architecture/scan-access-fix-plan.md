@@ -12,10 +12,10 @@ Status: 2026-10-16.
 | F6  | Merged                | Location and `Accept-Language` in PR #143; redirect-loop wording in PR #144 |
 | F7  | Merged                | PR #140 (`c97cf1d1`)                                                        |
 | F8  | Merged                | PR #144 (`8eb98ae0`)                                                        |
-| F9  | Proposed              | `packages/core/src/fetcher.ts` (cookies across redirect hops)               |
-| F10 | Proposed              | `hydration-payload-share.ts` (linear string scan)                           |
-| F11 | Proposed              | `invisible-instruction-scan.ts` (memoise the hidden verdict)                |
-| F12 | Proposed              | `waf-detector.ts` (challenge redirect targets)                              |
+| F9  | In PR #146            | `packages/core/src/fetcher.ts` (cookies across redirect hops)               |
+| F10 | In PR #146            | `hydration-payload-share.ts` (linear string scan)                           |
+| F11 | In PR #146            | `invisible-instruction-scan.ts` (memoise the hidden verdict)                |
+| F12 | In PR #146            | `waf-detector.ts` (challenge redirect targets)                              |
 
 Decisions taken while implementing:
 
