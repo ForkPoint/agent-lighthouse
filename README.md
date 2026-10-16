@@ -135,7 +135,6 @@ jobs:
       - uses: ForkPoint/agent-lighthouse@main
         with:
           url: https://staging.yourstore.com
-          preset: ecommerce
           min-score: "85"
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```

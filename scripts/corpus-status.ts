@@ -14,7 +14,7 @@ import {
  *   pnpm corpus:status report
  *
  * `import` accepts either runner's summary: both carry `outcomes[]` with a
- * `domain`, an optional `skipped`, the report's evidence map and its
+ * `domain`, the report's evidence map and its
  * `unscoredReason`. The date defaults to today, UTC; pass one to import an
  * older artifact under the day it ran.
  *

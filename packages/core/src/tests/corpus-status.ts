@@ -10,7 +10,6 @@ import { EvidenceKey } from "#core/types";
 export const CorpusState = {
   Ok: "ok",
   Unscored: "unscored",
-  Blocked: "blocked",
   Dead: "dead",
 } as const;
 
@@ -18,7 +17,7 @@ export type CorpusState = (typeof CorpusState)[keyof typeof CorpusState];
 
 export interface CorpusObservation {
   state: CorpusState;
-  /** The scan's own `unscoredReason`, or the robots skip reason. */
+  /** The scan's own `unscoredReason`. */
   reason?: string;
   /** `YYYY-MM-DD` of the latest import that mentioned the domain. */
   seenAt: string;
@@ -34,7 +33,6 @@ export interface CorpusStatus {
 /** The fields both runner summaries share in `outcomes[]`. */
 export interface RunnerOutcome {
   domain: string;
-  skipped?: string;
   score?: number | null;
   evidence?: Partial<Record<string, boolean>>;
   unscoredReason?: string;
@@ -55,8 +53,6 @@ export function stateOf(outcome: RunnerOutcome): {
   state: CorpusState;
   reason?: string;
 } {
-  if (outcome.skipped)
-    return { state: CorpusState.Blocked, reason: outcome.skipped };
   if (typeof outcome.score === "number") return { state: CorpusState.Ok };
   const reachable = outcome.evidence?.[EvidenceKey.OriginReachable];
   const unblocked = outcome.evidence?.[EvidenceKey.UnblockedFetches];
@@ -117,14 +113,12 @@ export function mergeStatus(
 /** The domains a runner leaves out unless asked to include them. */
 export function excludedDomains(
   status: CorpusStatus | undefined,
-  include: { dead?: boolean; blocked?: boolean },
+  include: { dead?: boolean },
 ): Set<string> {
   const out = new Set<string>();
   if (!status) return out;
   for (const [domain, observation] of Object.entries(status.domains)) {
     if (observation.state === CorpusState.Dead && !include.dead)
-      out.add(domain);
-    if (observation.state === CorpusState.Blocked && !include.blocked)
       out.add(domain);
   }
   return out;
@@ -132,7 +126,6 @@ export function excludedDomains(
 
 const STATE_ORDER: readonly CorpusState[] = [
   CorpusState.Dead,
-  CorpusState.Blocked,
   CorpusState.Unscored,
   CorpusState.Ok,
 ];

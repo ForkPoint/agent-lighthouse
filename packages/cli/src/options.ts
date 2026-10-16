@@ -6,7 +6,6 @@ import {
   PageScopeOptionsSchema,
   type BrowserSnapshots,
   type PageOverride,
-  PresetName,
   type PageType,
   CheckStatus,
 } from "@forkpoint/agent-lighthouse-core";
@@ -45,7 +44,6 @@ export interface FileConfig {
   url?: string;
   pageType?: PageType;
   pages?: PageOverride[] | null;
-  preset?: string;
   minScore?: number;
   outputDir?: string;
   output?: string[];
@@ -59,7 +57,6 @@ export interface CliOptions {
   invalidSnapshots?: string;
   url: string | undefined;
   configPath: string | undefined;
-  presetName: PresetName;
   minScore: number;
   outputDir: string;
   outputFormats: string[];
@@ -89,8 +86,8 @@ export interface CliOptions {
  * Read one flag's value, in either `--flag=value` or `--flag value` form.
  *
  * A following token that starts with `-` is treated as the next flag rather
- * than as this one's value, so `--preset --silent` reports no preset instead of
- * silently scanning with a preset named "--silent".
+ * than as this one's value, so `--output-dir --silent` reports no directory
+ * instead of writing reports to a directory named "--silent".
  */
 export function getArgValue(
   args: string[],
@@ -240,9 +237,6 @@ export function parseCliOptions(
   return {
     url: resolveUrl(positionalUrl, fileConfig),
     configPath: getArgValue(args, "-c", "--config"),
-    presetName: (getArgValue(args, "-p", "--preset") ||
-      fileConfig.preset ||
-      PresetName.Full) as PresetName,
     minScore,
     outputDir:
       getArgValue(args, "-d", "--output-dir") ||
@@ -397,9 +391,9 @@ export interface FailedAssertion {
 /**
  * The first assertion the scan does not meet, or undefined if it meets all.
  *
- * A threshold naming a category that did not run is not a failure: `--preset`
- * and `--categories` both narrow the scan, and failing CI over a category the
- * operator deliberately excluded would make the two flags unusable together.
+ * A threshold naming a category that did not run is not a failure:
+ * `--categories` narrows the scan, and failing CI over a category the operator
+ * deliberately excluded would make the two flags unusable together.
  *
  * A category that ran but was not assessed does fail, the way `--min-score`
  * fails an unscored scan: the assertion asks for proof the bar is cleared, and

@@ -64,7 +64,6 @@ Short and long spellings are interchangeable (`-o json` and `--output json` are 
 | Flag                         | Value               | Default              | What it does                                                           |
 | :--------------------------- | :------------------ | :------------------- | :--------------------------------------------------------------------- |
 | `-h`, `--help`               | —                   | —                    | Print usage and exit. Recognised only as the first argument.           |
-| `-p`, `--preset <name>`      | preset name         | `full`               | Names the audit profile shown in the report header.                    |
 | `-c`, `--config <path>`      | file path           | auto-discovered      | Load configuration from an explicit file.                              |
 | `--categories <list>`        | comma-separated ids | all eight            | Restrict the scan to these categories.                                 |
 | `--experimental`             | —                   | off                  | Also run experimental-tier audits (reported, never scored).            |
@@ -86,16 +85,6 @@ Prints the usage block and exits.
 Unlike every other entry in this table, help is not an option on a scan: it is read only when it is the **first** argument. `agent-lighthouse --help` and `agent-lighthouse -h` print usage; `agent-lighthouse https://example.com --help` runs a full scan of that URL and never prints anything about usage. Running the command with no arguments at all prints the same usage block.
 
 Note also that the exit code is **1**, not 0 — the same code as a missing URL, since both mean "nothing was scanned". Do not use `agent-lighthouse --help` as a health check in a script that treats a non-zero exit as a failure.
-
-### `-p`, `--preset <name>`
-
-Accepted names: `ecommerce`, `saas`, `content`, `quick`, `full`. Default `full`. An unrecognised name silently falls back to `full`.
-
-```bash
-agent-lighthouse https://yourstore.com --preset ecommerce
-```
-
-The preset name is recorded and printed in the run header. **In the current release it does not change which audits run or how they are scored** — v2 replaced hand-tuned category weights with evidence mass (see [scoring.md](./scoring.md#category-scores-to-the-overall-score)), and the preset's category filter is not applied. To actually narrow a scan, use `--categories`.
 
 ### `-c`, `--config <path>`
 

@@ -271,7 +271,7 @@ I am working on Agent Lighthouse, an open-source scanner for storefronts that wa
 It runs 215 checks across llms.txt, AI crawler access, Product/Offer/Review schema, OpenAPI/WebMCP action surfaces, semantic HTML, accessible forms/buttons, and technical readiness.
 
 CLI:
-npx @forkpoint/agent-lighthouse https://store.example.com --preset ecommerce --view
+npx @forkpoint/agent-lighthouse https://store.example.com --view
 
 The output is a standalone HTML report plus JSON/Markdown for CI or client delivery.
 

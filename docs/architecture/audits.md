@@ -231,10 +231,10 @@ as input; stored reports that carry them read as `general` (`LEGACY_PAGE_TYPES`,
 The five page types are `homepage`, `category`, `product`, `article` and
 `general`. `article` means an editorial page: a post, news story or guide that
 carries author and date obligations. `general` means every other page: about,
-FAQ, help, contact, policy and landing pages. Three other names use the word
-"content" and are not page types: the `content` scan preset, the `content`
-readiness vital, and the `content-extraction` audit category. Write "article
-page" or "general page" in audit copy and dossiers, never "content page".
+FAQ, help, contact, policy and landing pages. Two other names use the word
+"content" and are not page types: the `content` readiness vital and the
+`content-extraction` audit category. Write "article page" or "general page" in
+audit copy and dossiers, never "content page".
 
 The runner canonicalizes `applicablePageTypes` on a metadata copy. It accepts the
 legacy `pageTypes` alias. If both aliases occur, their sets must match, including

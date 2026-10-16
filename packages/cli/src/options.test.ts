@@ -23,41 +23,37 @@ import {
 
 describe("getArgValue", () => {
   it("reads --flag=value", () => {
-    expect(getArgValue(["--preset=ecommerce"], "-p", "--preset")).toBe(
-      "ecommerce",
-    );
+    expect(getArgValue(["--output-dir=out"], "-d", "--output-dir")).toBe("out");
   });
 
-  it("reads -p=value", () => {
-    expect(getArgValue(["-p=ecommerce"], "-p", "--preset")).toBe("ecommerce");
+  it("reads -d=value", () => {
+    expect(getArgValue(["-d=out"], "-d", "--output-dir")).toBe("out");
   });
 
   it("reads --flag value", () => {
-    expect(getArgValue(["--preset", "ecommerce"], "-p", "--preset")).toBe(
-      "ecommerce",
+    expect(getArgValue(["--output-dir", "out"], "-d", "--output-dir")).toBe(
+      "out",
     );
   });
 
-  it("reads -p value", () => {
-    expect(getArgValue(["-p", "ecommerce"], "-p", "--preset")).toBe(
-      "ecommerce",
-    );
+  it("reads -d value", () => {
+    expect(getArgValue(["-d", "out"], "-d", "--output-dir")).toBe("out");
   });
 
-  // Without this a `--preset --silent` typo scans with a preset named
-  // "--silent" instead of reporting that no preset was given.
+  // Without this an `--output-dir --silent` typo writes reports to a directory
+  // named "--silent" instead of reporting that no directory was given.
   it("does not take the next flag as a value", () => {
     expect(
-      getArgValue(["--preset", "--silent"], "-p", "--preset"),
+      getArgValue(["--output-dir", "--silent"], "-d", "--output-dir"),
     ).toBeUndefined();
   });
 
   it("returns undefined for a flag that is absent", () => {
-    expect(getArgValue(["--silent"], "-p", "--preset")).toBeUndefined();
+    expect(getArgValue(["--silent"], "-d", "--output-dir")).toBeUndefined();
   });
 
   it("returns undefined for a trailing flag with no value", () => {
-    expect(getArgValue(["--preset"], "-p", "--preset")).toBeUndefined();
+    expect(getArgValue(["--output-dir"], "-d", "--output-dir")).toBeUndefined();
   });
 
   it("supports a long-only flag", () => {
@@ -65,9 +61,13 @@ describe("getArgValue", () => {
   });
 
   it("prefers the = form when both appear", () => {
-    expect(getArgValue(["--preset=a", "--preset", "b"], "-p", "--preset")).toBe(
-      "a",
-    );
+    expect(
+      getArgValue(
+        ["--output-dir=a", "--output-dir", "b"],
+        "-d",
+        "--output-dir",
+      ),
+    ).toBe("a");
   });
 });
 
@@ -128,7 +128,6 @@ describe("parseCliOptions", () => {
     const o = parseCliOptions([], "https://example.com");
     expect(o).toMatchObject({
       url: "https://example.com",
-      presetName: "full",
       minScore: 0,
       outputDir: "./reports",
       outputFormats: ["terminal", "html", "json"],
@@ -146,14 +145,12 @@ describe("parseCliOptions", () => {
   it("takes values from the config file when no flag overrides them", () => {
     const o = parseCliOptions([], undefined, {
       url: "https://cfg.test",
-      preset: "ecommerce",
       minScore: 70,
       outputDir: "./out",
       output: ["json"],
     });
     expect(o).toMatchObject({
       url: "https://cfg.test",
-      presetName: "ecommerce",
       minScore: 70,
       outputDir: "./out",
       outputFormats: ["json"],
@@ -162,17 +159,15 @@ describe("parseCliOptions", () => {
 
   it("lets a flag beat the config file", () => {
     const o = parseCliOptions(
-      ["--preset=full", "--min-score=90", "-d", "./flag-out", "-o", "html"],
+      ["--min-score=90", "-d", "./flag-out", "-o", "html"],
       undefined,
       {
-        preset: "ecommerce",
         minScore: 70,
         outputDir: "./cfg-out",
         output: ["json"],
       },
     );
     expect(o).toMatchObject({
-      presetName: "full",
       minScore: 90,
       outputDir: "./flag-out",
       outputFormats: ["html"],
@@ -394,8 +389,8 @@ describe("failedAssertion", () => {
     );
   });
 
-  // --preset and --categories both narrow the scan; failing CI over a category
-  // the operator excluded on purpose would make the flags unusable together.
+  // --categories narrows the scan; failing CI over a category the operator
+  // excluded on purpose would make the two flags unusable together.
   it("ignores a threshold for a category that did not run", () => {
     expect(
       failedAssertion(categories, { "agentic-commerce": 90 }),

@@ -19,7 +19,6 @@ All three are parsed as **JSON**. An auto-discovered file that fails to parse is
 ```json
 {
   "url": "https://staging.yourstore.com",
-  "preset": "ecommerce",
   "minScore": 80,
   "assertCategories": {
     "structured-data": 90,
@@ -36,18 +35,17 @@ A bare `agent-lighthouse` with no arguments at all does **not**: it prints the u
 
 ### Keys
 
-| Key                | Type                                                      | Default                        | Effect                                                                                                       |
-| :----------------- | :-------------------------------------------------------- | :----------------------------- | :----------------------------------------------------------------------------------------------------------- |
-| `url`              | `string`                                                  | none                           | Target URL, used when the invocation gives none — see [cli.md](./cli.md#invocation) for which forms read it. |
-| `preset`           | `"ecommerce" \| "saas" \| "content" \| "quick" \| "full"` | `"full"`                       | Preset name shown in the run header.                                                                         |
-| `minScore`         | `number` (0–100)                                          | `0`                            | Overall-score budget; the run exits 1 below it.                                                              |
-| `assertCategories` | `Record<string, number>`                                  | `{}`                           | Per-category budgets, keyed by category id.                                                                  |
-| `output`           | `Array<"terminal" \| "html" \| "json" \| "md">`           | `["terminal", "html", "json"]` | Report formats to produce.                                                                                   |
-| `outputDir`        | `string`                                                  | `"./reports"`                  | Where report files are written.                                                                              |
-| `timeout`          | `number` (seconds)                                        | `180`                          | Wall-clock budget for the scan; `0` disables it. `--timeout` overrides it.                                   |
-| `pageType`         | `PageType`                                                | none                           | Explicit purpose of the target URL. `--page-type` overrides it.                                              |
-| `pages`            | `PageOverride[] \| null`                                  | none                           | Explicit URL/type pairs, read as pages next to the target URL.                                               |
-| `categories`       | `string[]`                                                | —                              | **Not read by the CLI.** Use the `--categories` flag instead.                                                |
+| Key                | Type                                            | Default                        | Effect                                                                                                       |
+| :----------------- | :---------------------------------------------- | :----------------------------- | :----------------------------------------------------------------------------------------------------------- |
+| `url`              | `string`                                        | none                           | Target URL, used when the invocation gives none — see [cli.md](./cli.md#invocation) for which forms read it. |
+| `minScore`         | `number` (0–100)                                | `0`                            | Overall-score budget; the run exits 1 below it.                                                              |
+| `assertCategories` | `Record<string, number>`                        | `{}`                           | Per-category budgets, keyed by category id.                                                                  |
+| `output`           | `Array<"terminal" \| "html" \| "json" \| "md">` | `["terminal", "html", "json"]` | Report formats to produce.                                                                                   |
+| `outputDir`        | `string`                                        | `"./reports"`                  | Where report files are written.                                                                              |
+| `timeout`          | `number` (seconds)                              | `180`                          | Wall-clock budget for the scan; `0` disables it. `--timeout` overrides it.                                   |
+| `pageType`         | `PageType`                                      | none                           | Explicit purpose of the target URL. `--page-type` overrides it.                                              |
+| `pages`            | `PageOverride[] \| null`                        | none                           | Explicit URL/type pairs, read as pages next to the target URL.                                               |
+| `categories`       | `string[]`                                      | —                              | **Not read by the CLI.** Use the `--categories` flag instead.                                                |
 
 The config file accepts `categories`, but it does not change the scan. Use the `--categories` command-line option to limit categories. A scan reads one target URL; see [Fixed limits](#fixed-limits).
 

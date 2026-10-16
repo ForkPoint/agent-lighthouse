@@ -25,7 +25,6 @@ The CLI generates terminal, HTML, JSON, and Markdown reports for 215 audits acro
 
 ```bash
 npx @forkpoint/agent-lighthouse https://staging.yourstore.com \
-  --preset ecommerce \
   --min-score 85 \
   --output terminal,html,json,md \
   --output-dir ./reports

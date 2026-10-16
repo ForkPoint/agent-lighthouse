@@ -9,10 +9,6 @@ inputs:
   url:
     description: "Target website or storefront URL to audit"
     required: true
-  preset:
-    description: "Audit preset profile (ecommerce, saas, content, quick, full)"
-    required: false
-    default: "full"
   min-score:
     description: "Minimum overall score (0-100) required to pass CI"
     required: false
@@ -40,7 +36,7 @@ runs:
     - name: Run Agent Lighthouse Audit
       shell: bash
       run: |
-        CMD="npx -y @forkpoint/agent-lighthouse ${{ inputs.url }} --preset=${{ inputs.preset }} --output=terminal,html,json,md --output-dir=${{ inputs.output-dir }}"
+        CMD="npx -y @forkpoint/agent-lighthouse ${{ inputs.url }} --output=terminal,html,json,md --output-dir=${{ inputs.output-dir }}"
 
         if [ "${{ inputs.min-score }}" != "0" ]; then
           CMD="$CMD --min-score=${{ inputs.min-score }}"
