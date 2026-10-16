@@ -1,437 +1,209 @@
 # Scan access fix plan
 
-Status: 2026-10-16.
+Status: 2026-10-16. F1-F12 are merged and confirmed on the full corpus.
+Open items are at the end.
 
-| Fix | State                 | Where                                                                              |
-| :-- | :-------------------- | :--------------------------------------------------------------------------------- |
-| F1  | Merged (harness part) | PR #143 (`1b38a27a`) (`www` then `http` fallback in the corpus runners)            |
-| F2  | Merged                | PR #144 (`8eb98ae0`)                                                               |
-| F3  | Merged                | PR #144 (`8eb98ae0`)                                                               |
-| F4  | Merged                | PR #143 (both corpus runners, nightly job included)                                |
-| F5  | Merged                | Request log in PR #143; RC13 cause found and fixed in PR #144                      |
-| F6  | Merged                | Location and `Accept-Language` in PR #143; redirect-loop wording in PR #144        |
-| F7  | Merged                | PR #140 (`c97cf1d1`)                                                               |
-| F8  | Merged                | PR #144 (`8eb98ae0`)                                                               |
-| F9  | Merged                | PR #146 (`b355ab45`) `packages/core/src/fetcher.ts` (cookies across redirect hops) |
-| F10 | Merged                | PR #146 (`b355ab45`) `hydration-payload-share.ts` (linear string scan)             |
-| F11 | Merged                | PR #146 (`b355ab45`) `invisible-instruction-scan.ts` (memoise the hidden verdict)  |
-| F12 | Merged                | PR #146 (`b355ab45`) `waf-detector.ts` (challenge redirect targets)                |
+This plan records why corpus sites were skipped or left unscored, what was
+wrong in the scanner, and what changed. Site-level evidence stays outside the
+repository. This plan names no scanned site.
 
-Decisions taken while implementing:
+## Corpus runs
 
-- F1 stays out of the scanner. The CLI accepts only absolute URLs (`isValidUrl`)
-  and `normalizeUrl` has no caller, so a bare domain never reaches the scan; a
-  URL the user typed is scanned as typed, as a browser would load it. The
-  corpus runners own the fallback, because the corpus lists bare domains. No
-  `www` hint in the core message: it would need a request to another host.
-- F5 found RC13's cause. Two corpus sites sit behind the same AWS-hosted apex
-  redirector. Scanned at the same time, their root-file bursts pass its
-  per-IP limit and it answers an empty HTTP 428 to every request, the homepage
-  included. Scanned alone, they pass. An empty 428 on the homepage is now a
-  throttle with one retry, like 429.
+All runs use `packages/core/test-data/sites/sites.json` (684 sites) and the
+scan location BG.
 
-## Source
+| Run                | Code                | Sites | Scored | Notes                                                                          |
+| :----------------- | :------------------ | ----: | -----: | :----------------------------------------------------------------------------- |
+| First 200          | before the fixes    |   200 |    117 | 42 skipped by robots.txt, 41 unscored; 88 problem sites triaged by hand        |
+| Other 484          | before the fixes    |   484 |    273 | 95 skipped by robots.txt, 116 unscored; 211 problem sites classified by script |
+| Robots-skipped 137 | robots gate off     |   137 |     12 | 119 stop at a real homepage block                                              |
+| Full, request log  | `8eb98ae0` (F1-F8)  |   684 |    443 | 0 invariant violations, 53 origin fallbacks; 140,267 requests logged           |
+| Full, request log  | `b355ab45` (F1-F12) |   684 |    456 | 0 invariant violations, 46 origin fallbacks; 143,547 requests logged           |
 
-A live corpus run scanned 200 sites from `packages/core/test-data/sites/sites.json`.
-88 of them were skipped (45) or unscored (43). Each of the 88 was triaged by hand:
-the live robots.txt and homepage were re-fetched with the scanner user agent and a
-browser user agent, and the WAF detector was run on each response alone.
+"Scored" for the two early runs counts scanned sites with a score. Before F4,
+robots-skipped sites were not scanned at all.
 
-| Verdict        | Sites | Meaning                                              |
-| :------------- | ----: | :--------------------------------------------------- |
-| correct        |    55 | The site blocks, throttles or asks for a crawl delay |
-| scanner-bug    |     9 | A reachable site is reported unreachable             |
-| site-issue     |     8 | The site itself fails from the scan location         |
-| false-positive |     7 | The scanner reports a block that does not exist      |
-| inconclusive   |     9 | The failure did not reproduce later                  |
+### `b355ab45` against `8eb98ae0`
 
-Site-level evidence stays outside the repository. This plan names no scanned site.
-
-A second run on 2026-10-16 scanned the other 484 corpus sites (389 scanned,
-95 skipped by robots, 116 unscored, 0 invariant violations, average 74). Its
-211 problem sites were classified by script, and each fix below was then
-tested on the affected sites. See "Corpus confirmation" at the end.
-
-## Root causes
-
-| ID   | Sites | Kind           | Summary                                                                     |
-| :--- | ----: | :------------- | :-------------------------------------------------------------------------- |
-| RC1  |    31 | correct        | Bot wall blocks every client                                                |
-| RC2  |    16 | correct        | WAF blocks the scanner user agent; a browser user agent passes              |
-| RC6  |    11 | label bug      | Every status-0 failure is named "Bot Wall"                                  |
-| RC7  |    10 | scanner bug    | A bare domain is tried only as `https://<apex>/`                            |
-| RC3  |     7 | correct        | Crawl-delay in a group that covers the scanner                              |
-| RC5  |     7 | inconclusive   | Transient 403, timeout or budget overrun                                    |
-| RC10 |     5 | site issue     | Geo redirect from the scan location to a 404, loop or other site            |
-| RC8  |     4 | false positive | One root-file response marks the whole site blocked                         |
-| RC9  |     4 | label bug      | WAF provider named wrong                                                    |
-| RC4  |     2 | harness skip   | Harness skips a site when robots.txt limits only an AI token (see F4)       |
-| RC13 |     2 | inconclusive   | Homepage 428 or timeout only inside a full scan                             |
-| RC14 |     1 | scanner bug    | Gateway root page with a meta refresh or canonical is not followed (see F7) |
-| RC15 |     1 | false negative | Akamai block page served with HTTP 200 is scored as content (see F8)        |
-| RC16 |     3 | intermittent   | Bot wall that lets the scanner in on some runs and blocks it on others      |
-| RC11 |     1 | site issue     | Country-selector gateway homepage                                           |
-| RC12 |     1 | false positive | A DataDome script reference on a normal page read as a block                |
+- 20 sites moved to scored: 7 redirect loops or hop-limit chains (F9), 11
+  budget overruns and 1 homepage timeout (F10, F11), and 1 each of HTTP 500
+  and Akamai 403 that answered this time.
+- 7 sites moved to unscored:
+  - 5 are corrections. Their homepage redirects to `PX-Show` and answers 200
+    in both runs. The `8eb98ae0` run scored the PerimeterX challenge page.
+    F12 now names the wall.
+  - 2 are budget overruns. One site timed out on 34 of 116 requests. The
+    other is open item 2.
+- The longest window with no request activity is 14.2 s, against 66-92 s
+  before. No window is over 15 s.
+- 228 sites stay unscored: 202 named WAF walls or throttles, 12 below the
+  evidence-mass floor, 4 homepage timeouts, 3 budget overruns, 6 cross-site
+  redirects, 1 Akamai redirect loop at 20 hops, and HTTP 401, 404, 409 and
+  503 pages with no WAF evidence.
 
 ## Fixes
 
-Ordered by sites recovered, then by risk.
+| Fix | Root causes | PR                | Change                                                                                                   | Changeset |
+| :-- | :---------- | :---------------- | :------------------------------------------------------------------------------------------------------- | :-------- |
+| F1  | RC7         | #143 (`1b38a27a`) | Corpus runners try `https://<apex>/`, then `https://www.<apex>/`, then `http://<apex>/`                  | none      |
+| F2  | RC8, RC12   | #144 (`8eb98ae0`) | The WAF verdict reads the pages the scan read; root files count only when the homepage failed            | patch     |
+| F3  | RC6, RC9    | #144 (`8eb98ae0`) | Origin failures are no longer a bot wall; providers are named only on their own evidence                 | patch     |
+| F4  | RC3, RC4    | #143, #145        | Corpus runners never skip a site because of robots.txt                                                   | none      |
+| F5  | RC5, RC13   | #143, #144        | `--request-log` in the corpus runners; an empty HTTP 428 on the homepage is a throttle with one retry    | patch     |
+| F6  | RC10, RC11  | #143, #144        | Scan location and a fixed `Accept-Language` in corpus runs; redirect-loop wording in the unscored reason | patch     |
+| F7  | RC14        | #140 (`c97cf1d1`) | A gateway root with no readable text gets one hop to its same-origin meta refresh or canonical target    | patch     |
+| F8  | RC15        | #144 (`8eb98ae0`) | An Akamai 200 page titled "Access Denied" with under 1000 characters of text is a location block         | patch     |
+| F9  | RC17        | #146 (`b355ab45`) | The fetcher sends back cookies set along one redirect chain and follows up to 20 redirects               | patch     |
+| F10 | RC18        | #146 (`b355ab45`) | `hydration-payload-share` reads payload strings in one forward pass                                      | patch     |
+| F11 | RC18        | #146 (`b355ab45`) | `invisible-instruction-scan` judges each element's hiding once per page, with hiding rules only          | patch     |
+| F12 | RC19        | #146 (`b355ab45`) | A homepage chain that ends on `PX-Show` or `DDUser-Challenge` names PerimeterX or DataDome               | patch     |
 
-### F1. Try `www` and `http` when the apex fails (RC7, 32 sites)
+Related clean-ups: #142 removed the multi-page scan leftovers
+(`MAX_PAGES_PER_SCAN`, `maxPages`) and the six-page wording in the docs. #145
+removed presets and the robots-blocked corpus state. Both are major and land
+in 8.0.0.
 
-Cause: `packages/core/src/url-utils.ts:6` turns a bare domain into
-`https://<apex>/`. Nothing tries another origin. On these sites the apex refuses
-port 443, times out, or serves an expired or mismatched certificate. The `www`
-host, or `http://<apex>/`, answers 200 and redirects to a working origin.
+### What each fix does
 
-Change:
+**F1.** The fallback lives in `scripts/lib/live-scan.ts` and runs only when the
+first attempt got no HTTP status at all (refused port, TLS or certificate
+error, timeout). A 403 or 404 is an answer and never falls back. `www` comes
+before `http`: the `http` fallback alone recovered 5 of 10 test sites. The
+scanner itself does not fall back. The CLI accepts only absolute URLs, so a
+URL is scanned as typed, as a browser would load it.
 
-- Only for input without a scheme. An explicit `https://` URL is the user's
-  choice and is never rewritten.
-- When the homepage fetch of `https://<apex>/` ends with status 0 (connect
-  error, TLS or certificate error, timeout), try `https://www.<apex>/`, then
-  `http://<apex>/`. Follow redirects as usual. Stop at the first 2xx/3xx chain.
-- Do not fall back on any HTTP status. A 403 or 404 is an answer, not a
-  connection failure.
-- Record the origin that worked, and the failed attempt, in the scan evidence,
-  so the report says "the apex failed TLS; scanned `www`".
-- The fallback shares the scan budget. One connect timeout must not use the
-  whole 180 s budget: cap the first attempt.
+**F2.** In `packages/core/src/waf-detector.ts`, a DataDome or Imperva marker
+counts only with a refusal status or on a page without readable text.
+"Access denied" names Akamai only beside an Akamai header. Before this, a 403
+S3 `AccessDenied` document for one missing `/.well-known/` file, a Cloudflare
+rule on one sitemap, or the DataDome tag on an open page marked the whole
+site as walled.
 
-Tests: unit tests with a mocked fetcher for each failure kind (refused, TLS,
-timeout), for a 403 that must not fall back, and for explicit `https://` input.
+**F3.** DNS, refused-port, TLS, certificate and connect-timeout errors return
+no WAF verdict. The evidence gate reports "The homepage could not be fetched"
+with the error. An OpenSSL error is cut to one line ("TLS error, <reason>").
+A challenge is named before a root-file 429. The plan also proposed calling a
+timeout a bot wall only when it repeats after a successful connect; that part
+is not built (see open items).
 
-Changeset: patch. A scan that failed now succeeds; no contract changes.
+**F4.** `SkipReason`, `--ignore-robots`, `--include-blocked` and
+`CorpusState.Blocked` are gone. A WAF block still ends a scan, because it
+stops the fetch. `scripts/discover-brand-pages.mjs` keeps its robots handling:
+it crawls many pages per site to build the corpus.
 
-### F2. Judge the WAF verdict from pages, not root files (RC8 + RC12, 12 sites)
+**F5.** The request log reads undici diagnostics channels and writes one JSON
+line per request (method, URL, status, time, user agent). It found RC13: two
+corpus sites share an AWS-hosted apex redirector with a per-IP limit. Scanned
+at the same time, their root-file bursts pass the limit, and it answers an
+empty HTTP 428 to everything. It also found RC18.
 
-Cause: `packages/core/src/waf-detector.ts:37` adds every root-file response
-to the verdict input. One response is enough to mark the whole site blocked:
+**F6.** The scan location comes from the Cloudflare trace endpoint. The
+redirect-loop and redirect-limit wording applies only when the chain reached
+the fetcher's hop limit (`FETCHER_REDIRECT_LIMIT`, pinned to `MAX_REDIRECTS`).
 
-- `:157` reads any 403 with "access denied" as Akamai. An S3 bucket answers a
-  missing `/.well-known/*` file with 403 `AccessDenied` XML.
-- `:123` matches the Imperva marker `_incapsula_resource` inside a 200
-  robots.txt that lists that path.
-- `:84` matches the `datadome.co` script URL on a normal 200 HTML page that
-  only loads the DataDome tag.
-- A Cloudflare rule that blocks one path (a sitemap, `/agents.md`,
-  `/.well-known/*`) with 403 marks the whole site as behind a Cloudflare
-  challenge, although the homepage and pages answer 200.
+**F7.** `packages/core/src/gateway.ts`. Only one hop, and only to a
+same-origin target. The root keeps its own findings. Of the 684 corpus roots,
+1 is a gateway; its target is a client-rendered shell, so it stays unscored.
 
-Change:
+**F8.** The reason names the location, because the page says the site is not
+available from the visitor's country.
 
-- Decide the block from the homepage and the sampled pages. A root file can
-  add evidence only when the homepage itself failed.
-- A vendor marker counts only with a block status (403, 429, 503, or a
-  challenge redirect) or a challenge-shaped body (challenge form, captcha
-  frame, interstitial title). A marker in a 200 page with real content is not
-  a block.
-- Drop the bare `403 + "access denied"` Akamai rule unless an Akamai header
-  (`server: AkamaiGHost`, `akamai-grn`) is present.
+**F9.** `packages/core/src/redirect-cookies.ts`. The jar lives for one fetch,
+so no state passes between requests or scans, and the first request never
+carries a cookie. It handles host-only and Domain cookies, Path, Secure and
+removal; a Domain for another site or a bare suffix is refused. The hop limit
+went from 5 to 20, the number browsers follow.
 
-Tests: one fixture per false positive above, each with a clean 200 homepage,
-and the existing block fixtures must still detect.
+**F10.** The scan cuts a payload at 512 KiB. A cut inside a string literal
+made the old regex restart at every later quote. An open literal is now read
+up to the cut.
 
-Changeset: patch. A false finding is removed.
+**F11.** A rule with no hiding declaration cannot change a verdict, so no
+result moved; only the time did.
 
-### F3. Name failures by their cause (RC6 + RC9, 15 sites mislabelled)
+**F12.** The route is the evidence. The route pages answer 404 with the shop's
+error page, or 200 with a script-only challenge.
 
-Cause: `packages/core/src/waf-detector.ts:211-219` names every status-0
-homepage as "Bot Wall / Aggressive Connection Drop". That includes expired
-certificates, TLS errors and refused connections. Provider names are also
-guessed: the 429 rule at `:45` runs before a Cloudflare challenge is seen, and
-an Akamai name is given when no page was fetched.
+## Root causes
 
-Change:
+| ID   | Kind           | Sites | Summary                                                                      | Fixed by |
+| :--- | :------------- | ----: | :--------------------------------------------------------------------------- | :------- |
+| RC1  | correct        |    31 | Bot wall blocks every client                                                 | —        |
+| RC2  | correct        |    16 | WAF blocks the scanner user agent; a browser user agent passes               | —        |
+| RC3  | correct        |     7 | Crawl-delay in a robots group that covers the scanner                        | F4       |
+| RC4  | harness skip   |     2 | Robots.txt limits only an AI token, and the harness skipped the site         | F4       |
+| RC5  | inconclusive   |    14 | Budget overrun, timeout or transient 403                                     | F5, RC18 |
+| RC6  | label bug      |    11 | Every status-0 failure named "Bot Wall"                                      | F3       |
+| RC7  | scanner bug    |    32 | A bare domain tried only as `https://<apex>/`                                | F1       |
+| RC8  | false positive |    11 | One root-file response marks the whole site blocked                          | F2       |
+| RC9  | label bug      |     4 | WAF provider named wrong                                                     | F3       |
+| RC10 | site issue     |     6 | Geo redirect from the scan location to a 404, a loop or another site         | open     |
+| RC11 | site issue     |     1 | Country-selector gateway homepage                                            | open     |
+| RC12 | false positive |     1 | A DataDome script reference on a normal page read as a block                 | F2       |
+| RC13 | throttle       |     2 | Shared apex redirector answers an empty 428 under a burst                    | F5       |
+| RC14 | scanner bug    |     1 | Gateway root page not followed                                               | F7       |
+| RC15 | false negative |     1 | Akamai block page served with HTTP 200 scored as content                     | F8       |
+| RC16 | intermittent   |     6 | Bot wall that lets the scanner in on some runs only                          | no fix   |
+| RC17 | scanner bug    |     9 | Cookies dropped between redirect hops, so cookie-gated chains loop           | F9       |
+| RC18 | scanner bug    |    15 | Synchronous audit work blocks the event loop for every parallel scan         | F10, F11 |
+| RC19 | label bug      |     2 | A challenge redirect that ends on an error page is reported as a bare status | F12      |
 
-- TLS or certificate error: "TLS failure". Connection refused: "connection
-  refused". DNS failure: "DNS failure". Name "Bot Wall" only for resets or
-  timeouts after a successful connect, seen more than once.
-- Name a provider only when its header or its challenge body is present.
-- Do not copy raw OpenSSL error text into the reason. It spans several lines
-  and breaks line-based log readers.
-- Check a challenge (for example `cf-mitigated: challenge`) before the 429
-  rate-limit diagnosis.
+Site counts come from the run that found or confirmed each cause. RC5 is the
+14 sites that RC18 later explained. RC18 counts the 11 budget overruns and 4
+homepage timeouts of the `8eb98ae0` run that fell inside a stall.
 
-These sites stay unscored. Only the reason changes.
+### RC18 in detail
 
-Changeset: patch. A message is reworded.
+The request log of the `8eb98ae0` run showed 5 windows of 66-92 s in which no
+request started or ended in any of the 6 parallel scans. Every budget overrun
+and every homepage timeout of the run fell in one. Three in-flight requests
+ended within 2 ms of each other when one window closed. CPU profiles named
+two causes: the payload regex of F10 (41 s on one payload, and no strings
+read) and the per-ancestor CSS matching of F11 (busy streaks of 8-11 s per
+page).
 
-### F4. Stop skipping sites on robots.txt (137 sites)
+### Verdicts checked and found correct
 
-The live harness tests the scanner. It is not a crawler, so a robots.txt
-restriction is not a reason to leave a site out of a test run.
-
-Cause: `checkRobots` in `scripts/test-live-sites.ts` skips a site when
-robots.txt answers 401, 403 or 429 (`robots-refused`), or when any probed token
-is disallowed (`robots-disallow`) or crawl-delayed (`crawl-delay`). Across the
-corpus this removed 137 of 684 sites from every run. 11 of them limited only
-one AI crawler token.
-
-Change: scan every site. Make the current `--ignore-robots` behaviour the
-default and remove the skip reasons from the summary. A WAF block still ends a
-scan, because it stops the fetch; that is reported as unscored, as today.
-
-Harness change only. No changeset.
-
-### F5. Retry and log transient failures (RC5 + RC13, 9 sites)
-
-- Add an opt-in request log to the live harness (method, URL, status, timing,
-  user agent) to find what in a full scan triggers a 428 or a homepage timeout
-  that single requests and a 25-request burst do not.
-
-### F6. Record the scan location (RC10 + RC11, 6 sites)
-
-- Write the egress country to the corpus result file.
-- Use a fixed `Accept-Language` for corpus runs.
-- When a redirect loop ends the fetch, say "redirect loop" in the reason
-  instead of the last status code.
-
-### F7. Follow a gateway root to the real homepage (RC14) — done, PR #140
-
-Cause: the scan reads only the URL it is given. `runScan` in
-`packages/core/src/orchestrator.ts` builds its page set from that URL and
-explicit page overrides (`allPageUrls`, about line 465). Some sites serve a
-splash or language-gateway page at `/`: a few words of text, a
-`<meta http-equiv="refresh" content="N;url=/en/">`, and a
-`<link rel="canonical">` that points at the real homepage. That page has fewer
-than 50 words and 200 characters, so `textIsReadable`
-(`packages/core/src/scan-evidence.ts:195-198`) rejects it. `RenderedBody` is
-not met, 116 audits get no evidence, and the scan ends unscored.
-
-Reproduction: a site whose `/` answers 200 with 6 visible words, a 4-second
-meta refresh to `/en/` and a canonical to `/en/`. The scan of `/` is unscored
-("could not feed 55% of the registry's evidence mass"). The scan of `/en/`
-scores 86.
-
-Change:
-
-- Only when the requested page has no readable text.
-- Take the target of a same-origin meta refresh first, then a same-origin
-  canonical that differs from the requested URL. Ignore a cross-origin target.
-- Fetch that target once, as the homepage. Do not chain a second hop.
-- Record the hop in the scan conditions and the report ("root is a gateway;
-  scanned `/en/`"). Keep the root's own findings, such as the meta-refresh
-  audit, on the root.
-- The country-selector homepage of RC11 is the same pattern when its links
-  name one default locale. Treat it here only if that target is unambiguous.
-
-Tests: a gateway fixture with meta refresh, one with canonical only, one with a
-cross-origin target (no hop), and one with readable text (no hop).
-
-Changeset: patch. A scan that was unscored now reads the site's real homepage.
-
-Related doc check: the CLI and config docs claimed a scan covers up to five
-pages discovered from the sitemap and navigation. The page set that feeds the
-evidence gate holds only the requested URL, declared pages and the gateway
-target; sitemap pages that single audits fetch
-(`packages/core/src/gatherers/sampled-pages.ts`) do not count toward
-`RenderedBody`. PR #140 corrected the docs. PR #142 (`862c93b2`) removed the
-unused `MAX_PAGES_PER_SCAN`, `DEFAULT_SCAN_LIMIT` and `maxPages` leftovers and
-the remaining six-page wording.
-
-### F8. Detect a block page served with HTTP 200 (RC15, 1 site)
-
-Cause: the Akamai branch of `detectWafProtection`
-(`packages/core/src/waf-detector.ts`, around line 151) marks a block only on
-status 403, on zero fetched pages, or on a soft-block phrase it knows
-("this page is currently unavailable", "you don't have permission to access",
-or "access denied" together with an `akamai-grn` header). One site answers
-every client with HTTP 200, `server: AkamaiGHost`, no `akamai-grn`, a page
-titled "Access Denied", and the text "This site is not accessible from your
-current location". The scan reads that page as the homepage and scores it 63.
-
-Change:
-
-- With an Akamai header (`server: AkamaiGHost`, `akamai-request-bc`,
-  `x-akam-sw-version`), a 200 page whose `<title>` is "Access Denied" and
-  whose readable text is short is a block.
-- Report it as a geo block when the text names the visitor's location, so the
-  report says the site refuses the scan location, not the scanner.
-- Keep the rule on the title and the text length. A normal page that
-  mentions "access denied" in its body must still score.
-
-Tests: the geo-block fixture (200, Akamai headers, "Access Denied" title), a
-normal Akamai-served page that contains the phrase in body copy (no block),
-and the existing Akamai fixtures.
-
-Changeset: patch. A false score is removed; the site becomes unscored with a
-block reason.
-
-## Order of work
-
-1. F1 and F2: separate branches, separate PRs. Together they recover 36 of
-   684 corpus sites (26 + 10), and give 7 more a correct block reason.
-   With F4, the harness tests 137 more sites per run; 12 of them score today.
-2. F3 after F2, because both edit `waf-detector.ts`.
-3. F4, F5 and F6 are harness and reporting changes. They can go in one PR.
-   F4 is the cheapest change and adds the most sites to every test run.
-4. F7 is done (PR #140).
-5. F8 goes with F2 or F3, because all three edit `waf-detector.ts`.
-
-Each PR runs the full pre-commit gate from `CLAUDE.md`, and then re-scans the
-affected corpus sites to confirm the verdict changed.
-
-## Corpus confirmation
-
-All 684 corpus sites were scanned once. The table counts unique sites across
-both runs.
-
-| Fix | Sites hit | Test                                                                      | Result                                                                                                                                                                                      |
-| :-- | --------: | :------------------------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| F1  |        32 | Re-fetch apex, then full scan of `https://www.<apex>/`                    | 32/32 apex still fail with status 0. 32/32 `www` reachable. 26 score (69-83); 6 unscored for other reasons                                                                                  |
-| F1  |         7 | Same, `www` answers 403                                                   | Still unscored, but the reason becomes the real block instead of "Bot Wall"                                                                                                                 |
-| F1  |        10 | `http://<apex>/` fallback on the first 10                                 | Works on 5/10 only. `www` must be tried first                                                                                                                                               |
-| F2  |        10 | Full scan with a temporary homepage-first patch (reverted, not committed) | 10/10 score (68-83). An 11th case, found later in the F4 run, was not rescanned                                                                                                             |
-| F2  |        31 | Homepage-only verdict on the confirmed bot walls                          | 31/31 still detected. No real block is lost                                                                                                                                                 |
-| F2  |         1 | DataDome marker on a 200 homepage                                         | Homepage alone still trips. The marker rule needs a block status as well                                                                                                                    |
-| F4  |       137 | Full scan with `--ignore-robots` of every robots-skipped site             | 137/137 scan with 0 invariant violations. 12 score (average 72). 119 stop at a real homepage block. 6 others: 1 more F2 case, 1 HTTP 428, 1 geo loop, 1 HTTP 401, 2 budget or evidence mass |
-
-Not yet explained: 14 sites that ran out of budget or evidence mass, and now
-answer 200 to a single homepage fetch (RC5). They need the request log of F5.
-
-## Scored-but-blocked review
-
-All 422 sites that received a score were scanned again with every page
-attempt recorded, and each homepage was fetched as the scanner and as a
-browser and checked for challenge markers.
-
-- Every scan reads exactly one page: the target URL, plus declared pages
-  and, since F7, a gateway target. No scored scan had a non-200 page or a
-  WAF verdict. A score is never built on a partly blocked page set.
-- 1 false negative (RC15): an Akamai geo-block page served with HTTP 200 is
-  scored 63. See F8.
-- 3 intermittent bot walls (RC16): scored in the corpus run, HTTP 403
-  challenges in the rerun. When they scored, the page read was real content.
-  No fix; the corpus result for these sites depends on the run.
-- 12 sites were unscored in the rerun by budget or timeouts (RC5), 1 by a
-  certificate that does not match the apex (RC7), and 1 by a redirect loop.
+- 7 sites reset the HTTP/2 stream for the scanner user agent only. A browser
+  user agent gets an answer. "Connection drop" is the right reading.
 - `challenge-platform` in a 200 page is the Cloudflare background script on a
-  normal page. It is not a block and must not become a detector marker.
-- Sitemap pages that single audits sample and that answer 403 are measured
-  in the full run on main below.
+  normal page. It is not a block and must not become a marker.
+- No scored scan was built on a blocked page. Every scan reads one page: the
+  target URL, plus declared pages and the F7 gateway target.
+- 62 scored sites saw some HTTP 403 for the scanner user agent. On every site
+  checked, the homepage answered 200. The 403s fell on root files,
+  `/.well-known/` paths and sampled pages, which read as absent or unread.
 
-## F7 corpus check
+## Open items
 
-Of the 684 corpus roots, 1 is a gateway by the F7 rule. The hop works there,
-but the target is a client-rendered shell: 5 server-rendered words, the rest
-inside scripts. The scan of the target alone is unscored on main too, so the
-unscored result is correct and not caused by F7.
-
-## Full corpus run on main
-
-Run of 2026-10-16 on `8eb98ae0` (F1-F8 merged), all 684 sites, concurrency 6,
-scan location BG, with the request log (140,267 requests).
-
-| Measure                | Value                                                   |
-| :--------------------- | :------------------------------------------------------ |
-| Scanned                | 684 (0 invariant violations)                            |
-| Origin fallbacks       | 53                                                      |
-| Scored                 | 443 (earlier runs: 390)                                 |
-| Unscored, now scored   | 53                                                      |
-| Scored, now unscored   | 12                                                      |
-| Unscored, WAF verdict  | 179 (Cloudflare 82, Akamai 58, PerimeterX 17, other 22) |
-| Unscored, other reason | 62                                                      |
-
-The 12 that lost their score:
-
-- 4 ran out of the 180 s budget, and 1 timed out on the homepage. All 5 fall
-  inside an event-loop stall (RC18).
-- 3 hit a bot wall that let them in on the earlier run (RC16).
-- 2 hit a cookie redirect loop (RC17).
-- 1 got the Akamai location block page (F8 works as designed).
-- 1 answered HTTP 500 once; it answers 200 now.
-
-The 62 other unscored sites:
-
-| Reason                                  | Sites | Verdict                                                                                                                    |
-| :-------------------------------------- | ----: | :------------------------------------------------------------------------------------------------------------------------- |
-| Evidence mass below the floor           |    12 | Not yet checked. The homepage answers 2xx without rendered text. One answers HTTP 202, which can be an AWS WAF challenge   |
-| Scan budget ran out                     |    11 | Scanner bug (RC18). Single requests take 78-92 s only because the event loop is blocked                                    |
-| Connection drop, timeout, HTTP/2 reset  |    12 | Correct. Seven reset the HTTP/2 stream for the scanner user agent only; a browser user agent gets an answer                |
-| Redirect loop or redirect limit         |     9 | Scanner bug (RC17). Seven of seven sampled loops end with a cookie jar                                                     |
-| Redirect to another site                |     6 | Site issue (RC10). Geo redirects from the scan location                                                                    |
-| Homepage HTTP 401, 404, 409, 500 or 503 |     8 | Two are a PerimeterX challenge redirect that ends on a 404 (RC19). One is a geo redirect to a 404. The rest are site state |
-| HTTP 429                                |     4 | Correct. Throttle                                                                                                          |
-
-### RC17. Cookies are dropped between redirect hops
-
-The fetcher walks redirects itself (`fetcher.ts`, the loop after the first
-`request`). It sends no cookies. Some storefronts set a session or locale
-cookie on the first hop and redirect until the cookie comes back. Without it
-they loop.
-
-Proof: `curl -L` without a cookie jar loops on all 7 sampled sites. With
-`-c`/`-b` all 7 end on HTTP 200: 5 on the homepage, 2 on a DataDome challenge
-page. 2 of the 7 need 6 hops, one more than `MAX_REDIRECTS` (5).
-
-### RC18. Synchronous audit work blocks the event loop
-
-The request log shows 5 windows of 66-92 s in which no request started or
-ended in any of the 6 parallel scans. Every budget overrun and every homepage
-timeout of the run falls in such a window. Three requests that were in
-flight ended within 2 ms of each other when one window closed.
-
-CPU profiles of single scans name two causes:
-
-- `unescapedStrings` in
-  `packages/core/src/audits/content-extraction/hydration-payload-share.ts`.
-  The scan cuts a payload at 512 KiB. When the cut falls inside a string
-  literal, the regex `/"((?:[^"\\]|\\.)*)"/g` finds no closing quote and
-  restarts at every later quote. On one RSC flight payload this takes 41 s
-  and returns no strings at all. The same payload uncut takes 2 ms.
-- `hidingTechnique` in
-  `packages/core/src/audits/operability-safety/invisible-instruction-scan.ts`.
-  For every text element it re-tests every ancestor against every CSS rule.
-  Busy streaks of 8-11 s per page.
-
-### RC19. A challenge redirect that ends on an error page
-
-Two storefronts redirect the scanner to their platform's PerimeterX challenge
-route (`PX-Show`), which answers HTTP 404. The scan reports "HTTP 404, fetched
-no pages". A browser user agent gets the same chain, so the block is real,
-but the provider is not named. The DataDome route `DDUser-Challenge` behaves
-the same way once cookies are kept (RC17).
-
-### Sampled pages that answer 403
-
-62 scored sites saw at least one HTTP 403 for the scanner user agent. On every
-site checked, the homepage answered 200. The 403s fall on root files,
-`/.well-known/` paths, hreflang alternates and sampled pages. They are read as
-absent or unread, which is correct. One site answered 403 to 408 of 530
-requests, nearly all hreflang alternates: the scan fetches every alternate,
-which is a request-volume question, not a verdict error.
-
-### F9. Keep cookies across redirect hops (RC17, 9 sites)
-
-Keep a cookie jar for one redirect chain only. Send back what the chain set,
-scoped by host and path. Never share it across fetches or scans, so no state
-leaks between requests. Raise `MAX_REDIRECTS` to match browsers (the Fetch
-standard follows 20) and keep `FETCHER_REDIRECT_LIMIT` pinned to it. Test with
-a stub server that loops until its cookie returns.
-
-### F10. Scan payload strings in linear time (RC18)
-
-Replace the regex in `unescapedStrings` with a single forward pass. An
-unterminated literal at the cut is read up to the cut instead of being lost.
-Test with a 512 KiB payload cut inside a literal and a time bound.
-
-### F11. Memoise the hidden verdict per element (RC18)
-
-Cache "this element hides its subtree" per element, so each ancestor is
-tested once per page and not once per text node below it. Test on a deep tree
-with many text nodes and a time bound.
-
-### F12. Name challenge redirect targets (RC19, 2 sites)
-
-When the final URL of the homepage chain is a known challenge route
-(`PX-Show`, `DDUser-Challenge`), report the provider instead of the bare
-status.
-
-### Order
-
-1. F10 and F11 first. They decide whether the scan finishes at all, and they
-   also slow every parallel scan in a corpus run.
-2. F9, then rescan the 9 loop sites.
-3. F12 after F9, because F9 changes where those chains end.
-4. Check the 12 evidence-mass sites by hand before proposing anything.
+1. **UA probes on a host that never answers.** `sharedUaProbes` in
+   `packages/core/src/gatherers/ua-parity.ts` probes every crawler user
+   agent even when the browser baseline got no response at all (status 0).
+   `classifyResponse` then reports "baseline blocked" and ignores the probe.
+   One corpus site lists sitemap URLs on a load-balancer host that refuses
+   connections. Each URL cost one 10 s connect timeout per user agent, one
+   after the other, and the scan ran out of its 180 s budget with the CPU
+   idle for 197 s. Proposed fix: skip the agent probes for a URL whose
+   baseline has status 0. Check `ai-crawler-edge-parity` (all baselines
+   blocked) and `machine-actionable-402-paid-access` (probe-only 402) before
+   the change: both read probe entries whose baseline failed.
+2. **12 sites below the evidence-mass floor.** The homepage answers 2xx
+   without rendered text. Not yet triaged. One answers HTTP 202, which can be
+   an AWS WAF challenge.
+3. **Timeout label.** A homepage timeout is still named "Bot Wall /
+   Aggressive Connection Drop" after one attempt. 3 of the 4 timeout sites
+   timed out in both full runs, and the second run had no stall, so these
+   are not stall victims. The F3 proposal to require a repeat after a
+   successful connect is not built.
+4. **Request volume.** One site answered 403 to 408 of 667 requests in one
+   scan: 486 page GETs in 16 s across four locale folders. Another site got
+   requests for paths with a locale folder repeated four times
+   (`/us/us/us/us/`). The code path that builds these URLs is not traced yet.
+5. **Smaller synchronous cost.** The `cursor:pointer` check in
+   `packages/core/src/audits/operability-safety/_agent-affordances.ts` took
+   about 0.7 s of one busy streak. Below the threshold that blocks scans.
+6. **Geo redirects (RC10, RC11).** These depend on the scan location. A run
+   from another country would show which sites redirect only from BG. 6
+   sites still redirect to another site without a permanent redirect.
+7. **Intermittent walls (RC16).** No fix. The corpus result for these sites
+   depends on the run.
