@@ -2,20 +2,20 @@
 
 Status: 2026-10-16.
 
-| Fix | State                 | Where                                                                       |
-| :-- | :-------------------- | :-------------------------------------------------------------------------- |
-| F1  | Merged (harness part) | PR #143 (`1b38a27a`) (`www` then `http` fallback in the corpus runners)     |
-| F2  | Merged                | PR #144 (`8eb98ae0`)                                                        |
-| F3  | Merged                | PR #144 (`8eb98ae0`)                                                        |
-| F4  | Merged                | PR #143 (both corpus runners, nightly job included)                         |
-| F5  | Merged                | Request log in PR #143; RC13 cause found and fixed in PR #144               |
-| F6  | Merged                | Location and `Accept-Language` in PR #143; redirect-loop wording in PR #144 |
-| F7  | Merged                | PR #140 (`c97cf1d1`)                                                        |
-| F8  | Merged                | PR #144 (`8eb98ae0`)                                                        |
-| F9  | In PR #146            | `packages/core/src/fetcher.ts` (cookies across redirect hops)               |
-| F10 | In PR #146            | `hydration-payload-share.ts` (linear string scan)                           |
-| F11 | In PR #146            | `invisible-instruction-scan.ts` (memoise the hidden verdict)                |
-| F12 | In PR #146            | `waf-detector.ts` (challenge redirect targets)                              |
+| Fix | State                 | Where                                                                              |
+| :-- | :-------------------- | :--------------------------------------------------------------------------------- |
+| F1  | Merged (harness part) | PR #143 (`1b38a27a`) (`www` then `http` fallback in the corpus runners)            |
+| F2  | Merged                | PR #144 (`8eb98ae0`)                                                               |
+| F3  | Merged                | PR #144 (`8eb98ae0`)                                                               |
+| F4  | Merged                | PR #143 (both corpus runners, nightly job included)                                |
+| F5  | Merged                | Request log in PR #143; RC13 cause found and fixed in PR #144                      |
+| F6  | Merged                | Location and `Accept-Language` in PR #143; redirect-loop wording in PR #144        |
+| F7  | Merged                | PR #140 (`c97cf1d1`)                                                               |
+| F8  | Merged                | PR #144 (`8eb98ae0`)                                                               |
+| F9  | Merged                | PR #146 (`b355ab45`) `packages/core/src/fetcher.ts` (cookies across redirect hops) |
+| F10 | Merged                | PR #146 (`b355ab45`) `hydration-payload-share.ts` (linear string scan)             |
+| F11 | Merged                | PR #146 (`b355ab45`) `invisible-instruction-scan.ts` (memoise the hidden verdict)  |
+| F12 | Merged                | PR #146 (`b355ab45`) `waf-detector.ts` (challenge redirect targets)                |
 
 Decisions taken while implementing:
 
