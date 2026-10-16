@@ -47,11 +47,6 @@ const walled: RunnerOutcome = {
   unscoredReason: "Cloudflare Turnstile refused the scan: challenge page.",
 };
 
-const robots: RunnerOutcome = {
-  domain: "robots.test",
-  skipped: "robots-disallow",
-};
-
 describe("stateOf", () => {
   it("maps a score to ok", () => {
     expect(stateOf(scored)).toEqual({ state: "ok" });
@@ -68,13 +63,6 @@ describe("stateOf", () => {
     expect(stateOf(walled)).toEqual({
       state: "unscored",
       reason: walled.unscoredReason,
-    });
-  });
-
-  it("maps a robots skip to blocked with the skip reason", () => {
-    expect(stateOf(robots)).toEqual({
-      state: "blocked",
-      reason: "robots-disallow",
     });
   });
 
@@ -135,23 +123,23 @@ describe("mergeStatus", () => {
 
   it("keeps domains the import did not mention", () => {
     const first = mergeStatus(undefined, [scored], "2026-09-02");
-    const second = mergeStatus(first, [robots], "2026-09-03");
+    const second = mergeStatus(first, [walled], "2026-09-03");
     expect(Object.keys(second.domains).sort()).toEqual([
       "ok.test",
-      "robots.test",
+      "wall.test",
     ]);
   });
 
   it("sorts domains so the committed file diffs cleanly", () => {
-    const status = mergeStatus(undefined, [robots, scored], "2026-09-02");
-    expect(Object.keys(status.domains)).toEqual(["ok.test", "robots.test"]);
+    const status = mergeStatus(undefined, [walled, scored], "2026-09-02");
+    expect(Object.keys(status.domains)).toEqual(["ok.test", "wall.test"]);
   });
 });
 
 describe("excludedDomains", () => {
   const status = mergeStatus(
     undefined,
-    [scored, robots, { ...noHomepage }],
+    [scored, walled, { ...noHomepage }],
     "2026-09-02",
   );
   const withDead: CorpusStatus = {
@@ -162,23 +150,26 @@ describe("excludedDomains", () => {
     },
   };
 
-  it("excludes dead and blocked by default", () => {
-    expect([...excludedDomains(withDead, {})].sort()).toEqual([
-      "dead.test",
-      "robots.test",
-    ]);
+  it("excludes dead domains by default", () => {
+    expect([...excludedDomains(withDead, {})]).toEqual(["dead.test"]);
   });
 
-  it("lets each class back in on request", () => {
-    expect([...excludedDomains(withDead, { dead: true })]).toEqual([
-      "robots.test",
-    ]);
-    expect([...excludedDomains(withDead, { blocked: true })]).toEqual([
-      "dead.test",
-    ]);
-    expect(excludedDomains(withDead, { dead: true, blocked: true }).size).toBe(
-      0,
-    );
+  it("lets dead domains back in on request", () => {
+    expect(excludedDomains(withDead, { dead: true }).size).toBe(0);
+  });
+
+  // The runners no longer skip on robots.txt, so nothing files a domain as
+  // blocked. A status file written before that still loads, and its old
+  // entries do not keep a domain out of a run.
+  it("does not exclude a legacy blocked entry", () => {
+    const legacy = {
+      ...withDead,
+      domains: {
+        ...withDead.domains,
+        "legacy.test": { state: "blocked", seenAt: "2026-09-01", runs: 1 },
+      },
+    } as unknown as CorpusStatus;
+    expect([...excludedDomains(legacy, {})]).toEqual(["dead.test"]);
   });
 
   it("excludes nothing without a status file", () => {
@@ -205,8 +196,8 @@ describe("formatReport", () => {
           runs: 2,
         },
         "c.test": {
-          state: CorpusState.Blocked,
-          reason: "robots-disallow",
+          state: CorpusState.Unscored,
+          reason: "Cloudflare Turnstile refused the scan: challenge page.",
           seenAt: "2026-09-02",
           runs: 1,
         },
@@ -217,7 +208,7 @@ describe("formatReport", () => {
     expect(text).toContain("dead (2)");
     expect(text).toContain("The homepage could not be fetched: ENOTFOUND. (2)");
     expect(text).toContain("a.test  2026-09-03  runs 2");
-    expect(text).toContain("blocked (1)");
+    expect(text).toContain("unscored (1)");
     expect(text).toContain("ok (1)");
     expect(text.indexOf("dead (2)")).toBeLessThan(text.indexOf("ok (1)"));
   });

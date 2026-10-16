@@ -128,8 +128,6 @@ const DEFAULTS = {
   "allow-partial": 0,
   /** 1 to scan domains `status.json` calls dead. */
   "include-dead": 0,
-  /** 1 to scan domains `status.json` calls blocked. */
-  "include-blocked": 0,
 } as const;
 
 type FlagName = keyof typeof DEFAULTS;
@@ -295,7 +293,6 @@ async function main(): Promise<void> {
     : undefined;
   const excluded = excludedDomains(status, {
     dead: FLAGS["include-dead"] > 0,
-    blocked: FLAGS["include-blocked"] > 0,
   });
   const all = listed.filter((s) => !excluded.has(s.domain));
   // Count list entries removed, not the exclusion set: status.json remembers

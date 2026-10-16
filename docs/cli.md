@@ -95,7 +95,7 @@ Accepted names: `ecommerce`, `saas`, `content`, `quick`, `full`. Default `full`.
 agent-lighthouse https://yourstore.com --preset ecommerce
 ```
 
-The preset name is recorded and printed in the run header. **In the current release it does not change which audits run or how they are scored** — v2 replaced hand-tuned category weights with evidence mass (see [scoring.md](./scoring.md#category-scores-to-the-overall-score)), and the preset's category filter is not applied. To actually narrow a scan, use `--categories`.
+The preset name is recorded and printed in the run header. **In the current release it does not change which audits run or how they are scored** — v2 replaced hand-tuned category weights with evidence mass (see [scoring.md](./scoring.md#category-scores-to-the-overall-score)). To actually narrow a scan, use `--categories`.
 
 ### `-c`, `--config <path>`
 

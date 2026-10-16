@@ -48,7 +48,6 @@ interface CliOptions {
   loop: number;
   tier?: "smoke";
   includeDead: boolean;
-  includeBlocked: boolean;
 }
 
 function parseCliArgs(argv: string[]): CliOptions {
@@ -64,7 +63,6 @@ function parseCliArgs(argv: string[]): CliOptions {
     shuffle: false,
     loop: 1,
     includeDead: false,
-    includeBlocked: false,
   };
 
   for (const arg of argv) {
@@ -86,10 +84,6 @@ function parseCliArgs(argv: string[]): CliOptions {
     }
     if (arg === "--include-dead") {
       options.includeDead = true;
-      continue;
-    }
-    if (arg === "--include-blocked") {
-      options.includeBlocked = true;
       continue;
     }
     const match = /^--([a-z-]+)=(.*)$/.exec(arg);
@@ -171,7 +165,6 @@ Options:
   --stratified, -s    Sample evenly across all available site categories
   --tier=smoke        Only the smoke tier: two seeded sites per category, about five minutes
   --include-dead      Also scan domains status.json calls dead
-  --include-blocked   Also scan domains status.json calls blocked
   --loop=<n>          Repeat the selection n times (default: 1)
   --shuffle, -r       Shuffle the pool before selecting
   --out=<path>        Output JSON file path (default: reports/live-sites-test.json)
@@ -244,7 +237,6 @@ async function main(): Promise<void> {
     : undefined;
   const excluded = excludedDomains(status, {
     dead: options.includeDead,
-    blocked: options.includeBlocked,
   });
   const pool = allSites.filter((s) => {
     if (options.tier && s.tier !== options.tier) return false;
@@ -257,7 +249,7 @@ async function main(): Promise<void> {
   ).length;
   if (leftOut > 0) {
     console.log(
-      `Status file: ${leftOut} dead or blocked domain(s) left out (--include-dead, --include-blocked to add them)`,
+      `Status file: ${leftOut} dead domain(s) left out (--include-dead to add them)`,
     );
   }
   if (options.tier) console.log(`Tier: ${options.tier} (${pool.length} sites)`);
