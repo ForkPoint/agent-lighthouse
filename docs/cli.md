@@ -298,7 +298,9 @@ Files are written into `--output-dir` (default `./reports`) with fixed names:
 
 Repeat runs overwrite them. Use `--output-dir` to keep runs apart.
 
-A scan covers the homepage plus up to five internal pages discovered from the sitemap and navigation, and probes a fixed set of root-level files (`/robots.txt`, `/llms.txt`, `/sitemap.xml`, `/.well-known/…` and others). Neither the page budget nor the discovery set is configurable from the CLI.
+A scan reads the URL you give it as its page, plus any pages you declare in a [config file](./config.md). It probes a fixed set of root-level files (`/robots.txt`, `/llms.txt`, `/sitemap.xml`, `/.well-known/…` and others). Some audits also sample pages that the sitemap lists, but those samples do not decide whether the scan is scored. Neither the probe set nor the sampling is configurable from the CLI.
+
+When the scanned page has no readable text and a same-origin `<meta http-equiv="refresh">` or `<link rel="canonical">` names another page, the scan treats it as a gateway, such as a splash or language-selection page. It reads that target once, as a second page. The gateway page stays in the report with its own findings. A target on another origin is not read, and the scan never follows more than one hop.
 
 ## Exit codes
 

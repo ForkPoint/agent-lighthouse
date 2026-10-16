@@ -46,7 +46,7 @@ A bare `agent-lighthouse` with no arguments at all does **not**: it prints the u
 | `outputDir`        | `string`                                                  | `"./reports"`                  | Where report files are written.                                                                              |
 | `timeout`          | `number` (seconds)                                        | `180`                          | Wall-clock budget for the scan; `0` disables it. `--timeout` overrides it.                                   |
 | `pageType`         | `PageType`                                                | none                           | Explicit purpose of the target URL. `--page-type` overrides it.                                              |
-| `pages`            | `PageOverride[] \| null`                                  | none                           | Explicit URL/type pairs within the six-page scan budget; discovery fills remaining slots.                    |
+| `pages`            | `PageOverride[] \| null`                                  | none                           | Explicit URL/type pairs, read as pages next to the target URL.                                               |
 | `categories`       | `string[]`                                                | —                              | **Not read by the CLI.** Use the `--categories` flag instead.                                                |
 | `maxPages`         | `number`                                                  | —                              | **Not read by anything.** The page budget is fixed; see [Fixed limits](#fixed-limits).                       |
 
@@ -117,7 +117,7 @@ An experimental audit carries weight 0 whether or not it runs, so this flag can 
 | `includeExperimental` | `boolean`                    | `false`   | Include experimental-tier audits, reported but never scored.                                                                      |
 | `onEvent`             | `(event: ScanEvent) => void` | none      | Progress callback; the CLI's progress display and its NDJSON stream are both built on it.                                         |
 | `pageType`            | `PageType`                   | none      | Declare the target URL's purpose. Takes precedence over a matching entry in `pages`.                                              |
-| `pages`               | `PageOverride[] \| null`     | none      | Scan these exact URLs with a declared page type instead of relying on discovery.                                                  |
+| `pages`               | `PageOverride[] \| null`     | none      | Scan these exact URLs with a declared page type, next to the target URL.                                                          |
 | `signal`              | `AbortSignal`                | none      | Cancel an in-flight scan.                                                                                                         |
 | `timeoutMs`           | `number`                     | `180000`  | Wall-clock budget. When it runs out the scan finishes with what it has and records it under `conditions.budget`; `0` disables it. |
 

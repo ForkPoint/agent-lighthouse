@@ -1699,3 +1699,91 @@ describe("runScan — DOM work limits", () => {
     expect(report.scanValidity?.evidence[EvidenceKey.RenderedBody]).toBe(true);
   });
 });
+
+describe("runScan — gateway root", () => {
+  const url = "https://example.com/";
+  const target = "https://example.com/en/";
+  const FULL_HTML = `<html><body><main><h1>Kettles</h1><p>${"copper kettle ".repeat(60)}</p></main></body></html>`;
+  const gateway = (head: string): string =>
+    `<html><head>${head}</head><body><h1>Brand</h1><p>Entering the store</p></body></html>`;
+
+  it("reads the meta refresh target of a gateway root and scores the site", async () => {
+    set(url, gateway(`<meta http-equiv="refresh" content="4;url=/en/">`));
+    set(target, FULL_HTML);
+
+    const report = await runScan(url);
+
+    expect(h.calls).toContain(target);
+    expect(report.pageAttempts?.map((page) => page.url)).toEqual([url, target]);
+    expect(report.pagesScanned.map((page) => page.url)).toEqual([url, target]);
+    expect(report.scanValidity?.evidence[EvidenceKey.RenderedBody]).toBe(true);
+    expect(report.overallScore).not.toBeNull();
+  });
+
+  it("follows a same-origin canonical when the gateway has no refresh", async () => {
+    set(url, gateway(`<link rel="canonical" href="${target}">`));
+    set(target, FULL_HTML);
+
+    const report = await runScan(url);
+
+    expect(report.pagesScanned.map((page) => page.url)).toContain(target);
+  });
+
+  it("does not leave the origin for a cross-origin target", async () => {
+    set(
+      url,
+      gateway(
+        `<meta http-equiv="refresh" content="0;url=https://other.example/">`,
+      ),
+    );
+
+    const report = await runScan(url);
+
+    expect(h.calls).not.toContain("https://other.example/");
+    expect(report.pageAttempts?.map((page) => page.url)).toEqual([url]);
+    expect(report.overallScore).toBeNull();
+  });
+
+  it("does not hop from a page with readable text", async () => {
+    set(
+      url,
+      FULL_HTML.replace(
+        "<html>",
+        `<html><head><meta http-equiv="refresh" content="4;url=/en/"></head>`,
+      ),
+    );
+    set(target, FULL_HTML);
+
+    const report = await runScan(url);
+
+    expect(h.calls).not.toContain(target);
+    expect(report.pageAttempts?.map((page) => page.url)).toEqual([url]);
+  });
+
+  it("makes one hop only, even when the target is a gateway too", async () => {
+    set(url, gateway(`<meta http-equiv="refresh" content="0;url=/en/">`));
+    set(
+      target,
+      gateway(`<meta http-equiv="refresh" content="0;url=/en/home">`),
+    );
+
+    const report = await runScan(url);
+
+    expect(h.calls).not.toContain("https://example.com/en/home");
+    expect(report.overallScore).toBeNull();
+  });
+
+  it("counts the hop in the page-fetch progress", async () => {
+    set(url, gateway(`<meta http-equiv="refresh" content="4;url=/en/">`));
+    set(target, FULL_HTML);
+    const events: ScanEvent[] = [];
+
+    await runScan(url, { onEvent: (event) => events.push(event) });
+
+    const fetched = events.filter(
+      (event) =>
+        event.type === "unit:done" && event.phase === PhaseId.FetchPages,
+    );
+    expect(fetched).toHaveLength(2);
+  });
+});
