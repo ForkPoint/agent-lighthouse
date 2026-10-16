@@ -13,7 +13,6 @@ export interface PresetOptions {
   description: string;
   categoryFilter?: string[];
   customWeights?: Record<string, number>;
-  maxPages?: number;
 }
 
 export const PRESETS: Record<PresetName, PresetOptions> = {
@@ -57,7 +56,6 @@ export const PRESETS: Record<PresetName, PresetOptions> = {
     name: PresetName.Quick,
     description:
       "Fast single-page scan checking only root files (robots.txt, llms.txt, sitemaps) and the homepage.",
-    maxPages: 1,
   },
   [PresetName.Full]: {
     name: PresetName.Full,

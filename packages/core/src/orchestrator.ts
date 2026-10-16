@@ -926,7 +926,7 @@ async function scanWithinBudget(
     ...(wafProtection != null && { wafProtection }),
     // Field-level verification is only trustworthy when the user explicitly
     // supplied the product page. Without a product override we don't guess from
-    // auto-discovered pages — leave it unset so the report marks it skipped.
+    // other scanned pages — leave it unset so the report marks it skipped.
     ...(productFields !== undefined && { productFields }),
     originEvidence: originCondition,
     conditions,

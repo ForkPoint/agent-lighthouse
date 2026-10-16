@@ -37,7 +37,7 @@ export const AUDIT_TOOL = {
       pages: {
         type: ["array", "null"],
         description:
-          "Explicit URL and purpose declarations, within the six-page scan budget. Target pageType takes precedence for the target URL.",
+          "Explicit URL and purpose declarations, read as pages next to the target URL. Target pageType takes precedence for the target URL.",
         items: {
           type: "object",
           properties: {

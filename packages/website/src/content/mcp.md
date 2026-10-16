@@ -45,7 +45,7 @@ The `audit_website` tool accepts optional `pageType` and `pages` fields:
 }
 ```
 
-Declare a type only when it matches the page's purpose. Supported types are `homepage`, `category`, `product`, `article`, `unknown`, and legacy `content`. The last two mean general content. Omit the type for detection; type-specific findings then stay advisory. The scan shares the SDK's validation, page budget, and evidence rules.
+Declare a type only when it matches the page's purpose. Supported types are `homepage`, `category`, `product`, `article`, `unknown`, and legacy `content`. The last two mean general content. Omit the type for detection; type-specific findings then stay advisory. The scan shares the SDK's validation and evidence rules.
 
 The response includes `pageScope` when the scan records scope data. It contains page classification, fetch attempts, and separate result populations with their selected, input, and unread URLs. Advisory results do not change the score. Each audit still counts once. The programmatic `auditWebsite(url, { pageType, pages })` helper supports the same declarations.
 

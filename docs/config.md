@@ -48,9 +48,8 @@ A bare `agent-lighthouse` with no arguments at all does **not**: it prints the u
 | `pageType`         | `PageType`                                                | none                           | Explicit purpose of the target URL. `--page-type` overrides it.                                              |
 | `pages`            | `PageOverride[] \| null`                                  | none                           | Explicit URL/type pairs, read as pages next to the target URL.                                               |
 | `categories`       | `string[]`                                                | —                              | **Not read by the CLI.** Use the `--categories` flag instead.                                                |
-| `maxPages`         | `number`                                                  | —                              | **Not read by anything.** The page budget is fixed; see [Fixed limits](#fixed-limits).                       |
 
-The config file accepts the last two keys, but they do not change the scan. Use the `--categories` command-line option to limit categories. You cannot change the page limit with `maxPages`.
+The config file accepts `categories`, but it does not change the scan. Use the `--categories` command-line option to limit categories. A scan reads one target URL; see [Fixed limits](#fixed-limits).
 
 ### Precedence
 
@@ -141,7 +140,7 @@ A `PageOverride` declares `{ url, pageType }`. Supported types are `homepage`, `
 
 The CLI config, SDK, and MCP tool accept the same `pageType` and `pages` fields. Invalid types or non-absolute override URLs fail validation before fetching. Older SDK versions silently skipped malformed override URLs; v7 reports the error.
 
-Overrides are de-duplicated ignoring a trailing slash. A target-URL entry supplies its declaration unless top-level `pageType` overrides it. Duplicate extra URLs keep their first declaration. Discovery fills remaining slots. A declaration does not bypass evidence gates or the page budget. Failed fetches remain in `pageAttempts` and audit coverage.
+Overrides are de-duplicated ignoring a trailing slash. A target-URL entry supplies its declaration unless top-level `pageType` overrides it. Duplicate extra URLs keep their first declaration. A declaration does not bypass evidence gates. Failed fetches remain in `pageAttempts` and audit coverage.
 
 ```json
 {
@@ -155,7 +154,7 @@ Overrides are de-duplicated ignoring a trailing slash. A target-URL entry suppli
 
 Omit the declaration to use detection. Type-specific checks on detected pages remain advisory. Common checks still use all eligible pages. Detection confidence and signals explain the classification; they do not grant scoring permission.
 
-Field-level product verification (`report.productFields`) is only produced when a page override with `pageType: 'product'` is supplied. Without one, the report marks it skipped rather than guessing from an auto-discovered page.
+Field-level product verification (`report.productFields`) is only produced when a page override with `pageType: 'product'` is supplied. Without one, the report marks it skipped rather than guessing from another scanned page.
 
 ## Environment variables
 
@@ -171,7 +170,7 @@ These are compile-time constants in [`packages/core/src/constants.ts`](../packag
 
 | Limit              | Value                                                                  |
 | :----------------- | :--------------------------------------------------------------------- |
-| Pages per scan     | 6 — the homepage plus five more, whether discovered or overridden      |
+| Pages per scan     | The target URL, plus declared `pages` and at most one gateway target   |
 | Request timeout    | 10 seconds per request                                                 |
 | Scan budget        | 180 seconds per scan by default; see `--timeout` in [cli.md](./cli.md) |
 | Response body read | 5 MB, after which the body is truncated                                |

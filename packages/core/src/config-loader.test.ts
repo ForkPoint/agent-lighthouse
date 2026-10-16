@@ -126,7 +126,6 @@ describe("loadConfigFile", () => {
         assertCategories: { "agent-interfaces": 80 },
         output: ["json"],
         outputDir: "./out",
-        maxPages: 12,
       }),
     );
     expect(loadConfigFile()).toMatchObject({
@@ -137,7 +136,6 @@ describe("loadConfigFile", () => {
       assertCategories: { "agent-interfaces": 80 },
       output: ["json"],
       outputDir: "./out",
-      maxPages: 12,
     });
   });
 });
