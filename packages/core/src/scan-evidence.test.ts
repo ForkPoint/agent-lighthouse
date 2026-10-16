@@ -529,15 +529,15 @@ describe("scan-evidence: unreachable homepage reasons", () => {
     expect(
       reason({
         status: 302,
-        redirectChain: [
-          { status: 302, from: a, to: b },
-          { status: 302, from: b, to: a },
-          { status: 302, from: a, to: b },
-          { status: 302, from: b, to: a },
-          { status: 302, from: a, to: b },
-        ],
+        redirectChain: Array.from({ length: MAX_REDIRECTS }, (_, i) =>
+          i % 2 === 0
+            ? { status: 302, from: a, to: b }
+            : { status: 302, from: b, to: a },
+        ),
       }),
-    ).toBe("The homepage redirects in a loop (HTTP 302 after 5 redirects).");
+    ).toBe(
+      `The homepage redirects in a loop (HTTP 302 after ${String(MAX_REDIRECTS)} redirects).`,
+    );
   });
 
   it("keeps the plain status when the chain ended before the hop limit", () => {
@@ -560,13 +560,13 @@ describe("scan-evidence: unreachable homepage reasons", () => {
   });
 
   it("names the redirect limit for a chain that never repeats", () => {
-    const hops = Array.from({ length: 5 }, (_, i) => ({
+    const hops = Array.from({ length: MAX_REDIRECTS }, (_, i) => ({
       status: 301,
       from: `https://example.com/${i}`,
       to: `https://example.com/${i + 1}`,
     }));
     expect(reason({ status: 301, redirectChain: hops })).toBe(
-      "The homepage answered HTTP 301 after 5 redirects, the most the scan follows.",
+      `The homepage answered HTTP 301 after ${String(MAX_REDIRECTS)} redirects, the most the scan follows.`,
     );
   });
 });

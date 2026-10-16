@@ -84,22 +84,34 @@ function shingles(text: string): Set<string> {
  */
 function unescapedStrings(source: string): string {
   const parts: string[] = [];
-  const re = /"((?:[^"\\]|\\.)*)"/g;
-  let match: RegExpExecArray | null;
   const text = source.slice(0, MAX_SCAN_CHARS);
-  while ((match = re.exec(text)) !== null) {
-    const raw = match[1]!;
+  // One forward pass. A regex here restarted at every later quote whenever
+  // the cut above fell inside a literal: 41 s on one 512 KiB flight payload,
+  // with the event loop blocked for every parallel scan. A literal the cut
+  // leaves open is read up to the cut, so its prose still counts.
+  let open = text.indexOf('"');
+  while (open !== -1) {
+    let close = open + 1;
+    while (close < text.length && text[close] !== '"')
+      close += text[close] === "\\" ? 2 : 1;
+    const raw = text.slice(open + 1, Math.min(close, text.length));
     try {
       parts.push(JSON.parse(`"${raw}"`) as string);
     } catch {
       parts.push(raw);
     }
+    if (close >= text.length) break;
+    open = text.indexOf('"', close + 1);
   }
-  return parts
-    .join(" ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  return (
+    parts
+      .join(" ")
+      // `[^<>]` stops a tag match at the next `<`, so text cut before a `>`
+      // costs one pass, not one pass per `<`.
+      .replace(/<[^<>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+  );
 }
 
 /** Add a chunk to the named payload, merging repeat frames of one stream. */

@@ -71,6 +71,15 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
   by page URL and payload name so the representative URL is stable. This fixes
   the single-payload limit and attribution without changing thresholds or weight.
 
+- 2026-10-16 — the string-literal read is one forward pass instead of a
+  regex. The scan cuts a payload at 512 KiB. When the cut fell inside a
+  literal, the regex found no closing quote and restarted at every later
+  quote. On one RSC flight payload from the live corpus it ran for 41 s,
+  blocked every scan in the same process, and returned no strings at all, so
+  duplication read as zero. A literal the cut leaves open is now read up to
+  the cut. Thresholds and weight are unchanged; a page whose duplicated prose
+  sat in that literal can now fail the duplication check it passed before.
+
 - **No tokenizer.** The dossier sizes payloads at `o200k_base`; the shipped
   audit uses the repo-wide estimator `characters / 4` (`CHARS_PER_TOKEN = 4`),
   because the global constraint forbids new runtime dependencies. Counts are

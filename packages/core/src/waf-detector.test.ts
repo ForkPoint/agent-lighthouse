@@ -425,6 +425,50 @@ describe("detectWafProtection", () => {
     });
   });
 
+  // Storefront platforms redirect a refused client to a challenge route. Its
+  // page can answer 404 with the shop's own error page, or 200 with a
+  // script-only challenge, so neither its status nor its text names the wall.
+  describe("challenge routes", () => {
+    it("names PerimeterX for a chain that ends on the PX-Show route", () => {
+      const wall = onHomepage(
+        {
+          status: 404,
+          finalUrl: `${URL}/on/demandware.store/Sites-shop-Site/en_US/PX-Show?url=abc`,
+          body: "<html><body>Page not found</body></html>",
+        },
+        0,
+      );
+      expect(wall?.name).toBe("HUMAN / PerimeterX Bot Defense");
+      expect(wall?.reason).toBe("redirected to the PerimeterX challenge route");
+      expect(wall?.statusCode).toBe(404);
+    });
+
+    it("names DataDome for a chain that ends on the DDUser-Challenge route", () => {
+      const wall = onHomepage({
+        status: 200,
+        finalUrl: `${URL}/on/demandware.store/Sites-shop-Site/en_US/DDUser-Challenge?redirect=%2F`,
+        body: '<p id="cmsg">Please enable JS and disable any ad blocker</p>',
+      });
+      expect(wall?.name).toBe("DataDome Bot Protection");
+      expect(wall?.reason).toBe("redirected to the DataDome challenge route");
+    });
+
+    it("does not read a route name inside a query or a longer segment", () => {
+      expect(
+        onHomepage({
+          finalUrl: `${URL}/search?q=PX-Show`,
+          body: "<html><body>Shop</body></html>",
+        }),
+      ).toBeNull();
+      expect(
+        onHomepage({
+          finalUrl: `${URL}/blog/PX-Showcase`,
+          body: "<html><body>Shop</body></html>",
+        }),
+      ).toBeNull();
+    });
+  });
+
   describe("Akamai block page served with HTTP 200", () => {
     const geoBlock = {
       status: 200,

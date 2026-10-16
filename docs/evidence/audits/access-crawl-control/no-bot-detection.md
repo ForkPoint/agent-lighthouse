@@ -94,6 +94,15 @@ scan read is named in a pass, because no wall was observed and the page was
 read. The `wafProtection` branch, which carries the A grade, is unchanged.
 Script-`src` scoping and a UA probe are still open items from the review above.
 
+- 2026-10-16 — a homepage chain that ends on a storefront platform's
+  challenge route is a wall: `PX-Show` names PerimeterX and
+  `DDUser-Challenge` names DataDome. The route page answered 404 with the
+  shop's error page, or 200 with a script-only challenge, so the scan said
+  "HTTP 404" without naming the vendor. The same day the fetcher began to
+  send cookies back along one redirect chain and to follow 20 hops, as
+  browsers do. Sites that looped until a locale cookie came back now load;
+  some of those chains end on the DataDome route above.
+
 - 2026-10-16 — the shared WAF detector judges the wall from the pages the
   scan read. A live run over 684 corpus sites found 12 sites reported as walled
   although the homepage answered 200 and was read: a 403 S3 `AccessDenied`

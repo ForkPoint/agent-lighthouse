@@ -94,6 +94,13 @@ without a rendering engine.
   away pass → na, HTTP 200 bot challenge pass → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
 
+- 2026-10-16 — the hiding checks are judged once per element. Each text
+  element used to re-test every ancestor against every CSS rule, which took
+  8-11 s on a large storefront page with the event loop blocked. Only rules
+  that carry a hiding declaration are matched now, and each element's own
+  verdict and its ancestors' verdict are cached for the page. A rule with no
+  hiding declaration could never change a verdict, so no result moves.
+
 ## Deferred
 
 The sketch's non-rendered channels — HTML comments, `<noscript>`, `<template>`,
