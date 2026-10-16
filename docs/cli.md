@@ -86,10 +86,6 @@ Unlike every other entry in this table, help is not an option on a scan: it is r
 
 Note also that the exit code is **1**, not 0 — the same code as a missing URL, since both mean "nothing was scanned". Do not use `agent-lighthouse --help` as a health check in a script that treats a non-zero exit as a failure.
 
-### Removed: `-p`, `--preset <name>`
-
-Presets were removed in 8.0.0. A preset never changed which audits ran or how they scored: v2 replaced hand-tuned category weights with evidence mass (see [scoring.md](./scoring.md#category-scores-to-the-overall-score)). The flag is still accepted, so existing scripts keep running, but it does nothing and the CLI prints a warning. To narrow a scan, use `--categories`.
-
 ### `-c`, `--config <path>`
 
 ```bash

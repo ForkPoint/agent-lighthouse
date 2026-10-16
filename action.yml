@@ -9,10 +9,6 @@ inputs:
   url:
     description: "Target website or storefront URL to audit"
     required: true
-  preset:
-    description: "Removed in 8.0.0. Ignored; kept so existing workflows still parse"
-    required: false
-    deprecationMessage: "The preset input was removed and does nothing. Delete it from the workflow."
   min-score:
     description: "Minimum overall score (0-100) required to pass CI"
     required: false

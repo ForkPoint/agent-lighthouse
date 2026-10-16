@@ -44,8 +44,6 @@ export interface FileConfig {
   url?: string;
   pageType?: PageType;
   pages?: PageOverride[] | null;
-  /** Removed in 8.0.0; still read so the CLI can warn that it does nothing. */
-  preset?: unknown;
   minScore?: number;
   outputDir?: string;
   output?: string[];
@@ -59,11 +57,6 @@ export interface CliOptions {
   invalidSnapshots?: string;
   url: string | undefined;
   configPath: string | undefined;
-  /**
-   * `--preset` or the config key `preset` was given. Presets are gone; the
-   * CLI warns instead of failing so existing scripts keep running.
-   */
-  presetIgnored: boolean;
   minScore: number;
   outputDir: string;
   outputFormats: string[];
@@ -244,14 +237,6 @@ export function parseCliOptions(
   return {
     url: resolveUrl(positionalUrl, fileConfig),
     configPath: getArgValue(args, "-c", "--config"),
-    presetIgnored:
-      args.some(
-        (arg) =>
-          arg === "-p" ||
-          arg === "--preset" ||
-          arg.startsWith("-p=") ||
-          arg.startsWith("--preset="),
-      ) || fileConfig.preset !== undefined,
     minScore,
     outputDir:
       getArgValue(args, "-d", "--output-dir") ||

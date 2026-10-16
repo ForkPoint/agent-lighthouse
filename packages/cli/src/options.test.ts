@@ -128,7 +128,6 @@ describe("parseCliOptions", () => {
     const o = parseCliOptions([], "https://example.com");
     expect(o).toMatchObject({
       url: "https://example.com",
-      presetIgnored: false,
       minScore: 0,
       outputDir: "./reports",
       outputFormats: ["terminal", "html", "json"],
@@ -156,20 +155,6 @@ describe("parseCliOptions", () => {
       outputDir: "./out",
       outputFormats: ["json"],
     });
-  });
-
-  // Presets were removed in 8.0.0. The flag and the config key are still
-  // recognised so main can warn instead of silently dropping them.
-  it.each([
-    [["--preset", "ecommerce"], {}],
-    [["--preset=ecommerce"], {}],
-    [["-p", "ecommerce"], {}],
-    [["-p=ecommerce"], {}],
-    [[], { preset: "ecommerce" }],
-  ])("flags a removed preset in %j %j", (args, fileConfig) => {
-    expect(
-      parseCliOptions(args, "https://example.com", fileConfig).presetIgnored,
-    ).toBe(true);
   });
 
   it("lets a flag beat the config file", () => {

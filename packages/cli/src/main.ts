@@ -192,14 +192,6 @@ async function audit(targetUrl?: string) {
     process.exit(1);
   }
 
-  // Removed in 8.0.0. A preset never changed which audits ran or how they
-  // scored, so ignoring it changes no result; failing would break CI scripts.
-  if (opts.presetIgnored && !isSilent && !progressJson) {
-    console.error(
-      '\x1b[33mWarning: --preset and the config key "preset" were removed and do nothing. Use --categories to narrow a scan.\x1b[0m',
-    );
-  }
-
   if (!isSilent) {
     printBanner();
     console.log(`Auditing \x1b[1m${url}\x1b[0m ...\n`);
