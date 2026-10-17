@@ -11,8 +11,10 @@ import { pageRendersText } from "./scan-evidence";
  * text is never a gateway, whatever its head says.
  *
  * The meta refresh wins over the canonical, because it is where a browser
- * goes. The target must be on the page's own origin and differ from the page
- * itself; a cross-origin target is another site and is not followed.
+ * goes. The target must be on the page's own site and differ from the page
+ * itself: the same origin, or the `www` twin of its host on the same scheme
+ * and port (`example.com` and `www.example.com`). Any other host is another
+ * site and is not followed.
  */
 export function gatewayTarget(
   page: Pick<DomPageContext, "$">,
@@ -41,7 +43,7 @@ export function gatewayTarget(
     } catch {
       continue;
     }
-    if (target.origin !== base.origin) continue;
+    if (!sameSite(target, base)) continue;
     target.hash = "";
     if (sameDocument(target, base)) continue;
     return target.href;
@@ -57,6 +59,14 @@ function refreshTarget(content: string): string | undefined {
   if (!match) return undefined;
   const url = match[1]!.trim().replace(/^(['"])(.*)\1$/, "$2");
   return url || undefined;
+}
+
+/** The same origin, or the apex and `www` hosts of one site. */
+function sameSite(a: URL, b: URL): boolean {
+  if (a.origin === b.origin) return true;
+  if (a.protocol !== b.protocol || a.port !== b.port) return false;
+  const bare = (host: string): string => host.replace(/^www\./, "");
+  return a.hostname !== b.hostname && bare(a.hostname) === bare(b.hostname);
 }
 
 function sameDocument(a: URL, b: URL): boolean {
