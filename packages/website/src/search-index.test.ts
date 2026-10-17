@@ -144,7 +144,7 @@ describe.skipIf(!built)("the built search index", () => {
     );
   });
 
-  it("indexes the source registry page, and none of its 715 records", () => {
+  it("indexes the source registry page, and none of its records", () => {
     // Deliberate, and said out loud in the dialog: `/sources/` fetches the
     // registry in the browser, so the built HTML holds the page's prose and not
     // the records. The page is findable; a search for a single source is not
@@ -153,7 +153,13 @@ describe.skipIf(!built)("the built search index", () => {
       (fragment) => fragment.url === "/sources/",
     )!;
 
-    expect(sources.content).toContain("715 sources");
+    const registry = JSON.parse(
+      readFileSync(
+        resolve(__dirname, "../../../docs/evidence/sources.json"),
+        "utf8",
+      ),
+    ) as { sources: unknown[] };
+    expect(sources.content).toContain(`${registry.sources.length} sources`);
     expect(sources.content).not.toContain("Agentic Commerce Protocol");
   });
 });

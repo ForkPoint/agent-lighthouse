@@ -816,6 +816,15 @@
       "keyFindings": "Anthropic operates three crawlers: ClaudeBot (collects web content for model training and development), Claude-User (retrieves sites when a user directs Claude to specific content), Claude-SearchBot (indexes web content to improve search result quality). Notable NEGATIVE finding: the document contains no guidance whatsoever on how content is selected, ranked or cited by Claude — no mention of authorship, credentials, publication dates, structured data, brand or source authority. It covers only crawler transparency and robots.txt control. This is direct absence-of-documentation counter-evidence for every authority signal in this domain."
     },
     {
+      "id": "aws-waf-captcha-challenge-actions",
+      "title": "CAPTCHA and Challenge action behavior",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/waf-captcha-and-challenge-actions.html",
+      "type": "vendor-doc",
+      "publisher": "Amazon Web Services",
+      "verified": "2026-10-17",
+      "keyFindings": "A request without a valid token that matches a Challenge rule is blocked; the response carries the header x-amzn-waf-action: challenge and HTTP 202 Request Accepted. A CAPTCHA rule answers x-amzn-waf-action: captcha with HTTP 405 Method Not Allowed. A JavaScript interstitial is included only when the request accepts text/html."
+    },
+    {
       "id": "anthropic-cu-tool",
       "title": "Computer use tool — security and prompt injection guidance",
       "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/computer-use-tool",

@@ -12,6 +12,7 @@ sources:
   - perplexity-bots-docs
   - s18
   - anthropic-crawlers
+  - aws-waf-captcha-challenge-actions
 ---
 
 # no-bot-detection (`2.26`)
@@ -93,6 +94,16 @@ scan evidence (`pageRendersText` when it is absent). A loader on a page the
 scan read is named in a pass, because no wall was observed and the page was
 read. The `wafProtection` branch, which carries the A grade, is unchanged.
 Script-`src` scoping and a UA probe are still open items from the review above.
+
+- 2026-10-17 — an AWS WAF Challenge or CAPTCHA response is a wall. AWS
+  documents both rule actions as answering a request without a valid token
+  with the header `x-amzn-waf-action` (`challenge` with HTTP 202, `captcha`
+  with HTTP 405); see
+  https://docs.aws.amazon.com/waf/latest/developerguide/waf-captcha-and-challenge-actions.html
+  (verified 2026-10-17). A corpus site answered the scanner with an empty
+  HTTP 202 and that header. The scan reported it as a page with too little
+  evidence; it now names AWS WAF. Like every vendor marker, the header on a
+  root file counts only when the homepage failed.
 
 - 2026-10-16 — a homepage chain that ends on a storefront platform's
   challenge route is a wall: `PX-Show` names PerimeterX and
