@@ -245,6 +245,20 @@ function vendorWall(
   const refused = BLOCK_STATUSES.has(status);
   const interstitial = !readable(rawBody);
 
+  // AWS WAF: a Challenge or CAPTCHA rule action answers with this header
+  // (HTTP 202 and 405, often with an empty body). AWS documents the header as
+  // the response to a request it blocked for a missing token.
+  const awsAction = (headers["x-amzn-waf-action"] || "").toLowerCase();
+  if (awsAction === "challenge" || awsAction === "captcha") {
+    return {
+      isBlocked: true,
+      provider: WafProvider.AwsWaf,
+      name: "AWS WAF",
+      reason: `${awsAction} rule action, HTTP ${status}`,
+      statusCode: status,
+    };
+  }
+
   // Cloudflare: the challenge header or the managed challenge page.
   if (
     headers["cf-mitigated"] === "challenge" ||

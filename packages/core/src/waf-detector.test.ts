@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { detectWafProtection } from "./waf-detector";
 import type { FetchResult } from "./fetcher";
+import { WafProvider } from "#core/contracts";
 
 /**
  * Bot-wall detection.
@@ -446,6 +447,39 @@ describe("detectWafProtection", () => {
   // Storefront platforms redirect a refused client to a challenge route. Its
   // page can answer 404 with the shop's own error page, or 200 with a
   // script-only challenge, so neither its status nor its text names the wall.
+  describe("AWS WAF", () => {
+    it.each([
+      ["challenge", 202],
+      ["captcha", 405],
+    ])("names the %s action from its header", (action, status) => {
+      const waf = onHomepage(
+        { status, headers: { "x-amzn-waf-action": action } },
+        0,
+      );
+      expect(waf).toMatchObject({
+        isBlocked: true,
+        provider: WafProvider.AwsWaf,
+        statusCode: status,
+      });
+      expect(waf?.reason).toContain(action);
+    });
+
+    it("ignores the header on a root file when the homepage was read", () => {
+      const waf = detectWafProtection(
+        URL,
+        result({ body: "<html><body><p>Open shop</p></body></html>" }),
+        {
+          "/llms.txt": result({
+            status: 202,
+            headers: { "x-amzn-waf-action": "challenge" },
+          }),
+        },
+        1,
+      );
+      expect(waf).toBeNull();
+    });
+  });
+
   describe("challenge routes", () => {
     it("names PerimeterX for a chain that ends on the PX-Show route", () => {
       const wall = onHomepage(
