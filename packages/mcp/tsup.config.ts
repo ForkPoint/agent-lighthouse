@@ -6,14 +6,13 @@ export default defineConfig({
   entry: {
     index: "src/index.ts",
     server: "src/server.ts",
+    // The command. Its own first line is the shebang, which esbuild keeps.
+    bin: "src/bin.ts",
   },
+  // bin.ts loads server.js at run time, after it turns source maps on;
+  // bundling the server into it would load everything before that line runs.
+  external: [/\/server\.js$/],
   format: ["cjs", "esm"],
-  banner: ({ entry }) => {
-    if (entry === "server") {
-      return { js: "#!/usr/bin/env node" };
-    }
-    return {};
-  },
   define: {
     __PACKAGE_VERSION__: JSON.stringify(packageVersion),
   },

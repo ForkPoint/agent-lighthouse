@@ -27,7 +27,7 @@
     "webmcp"
   ],
   "bin": {
-    "agent-lighthouse-mcp": "./dist/server.js"
+    "agent-lighthouse-mcp": "./dist/bin.js"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
