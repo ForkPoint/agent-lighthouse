@@ -217,8 +217,19 @@ function classifyWithinLimits(baseline: FetchResult, probe: FetchResult) {
 }
 
 /**
+ * A baseline with no HTTP answer: a refused or timed-out connection, a DNS or
+ * TLS failure. `classifyResponse` reports any crawler probe against it as
+ * "baseline blocked", so the probes cost a request each and change nothing.
+ * On a host that never accepts a connection, each one waits out the connect
+ * timeout in turn, and a few such sitemap URLs exhaust the scan budget.
+ */
+function unanswered(baseline: FetchResult): boolean {
+  return baseline.status === 0;
+}
+
+/**
  * Fetch each URL once as a browser, then once per crawler token, and classify
- * the difference.
+ * the difference. A URL whose baseline got no HTTP answer is not probed.
  *
  * The baseline is fetched once per URL and reused across tokens, so a six-token
  * sweep costs seven requests per URL rather than twelve. URLs are `isSafeUrl`-
@@ -244,6 +255,7 @@ export async function probeUaParity(
       followRedirects: true,
       signal: opts.signal,
     });
+    if (unanswered(baseline)) continue;
     for (const agent of agents) {
       const probe = await fetch({
         url,
@@ -330,7 +342,7 @@ export async function sharedUaProbes(
       cache.baselines.set(url, baseline);
     }
     const baselineResult = await baseline;
-    if (!baselineResult) continue;
+    if (!baselineResult || unanswered(baselineResult)) continue;
 
     for (const agent of agents) {
       const key = `${agent.token}|${url}`;
