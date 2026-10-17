@@ -969,6 +969,33 @@ describe("createFetcher redirect handling", () => {
     expect(headers["Cookie"]).toBeUndefined();
   });
 
+  // The cookies go only on hops, so the case above passes even with one jar
+  // for every fetch. A second fetch that redirects too shows the leak.
+  it("does not carry one fetch's cookies onto the hops of the next", async () => {
+    mockLookup.mockResolvedValue({ address: "93.184.216.34", family: 4 });
+    mockRequest
+      .mockResolvedValueOnce(
+        mockResponse(302, "", {
+          location: "/b",
+          "set-cookie": "session=abc; Path=/",
+        }) as never,
+      )
+      .mockResolvedValueOnce(mockResponse(200, "") as never)
+      .mockResolvedValueOnce(mockResponse(302, "", { location: "/d" }) as never)
+      .mockResolvedValueOnce(mockResponse(200, "") as never);
+
+    const fetcher = createFetcher();
+    await fetcher.fetch({ url: "https://example.com/a" });
+    await fetcher.fetch({ url: "https://example.com/c" });
+
+    const headers = mockRequest.mock.calls[3]![1]?.headers as Record<
+      string,
+      string
+    >;
+    expect(mockRequest.mock.calls[3]![0]).toBe("https://example.com/d");
+    expect(headers["Cookie"]).toBeUndefined();
+  });
+
   // A caller's own Cookie header is kept on every hop. The cookies the chain
   // set are added after it, not put in its place.
   it("adds the chain's cookies after a Cookie header the caller sent", async () => {
