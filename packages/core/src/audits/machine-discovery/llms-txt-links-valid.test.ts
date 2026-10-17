@@ -70,6 +70,23 @@ describe("LlmsTxtLinksValidAudit", () => {
     expect(result.message).toContain("no links to validate");
   });
 
+  it("is not applicable when /llms.txt redirects to the homepage", async () => {
+    const home = mockFetchResult(
+      '<!DOCTYPE html>\n<html lang="fr"><head><title>Home</title></head><body>Shop</body></html>',
+      200,
+      "text/html",
+    );
+    home.url = "https://example.com/llms.txt";
+    home.finalUrl = "https://example.com/";
+    const result = await audit.audit(
+      mockCheckContext([], { "/llms.txt": home }),
+    );
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.found).toBe(
+      "HTTP 200 with an HTML page, redirected to https://example.com/, not the file",
+    );
+  });
+
   it("skips malformed URLs in the link list (catch branch)", async () => {
     // http://[invalid has an unclosed IPv6 bracket → new URL throws → catch fires
     const body =

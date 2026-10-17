@@ -32,6 +32,10 @@ const THIN = "<html><body><main><p>One line.</p></main></body></html>";
 interface RunOptions {
   robots?: string;
   llms?: boolean;
+  /** Body served at /llms.txt instead of a Markdown file. */
+  llmsBody?: string;
+  /** Collects every URL the audit requests. */
+  seen?: string[];
   baselineStatus?: number;
   /** The response every crawler UA gets. Defaults to the browser response. */
   probe?: () => FetchResult;
@@ -48,6 +52,12 @@ function run(options: RunOptions = {}) {
     );
   if (options.llms)
     rootFiles["/llms.txt"] = mockFetchResult("# Site\n", 200, "text/plain");
+  if (options.llmsBody !== undefined)
+    rootFiles["/llms.txt"] = mockFetchResult(
+      options.llmsBody,
+      200,
+      "text/html",
+    );
 
   const ctx = mockCheckContext(
     [mockPageContext("https://example.com/", FULL)],
@@ -56,6 +66,7 @@ function run(options: RunOptions = {}) {
   const xml = `<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://example.com/docs/a</loc></url></urlset>`;
 
   ctx.fetch = async (o: FetchOptions): Promise<FetchResult> => {
+    options.seen?.push(o.url);
     if (new URL(o.url).pathname === "/sitemap.xml") {
       return mockFetchResult(xml, 200, "application/xml");
     }
@@ -193,5 +204,21 @@ describe("AiCrawlerEdgeParityAudit", () => {
       probe: () => mockFetchResult("", 503),
     });
     expect(result.message).toContain("/llms.txt");
+  });
+
+  // A homepage redirect answers /llms.txt with HTML. That is no llms.txt, so
+  // it is not probed as one.
+  it("does not probe /llms.txt when it answers with an HTML page", async () => {
+    const seen: string[] = [];
+    await run({
+      robots: ALLOW_ALL,
+      llmsBody:
+        '<!DOCTYPE html>\n<html lang="fr"><head><title>Home</title></head><body>Shop</body></html>',
+      seen,
+    });
+    expect(seen.length).toBeGreaterThan(0);
+    expect(seen.some((url) => new URL(url).pathname === "/llms.txt")).toBe(
+      false,
+    );
   });
 });

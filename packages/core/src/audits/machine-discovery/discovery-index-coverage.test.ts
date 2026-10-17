@@ -136,6 +136,21 @@ describe("DiscoveryIndexCoverageAudit", () => {
     expect(result.status).toBe(CheckStatus.Pass);
   });
 
+  // A homepage redirect answers /llms.txt with HTML. Link-shaped text in that
+  // page is not an llms.txt listing, so it covers nothing.
+  it("does not read an HTML page at /llms.txt as a discovery index", async () => {
+    const ctx = mockCheckContext([page("https://example.com/about")], {
+      "/llms.txt": mockFetchResult(
+        "<!DOCTYPE html><html><body><p>- [About](https://example.com/about): About page</p></body></html>",
+        200,
+        "text/html",
+      ),
+    });
+    const result = await audit.audit(ctx);
+    expect(result.status).not.toBe(CheckStatus.Pass);
+    expect(result.message).toContain("No sitemap URLs or llms.txt links");
+  });
+
   // Review finding (1.22): extractMarkdownLinks drops relative URLs, so the
   // llms.txt half of the comparison was empty for any site using them.
   it("resolves relative llms.txt links against the base URL", async () => {

@@ -63,6 +63,7 @@ describe("rootArtifactMiss", () => {
     const failed = mockFetchResult("", 0);
     failed.error = "connect ECONNREFUSED";
     expect(rootArtifactMiss(failed)).toBe("connect ECONNREFUSED");
+    expect(rootArtifactMiss(mockFetchResult("", 0))).toBe("No response");
     expect(rootArtifactMiss(undefined)).toBe("No response");
   });
 });

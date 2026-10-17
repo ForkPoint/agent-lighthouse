@@ -44,6 +44,10 @@ interface RunOptions {
   hitBrowsers?: boolean;
   robots?: string;
   inlineRsl?: string;
+  /** Served at /llms.txt with HTTP 200. */
+  llms?: { body: string; contentType: string };
+  /** Collects every URL the audit requests. */
+  seen?: string[];
 }
 
 function run(options: RunOptions = {}) {
@@ -54,6 +58,12 @@ function run(options: RunOptions = {}) {
       options.robots,
       200,
       "text/plain",
+    );
+  if (options.llms)
+    rootFiles["/llms.txt"] = mockFetchResult(
+      options.llms.body,
+      200,
+      options.llms.contentType,
     );
 
   const body = options.inlineRsl
@@ -75,6 +85,7 @@ function run(options: RunOptions = {}) {
   };
 
   ctx.fetch = async (o: FetchOptions): Promise<FetchResult> => {
+    options.seen?.push(o.url);
     if (new URL(o.url).pathname === "/sitemap.xml")
       return mockFetchResult("", 404, "text/plain");
     if (o.userAgent === BASELINE_UA) {
@@ -213,5 +224,28 @@ describe("MachineActionable402PaidAccessAudit", () => {
     expect(meta.tier).toBe(AuditTier.Scored);
     expect(meta.weight).toBeCloseTo(0.6);
     expect(meta.id.length).toBeLessThanOrEqual(64);
+  });
+
+  it("probes /llms.txt when the site publishes one", async () => {
+    const seen: string[] = [];
+    await run({ llms: { body: "# Site\\n", contentType: "text/plain" }, seen });
+    expect(seen.some((url) => new URL(url).pathname === "/llms.txt")).toBe(
+      true,
+    );
+  });
+
+  it("does not probe /llms.txt when it answers with an HTML page", async () => {
+    const seen: string[] = [];
+    await run({
+      llms: {
+        body: '<!DOCTYPE html>\n<html lang="fr"><head><title>Home</title></head><body>Shop</body></html>',
+        contentType: "text/html",
+      },
+      seen,
+    });
+    expect(seen.length).toBeGreaterThan(0);
+    expect(seen.some((url) => new URL(url).pathname === "/llms.txt")).toBe(
+      false,
+    );
   });
 });

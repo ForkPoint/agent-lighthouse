@@ -60,6 +60,46 @@ const CATALOG = JSON.stringify({
 });
 
 describe("discoverMcpEndpoint", () => {
+  // A homepage redirect answers each well-known path with HTML. None of them
+  // declares anything, so discovery moves on to the next source.
+  it("skips an HTML page at servers.json and reads the UCP service", () => {
+    const found = discoverMcpEndpoint(
+      ctxWith({
+        "/.well-known/mcp/servers.json":
+          '<!DOCTYPE html>\n<html lang="fr"><head><title>Home</title></head><body>Shop</body></html>',
+        "/.well-known/ucp": UCP,
+      }),
+    );
+    expect(found).toEqual({ url: "https://a.test/ucp-mcp", source: "ucp" });
+  });
+
+  it("skips HTML pages at servers.json and ucp and reads the ai-catalog", () => {
+    const found = discoverMcpEndpoint(
+      ctxWith({
+        "/.well-known/mcp/servers.json":
+          '<!DOCTYPE html>\n<html lang="fr"><head><title>Home</title></head><body>Shop</body></html>',
+        "/.well-known/ucp":
+          '<!DOCTYPE html>\n<html lang="fr"><head><title>Home</title></head><body>Shop</body></html>',
+        "/.well-known/ai-catalog.json": CATALOG,
+      }),
+    );
+    expect(found?.source).toBe("ai-catalog");
+  });
+
+  it("finds nothing when every source is an HTML page", () => {
+    const found = discoverMcpEndpoint(
+      ctxWith({
+        "/.well-known/mcp/servers.json":
+          '<!DOCTYPE html>\n<html lang="fr"><head><title>Home</title></head><body>Shop</body></html>',
+        "/.well-known/ucp":
+          '<!DOCTYPE html>\n<html lang="fr"><head><title>Home</title></head><body>Shop</body></html>',
+        "/.well-known/ai-catalog.json":
+          '<!DOCTYPE html>\n<html lang="fr"><head><title>Home</title></head><body>Shop</body></html>',
+      }),
+    );
+    expect(found).toBeUndefined();
+  });
+
   it("reads the endpoint out of /.well-known/mcp/servers.json", () => {
     const found = discoverMcpEndpoint(
       ctxWith({ "/.well-known/mcp/servers.json": SERVERS_JSON }),
