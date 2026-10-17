@@ -9,43 +9,62 @@ disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
 graduated: 2026-08-23
 sources:
-  - S6
-  - S2
-  - S12
+  - c2pa-spec-2-4
+  - c2pa-trust-lists
+  - google-c2pa-transparency
 ---
 
-# C2PA signer chains to the live C2PA Trust List
+# C2PA signing certificate status
 
 > Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
-A manifest that exists is not a manifest that verifies. Grades the signing certificate behind each Content Credential as one of three states: trusted, meaning it is on the official C2PA Trust List; legacy, meaning the Interim Trust List, frozen 2026-01-01; or untrusted, meaning self-signed, expired, or an unknown CA. Separately reports whether a CAWG identity assertion binds a real named creator.
+A manifest that exists is not a manifest that verifies. For each sampled image that carries a C2PA manifest store, the audit reads the signing certificate out of the store and reports what the certificate itself states. It sorts each signer into one of four outcomes:
+
+- **Fails:** the certificate is self-signed, its validity period has ended, or its validity period has not started.
+- **Warns:** the certificate is CA-issued and inside its validity period, but the store carries no time-stamp.
+- **Warns:** a manifest is present but no certificate can be read from it.
+- **Passes:** the certificate is CA-issued, inside its validity period, and the store carries a time-stamp.
+
+The audit does not check whether the issuing CA is on the C2PA Trust List. A CA-issued certificate that passes here can still be untrusted by a conforming validator.
 
 ## Claimed mechanism (falsifiable)
 
-Conforming C2PA validators resolve the signing certificate against the published C2PA Trust List. The Interim Trust List was frozen on 2026-01-01: no new entries are accepted and legacy ITL certificates are not renewed, and C2PA explicitly urges products to distinguish ITL-era credentials from conforming-product credentials. Therefore an asset signed with a self-signed or ITL-legacy certificate will surface as untrusted/unknown-signer in any conforming validator, regardless of how well-formed the manifest is. FALSIFIABLE: extract the x5chain from the COSE signature and attempt a chain build to the trust list; the check is wrong if untrusted-signer manifests validate cleanly in conforming tools.
+A conforming C2PA validator builds a chain of trust from the signing certificate to a trust anchor. If it cannot, the specification says the claim "shall be rejected with a failure code of `signingCredential.untrusted`". The anchors on the C2PA Trust List are certification authorities, and a validator "shall not be pre-configured" with any individual signing credentials. A self-signed certificate therefore has no default path to an anchor. A signature made outside the certificate's validity period fails with `claimSignature.outsideValidity`, and "manifests without time-stamps cease to be valid when the signing credential expires or becomes revoked". The specification tells consumers not to display data from manifests that are not valid. Google states it will validate content against the C2PA Trust List.
+
+FALSIFIABLE: the claim is wrong if a conforming validator, with its default configuration, accepts a manifest signed by a self-signed or expired certificate with no time-stamp.
 
 ## Evidence
 
-- **[MCP Specification 2026-07-28 — Authorization](https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization)** — Model Context Protocol (spec, URL verified 2026-08-20)
-  - 'MCP servers MUST implement OAuth 2.0 Protected Resource Metadata (RFC9728).' Authorization servers MUST provide RFC8414 or OIDC Discovery. Servers SHOULD include a scope parameter in the WWW-Authenticate challenge. Example verbatim: `WWW-Authenticate: Bearer resource_metadata="https://mcp.example.com/.well-known/oauth-protected-resource", scope="files:read"`. Insufficient scope -> 403 with error="insufficient_scope". Servers SHOULD NOT include offline_access in WWW-Authenticate scope or in PRM scopes_supported. Canonical server URI rules: no fragment, scheme required, prefer no trailing slash. Servers MUST validate token audience; MUST NOT accept or transit other tokens.
-- **[Playwright: Auto-waiting / Actionability checks](https://playwright.dev/docs/actionability)** — Microsoft (vendor-doc, URL verified 2026-08-20)
-  - Before click/check/fill/selectOption, Playwright enforces five checks: Visible (non-empty bounding box, not visibility:hidden), Stable (same bounding box over 2 animation frames), Receives Events (element is the hit target at the action point — overlays cause failure), Enabled (not [disabled]/aria-disabled), Editable (not readonly/aria-readonly). Fill requires visible+enabled+editable. This is the exact gate every Playwright-based agent (Playwright-MCP, browser-use, most CUA harnesses) passes through, so each check is a directly testable site-side failure cause.
-- **[Text fragments](https://web.dev/articles/text-fragments)** — Google / web.dev (vendor-doc, URL verified 2026-08-20)
-  - Confirms a shipped answer-surface consumer: "Clicking a featured snippet takes the user directly to the featured snippet text on the source web page. This works thanks to automatically created Text Fragments URLs." Support: Chrome 89+, Edge 89+, Firefox 131+, Safari 18.2+. Restates the boundary rule: "Each of prefix-, start, end, and -suffix can only match text within a single block-level element, but full start,end ranges can span multiple blocks." Opt-out header: Document-Policy: force-load-at-top.
+- **[C2PA Technical Specification 2.4](https://spec.c2pa.org/specifications/specifications/2.4/specs/C2PA_Specification.html)** — C2PA (spec, verified 2026-10-17)
+  - Validation: "If a chain of trust cannot be verified, the claim shall be rejected with a failure code of signingCredential.untrusted." That code means "The signing credential is not listed on any of the validator's applicable trust lists."
+  - Private credential store (14.4.3): a user may trust an individual signer by hand, but "A validator shall not be pre-configured with any entries in a private credential store."
+  - `claimSignature.outsideValidity`: "The claim signature referenced in the claim was created outside the validity period of the signing credential."
+  - Time-stamps (10.3.2.5.1): "manifests without time-stamps cease to be valid when the signing credential expires or becomes revoked." Time-stamps sit in the COSE header labelled `sigTst` or `sigTst2`.
+  - Display (15.3): "Manifest Consumers should not display data from manifests which are not Valid".
+  - Certificates (14.5): the `x5chain` header carries the signer's certificate first, then the certificates that issued it. This is where the audit finds the certificate.
+- **[Trust lists](https://opensource.contentauthenticity.org/docs/conformance/trust-lists)** — Content Authenticity Initiative, C2PA conformance docs (vendor-doc, verified 2026-10-17)
+  - The C2PA Trust List is "a list of X.509 certificate trust anchors". Conforming validators must "refer to the C2PA trust list to determine whether" Content Credentials were signed with a valid certificate.
+  - The Interim Trust List was frozen on January 1, 2026. Content signed during an ITL certificate's validity period stays valid under the legacy trust model.
+- **[How we're increasing transparency for gen AI content with the C2PA](https://blog.google/innovation-and-ai/products/google-gen-ai-content-transparency-c2pa/)** — Google (announcement, verified 2026-10-17)
+  - "We will ensure that our implementations validate content against the forthcoming C2PA Trust list, which allows platforms to confirm the content's origin." The named surfaces are "About this image" in Google Images, Lens and Circle to Search, and Google's ad systems.
 
-## Example failure
-
-A brand runs an in-house signing script using a self-generated certificate. Every product photo carries a syntactically perfect manifest, and internal tooling shows a green check because it was configured to trust the company's own root. In any conforming external validator the assets report an untrusted signing credential, so the provenance claim carries zero third-party weight.
+**Counter-evidence:** The audit checks only what the certificate states about itself. It does not build a chain to the C2PA Trust List, check revocation, or validate the time-stamp, so a pass is necessary rather than sufficient. An expired certificate fails even when the manifest carries a time-stamp; the specification keeps a time-stamped manifest valid if it was signed inside the certificate's validity period, and the audit does not read the time-stamp to tell. Self-signed is judged by the subject and issuer names matching. The Google source is a 2024 announcement in the future tense. No source documents an AI agent that fetches a page and validates the C2PA signer of its images.
 
 ## Scoring
 
-Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
+**Grade: B** — the C2PA specification is a published, versioned industry specification with a conformance programme and trust list, not a ratified standards-body document. Its validation rules are normative for conforming validators, and Google names its consumer surfaces and states it validates against the trust list. That meets the policy's B bar: a draft-status standard with meaningful adoption. It falls short of A because no vendor documents an AI agent consuming the signal.
+
+The audit fails when any sampled signer is self-signed or outside its validity period. It warns when a certificate cannot be read or a valid CA-issued certificate has no time-stamp. A site with no image carrying a manifest is `notApplicable`.
+
+## Example failure
+
+A brand runs an in-house signing script with a self-generated certificate. Every product photo carries a well-formed manifest, and internal tooling shows a green check because it trusts the company's own root. A conforming validator with its default configuration finds no chain to a trust anchor and rejects the signer as `signingCredential.untrusted`, so the provenance claim carries no third-party weight.
 
 ## Implementation deviations
 
-- The slug is shorter than the dossier title. The full name would exceed the 64-character id cap and promise more than the audit delivers.
+- The original proposal title, "C2PA signer chains to the live C2PA Trust List", promised more than the audit delivers. The dossier title now names what it checks.
 - The audit reports only what the signing certificate states: self-signed or CA-issued, inside or outside its validity window, and whether a timestamp token is present. A test asserts no output claims the certificate is trusted or chains to anything.
 - Certificates are found by DER shape, not by decoding COSE. The audit scans the store for the `30 82` SEQUENCE header and hands each candidate to Node's `X509Certificate`, which rejects anything else.
 - A CA-issued certificate with no RFC 3161 timestamp warns rather than passes. Without one the credential stops validating when the certificate expires.

@@ -569,8 +569,9 @@ describe("publicDossier", () => {
         "Why it matters": 215,
         Evidence: 215,
         // 149 since 2026-10-17: `mcp-registry-listing-ownership` gained its
-        // counter-evidence when its sources were replaced.
-        Limits: 149,
+        // counter-evidence when its sources were replaced. 151 since the same
+        // day: both `c2pa-*` audits gained theirs the same way.
+        Limits: 151,
         // Every scored audit publishes its grade reasoning; the shortfall is
         // in the informative and experimental tiers, which the bar exempts.
         "How it scores": 190,
