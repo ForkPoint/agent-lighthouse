@@ -1911,7 +1911,7 @@
       "category": "agent-interfaces",
       "slug": "openapi-servers",
       "title": "OpenAPI servers array valid",
-      "purpose": "Without a servers array, AI agents do not know the base URL for your API. They cannot construct valid request URLs, rendering the entire spec unusable. Add at least your production server URL.",
+      "purpose": "Agents join each operation path to a server URL to build a request. A servers entry with no url, or a servers value that is not an array, leaves them no base URL. An absent servers array is legal: OpenAPI defaults it to `/`.",
       "features": [
         "api",
         "openapi",
