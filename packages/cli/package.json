@@ -1,6 +1,6 @@
 {
   "name": "@forkpoint/agent-lighthouse",
-  "version": "7.3.0",
+  "version": "8.0.0",
   "description": "Lighthouse-style CLI for auditing websites for AI agents, LLM crawlers, MCP clients, llms.txt, WebMCP, OpenAPI, and Schema.org readiness",
   "author": "ForkPoint",
   "license": "Apache-2.0",

@@ -1,5 +1,38 @@
 # @forkpoint/agent-lighthouse-mcp
 
+## 8.0.0
+
+### Patch Changes
+
+- 720315e: The `agent-lighthouse-mcp` command starts again on macOS and Linux. The published file had no `#!/usr/bin/env node` line, so the shell ran it as a shell script and failed with `use strict: command not found`. The command also turns on source maps before the server loads, so stack traces and the `caller` field of log lines name the source file, such as `orchestrator.ts:815`, not the bundle.
+- Updated dependencies [16fb09f]
+- Updated dependencies [16fb09f]
+- Updated dependencies [16fb09f]
+- Updated dependencies [3133998]
+- Updated dependencies [95891cb]
+- Updated dependencies [7b3261e]
+- Updated dependencies [60926ee]
+- Updated dependencies [c97cf1d]
+- Updated dependencies [7b3261e]
+- Updated dependencies [3f6d916]
+- Updated dependencies [02498cf]
+- Updated dependencies [16fb09f]
+- Updated dependencies [105099d]
+- Updated dependencies [2628c5b]
+- Updated dependencies [16fb09f]
+- Updated dependencies [7b3261e]
+- Updated dependencies [862c93b]
+- Updated dependencies [548691c]
+- Updated dependencies [3c31305]
+- Updated dependencies [b355ab4]
+- Updated dependencies [4e07fdd]
+- Updated dependencies [721d7b3]
+- Updated dependencies [7b3261e]
+- Updated dependencies [8eb98ae]
+- Updated dependencies [16fb09f]
+  - @forkpoint/agent-lighthouse-core@8.0.0
+  - @forkpoint/agent-lighthouse-report@8.0.0
+
 ## 7.3.0
 
 ### Patch Changes

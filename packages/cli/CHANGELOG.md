@@ -1,5 +1,64 @@
 # @forkpoint/agent-lighthouse
 
+## 8.0.0
+
+### Major Changes
+
+- 548691c: Remove presets. A preset never changed which audits run or how they score after v2 replaced category weights with evidence mass; it only printed a name in the run header, and its descriptions claimed otherwise.
+
+  - Core no longer exports `PresetName`, `PRESETS`, `getPreset` or `PresetOptions`, and `AgentLighthouseConfig` has no `preset` field.
+  - The CLI drops `-p`/`--preset` and the config key `preset`, and the run header no longer names a preset. The CLI ignores flags and config keys it does not know, so a script that still passes them keeps running unchanged.
+  - The GitHub Action drops its `preset` input. A workflow that still sets it gets GitHub's unexpected-input warning; the run is not affected.
+
+  Use `--categories` to narrow a scan.
+
+### Minor Changes
+
+- 2628c5b: Log lines say where they came from. Besides `site`, `scan` and `component`, each line now carries the scan `phase`, the `audit` whose run wrote it (also for the requests and gatherer work that audit started), and the `gatherer` whose shared work wrote it. Warn and error lines also carry `caller`, the source file and line. The CLI turns on source maps so `caller` names the source file, not the bundle. One `jq` query over a `--log-file` now shows which audit sent which requests.
+- 4e07fdd: Structured logging.
+
+  - Every line carries a time, a level, a message and fields: the site, the scan id and the component that wrote it. Components are fields from child loggers, not prefixes in the message.
+  - `runScan` takes a `logger` option. Any logger with pino's methods works, pino included, and every line of that scan goes to it. Calls use pino's order, `log.info({ fields }, "Message")`.
+  - `runScan` takes a `scanId` option and now fills the report's `scanId`, which was always empty. Omitted, it is a random UUID. Log lines carry the same id, so a log and its report join on it.
+  - New `trace` level below `debug`. Levels: `error` for scanner faults (with the stack), `warn` for what changes a result, `info` for one line per scan, `debug` for decisions and phases, `trace` for each request and audit.
+  - Field names follow OpenTelemetry where it has one (`http.request.method`, `url.full`, `http.response.status_code`, `user_agent.original`); durations are `durationMs`; errors are `err` with `type`, `message`, `stack`, `code` and `cause`.
+  - The logger removes credentials before it writes: a URL's `user:password@` anywhere in a line, and the value of keys named like a secret (`authorization`, `cookie`, `token` and similar). The old debug line that printed the scan URL with its credentials is gone.
+  - Logs go to stderr only; before, debug and info lines went to stdout.
+  - A failed request is now a debug line. The scan logs one warning that counts the failures by error code, and one when requests are still open after the audits.
+  - New CLI flags: `--log-level <level>` sets the terminal level (default `warn`), and `--log-file <path>` appends every line as JSON. `LOG_FORMAT=json` writes JSON to stderr. An unknown `LOG_LEVEL` now warns and falls back to `info` instead of turning on every level.
+  - Core exports `LogField`, `LoggerLike`, `withLogContext`, `LogFormat`, `formatLogRecord`, `parseLogLevel`, `parseLogFormat`, `logger.child()`, `logger.addSink()` and `logger.isLevelEnabled()`.
+
+### Patch Changes
+
+- 7b3261e: Three command-line fixes. `--help` exits 0 instead of 1, and asks for help wherever it appears. Flags may come before the URL: `agent-lighthouse --timeout 30 https://example.com` scans the URL instead of reporting "No target URL specified". The "Auditing …" line no longer echoes a `user:password@` part of the target URL.
+- Updated dependencies [16fb09f]
+- Updated dependencies [16fb09f]
+- Updated dependencies [16fb09f]
+- Updated dependencies [3133998]
+- Updated dependencies [95891cb]
+- Updated dependencies [7b3261e]
+- Updated dependencies [60926ee]
+- Updated dependencies [c97cf1d]
+- Updated dependencies [7b3261e]
+- Updated dependencies [3f6d916]
+- Updated dependencies [02498cf]
+- Updated dependencies [16fb09f]
+- Updated dependencies [105099d]
+- Updated dependencies [2628c5b]
+- Updated dependencies [16fb09f]
+- Updated dependencies [7b3261e]
+- Updated dependencies [862c93b]
+- Updated dependencies [548691c]
+- Updated dependencies [3c31305]
+- Updated dependencies [b355ab4]
+- Updated dependencies [4e07fdd]
+- Updated dependencies [721d7b3]
+- Updated dependencies [7b3261e]
+- Updated dependencies [8eb98ae]
+- Updated dependencies [16fb09f]
+  - @forkpoint/agent-lighthouse-core@8.0.0
+  - @forkpoint/agent-lighthouse-report@8.0.0
+
 ## 7.3.0
 
 ### Patch Changes

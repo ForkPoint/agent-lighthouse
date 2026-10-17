@@ -1,5 +1,84 @@
 # @forkpoint/agent-lighthouse-core
 
+## 8.0.0
+
+### Major Changes
+
+- 862c93b: Remove leftovers of the multi-page scan that nothing read. A scan reads one target URL, plus declared `pages` and at most one gateway target; the page budget was never configurable after the single-URL scan unit.
+
+  - `MAX_PAGES_PER_SCAN` and `DEFAULT_SCAN_LIMIT` are no longer exported from the core package.
+  - The `maxPages` key is removed from `AgentLighthouseConfig` and `PresetOptions`. A JSON config file that still sets `maxPages` loads as before and the key stays ignored; TypeScript code that passes `maxPages` to `defineConfig` no longer type-checks. Remove the key.
+  - The docs, the website MCP page and the MCP tool's `pages` description state the real page set instead of a six-page budget and page discovery.
+
+- 548691c: Remove presets. A preset never changed which audits run or how they score after v2 replaced category weights with evidence mass; it only printed a name in the run header, and its descriptions claimed otherwise.
+
+  - Core no longer exports `PresetName`, `PRESETS`, `getPreset` or `PresetOptions`, and `AgentLighthouseConfig` has no `preset` field.
+  - The CLI drops `-p`/`--preset` and the config key `preset`, and the run header no longer names a preset. The CLI ignores flags and config keys it does not know, so a script that still passes them keeps running unchanged.
+  - The GitHub Action drops its `preset` input. A workflow that still sets it gets GitHub's unexpected-input warning; the run is not affected.
+
+  Use `--categories` to narrow a scan.
+
+### Minor Changes
+
+- 2628c5b: Log lines say where they came from. Besides `site`, `scan` and `component`, each line now carries the scan `phase`, the `audit` whose run wrote it (also for the requests and gatherer work that audit started), and the `gatherer` whose shared work wrote it. Warn and error lines also carry `caller`, the source file and line. The CLI turns on source maps so `caller` names the source file, not the bundle. One `jq` query over a `--log-file` now shows which audit sent which requests.
+- 4e07fdd: Structured logging.
+
+  - Every line carries a time, a level, a message and fields: the site, the scan id and the component that wrote it. Components are fields from child loggers, not prefixes in the message.
+  - `runScan` takes a `logger` option. Any logger with pino's methods works, pino included, and every line of that scan goes to it. Calls use pino's order, `log.info({ fields }, "Message")`.
+  - `runScan` takes a `scanId` option and now fills the report's `scanId`, which was always empty. Omitted, it is a random UUID. Log lines carry the same id, so a log and its report join on it.
+  - New `trace` level below `debug`. Levels: `error` for scanner faults (with the stack), `warn` for what changes a result, `info` for one line per scan, `debug` for decisions and phases, `trace` for each request and audit.
+  - Field names follow OpenTelemetry where it has one (`http.request.method`, `url.full`, `http.response.status_code`, `user_agent.original`); durations are `durationMs`; errors are `err` with `type`, `message`, `stack`, `code` and `cause`.
+  - The logger removes credentials before it writes: a URL's `user:password@` anywhere in a line, and the value of keys named like a secret (`authorization`, `cookie`, `token` and similar). The old debug line that printed the scan URL with its credentials is gone.
+  - Logs go to stderr only; before, debug and info lines went to stdout.
+  - A failed request is now a debug line. The scan logs one warning that counts the failures by error code, and one when requests are still open after the audits.
+  - New CLI flags: `--log-level <level>` sets the terminal level (default `warn`), and `--log-file <path>` appends every line as JSON. `LOG_FORMAT=json` writes JSON to stderr. An unknown `LOG_LEVEL` now warns and falls back to `info` instead of turning on every level.
+  - Core exports `LogField`, `LoggerLike`, `withLogContext`, `LogFormat`, `formatLogRecord`, `parseLogLevel`, `parseLogFormat`, `logger.child()`, `logger.addSink()` and `logger.isLevelEnabled()`.
+
+### Patch Changes
+
+- 16fb09f: Three access and crawl-control audits no longer judge what is not there. `crawl-delay` is not applicable when the site serves no robots.txt or sets no `Crawl-delay`; it used to warn on the first and pass the second. `no-redirect-chains` is not applicable when no page was scanned; it used to fail. `no-bot-detection` is not applicable when no page was scanned and no bot wall was detected; it used to warn. Every verdict on a robots.txt, page or wall that the scan did read is unchanged.
+- 16fb09f: Three audit descriptions now say what the audit measures. `native-control-substitution` reports a weighted substitution index, not an agent-action count. `form-autofill-token-coverage` checks autocomplete tokens, a name or id and the input type across all scanned forms; it does not check constraints or `aria-invalid`. `drag-and-slider-dependency` limits only its reorder check to transaction paths.
+- 16fb09f: Two audits now describe what they check. `agentic-commerce/checkout-offer-field-mapping` said it audits each product page; it judges the first scanned product page with `Product` markup, and its description and expected text now say so. `machine-discovery/rss-feed` named three conventional feed paths in its messages; the scan probes five (`/feed`, `/feed.xml`, `/rss.xml`, `/atom.xml`, `/index.xml`), and the messages now list them all. No verdict changes.
+- 3133998: An AWS WAF Challenge or CAPTCHA response now names AWS WAF as the bot wall. AWS documents both actions as answering with the header `x-amzn-waf-action` (`challenge` with HTTP 202, `captcha` with HTTP 405), often with an empty body. Such a homepage was reported as a page with too little evidence to score; it is now reported as refused by AWS WAF.
+- 95891cb: A homepage that times out or drops the connection is no longer described as "dropped or timed out repeatedly". The scan fetches the homepage once. The reason now says what that attempt saw: "The connection opened, but the homepage sent no response before the timeout", or "The server closed the connection without a response". The verdict is unchanged.
+- 7b3261e: A redirect cookie with both `Max-Age` and `Expires` now follows `Max-Age`, as RFC 6265 says, whatever their order. A past `Expires` written after a positive `Max-Age` used to drop a cookie a browser keeps.
+- 60926ee: A site whose host accepts no connection no longer waits out the connect timeout once per root file. The scan now fetches `/robots.txt` first, and tries it a second time when it fails to connect. When both attempts fail to connect, the other root files are not sent and read as not sent. The homepage fetch still runs and still decides whether the site is reachable. One such scan took 120 s; it now takes about 30 s.
+- c97cf1d: A scanned page with no readable text that names another page on its own origin through a meta refresh or a canonical link is now treated as a gateway, such as a splash or language-selection page. The scan reads that target once as a second page, so a site behind a gateway root is scored instead of reported as unscored. The gateway page keeps its own findings. A cross-origin target is never read, and the scan makes at most one hop. The CLI and config docs no longer claim that a scan discovers extra pages from the sitemap and navigation.
+- 7b3261e: A gateway page whose target leads back to the requested URL, or to any hop of the redirect that reached it, is no longer followed. A root that redirected to a `www` shell whose canonical named the root was read twice and listed twice in `pagesScanned`.
+- 3f6d916: A gateway homepage with no readable text is now followed to its `www` or apex twin, not only to a target on the same origin. A site whose apex page is only a meta refresh to `https://www.<site>` was left unscored; it is now read at the target, as a browser would. Other hosts, other schemes and other ports are still not followed.
+- 02498cf: `operability-safety/hover-only-content-and-navigation` no longer counts a `title` attribute that repeats what the element already says. The comparison now ignores letter case and covers the `aria-label`, the `aria-labelledby` text and an image's `alt`, and a title whose content words all appear in those names also counts as a repeat. On one homepage the title-only count fell from 51 to 13. A site whose only finding was such titles now passes, so its score can rise.
+- 16fb09f: `https-enabled` no longer says that GPTBot, ClaudeBot and other AI crawlers skip plain-HTTP sites. No crawler vendor documents that. The message now names what is documented: agent protocols such as MCP require HTTPS, and browser-based agents warn on or block plain-HTTP pages. The verdict is unchanged.
+- 105099d: `machine-discovery/llms-txt-links-valid` checks at most 20 links from llms.txt, 4 at a time, instead of every link at once. A large llms.txt made the scan send hundreds of requests in a few seconds, and a site's WAF then refused the rest of the scan. Links that answer 401, 403 or 429, or do not answer, are now unverifiable instead of broken; redirects are followed before a link is judged; and the broken list names the right URLs. The audit is informative, so no score changes.
+- 16fb09f: `agent-interfaces/openapi-servers` no longer fails an OpenAPI document that has no `servers` array, or an empty one. OpenAPI 3.0 and 3.1 both default it to a single server with url `/`, resolved against the document's location, so the base URL is derivable and the document passes. A `servers` value that is not an array now fails with its own message. The audit's description and fix advice no longer say a missing array makes the spec unusable.
+- 7b3261e: Log redaction removes a URL password that contains a raw `@` in full. `https://user:p@ss@host/` was logged as `https://[redacted]@ss@host/`, leaking the rest of the password at debug level and in `--log-file` output.
+- 3c31305: A root file that answers HTTP 200 with an HTML page now counts as absent. Many sites redirect `/llms.txt`, `/trust.txt` or `/.well-known/mcp/servers.json` to the homepage, and audits read that homepage as the file: "llms.txt missing markdown heading", a trust.txt with 1,960 attributes, "servers.json has no servers array", and homepage links checked as AI endpoints. One shared check, `isRootArtifact`, now sits beside the root-file read, and the llms.txt, trust.txt, MCP, ai-catalog, tdmrep, OpenAPI and CORS readers use it.
+
+  Audits about an optional file's contents now return not applicable when the file is absent, as the repo rule and their dossiers say:
+
+  - informative: `machine-discovery/llms-txt-link-descriptions`, `machine-discovery/llms-full-txt`, `machine-discovery/cors-ai-files` and `machine-discovery/rss-feed-content`;
+  - scored: `machine-discovery/no-broken-ai-endpoints`, when none of ai-catalog.json, llms.txt or navigation.json is published. Sites without those files no longer lose its warn, so their score can rise. A file that is there and lists no URLs still warns.
+
+- b355ab4: Fix scan stalls and redirect handling found in a full corpus run.
+
+  - `content-extraction/hydration-payload-share` reads payload strings in one pass. A payload cut inside a string literal made the old regex run for tens of seconds, blocking every scan in the process, and read no strings. The open literal is now read up to the cut.
+  - `operability-safety/invisible-instruction-scan` judges each element's hiding once per page and matches only rules that can hide text. No verdict changes; large pages no longer take seconds.
+  - The fetcher sends cookies set along one redirect chain back on its later hops and follows up to 20 redirects, as browsers do. Sites that redirect until their locale or session cookie returns now load. The jar lives for one fetch only.
+  - A homepage chain that ends on a storefront challenge route (`PX-Show`, `DDUser-Challenge`) is reported as a PerimeterX or DataDome wall instead of a bare HTTP status.
+
+- 721d7b3: Stop a dead host from using up the scan budget.
+
+  - A host that refuses a connection, times out on connect or does not resolve is tried once per scan. Later fetches to it return the same error at once. The scanned site's own hosts are never skipped this way.
+  - Crawler user-agent probes skip a URL whose browser baseline got no HTTP answer. Such a probe was always reported as "baseline blocked" and never changed a verdict. `ai-crawler-edge-parity` now says "No probe completed" when every baseline went unanswered, instead of "answered with HTTP 0".
+
+  A sitemap that listed a few URLs on a load-balancer host that never accepts a connection made the scan wait out one 10 s connect timeout per URL and per crawler, one after another, until the 180 s budget ran out.
+
+- 7b3261e: Two bot-wall verdict fixes. When the homepage fails but answers (a 404, say), a vendor path named inside a plain-text or XML root file, such as `Disallow: /_Incapsula_Resource` in robots.txt, no longer reads as an Imperva wall: a vendor marker counts only in an HTML page or a refused response, while vendor headers still count. A homepage that answers HTTP 428 with a body is no longer reported as "the scan was throttled"; an empty 428 still is.
+- 8eb98ae: Judge a bot wall from the pages the scan read. Root files count toward the WAF verdict only when the homepage itself failed, so a 403 on a missing `/.well-known/` file, a Cloudflare rule on one sitemap, or an Imperva path named in `robots.txt` no longer marks an open site as walled. A DataDome or Imperva marker counts only with a refusal status or on a page with no readable text, and "access denied" names Akamai only beside an Akamai header. An Akamai block page served with HTTP 200 is now detected, and its reason names a location refusal when the page says so. A homepage challenge is named before a root-file 429, and a vendor's own challenge before a bare Cloudflare 403. DNS, refused-port, TLS, certificate and connect-timeout failures are reported as an unreachable homepage instead of a bot wall. A multi-line OpenSSL error is reduced to one line, and a homepage that still answers a redirect after the fetcher's five-hop limit is reported as a redirect loop or a too-long chain.
+
+  An empty HTTP 428 on the homepage, which some apex redirectors send once a burst from one IP passes their limit, is now treated like a 429: the homepage fetch retries once after a pause, and a scan still limited after the retry is reported as throttled instead of as fetching no pages.
+
+- 16fb09f: `operability-safety/wikidata-round-trip-verification` no longer warns a site when Wikidata does not answer. An unreachable entity is listed as unverified and does not decide the verdict. When no claimed entity could be read, the result is not applicable, because nothing about the site was measured.
+
 ## 7.3.0
 
 ### Minor Changes
