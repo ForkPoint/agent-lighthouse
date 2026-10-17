@@ -29,6 +29,13 @@ const CONNECT_FAILURES = [
   "ENETUNREACH",
 ] as const;
 
+/** True when a fetch failed before the host accepted a connection. */
+export function isConnectFailure(result: FetchResult): boolean {
+  if (result.status !== 0 || !result.error) return false;
+  const error = result.error;
+  return CONNECT_FAILURES.some((code) => error.includes(`(${code})`));
+}
+
 function hostOf(url: string): string | undefined {
   try {
     return new URL(url).hostname.toLowerCase();
@@ -66,14 +73,12 @@ export class UnreachableHosts {
 
   /** Remember the host of a fetch that failed to connect. */
   record(url: string, result: FetchResult): void {
-    if (result.status !== 0 || !result.error) return;
-    const error = result.error;
-    if (!CONNECT_FAILURES.some((code) => error.includes(`(${code})`))) return;
+    if (!isConnectFailure(result)) return;
     const host = hostOf(url);
     if (host === undefined || this.isOwn(host) || this.dead.has(host)) return;
     this.dead.set(
       host,
-      `${host} refused a connection earlier in this scan: ${error}`,
+      `${host} refused a connection earlier in this scan: ${result.error}`,
     );
   }
 }
