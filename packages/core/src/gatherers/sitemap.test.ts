@@ -588,6 +588,26 @@ describe("readSitemap", () => {
     expect(res.kind).toBe("readable");
     if (res.kind === "readable") {
       expect(res.tree.entries).toHaveLength(1);
+      expect(res.defects).toEqual([]);
+    }
+  });
+
+  // A bad <lastmod> does not make the sitemap unreadable. It is a defect the
+  // audits name, with the count, beside the entries they still read.
+  it("names <lastmod> values that are not W3C Datetime as a defect", async () => {
+    const xml = `<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://example.com/a</loc><lastmod>yesterday</lastmod></url><url><loc>https://example.com/b</loc><lastmod>last week</lastmod></url><url><loc>https://example.com/c</loc><lastmod>2026-08-01</lastmod></url></urlset>`;
+    const scan = {
+      baseUrl: "https://example.com",
+      rootFiles: { "/sitemap.xml": mockFetchResult(xml, 200) },
+      fetch: async () => mockFetchResult(xml, 200),
+    };
+    const res = await readSitemap(scan);
+    expect(res.kind).toBe("readable");
+    if (res.kind === "readable") {
+      expect(res.tree.entries).toHaveLength(3);
+      expect(res.defects).toEqual([
+        "2 <lastmod> date(s) fail W3C Datetime shape.",
+      ]);
     }
   });
 });
