@@ -208,7 +208,10 @@ function callerOf(stack: string | undefined): string | undefined {
 
 const SECRET_KEY =
   /^(authorization|proxy-authorization|cookie|set-cookie|password|passwd|secret|token|access_token|api[-_]?key|x-api-key)$/i;
-const URL_CREDENTIALS = /\b([a-z][a-z0-9+.-]*:\/\/)[^\s/@]+@/gi;
+// The userinfo runs to the last "@" before the path, query or fragment, as the
+// WHATWG URL parser reads it: a raw "@" inside a password is part of the
+// password, and stopping at the first one logged the rest of it.
+const URL_CREDENTIALS = /\b([a-z][a-z0-9+.-]*:\/\/)[^\s/?#]+@/gi;
 const REDACTED = "[redacted]";
 const MAX_DEPTH = 6;
 

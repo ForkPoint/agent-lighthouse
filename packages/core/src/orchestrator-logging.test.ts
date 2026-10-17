@@ -210,7 +210,7 @@ describe("runScan — where a log line came from", () => {
   // URL parsing does, but the log redaction stops at the first "@". "Scan
   // started" logs the target as given, so the rest of the password leaks.
   // See the matching case in logger.test.ts.
-  it.fails("never logs any part of a password that holds a raw @", async () => {
+  it("never logs any part of a password that holds a raw @", async () => {
     const { lines } = await logsOf(() =>
       runScan("https://scanner:hun@ter2@example.com/", { dispatcher: site() }),
     );

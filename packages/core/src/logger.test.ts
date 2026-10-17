@@ -269,11 +269,28 @@ describe("logger", () => {
     // of the password reaches the sink: "https://[redacted]@ss@example.com/".
     // runScan logs the target URL as given on "Scan started", so a CLI user's
     // password leaks into a debug or --log-file line.
-    it.fails("removes a password that holds a raw @ in full", () => {
+    it("removes a password that holds a raw @ in full", () => {
       const lines = capture();
       logger.info({ [LogField.Url]: "https://user:p@ss@example.com/" });
       expect(JSON.stringify(lines)).not.toContain("ss@example.com");
       expect(lines[0]?.[LogField.Url]).toBe("https://[redacted]@example.com/");
+    });
+
+    // The userinfo ends at the path, query or fragment. An "@" after that is
+    // data, and a mail address beside a URL is not the URL's userinfo.
+    it.each([
+      ["https://example.com/?to=a@b.test", "https://example.com/?to=a@b.test"],
+      ["https://example.com/a@b", "https://example.com/a@b"],
+      ["https://example.com#me@b", "https://example.com#me@b"],
+      [
+        "https://example.com and me@b.test",
+        "https://example.com and me@b.test",
+      ],
+      ["https://u:p@example.com?x=@", "https://[redacted]@example.com?x=@"],
+    ])("leaves %j as %j", (input, output) => {
+      const lines = capture();
+      logger.info({ [LogField.Url]: input });
+      expect(lines[0]?.[LogField.Url]).toBe(output);
     });
   });
 
