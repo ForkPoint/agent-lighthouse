@@ -37,6 +37,42 @@ const HIDING = [
   /max-height\s*:\s*0\b/i,
 ];
 
+/** Lower case, single spaces, no padding. */
+function normalize(text: string): string {
+  return text.replace(/\s+/g, " ").trim().toLowerCase();
+}
+
+/**
+ * Words of three letters or more. Shorter ones ("de", "à", "of") carry the
+ * grammar, not the information, and differ between a title and its link text
+ * that say the same thing.
+ */
+function contentWords(text: string): string[] {
+  return normalize(text)
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter((word) => word.length > 2);
+}
+
+/**
+ * True when a `title` says nothing the element does not already say.
+ *
+ * The element's own text, its `aria-label`, the text its `aria-labelledby`
+ * points at and the `alt` of an image inside it are all read without a hover.
+ * The title repeats them when it appears in one of them, in any letter case,
+ * or when every content word of it does: "Veste Ski" on a link reading
+ * "Veste de Ski" adds nothing. A title made only of short words is compared
+ * whole, since it has no content word to check.
+ */
+function repeatsVisibleName(title: string, names: string[]): boolean {
+  const known = normalize(names.join(" "));
+  if (known === "") return false;
+  if (known.includes(normalize(title))) return true;
+  const words = contentWords(title);
+  if (words.length === 0) return false;
+  const knownWords = new Set(contentWords(known));
+  return words.every((word) => knownWords.has(word));
+}
+
 /** Selector fragments that reveal an element without a pointer. */
 const KEYBOARD_STATE =
   /:focus-within|:focus-visible|:focus|\[aria-expanded=["']?true["']?\]|\[data-open\b|\[open\b/i;
@@ -197,9 +233,22 @@ async function survey(ctx: CheckContext): Promise<Survey> {
       if (TITLE_EXEMPT.has(tag)) return;
       const title = ($n.attr("title") ?? "").trim();
       if (!title) return;
-      // A title that repeats the element's own text adds nothing and loses
-      // nothing, so it is not a finding.
-      if ($n.text().replace(/\s+/g, " ").trim().includes(title)) return;
+      // A title that repeats what the element already says adds nothing and
+      // loses nothing, so it is not a finding.
+      const labelledBy = ($n.attr("aria-labelledby") ?? "")
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((id) => $(`[id="${escapeAttrValue(id)}"]`).text());
+      const names = [
+        $n.text(),
+        $n.attr("aria-label") ?? "",
+        ...labelledBy,
+        ...$n
+          .find("img[alt]")
+          .map((_j, img) => $(img as never).attr("alt") ?? "")
+          .get(),
+      ];
+      if (repeatsVisibleName(title, names)) return;
       result.titleOnly += 1;
       if (!result.titleSample) result.titleSample = title;
     });
