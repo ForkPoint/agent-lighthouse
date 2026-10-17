@@ -100,10 +100,10 @@ Options:
   --min-score <number>         Minimum score (0-100) required to pass CI assertions
   --assert-category <id:min>   Per-category assertions (e.g. --assert-category structured-data:90)
   --silent                     Suppress progress output
-  --log-level <level>          Terminal log level: silent, error, warn, info, debug
-                               [default: LOG_LEVEL or info]. Logs go to stderr.
-  --log-file <path>            Append every log line, at debug level, as JSON lines.
-                               Each line names its scan and site
+  --log-level <level>          Terminal log level: silent, error, warn, info, debug, trace
+                               [default: LOG_LEVEL or warn]. Logs go to stderr.
+  --log-file <path>            Append every log line, down to trace, as JSON lines.
+                               Each line names its site, scan id and component
   --progress-json              Stream scan progress as NDJSON (one ScanEvent per line) to stderr
                                and suppress the interactive progress display. Stderr is used so
                                NDJSON never interleaves with the terminal report on stdout;
@@ -153,15 +153,19 @@ async function audit(targetUrl?: string) {
     );
     process.exit(1);
   }
-  if (opts.logLevel) logger.level = opts.logLevel;
+  // A terminal run shows warnings and errors unless asked for more: the
+  // report is the output, and one info line per scan would only repeat it.
+  logger.level =
+    opts.logLevel ??
+    (process.env["LOG_LEVEL"] === undefined ? LogLevel.Warn : logger.level);
   // Keep the NDJSON stream clean: scanner logs also go to stderr.
   if (progressJson) logger.level = LogLevel.Silent;
   if (opts.logFile) {
-    // Every line at debug, as JSON, whatever the terminal shows. A file that
-    // cannot be opened ends the run before any scan work starts.
+    // Every line, down to trace, as JSON, whatever the terminal shows. A file
+    // that cannot be opened ends the run before any scan work starts.
     const fd = openSync(opts.logFile, "a");
     logger.addSink({
-      level: LogLevel.Debug,
+      level: LogLevel.Trace,
       format: LogFormat.Json,
       write: (line) => writeSync(fd, `${line}\n`),
     });

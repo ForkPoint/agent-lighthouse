@@ -6,9 +6,9 @@ import {
   MAX_RESPONSE_BODY_BYTES,
 } from "./constants";
 import { isPrivateIp } from "./url-utils";
-import { logger } from "./logger";
+import { LogField, logger } from "./logger";
 
-const log = logger.child({ component: "fetcher" });
+const log = logger.child({ [LogField.Component]: "fetcher" });
 import { RedirectCookieJar } from "./redirect-cookies";
 import { HttpMethod } from "./types";
 
@@ -148,6 +148,18 @@ function errorCode(err: unknown): string | undefined {
   return typeof code === "string" ? code : undefined;
 }
 
+/** What one fetcher did; see `createFetcher().summary()`. */
+export interface FetcherSummary {
+  /** Requests that got an answer or failed. */
+  requests: number;
+  /** Answered requests by status class, such as `2xx`. */
+  statuses: Record<string, number>;
+  /** Failed requests by error code, such as `UND_ERR_CONNECT_TIMEOUT`. */
+  failures: Record<string, number>;
+  /** Requests not yet answered, with how long each has waited. */
+  open: Array<{ url: string; ms: number }>;
+}
+
 export interface FetcherOptions {
   /**
    * undici dispatcher for every request this fetcher makes.
@@ -257,6 +269,7 @@ export function mergeHeaders(
 export function createFetcher(fetcherOptions: FetcherOptions = {}) {
   const dispatcher = fetcherOptions.dispatcher ?? noRedirectAgent;
   const pending = new Set<{ url: string; since: number }>();
+  const tally = createTally();
   const gate =
     fetcherOptions.maxConcurrent && fetcherOptions.maxConcurrent > 0
       ? createGate(Math.floor(fetcherOptions.maxConcurrent))
@@ -284,16 +297,22 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
   }
 
   /**
-   * Requests not yet answered, oldest first, with how long each has waited.
-   * A request that never ends writes no "finished" line, so a scan that ends
-   * with some still open names them here.
+   * What this fetcher did so far: requests answered by status class, failures
+   * by error code, and the requests not yet answered with how long each has
+   * waited. A request that never ends writes no "finished" line, so a scan
+   * that ends with some still open names them from here.
    */
-  function inFlight(): Array<{ url: string; ms: number }> {
+  function summary(): FetcherSummary {
     const now = performance.now();
-    return [...pending].map((entry) => ({
-      url: splitCredentials(entry.url).url,
-      ms: Math.round(now - entry.since),
-    }));
+    return {
+      requests: tally.requests,
+      statuses: { ...tally.statuses },
+      failures: { ...tally.failures },
+      open: [...pending].map((entry) => ({
+        url: splitCredentials(entry.url).url,
+        ms: Math.round(now - entry.since),
+      })),
+    };
   }
 
   async function issue(options: FetchOptions): Promise<FetchResult> {
@@ -343,11 +362,14 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
       }
 
       const ua = reqHeaders["User-Agent"];
-      log.debug("Request started", {
-        method,
-        url: targetUrl,
-        ua,
-      });
+      log.trace(
+        {
+          [LogField.HttpMethod]: method,
+          [LogField.Url]: targetUrl,
+          [LogField.UserAgent]: ua,
+        },
+        "Request started",
+      );
 
       let currentUrl = targetUrl;
       let currentMethod = method;
@@ -402,10 +424,10 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
         gateArmed ??= await isSafeUrl(targetUrl);
         if (gateArmed && !(await isSafeUrl(next))) {
           await response.body.dump();
-          log.warn("Refusing redirect out of public address space", {
-            url: targetUrl,
-            to: next,
-          });
+          log.warn(
+            { [LogField.Url]: targetUrl, redirectTo: next },
+            "Refusing redirect out of public address space",
+          );
           const refusedMs = performance.now() - start;
           return {
             url: targetUrl,
@@ -485,16 +507,20 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
       }
       const totalMs = performance.now() - start;
 
-      log.debug("Request finished", {
-        method,
-        url: targetUrl,
-        ...(currentUrl !== targetUrl && { finalUrl: currentUrl }),
-        status: response.statusCode,
-        ms: Math.round(totalMs),
-        ttfbMs: Math.round(ttfbMs),
-        ...(hops > 0 && { hops }),
-        ua,
-      });
+      tally.answered(response.statusCode);
+      log.trace(
+        {
+          [LogField.HttpMethod]: method,
+          [LogField.Url]: targetUrl,
+          ...(currentUrl !== targetUrl && { finalUrl: currentUrl }),
+          [LogField.HttpStatus]: response.statusCode,
+          [LogField.DurationMs]: Math.round(totalMs),
+          ttfbMs: Math.round(ttfbMs),
+          ...(hops > 0 && { hops }),
+          [LogField.UserAgent]: ua,
+        },
+        "Request finished",
+      );
 
       const truncatedBody =
         body.length > MAX_RESPONSE_BODY_BYTES
@@ -541,12 +567,18 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
       // A failed fetch is a result, not a fault: the caller reads `error` and
       // decides. One line at warn names it; the object and its stack are
       // debug material, or every walled site prints a screen of frames.
-      log.warn("Request failed", {
-        method,
-        url: targetUrl,
-        error: detail,
-        ms: Math.round(totalMs),
-      });
+      // A failed request is a result the audits read, not a scanner fault,
+      // so it is a debug line; the scan logs one summary of all failures.
+      tally.failed(code);
+      log.debug(
+        {
+          [LogField.HttpMethod]: method,
+          [LogField.Url]: targetUrl,
+          [LogField.Error]: { message: detail, ...(code && { code }) },
+          [LogField.DurationMs]: Math.round(totalMs),
+        },
+        "Request failed",
+      );
 
       return {
         url: targetUrl,
@@ -563,5 +595,25 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
     }
   }
 
-  return { fetch, inFlight };
+  return { fetch, summary };
+}
+
+/** Counts behind {@link FetcherSummary}, kept per fetcher. */
+function createTally() {
+  const tally = {
+    requests: 0,
+    statuses: {} as Record<string, number>,
+    failures: {} as Record<string, number>,
+    answered(status: number): void {
+      tally.requests += 1;
+      const group = `${Math.floor(status / 100)}xx`;
+      tally.statuses[group] = (tally.statuses[group] ?? 0) + 1;
+    },
+    failed(code: string | undefined): void {
+      tally.requests += 1;
+      const key = code ?? "other";
+      tally.failures[key] = (tally.failures[key] ?? 0) + 1;
+    },
+  };
+  return tally;
 }

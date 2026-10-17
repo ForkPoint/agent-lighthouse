@@ -118,12 +118,19 @@ export {
   logger,
   LogLevel,
   LogFormat,
+  LogField,
   withLogContext,
   formatLogRecord,
   parseLogLevel,
   parseLogFormat,
 } from "./logger";
-export type { LogFields, LogRecord, LogSink } from "./logger";
+export type {
+  LineLevel,
+  LogFields,
+  LoggerLike,
+  LogRecord,
+  LogSink,
+} from "./logger";
 
 // ACP policy-link resolution, reused by the checkout-eligibility audits.
 export {

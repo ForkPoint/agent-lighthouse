@@ -15,9 +15,9 @@ import {
   TAG_SKIPPED_PAGE_TYPE,
   TAG_SKIPPED_SCAN_BUDGET,
 } from "./constants";
-import { logger, withLogContext } from "./logger";
+import { LogField, logger, withLogContext, type LoggerLike } from "./logger";
 
-const log = logger.child({ component: "orchestrator" });
+const log = logger.child({ [LogField.Component]: "orchestrator" });
 import { createFetcher, isSafeUrl, splitCredentials } from "./fetcher";
 import { UnreachableHosts, isConnectFailure } from "./unreachable-hosts";
 import { gatewayTarget } from "./gateway";
@@ -112,6 +112,17 @@ export interface ScanOptions {
    */
   onAuditTrace?: AuditTraceHandler | undefined;
   /**
+   * Where this scan logs. Any logger with pino's methods works, pino itself
+   * included; every line of the scan goes to it, with `site`, `scan` and
+   * `component` fields. Omitted, the scan logs to the built-in logger.
+   */
+  logger?: LoggerLike | undefined;
+  /**
+   * The id this scan reports as `scanId` and logs as `scan`. Omitted, the
+   * scan makes a random UUID, so a log line and its report share one id.
+   */
+  scanId?: string | undefined;
+  /**
    * Skip audits the scan could not feed, instead of running them blind.
    *
    * On by default. An audit whose required evidence the scan never obtained
@@ -203,11 +214,10 @@ async function fetchPageWithRetry(
       ? Math.min(header * 1000, MAX_RETRY_AFTER_MS)
       : RATE_LIMIT_BACKOFF_MS;
 
-  log.debug("Page throttled; retrying once", {
-    url: splitCredentials(url).url,
-    status: first.status,
-    waitMs,
-  });
+  log.debug(
+    { [LogField.Url]: url, [LogField.HttpStatus]: first.status, waitMs },
+    "Page throttled; retrying once",
+  );
   // The wait ends early when either signal fires, and is skipped when one
   // already has: an aborted signal never dispatches `abort` again, and the
   // budget usually goes during the first fetch of a throttled origin.
@@ -259,22 +269,18 @@ export async function runScan(
     );
   // Every line logged during this scan names it, so lines from scans that
   // run side by side can be told apart.
+  const scanId = options?.scanId ?? randomUUID();
   return withLogContext(
-    { site: logSite(url), scan: randomUUID().slice(0, 8) },
+    { [LogField.Site]: logSite(url), [LogField.Scan]: scanId },
     async () => {
       const started = performance.now();
-      log.debug("Scan started", {
-        url: splitCredentials(url).url,
-        budgetMs: limitMs,
-      });
+      log.debug({ [LogField.Url]: url, budgetMs: limitMs }, "Scan started");
       const budget = new AbortController();
       const timer =
         limitMs > 0
           ? setTimeout(() => {
               const message = `The scan budget of ${formatBudget(limitMs)} ran out.`;
-              log.warn(message, {
-                url: splitCredentials(url).url,
-              });
+              log.warn({ budgetMs: limitMs }, message);
               budget.abort(new Error(message));
             }, limitMs)
           : undefined;
@@ -282,25 +288,33 @@ export async function runScan(
         const report = await scanWithinBudget(url, options, {
           signal: budget.signal,
           limitMs,
+          scanId,
         });
-        log.debug("Scan finished", {
-          durationMs: Math.round(performance.now() - started),
-          score: report.overallScore,
-          pages: report.pagesScanned.length,
-          budgetExhausted: budget.signal.aborted,
-          unscoredReason: report.scanValidity?.unscoredReason,
-        });
+        log.info(
+          {
+            [LogField.DurationMs]: Math.round(performance.now() - started),
+            score: report.overallScore,
+            pages: report.pagesScanned.length,
+            budgetExhausted: budget.signal.aborted,
+            unscoredReason: report.scanValidity?.unscoredReason,
+          },
+          "Scan finished",
+        );
         return report;
       } catch (error) {
-        log.debug("Scan threw", {
-          durationMs: Math.round(performance.now() - started),
-          err: error,
-        });
+        log.debug(
+          {
+            [LogField.DurationMs]: Math.round(performance.now() - started),
+            [LogField.Error]: error,
+          },
+          "Scan threw",
+        );
         throw error;
       } finally {
         if (timer !== undefined) clearTimeout(timer);
       }
     },
+    options?.logger,
   );
 }
 
@@ -316,7 +330,7 @@ function logSite(url: string): string {
 async function scanWithinBudget(
   url: string,
   options: ScanOptions | undefined,
-  budget: { signal: AbortSignal; limitMs: number },
+  budget: { signal: AbortSignal; limitMs: number; scanId: string },
 ): Promise<ScanReport> {
   const onEvent = options?.onEvent;
   const pageOverrides = options?.pages;
@@ -329,10 +343,13 @@ async function scanWithinBudget(
 
   const tracker = new ProgressTracker((event) => {
     if (event.type === "phase:done")
-      log.debug("Phase done", {
-        phase: event.phase,
-        durationMs: Math.round(event.durationMs),
-      });
+      log.debug(
+        {
+          phase: event.phase,
+          [LogField.DurationMs]: Math.round(event.durationMs),
+        },
+        "Phase done",
+      );
     onEvent?.(event);
   });
   const start = performance.now();
@@ -431,9 +448,7 @@ async function scanWithinBudget(
     originReadAt = cachedEvidence.readAt;
     tracker.phaseStart(PhaseId.FetchRoot, 0);
     tracker.phaseDone();
-    log.debug("Reusing cached origin evidence", {
-      origin: baseUrl,
-    });
+    log.debug({ origin: baseUrl }, "Reusing cached origin evidence");
   } else {
     tracker.phaseStart(PhaseId.FetchRoot, rootFilePaths.length);
 
@@ -454,7 +469,7 @@ async function scanWithinBudget(
     const refused = isConnectFailure(robots)
       ? `${new URL(baseUrl).host} did not accept a connection: ${robots.error}`
       : undefined;
-    if (refused) log.debug("Root files not sent", { reason: refused });
+    if (refused) log.debug({ reason: refused }, "Root files not sent");
 
     const rootResults = await Promise.all(
       rootFilePaths.map((path) => {
@@ -553,10 +568,10 @@ async function scanWithinBudget(
     !overrideTypeByKey.has(gatewayCandidate.replace(/\/$/, "")) &&
     (await isSafeUrl(gatewayCandidate))
   ) {
-    log.debug("Requested page is a gateway; reading its target", {
-      from: displayUrl,
-      to: gatewayCandidate,
-    });
+    log.debug(
+      { from: displayUrl, to: gatewayCandidate },
+      "Requested page is a gateway; reading its target",
+    );
     gatewayUrls.push(gatewayCandidate);
     tracker.setPhaseTotal(2 + overrideUrls.length);
   }
@@ -644,12 +659,15 @@ async function scanWithinBudget(
       .length,
   );
   if (wafProtection)
-    log.debug("Bot wall detected", {
-      name: wafProtection.name,
-      blocked: wafProtection.isBlocked,
-      reason: wafProtection.reason,
-      status: pageResult.status,
-    });
+    log.debug(
+      {
+        name: wafProtection.name,
+        blocked: wafProtection.isBlocked,
+        reason: wafProtection.reason,
+        [LogField.HttpStatus]: pageResult.status,
+      },
+      "Bot wall detected",
+    );
 
   const evidence = buildScanEvidence({
     requestedUrl: url,
@@ -768,21 +786,38 @@ async function scanWithinBudget(
   // being assembled cut nothing, and must not say it did.
   const budgetExhausted = budget.signal.aborted;
 
-  const open = fetcher.inFlight();
-  log.debug("Audits finished", {
-    budgetExhausted,
-    notSentBudget: notSent.budget,
-    notSentUnreachable: notSent.unreachable,
-    inFlight: open.length,
-  });
-  if (open.length > 0)
-    log.warn("Requests still open after the audits", {
-      count: open.length,
-      oldest: open
-        .sort((a, b) => b.ms - a.ms)
-        .slice(0, 5)
-        .map((r) => `${r.url} (${r.ms} ms)`),
-    });
+  const requests = fetcher.summary();
+  const failed = Object.values(requests.failures).reduce((a, b) => a + b, 0);
+  log.debug(
+    {
+      budgetExhausted,
+      requests: requests.requests,
+      statuses: requests.statuses,
+      failures: requests.failures,
+      notSentBudget: notSent.budget,
+      notSentUnreachable: notSent.unreachable,
+      open: requests.open.length,
+    },
+    "Audits finished",
+  );
+  // One line per scan for every failed request, grouped by error code. Each
+  // failure has its own debug line; at warn they would bury the terminal.
+  if (failed > 0)
+    log.warn(
+      { failed, requests: requests.requests, failures: requests.failures },
+      "Some requests got no answer",
+    );
+  if (requests.open.length > 0)
+    log.warn(
+      {
+        count: requests.open.length,
+        oldest: requests.open
+          .sort((a, b) => b.ms - a.ms)
+          .slice(0, 5)
+          .map((r) => `${r.url} (${r.ms} ms)`),
+      },
+      "Requests still open after the audits",
+    );
 
   // ── Phase 4: Assemble report ─────────────────────────────────
   tracker.phaseStart(PhaseId.Report, 1);
@@ -992,7 +1027,7 @@ async function scanWithinBudget(
     ? extractProductFieldVerification(pages)
     : undefined;
   const report: ScanReport = {
-    scanId: "", // Set by the caller
+    scanId: budget.scanId,
     url: displayUrl,
     domain,
     overallScore: scored ? overallScore : null,

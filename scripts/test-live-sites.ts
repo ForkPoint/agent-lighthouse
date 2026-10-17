@@ -169,7 +169,7 @@ Options:
   --loop=<n>          Repeat the selection n times (default: 1)
   --shuffle, -r       Shuffle the pool before selecting
   --out=<path>        Output JSON file path (default: reports/live-sites-test.json)
-  --log=<path>        Append every log line of the run, at debug level, to a
+  --log=<path>        Append every log line of the run, down to trace, to a
                       JSON-lines file: each request, phase and verdict, per scan
                       and site (--request-log is the old name)
   --verbose, -v       Print detailed per-check breakdown

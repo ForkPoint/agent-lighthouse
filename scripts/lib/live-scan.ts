@@ -100,7 +100,7 @@ export async function scanLocation(): Promise<string | undefined> {
 }
 
 /**
- * Append every log line of the run to `path` as JSON lines, at debug level.
+ * Append every log line of the run to `path` as JSON lines, down to trace.
  *
  * Some sites answer a full scan with a 428 or a timeout while single requests
  * and a burst of the same URLs pass. A log of every request a scan made is
@@ -115,7 +115,7 @@ export async function scanLocation(): Promise<string | undefined> {
 export function startLogFile(path: string): () => void {
   const fd = fs.openSync(path, "a");
   const remove = logger.addSink({
-    level: LogLevel.Debug,
+    level: LogLevel.Trace,
     format: LogFormat.Json,
     write: (line) => fs.writeSync(fd, `${line}\n`),
   });

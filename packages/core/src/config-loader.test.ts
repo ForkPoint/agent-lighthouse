@@ -112,7 +112,8 @@ describe("loadConfigFile", () => {
     expect(logs.lines).toMatchObject([
       {
         component: "config",
-        msg: expect.stringContaining("agent-lighthouse.config.json"),
+        file: "agent-lighthouse.config.json",
+        err: { type: "SyntaxError" },
       },
     ]);
   });

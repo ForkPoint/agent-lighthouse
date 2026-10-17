@@ -734,7 +734,7 @@ describe("audit tracing", () => {
   });
 
   // Building a record per audit is not free, so nothing is built when nobody
-  // is listening and the logger is not at debug level.
+  // is listening and the logger is not at trace level.
   /** The per-audit debug lines a run of the tracing config writes. */
   async function auditLines(level: LogLevel): Promise<LogFields[]> {
     const logs = captureLogs(level);
@@ -747,11 +747,11 @@ describe("audit tracing", () => {
   }
 
   it("builds nothing when no handler is given and the logger is quiet", async () => {
-    expect(await auditLines(LogLevel.Info)).toEqual([]);
+    expect(await auditLines(LogLevel.Debug)).toEqual([]);
   });
 
-  it("logs one debug line per audit when the level asks for it", async () => {
-    const lines = await auditLines(LogLevel.Debug);
+  it("logs one trace line per audit when the level asks for it", async () => {
+    const lines = await auditLines(LogLevel.Trace);
     expect(lines).toHaveLength(3);
     expect(lines[0]).toMatchObject({
       component: "audit",

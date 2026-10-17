@@ -251,38 +251,55 @@ jq 'select(.id == "structured-data/faqpage-schema")' trace.ndjson
 ```
 
 For a one-line-per-audit summary on stderr instead of a file, set
-`LOG_LEVEL=debug`. The runner logs one line per audit at debug level, under the
+`LOG_LEVEL=trace`. The runner logs one line per audit at trace level, under the
 `audit` component, whether or not a trace file is open:
 
 ```bash
-LOG_LEVEL=debug agent-lighthouse https://yourstore.com --silent 2>&1 | grep ' audit: '
+LOG_LEVEL=trace agent-lighthouse https://yourstore.com --silent 2>&1 | grep ' audit: '
 ```
 
 ```
-07:12:03.456 DEBUG [yourstore.com a1b2c3d4] audit: Audit finished audit=machine-discovery/llms-txt-exists outcome=ran status=na score=0 weight=0 durationMs=17 displayValue="HTTP 404; no discovery <link> in <head>"
-07:12:03.457 DEBUG [yourstore.com a1b2c3d4] audit: Audit finished audit=structured-data/product-schema outcome=skipped status=na score=0 weight=0 durationMs=0
+07:12:03.456 TRACE [yourstore.com a1b2c3d4] audit: Audit finished audit=machine-discovery/llms-txt-exists outcome=ran status=na score=0 weight=0 durationMs=17 displayValue="HTTP 404; no discovery <link> in <head>"
+07:12:03.457 TRACE [yourstore.com a1b2c3d4] audit: Audit finished audit=structured-data/product-schema outcome=skipped status=na score=0 weight=0 durationMs=0
 ```
 
 ### `--log-level <level>`
 
-Sets the terminal log level: `silent`, `error`, `warn`, `info` or `debug`. It
-overrides `LOG_LEVEL`. Logs always go to stderr, so they never mix with a
-report written to stdout. `--progress-json` still forces `silent`.
+Sets the terminal log level. It overrides `LOG_LEVEL`. Without either, the
+CLI shows `warn` and `error` only: the report is the output. Logs always go to
+stderr, so they never mix with a report written to stdout. `--progress-json`
+still forces `silent`.
 
-Each line starts with the time, the level, the site and a short scan id:
+| Level   | What it adds                                                       |
+| :------ | :----------------------------------------------------------------- |
+| `error` | Faults in the scanner, such as an audit that threw, with its stack |
+| `warn`  | What changes a result: a budget that ran out, failed requests      |
+| `info`  | One line per scan: score, pages, duration                          |
+| `debug` | Decisions and phases: bot walls, hosts dropped, time per phase     |
+| `trace` | One line per request and per audit                                 |
+
+Each line starts with the time, the level, the site and the first 8
+characters of the scan id, then the component that wrote it:
 
 ```
-07:12:03.456 WARN  [yourstore.com a1b2c3d4] fetcher: Request failed method=GET url=https://yourstore.com/llms.txt error="Connect Timeout Error (UND_ERR_CONNECT_TIMEOUT)" ms=10012
+07:12:03.456 WARN  [yourstore.com a1b2c3d4] orchestrator: Some requests got no answer failed=3 requests=212 failures={"UND_ERR_CONNECT_TIMEOUT":3}
 ```
 
-After the site and scan id comes the component that wrote the line:
-`orchestrator`, `fetcher`, `audit`, `scan`, `ua-parity`, `extraction`, `a11y`
-or `config`. Set `LOG_FORMAT=json` to get the same lines as one JSON object
-each; the component is then the `component` field.
+The components are `orchestrator`, `fetcher`, `audit`, `scan`, `ua-parity`,
+`extraction`, `a11y` and `config`. Set `LOG_FORMAT=json` to get one JSON
+object per line instead. Field names follow OpenTelemetry where it has one:
+`http.request.method`, `url.full`, `http.response.status_code`,
+`user_agent.original`. Durations are `durationMs`; errors are `err`, with
+`type`, `message`, `stack` and `code`. The scan id is the report's `scanId`,
+so a log line and its report join on it.
+
+The logger removes credentials before it writes: a URL's `user:password@`, and
+the value of any key named like a secret (`authorization`, `cookie`, `token`
+and similar).
 
 ### `--log-file <path>`
 
-Appends every log line to a file, at debug level and as JSON, whatever the
+Appends every log line to a file, down to `trace` and as JSON, whatever the
 terminal level is. The file shows each request when it starts and when it
 ends, the time each phase took, a detected bot wall, requests the scan chose
 not to send, and any request still open when the audits finished.
@@ -291,10 +308,24 @@ not to send, and any request still open when the audits finished.
 agent-lighthouse https://yourstore.com --silent --log-file ./scan-log.jsonl
 
 # the ten slowest requests
-jq -s 'map(select(.component == "fetcher" and .msg == "Request finished")) | sort_by(-.ms) | .[:10] | .[] | "\(.ms)ms\t\(.status)\t\(.url)"' -r scan-log.jsonl
+jq -r 'select(.msg == "Request finished") | [.durationMs, ."http.response.status_code", ."url.full"] | @tsv' scan-log.jsonl | sort -rn | head
 
 # time per phase
-jq -r 'select(.component == "orchestrator" and .msg == "Phase done") | "\(.phase)\t\(.durationMs)ms"' scan-log.jsonl
+jq -r 'select(.msg == "Phase done") | "\(.phase)\t\(.durationMs)ms"' scan-log.jsonl
+```
+
+### Logging from your own code
+
+`runScan` takes a `logger` option. Any logger with pino's methods works, pino
+included, and every line of that scan goes to it instead of to stderr:
+
+```ts
+import pino from "pino";
+import { runScan } from "@forkpoint/agent-lighthouse-core";
+
+const report = await runScan("https://yourstore.com", {
+  logger: pino({ level: "debug" }),
+});
 ```
 
 ### `--silent`

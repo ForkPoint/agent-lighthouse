@@ -1,9 +1,9 @@
 import { cacheOwner } from "./cache-owner";
 import type { FetchOptions, FetchResult } from "#core/fetcher";
 import { isSafeUrl } from "#core/fetcher";
-import { logger } from "#core/logger";
+import { LogField, logger } from "#core/logger";
 
-const log = logger.child({ component: "ua-parity" });
+const log = logger.child({ [LogField.Component]: "ua-parity" });
 import { getMainContentText } from "#core/parser";
 import { DomWorkLimitError, parseBoundedHtml } from "#core/dom-work";
 
@@ -228,10 +228,10 @@ function classifyWithinLimits(baseline: FetchResult, probe: FetchResult) {
  */
 function unanswered(baseline: FetchResult): boolean {
   if (baseline.status !== 0) return false;
-  log.debug("Baseline got no answer; crawler probes skipped", {
-    url: baseline.url,
-    error: baseline.error,
-  });
+  log.debug(
+    { [LogField.Url]: baseline.url, [LogField.Error]: baseline.error },
+    "Baseline got no answer; crawler probes skipped",
+  );
   return true;
 }
 
