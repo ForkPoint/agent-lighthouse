@@ -309,28 +309,74 @@ export const CliCommand = {
 
 export type CliCommand = (typeof CliCommand)[keyof typeof CliCommand];
 
+/** Flags whose next argument is their value, so it is never the target URL. */
+const VALUE_FLAGS = new Set([
+  "-c",
+  "--config",
+  "-o",
+  "--output",
+  "-d",
+  "--output-dir",
+  "--categories",
+  "--debug-audit",
+  "--trace",
+  "--page-type",
+  "--timeout",
+  "--min-score",
+  "--assert-category",
+  "--log-level",
+  "--log-file",
+]);
+
 /**
  * Which subcommand form was used.
  *
  * `al audit <url>`, `al <url>` and a bare `al` with a config file all reach the
- * same scan; anything starting with `-` is a flag, never a URL.
+ * same scan. Flags may come before the URL: `al --timeout 30 <url>` scans
+ * `<url>`. A flag's value is never the URL. An argument after a flag the CLI
+ * does not know (a removed `--preset fast`, say) could be either, so the
+ * first argument that parses as an absolute URL wins; when none does, the
+ * first one is returned and the caller reports it as invalid. `-h` or
+ * `--help` anywhere asks for help.
  */
 export function resolveCommand(args: string[]): {
   action: CliCommand;
   url?: string;
 } {
-  const command = args[0];
-  if (!command || command === "-h" || command === "--help")
+  if (args.length === 0 || args.includes("-h") || args.includes("--help"))
     return { action: CliCommand.Help };
-  if (command === "audit") {
-    const url = args[1];
-    return url === undefined
-      ? { action: CliCommand.Audit }
-      : { action: CliCommand.Audit, url };
+  const rest = args[0] === "audit" ? args.slice(1) : args;
+  const candidates: string[] = [];
+  for (let i = 0; i < rest.length; i++) {
+    const arg = rest[i]!;
+    if (arg.startsWith("-")) {
+      const next = rest[i + 1];
+      if (VALUE_FLAGS.has(arg) && next !== undefined && !next.startsWith("-"))
+        i++;
+      continue;
+    }
+    candidates.push(arg);
   }
-  if (!command.startsWith("-"))
-    return { action: CliCommand.Audit, url: command };
-  return { action: CliCommand.Audit };
+  const url = candidates.find(isValidUrl) ?? candidates[0];
+  return url === undefined
+    ? { action: CliCommand.Audit }
+    : { action: CliCommand.Audit, url };
+}
+
+/**
+ * The target as the terminal shows it: without a `user:password@` part.
+ * The scan still uses the credentials; only the echo drops them.
+ */
+export function displayUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    if (!parsed.username && !parsed.password) return url;
+    parsed.username = "";
+    parsed.password = "";
+    return parsed.toString();
+  } catch {
+    return url;
+  }
 }
 
 /**

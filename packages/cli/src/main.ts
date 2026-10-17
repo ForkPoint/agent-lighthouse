@@ -20,6 +20,7 @@ import { createProgressRenderer } from "./progress-renderer";
 import {
   parseCliOptions,
   resolveCommand,
+  displayUrl,
   isValidUrl,
   parseCategoryAssertions,
   failedAssertion,
@@ -67,7 +68,7 @@ function printBanner() {
 `);
 }
 
-function usage(): never {
+function usage(exitCode = 1): never {
   printBanner();
   console.log(`Usage:
   agent-lighthouse <url> [options]
@@ -115,7 +116,7 @@ Examples:
   npx @forkpoint/agent-lighthouse https://yourstore.com --debug-audit structured-data/faqpage-schema
   npx @forkpoint/agent-lighthouse https://staging.yourstore.com --min-score 85
 `);
-  process.exit(1);
+  process.exit(exitCode);
 }
 
 function openInBrowser(filePath: string) {
@@ -222,7 +223,7 @@ async function audit(targetUrl?: string) {
 
   if (!isSilent) {
     printBanner();
-    console.log(`Auditing \x1b[1m${url}\x1b[0m ...\n`);
+    console.log(`Auditing \x1b[1m${displayUrl(url)}\x1b[0m ...\n`);
   }
 
   // Progress: --progress-json streams raw ScanEvents as NDJSON to stderr (kept
@@ -520,7 +521,7 @@ async function audit(targetUrl?: string) {
 
 async function main() {
   const resolved = resolveCommand(args);
-  if (resolved.action === CliCommand.Help) usage();
+  if (resolved.action === CliCommand.Help) usage(0);
   await audit(resolved.url);
 }
 
