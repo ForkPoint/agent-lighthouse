@@ -39,14 +39,6 @@ RFC 9110 defines GET as read-only ('they do not commit to any action on the orig
 - **[Piloting Claude for Chrome](https://claude.com/blog/claude-for-chrome)** — Anthropic (vendor-doc, URL verified 2026-08-20)
   - Red-team attack success rate 23.6% in autonomous browsing mode, 11.2% after mitigations; a browser-specific challenge set went 35.7% -> 0%. Names the exact vectors: 'hidden malicious form fields in a webpage's Document Object Model (DOM) invisible to humans, and other hard-to-catch injections such as through the URL text and tab title that only an agent might see.' This is the vendor-documented basis for auditing hidden inputs and a11y/metadata attributes.
 
-## Competitor coverage
-
-Nobody ships this. SEO crawlers deliberately avoid such URLs (or the site excludes them in robots.txt) and report them at most as crawl-budget waste; Lighthouse's agentic category measures whether an agent can operate the page, never whether operating it is destructive. This is the old 'Google Web Accelerator deleted my records' failure mode, resurfaced by agents and unaudited by any current tool.
-
-## Implementation sketch
-
-Never follow a flagged link — this check is purely markup analysis. Enumerate every <a href> and every <form method="get"> action URL on the sampled pages. Match against state-verb patterns: /([?&])(action|do|cmd|op|task)=(delete|remove|destroy|cancel|purge|reset|clear|unsubscribe|optout|revoke)/i, /add[-_]?to[-_]?cart/i, /\/(logout|signout|sign-out|unsubscribe|delete-account|checkout|confirm-order)(\/|$|\?)/i, /([?&])(confirm|approve|accept|apply)=(1|true|yes)/i. For each match, look for a confirmation affordance on the element or an ancestor: data-confirm/data-turbo-confirm attributes, an onclick containing confirm(, membership in a <form method="post">, or rel containing nofollow. FAIL on a state-verb GET link with none of those. WARN on <form method="get"> whose action matches a state verb (query-string mutation, trivially replayable). Separately report whether the site declares any of these paths in robots.txt Disallow — a partial mitigation for well-behaved crawlers but not for ChatGPT-User, which OpenAI documents as not necessarily bound by robots.txt for user-initiated fetches, nor for a computer-use agent driving a real browser. Present findings as 'agent tripwires' with the fix: POST plus a confirmation step, or rel="nofollow" as a minimum.
-
 ## Example failure
 
 A store renders 'Remove' in the cart as <a href="/cart?action=remove&item=482">. An agent asked to compare the cart against a wishlist explores the cart page, follows every link to read the resulting state, and empties the basket. The identical pattern at /account?action=delete is unrecoverable, and ChatGPT-User is documented as not necessarily honoring robots.txt on user-initiated fetches.
@@ -55,53 +47,14 @@ A store renders 'Remove' in the cart as <a href="/cart?action=remove&item=482">.
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
-The shipped audit is `operability-safety/unsafe-agent-triggerable-affordances`,
-in the `operability-safety` category: the proposal's `injection-safety` domain
-is a research grouping, not one of the eight v2 categories.
-
-The audit never fetches a flagged URL. Following `?action=delete&id=7` would
-perform the destructive action the finding exists to report, so detection is
-markup analysis only and the test suite pins that `ctx.fetch` is never called
-during a run.
-
-`rel="nofollow"`, a `data-confirm`/`data-turbo-confirm`/`data-method` attribute,
-an `onclick` calling `confirm(`, and membership in a `method="post"` form all
-count as guards. Any one of them stops the finding: each puts either a human
-decision or a non-safe method between an agent and the state change.
-
-A path named in a robots.txt `Disallow` rule is still reported, and the message
-states the mitigation is partial. A `Disallow: /` rule is ignored for this
-purpose, because a site-wide block says nothing about the individual path.
-
-- 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. It read the links and GET forms on the scanned
-  pages, and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a
-  parked domain a broker's page from another host, on a walled or throttled
-  origin nothing at all. It now consults `scanReadTheSite()` and returns
-  `notApplicable` carrying the gate's own reason.
-  Verdicts that moved on the five nothing-obtained contract states: redirected
-  away pass → na, non-HTML homepage pass → na, HTTP 200 bot challenge pass →
-  na. Found by `packages/core/src/tests/hostile-state-contract.test.ts`.
-- 2026-08-28 — links and GET forms live in the body, and a JS shell exposes
-  neither, so "no link or GET form changes state when it is fetched" was silence
-  rather than safety. The empty-findings branch now returns `notApplicable` when
-  `scanReadPageText()` is false, keeping its `details` counts; every finding
-  still fails or warns as before. Verdict moved on the shell contract state:
-  pass → na. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
+- The audit never fetches a flagged URL. Fetching it would perform the action. A test pins that `ctx.fetch` is never called.
+- Any one guard stops the finding: `rel="nofollow"`, `data-confirm`, `data-turbo-confirm`, `data-method`, an `onclick` calling `confirm(`, or a `method="post"` form.
+- A path in a robots.txt `Disallow` rule is still reported, with the mitigation called partial. `Disallow: /` is ignored here: a site-wide block says nothing about one path.
+- The empty-findings branch returns `notApplicable` when no page text was read. A JS shell exposes no links or forms, so silence is not safety.
 
 ## Deferred
 
-- **Verifying that the URL really mutates.** Proving it means fetching it, which
-  is exactly what this audit must not do. The finding is that the markup offers
-  a state change over a safe method, which is a defect on its own terms.
-- **Buttons wired by script.** A control that issues a mutating request from a
-  click handler carries no href to match. Detecting it needs the page to run.
-- **Per-crawler robots evaluation.** Whether a specific agent honours a specific
-  `Disallow` group is `access-crawl-control`'s question, not this audit's.
+- Verifying that a URL really mutates. That means fetching it, which this audit must not do.
+- Buttons wired by script. A click handler carries no href to match. Detecting it needs the page to run.

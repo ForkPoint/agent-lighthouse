@@ -45,14 +45,6 @@ An agent answering a question rarely fetches one page; it fetches several and pa
 - **[OpenAI Bots / Crawler documentation](https://developers.openai.com/api/docs/bots)** — OpenAI (vendor-doc, URL verified 2026-08-20)
   - Four distinct user agents, with separate robots.txt tokens and separate published IP-range files. OAI-SearchBot surfaces sites in ChatGPT search — https://openai.com/searchbot.json. OAI-AdsBot validates ad landing pages — https://openai.com/adsbot.json. GPTBot handles model training — https://openai.com/gptbot.json, ChatGPT-User (user-initiated actions: web visits and GPT Actions — https://openai.com/chatgpt-user.json). ChatGPT-User is the agent that fetches on a shopper's behalf. Crucially these are separately controllable: blocking GPTBot does not block OAI-SearchBot or ChatGPT-User, and vice versa.
 
-## Competitor coverage
-
-SEO crawlers ship near-duplicate-page detection (Screaming Frog and similar) aimed at thin-content and canonicalization problems; they measure page-to-page similarity, not the token mass of shared chrome, and they never express the result as agent context cost per fetch. Lighthouse is single-page by construction and cannot compute this at all. The 'unique tokens per fetch' framing appears nowhere.
-
-## Implementation sketch
-
-Reuse the existing multi-page crawl. For each sampled URL keep the extracted main content and the full delivered token count from the Signal Density check. Build a 5-gram shingle index across the sample; mark shingles with document frequency ≥ 0.8 as boilerplate. Per page: boilerplate tokens, unique tokens, ratio. Site roll-up: total delivered tokens, total unique tokens, unique-per-fetch median. Stratify the sample by URL path depth and by detected template so a large blog does not swamp the commerce templates. Present the headline as 'an agent reading 10 pages of this site pays N tokens to receive M tokens of distinct information'.
-
 ## Example failure
 
 A documentation site renders a 4,100-token sidebar containing every page in the tree into all 600 pages. Delivered 5,200 tokens per page, unique 1,100 — 79% boilerplate. An agent reading eight pages spends 41,600 tokens to obtain 8,800 tokens of documentation, and the repeated sidebar dominates the context it reasons over.
@@ -61,47 +53,16 @@ A documentation site renders a 4,100-token sidebar containing every page in the 
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
-The shipped audit is `content-extraction/boilerplate-tax`: the proposal's
-`token-economics` domain is a research grouping, not one of the eight v2
-categories, and the proposal's slug —
-`boilerplate-tax-across-the-crawl-unique-tokens-per-fetch` — produced a
-73-character id, over the 64-character cap `v2-meta.test.ts` enforces. The full
-name survives as the audit's title.
-
-The sample is the scan's existing crawl, not a new one. No page is fetched for
-this audit.
-
-Stratification is by URL path depth, capped at 5 pages per depth. The proposal
-asks for stratification by detected template; depth is a cheap stand-in that is
-stable across runs and achieves the thing that matters — a site with a large
-blog cannot let its blog chrome define what "boilerplate" means for the whole
-site while the commerce templates go unmeasured.
-
-Per-page unique tokens are the page's extracted-content tokens scaled by the
-share of its five-word windows that are not site-wide boilerplate. Counting
-tokens per shingle directly would double-count the four words every pair of
-adjacent shingles shares.
-
-Thresholds are the proposal's: below 20% of fetched tokens distinct, or a median
-below 300 distinct tokens per page, fails. The 35% warn band between "failing"
-and "fine" is this implementation's, not the proposal's.
-
-Fewer than 3 pages with extractable content returns `notApplicable`. Document
-frequency over two documents is arithmetic, not a measurement.
+- The sample is the scan's existing crawl. The audit fetches nothing.
+- Stratification is by URL path depth, capped at 5 pages per depth. The proposal asked for template detection. Depth is a cheap, stable stand-in that keeps one large template from defining boilerplate for the whole site.
+- Per-page unique tokens are the extracted-content tokens scaled by the share of five-word windows that are not site-wide boilerplate. Counting tokens per shingle would double-count overlapping words.
+- The 35% warn band is this implementation's. The fail thresholds (20% distinct, or a median below 300 distinct tokens) are the proposal's.
+- Fewer than 3 pages with extractable content returns `notApplicable`.
 
 ## Deferred
 
-- **A dollar figure.** The proposal offers an optional cost line at a
-  user-supplied per-million rate. `ScanOptions` carries no such rate, and
-  inventing one would put a number in the report the operator never gave.
-- **Template detection.** Grouping pages by their actual template needs a
-  structural fingerprint per page; depth buckets do the same job for this
-  measurement at a fraction of the cost.
-- **Cross-run trending.** "Unique tokens per fetch" is most useful as a series.
-  The scanner reports one run.
+- A dollar figure at a user-supplied per-million rate. `ScanOptions` carries no such rate.
+- Template detection by structural fingerprint.
+- Cross-run trending. The scanner reports one run.

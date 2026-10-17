@@ -45,14 +45,6 @@ re-fetched on 2026-08-24 except where a date is given.
 re-parse, diff — so a disputed finding is settled by running it, not by
 argument.
 
-## Competitor coverage
-
-axe-core and Lighthouse's accessibility category check th presence, scope validity, and headers/id references — that overlap is real but framed for assistive tech, and they stop at the DOM. Nobody performs the markdown round-trip, which is the part that predicts LLM misreads. No competitor flags colspan-in-header, nested tables, ragged rows, or units-stranded-in-caption as extraction hazards.
-
-## Implementation sketch
-
-Static fetch. Per table in main content: 1) DOM-level flags — hasCaption, hasTh, thScopeCoverage (fraction of th with a valid scope when the table has both row and column headers), spannedHeader (any th with colspan or rowspan > 1), nestedTable, blockContentInCell (p/ul/ol/table/dl inside td or th), raggedRow (row cell count, expanded for spans, differs from header column count), headerlessNumeric (zero th and >= 2 numeric-majority columns), unitsStranded (currency or unit token present in <caption> or a footnote but absent from every header cell and every cell). 2) Round-trip: serialize with a GFM table serializer, re-parse with a GFM parser, rebuild the grid, and diff against the expanded source grid. Report lostCells, shiftedCells, and mergedCells with row/column coordinates and their text. 3) Fail the table on any nonzero round-trip loss, or on headerlessNumeric, or on unitsStranded. 4) Score = tables with zero loss / total main-content tables. 5) Suggested fix per finding: flatten spanned headers into repeated explicit th, move units into header cells, pull block content out of cells.
-
 ## Example failure
 
 A pricing comparison table uses a two-row header where 'Monthly' and 'Annual' sit under a colspan=2 th labelled 'Price'. GFM has no colspan, so the serializer emits a single header row and every price column shifts left by one. The re-parsed grid associates the annual price with the feature-count column. A model asked 'what is the annual price of the Pro plan' answers with a seat count.
@@ -61,46 +53,17 @@ A pricing comparison table uses a two-row header where 'Monthly' and 'Annual' si
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
-Every DOM-level flag in the sketch ships except `thScopeCoverage`: the round
-trip already tells the caller whether a header reaches the column it heads, and
-`scope` coverage is the accessibility framing the dossier explicitly sets this
-audit apart from. `hasCaption` is reported as the table's label rather than as a
-finding — a missing caption costs a reader context, but no cell.
-
-The serializer and the parser are written in place rather than pulled in as a
-markdown library. The audit does not need a general converter: it needs the two
-table behaviours GFM specifies — one header row, and a spanned cell written once
-— reproduced exactly. Twenty lines that do only that are testable against the
-spec text; a dependency would add a whole markdown implementation to be sure of
-the same two rules.
-
-The grid is expanded before the diff, so a header spanning two columns is
-compared as heading both. That is what makes the loss visible: the round trip
-returns the text in the first column and nothing in the second.
-
-A row is called ragged when the cells it declares do not add up to the header
-width _and_ the grid row was not filled by a `rowspan` from above. Without the
-second condition every table using `rowspan` reports every row it touches.
-
-Status bands are this implementation's. `headerlessNumeric` and stranded units
-fail outright — they hand a model numbers with nothing naming them. Otherwise
-the page fails below a score of 0.5 and warns on any finding at all. The
-proposal specifies the per-table failure rule and the score; the page-level
-bands follow from them.
+- `thScopeCoverage` is not measured. The round trip already shows whether a header reaches its column, and `scope` coverage is an accessibility concern.
+- `hasCaption` is reported as the table's label, not as a finding.
+- The GFM serializer and parser are written in place. The audit needs only two GFM rules: one header row, and a spanned cell written once.
+- The grid is expanded before the diff, so a header spanning two columns is compared as heading both.
+- A row is ragged only when its cells miss the header width and no `rowspan` from above fills it.
+- `shiftedCells` and `mergedCells` are not separate classes. The diff reports every changed coordinate and whether its source cell was spanned.
+- `headerlessNumeric` and stranded units fail outright. Otherwise the page fails below a score of 0.5 and warns on any finding. These bands are this implementation's own.
+- Only tables inside `<main>` are read, or the body when there is no `<main>`.
 
 ## Deferred
 
-- **`shiftedCells` and `mergedCells` as separate classes.** The diff reports
-  every coordinate whose text changed, and names whether the source cell was
-  spanned. Splitting that into three named classes would be a naming exercise
-  over the same coordinates.
-- **Tables outside the main content.** A pricing table in a footer is chrome.
-  The scope is `<main>` where it exists, the body otherwise.
-- **Multi-page.** Only the entry page is measured; table markup is a property of
-  a template.
+- Multi-page assessment. Only `ctx.pages[0]` is measured.

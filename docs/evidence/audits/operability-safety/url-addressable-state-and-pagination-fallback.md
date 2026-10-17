@@ -38,14 +38,6 @@ Falsifiable claim: an agent's dominant recovery primitive is re-navigation. A st
 - **[Playwright: Auto-waiting / Actionability checks](https://playwright.dev/docs/actionability)** — Microsoft (vendor-doc, URL verified 2026-08-20)
   - Before click/check/fill/selectOption, Playwright enforces five checks: Visible (non-empty bounding box, not visibility:hidden), Stable (same bounding box over 2 animation frames), Receives Events (element is the hit target at the action point — overlays cause failure), Enabled (not [disabled]/aria-disabled), Editable (not readonly/aria-readonly). Fill requires visible+enabled+editable. This is the exact gate every Playwright-based agent (Playwright-MCP, browser-use, most CUA harnesses) passes through, so each check is a directly testable site-side failure cause.
 
-## Competitor coverage
-
-Not covered as an agent check. SEO crawlers report 'orphaned content' and JS-rendering coverage, but score it against indexability, not against an agent's per-task action budget and recovery path; Lighthouse's agentic category has no navigation or state-addressability audit, and answer-engine trackers do not crawl interaction state at all.
-
-## Implementation sketch
-
-Multi-page crawl. For each listing/collection page: (1) count items present in the initial HTML and compare against a declared total (result-count text, or schema.org numberOfItems); (2) look for real pagination — <a href> page links, <link rel="next">, or a URL parameter matching /page|offset|start|p=|from=/ that changes results when varied; (3) detect infinite-scroll machinery (IntersectionObserver sentinel div near the list end, class matching /infinite|load-more|sentinel/, or a 'Load more' button) and fail when it is present with no href-based fallback. Note that a 'Load more' <button> scores better than a pure scroll sentinel but worse than href pagination, since it is at least a discrete action. Separately, for faceted listings, fetch the page with each facet's declared value as a query parameter and verify the server returns filtered results (facet is URL-addressable) versus identical unfiltered HTML (facet is client-only). Headless tier extends this to tabs and modals by clicking each and asserting location.href changed. Report the deepest item index reachable by URL alone.
-
 ## Example failure
 
 A jobs board renders 15 of 400 listings and appends more via an IntersectionObserver, with filters held in React state and no query parameters. Asked to 'find the remote Rust role in Berlin', the agent must scroll roughly 26 times, with a network wait on each. It cannot deep-link the filtered view, and it blows its step budget. If it does find the role, it cannot hand the user a link to it.
@@ -54,41 +46,15 @@ A jobs board renders 15 of 400 listings and appends more via an IntersectionObse
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
-The shipped audit is `operability-safety/url-addressable-state-and-pagination-fallback`,
-in the `operability-safety` category: the proposal's `agent-operability` domain
-is a research grouping, not one of the eight v2 categories. It declares
-`applicablePageTypes: ['category']`, and returns notApplicable when the scan
-found no listing page.
-
-The three pagination affordances are graded apart, in the order the sketch
-argues for: an `href` or a `rel="next"` passes, a "Load more" button warns
-because it is at least a discrete action, and scroll machinery alone fails.
-
-The declared-total check fires only when the total exceeds the rendered items by
-more than half. A listing that renders 20 of 24 is paginating normally; one that
-renders 20 of 100 with no `href` is hiding four fifths of its catalogue.
-
-Facet probing is capped at two same-origin GETs per listing, each through the
-shared sampled-page cache and its SSRF gate. A facet is called client-only when
-the fetched response is byte-identical to the unfiltered page, or when it holds
-the same number of items — either way the server did not act on the parameter.
+- `applicablePageTypes` is `['category']`. With no listing page the audit returns `notApplicable`.
+- Pagination is graded in three steps. An `href` or `rel="next"` passes. A "Load more" button warns. Scroll machinery alone fails.
+- The declared-total check fires only when the total exceeds the rendered items by more than half.
+- Facet probing is capped at two same-origin GETs per listing, through the shared sampled-page cache. A facet is client-only when the response is byte-identical to the unfiltered page, or holds the same number of items.
 
 ## Deferred
 
-- **Headless tab and modal extension.** The sketch extends the check to tabs and
-  modals by clicking each one and asserting `location.href` changed. Clicking
-  needs a live browser, which the scanner does not drive.
-- **Varying the page parameter to prove it works.** The audit reads the page
-  numbers the listing itself advertises. Fetching `?page=2` to confirm the
-  server returns different items would double the request budget for a claim
-  the markup already makes.
-- **Facets that filter through a different parameter name.** Only links whose
-  own class, `data-filter` or parent class reads as a facet are probed. A filter
-  rendered as an unlabelled anchor is not distinguishable from ordinary
-  navigation without running the page.
+- Tabs and modals. Clicking each and checking `location.href` needs a live browser.
+- Varying the page parameter. The audit trusts the page numbers the listing advertises rather than fetching `?page=2`.
+- Unlabelled facet links. Only links whose class, `data-filter` or parent class reads as a facet are probed.

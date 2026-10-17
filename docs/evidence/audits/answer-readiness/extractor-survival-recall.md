@@ -32,14 +32,6 @@ Answer engines and agent readers do not embed raw HTML. They strip boilerplate a
 - **[WebSuite: Systematically Evaluating Why Web Agents Fail](https://arxiv.org/html/2406.01623v1)** — arXiv (study, URL verified 2026-08-20)
   - Per-UI-primitive success rates for natbot and SeeAct. Worst patterns: slider interaction 0% for both agents; tooltip-based information retrieval 0% for both; complex form filling 12.5% (natbot) / 0% (SeeAct). Aggregate: operational actions 85.2%/76.2%, menu navigation 93.8%/81.3%, informational actions 43.8%/40.6%. Taxonomy covers click (button, link, icon button, slider, switch, accordion, dropdown menu, dialog button, snackbar), type (text/date/phone), select (checkbox, multicheck, select, datagrid row).
 
-## Competitor coverage
-
-No competitor runs the extraction pipeline and measures recall against the source. Lighthouse SEO checks that content is crawlable, not that it survives boilerplate stripping. This check is the difference between 'the bot can fetch it' (universally covered) and 'the bot keeps it' (covered by nobody). Content-to-code-ratio metrics in legacy SEO tools are a crude, non-span-level cousin.
-
-## Implementation sketch
-
-Static fetch, parse with linkedom or jsdom. 1) Run @mozilla/readability to get article.content. 2) Run a second pass mimicking Firecrawl/Jina defaults: drop script, style, nav, aside, header, footer, form, iframe, plus elements whose class or id matches /comment|sidebar|promo|related|advert|ad-|banner|cookie|newsletter|share/i. 3) Define key spans K: h1 text; the first two sentences of each h2/h3 section; every <caption>; every <dt>; every <th>; and every JSON-LD string value (description, offers.price, aggregateRating.ratingValue) that also literally occurs in the HTML. 4) recall = |K present in extracted output| / |K|; fail below 0.9. 5) For each dropped span, walk back up the source DOM and report the ancestor chain that caused the drop — that is the actionable output ('your spec table lives inside <aside class="related-specs">'). 6) textRatio = extracted chars / total visible-text chars: flag < 0.25 as over-strip risk and > 0.85 as boilerplate leakage (chrome text will dominate the page's chunk embeddings). 7) Report both extractors separately, since disagreement between them is itself a fragility signal.
-
 ## Example failure
 
 A product page renders its full specification table inside <aside class="product-sidebar">. Readability and every only-main-content extractor drop the aside wholesale. The markdown an answer engine ingests contains marketing prose, and no dimensions, weight or materials. The page can therefore never be cited for the spec questions it is uniquely qualified to answer. A retailer's thinner page that keeps specs in <main> wins the citation instead.
@@ -48,106 +40,22 @@ A product page renders its full specification table inside <aside class="product
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
-The shipped audit is `answer-readiness/extractor-survival-recall`: the
-proposal's `answer-selection-forensics` domain is a research grouping, not one
-of the eight v2 categories.
-
-Two extractors are run, not the proposal's `linkedom` plus a hand-rolled pair:
-`@mozilla/readability` over jsdom, and a Firecrawl/Jina-style stripper that
-removes `script`, `style`, `noscript`, `template`, `nav`, `aside`, `header`,
-`footer`, `form` and `iframe`, plus any element whose class or id matches
-`/comment|sidebar|promo|related|advert|ad-|banner|cookie|newsletter|share/i`.
-Both are reported separately, because their disagreement is itself the signal.
-
-Recall is the _minimum_ of the two, not the average. An agent uses one pipeline
-or the other, and a fact that survives only one of them is a fact half the
-agents will not see.
-
-A span counts as surviving when its first eight normalized words appear in the
-extractor's output. Comparing whole spans would fail on reflowed whitespace;
-comparing fewer words would match by accident. Header cells — `caption`, `dt`,
-`th` — are allowed to be a single word of four characters or more, because
-"Capacity" is the fact.
-
-JSON-LD strings are key spans only when the prose also carries them, as the
-proposal specifies. Machine-only data has no reason to survive an extractor and
-counting it would manufacture failures.
-
-`textRatio` — the aggressive extractor's output over the page's whole visible
-text — is reported with its two interpretations, over-strip below 0.25 and
-chrome leakage above 0.85, but does not decide the status. Both are properties
-of the extractor as much as of the page.
-
-Thresholds: below 90% recall fails, per the proposal. The 90–97% warn band is
-this implementation's.
-
-- 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. It read the first scanned page's key spans, and
-  `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain
-  a broker's page from another host, on a walled or throttled origin nothing
-  at all. It now consults `scanReadTheSite()` and returns `notApplicable`
-  carrying the gate's own reason.
-  Verdicts that moved on the five nothing-obtained contract states: redirected
-  away pass → na, HTTP 200 bot challenge pass → na. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
-- 2026-08-28 — the JSON-LD span's host element is found by walking the DOM in
-  reverse instead of by building a `:contains()` selector out of the string.
-  Page content is not a selector: gov.uk publishes the service name "Register
-  your vehicle as off the road (SORN)", the 40-character prefix used for the
-  lookup cuts the closing bracket off, and css-what threw "Parenthesis not
-  matched". A throw is not a verdict — the runner replaced the whole result
-  with `scan-error`, so the audit reported nothing about a page it had already
-  measured. Any published string can carry a bracket, a quote or a backslash.
-  Verdicts that moved: `gov-uk-vehicle-tax` scan-error → fail. Found by
-  `packages/core/src/tests/real-page-corpus.test.ts`.
-
-### Class tokens, not substrings (2026-10-06)
-
-The stripper matched its blocklist as a substring of the joined class and id string. `/banner/` matched `page-content--banner-enabled`, the wrapper that holds a whole page on a large retail site, so the aggressive extractor deleted everything and every key span was reported lost. Firecrawl's `excludeNonMainTags` lists class and id selectors such as `.ad`, `.sidebar`, `.cookie` and `#share`, and a class selector names a whole token ([removeUnwantedElements.ts](https://github.com/firecrawl/firecrawl/blob/main/apps/api/src/scraper/scrapeURL/lib/removeUnwantedElements.ts), verified 2026-10-06). Each class token and the id are now tested against `/^(?:comments?|sidebar|promo|related|advert|ads?|banner|cookie|newsletter|share)$/i`. The old `ad-` prefix becomes the `ad` and `ads` tokens, as in Firecrawl's list.
-
-An element that matches is still kept when it holds more than half the page's text after the tag pass. A rule that would delete most of the page has matched the page, not a widget. Firecrawl guards the same way: it keeps an excluded element that contains a main-content marker.
-
-### Script text is not prose (2026-10-06)
-
-JSON-LD strings are key spans only when the prose carries them. The audit tested that against `$("body").text()`, which includes `<script>` contents, so a JSON-LD block in the body vouched for its own URLs. They became key spans that no extractor keeps. The prose test and the `textRatio` denominator now drop `script`, `style`, `noscript` and `template` first.
-
-On the retail page, recall moved from 0 to 0.818, and the page still fails: readability drops the tile headings. Verdicts that moved in the real-page corpus: `atlassian-com-pricing-shell` fail → na, because its only key spans were JSON-LD strings in scripts.
-
-### The article title and hidden panels (2026-10-06)
-
-Two key-span rules reported facts as lost that no reader loses.
-
-- **An h1 Readability keeps as the title.** Readability removes the first
-  heading that repeats the document title from the article body and returns
-  it as the article title. Every Readability-based pipeline delivers that
-  title. The audit read only the body text, so a page whose h1 repeats its
-  `<title>` lost its h1 to Readability. An h1 span now survives Readability
-  when the article title contains it.
-- **Spans in hidden panels.** Section openers inside a hidden command palette
-  were key spans on a small marketing site. Readability drops hidden subtrees
-  before scoring, and a reader never sees them. Spans inside a subtree the
-  markup hides (`hidden`, `aria-hidden="true"`, inline `display:none`, a
-  closed `<dialog>`, `<template>`) are no longer collected.
-
-Verdicts that moved: the bare-site fixture fail → pass, whose h1 repeats its
-title. In the real-page corpus, `theguardian-com-article` fail → pass (h1 is
-the title), `python-docs-json` fail → warn (h1 is the title),
-`otto-de-category` fail → pass (eight spans in hidden footer panels) and
-`tattly-com-shell` fail → na (its only span sat in a closed dialog).
+- Two extractors run: `@mozilla/readability` and a Firecrawl/Jina-style stripper. They are reported separately, because their disagreement is itself the signal.
+- The stripper removes `script`, `style`, `noscript`, `template`, `nav`, `aside`, `header`, `footer`, `form` and `iframe`. It also removes any element with a class token or id that is a whole word from its blocklist (`AGGRESSIVE_DROP_TOKEN_RE` in `gatherers/extraction.ts`). A substring match would hit whole-page wrappers such as `page-content--banner-enabled`.
+- A matched element holding more than half the page's text is kept. Such a rule has matched the page, not a widget. Firecrawl guards the same way.
+- Recall is the minimum of the two extractors, not the average. A fact that survives only one is lost to half the agents.
+- A span survives when its first eight normalized words appear in the output. `caption`, `dt` and `th` spans may be a single word of four characters or more.
+- An `h1` survives Readability when the article title contains it. Readability moves a title-repeating `h1` out of the body.
+- Spans inside a hidden subtree are not collected (`hiddenFromReaders`). Readability drops those before scoring.
+- JSON-LD strings are key spans only when the visible prose carries them. The prose test and the `textRatio` denominator drop `script`, `style`, `noscript` and `template` first.
+- A JSON-LD span's host element is found by walking the DOM in reverse, never by building a `:contains()` selector from page text.
+- `textRatio` is reported against its over-strip (0.25) and leakage (0.85) bounds but does not set the status.
+- Below 90% recall fails. The 90% to 97% warn band is this implementation's own.
 
 ## Deferred
 
-- **The third extractor.** `content-extraction/extraction-determinism` runs
-  three and compares them; this audit asks a different question — which named
-  facts survive — where two pipelines with opposite biases bracket the answer.
-- **Per-page assessment.** Only the entry page is measured. Where a fact lives
-  in the template is a template property.
-- **Ancestor chains for JSON-LD spans.** A structured-data string has no single
-  home element; the chain reported for one is the last node whose text contains
-  it, which is indicative rather than exact.
+- A third extractor. `content-extraction/extraction-determinism` already compares three.
+- Per-page assessment. Only `ctx.pages[0]` is measured.
+- Exact ancestor chains for JSON-LD spans. The reported chain is the last node whose text contains the string.

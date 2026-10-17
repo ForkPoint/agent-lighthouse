@@ -47,14 +47,6 @@ Falsifiable claim. An element is omitted from the serialized accessibility snaps
 - **[MCP Security Best Practices (2026-07-28)](https://modelcontextprotocol.io/docs/2026-07-28/tutorials/security/security_best_practices.md)** — Model Context Protocol (spec, URL verified 2026-08-20)
   - Token passthrough: 'MCP servers MUST NOT accept any tokens that were not explicitly issued for the MCP server.' Scope minimization: 'Common Mistakes' list names publishing all possible scopes in scopes_supported and using wildcard/omnibus scopes (*, all, full-access). State handle hijacking replaces session hijacking now that MCP is stateless: servers MUST NOT treat possession of a state handle as authentication; SHOULD use non-deterministic handles bound server-side to the authenticated user. SSRF section: clients SHOULD require HTTPS for all OAuth-related URLs and block private/link-local ranges (169.254.0.0/16 etc.).
 
-## Competitor coverage
-
-Not covered. Lighthouse's agent-accessibility-tree audit is a filter over ~37 axe rules; axe's button-name/link-name/input-button-name rules only fire on elements that ALREADY declare button/link semantics, and no axe rule can fail a bare unroled div — the ghost case is invisible to it by construction. Answer-engine tools (Profound, Otterly) and SEO AI toolkits (Semrush, Ahrefs) audit citation/visibility and content, not DOM actionability.
-
-## Implementation sketch
-
-Static tier (default): parse the served HTML plus linked CSS. Flag as ghost any element that (a) is not a natively interactive tag and has no role attribute, AND (b) matches at least one clickability signal — inline onclick/onmousedown/onkeydown, a class or data-attribute matching /(^|[-_])(btn|button|cta|link|clickable|tile|card-link|toggle)([-_]|$)/, or a CSS rule setting cursor:pointer on its selector. Also flag <a> without href (no link role, no snapshot entry) and <button>/<a> whose computed accessible name per accname resolution (content, aria-label, aria-labelledby, title, alt of child img, svg <title>) is empty. Score = 1 - ghost/(ghost+semantic), fail below ~0.9. Headless tier (higher precision): CDP DOMDebugger.getEventListeners over all nodes plus DOMSnapshot cursor/isClickable (the exact signals browser-use consumes) intersected against the CDP Accessibility.getFullAXTree node set; a ghost is any node with a click listener or cursor:pointer whose AX node is ignored or has role generic/none with empty name.
-
 ## Example failure
 
 A product grid renders each tile as <div class="product-tile" onclick="goTo(id)"> with the title in a nested <span>. Humans and screenshot agents click tiles fine. Playwright-MCP's snapshot shows only generic text nodes with no refs, so the agent reports 'I cannot find a link for this product' and either scrolls indefinitely (WebVoyager's 44.4% navigation-stuck bucket) or guesses a URL.
@@ -63,98 +55,19 @@ A product grid renders each tile as <div class="product-tile" onclick="goTo(id)"
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
-The shipped audit is `operability-safety/ghost-clickable-element-ratio`, in the
-`operability-safety` category: the proposal's `agent-operability` domain is a
-research grouping, not one of the eight v2 categories.
-
-The clickability and accessible-name helpers live in
-`packages/core/src/audits/operability-safety/_agent-affordances.ts` rather than
-in this audit, because three audits in this category need the same two answers
-and the patterns must not drift apart between them.
-
-The ratio is reported as semantic / (semantic + ghost) — the sketch writes the
-same quantity as `1 - ghost/(ghost+semantic)`. The floor is 0.9 exactly: a page
-at 0.9 warns, below it fails, and a page with no ghost at all passes.
-
-The empty-accessible-name arm is applied to `<a>`, `<button>` and `<summary>`
-only. A form control usually takes its name from a `<label for>` association,
-which accname resolution over the served markup alone does not follow, so
-calling a nameless `<input>` a ghost would be a guess rather than a measurement.
-
-A ghost whose ancestor was already flagged on the click-signal arm is not
-counted again, so a clickable wrapper holding a clickable inner div is one
-finding rather than two.
-
-- 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. `ctx.pages` carries whatever answered 200, and a
-  Cloudflare managed challenge answers 200 `text/html` from the requested host:
-  its one `role="main"` wrapper is a semantic click target, so the survey found
-  a ratio of 1.00 and passed the interstitial as though the owner had written
-  it. It now consults `scanReadTheSite()` and returns `notApplicable` carrying
-  the gate's own reason, before the survey runs. In production the gate already
-  skips this audit in every such state — it declares all four evidence keys —
-  so no released verdict moves; the guard is what makes the audit correct when
-  it is called directly, which is how the contract suite calls it. Measured on
-  the HTTP 200 bot-challenge contract state: pass → na. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
-
-### A wrapper around a control is not a control (2026-10-06)
-
-The class vocabulary and the cursor rule stand in for a listener the scanner
-cannot see. On a small marketing site they flagged two `div`s whose class
-ended in `-cta`. Each held a native `<a href>`, which was the action, and
-which the snapshot names. The wrapper had no listener of its own. The same
-arm flagged icons and labels inside links, such as a `span` styled as the
-link's text.
-
-Two rules now hold for an element whose only signal is a name or a cursor:
-
-- **It holds a control.** An element that contains `a[href]`, `button`,
-  `select`, `textarea`, `summary`, a non-hidden `input`, or an interactive
-  widget role is layout around that control, and is not a ghost. Decorative
-  and structural roles such as `presentation`, `none`, `img` and `status`
-  do not supply an action.
-- **It sits inside a control.** An element inside a link, a button, a
-  `summary` or a widget role is part of that control. A click on it is the
-  control's click.
-
-An inline handler (`onclick` and the rest) is the element's own action. It
-still flags the element whatever it contains. Inside a control it counts
-only when it stops the event: `stopPropagation`, `stopImmediatePropagation`
-or `cancelBubble`. Any other handler, such as an analytics call, runs and
-lets the click reach the control, so the element stays part of it.
-
-Role names match as the ARIA role attribute is read: case-insensitive, and
-the first token that names a concrete role wins. `role="link button"` is a
-link, and `role="img button"` is an image, not a control. A wrapper around
-a `gridcell` or a `scrollbar` holds a control too. `progressbar` is a widget
-role but takes no input, so it is not one.
-
-Verdicts that moved in the real-page corpus, all from wrappers and inner
-labels: `barclays-co-uk-current-accounts`, `capitalone-com-savings`,
-`irs-gov-form-1040`, `otto-de-category`, `rakuten-co-jp-home` and
-`wellsfargo-com-checking` fail → warn; `bbc-co-uk-article`, `chase-com`,
-`gov-uk-vehicle-tax`, `mdn-cache-control` and `theguardian-com-article` warn →
-pass; `discourse-meta-topic` fail → pass.
+- The clickability and accessible-name helpers live in `_agent-affordances.ts`. Several audits in this category share them, so the patterns cannot drift apart.
+- The ratio is reported as semantic / (semantic + ghost). The floor is 0.9: a page at 0.9 warns, below it fails, and a page with no ghost passes.
+- The empty-name arm covers `<a>`, `<button>` and `<summary>` only. A form control usually takes its name from `<label for>`, which this resolution does not follow.
+- A ghost whose ancestor was already flagged on the click-signal arm is not counted again.
+- An element whose only signal is a class name or a cursor is not a ghost when it holds a control. Controls are `a[href]`, `button`, `select`, `textarea`, `summary`, a non-hidden `input` or a widget role. Decorative roles such as `presentation`, `img` and `status` supply no action.
+- Such an element is also not a ghost when it sits inside a link, a button, a `summary` or a widget role. A click on it is the control's click.
+- An inline handler is the element's own action and always flags it, except inside a control. There it counts only when it stops the event with `stopPropagation`, `stopImmediatePropagation` or `cancelBubble`.
+- Roles are read like the ARIA role attribute: case-insensitive, first concrete token wins. A wrapper around a `gridcell` or `scrollbar` holds a control. `progressbar` takes no input, so it does not.
 
 ## Deferred
 
-- **Headless CDP tier.** The sketch's higher-precision tier intersects
-  `DOMDebugger.getEventListeners` and `DOMSnapshot` cursor/`isClickable` against
-  `Accessibility.getFullAXTree`. All three need a live browser, which the
-  scanner does not drive. The shipped audit is the static tier only, and its
-  description does not claim otherwise.
-- **Listener-based detection.** Only inline handler attributes are visible in
-  served markup. A listener attached with `addEventListener` in a script is not
-  detectable without executing the page, so the class-name vocabulary and the
-  `cursor: pointer` rule carry that signal instead.
-- **Occlusion and paint order.** browser-use consumes bounding boxes, client
-  rects and stacking contexts to decide what is really clickable. None of those
-  exist before layout, so overlay interception is left to the proposed
-  `overlay-interception-hazard` check, which stays blocked on the headless tier.
+- The headless CDP tier, which intersects event listeners and cursor data with the full accessibility tree. The scanner drives no live browser.
+- Listener-based detection. A listener added with `addEventListener` is invisible in served markup, so the class vocabulary and the `cursor: pointer` rule stand in for it.
+- Occlusion and paint order. They need layout, so overlay interception is left to the headless tier.

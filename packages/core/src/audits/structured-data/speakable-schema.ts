@@ -3,7 +3,6 @@
 // signal Google only reads on news content; it also demanded an ARRAY
 // cssSelector, ignored `xpath`, and never checked the host type.
 // Evidence dossier: docs/evidence/audits/structured-data/speakable-schema.md
-// Research: docs/evidence/deletions/structured-data/speakable-schema.md
 //
 // Re-graded A -> B on 2026-08-24. Google's speakable page is live and still
 // names Google Assistant as the consumer, but it says verbatim "This feature is

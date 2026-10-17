@@ -40,30 +40,6 @@ sources:
 
 AI scrapers use <main> to identify primary content and discard nav/footer chrome, reducing hallucination risk from boilerplate text. Without <main>, agents must guess which content is primary versus navigational, often ingesting menus and footers into their context window.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Checks only the literal tag — 'page.$('main').length > 0' — so <div role="main"> and <div id="main" role="main"> (still emitted by many older themes and by every framework that predates the element) are scored as failures despite being exactly equivalent in the accessibility tree that the audit's own impact text invokes. It also passes vacuously on an empty crawl ('allPass = pagesWithMain === ctx.pages.length' → 0 === 0), and passes a page with three <main> elements even though the guidance demands exactly one.
-
-**Required fix:** Match 'main, [role="main"]' instead of 'main'. Guard ctx.pages.length === 0 with notApplicable(). Add a warn when a page has more than one main/role=main, matching the stated 'exactly one <main> per page' guidance. Include the offending page URLs in `found` — currently the report says '3/10 pages' with no way to know which 7.
-
-**False-positive risks:**
-
-- role="main" on a div is not accepted — a false fail for a semantically correct page.
-- Empty ctx.pages → '0 === 0' → pass with '0/0 pages with <main>'. A WAF-blocked crawl reports success.
-- CSR SPA shells (<div id="root"></div>) fail although the hydrated DOM has <main>; the fetcher does no JS rendering.
-- Multiple <main> elements (invalid HTML, common when a layout and a page template both emit one) score as pass.
-- found/message report only counts, never URLs, so the result is not actionable on a multi-page crawl.
-
-**Test gaps:**
-
-- No <div role="main"> fixture.
-- No empty-ctx.pages test (the false pass is unguarded and unnoticed).
-- No multiple-<main> fixture.
-- No SPA-shell fixture.
-- Only 1- and 2-page crawls tested; the warn/fail boundary on larger crawls is unexercised.
-
-**Overlaps with:** `6.4`, `6.5`, `6.6`
-
 ## Evidence
 
 ### Signal: Landmark elements (main, nav, header, footer, article, aside) as extraction boundaries — grade A (semantic-dom-a11y)
@@ -78,32 +54,9 @@ Checks only the literal tag — 'page.$('main').length > 0' — so <div role="ma
 
 ## Implementation deviations
 
-- 2026-10-07 — the scope pilot for 7.0.0 removes the first page's special
-  role. Every selected page contributes to the same count. All pages with
-  `<main>` pass; partial coverage warns; no pages with `<main>` fail. An empty
-  sample returns `notApplicable`. Results name the missing-page URLs in sorted
-  order and use the first sorted missing URL as `pageUrl`. Evidence text uses
-  the existing result length limit and its truncation marker.
-
-- 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. It read the `<main>` landmark on the scanned pages,
-  and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked
-  domain a broker's page from another host, on a walled or throttled origin
-  nothing at all. It now consults `scanReadTheSite()` and returns
-  `notApplicable` carrying the gate's own reason.
-  Verdicts that moved on the five nothing-obtained contract states: walled
-  pass → na, throttled pass → na, redirected away pass → na, non-HTML homepage
-  fail → na, HTTP 200 bot challenge fail → na. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
+- Every sampled page is judged through `judgePages`. There is no first-page exception. Partial coverage warns; no page with `<main>` fails.
 
 ## Deferred
 
-- The 7.0.0 applicability review must address `[role="main"]`, multiple main
-  landmarks and hidden landmarks. This scope-only correction retains the
-  existing literal `<main>` predicate. It does not claim those semantic defects
-  are fixed or that fetched HTML represents a hydrated browser DOM.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+- The predicate is the literal `<main>`. `[role="main"]`, multiple main landmarks and hidden landmarks are not handled.
+- Fetched HTML does not prove the hydrated browser DOM.

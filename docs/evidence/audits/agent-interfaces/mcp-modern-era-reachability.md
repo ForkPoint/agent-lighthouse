@@ -41,32 +41,6 @@ Revision 2026-07-28 abolished the `initialize` handshake and protocol-level sess
 - **[MCP Specification 2025-06-18 — Transports (superseded baseline)](https://modelcontextprotocol.io/specification/2025-06-18/basic/transports)** — Model Context Protocol (spec, URL verified 2026-08-20)
   - The legacy-era shape used for backward-compat detection: Mcp-Session-Id assigned in the InitializeResult, GET opens a standalone SSE stream or returns 405, DELETE terminates a session, Last-Event-ID resumability, and servers SHOULD assume 2025-03-26 when MCP-Protocol-Version is absent. Also documents the deprecated 2024-11-05 HTTP+SSE detection path (GET returns an `endpoint` event as the first SSE event).
 
-## Competitor coverage
-
-Lighthouse's Agentic Browsing category audits WebMCP — in-page tools registered via navigator.modelContext — which is a different surface entirely and never opens a socket to a remote MCP endpoint. Profound, Otterly, Semrush and Ahrefs AI toolkits are answer-engine citation/visibility trackers and issue no JSON-RPC at all. MCP Inspector and mcpjam can connect to a server but are interactive developer tools, not scored site audits, and neither classifies protocol era or reports it as a readiness grade.
-
-## Implementation sketch
-
-Resolve the candidate MCP endpoint (from a registry match, an llms.txt reference, a documented /mcp path, or user config). Issue:
-
-POST <endpoint>
-Content-Type: application/json
-Accept: application/json, text/event-stream
-MCP-Protocol-Version: 2026-07-28
-Mcp-Method: server/discover
-
-{"jsonrpc":"2.0","id":"al-1","method":"server/discover","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientInfo":{"name":"AgentLighthouse","version":"1.0.0"},"io.modelcontextprotocol/clientCapabilities":{}}}}
-
-Handle both Content-Type: application/json and text/event-stream (parse the final SSE data: frame). Classify:
-
-- 200 + result.supportedVersions includes "2026-07-28" -> PASS (modern). Record capabilities keys, capabilities.extensions ids, presence of `instructions`, and serverInfo.
-- 400 + error.code === -32022 -> modern era but older revision; read error.data.supported[] and report the newest supported.
-- 401 + WWW-Authenticate -> auth-gated; hand off to the OAuth Discovery Chain check and re-probe after noting the challenge.
-- 404 + error.code === -32601 -> MUST violation: modern server that does not implement server/discover.
-- 400/404/405 with an empty or non-JSON-RPC body, or a body demanding `initialize` -> LEGACY-ONLY. Confirm by POSTing a legacy `initialize` and checking for an Mcp-Session-Id response header.
-- GET <endpoint> returning text/event-stream whose first event is `endpoint` -> deprecated 2024-11-05 HTTP+SSE only (FAIL, deprecated since 2025-03-26 and eligible for removal).
-  Also flag legacy residue on a modern server: a GET or DELETE that does not return 405, or a minted/echoed Mcp-Session-Id.
-
 ## Example failure
 
 A retailer ships `https://shop.example.com/mcp` on an SDK pinned to protocol 2025-06-18. Probing it with a modern request returns `400 Bad Request` with an empty body and no JSON-RPC error, and a legacy `initialize` POST returns 200 with an `Mcp-Session-Id` header. Verdict: legacy-only. Any shopping agent whose client has adopted 2026-07-28 gets a hard failure on first contact. It cannot even enumerate the catalog tools. There is no downgrade signal to act on, because the 400 body carries no recognized modern error.
@@ -75,21 +49,15 @@ A retailer ships `https://shop.example.com/mcp` on an SDK pinned to protocol 202
 
 Tier per evidence policy: **scored** — grade A meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
-Recorded at graduation (2026-08-22, Plan 5 Task 26).
-
-- **"Modern era, older revision" is a `warn`, not a low-scoring pass.** The sketch called a `-32022` rejection "PASS at a lower score". This audit is ternary, where the lower score _is_ `warn`; there is no third passing grade to hand out. The classification, the supported list and the newest revision are all reported in the message either way.
-- **Endpoint discovery is the shared one.** The sketch allowed resolving the endpoint from "a registry match, an llms.txt reference, a documented /mcp path, or user config". This implementation uses only `discoverMcpEndpoint` from `_mcp-client.ts`, which reads the three explicit declarations (`/.well-known/mcp/servers.json`, `/.well-known/ucp`, `/.well-known/ai-catalog.json`). Probing `/mcp` speculatively would POST to a path the site never declared; see the `agent-interfaces/mcp-endpoint` dossier for why that is out of bounds.
-- **Probes are shared per scan.** `server/discover`, the GET and the DELETE go through the `sharedProbe` cache keyed on the `CheckContext` object, so the five MCP audits in this wave issue each of those requests once per scan rather than once per audit.
-- **The deprecated-transport verdict outranks the POST classification.** A GET answering with an SSE stream whose first event is `endpoint` is reported as the 2024-11-05 HTTP+SSE transport regardless of what the POST returned, because that finding is decisive: a current client cannot speak that transport at all.
-- **Legacy confirmation is one extra POST, and only when nothing modern came back.** The `initialize` probe fires only after `server/discover` produced neither a result nor a recognised modern error code, and LEGACY-ONLY is asserted only when the response carries an `Mcp-Session-Id` header.
+- A `-32022` rejection ("modern era, older revision") is a `warn`. The audit is ternary, so there is no lower passing grade.
+- The endpoint comes only from `discoverMcpEndpoint` in `gatherers/mcp.ts`: `servers.json`, `/.well-known/ucp` or `/.well-known/ai-catalog.json`. The audit never probes an undeclared `/mcp`.
+- `server/discover`, the GET and the DELETE go through `sharedProbe`, so the MCP audits issue each request once per scan.
+- A GET that opens an SSE stream with an `endpoint` event is reported as the deprecated 2024-11-05 transport, whatever the POST returned.
+- The legacy `initialize` POST fires only when nothing modern came back. LEGACY-ONLY requires an `Mcp-Session-Id` header on its response.
 
 ## Deferred
 
-- Re-probing after the 401 challenge with a token. The audit reports the challenge and names `agent-interfaces/mcp-oauth-discovery-chain` as the check that follows the chain; acquiring credentials is out of scope for an unauthenticated scanner.
-- Validating `instructions` content quality, and validating the declared capabilities against what `tools/list` actually returns. The first is subjective; the second belongs to `agent-interfaces/mcp-tool-contract-validity`.
+- Re-probing after a 401 challenge with a token. Acquiring credentials is out of scope for an unauthenticated scanner.
+- Judging the quality of `instructions`.

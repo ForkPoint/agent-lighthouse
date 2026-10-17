@@ -42,14 +42,6 @@ Falsifiable claim: ACP spec 2026-04-17 makes `links` one of the 9 REQUIRED field
 - **[ACP Getting Started: Sellers](https://agenticcommerce.dev/docs/getting-started/sellers)** — Agentic Commerce Protocol (spec, URL verified 2026-08-20)
   - Seller obligations: implement the five HTTPS/JSON checkout endpoints; calculate all amounts (item prices, discounts, taxes, shipping); manage inventory and availability; process payments through their PSP; fulfil orders. Sellers must declare capabilities in every checkout response, including payment handlers (handler id, name, version, PSP reference, configuration) and optional extensions. Sellers must validate payment handler IDs against declared capabilities and manage state transitions to ready_for_payment.
 
-## Competitor coverage
-
-Lighthouse's Agentic Browsing category covers llms.txt, WebMCP tools, agent accessibility and layout stability — no policy-link surface. Semrush/Ahrefs site audits flag broken links generically but do not classify by ACP link-type enum or gate on the two conditional feed requirements. Profound/Otterly measure answer-engine visibility, not merchant transactability.
-
-## Implementation sketch
-
-1. Fetch homepage + 2 sampled PDPs; extract every <a href> from the RAW HTML (no JS) plus any <link rel> policy hints. 2) Classify each href into the 8 enum types using path and anchor-text regexes: terms_of_use=/terms|/tos|terms-of-(service|use|sale); privacy_policy=/privacy|privacy-(policy|notice); return_policy=/returns?|/refunds?|return-policy|/exchanges; shipping_policy=/shipping|/delivery|shipping-policy; contact_us=/contact; about_us=/about; faq=/faqs?|frequently-asked; support=/support|/help|/customer-(service|care). 3) For each resolved URL: require scheme https, final status 200 after <=3 same-registrable-domain redirects, Content-Type text/html, and a soft-404 guard (raw body must contain >=500 chars of extracted text and must not match /page not found|404|doesn.t exist/i in <title> or <h1>). 4) No-JS guard: policy text must be present in the initial HTML, since ACP link targets are opened by agents that may not execute JS. 5) Score = fraction of 8 types resolved; terms_of_use and privacy_policy are hard gates that force the whole check to fail. Emit the resolved URL per type so the merchant can paste them straight into their `links` array and feed rows.
-
 ## Example failure
 
 A Shopify store renders its refund policy at /policies/refund-policy but the PDP only links it from a JS-hydrated footer drawer, so raw HTML contains no href to it; return_policy resolves to nothing and the merchant's CheckoutSession `links` array ships incomplete. Worse case: /terms 301-redirects cross-domain to a Zendesk help centre that returns 403 to non-browser clients — terms_of_use fails the hard gate and is_eligible_checkout cannot be set.
@@ -58,51 +50,27 @@ A Shopify store renders its refund policy at /policies/refund-policy but the PDP
 
 Tier per evidence policy: **scored** — grade A meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
-- **The fetcher's declared `followRedirects` option was inert.** It is now
-  honoured (`packages/core/src/fetcher.ts`): `false` selects a dispatcher with
-  no redirect interceptor, so this audit can walk the chain one hop at a time
-  and count it. Pinned in `packages/core/src/fetcher.test.ts`.
-- **The no-JS guard is a text-versus-body-size comparison.** Under 500
-  characters of extracted text with a response body over 2,000 characters is
-  reported as a client-rendered shell; under 500 characters with a small body is
-  reported as a thin page. Scripts, styles and templates are removed before the
-  text is measured.
-- **Classification is path-first, anchor-text-second**, so an opaque path is
-  still classified by its label and a mislabelled link is still classified by
-  its path. The first match in document order wins per type.
-- `resolvePolicyLinks(ctx)` is exported from the package root so other
-  checkout-eligibility audits reuse the resolved `terms_of_use` and
-  `privacy_policy` targets rather than re-deriving them.
-
-### Policy links on another domain, and PDF policies (2026-10-06)
-
-The implementation sketch required every link and every redirect hop to stay
-on the merchant's registrable domain, and required `text/html`. No cited
-source asks for either. The ACP `Link` schema in `openapi.agentic_checkout.yaml`
-(2026-04-17) asks only for `url: string, format: uri`. The OpenAI feed spec
-asks for `seller_tos` and `seller_privacy_policy` as a public URL. A large
-retail site linked both policies to a sister brand domain, which redirected
-to a PDF on the brand's asset CDN. Both hard gates failed on that, and the
-audit declared the catalogue ineligible for checkout without a source.
-
-Both rules are dropped. A link may point at any domain and redirect across
-domains. Every hop still passes `isSafeUrl()`, still counts toward the
-3-redirect cap, and the target must still be HTTPS and answer 200.
-
-A target served as `application/pdf` is accepted when its body starts with
-the `%PDF-` signature. The soft-404 and 500-character text checks read HTML,
-so they apply to HTML targets only. A PDF's text is not extracted: the core
-package carries no PDF parser, and no source makes a PDF policy unusable.
-Any other content type still fails.
+- The no-JS guard compares text to body size. Under 500 characters of text
+  with a body over 2,000 characters is a client-rendered shell. Under 500
+  characters with a small body is a thin page. Scripts, styles and templates
+  are removed before the text is measured.
+- Classification is path-first, anchor-text-second. An opaque path is still
+  classified by its label. The first match in document order wins per type.
+- `resolvePolicyLinks(ctx)` is exported from the package root.
+  `agent-ua-commerce-parity` reuses it.
+- No same-domain rule. No cited source asks for one: the ACP `Link` schema
+  asks only for `url: string, format: uri`. A link may point at any domain and
+  redirect across domains. Every hop still passes `isSafeUrl()` and counts
+  toward the 3-redirect cap. The target must be HTTPS and answer 200.
+- A target served as `application/pdf` passes when its body starts with
+  `%PDF-`. Its text is not extracted, because core carries no PDF parser. The
+  soft-404 and text-floor checks apply to HTML targets only. Any other content
+  type fails.
+- The audit reads the pages already in the scan context. It issues no PDP
+  fetches of its own.
 
 ## Deferred
 
-- The sampled-PDP sweep is implicit: the audit reads every page already in the
-  scan context rather than issuing its own PDP fetches.
-- `<link rel>` policy hints are not read; every candidate comes from `<a href>`.
+- `<link rel>` policy hints are not read. Every candidate comes from `<a href>`.

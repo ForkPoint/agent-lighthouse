@@ -40,29 +40,6 @@ sources:
 
 AI agents use <header> and <footer> landmarks to identify and exclude boilerplate content (navigation, copyright, links) from primary content extraction. Without these landmarks, agents may include footer disclaimers or nav menus in their content summaries.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Counts any <header> or <footer> anywhere in the document — 'page.$('header').length > 0' — but <header>/<footer> nested inside <article>, <section>, or <aside> are sectioning-content headers, not banner/contentinfo landmarks. A blog post whose cards each use <article><header><h2>…</h2></header></article> is credited with a site banner it does not have, so the audit passes exactly the pages whose chrome an agent cannot identify. The premise it is meant to verify is therefore inverted for a common markup pattern.
-
-**Required fix:** Restrict to landmark scope: 'body > header, body > footer' plus 'header:not(article header, section header, aside header, main header)' and equivalently for footer, or accept [role=banner]/[role=contentinfo]. Guard ctx.pages.length === 0 with notApplicable(). Report which pages are missing which landmark rather than only aggregate counts.
-
-**False-positive risks:**
-
-- Article-scoped <header>/<footer> are counted as landmarks — false pass on card/list layouts and on any theme using <article><header>.
-- [role="banner"] / [role="contentinfo"] on a div are not accepted — false fail on older themes.
-- Empty ctx.pages → '0 === 0' → pass.
-- CSR SPA shells fail although the hydrated page has both.
-- The warn branch's message and found disagree in granularity: message reports header/footer separately while found reports the 'both' count, so a user reading found sees a lower number than the message implies.
-
-**Test gaps:**
-
-- No <article><header> fixture — the inverted-premise false pass is untested.
-- No role=banner/role=contentinfo fixture.
-- No empty-ctx.pages test.
-- No fixture with multiple <footer> elements (article footers plus site footer).
-
-**Overlaps with:** `6.3`, `6.4`, `6.6`
-
 ## Evidence
 
 ### Signal: Landmark elements (main, nav, header, footer, article, aside) as extraction boundaries — grade A (semantic-dom-a11y)
@@ -77,34 +54,10 @@ Counts any <header> or <footer> anywhere in the document — 'page.$('header').l
 
 ## Implementation deviations
 
-- 2026-10-07 — the 7.0.0 scope review removes the first-page exception.
-  The audit uses `judgePages` for the complete selected sample: all pages with
-  both elements pass; partial coverage warns; no page with both fails. An empty
-  sample returns `notApplicable`. Header and footer counts still refer to the
-  same sample. The result names each affected URL and its missing elements in
-  sorted order, with the first affected URL as `pageUrl`. Existing result text
-  limits bound long samples and retain the truncation marker.
-
-- 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. It read the `<header>` and `<footer>` landmarks on the
-  scanned pages, and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 —
-  on a parked domain a broker's page from another host, on a walled or
-  throttled origin nothing at all. It now consults `scanReadTheSite()` and
-  returns `notApplicable` carrying the gate's own reason.
-  Verdicts that moved on the five nothing-obtained contract states: walled
-  pass → na, throttled pass → na, redirected away fail → na, non-HTML homepage
-  fail → na, HTTP 200 bot challenge fail → na. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
+- Every sampled page is judged through `judgePages`. There is no first-page exception. Partial coverage warns; no page with both landmarks fails.
 
 ## Deferred
 
-- This scope correction retains the literal `<header>`/`<footer>` selectors.
-  It does not fix section-scoped elements counted as document landmarks, missing
-  ARIA equivalents, or hidden markup. The 7.0.0 semantic follow-up must test
-  these against the evidence above and define applicability when a page has
-  no relevant chrome. Fetched HTML does not prove the hydrated browser DOM.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+- The selectors are literal `<header>` and `<footer>`. Section-scoped elements still count as document landmarks, ARIA equivalents are not read, and hidden markup is not skipped.
+- Applicability when a page has no relevant chrome is undefined.
+- Fetched HTML does not prove the hydrated browser DOM.

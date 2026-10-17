@@ -115,51 +115,14 @@ That is also the disposition of YouBot inside this audit. **YouBot's own contrib
 
 ## Implementation deviations
 
-### Inherited access passes (2026-10-06)
-
-The audit warned at 0.5 when YouBot or AI2Bot was allowed through
-`User-agent: *` or by no rule at all. The stated reason was that the policy
-"flips the day a blanket block is added".
-
-No source supports that warn. Neither You.com nor the Allen Institute documents
-treating a named `Allow: /` group differently from inherited access. RFC 9309
-§2.2.1 makes a crawler obey the group that names its product token and fall
-back to `*` only when none exists, so the two states grant identical access.
-A later blanket block is a future edit, and this audit fails it when it lands.
-Scoring a risk the site has not taken is speculation the evidence policy does
-not allow.
-
-The named-group advice also had a cost. A `User-agent: YouBot` / `Allow: /`
-group replaces the catch-all for YouBot, so it drops every catch-all
-`Disallow` the site meant to apply.
-
-The rule now asks one question per scored bot: do the rules that apply to it
-permit `/`? A block that reaches either bot still fails. An unreadable
-robots.txt is not applicable, as in `access-crawl-control/meta-external-agent`:
-missing, non-200, empty, or a 200 that parses to no groups and no directives.
-A site with no robots.txt had received the same warn as a site with an open
-catch-all. Neither is penalised now.
-
-The title moved from "AI bot directives are explicit" to "Documented AI bots
-allowed by robots.txt". The failure title moved to "A documented AI bot is
-blocked in robots.txt", because a block is now the only failing state. The
-per-bot table keeps its stance labels: "allowed by default" is still an
-accurate description of a row. `guidance.code` still shows the named
-`Allow: /` snippet, and the fix text carries the caveat.
-
-Grade, tier and weight are unchanged at B, scored, 0.6.
+- The audit grades access for each scored bot, not file shape. Allowed by its own group, through the catch-all, or by no applicable group all pass. No source supports a lower score for inherited access.
+- A later blanket block is a future edit. The audit fails it when it lands and does not score the risk in advance.
+- An unreadable robots.txt is not applicable: missing, non-200, an empty body, or a 200 that parses to no groups and no sitemaps.
+- The per-bot table keeps its stance labels. "Allowed by default" still describes a row accurately.
+- `guidance.code` still shows the named `Allow: /` snippet. The fix text warns that a named group replaces the catch-all for that bot and drops its `Disallow` lines.
 
 ## Deferred
 
 - **A 5xx robots.txt.** RFC 9309 §2.3.1.4 tells a crawler to assume a complete
   disallow when robots.txt is unreachable. This audit reports any non-200 as
   not applicable and does not grade that case.
-
-```
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources) on the five source audits.
-- 2026-08-21 — five dossiers generated; REWORK-TODO records the consolidation requirement.
-- 2026-08-22 — consolidated into this audit (Plan 4, Task 2). Source dossiers preserved at [`docs/evidence/merged/access-crawl-control/`](../../merged/access-crawl-control/).
-```

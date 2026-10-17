@@ -35,14 +35,6 @@ Image transformation pipelines strip C2PA manifests by default. Cloudflare state
 - **[Text fragments](https://web.dev/articles/text-fragments)** — Google / web.dev (vendor-doc, URL verified 2026-08-20)
   - Confirms a shipped answer-surface consumer: "Clicking a featured snippet takes the user directly to the featured snippet text on the source web page. This works thanks to automatically created Text Fragments URLs." Support: Chrome 89+, Edge 89+, Firefox 131+, Safari 18.2+. Restates the boundary rule: "Each of prefix-, start, end, and -suffix can only match text within a single block-level element, but full start,end ranges can span multiple blocks." Opt-out header: Document-Policy: force-load-at-top.
 
-## Competitor coverage
-
-Lighthouse 13.3's Agentic Browsing category covers llms.txt, WebMCP tools, agent accessibility and layout stability — no binary media parsing at all. Semrush/Ahrefs AI toolkits check image alt text, size and format, never embedded JUMBF/C2PA. Profound and Otterly measure answer-engine share of voice from the outside and never parse the site's image bytes. No SEO or AI-readiness tool ships container-level provenance parsing.
-
-## Implementation sketch
-
-1. Collect candidate image URLs from <img src>, every <img>/<source> srcset candidate, og:image/twitter:image, and JSON-LD image/logo/primaryImageOfPage. 2) For each, GET the bytes (Range-limited first pass is unsafe — JPEG APP11 can sit mid-file per C2PA spec, so fetch fully but cap at ~5MB). 3) Detect the manifest store per container: JPEG scan APP11 (0xFFEB) segments for the 'JP' identifier wrapping a JUMBF box; PNG scan for the C2PA chunk carrying the JUMBF store; WebP scan RIFF for the C2PA chunk; AVIF/HEIF scan BMFF for the C2PA uuid box. Prefer shelling out to c2patool / binding c2pa-rs via its C API rather than reimplementing JUMBF+COSE. 4) Derive origin-vs-variant pairs: for /_next/image?url=X and /cdn-cgi/image/<opts>/X, decode X as the origin; for WordPress -WxH.jpg suffixes, strip to the base upload. 5) Emit manifestCoverage = signed images / total images, and strippedInTransit = pairs where origin has a manifest and variant does not. 6) Report a HIGH finding for strippedInTransit > 0, INFO when the whole site has zero manifests (nothing to strip). Sample 2-3 images per page template rather than every asset.
-
 ## Example failure
 
 A newsroom signs photos in Photoshop, uploads them to a Next.js site behind Cloudflare. The origin /uploads/protest.jpg validates with a full manifest, but every rendered <img> points at /_next/image?url=%2Fuploads%2Fprotest.jpg&w=1920 which returns a re-encoded JPEG with no APP11 segment. Content Credentials verification on the live page shows nothing; 100% of the provenance investment is destroyed at the edge.
@@ -51,47 +43,15 @@ A newsroom signs photos in Photoshop, uploads them to a Next.js site behind Clou
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
-**Renamed** from `c2pa-manifest-survives-the-delivery-pipeline`, which would
-make a 63-character id with the category prefix — inside the cap, but the
-shorter slug reads better beside its five siblings. The full name survives as
-the dossier title.
-
-Steps 1, 2, 4, 5 and 6 of the sketch ship: candidate collection from `<img>`,
-every `srcset` candidate, `og:image`/`twitter:image` and JSON-LD
-`image`/`logo`/`primaryImageOfPage`; a full byte fetch capped at 5MB;
-origin-vs-variant derivation for Next.js, Cloudflare and WordPress; and the
-`manifestCoverage` / `strippedInTransit` pair, with a site of zero manifests
-reported as not-applicable rather than as a failure.
-
-**Detection is structural, not a parse** (sketch step 3 without the
-c2patool dependency). The gatherer walks the container — JPEG marker
-segments, PNG chunks, RIFF chunks, BMFF boxes — and locates a manifest store
-by its own container marker: an APP11 segment opening with the `JP` JUMBF
-identifier, a PNG `caBX` chunk, a WebP `C2PA` chunk, or a `uuid` box carrying
-the C2PA UUID. Shelling out to `c2patool` would add a native binary to a pure
-TypeScript package, and reimplementing JUMBF+COSE is not needed to answer
-"did the pipeline strip it", which is what this audit asks.
-
-**An image over the read cap is skipped, not counted as unsigned.** C2PA
-allows the store to sit mid-file, so a truncated read cannot prove absence.
-The skipped URLs are reported.
-
-**The scan reads at most six images**, three per page, deduplicated, each
-fetched once through the shared cache. A stripping pipeline strips every
-image it touches; six samples find it if it is there.
+- The slug is shorter than the dossier title, `c2pa-manifest-survives-the-delivery-pipeline`.
+- Detection is structural, not a parse. `findC2paManifest` in `gatherers/media.ts` walks the container and finds the store by its marker: a JPEG APP11 JUMBF segment, a PNG `caBX` chunk, a WebP `C2PA` chunk or a BMFF C2PA `uuid` box. `c2patool` would add a native binary to a pure TypeScript package.
+- An image over the 5MB read cap is skipped, not counted as unsigned. C2PA allows the store mid-file, so a truncated read cannot prove absence.
+- The scan reads at most six images, three per page, deduplicated.
+- A site with no signed image returns `notApplicable`. There is nothing for the pipeline to strip.
 
 ## Deferred
 
-- **Validating the manifest.** Whether the store parses, what it asserts, and
-  who signed it is `operability-safety/c2pa-signer-trust-status`.
-- **`c2patool` / `c2pa-rs` bindings.** They would give a real parse and real
-  validation, at the cost of a native dependency in a package that has none.
-- **Per-template sampling.** The sketch samples per page template; this audit
-  samples per page, because the scan's page set is already type-diverse and a
-  template classifier would be a second inference on top of it.
+- `c2patool` or `c2pa-rs` bindings would give a real parse, at the cost of a native dependency.
+- Sampling is per page, not per page template.

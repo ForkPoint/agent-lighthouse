@@ -38,14 +38,6 @@ A discovery surface is only useful if it is fresher than organic rediscovery —
 - **[RFC 4287 — The Atom Syndication Format](https://www.rfc-editor.org/rfc/rfc4287)** — IETF (spec, URL verified 2026-08-20)
   - Sec 4.1.2: atom:entry MUST contain exactly one atom:id and exactly one atom:updated. The id is a permanent, universally unique IRI that 'must not change across different instantiations of the entry'. The updated time is the 'most recent modification time that the publisher considers significant'. atom:entry MUST also contain atom:summary in two cases: when atom:content carries a src attribute, and is thus empty, and when content is Base64-encoded. MUST NOT contain more than one atom:summary.
 
-## Competitor coverage
-
-Screaming Frog and Sitebulb compute orphan URLs against a sitemap, and both list dead sitemap entries. Neither includes the feed as a third set, neither compares generator-level lastBuildDate against item dates, and neither computes the on-page-vs-sitemap-vs-feed freshness lag as a single finding. AI-visibility tools track citations, not ingestion-surface freshness.
-
-## Implementation sketch
-
-1. Build three sets: SITEMAP (all URLs from the sitemap tree, capped), FEED (all item links across discovered feeds), and SITE (URLs harvested from the homepage plus up to 5 section/index/blog-listing pages, restricted to same-host, non-paginated, HTML content-type after HEAD). 2) Compute ORPHANS = SITE \ (SITEMAP ∪ FEED); FAIL when |ORPHANS| > 0 and any orphan's on-page datePublished is within the last 30 days — report those URLs explicitly. 3) Compute newest_on_page = max(datePublished/dateModified across sampled SITE pages), newest_sitemap = max(lastmod), newest_feed = max(item date). FAIL when newest_on_page - newest_sitemap > 7 days, or newest_on_page - newest_feed > 7 days. 4) Assert feed-level <lastBuildDate>/<updated> >= max(item date); FAIL otherwise (generator bug). 5) Assert item ordering is newest-first, since many consumers read only the head of the feed; WARN on unordered feeds. 6) Report the inverse set too: SITEMAP \ SITE URLs that return 404/410/noindex — advertised-but-dead entries that waste every crawler's budget. All date parsing normalizes to UTC and ignores timezone-less values rather than guessing.
-
 ## Example failure
 
 A news site migrates to a new CMS. The homepage lists 12 articles from the last 48 hours. sitemap.xml is regenerated nightly by a cron job that silently started failing 11 days ago. The RSS feed is served from a CDN cache with a 30-day TTL and no purge hook. Every article of the last 11 days is an orphan in both surfaces. Link-following crawlers eventually find them; polling agents that fetch only sitemap.xml and /feed see a site that stopped publishing 11 days ago, and the site disappears from freshness-weighted answer surfaces while every page individually passes SEO audits.
@@ -54,61 +46,25 @@ A news site migrates to a new CMS. The homepage lists 12 articles from the last 
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
-### Subpath sitemap scope (2026-10-05)
-
-The shared sitemap gatherer uses the scanned homepage directory as the site root when it is a detected or declared subpath homepage. It reads declarations from the origin's robots.txt, then tries the conventional sitemap names under that directory before the origin fallbacks. Shared sitemap files contribute only absolute URLs on the same origin and under that directory. Filtering precedes the entry cap and sampling. Relative or malformed loc values associated with this site remain available to content audits. A sibling-only sitemap does not prove that this site has a sitemap. The child-fetch cap remains in force even when all children cover siblings.
-
-Content-page scans do not infer a mount. Origin files, origin probes, feed discovery, explicit page overrides, and redirect handling keep their existing scope. This change limits sitemap-derived evidence; it does not make every scan request subpath-only.
-
-**Renamed** from `three-way-freshness-lag-and-orphaned-fresh-content`, which
-would make a 71-character id, and because only the freshness half ships here.
-
-**The orphan half is deliberately not recomputed.** Sketch steps 1 and 2 build
-SITE, SITEMAP and FEED sets and report `SITE \ (SITEMAP ∪ FEED)`.
-`machine-discovery/discovery-index-coverage` already owns that computation and
-already reports the URLs it finds. Running it a second time here would report
-one defect twice, in two audits, with two scores against it — which is exactly
-the double-counting the v2 restructure removes. What ships is steps 3, 4, 5 and
-the advertised-but-dead half of step 6.
-
-**Every date is read with `parseFeedDate`**, the strict parser from
-`gatherers/feeds.ts`: a timestamp carrying no timezone yields `undefined`
-rather than being read in the scanner's own offset. The audit measures a lag in
-days and the guess is worth up to a day of it. Sitemap `<lastmod>` additionally
-has to pass `isW3CDateTime` before it counts, which is the sitemap protocol's
-own requirement.
-
-**Dead sitemap URLs are sampled, not swept.** Five URLs, chosen by
-`sampleEntries` across the whole tree, because each one is a request. A dead
-entry is a systemic defect — a stale generator — and five spread samples find a
-systemic defect if it is there.
-
-**A dead URL or an unordered feed warns; a lag fails.** The sketch marks
-ordering as a warning already. The advertised-but-dead set is reported at the
-same level because a sampled 404 is evidence of a stale sitemap, not a
-measurement of how stale.
-
-**Evidence hygiene.** The dossier's first two sources are IndexNow
-documentation, which belongs to
-`machine-discovery/root-text-file-resolution-integrity`; only the phrase they
-support — that organic rediscovery takes days to weeks, which is why a
-discovery surface has to be fresher than it — bears on this audit. The Google
-sitemap documentation supports the `<lastmod>` assertion and RFC 4287 supports
-reading `atom:updated` as the item's own modification time.
-
-## Deferred
-
-- **The orphan set.** Owned by `machine-discovery/discovery-index-coverage`.
-- **Crawling section index pages to widen the SITE set.** The audit reads the
-  dates on the pages the scan already fetched. Fetching five more listing pages
-  to find more dates would change the request budget without changing what a
-  seven-day lag means.
-- **Per-URL lag.** The finding is about a surface's regeneration cadence, which
-  is one number for the whole surface. A per-URL comparison is
+- **Renamed** from `three-way-freshness-lag-and-orphaned-fresh-content`, which
+  exceeds the 64-character id cap. Only the freshness half ships here.
+- **The orphan set is not computed.** `machine-discovery/discovery-index-coverage`
+  owns it, so one defect is not scored twice.
+- **The SITE set is the pages the scan already fetched.** No extra section or
+  listing pages are crawled.
+- **Lag is one number per surface**, not per URL. Per-URL comparison is
   `machine-discovery/sitemap-lastmod-verifiability`.
+- **Subpath sitemap scope.** On a subpath homepage, the shared sitemap gatherer
+  keeps only same-origin URLs under that directory.
+- **Every date goes through `parseFeedDate`.** A timestamp without a timezone
+  yields `undefined` rather than a guess. Sitemap `<lastmod>` must also pass
+  `isW3CDateTime`.
+- **Dead sitemap URLs are sampled, not swept.** `sampleEntries` takes 5 URLs
+  across the tree.
+- **A dead URL or an unordered feed warns; a lag fails.** A sampled 404 shows
+  a stale sitemap but does not measure how stale.
+- **The IndexNow sources carry one point only:** organic rediscovery takes days
+  to weeks. The Google sitemap doc supports the `<lastmod>` assertion, and RFC
+  4287 supports reading `atom:updated`.

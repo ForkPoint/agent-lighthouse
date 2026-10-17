@@ -30,34 +30,6 @@ sources:
 
 AI engines use URL text as a content signal. Descriptive slugs help agents understand page topics before fetching the content.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Real signal — readable URLs appear in AI citations and do carry pre-fetch topical hints — but the pattern list is wrong in both directions and the audit runs at `defaultPriority: 'high'`. `/%[0-9A-Fa-f]{2}.*%[0-9A-Fa-f]{2}/` flags every percent-encoded non-Latin URL as 'non-descriptive', so a Japanese, Russian, Greek or Arabic site with perfectly descriptive slugs is told at high priority to restructure its URLs. `/\/[a-z]*\/\d+\/?$/i` flags legitimate `/blog/page/2` pagination and `/products/12345` SKU URLs. And a homepage-only scan passes vacuously.
-
-**Required fix:** 1) Decode before testing: run `decodeURIComponent` on the pathname and judge the decoded form — a decoded slug of readable words in ANY script is descriptive. Delete the `%XX.*%XX` pattern entirely. 2) Replace `/\/[a-z]*\/\d+\/?$/` with a rule requiring the numeric segment to be the only meaningful segment (no word-bearing slug anywhere in the path), and explicitly exempt `/page/N` pagination. 3) Use `p.fetchResult.finalUrl ?? p.url` so post-redirect canonical URLs are judged. 4) Anchor the UUID and query-id patterns to the path, not the whole URL. 5) Return `notApplicable()` when the scan discovered only the homepage. 6) Drop `defaultPriority` to 'medium' — URL restructuring is high-cost and high-risk, and the evidence for its AI impact does not justify high-priority framing.
-
-**False-positive risks:**
-
-- `/%[0-9A-Fa-f]{2}.*%[0-9A-Fa-f]{2}/` matches any URL containing two percent-escapes. A descriptive Japanese slug `https://example.jp/%E8%A8%98%E4%BA%8B/%E3%82%BF%E3%82%A4%E3%83%88%E3%83%AB` — which renders as readable Japanese in every browser and in AI citations — is reported as non-descriptive and needing restructuring. Same for Russian, Greek, Hebrew, Thai, Arabic, and Latin slugs with accents (`/café-guide/`). This is the highest-severity defect in the category: confident, high-priority, wrong advice to every non-English site.
-- `/\/[a-z]*\/\d+\/?$/i` — `[a-z]*` allows zero characters, so the rule is 'any path ending in /word/digits'. It flags `/blog/page/2` (standard pagination), `/products/12345` (legitimate stable SKU URLs), `/news/2024` (a year archive), `/docs/v2`. None is a defect.
-- `/\/\d{5,}\/?$/i` flags stable numeric identifiers that are correct by design — legal document numbers, ISBN/EAN paths, ticket or order references, government record IDs.
-- The audit inspects only `ctx.pages`, a small discovered sample. A scan finding only the homepage `https://example.com/` matches nothing and reports 'All 1 scanned page URL(s) use descriptive slugs' — a vacuous PASS on a site whose entire catalogue is `/p/12345`.
-- Conversely, if the crawler happens to discover only paginated or product-ID URLs, the site gets 'All scanned page URLs have non-descriptive slugs' at 'high' priority — the verdict is a function of crawler sampling, not site structure.
-- `p.url` is the requested URL, not `fetchResult.finalUrl`. A site redirecting `/?p=123` → `/how-to-bake-bread/` is judged on the pre-redirect URL and FAILS despite having exactly the slugs the audit wants.
-- The UUID pattern is unanchored, so a UUID anywhere — including an analytics/session query param `?sid=<uuid>` — condemns an otherwise clean path. Likewise `[?&](?:id|p|page_id)=\d+` flags a URL whose path is fully descriptive.
-
-**Test gaps:**
-
-- No test for a percent-encoded non-Latin URL — the highest-impact false positive.
-- No test for `/blog/page/2` or `/products/12345`.
-- No test for a homepage-only scan producing the vacuous pass.
-- No test for a redirect where `finalUrl` differs from `p.url`.
-- No test for a UUID confined to a query parameter.
-- No test for accented Latin slugs (`/café-guide/`).
-- Only 4 tests, one per branch, all with hand-picked English URLs that confirm intent and probe no edges.
-
-**Overlaps with:** _none_
-
 ## Evidence
 
 ### Signal: Descriptive URLs — grade C (geo-authority)
@@ -70,27 +42,5 @@ Real signal — readable URLs appear in AI citations and do carry pre-fetch topi
 
 ## Implementation deviations
 
-- 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. It read the URL slugs of the scanned pages, and
-  `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain
-  a broker's page from another host, on a walled or throttled origin nothing
-  at all. It now consults `scanReadTheSite()` and returns `notApplicable`
-  carrying the gate's own reason.
-  Verdicts that moved on the five nothing-obtained contract states: walled
-  fail → na, throttled fail → na, redirected away pass → na, non-HTML homepage
-  pass → na, HTTP 200 bot challenge pass → na. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
-- 2026-08-28 — `requires` drops `rendered-body` and `sample-adequate` and is now
-  `['origin-reachable', 'unblocked-fetches']`. The audit judges the URL strings
-  of the pages the scan fetched, and a URL is readable whether or not the page
-  behind it rendered text. Recorded as a gate exemption in
-  `scripts/lib/requires-analysis.mjs`. The verdict itself does not move, and
-  the audit carries weight 0 in the `informative` tier, so a shell scan gains a
-  reported line and no score. The reservation worth recording is the sample: a
-  shell yields fewer URLs to judge, because link discovery finds less. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+- `requires` is only `origin-reachable` and `unblocked-fetches`. The audit judges URL strings, which are readable whether or not the page rendered text. The exemption is recorded in `scripts/lib/requires-analysis.ts`.
+- A shell scan yields fewer URLs to judge, because link discovery finds less.

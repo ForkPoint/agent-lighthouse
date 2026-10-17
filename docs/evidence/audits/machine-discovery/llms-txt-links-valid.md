@@ -50,31 +50,6 @@ sources:
 
 Valid links in llms.txt ensure AI agents can navigate to your content without encountering dead ends.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Fetches every llms.txt link and fails if any is not 200. Genuinely valuable signal (dead links in llms.txt do waste an agent's context), but it silently validates only absolute links, has no concurrency cap, and equates any non-200 with 'broken' — so WAF 403s, 429 rate limits and gated 401 pages are reported to the user as broken links they must fix.
-
-**Required fix:** Resolve relative links against ctx.baseUrl rather than dropping them; use the same set for the denominator and the fetch list. Cap concurrency (e.g. 5) and prefer HEAD with GET fallback. Classify results: only 4xx/5xx excluding 401/403/429 count as broken; 401/403/429/0 report as 'unverifiable' and, when `ctx.wafProtection?.isBlocked`, return notApplicable instead of fail. Report the count of skipped/unsafe links explicitly.
-
-**False-positive risks:**
-
-- Relative links are dropped upstream by `extractMarkdownLinks()`, so a file of relative links produces WARN 'No links found in llms.txt to validate' — the audit reports it validated nothing while claiming coverage. Worse, `links.length` (pre-filter) is used as the denominator in the fail message while `resolved` (post-filter) is what actually got fetched, so 'N/M link(s) are broken' can print inconsistent counts.
-- `await Promise.all(resolved.map((url) => ctx.fetch({ url })))` — unbounded parallel GETs against one origin. A 100-link llms.txt fires 100 simultaneous requests; the resulting 429s are reported as broken links.
-- `broken = results.filter((r) => !isOk(r))` treats 401/403/429/503 and the fetcher's own `status: 0` timeout result as broken. On any Cloudflare/Akamai-protected site the audit lists the site's own pages as dead. `ctx.wafProtection` is available and ignored.
-- `isSafeUrl()` does a live DNS lookup per link inside the loop, sequentially (`for … await`), adding seconds of latency and silently dropping links whose DNS is slow or fails transiently — those links are never reported as broken OR as skipped.
-- Links to legitimately non-200 resources (a PDF behind 302 to a CDN that 403s the scanner UA, an intentionally 410'd page) are indistinguishable from mistakes.
-
-**Test gaps:**
-
-- Relative links in llms.txt (never fetched, silently 'no links')
-- 403/429/503 responses vs genuine 404
-- Timeout/status:0 results from the fetcher
-- A link list large enough to trigger the unbounded-parallelism problem
-- Redirecting links (301 → 200) — should pass but is untested
-- Mismatch between `links.length` and the actually-fetched `resolved.length` in the fail message
-
-**Overlaps with:** `1.4`, `1.20`
-
 ## Evidence
 
 ### Signal: /llms.txt existence at domain root (llmstxt.org proposal) — grade C (llms-txt)
@@ -93,44 +68,6 @@ Fetches every llms.txt link and fails if any is not 200. Genuinely valuable sign
 
 **Counter-evidence:** Sharply scope this signal. The blockquote convention is optional in the spec, unchecked by Lighthouse, and not universally followed even by exemplars. Across 7 major vendor files measured for this dossier, all 7 had an H1 and markdown links, but only 5 had a blockquote. Anthropic and Stripe both omit it, so failing sites for a missing blockquote would fail Anthropic's own file. Lighthouse checks no link validity, no per-link descriptions, and no section structure. SEJ's caveat is the honest frame: 'The audit checks whether your file is mechanically parseable. It does not check whether the file describes your website usefully.' And parseability is worth little when the consumer population is near-empty — Lighthouse is an auditor, not an agent, and it scores a 404 as notApplicable. Link-validity checking is also expensive at scale (Vercel's file has 1,872 links).
 
-## Re-grade (evidence sweep, 2026-08-24)
-
-**B → C. Scored → informative. Weight 0.6 → 0.**
-
-### The audit was graded on evidence for checks it does not perform
-
-The B came from the "content quality conventions" signal, whose own mechanism
-paragraph splits the checks explicitly: (a) H1 present, (b) at least one
-`[text](url)` markdown link and (c) length over 50 characters **are enforced by
-a real shipping consumer**; (d) blockquote summary, (e) per-link descriptions
-and **(f) link validity are spec-optional with no known enforcing consumer**.
-
-This audit implements (f). Its own counter-evidence already said so —
-_"Lighthouse checks **no** link validity."_ The Lighthouse audit source was
-re-read on 2026-08-24 and that is still exactly true: three regex and length
-tests, no link is ever fetched.
-
-So the audit was scored at weight 0.6 on a grade earned by different checks,
-for a signal its own dossier records as having no known consumer, inside a file
-whose existence has no known consumer either — see the parallel re-grade in
-[llms-txt-exists](llms-txt-exists.md#re-grade-evidence-sweep-2026-08-24), which
-covers the eleven-vendor sweep behind that last clause.
-
-**Grade C, tier informative, weight 0.** Together with `llms-txt-exists`, 1.6 of
-weight leaves the scored set.
-
-### What the audit does now
-
-- No llms.txt at the site root → **not applicable**. Whether the file exists is
-  `machine-discovery/llms-txt-exists`; reporting it here too made one absent
-  file cost two rows, one of them a `critical` failure telling the site to go
-  create the file.
-- Broken links inside a published file → **warn** at `low`, was `fail` at
-  `high`.
-- An llms.txt with no links at all → **warn** at `low`, was `medium`.
-- Guidance no longer claims broken links waste an agent's context window or
-  degrade answers about the site. No agent is documented to read the file.
-
 ## Limits
 
 The audit checks at most 20 links, taken evenly from the start to the end of
@@ -139,33 +76,19 @@ redirects followed. A link that answers 401, 403 or 429, or does not answer,
 is reported as unverifiable, not broken: the answer is about the scanner, not
 the link. When no checked link can be verified, the result is not applicable.
 
-## Link-burst fix (2026-10-17)
+## Implementation deviations
 
-A corpus scan of a site whose llms.txt lists about 300 pages in four
-languages sent every link at once: 304 page requests in 16 s. The site's WAF
-answered 403 to the rest of that scan, and later scans from the same address
-could not connect at all. The audit carries weight 0, so the burst cost the
-other audits their evidence and bought nothing.
-
-Changes, all from the required fix of the 2026-08-20 review:
-
-- At most 20 links are checked, 4 at a time (was every link, all at once).
-- 401, 403, 429 and no answer are unverifiable, not broken.
-- Redirects are followed before a link is judged.
-- The broken list names the right URLs. The old code filtered the results and
-  then took each URL from the filtered index, so it named the link before the
-  broken one.
+- **Grade C, informative, weight 0.** The B signal's consumer enforces the H1,
+  one-link and length rules. Link validity is spec-optional with no known
+  enforcing consumer, and Chrome Lighthouse fetches no link.
+- **Outcomes.** No llms.txt is not applicable; `llms-txt-exists` owns
+  existence. Broken links warn at `low`. A file with no links warns at `low`.
+- **The link check is bounded** so a long file cannot trip the site's WAF and
+  cost other audits their evidence.
+- **`ctx.wafProtection` is not read.** The unverifiable class covers the same
+  answers link by link.
 
 ## Deferred
 
 - Relative links. `extractMarkdownLinks` keeps absolute links only, so a file
-  of relative links still reads as "No links found". Not changed here.
-- `ctx.wafProtection` is not read. The unverifiable class covers the same
-  answers link by link.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
-- 2026-08-24 — evidence sweep: grade B → C, tier scored → informative, weight 0.6 → 0. The B belonged to conformance checks this audit does not implement; link validity has no known enforcing consumer.
-- 2026-10-17 — link-burst fix: at most 20 links, 4 at a time; refused and unanswered links unverifiable; redirects followed; broken URLs named correctly.
+  of relative links still reads as "No links found".

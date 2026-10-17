@@ -32,14 +32,6 @@ Retrieval systems embed and retrieve chunks, not pages. A chunk whose subject is
 - **[MCP Specification 2026-07-28 — Caching](https://modelcontextprotocol.io/specification/2026-07-28/server/utilities/caching)** — Model Context Protocol (spec, URL verified 2026-08-20)
   - 'Servers MUST include caching hints on results with resultType: "complete"' for server/discover, tools/list, prompts/list, resources/list, resources/templates/list, resources/read. ttlMs is an integer ms; servers MUST provide ttlMs >= 0. If ttlMs is absent clients SHOULD assume 0 = immediately stale. cacheScope is exactly "public" or "private". Servers MUST apply the same cacheScope to all pages of a paginated list. Public scope on an authenticated endpoint may be shared across access tokens — servers MUST NOT rely on cacheScope for access control.
 
-## Competitor coverage
-
-Lighthouse 13.3 agentic category covers llms.txt quality, WebMCP tools, agent a11y and layout stability — nothing at passage level. Profound and Otterly measure brand mentions in model answers (outcome monitoring), never page mechanics. Semrush AI toolkit / Ahrefs Brand Radar are visibility trackers plus AI-crawler robots checks. Readability-grade tools (Flesch) measure sentence length, which is orthogonal to referent resolution. No shipping tool segments a page into chunks and audits referent survival.
-
-## Implementation sketch
-
-Static fetch of HTML. 1) Isolate main content (<main>/<article>, else Readability). 2) Segment: walk h2/h3; chunk_i = heading_i plus all nodes until the next heading of level <= level_i. 3) Build entity set E from h1 text, og:title, and JSON-LD name/headline, plus derived aliases (longest shared noun phrase, acronym form, first token). 4) Per chunk compute three deterministic flags: (a) anaphoraOpen — first sentence matches /^(This|That|These|Those|It|They|He|She|Such|Here|There|Both|Either)\b/ AND the demonstrative is not followed within 3 tokens by a content word that also appears in heading_i; (b) entityAbsent — chunk body >= 40 words and no member of E appears (case-insensitive, light stemming); (c) positionalRefs — count matches of /\b(as (mentioned|described|noted|shown) (above|below|earlier|previously)|see (above|below|the previous|the next)|the (table|figure|image|list|section|chart) (above|below)|in the previous section|as we saw|click here|read more here|the former|the latter)\b/gi. 5) Chunk passes if all three are clean. Score = passing chunks / total chunks; audit fails below 0.8. 6) Report the failing heading, the flag, and the offending sentence verbatim so the fix is a one-line edit.
-
 ## Example failure
 
 A pricing page with h2 'Enterprise plan'. The section body opens 'It includes SSO, audit logs, and a 99.9% SLA.' — chunk-initial 'It', product name never repeated in the section. Chunked and embedded standalone, this passage does not encode the vendor or the plan; a query 'does <vendor> Enterprise include SSO' misses it, and the competitor page whose section reads '<Vendor> Enterprise includes SSO...' is retrieved instead.
@@ -48,49 +40,17 @@ A pricing page with h2 'Enterprise plan'. The section body opens 'It includes SS
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
-The shipped audit is `answer-readiness/chunk-boundary-referent-integrity`: the
-proposal's `answer-selection-forensics` domain is a research grouping, not one
-of the eight v2 categories.
-
-Segmentation is heading-led over `<main>`/`<article>`, falling back to `<body>`:
-every `h2` and `h3` starts a chunk that runs to the next heading of either
-level. The proposal's "next heading of level ≤ level_i" rule differs only for an
-`h3` following an `h3`, where both readings produce the same boundary.
-
-Readability is not used to isolate the content. The three flags are computed
-against the same DOM the segmentation walks, and running an extractor first
-would put its opinion between the page and the finding.
-
-The entity set is built from `h1`, `og:title` and JSON-LD `name`/`headline`,
-plus three derived aliases per multi-word name: the acronym, the first
-significant word, and the last. Stopwords are dropped before deriving them, so
-"The New Kettle" does not alias to "T".
-
-Matching is case-insensitive with light stemming — plural `s`/`es`/`ies` only.
-Real stemming would need a dependency to decide that "boiling" and "boil" are
-the same word, and the flag it feeds is about naming the subject, where the
-plural is the only form that varies in practice.
-
-Thresholds: below 80% clean chunks fails, per the proposal. The 80–95% warn band
-is this implementation's.
-
-One evidence sentence per chunk, not one per flag: the fix is a one-line edit
-and the first offending sentence is where it goes.
+- Segmentation walks the first `<main>` or `<article>`, else `<body>`. Every `h2` and `h3` starts a chunk that runs to the next heading of either level.
+- No Readability pass isolates the content. The flags read the same DOM the segmentation walks.
+- The entity set comes from `h1`, `og:title` and JSON-LD `name`/`headline`. Each multi-word name adds its acronym, its first significant word (four letters or more) and its last word. Stopwords are dropped first.
+- Matching is case-insensitive with plural-only stemming (`s`, `es`, `ies`). Fuller stemming would need a dependency.
+- Below 80% clean chunks fails. The 80% to 95% warn band is this implementation's own.
+- Each failing chunk reports one evidence sentence, the first offending one.
 
 ## Deferred
 
-- **Coreference resolution.** Whether "it" resolves to something a reader
-  understands needs a model. The three deterministic flags catch the cases that
-  are decidable from the text alone, which is what a scored audit can defend.
-- **Sub-chunk boundaries.** A retriever that splits mid-section produces chunks
-  this audit does not model; `answer-readiness/section-split-risk-profile`
-  measures that from the token side.
-- **Per-page assessment.** Only the entry page is segmented. Referent integrity
-  is a property of how a template's sections are written, and the entry page is
-  where an agent starts.
+- Coreference resolution. Whether "it" resolves needs a model.
+- Sub-chunk boundaries. `section-split-risk-profile` measures them from the token side.
+- Per-page assessment. Only `ctx.pages[0]` is segmented.

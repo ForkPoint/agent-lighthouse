@@ -47,14 +47,6 @@ Falsifiable claim: an agent filling a checkout must map each field to a value fr
 - **[Operator System Card](https://cdn.openai.com/operator_system_card.pdf)** — OpenAI (vendor-doc, URL verified 2026-08-20)
   - Documents confirmation prompts before 'actions that affect the state of the world (e.g., before completing a purchase or sending an email)', with 92% recall on 607 risky-action tasks and a mistake-risk reduction of about 90%. It also documents watch mode, which forces supervision on high-impact sites, and proactive refusal of high-risk categories. Implication for site authors: an agent must be able to observe and verify state transitions before and after acting, which requires persistent, machine-readable confirmation of what changed.
 
-## Competitor coverage
-
-Partial overlap, deliberately scoped to the gap. Lighthouse's agent-accessibility-tree includes axe's autocomplete-valid and label rules — but autocomplete-valid only validates a token that is ALREADY present and never fires on its absence, and label only demands an accessible name, not a machine-readable concept. Coverage scoring, concept inference, constraint programmability, and error-wiring are unshipped by Lighthouse, Semrush and Ahrefs alike.
-
-## Implementation sketch
-
-Static parse of every <form>. For each control, infer the intended concept from label text, name/id, placeholder and type using a keyword→token map (email→email, zip|postcode|postal→postal-code, phone|tel|mobile→tel, card number|cc-num→cc-number, expiry|exp date→cc-exp, cvv|cvc|security code→cc-csc, address line 2|apt|suite→address-line2, city|town→address-level2, state|province|region→address-level1, first name→given-name, last name|surname→family-name, dob|birth→bday, otp|verification code→one-time-code, password on a login form→current-password, on a signup form→new-password). A field is COVERED when it has an autocomplete attribute whose token equals the inferred token (or is a valid token from the spec list when inference is ambiguous), plus a non-empty name or id, plus a type consistent with the concept (email→type=email, tel→type=tel, otp→inputmode=numeric + autocomplete=one-time-code). Separately flag: required-ness expressed only by a visual asterisk with no required attribute or aria-required; validation constraints expressed only in JS with no pattern/min/max/minlength; error messages rendered as adjacent text with no aria-describedby link and no aria-invalid on the field. Emit form-level score plus a per-field diff table showing expected vs actual token.
-
 ## Example failure
 
 A signup form uses <input name="f_2" placeholder="ZIP"> and <input name="f_3" placeholder="State"> with no autocomplete and no labels. The agent fills the ZIP into the State field, since both are short free-text inputs adjacent in the DOM, and submits. It gets a red border and a JS-injected sibling <span>Invalid</span> that is not linked by aria-describedby and carries no aria-invalid. The agent's post-action snapshot therefore shows no machine-readable error, and it reports success on a form that never submitted.
@@ -63,67 +55,17 @@ A signup form uses <input name="f_2" placeholder="ZIP"> and <input name="f_3" pl
 
 Tier per evidence policy: **scored** — grade A meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
-Browser snapshots provide serialized markup observations only. The browser assessment uses informative display and weight 0. It does not extend the dossier's crawler scoring claim to browser task success. Truncated, redacted, and still-loading captures produce missing-evidence records rather than verdicts.
-
-None. The sketch names no dependency outside the repo: concept inference reads
-the label, `name`, `id`, `placeholder` and `aria-label` through the cheerio
-document the scanner already parses.
-
-Two sketch details were tightened during implementation:
-
-- **Password token.** The sketch keys `current-password` vs `new-password` off
-  "a login form" vs "a signup form". The implementation keys it off the page
-  URL (`/signup`, `/register`, `/create-account`, `/join` against `/login`,
-  `/signin`, `/auth`), because a served document carries no other reliable
-  marker of which one it is. An unrecognisable URL defaults to
-  `current-password`, the more common case.
-- **Prefixed tokens.** `autocomplete="billing postal-code"` and
-  `autocomplete="shipping tel"` are valid WHATWG values. Coverage compares the
-  final token, so a section- or address-type prefix does not read as a miss.
-
-### Search and store-locator forms are out of scope (2026-10-06)
-
-The audit judges fields an agent fills from the user's profile. A site
-search or a store locator takes a keyword or a place to look up, so no
-autofill token applies to it. A large retail site was failed for its store
-locator's "City or postcode" box.
-
-- A form is skipped when it has `role="search"`, sits inside a search
-  landmark, holds an `input type="search"`, or its action path, name or id
-  reads as search, locator or stores.
-- "find" is not a skip keyword. Checkout postcode-lookup forms are often
-  named "find address", and their postcode field does owe its token.
-- A location field whose visible name offers a choice between concepts
-  ("City or postcode", "Ville ou code postal") is not counted. Two names for
-  one concept ("State or province") still are. Sign-in fields such as
-  "Email or username" are unaffected; `username` is their token.
+- The password token is keyed off the page URL. Signup paths (`/signup`, `/register`, `/create-account`, `/join`) expect `new-password`. Any other page expects `current-password`, the more common case.
+- Coverage compares the bare token. A section, `billing` or `shipping` prefix does not read as a miss.
+- Search and store-locator forms are skipped. Their fields take a query, not profile data. A form is skipped when it has `role="search"`, sits in a search landmark, holds an `input type="search"`, or its action path, name or id reads as search, locator or stores.
+- "find" is not a skip keyword. Checkout postcode-lookup forms are often named "find address" and still owe the token.
+- A location field whose name offers a choice ("City or postcode") is not counted. Two names for one concept ("State or province") still are.
 - A scan whose only candidate fields sit in skipped forms is not applicable.
-  `found` reports how many forms were skipped.
+- Browser snapshots reuse the audit on each complete, unredacted, non-loading capture with readable text. The finding is informative with weight 0 and claims nothing about live form state or task success. Truncated, redacted and still-loading captures produce missing-evidence records. The eligibility record is in `packages/core/src/snapshot-eligibility.ts`.
 
 ## Deferred
 
-- **Constraint programmability.** The sketch also asks for "validation
-  constraints expressed only in JS with no pattern/min/max/minlength". Deciding
-  that a constraint exists _only_ in JS requires executing the page's scripts,
-  which is the headless-browser tier. The static half — that a field carries no
-  `pattern`/`min`/`max`/`minlength` at all — is not reported, because on its own
-  it cannot distinguish an unconstrained field from a field with no constraint
-  to express.
-- **Per-field diff table.** The sketch asks for a per-field expected-vs-actual
-  table. The result surface carries one `found` string; the audit reports the
-  coverage ratio plus the first uncovered field as an example. A structured
-  per-field table is a report-format change, tracked for Plan 6.
-
-## Limits
-
-### Browser snapshot evidence
-
-The snapshot path reuses this audit on each complete, unredacted, non-loading DOM capture that carries readable text. It reports the original static verdict as an unscored browser finding. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. The source and page URL accompany every finding. Existing implementation limits still apply.
-
-The individual evidence review and limits appear in [Browser-rendered snapshot assessment](../../../architecture/browser-snapshots.md#supported-audit-inventory). The explicit eligibility record lives in `packages/core/src/snapshot-eligibility.ts`. Original crawler grades, tiers, and weights stay unchanged.
+- Constraint programmability. Telling that a constraint exists only in JS needs the page's scripts to run. A field with no `pattern`, `min`, `max` or `minlength` is not reported on its own.
+- A per-field expected-vs-actual table. The result reports the coverage ratio and the first uncovered field.

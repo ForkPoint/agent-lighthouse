@@ -35,33 +35,6 @@ sources:
 
 Whether the site publishes a reachable RSS/Atom feed — discovered from the `<head>` autodiscovery links of every scanned page, then from the well-known paths (`/rss.xml`, `/feed.xml`, `/atom.xml`). The autodiscovery link's own state is appended to `found` (`autodiscovery <link> present (<url>)` or `no autodiscovery <link> in <head>`); it is reported, never scored on its own.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Looks for a feed via <link rel=alternate> then /rss.xml, /feed.xml, /atom.xml. Feeds remain a genuine freshness channel, so the signal is worth keeping — but discovery uses exact case-sensitive string equality on rel/type, only resolves '/'-prefixed hrefs, and passes on a bare 200 with zero validation that the body is a feed. It also fails brochure sites that have no periodic content and for which a feed is meaningless.
-
-**Required fix:** Extract `findFeedResult()` into a shared `_feed.ts` used by 1.11 and 1.12 (one discovery pass per scan). Tokenize and lowercase rel, match type by prefix, and resolve hrefs with `new URL(href, page.url)`. Add `/feed/`, `/index.xml`, `/rss`, `/feed.atom` to the candidate list. Require the body to parse as XML with an `<rss>`/`<feed>`/`<rdf:RDF>` root before passing. Return notApplicable when no article/blog-type pages were scanned.
-
-**False-positive risks:**
-
-- `link.rel === 'alternate'` — `extractHeadLinks()` does not lowercase or tokenize rel, so `rel="Alternate"`, `rel="alternate home"` (WordPress emits multi-token rels) miss entirely.
-- `link.type === 'application/rss+xml'` exact — `application/rss+xml; charset=utf-8`, `application/atom+xml;charset=UTF-8`, `text/xml` and `application/xml` all miss.
-- `if (feedUrl.startsWith('/')) feedUrl = baseUrl + feedUrl` — hrefs like `feed.xml`, `./rss`, or `../feed` are passed unresolved to ctx.fetch and fail. Should be `new URL(link.href, page.url)`.
-- No content validation: a 200 HTML soft-404 at /rss.xml (SPA catch-all) yields PASS 'RSS/Atom feed found at https://…/rss.xml'.
-- Common real paths are missing: `/feed/`, `/blog/rss.xml`, `/index.xml` (Hugo), `/feed.atom`, `/rss` — a Hugo or WordPress site with a working feed is reported as having none.
-- No page-type gating: a single-page brochure or SaaS landing site with no periodic content is failed at medium priority for lacking a feed, which improves nothing.
-- Fires an extra live /atom.xml request even after rootFiles already answered, and audit 1.12 repeats the whole discovery independently — duplicate load on the scanned origin.
-
-**Test gaps:**
-
-- rel="alternate home" / rel="Alternate" (multi-token, mixed case)
-- type with a charset parameter
-- Relative href without a leading slash ('feed.xml', './rss')
-- 200 HTML soft-404 at /rss.xml — currently a false PASS
-- Hugo /index.xml and WordPress /feed/ paths
-- A site with no blog at all (should be N/A, currently FAIL)
-
-**Overlaps with:** `1.12`
-
 ## Evidence
 
 ### Signal: RSS/Atom feed published (with autodiscovery link) as an AI content-ingestion surface — grade B (discovery-infra)
@@ -74,56 +47,17 @@ Looks for a feed via <link rel=alternate> then /rss.xml, /feed.xml, /atom.xml. F
 
 **Counter-evidence:** No LLM vendor — OpenAI, Anthropic, or Perplexity — documents consuming RSS or Atom feeds anywhere. Apple's current June 2026 Applebot page dropped the RSS mention entirely. OpenAI's Agentic Commerce product feed spec goes further and explicitly excludes syndication formats: 'JSON, spreadsheet, XML, RSS, and Atom sources are not part of this compatibility path.' NLWeb adoption remains negligible in absolute terms. RFC 4287 does not itself define HTML <link rel=alternate> autodiscovery, so the autodiscovery half of this audit rests on convention rather than the ratified spec. Net: the feed is a documented discovery input for Google and (historically) Apple, but there is no evidence any LLM ingests feeds directly.
 
-## Absorbed evidence — rss-feed-link (4.16)
-
-4.16 checked for `<link rel="alternate" type="application/rss+xml">` in the head. That is this audit's first discovery step, so the C3 collapse makes them one audit: the reachable feed is the signal, the autodiscovery link is how it is advertised.
-
-Its dossier is kept verbatim at [merged/machine-discovery/rss-feed-link.md](../../merged/machine-discovery/rss-feed-link.md) (grade **C**).
-
-### Grade decision: stays **B**
-
-4.16 graded **C**: autodiscovery is a stable convention with browser and aggregator consumers, but the only documented _Google_ consumption path for a feed is submitting it as a sitemap, and no AI vendor documents crawling the head-level link — "none-known for any AI answer engine". The target's own signal (a published, reachable feed as an ingestion surface) grades **B**. Weaker evidence, and not proven for the merged signal, so the audit keeps **B**, `tier: scored`, `weight 0.6`.
-
-Consequently the link never decides the result on its own: a site with a reachable feed and no `<link>` passes, and a site with a `<link>` but no reachable feed fails.
-
-### Required fixes from 4.16 — landed 2026-08-22
-
-- **Atom and JSON Feed are feeds.** `type === 'application/rss+xml'` was the only accepted value, so Blogger/Hugo/Jekyll defaults (`application/atom+xml`) and JSON Feed sites were reported as having no feed link — the review calls it "probably the highest-frequency false failure in the whole category". The type set now covers rss, atom, feed+json and rdf+xml.
-- **MIME parameters stripped.** `application/rss+xml; charset=UTF-8` no longer misses.
-- **Normalized `rel`.** `rel="Alternate"` and WordPress' multi-token `rel="alternate home"` are accepted (this also fixes the same defect in 1.11's own discovery).
-- **Every page inspected.** v1 4.16 read `ctx.pages[0]` only, so a feed declared on the blog index and not the homepage was invisible.
-- **Relative hrefs resolved.** 1.11 resolved `/`-prefixed hrefs only; `feed.xml` and `./rss` are now resolved with `new URL(href, page.url)`.
-
-Not addressed by this fold (they belong to 1.11's own "fix required" backlog, not to the merge): validating that the feed body parses as XML before passing, the extra candidate paths (`/feed/`, `/index.xml`, `/rss`), the shared `_feed.ts` with rss-feed-content, and returning `na` for sites with no periodic content.
-
 ## Implementation deviations
 
-- 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. It read the feed served at the root and the
-  autodiscovery link, and `ctx.pages`/`ctx.rootFiles` carry whatever answered
-  200 — on a parked domain a broker's page from another host, on a walled or
-  throttled origin nothing at all. It now consults `scanReadTheSite()` and
-  returns `notApplicable` carrying the gate's own reason.
-  Verdicts that moved on the five nothing-obtained contract states: walled
-  fail → na, throttled fail → na, redirected away pass → na, non-HTML homepage
-  fail → na, HTTP 200 bot challenge pass → na. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
-
-### No feed and no link is not applicable (2026-10-06)
-
-The audit failed every site without a feed. The grade decision says the
-audit "informs rather than penalises", and the test gaps list a site with no
-blog as "should be N/A, currently FAIL". It now returns `notApplicable` when
-no feed answers and no page carries an autodiscovery `<link>`. A site whose
-`<link>` advertises a feed that does not answer still fails, as the merge
-decision above requires. The message names the advertised URL.
-
-The narrower page-type gate the required fix suggests ("no article/blog-type
-pages") is not used. Advertising is the site's own statement that a feed
-exists, and the scan observes it directly.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources) on both source audits.
-- 2026-08-21 — dispositions approved: 1.11 keep-with-fixes, 4.16 folds in (C3 collapse).
-- 2026-08-22 — 4.16 folded in with its required fixes (Plan 4, Task 4); registry 171 → 170.
+- **Absorbs `rss-feed-link` (4.16).** Its dossier is kept at
+  [merged/machine-discovery/rss-feed-link.md](../../merged/machine-discovery/rss-feed-link.md).
+  Its C evidence is weaker, so the grade stays B.
+- **The link never decides the result on its own.** A reachable feed with no
+  `<link>` passes. A `<link>` with no reachable feed fails, and the message
+  names the advertised URL.
+- **No feed and no link is not applicable.** The grade says the audit informs
+  rather than penalises. Advertising is the site's own statement that a feed
+  exists, so no page-type gate is used.
+- **Discovery comes from the shared `gatherers/feeds.ts`.** It reads every
+  scanned page's head links, accepts rss, atom, feed+json and rdf+xml types,
+  and counts only feeds that parse.

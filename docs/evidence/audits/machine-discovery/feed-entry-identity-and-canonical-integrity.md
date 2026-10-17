@@ -32,14 +32,6 @@ RFC 4287 makes atom:id mandatory, exactly one per entry, 'permanent, universally
 - **[Build and submit a sitemap](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap)** — Google Search Central (vendor-doc, URL verified 2026-08-20)
   - Direct quote: 'Google uses the <lastmod> value if it's consistently and verifiably (for example by comparing to the last modification of the page) accurate.' The value 'should reflect the date and time of the last significant update to the page… an update to the copyright date is not [significant].' priority and changefreq are ignored. The limit per sitemap file is 50MB uncompressed and 50,000 URLs.
 
-## Competitor coverage
-
-W3C Feed Validator checks RFC conformance but does not fetch the target pages or compare against rel=canonical. SEO suites largely ignore feeds; none of the AI-visibility tools (Profound, Otterly) audit feed identity or feed-link/canonical agreement. Lighthouse has no feed checks.
-
-## Implementation sketch
-
-1. Autodiscover feeds via <link rel="alternate" type="application/rss+xml|application/atom+xml|application/feed+json"> on the homepage and one article page, plus conventional paths /feed, /rss.xml, /atom.xml, /index.xml (gated on the root-text-file integrity flag). 2) Assert Content-Type matches the declared type and the body parses as XML/JSON without a BOM or leading whitespace. 3) Per entry, for the 20 newest: Atom — exactly one atom:id, exactly one atom:updated, and atom:summary present whenever atom:content has a src attribute or non-text/non-XML type (RFC 4287 MUST); RSS — a <guid>, and if isPermaLink is absent or 'true' the guid must be an absolute resolvable URL. 4) Assert ids are unique within the feed (FAIL on any duplicate) and that item link hrefs are absolute HTTPS. 5) Fetch the 5 newest item URLs; compare each item link, after stripping nothing, to the target page's <link rel="canonical"> and to the final URL after redirects. FAIL when the feed link differs from canonical, or 3xx-redirects, or carries utm_*/ref/fbclid parameters absent from canonical. 6) Re-fetch the feed once at the end of the audit run and assert ids for unchanged entries are byte-identical (catches per-build id regeneration within a single session only when a deploy intervenes; otherwise report as advisory). 7) ADVISORY sub-signal (not scored): median ratio of content:encoded/atom:content length to the target page's extracted main-content length; flag <0.25 as a stub feed, and escalate to a finding only when the target page's main content is absent from the raw HTML (JS-rendered), because then the stub feed is the only text an agent can get and it is insufficient.
-
 ## Example failure
 
 A headless CMS emits `<guid>https://example.com/blog/post?preview_id=8812</guid>` and `<link>https://example.com/blog/post?utm_source=rss</link>` while the page declares `rel=canonical https://example.com/blog/post`. Every consumer stores the utm-tagged URL; an answer engine citing the article links to a URL that 301s, and analytics-driven URL rotation changes the guid on republish so the same article is ingested three times as three distinct documents.
@@ -48,59 +40,26 @@ A headless CMS emits `<guid>https://example.com/blog/post?preview_id=8812</guid>
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-- 2026-10-06 — a generic XML media type stopped returning `warn`; no source documents a consumer penalty, and `application/rss+xml` is unregistered.
-
 ## Implementation deviations
 
-Steps 1–5 of the sketch ship in full: autodiscovery from every crawled page's
-`<link rel="alternate">` plus the conventional paths, the `Content-Type` and
-BOM assertions, the per-entry Atom and RSS identity rules, the duplicate-id
-check, the absolute-HTTPS link rule, and the canonical comparison on the five
-newest item URLs.
-
-**Discovery is capped at two feeds and reuses `gatherers/feeds.ts`**, so the
-four Wave C feed audits fetch a given feed once between them. The sketch gates
-autodiscovery on the root-text-file integrity flag; that audit ships
-independently in this wave and nothing wires the flag into this one, because a
-feed that parses as a feed is already proof the path resolved.
-
-**One entry produces one finding.** A canonical that disagrees with the item
-link already explains the tracking parameters, so the finding names both and the
-tracking arm fires on its own only when the page declares no canonical at all
-to disagree with.
-
-**A generic `application/xml` or `text/xml` is noted, not scored.** Atom's
-`application/atom+xml` is registered by RFC 4287. `application/rss+xml` was
-never registered with IANA; it is a convention. A generic XML type parses in
-every feed reader, and no source names a consumer that treats it worse. The
-audit records it under `details.warnings` and still passes. A type that is not
-XML at all — most often `text/html` from a misconfigured catch-all — fails.
-Until 2026-10-06 the generic type returned `warn`, which cost half the audit's
-weight with no consumer source behind it.
-
-**The newest-five selection uses only timezone-carrying dates.**
-`parseFeedDate` returns `undefined` for a timestamp with no offset rather than
-guessing one, so such entries sort last. Their identity is still checked; only
-their canonical is not fetched.
-
-**Evidence hygiene.** The dossier's second source is Google's sitemap
-documentation, which belongs to a different proposal and says nothing about
-feed entry identity. Nothing in this audit rests on it. RFC 4287 §4.1.2 carries
-every Atom assertion made here, and the RSS `<guid>`/`isPermaLink` rule comes
-from the RSS 2.0 specification.
-
-## Deferred
-
-- **Re-fetching the feed at the end of the run to check id stability** (sketch
-  step 6). Ids only regenerate when a deploy intervenes, so a second fetch
-  inside one scan proves nothing and costs a request.
-- **The stub-feed content-length ratio** (sketch step 7, advisory). Feed body
-  length against extracted main content is `machine-discovery/rss-feed-content`.
-- **JSON Feed identity rules.** The gatherer parses JSON Feed, and the
-  duplicate-id, missing-id and link rules apply to it, but JSON Feed has no
-  `isPermaLink` or summary-when-src requirement to assert.
-- **More than five canonical comparisons.** Each is a page fetch. Five newest
-  entries is where a publishing defect shows if it exists at all.
+- **Feeds come from the shared `gatherers/feeds.ts`**, capped at two. Each
+  feed is fetched once per scan across the feed audits.
+- **Autodiscovery is not gated on root-text-file integrity.** A feed that
+  parses as a feed already proves the path resolved.
+- **One entry produces one finding.** A canonical mismatch names the tracking
+  parameters too. The tracking arm fires alone only when the page declares no
+  canonical.
+- **A generic `application/xml` or `text/xml` is noted, not scored.** It goes
+  under `details.warnings` and the audit still passes. A non-XML type such as
+  `text/html` fails.
+- **The newest-five selection uses only timezone-carrying dates.** Entries
+  without an offset sort last. Their identity is still checked.
+- **Only the five newest entries get a canonical comparison.** Each costs a
+  page fetch.
+- **Id stability is not re-fetched within a scan.** Ids only regenerate across
+  a deploy.
+- **The stub-feed length ratio** belongs to `machine-discovery/rss-feed-content`.
+- **JSON Feed** gets the duplicate-id, missing-id and link rules. It has no
+  `isPermaLink` or summary-when-src rule to assert.
+- **The Google sitemap source carries no weight here.** RFC 4287 §4.1.2 and the
+  RSS 2.0 `<guid>` rule carry every assertion.

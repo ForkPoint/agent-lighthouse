@@ -54,31 +54,6 @@ pages. These limits remain pending. The finding asks for a policy review, not
 removal of every intentional restriction. Metadata and response headers remain
 checkable when the page body has no readable text.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Title and guidance promise 'No nofollow on important links' and advise reserving nofollow 'for untrusted external links', but the code never inspects a single anchor — it only reads page-level meta robots / X-Robots-Tag. The user is graded on one thing and advised about another. Marginal value even when fixed: page-level nofollow is rare and, in 2026, a weak lever compared with noindex or robots.txt disallow.
-
-**Required fix:** Either (a) implement what the title says — count `rel="nofollow"` on internal anchors and flag only internal links that are nofollowed — or (b) rename the audit to 'No page-level nofollow directive' and align the guidance text with the code. Add `content="none"` detection, tokenize the directive list instead of substring matching, and exempt known utility page types (login/cart/search) from the count.
-
-**False-positive risks:**
-
-- Implementation/description mismatch: `metaRobots.includes('nofollow')` on page meta only. `rel="nofollow"` / `rel="ugc"` / `rel="sponsored"` on anchors — what the title and fix text describe — is never examined.
-- `content="none"` (which implies nofollow) is not detected → false PASS.
-- Substring matching on the raw content string: a value like `max-snippet:-1, nofollowups` would match, and per-bot directives are not distinguished.
-- Same repeated-X-Robots-Tag drop as 1.13 (fetcher keeps only string-typed header values).
-- Legitimate uses are penalized: a login, cart, search-results or paginated page carrying `index,nofollow` is normal practice; the audit surfaces it as an AI-discoverability problem at medium priority.
-- Reports 'All N pages have nofollow' as a hard FAIL when N could be 1 (a single-page scan), making a one-page site's normal configuration look site-wide catastrophic.
-
-**Test gaps:**
-
-- rel="nofollow" on internal anchors — the audit's stated subject, entirely untested
-- content="none"
-- Per-bot nofollow directives
-- Utility pages (login/cart) legitimately carrying nofollow
-- Single-page scan producing a site-wide FAIL
-
-**Overlaps with:** `1.13`, `1.15`
-
 ## Evidence
 
 ### Signal: nofollow on internal links / meta robots nofollow suppressing AI crawler link traversal — grade A (discovery-infra)
@@ -93,47 +68,13 @@ Title and guidance promise 'No nofollow on important links' and advise reserving
 
 ## Implementation deviations
 
-- 2026-10-07 — common-page scope correction: empty samples now return
-  `notApplicable`; affected URLs sort before selection; both failure and warning
-  evidence name affected pages and pass through result bounds. The title and
-  guidance describe page directives and the documented Applebot consumer,
-  rather than individual links or guaranteed site-wide invisibility. Existing
-  all/some/none aggregation, grade, tier, weight and metadata requirements stay
-  unchanged. The body-readability exemption has runner tests across all four
-  current page types and both provenance values.
-
-- 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. It read the nofollow directives on the scanned
-  pages, and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a
-  parked domain a broker's page from another host, on a walled or throttled
-  origin nothing at all. It now consults `scanReadTheSite()` and returns
-  `notApplicable` carrying the gate's own reason.
-  Verdicts that moved on the five nothing-obtained contract states: walled
-  fail → na, throttled fail → na, redirected away pass → na, non-HTML homepage
-  pass → na, HTTP 200 bot challenge fail → na. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
-- 2026-08-28 — `requires` drops `rendered-body` and `sample-adequate` and is now
-  `['origin-reachable']`. `check-requires` derived those two keys from the source
-  touching `ctx.pages`, but what it reads there is `<meta name="robots">` and the
-  `X-Robots-Tag` header, both served whole by a page whose body renders nothing.
-  The disagreement is recorded as a gate exemption in
-  `scripts/lib/requires-analysis.mjs`. The verdict itself does not move, but
-  the gate is on for every scan, so this audit now runs on a client-rendered
-  one instead of being skipped. It is scored at weight 1.0, so a shell scan
-  that reported nothing about its nofollow directives now reports and scores
-  them. Found by `packages/core/src/tests/hostile-state-contract.test.ts`.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+- `requires` is `origin-reachable` and `unblocked-fetches` only. The audit reads `<meta name="robots">` and the `X-Robots-Tag` header, which a page whose body renders nothing still serves whole. The exemption is recorded in `scripts/lib/requires-analysis.ts`.
+- The title and guidance describe a page-level directive and its documented Applebot consumer, not individual links or site-wide invisibility.
 
 ## Deferred
 
 - Replace substring matching with directive-aware parsing, including `none` and
-  bot-specific scope. Test this independently of the completed page-scope fix.
+  bot-specific scope.
 - Establish utility/indexable-page eligibility from supported purpose evidence.
-  Preserve intentional restrictions. The current whole-sample severity remains
-  unchanged until that population review has its own tests and evidence.
-- Reconcile the historical scan-gate notes with the current runner-owned
-  `requires` contract during the 7.0.0 architecture update.
+  Preserve intentional restrictions. Whole-sample severity stays as it is until
+  that population review has its own tests and evidence.

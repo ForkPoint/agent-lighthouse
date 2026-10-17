@@ -46,33 +46,6 @@ sources:
 
 AI agents pay for every token of raw HTML they download, but only the visible text carries meaning. This audit compares the character weight of the raw HTML against the extracted main-content text to produce a "context bloat score": the share of the page that is actual content rather than markup, scripts, and styles. The ratio is evaluated on the homepage (the first crawled page), which is the entry point agents most often fetch. A ratio under 5% means an agent parses 20 tokens of noise for every token of content; under 15% still wastes most of the context window on boilerplate. Unlike content depth (which measures text volume), this measures how efficiently that text is packaged.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Good idea, miscalibrated and internally inconsistent. The numerator is getMainContentText (scoped to <main> when present) while the denominator is the entire raw HTML — so adopting <main>, which audit 6.3 pushes as high priority, shrinks the numerator and lowers this score. The two audits in the same category reward opposite behavior on the same markup. Separately the thresholds are set where nearly the whole modern web fails: a typical Next.js/Nuxt/Shopify homepage carries 200–400KB of HTML with hydration payloads and 3–6KB of visible text, i.e. 1–3% — under the 5% FAIL floor. An audit that fails almost every site conveys no information, and its stated harm ('the page may be truncated before the real content is read') does not hold for the Readability/Turndown pipelines that strip scripts first.
-
-**Required fix:** Compute the ratio against comparable scopes: strip script/style/template/svg/noscript and inline data blobs from the denominator before dividing, or use the whole body text as the numerator when <main> is present so both sides cover the same subtree. Recalibrate thresholds against a real corpus of SSR framework output rather than round numbers. Make CHARS_PER_TOKEN script-aware (~1.5 for CJK, ~3 for markup) or drop the token estimate from displayValue. Reject non-HTML content types and WAF interstitials (ctx.wafProtection is available and unused) instead of scoring them.
-
-**False-positive risks:**
-
-- 'const cleanText = getMainContentText(page.$)' (main-scoped) over 'rawHtml.length' (whole document) — a site is penalized for adopting <main>, directly contradicting audit 6.3.
-- Every SSR React/Vue/Svelte site with a hydration payload lands under 5% → fail. Near-universal failure means the check does not discriminate good sites from bad.
-- Pretty-printed HTML is penalized versus minified HTML for identical content — the audit measures build configuration, not agent experience.
-- 'CHARS_PER_TOKEN = 4' is wrong for HTML (~3) and badly wrong for CJK (~1–1.5), so displayValue's 'est. tokens' misleads on non-English pages.
-- A WAF challenge page or a small soft-404 has a high text-to-markup ratio and PASSES; ctx.wafProtection is never consulted.
-- Only the homepage is measured (documented), so a lean homepage in front of bloated deep pages passes.
-- A CSR shell (tiny HTML, tiny text) can land anywhere on the scale for reasons unrelated to content packaging.
-
-**Test gaps:**
-
-- No fixture comparing the same content with and without <main> — the 6.3 contradiction is untested.
-- No realistic SSR framework fixture (Next.js **NEXT_DATA** / Nuxt payload) to show where real sites land against the thresholds.
-- No CJK fixture for the token estimate.
-- No WAF/soft-404 fixture (currently would pass).
-- No boundary tests at exactly 5% and 15%.
-- No minified-vs-pretty-printed comparison.
-
-**Overlaps with:** `6.14`, `6.18`
-
 ## Evidence
 
 ### Signal: Content depth and text-to-boilerplate token ratio — grade B (semantic-dom-a11y)
@@ -97,55 +70,9 @@ Good idea, miscalibrated and internally inconsistent. The numerator is getMainCo
 
 ## Implementation deviations
 
-- 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. It read the first scanned page's token mix, and
-  `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain
-  a broker's page from another host, on a walled or throttled origin nothing
-  at all. It now consults `scanReadTheSite()` and returns `notApplicable`
-  carrying the gate's own reason.
-  Verdicts that moved on the five nothing-obtained contract states: redirected
-  away pass → na, non-HTML homepage pass → na, HTTP 200 bot challenge warn →
-  na. Found by `packages/core/src/tests/hostile-state-contract.test.ts`.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
-
-## Absorbed proposal — Signal Density Index (content tokens ÷ delivered tokens)
-
-On 2026-08-23 the `token-economics/signal-density-index-content-tokens-delivered-tokens`
-proposal (evidence grade **B**, `static-fetch`) was folded into this audit
-rather than shipped beside it. Both measure the same quantity — how much of
-what a site delivers is content — and shipping both would have scored one
-defect twice and given `content-extraction` 1.2 evidence mass for it.
-
-What the fold changed here:
-
-- The ratio is now BPE tokens under `o200k_base`, not characters. Base64,
-  minified script and SVG path data tokenize four to eight times worse than
-  prose of the same length, which a character ratio cannot see.
-- The numerator is `@mozilla/readability` — the extractor most of the industry
-  deploys — falling back to the semantic container when readability declines.
-  `found` and `details.extractor` name which one produced the number.
-- `details` carries the denominator split into `script`, `style`, `comment`,
-  `text` and `structure` tokens. `structure` is the residual, so the buckets
-  always sum to the delivered count. The split is what makes the finding
-  actionable: it names the bucket to attack.
-
-Thresholds did not move: ≥ 15% passes, ≥ 5% warns, below 5% fails.
-
-The proposal's evidence carries over. AI crawlers do not execute JavaScript or
-apply CSS, so the whole response body is what enters the agent's context
-([Vercel, The rise of the AI crawler](https://vercel.com/blog/the-rise-of-the-ai-crawler));
-infrastructure vendors already bill and report HTML→markdown conversion in
-tokens per document ([Cloudflare Workers AI, Markdown Conversion](https://developers.cloudflare.com/workers-ai/features/markdown-conversion/usage/rest-api/));
-irrelevant context measurably degrades answer quality, so the waste is not only
-a cost ([Shi et al., ICML 2023](https://arxiv.org/abs/2302.00093)); and
-`o200k_base` makes the number reproducible offline
-([openai/tiktoken](https://github.com/openai/tiktoken)).
-
-The proposal's letter grades (A ≥ 0.20, B 0.10–0.20, C 0.04–0.10, F < 0.04) were
-**not** adopted. This audit's three-band ternary result predates them and is
-what the migration map and every consumer of `content-extraction/token-ratio`
-already expect.
+- This audit absorbed the Signal Density Index proposal, which measured the same quantity. Its record is in [merged/content-extraction/signal-density-index-content-tokens-delivered-tokens.md](../../merged/content-extraction/signal-density-index-content-tokens-delivered-tokens.md).
+- The ratio is `o200k_base` tokens, not characters. Base64, minified script and SVG path data tokenize far worse than prose.
+- The numerator is `@mozilla/readability`, falling back to the semantic container when Readability declines. `details.extractor` names which one produced the number.
+- `details` splits the denominator into `script`, `style`, `comment`, `text` and `structure` tokens. `structure` is the residual, so the buckets sum to the delivered count.
+- Thresholds: 15% or more passes, 5% or more warns, below 5% fails. The proposal's letter grades were not adopted.
+- Only the entry page is measured.

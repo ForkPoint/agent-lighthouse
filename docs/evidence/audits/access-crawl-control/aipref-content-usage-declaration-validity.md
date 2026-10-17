@@ -41,14 +41,6 @@ draft-ietf-aipref-attach-05 defines the only two attachment points a conformant 
 - **[Managed robots.txt — Cloudflare Bots](https://developers.cloudflare.com/bots/additional-configurations/managed-robots-txt/)** — Cloudflare (vendor-doc, URL verified 2026-08-20)
   - Cloudflare prepends its own block to the origin's robots.txt: `User-Agent: *` / `Content-signal: search=yes, ai-train=no, use=reference` / `Allow: /`. When the origin already serves robots.txt it combines both files, Cloudflare's block first. This is the mechanism by which a site's own AI policy gets silently overridden at the edge — directly auditable by diffing declared vs. served robots.txt.
 
-## Competitor coverage
-
-Nobody ships AIPREF validation. Lighthouse's agentic category covers llms.txt quality and WebMCP, not licensing signals. Semrush/Ahrefs AI toolkits parse robots.txt for AI user-agent Disallow lines only. Dark Visitors generates robots.txt AI blocks but does not emit or validate `Content-Usage`. Cloudflare emits `Content-Signal` but ships no validator, and its own managed output is not yet AIPREF-conformant.
-
-## Implementation sketch
-
-Static-fetch only. 1) GET /robots.txt; tokenise line-wise, collecting `Content-Usage:` (case-insensitive) both at file scope and within each `User-agent` group, and separately collecting legacy `Content-Signal:`. 2) Each Content-Usage value may be preceded by a path prefix (`Content-Usage: /ai-ok/ train-ai=y`); split the optional leading path token, then parse the remainder as an RFC 8941 dictionary (a ~60-line parser, or the `structured-headers` npm package). 3) Validate keys against {train-ai, search} plus any newer registered categories, and values against tokens y|n. Reject bare strings `yes`/`no` with a distinct 'legacy Content-Signal syntax in an AIPREF directive' message. 4) GET the homepage and 2 sampled content pages; read the `Content-Usage` response header and parse identically. 5) Apply attach-05 precedence: for each declared (path-prefix, category) pair, resolve which User-agent group applies and check the longest-matching Allow/Disallow; if the path is disallowed for that group, flag the preference as inert. 6) Cross-check the robots.txt directive against the HTTP header for the same path and flag disagreement. Verdict: pass when at least one valid, non-inert declaration exists and header/robots agree; warn when only legacy `Content-Signal` is present (migration gap); fail on structured-field syntax errors, unknown category tokens, or preferences attached only to disallowed paths.
-
 ## Example failure
 
 A publisher wants an opt-out of AI training. Their robots.txt (or Cloudflare's prepended managed block) reads `Content-Signal: search=yes, ai-train=no` and nothing else. An AIPREF-conformant crawler looks for `Content-Usage`, finds none, resolves `train-ai` to _unknown_, and applies its own permissive default. The opt-out the operator believes they published is unenforceable under the very standard the industry is converging on. A second variant: `Content-Usage: train-ai=no` — `no` is not a valid token, the dictionary fails to parse, and the whole directive is dropped.
@@ -57,61 +49,17 @@ A publisher wants an opt-out of AI training. Their robots.txt (or Cloudflare's p
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
-The sketch's six steps ship: collection at file scope and per group, the leading
-path token split off before parsing, RFC 8941 parsing, category and value
-validation with a distinct message for legacy `Content-Signal` syntax, the
-attach-05 inertness rule, and the robots-versus-header cross-check.
-
-Three decisions the sketch leaves open.
-
-**`ai-input` is not an AIPREF category.** It is Cloudflare's Content-Signal
-vocabulary. Accepting it inside a `Content-Usage` line would pass exactly the
-migration mistake this audit exists to catch, so it is reported as an unknown
-category. The cross-channel audit still reads it, because there it arrives on
-the directive that defines it.
-
-**The parser is RFC 8941, not AIPREF.** `parseDictionary` in
-`gatherers/structured-fields.ts` accepts `train-ai=yes` — `yes` is a
-syntactically valid token — and this audit rejects it against the vocabulary
-with a message naming the directive it belongs to. Putting the vocabulary in
-the parser would have made a general header parser refuse a legal structured
-field.
-
-**Inertness is only reported for robots.txt declarations.** attach-05 gives the
-rule for the robots.txt attachment, where the same file carries the
-`Allow`/`Disallow` that decides it. A `Content-Usage` response header arrives
-with the resource, so a crawler that received it was allowed to fetch it.
-
-Status bands follow the sketch's verdict list: a syntax or vocabulary error, a
-channel disagreement, or every declaration inert fails; only legacy
-`Content-Signal`, or a valid declaration beside an inert one, warns; a valid,
-crawlable, consistent declaration passes. No declaration at all is
-`notApplicable` — AIPREF is a draft, and not publishing a preference is not a
-defect.
-
-- 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. Both channels it reads — the robots.txt
-  `Content-Usage` directive and the `Content-Usage` response header — come from
-  whatever answered the request, and a bot wall served at HTTP 200 through the
-  site's own edge carries the site-wide headers on a body the site did not
-  write. The audit validated the wall's header as this site's declaration. It
-  now consults `scanReadTheSite()` and returns `notApplicable` carrying the
-  gate's own reason. Measured merge-base to here on a text-rich HTTP 200 wall:
-  pass → na, at weight 0.6. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
+- `ai-input` is reported as an unknown category inside `Content-Usage`. It is Cloudflare's Content-Signal vocabulary, not AIPREF. The cross-channel audit still reads it on `Content-Signal`.
+- The parser is plain RFC 8941 (`parseDictionary` in `gatherers/structured-fields.ts`). It accepts `train-ai=yes`. This audit rejects `yes`/`no` against the vocabulary, with a message naming the legacy directive.
+- Inertness is reported only for robots.txt declarations. A crawler that received a `Content-Usage` header was allowed to fetch the resource.
+- A syntax or vocabulary error, a channel disagreement, or every declaration inert fails. Only legacy `Content-Signal`, or a valid declaration beside an inert one, warns. No declaration at all is not applicable.
 
 ## Deferred
 
 - **Longest-prefix resolution between two declarations.** attach-05 says the
-  longest matching prefix wins, so two declarations for nested paths are not a
-  contradiction. This audit compares only declarations with the same scope, which
-  under-reports rather than inventing a conflict the spec resolves.
-- **Newer registered categories.** The vocabulary draft may register more than
-  `train-ai` and `search`. Until it does, an unregistered token is more likely a
-  typo than a forward reference, and the finding says which categories exist.
+  longest matching prefix wins. This audit compares only declarations with the
+  same scope, which under-reports rather than inventing a conflict.
+- **Newer registered categories.** Only `train-ai` and `search` are accepted
+  until the vocabulary draft registers more.

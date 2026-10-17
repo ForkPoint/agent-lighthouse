@@ -22,68 +22,15 @@ sources:
 
 Redirect chains waste AI crawler budget and slow down content discovery. Each page should resolve in a single redirect at most.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-BROKEN — always passes. It compares `page.fetchResult.url` with `page.fetchResult.finalUrl`, but fetcher.ts sets `finalUrl: targetUrl` unconditionally (its own comment: 'undici doesn't expose final URL after redirects easily'). The two values are equal by construction on every real scan, so the audit reports 'All N page(s) resolve without redirects' even for a site where every single URL 301s. The tests hide this by hand-assigning finalUrl to a value production can never produce.
-
-**Required fix:** Make the fetcher record the redirect chain: either drop the redirect interceptor for this purpose and follow hops manually (`followRedirects: false`, loop on Location, cap at 5), or capture undici's redirect history and expose `redirectChain: string[]` plus a real `finalUrl` on FetchResult. Then fail on chains of length >= 2, warn on a single hop, and ignore pure http→https / trailing-slash normalizations. Rewrite the tests to drive the real fetcher against a stub server instead of assigning finalUrl by hand.
-
-**False-positive risks:**
-
-- `if (requestUrl !== finalUrl)` can never be true in production: `fetcher.ts` returns `finalUrl: targetUrl` in both the success and error paths. Guaranteed false PASS on 100% of scans.
-- Even if finalUrl were populated, comparing start vs end URL detects _a_ redirect, never a _chain_ — the audit's stated subject (multi-hop) is unmeasurable this way. The undici redirect interceptor is configured with maxRedirections: 5 and the hop count is discarded.
-- Cosmetic normalizations (http→https, adding a trailing slash, bare→www) would be reported as defects identically to genuine legacy chains, once finalUrl worked.
-- `redirected.length > ctx.pages.length / 2` on a one-page scan means a single redirect is a site-wide FAIL.
-- The tests set `p.fetchResult.finalUrl` manually, so the suite is green while the audit is inert — the coverage gives false confidence.
-
-**Test gaps:**
-
-- Any test exercising the real fetcher — the entire suite fakes finalUrl, concealing that the audit cannot fail
-- Multi-hop chain (the audit's stated subject) vs a single hop
-- http→https and trailing-slash normalization (should not be a defect)
-- Cross-host redirect (bare → www)
-- Redirect loop / exceeding maxRedirections
-
-**Overlaps with:** `1.20`
-
 ## Evidence
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
 
 ## Implementation deviations
 
-- 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. It read the request/final URL of each scanned page,
-  and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked
-  domain a broker's page from another host, on a walled or throttled origin
-  nothing at all. It now consults `scanReadTheSite()` and returns
-  `notApplicable` carrying the gate's own reason.
-  The redirect is counted **before** the guard runs: a hop that left the site
-  is this audit's subject, and leaving the site is exactly what denies
-  `origin-reachable`. A scan redirected to a parking host now fails naming the
-  hop instead of declining. The guard only stops the audit _clearing_ a site
-  whose pages it never saw. The gate exemption drops `origin-reachable` for
-  the same reason; the page-fed keys stay, because with no page there is no
-  hop.
-  Verdicts that moved on the five nothing-obtained contract states: walled
-  fail → na, throttled fail → na, non-HTML homepage pass → na, HTTP 200 bot
-  challenge pass → na. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
-- 2026-08-28 — `requires` is now empty. The gate exemption already dropped
-  `origin-reachable`, because a hop that left the site is this audit's subject;
-  `rendered-body` and `sample-adequate` now go with it. A hop is recorded by the
-  response — request URL against final URL — and a page that renders no text
-  resolves in as many hops as any other. The audit reports "no pages scanned"
-  itself, so nothing relies on those keys standing in for a page existing. The
-  verdict itself does not move, but the gate is on for every scan, so a
-  client-rendered scan is now scored on its redirect behaviour at weight 1.0
-  instead of being skipped. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+- `requires` is empty. A hop that left the site is this audit's subject, and leaving the site is what denies `origin-reachable`. A scan redirected to a parking host fails and names the hop.
+- A hop is read from the response, request URL against final URL. A page that renders no text resolves in as many hops as any other, so `rendered-body` and `sample-adequate` are not required.
+- The audit reports "no pages scanned" itself.
 
 ## Evidence (2026-08-21)
 

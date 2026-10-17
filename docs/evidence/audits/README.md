@@ -1,6 +1,6 @@
 # Audit dossiers — the v1 index
 
-One dossier per audit: what it checks, the 2026-08-20 code-review findings, graded evidence signals with sources, and current disposition. Companion documents: [evidence policy](../policy.md) · [deletion research](../deletions/README.md) · [sunset audits](../sunset/README.md) · [proposed new checks](../proposals/README.md).
+One dossier per audit: what it checks, graded evidence signals with sources, and current disposition. Companion documents: [evidence policy](../policy.md) · [sunset audits](../sunset/README.md) · [proposed new checks](../proposals/README.md).
 
 207 legacy v1 audits are indexed here. Today the shipping registry holds 215 audits across eight categories, with every audit backed by an individual dossier under this directory. A row whose dossier moved links out of the folder: `../sunset/` for the 26 removed audits, `../merged/` for a signal folded into another audit. `docs/evidence/audit-map.md` (and `audit-map.json`) records the identity and migration map. "Approved 2026-08-21" reflects the accepted deletion-research verdicts.
 

@@ -41,14 +41,6 @@ Falsifiable claim: native <select>, <input type="date">, and <input type="file">
 - **[MCP Specification 2026-07-28 — Streamable HTTP Transport](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/streamable-http)** — Model Context Protocol (Anthropic / MCP Working Groups) (spec, URL verified 2026-08-20)
   - Revision 2026-07-28 removed the GET stream endpoint and protocol-level sessions (Mcp-Session-Id, Last-Event-ID). Server MUST expose one POST endpoint. Server MUST validate Origin; if Origin is present and invalid it MUST return 403 Forbidden. Every POST MUST carry MCP-Protocol-Version, Mcp-Method, and (for tools/call, resources/read, prompts/get) Mcp-Name headers; these are 'REQUIRED for compliance'. Header value MUST match the _meta body value or server MUST return 400 + JSON-RPC code -32020 HeaderMismatch. Unknown protocol version -> 400 + UnsupportedProtocolVersionError. Unknown method -> 404 + -32601. x-mcp-header constraints defined; clients MUST reject (exclude from tools/list) tools that violate them. Servers SHOULD send X-Accel-Buffering: no on SSE. GET/DELETE to endpoint SHOULD now return 405.
 
-## Competitor coverage
-
-Not covered. Lighthouse's agentic category has no control-substitution audit; axe's aria-required-attr will demand aria-expanded on an element that already declares role=combobox but says nothing when the widget declares no role and nothing about the native-vs-custom choice. Lighthouse's webmcp-form-coverage audit checks for declarative WebMCP tool exposure, an orthogonal (and far less deployed) mechanism.
-
-## Implementation sketch
-
-Static parse. For each <form> and each labelled field region, classify the control: NATIVE if <select>, <input type=date|month|time|file|color|range>; SUBSTITUTED if the region contains no native control but does contain (a) role="combobox"/"listbox"/"menu" markup, (b) a hidden <input type="hidden"> or type="text" readonly paired with a clickable div whose class matches /select|dropdown|picker|calendar|datepicker|chooser/, or (c) a drop-zone div (class matching /drop.?zone|file.?drop|upload.?area/) with no sibling <input type="file">. Weight fields on paths matched by URL or form action containing /checkout|cart|signup|register|book|order|search/. For each SUBSTITUTED control additionally check whether the ARIA combobox contract is satisfiable per APG (aria-expanded present, aria-controls resolving to an existing element whose role is listbox/grid/tree/dialog, options carrying role=option, aria-activedescendant ids resolvable) — a substituted control with a complete contract is a warning; one with a broken or absent contract is a failure.
-
 ## Example failure
 
 A checkout ships a styled country picker: <div class="dropdown" tabindex="0"> plus a virtualised <ul> that only renders 20 of 195 countries at a time, and a hidden input carrying the value. Playwright's selectOption is unusable; the agent opens the list, sees 20 entries, does not find 'Netherlands', and has no scroll target inside the popup — the same 'difficulty locating correct scrollable areas' failure WebVoyager names as a driver of navigation-stuck.
@@ -57,31 +49,12 @@ A checkout ships a styled country picker: <div class="dropdown" tabindex="0"> pl
 
 Tier per evidence policy: **scored** — grade A meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
-The shipped audit is `operability-safety/native-control-substitution`; the
-proposal's `-index` suffix is dropped because the result carries the index as a
-weighted count rather than being an index in its own right.
-
-No dependency substitution was needed: detection is cheerio selector matching
-over the document the scanner already parses.
-
-The region rule is stated concretely, where the sketch said "labelled field
-region": the region is the control's enclosing `<form>` when it has one, and its
-parent element otherwise. A native control anywhere in that region means the
-styled div is decoration around a real element, not a stand-in for one, and the
-div is not counted.
+- The id drops the proposal's `-index` suffix. The result carries the index as a weighted count.
+- The "labelled field region" is the control's enclosing `<form>`, or its parent element when there is none. A native control anywhere in that region makes the styled div decoration, and it is not counted.
 
 ## Deferred
 
-- **Action-cost reporting.** The sketch asks for "the number of agent actions it
-  costs versus its native equivalent". Counting actions requires driving the
-  widget, which is the headless-browser tier. The shipped audit reports the
-  weighted substitution index and the specific contract defect instead.
-- **Virtualised option lists.** The dossier's example failure turns on a popup
-  that renders 20 of 195 options. Whether a list is virtualised is only
-  observable once its script runs, so it is not assessed.
+- **Action-cost reporting.** Counting the agent actions a widget costs needs a headless browser. The audit reports the weighted substitution index and the contract defect instead.
+- **Virtualised option lists.** Whether a list renders only part of its options is observable only once its script runs, so it is not assessed.

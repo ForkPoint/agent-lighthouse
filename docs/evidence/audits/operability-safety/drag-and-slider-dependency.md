@@ -38,14 +38,6 @@ Falsifiable claim: continuous pointer gestures require an agent to synthesise a 
 - **[Playwright: Auto-waiting / Actionability checks](https://playwright.dev/docs/actionability)** — Microsoft (vendor-doc, URL verified 2026-08-20)
   - Before click/check/fill/selectOption, Playwright enforces five checks: Visible (non-empty bounding box, not visibility:hidden), Stable (same bounding box over 2 animation frames), Receives Events (element is the hit target at the action point — overlays cause failure), Enabled (not [disabled]/aria-disabled), Editable (not readonly/aria-readonly). Fill requires visible+enabled+editable. This is the exact gate every Playwright-based agent (Playwright-MCP, browser-use, most CUA harnesses) passes through, so each check is a directly testable site-side failure cause.
 
-## Competitor coverage
-
-Not covered. Lighthouse's agentic audit inherits axe's aria-required-attr which will fire on a declared role=slider missing aria-valuenow, but the far more common unroled div-thumb slider, drag-only upload, and drag-reorder cases produce no finding anywhere. No competitor scores discrete-alternative availability.
-
-## Implementation sketch
-
-Static parse. Flag (a) <input type="range"> or role="slider" that is not accompanied within the same labelled field group by a numeric <input> or a <select> bound to the same parameter — and additionally fail any role="slider" missing aria-valuenow/aria-valuemin/aria-valuemax or an accessible name per APG, since without them the agent cannot even read the current value; (b) elements with draggable="true" (or class matching /sortable|draggable|drag-handle|reorder/) inside a list on a path matched by /cart|checkout|builder|configure|order/ with no adjacent move-up/move-down buttons or position <select>; (c) drop-zone divs with no sibling or descendant <input type="file"> (drag-only upload is unoperable — agents set files on an input, they do not synthesise a DataTransfer drop); (d) carousels whose only next/prev affordance is touch/swipe handlers with no rendered button controls. Weight by path criticality. Every finding names the missing discrete alternative, which is the remediation.
-
 ## Example failure
 
 A hotel search gates results behind a dual-thumb price range slider (two divs with no role and no aria-value*) and a drag-only date range. Asked to find rooms under 200 EUR, the agent has no readable current value, no keyboard path and no numeric input. It drags approximately, and cannot read where it landed. It returns results for the wrong range, while asserting the filter was applied.
@@ -54,45 +46,15 @@ A hotel search gates results behind a dual-thumb price range slider (two divs wi
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
-The shipped audit is `operability-safety/drag-and-slider-dependency`, in the
-`operability-safety` category: the proposal's `agent-operability` domain is a
-research grouping, not one of the eight v2 categories.
-
-The two slider arms are counted apart. A `role="slider"` missing any of
-`aria-valuenow`, `aria-valuemin`, `aria-valuemax` or an accessible name is
-reported on the APG arm and not also on the missing-alternative arm: a value an
-agent cannot read is a different defect, with a different fix, from a value it
-cannot set discretely.
-
-"The same labelled field group" is read as the control's enclosing `<fieldset>`,
-`<form>` or `[role="group"]`, and its parent element when it has none. A numeric
-input bound to the same parameter is placed beside the slider, so a page-wide
-search would pass a slider that has an unrelated number field elsewhere.
-
-Path criticality is matched on `/cart|checkout|builder|configure|order/`. The
-wider vocabulary the sketch hints at (`seat`, `book`) matches ordinary editorial
-URLs such as `/blog/seat-tips`, which turns a criticality test into a substring
-test.
-
-The reorder finding is raised once per list, not once per item: one set of move
-buttons on the list is one fix.
+- The two slider arms are counted apart. A `role="slider"` missing a value attribute or an accessible name is reported on the APG arm only. A value an agent cannot read is a different defect from one it cannot set discretely.
+- "The same labelled field group" is the enclosing `<fieldset>`, `<form>` or `[role="group"]`, else the parent element. A page-wide search would pass a slider beside an unrelated number field.
+- Path criticality is matched on `/cart|checkout|builder|configure|order/`. Wider words such as `seat` or `book` match ordinary editorial URLs.
+- The reorder finding is raised once per list, not once per item. One set of move buttons is one fix.
 
 ## Deferred
 
-- **Weighting by path criticality.** The sketch asks for weighted findings. The
-  audit is binary: a gesture-only control on a checkout path is a finding and
-  the same control on an article page is not, which is the same judgement
-  expressed as a gate rather than a weight.
-- **Listener-attached drag.** A list made sortable by a library that binds
-  pointer handlers in script carries no `draggable` attribute and no class from
-  the vocabulary. Detecting it needs the page to run, which is the
-  headless-browser tier.
-- **Value binding.** Whether the numeric input beside a slider is actually bound
-  to the same parameter is only observable by driving both. The audit checks
-  that a discrete control shares the field group, not that the two agree.
+- Criticality is a gate on the reorder arm, not a weight on findings.
+- Listener-attached drag. A list made sortable in script carries no `draggable` attribute or matching class. Detecting it needs a headless browser.
+- Value binding. The audit checks that a discrete control shares the field group, not that it is bound to the same value.

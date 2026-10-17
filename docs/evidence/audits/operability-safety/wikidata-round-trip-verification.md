@@ -35,14 +35,6 @@ schema.org sameAs is a self-asserted outbound link — Google documents it purel
 - **[MCP Specification 2025-06-18 — Transports (superseded baseline)](https://modelcontextprotocol.io/specification/2025-06-18/basic/transports)** — Model Context Protocol (spec, URL verified 2026-08-20)
   - The legacy-era shape used for backward-compat detection: Mcp-Session-Id assigned in the InitializeResult, GET opens a standalone SSE stream or returns 405, DELETE terminates a session, Last-Event-ID resumability, and servers SHOULD assume 2025-03-26 when MCP-Protocol-Version is absent. Also documents the deprecated 2024-11-05 HTTP+SSE detection path (GET returns an `endpoint` event as the first SSE event).
 
-## Competitor coverage
-
-Every SEO tool validates that sameAs is a well-formed URL array; none dereferences the target and none checks reciprocity. Lighthouse's agentic category has no entity checks whatsoever. Profound/Otterly observe brand mentions in answers but do not audit the site's own entity claims. Bidirectional authority verification is unshipped across the entire category.
-
-## Implementation sketch
-
-1. Parse all JSON-LD blocks including @graph, collect Organization/Person/NewsMediaOrganization nodes and their sameAs values. 2) Filter to authority hosts: wikidata.org, _.wikipedia.org, gleif.org, LinkedIn company pages, GitHub orgs. 3) Wikidata: extract the Q-id from /wiki/Q\d+ or /entity/Q\d+, then GET https://www.wikidata.org/w/api.php?action=wbgetclaims&entity=<Qid>&property=P856&format=json and read claims.P856[_].mainsnak.datavalue.value — use the per-property endpoint, not Special:EntityData, whose full export is enormous for popular entities. 4) Respect statement rank: prefer 'preferred', ignore 'deprecated'. 5) Compare using the Public Suffix List registrable domain, not string equality — Q95 (Google) resolves to https://about.google/, so also accept a configured alias set and treat a same-organization-different-TLD result as WARN rather than FAIL. 6) Wikipedia sameAs: resolve the article to its Q-id via the Wikipedia API sitelinks, then run the same round trip. 7) Verdicts: PASS = P856 registrable domain matches; WARN = entity exists but has no P856 (unverifiable); FAIL = P856 points at a different organization's domain. Cache per Q-id for 30 days.
-
 ## Example failure
 
 A SaaS company's Organization JSON-LD lists sameAs: https://www.wikidata.org/wiki/Q12345 — but Q12345 is a same-named defunct hardware manufacturer whose P856 points at a parked domain. The site has been actively mis-grounding itself to the wrong knowledge-graph entity for years; every downstream consumer that trusts sameAs inherits the wrong company's facts, and no existing structured-data validator flags it because the markup is syntactically perfect.
@@ -51,45 +43,15 @@ A SaaS company's Organization JSON-LD lists sameAs: https://www.wikidata.org/wik
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
-**Renamed** from `wikidata-round-trip-entity-verification` for symmetry with
-its siblings; the id was inside the cap either way.
-
-Steps 1 and 3 to 7 of the sketch ship: `sameAs` collected from Organization,
-Corporation, NewsMediaOrganization, LocalBusiness, Person and Brand nodes
-across every JSON-LD block including `@graph`; the Q-id read from both the
-`/wiki/Q…` and `/entity/Q…` forms; one `wbgetclaims` call per entity for
-P856 alone, never `Special:EntityData`; statement rank respected, with
-`preferred` winning and `deprecated` ignored; registrable-domain comparison
-rather than string equality; and the three verdicts — verified, same name
-under another domain (warn), other organization's domain (fail) — plus a warn
-when the entity carries no P856 at all.
-
-**Only Wikidata is resolved** (sketch step 2 named several authority hosts,
-step 6 added Wikipedia). Wikidata is the one with a free, documented,
-per-property endpoint and a reciprocal property. Resolving a Wikipedia article
-to its Q-id would cost a second request per claim through a different API for
-the same answer, and GLEIF round trips are
-`operability-safety/organization-identifier-registry-resolution`.
-
-**Registrable-domain comparison lives in `gatherers/domains.ts`.** Two audits
-already carried a private copy of the eTLD+1 reduction; the third is where a
-shared one earns its place. It uses a short public-suffix set rather than a
-bundled PSL snapshot, and the module says why.
-
-**At most two entities are resolved per scan.** A site claiming three
-identities has an identity problem this audit reports off two of them.
+- Only Wikidata is resolved. It has a free, documented per-property endpoint and a reciprocal property. GLEIF round trips belong to `operability-safety/organization-identifier-registry-resolution`.
+- One `wbgetclaims` call per entity reads P856 alone. `Special:EntityData` is never used.
+- Registrable-domain comparison uses `gatherers/domains.ts`, with a short public-suffix set rather than a bundled PSL.
+- At most two entities are resolved per scan.
 
 ## Deferred
 
-- **Wikipedia `sameAs` round trips** through the sitelinks API.
-- **The 30-day per-Q-id cache** the sketch suggests. The scanner has no
-  cross-scan store; the cache here is per scan.
-- **A configurable alias set** for organizations whose official domain
-  legitimately differs from the audited one. The same-name-different-TLD case
-  is a warning instead, which is the outcome an alias set would produce.
+- Wikipedia `sameAs` round trips through the sitelinks API.
+- A cross-scan cache per Q-id. The cache is per scan.
+- A configurable alias set. A same-name, different-TLD result warns instead.

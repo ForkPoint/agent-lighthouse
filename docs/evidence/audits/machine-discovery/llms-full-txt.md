@@ -30,29 +30,6 @@ sources:
 
 llms-full.txt provides the complete content of your site in a single file, allowing AI agents to ingest everything in one request instead of crawling page by page.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Fails any site lacking /llms-full.txt, at HIGH priority, on the strength of a 200 status alone — no content check whatsoever. llms-full.txt is a real convention (Mintlify and several doc platforms emit it) but it is explicitly optional even in the llms.txt spec, is only meaningful for documentation-shaped sites, and is actively inappropriate for large or commerce sites. Failing every site for its absence at high priority is misleading; passing any 200 makes the pass meaningless.
-
-**Required fix:** Require 200 AND a non-HTML content-type AND a markdown-shaped body over a minimum size (say 2KB) to pass. Return notApplicable() rather than fail() when the file is absent — it is an optional enhancement, not a defect — or gate it to documentation-type sites. Drop defaultPriority from high to low.
-
-**False-positive risks:**
-
-- `isOk` status-only: an SPA catch-all serving `<!doctype html>` at /llms-full.txt yields PASS 'llms-full.txt exists and returns HTTP 200'. So does a 200 error page, a redirect to the homepage, or a 0-byte file.
-- No size or format floor — a one-line placeholder file scores identically to a genuine full-content dump, so the audit rewards the gesture rather than the content.
-- A 30k-page ecommerce catalogue cannot meaningfully produce llms-full.txt; the audit still marks it a HIGH-priority failure with 'moderate' effort guidance that is not actionable.
-- Body is truncated at MAX_RESPONSE_BODY_BYTES (5MB) by the fetcher, so any real llms-full.txt of consequence is partially read — currently harmless because nothing is inspected, but it blocks any future content check.
-
-**Test gaps:**
-
-- 200 + HTML soft-404 (currently a false PASS)
-- Empty or 1-line placeholder file (currently a false PASS)
-- Redirect to homepage returning 200
-- Very large body hitting the 5MB fetcher truncation
-- Non-markdown content types
-
-**Overlaps with:** `1.1`
-
 ## Evidence
 
 ### Signal: /llms-full.txt (full concatenated documentation file) — grade D (llms-txt)
@@ -63,52 +40,9 @@ Fails any site lacking /llms-full.txt, at HIGH priority, on the strength of a 20
 
 **Counter-evidence:** A measurement taken for this dossier is close to disqualifying. Anthropic's llms-full.txt is 33.5 MB, Cloudflare's is 57.3 MB, OpenAI's 6.1 MB, Perplexity's 4.1 MB. At roughly 4 characters per token these are about 8M, 14M, 1.5M and 1M tokens. That is one to two orders of magnitude beyond any production context window. The stated mechanism, single-fetch full ingestion, is therefore physically impossible for the very sites held up as exemplars. Stripe returns 404 for it while maintaining a 92 KB llms.txt, suggesting deliberate rejection. Mintlify caps auto-generated llms.txt at 100,000 characters but applies no cap to llms-full.txt, which is how these files reach absurd sizes. Serving a 57 MB file to any agent that requests it is also a real bandwidth and abuse liability.
 
-## Adversarial redemption research (2026-08-21)
-
-This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/deletions/content-discoverability/llms-full-txt.md](../../deletions/content-discoverability/llms-full-txt.md). Outcome: **dead-but-informative-candidate**, grade C.
-
-## Re-checked (evidence sweep, 2026-08-24)
-
-**No change: C / informative / weight 0. Correctly graded.**
-
-The sweep that re-graded `llms-txt-exists` and `llms-txt-links-valid` covered
-this file too and disturbed nothing. Two things reconfirm the C:
-
-- The Lighthouse gatherer source, re-read on 2026-08-24, resolves
-  `new URL('/llms.txt', …)` and nothing else. The one documented fetcher of the
-  llms.txt family in existence never fetches `llms-full.txt`.
-- llmstxt.org v2 still does not define the file, and no vendor documents
-  consuming it.
-
-One new datum, and it cuts mildly in the file's favour: Cloudflare AI Index
-generates `LLMs-full.txt` alongside `LLMs.txt` for customers. That is a
-generator, not a consumer, but it holds the audit at C — "community convention
-with partial adoption" — rather than letting it slide back toward the D its
-underlying evidence signal first assigned.
-
-**Flagged:** `https://llmstxt.org/changes.html`, cited in this dossier, returned
-HTTP 503 at access time on 2026-08-24. The changelog leg of the claim above
-could not be re-verified. CI's link checker will flag it.
-
 ## Implementation deviations
 
-- 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. It read the llms-full.txt served at the root, and
-  `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain
-  a broker's page from another host, on a walled or throttled origin nothing
-  at all. It now consults `scanReadTheSite()` and returns `notApplicable`
-  carrying the gate's own reason.
-  Verdicts that moved on the five nothing-obtained contract states: walled
-  fail → na, throttled fail → na, redirected away pass → na, non-HTML homepage
-  fail → na, HTTP 200 bot challenge pass → na. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
-- 2026-10-17 — an absent llms-full.txt is not applicable, as the required fix
-  above says. It used to fail at high priority. A 200 whose body opens as an
-  HTML document counts as absent (`gatherers/root-files.ts`
-  `isRootArtifact`); a homepage redirect at `/llms-full.txt` used to pass.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — adversarial redemption research; user accepted verdict (disposition above).
-- 2026-08-24 — evidence sweep: re-checked, no change. C / informative / weight 0 stands.
+- **The grade is C, not the signal's D.** Cloudflare AI Index generates the
+  file for customers. That is partial adoption by a generator, not a consumer.
+- **An absent file is not applicable.** A 200 whose body opens as an HTML
+  document counts as absent (`isRootArtifact` in `gatherers/root-files.ts`).

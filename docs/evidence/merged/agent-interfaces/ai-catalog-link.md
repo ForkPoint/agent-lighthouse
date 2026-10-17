@@ -51,7 +51,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Adversarial redemption research (2026-08-21)
 
-This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/deletions/meta-tags/ai-catalog-link.md](../../deletions/meta-tags/ai-catalog-link.md). Outcome: **redeemable**, grade B.
+This audit was a delete candidate and went through dedicated adversarial research. Outcome: **redeemable**, grade B.
 
 ## Review history
 

@@ -38,14 +38,6 @@ Every deployed paid-crawl scheme puts the price in a machine-readable slot, neve
 - **[RSL 1.0 Standard Specification](https://rslstandard.org/rsl)** — RSL Collective (spec, URL verified 2026-08-20)
   - robots.txt directive `License: https://example.com/license.xml` — "The value MUST be an absolute URI"; may be global or inside a User-agent group; multiple allowed. HTTP discovery: `Link: <https://example.com/license.xml>; rel="license"; type="application/rsl+xml"`. HTML: `<link rel="license" type="application/rsl+xml" href="...">` or inline `<script type="application/rsl+xml">`. no default/well-known location is mandated. XML: root `<rsl xmlns="https://rslstandard.org/rsl" max-age>`, `<content url required, server, encrypted>`, `<license>`, `<permits|prohibits type="usage|user|geo">`, `<payment type="purchase|subscription|crawl|use|attribution|free">`, `<amount currency=ISO4217>`, `<standard>`, `<copyright type contactEmail contactUrl>`, `<legal type="warranty|disclaimer|attestation|contact|proof">`.
 
-## Competitor coverage
-
-None found in the 2026-08 competitor survey.
-
-## Implementation sketch
-
-Static-fetch, piggybacking on responses already captured by the edge-parity probe. 1) Collect every response with status 402 across the crawler-UA probe matrix and the baseline browser fetch. 2) A 402 is machine-actionable if ANY holds: (a) a `crawler-price` header matching /^[A-Z]{3}\s+\d+(\.\d+)?$/ with an ISO 4217 currency; (b) a `PAYMENT-REQUIRED` header whose base64 decodes to JSON containing `x402Version` and a non-empty `accepts` array, each item having scheme, network, amount, asset and payTo; (c) a `Link: rel=license; type=application/rsl+xml` (or a robots.txt `License:`) resolving to an RSL doc with `<payment type="crawl">` and a valid `<amount currency>` whose `<content url>` covers the 402'd path. 3) Fail when a 402 is returned with `content-type: text/html` and none of the three are present. 4) Secondary assertions worth their own sub-findings: the currency token is real ISO 4217; the amount parses as a decimal; a `Cache-Control` that would let a CDN cache the 402 across clients is flagged (a cached 402 poisons paying crawlers); and a 402 returned to the _browser_ baseline as well as to crawler UAs indicates a misapplied rule hitting humans. 5) Emit a distinct informational result — not a failure — when no 402 is observed anywhere, so free sites are not penalised.
-
 ## Example failure
 
 A publisher enables a paid-crawl rule at their edge, but the rule is a generic custom response: `HTTP/1.1 402 Payment Required`, `content-type: text/html`, body 'Access to this content requires a licence. Contact sales@example.com.' No `crawler-price`, no `PAYMENT-REQUIRED`, no RSL link. Every crawler willing to pay treats it as an unrecoverable error and removes the URL from its frontier; the publisher earns nothing and loses the citation.
@@ -54,54 +46,20 @@ A publisher enables a paid-crawl rule at their edge, but the rule is a generic c
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
-### Subpath sitemap scope (2026-10-05)
-
-The shared sitemap gatherer uses the scanned homepage directory as the site root when it is a detected or declared subpath homepage. It reads declarations from the origin's robots.txt, then tries the conventional sitemap names under that directory before the origin fallbacks. Shared sitemap files contribute only absolute URLs on the same origin and under that directory. Filtering precedes the entry cap and sampling. Relative or malformed loc values associated with this site remain available to content audits. A sibling-only sitemap does not prove that this site has a sitemap. The child-fetch cap remains in force even when all children cover siblings.
-
-Content-page scans do not infer a mount. Origin files, origin probes, feed discovery, explicit page overrides, and redirect handling keep their existing scope. This change limits sitemap-derived evidence; it does not make every scan request subpath-only.
-
-**Renamed.** `machine-actionable-402-paid-access-response` would make a
-63-character id, inside the cap, but the trailing `-response` says nothing the
-rest does not; the audit ships as `machine-actionable-402-paid-access`.
-
-**It issues no request.** The sketch says the audit piggybacks on the
-edge-parity probe matrix, and it does: it calls `sharedUaProbes` with the same
-URL and token arguments `access-crawl-control/ai-crawler-edge-parity` passes, so
-the per-scan cache answers every one. To read the payment headers off those
-responses, `UaProbe` gained `baselineHeaders` and `probeHeaders` — the gatherer
-kept the bodies but not the headers, and a 402's whole meaning is in its
-headers.
-
-**RSL is read inline, not fetched.** `access-crawl-control/rsl-licensing-terms-conformance`
-fetches the licence document; fetching it again here would double the cost to
-answer a narrower question. This audit reads inline
-`<script type="application/rsl+xml">` blocks, and when a licence is advertised
-but not readable from what the scan already has, it says exactly that rather
-than assuming either way.
-
-**A `Cache-Control` that a shared cache may store is a warning, not a failure.**
-The sketch calls it a sub-finding. It is real — a stored 402 is served to a
-crawler that already paid — but it is not the defect the audit is named for, and
-a site whose 402 is otherwise machine-actionable has done the hard part.
-
-**No 402 is `notApplicable`.** The sketch asks for a distinct informational
-result so free sites are not penalised; in this codebase that verdict is
-`notApplicable`, which is excluded from the score rather than counted as a pass.
+- The audit issues no request. It calls `sharedUaProbes` with the same arguments as `access-crawl-control/ai-crawler-edge-parity`, so the per-scan cache answers every probe. It reads the payment headers from `UaProbe.baselineHeaders` and `probeHeaders`.
+- The probe URLs come from the shared sitemap gatherer. On a subpath homepage it keeps only same-origin URLs under that directory.
+- RSL is read from inline `<script type="application/rsl+xml">` blocks, not fetched. `access-crawl-control/rsl-licensing-terms-conformance` fetches the licence document. An advertised but unread licence is reported as such.
+- A `Cache-Control` that lets a shared cache store the 402 is a warning, not a failure.
+- No 402 anywhere is not applicable, so free sites are not penalised.
 
 ## Deferred
 
 - **Completing a payment.** The audit reads the challenge and never acts on it.
-  Paying to verify the flow is a financial transaction a scanner has no standing
-  to make.
-- **`crawler-max-price` negotiation.** Cloudflare's flow has the crawler retry
-  with `crawler-exact-price`. A scanner that retried would be starting a
-  purchase.
+  A scanner has no standing to make a financial transaction.
+- **`crawler-max-price` negotiation.** A scanner that retried with
+  `crawler-exact-price` would be starting a purchase.
 - **402s outside the probe matrix.** Only URLs the edge-parity probes visit are
   seen. A paywalled section neither the sitemap nor the homepage links to is not
   sampled.

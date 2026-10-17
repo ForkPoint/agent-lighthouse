@@ -19,8 +19,7 @@ import { CheckPriority } from "#core/types";
  * warn at 0.5 on inherited access. No vendor documents a difference, and the
  * fix it prescribed, a named `Allow: /` group, silently drops every catch-all
  * Disallow for that bot. `meta-external-agent` and `anthropic-ai` made the
- * same change first; see "Inherited access passes (2026-10-06)" in each bot's
- * dossier.
+ * same change first; see "Implementation deviations" in each bot's dossier.
  */
 export abstract class CrawlerBotAudit extends Audit {
   protected abstract bot: CrawlerBot;

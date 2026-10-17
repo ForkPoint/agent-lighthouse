@@ -35,14 +35,6 @@ Conforming C2PA validators resolve the signing certificate against the published
 - **[Text fragments](https://web.dev/articles/text-fragments)** — Google / web.dev (vendor-doc, URL verified 2026-08-20)
   - Confirms a shipped answer-surface consumer: "Clicking a featured snippet takes the user directly to the featured snippet text on the source web page. This works thanks to automatically created Text Fragments URLs." Support: Chrome 89+, Edge 89+, Firefox 131+, Safari 18.2+. Restates the boundary rule: "Each of prefix-, start, end, and -suffix can only match text within a single block-level element, but full start,end ranges can span multiple blocks." Opt-out header: Document-Policy: force-load-at-top.
 
-## Competitor coverage
-
-Nothing in the Lighthouse agentic category touches certificates. SEO suites do not parse COSE signatures. Even most C2PA-adjacent tooling stops at 'manifest present'; distinguishing C2PA Trust List from the frozen Interim Trust List is a 2026-specific distinction no auditing product currently surfaces.
-
-## Implementation sketch
-
-1. Reuse the manifest stores extracted by the pipeline-survival check. 2) Run validation via c2patool or c2pa-rs bindings and read the validation status codes; treat any signingCredential untrusted/expired/revoked status as FAIL. 3) Pin the trust list at build time: the C2PA Conformance Explorer publishes the C2PA Trust List, TSA Trust List and Conforming Products List as JSON on GitHub — resolve the exact path once from c2pa.org/conformance/ and vendor the JSON with a refresh job rather than hardcoding a guessed URL. 4) Classify each manifest: TRUSTED (chains to C2PA TL), LEGACY_ITL (chains only to the frozen interim list — WARN, will not be renewed), UNTRUSTED (self-signed / unknown root — FAIL). 5) Also assert the timestamp authority is on the TSA trust list, so credentials stay valid past certificate expiry. 6) Bonus signal: report presence of a CAWG identity assertion, which binds a named creator identity rather than only a signing tool.
-
 ## Example failure
 
 A brand runs an in-house signing script using a self-generated certificate. Every product photo carries a syntactically perfect manifest, and internal tooling shows a green check because it was configured to trust the company's own root. In any conforming external validator the assets report an untrusted signing credential, so the provenance claim carries zero third-party weight.
@@ -51,46 +43,17 @@ A brand runs an in-house signing script using a self-generated certificate. Ever
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
-**Renamed** from `c2pa-signer-chains-to-the-live-c2pa-trust-list`, which would
-make a 65-character id — one over the cap — and which promises more than this
-audit delivers.
-
-**Shipped reduced, by decision, and the finding text says so.** The audit
-reports what the signing certificate itself states: self-signed or CA-issued,
-inside its validity window or outside it, and whether a timestamp token is
-present. Sketch steps 3, 4 and 6 — resolving the chain against the vendored
-C2PA Trust List, the TRUSTED / LEGACY_ITL / UNTRUSTED classification, the TSA
-trust list, and the CAWG identity assertion — are deferred. A test asserts no
-output ever claims the certificate is trusted or chains to anything.
-
-**Certificates are located by DER shape, not by decoding COSE** (sketch step
-2 without the c2patool dependency). A COSE_Sign1 carries its chain under
-protected header label 33 in CBOR; instead of decoding CBOR, the audit scans
-the manifest store for the `30 82` SEQUENCE header a certificate begins with
-and hands each candidate to Node's `X509Certificate`, which rejects anything
-that is not one. The parser is the test.
-
-**Pass requires a timestamp.** A CA-issued certificate inside its window but
-with no RFC 3161 timestamp token warns rather than passes: without one the
-credential stops validating the day the certificate expires, which is a
-documented C2PA property and is checkable from the bytes.
-
-**It reuses Task 2's image fetches.** `gatherers/media.ts` caches per scan, so
-running both C2PA audits in one scan costs one set of image fetches.
+- The slug is shorter than the dossier title. The full name would exceed the 64-character id cap and promise more than the audit delivers.
+- The audit reports only what the signing certificate states: self-signed or CA-issued, inside or outside its validity window, and whether a timestamp token is present. A test asserts no output claims the certificate is trusted or chains to anything.
+- Certificates are found by DER shape, not by decoding COSE. The audit scans the store for the `30 82` SEQUENCE header and hands each candidate to Node's `X509Certificate`, which rejects anything else.
+- A CA-issued certificate with no RFC 3161 timestamp warns rather than passes. Without one the credential stops validating when the certificate expires.
+- Image fetches are shared with `c2pa-manifest-survives-delivery` through the per-scan cache in `gatherers/media.ts`.
 
 ## Deferred
 
-- **Trust List membership.** Needs the C2PA Trust List, the TSA Trust List and
-  the Conforming Products List vendored as JSON with a refresh job, plus an
-  X.509 path builder. Node exposes `checkIssued` but no path building, and the
-  lists change independently of this repo's release cycle.
-- **The LEGACY_ITL classification.** It is a statement about which list a
-  certificate appears on, so it cannot exist before the lists do.
-- **CAWG identity assertions.** They need a real JUMBF parse, not a byte scan.
-- **Revocation.** No OCSP or CRL check is made.
+- Trust List membership. It needs the C2PA Trust List, the TSA Trust List and the Conforming Products List vendored with a refresh job, plus an X.509 path builder.
+- The LEGACY_ITL classification. It depends on the vendored lists.
+- CAWG identity assertions. They need a real JUMBF parse.
+- Revocation. No OCSP or CRL check is made.

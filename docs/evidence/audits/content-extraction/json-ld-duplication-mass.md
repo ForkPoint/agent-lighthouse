@@ -41,14 +41,6 @@ Structured data must mirror visible page content by policy, so some duplication 
 - **[Markdown Conversion — REST API usage (Workers AI)](https://developers.cloudflare.com/workers-ai/features/markdown-conversion/usage/rest-api/)** — Cloudflare (vendor-doc, URL verified 2026-08-20)
   - The toMarkdown REST response returns fields id, name, mimeType, format, tokens, data — e.g. "tokens": 49 for a converted HTML file. A major infra vendor bills/reports HTML→markdown conversion in tokens per document, so per-page token count is a first-class, vendor-visible unit.
 
-## Competitor coverage
-
-Every SEO tool validates JSON-LD syntax and required properties; Lighthouse's structured-data checks are validity-oriented. None of them treat schema as a token cost or detect duplicate graphs across script blocks. Because it is diagnostic rather than scored, it belongs in the report body as an explainer for a bad Signal Density number, not in the score.
-
-## Implementation sketch
-
-Collect all <script type="application/ld+json">, tokenize each raw block at o200k_base. Parse each; walk to collect (@type, @id) pairs and hash canonicalized JSON of each node to find cross-block duplicates. For body duplication, take string-valued properties over ~500 chars (articleBody, text, description, acceptedAnswer.text, reviewBody), strip HTML entities, 5-gram shingle, and intersect with main-content shingles. Present as 'X tokens of your Y-token page are structured data; Z of those repeat text already in the DOM'.
-
 ## Example failure
 
 A publisher emits Article with a full articleBody, an identical NewsArticle graph from a second plugin, plus a FAQPage repeating all six on-page Q&As. The 2,400-token article is delivered three times in one response — 7,200 tokens — and the model, seeing near-identical passages, has more surface for contradiction if any copy is stale.
@@ -57,60 +49,15 @@ A publisher emits Article with a full articleBody, an identical NewsArticle grap
 
 Tier per evidence policy: **informative (weight 0)** — grade C does not meet the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
-The shipped audit is `content-extraction/json-ld-duplication-mass`: the
-proposal's `token-economics` domain is a research grouping, not one of the eight
-v2 categories.
-
-Grade C ships at tier `informative`, weight 0, `scoreDisplayMode: 'informative'`,
-per the meta law — grade C in the scored tier is unregistrable. The audit
-reports a cost and never fails: duplication is a decision an operator may have
-made deliberately, and no documented consumer path shows it changing an answer.
-
-Duplicate nodes are found by canonicalizing each node — keys sorted, values
-rendered — and counting repeats. The proposal asks for `(@type, @id)` pairs plus
-a canonical hash; the canonical form alone catches both, including the common
-case of two blocks that carry the same node with no `@id` at all.
-
-Long prose strings are compared against the DOM's five-word windows, and only
-the properties that carry prose are considered: `articleBody`, `text`,
-`description`, `reviewBody`, `abstract`, `transcript`. `acceptedAnswer.text`
-from the sketch is covered by `text`, since the walk matches on the property name
-wherever it sits. Overlap is reported from 50% up; below that a shared sentence
-is a quotation, not a second copy.
-
-Only the entry page is measured. The block is a template property, and
-tokenizing every page's JSON-LD to report one number is a cost with no extra
-finding in it.
-
-### References are not declarations (2026-10-06)
-
-The node count walked every JSON-LD object, including a bare
-`{"@id": "…#organization"}`. A small marketing site names one Organization as
-both `publisher` and `author` by reference, and the audit reported it as a
-node declared twice. A reference is how linked data avoids a second
-declaration, and it adds no facts. The duplicate count now skips any node
-whose only key, apart from an inherited `@context`, is `@id`. Two full copies
-of one entity still count.
-
-The warn message also named a token count of zero when only a node was
-duplicated. It now names the duplicated nodes in that case.
-
-Verdict moved in the real-page corpus: `aljazeera-com-article` warn → pass,
-whose only duplicate was two references to its Organization.
+- The audit reports a cost and never fails. Duplication may be deliberate, and no documented consumer path shows it changing an answer.
+- Duplicate nodes are found by canonicalizing each node (keys sorted, values rendered) and counting repeats. This catches two copies of one node with no `@id`.
+- A bare reference (a node whose only key, apart from an inherited `@context`, is `@id`) is not a declaration and is not counted.
+- Only prose properties are compared with the DOM: `articleBody`, `text`, `description`, `reviewBody`, `abstract`, `transcript`, matched by name at any depth. Overlap is reported from 50% up.
+- Only the entry page is measured.
 
 ## Deferred
 
-- **Cross-page duplication.** The same `@graph` repeated on 400 pages is a
-  crawl-level cost, which `content-extraction/boilerplate-tax` measures from the
-  other direction.
-- **Microdata and RDFa.** The proposal is about JSON-LD blocks specifically, and
-  the other two formats do not carry a separate token cost — their text is the
-  DOM's text.
-- **A dollar figure.** No per-million rate is supplied to the scanner, and
-  inventing one would put a number in the report the operator never gave.
+- Cross-page duplication of one `@graph`.
+- A dollar figure. No per-million rate is supplied to the scanner.

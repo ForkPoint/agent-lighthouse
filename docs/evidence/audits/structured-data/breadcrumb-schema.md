@@ -25,39 +25,9 @@ The v7 runner includes `article` and `general` pages in this check's existing pa
 
 AI agents use BreadcrumbList to understand your site hierarchy and navigate between parent/child pages. Without breadcrumbs, agents cannot infer where a page sits in your content tree, making it harder to provide contextual answers that reference related pages.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-BreadcrumbList is a real, still-consumed signal, but the applicability gate is a raw URL-segment count that has no relationship to site hierarchy, and the 'nothing to assess' branch returns warn (0.5) instead of notApplicable, docking flat-URL sites for a structure they do not have.
-
-**Required fix:** Return `this.notApplicable(...)` when no deep pages exist. Drive applicability off `pageType` (product/category/content) rather than segment count, resolve depth from `fetchResult.finalUrl`, and strip a leading locale segment (`/xx/` or `/xx-yy/`) before counting. Additionally require `itemListElement` to be a non-empty array with sequential `position` values before passing.
-
-**False-positive risks:**
-
-- `urlDepth(p.url) > 1` is pure URL shape. A locale-prefixed site (`/en-us/about`, `/de/kontakt`) has depth 2 on every page and is required to carry breadcrumbs even though it is logically flat — a false fail driven entirely by an i18n path segment.
-- Conversely a genuinely deep site using flat slugs (`/blue-running-shoe`) is exempted from breadcrumbs entirely, so the audit passes sites that most need the fix.
-- Uses `p.url` rather than `p.fetchResult.finalUrl`. After a `/category/sub-page` → `/sub-page` redirect the page is still counted as deep and required to have breadcrumbs describing a hierarchy that no longer exists.
-- The no-deep-pages branch returns `this.warn(...)` (score 0.5), not `this.notApplicable(...)`, so a single-level marketing site takes a permanent half-point deduction for a check the base class explicitly documents as an `na` case (audit.ts:38-46).
-- Only `@type === 'BreadcrumbList'` is accepted, with no check that `itemListElement` exists or that positions are sequential — an empty `"itemListElement": []` BreadcrumbList counts as a pass.
-- Which pages count as 'deep' depends entirely on which URLs the crawler happened to sample, so the same site can score pass/warn/fail across runs with different page discovery.
-
-**Test gaps:**
-
-- No test for a locale-prefixed URL (`/en-us/about`) being wrongly classed as deep
-- No test where `url` and `fetchResult.finalUrl` differ (redirect)
-- No test for a BreadcrumbList with an empty or malformed `itemListElement`
-- No test asserting the no-deep-pages branch should be `na` rather than `warn`
-- No Microdata/RDFa breadcrumb test (`itemtype=".../BreadcrumbList"` is very common on legacy commerce platforms)
-
-**Overlaps with:** _none_
-
 ## Evidence
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 
 ## Evidence (2026-08-21)
 
@@ -73,6 +43,9 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Counter-evidence:** The audit's stated mechanism — that AI agents use BreadcrumbList to "navigate between parent/child pages" — has no documented consumer; no LLM or assistant vendor names BreadcrumbList, and Apple's Applebot type list does not include it. Google's own guidance contradicts the audit's URL-depth applicability gate: "We recommend providing breadcrumbs that represent a typical user path to a page, instead of mirroring the URL structure." Google also disclaims any special schema requirement for AI Overviews and AI Mode — https://developers.google.com/search/docs/appearance/ai-features (verified 2026-08-21). A controlled fetch test found that data present only in JSON-LD was read by 0 of 5 AI systems on direct retrieval — https://www.searchviu.com/en/schema-markup-and-ai-in-2025-what-chatgpt-claude-perplexity-gemini-really-see/ (verified 2026-08-21)
 
-## Implementation deviations (v7 P3, 2026-10-07)
+## Deferred
 
-The added labels preserve the old general-content population while classification changes. This is not the final feature-gate migration. The evidence grade, tier, weight, and audit ID stay unchanged.
+- The category, product, general and article list is a broad list kept while
+  classification changes. Its review against the documented hierarchy
+  obligation is open in
+  `docs/architecture/audits.md#511-default-scope-and-page-type-restrictions`.

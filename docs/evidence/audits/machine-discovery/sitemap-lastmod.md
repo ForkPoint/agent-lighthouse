@@ -42,31 +42,6 @@ sources:
 
 AI crawlers use <lastmod> to decide which pages to re-index and which to skip. Without these dates, crawlers must re-fetch every page on every visit.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Requires >=80% of <url> entries to carry a <lastmod>. Same sitemap-index blindness as 1.9 (reports 'no <url> entries' on a valid index), and it only checks for the tag's presence — never its value — so it awards a full pass to the well-known antipattern of stamping every page with today's date, which crawlers explicitly learn to distrust. The audit therefore can reward the behaviour it claims to prevent.
-
-**Required fix:** Resolve sitemap indexes via the shared resolver before counting. Parse each <lastmod> as a date and additionally flag (a) unparseable values, (b) future dates, and (c) the case where >90% of entries share one identical timestamp — that last case should warn, not pass. Scope the lookup to direct children (`$(el).children('lastmod')`). Return notApplicable when there are no <url> entries at all.
-
-**False-positive risks:**
-
-- `const urls = $('url')` → 0 on a `<sitemapindex>` → WARN 'Sitemap has no <url> entries' at high priority on a valid sitemap index. Sub-sitemap `<sitemap><lastmod>` values are ignored entirely.
-- `if ($(el).find('lastmod').length > 0) withLastmod++` — presence only. A generator emitting `<lastmod>{build_time}</lastmod>` identically on all 5,000 URLs scores 100% and PASSES, which is precisely the signal-destroying pattern the guidance text warns about.
-- No date format validation: `<lastmod>yesterday</lastmod>`, a malformed date, or a future date all count as present.
-- `.find('lastmod')` is a descendant search, so a `lastmod` nested inside an extension element (e.g. `<image:image>`) inside a `<url>` counts as the URL's lastmod.
-- 80% threshold is arbitrary; a site with 79% coverage FAILS at medium priority while 80% PASSES, with no gradation.
-- 5MB truncation of a large sitemap changes the denominator unpredictably.
-
-**Test gaps:**
-
-- <sitemapindex> input (wrong verdict, untested)
-- All lastmod values identical / equal to today — currently a false PASS
-- Invalid or future date strings
-- lastmod nested inside an extension element
-- Truncated sitemap body
-
-**Overlaps with:** `1.7`, `1.8`, `1.9`
-
 ## Evidence
 
 ### Signal: sitemap.xml for AI crawler discovery — grade B (technical-infra)
@@ -89,15 +64,8 @@ Requires >=80% of <url> entries to carry a <lastmod>. Same sitemap-index blindne
 
 **Counter-evidence:** Substantial and must be published alongside the claim. OpenAI's crawler documentation, Anthropic's crawler documentation, and Perplexity's crawler documentation contain zero mentions of sitemaps — none of the three pure-LLM vendors documents any URL-discovery mechanism at all. Apple's June 2026 revision of the Applebot page silently removed the sitemaps/RSS sentence, so the strongest quote is now only available as an archived snapshot. Google itself downgrades the guarantee: 'submitting a sitemap is merely a hint: it doesn't guarantee that Google will download the sitemap or use the sitemap for crawling URLs on the site'. It also treats sitemap inclusion as only 'a weak signal' for canonicalization. Empirically, the Vercel and MERJ data cuts against sitemap-driven crawling for LLM bots. ChatGPT spends 34.82% of fetches on 404s, and Claude 34.16%, against Googlebot's 8.22%. That is the signature of crawling from stale memory and hallucinated paths, not from a current sitemap. Claims circulating in SEO gray literature that GPTBot and ClaudeBot only began requesting sitemap.xml around March 2026 are unverified by any primary source and should not be cited.
 
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
-
 ## Implementation deviations
 
-### Subpath sitemap scope (2026-10-05)
-
-The shared sitemap gatherer uses the scanned homepage directory as the site root when it is a detected or declared subpath homepage. It reads declarations from the origin's robots.txt, then tries the conventional sitemap names under that directory before the origin fallbacks. Shared sitemap files contribute only absolute URLs on the same origin and under that directory. Filtering precedes the entry cap and sampling. Relative or malformed loc values associated with this site remain available to content audits. A sibling-only sitemap does not prove that this site has a sitemap. The child-fetch cap remains in force even when all children cover siblings.
-
-Content-page scans do not infer a mount. Origin files, origin probes, feed discovery, explicit page overrides, and redirect handling keep their existing scope. This change limits sitemap-derived evidence; it does not make every scan request subpath-only.
+- **Subpath sitemap scope.** On a subpath homepage, the shared sitemap gatherer
+  treats that directory as the site root. It keeps only same-origin URLs under
+  it, before the entry cap. A sibling-only sitemap does not count.

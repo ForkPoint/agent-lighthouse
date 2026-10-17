@@ -44,14 +44,6 @@ There is no single 'the content of this page'; there is whatever the fetching ag
 - **[Web Almanac 2024 — Markup](https://almanac.httparchive.org/en/2024/markup)** — HTTP Archive (dataset, URL verified 2026-08-20)
   - The median mobile page carries 594 elements, and the 90th percentile 1,716. Median HTML transfer size is 33 kB on desktop and 32 kB on mobile, and 10.5% of mobile pages serve HTML uncompressed. 86% of mobile pages contain at least one HTML comment, and 26% still ship IE conditional comments. SVG is present on 51.6% of pages. Population baseline for calibrating per-page token budgets and for the claim that dead markup ships at scale.
 
-## Competitor coverage
-
-No tool ships extractor-agreement. Lighthouse's agentic checks look at declared affordances (llms.txt, WebMCP tools, a11y tree); AI-visibility platforms sample model outputs after the fact but cannot attribute a wrong answer back to extraction ambiguity. This check turns 'the model got my page wrong' into a reproducible, pre-publication structural number.
-
-## Implementation sketch
-
-Parse once into a DOM (linkedom). Extractor 1: @mozilla/readability. Extractor 2: semantic selector — first non-empty of main, [role=main], article, then largest text-density block — with nav/aside/footer/header removed. Extractor 3: an independent density heuristic (defuddle, or a text-to-link-density scorer in the boilerpipe/trafilatura style). Normalize each output (lowercase, collapse whitespace, strip punctuation), shingle at n=5, compute pairwise Jaccard. Fold in readability's own signals: null return, textContent length < charThreshold (500), and isProbablyReaderable false are automatic fails since they mean the most widely deployed extractor gives an agent nothing. Emit the symmetric difference of the largest disagreeing pair as evidence.
-
 ## Example failure
 
 A product page wraps the description in <div class="pdp-col"> siblings alongside a 'customers also bought' grid with equal text volume and no <main>. Readability returns the recommendations carousel, the semantic extractor returns null and falls back to the whole body, the density extractor returns the spec table. Minimum pairwise agreement 0.21 — three answer engines quoting three different pages under the same URL.
@@ -60,76 +52,17 @@ A product page wraps the description in <div class="pdp-col"> siblings alongside
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
-The shipped audit is `content-extraction/extraction-determinism`: the proposal's
-`token-economics` domain is a research grouping, not one of the eight v2
-categories, and its slug —
-`extraction-determinism-multi-extractor-agreement` — produced a 67-character id,
-over the 64-character cap `v2-meta.test.ts` enforces. The full name survives as
-the audit's title.
-
-The three extractors are `@mozilla/readability` over jsdom, a semantic-container
-selector (`main` → `[role=main]` → `article` → `body`, chrome removed), and a
-text-density scorer that picks the block with the most text that is not link
-text. The proposal names `linkedom` for parsing and `defuddle` as the third
-extractor; jsdom is already a dependency of this package and the density scorer
-is the one load-bearing idea of the boilerpipe/trafilatura family, written in
-place rather than added as a dependency.
-
-Two conditions fail outright, before any comparison runs: readability declining
-the document, and readability returning fewer than 500 characters — its own
-`charThreshold`. Both mean the same thing, which is that the most widely
-deployed extractor of the three hands an agent nothing.
-
-`isProbablyReaderable` is not called separately. It answers a weaker version of
-the same question that `parse()` already answers definitively, and calling it
-would parse the document twice.
-
-Agreement is pairwise Jaccard over five-word shingles. Above 0.8 all three are
-reading the same article; below 0.6 two of them are reading different documents.
-The 0.6–0.8 warn band is this implementation's, not the proposal's.
-
-The applicability gate measures the page's whole visible text, not its main
-content. Asking an extractor whether there is anything to extract would decide
-the question with the tool under test.
-
-Only the entry page is compared. Three extractions cost one jsdom parse and two
-cheerio passes; running that per page would multiply the scan's cost to report
-the same template property.
-
-- 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. It read the first scanned page through three
-  extractors, and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on
-  a parked domain a broker's page from another host, on a walled or throttled
-  origin nothing at all. It now consults `scanReadTheSite()` and returns
-  `notApplicable` carrying the gate's own reason.
-  Verdicts that moved on the five nothing-obtained contract states: redirected
-  away pass → na, HTTP 200 bot challenge unchanged. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
-
-### The semantic extractor reads the largest article (2026-10-06)
-
-The sketch names the semantic step "first non-empty of main, [role=main], article". The code took the first `<article>` element. A page may carry many, and the first is often a promo strip. A large retail site with no `<main>` opened its body with a 145-character ticker in an `<article>`. The semantic extraction was that ticker, and the audit reported 0.00 agreement.
-
-`main` and `[role=main]` still take the first non-empty match, because a page declares one main region. For `article`, the extractor now takes the element with the most chrome-stripped text. It keeps that element only when it holds at least 20% of the body's chrome-stripped text. Below that it is one card among many, and the extractor falls back to the body, as the example failure describes. On the retail page the largest article held 3.5% of the text. The worst pair moved from 0.00 to 0.56, and the page still fails: readability keeps about half the page.
-
-The fallback also reaches `token-ratio`, `preamble-tax`, `boilerplate-tax` and `site-wide-passage-uniqueness-ratio`, but only when Readability declines the document. No verdict in the real-page corpus moved.
+- The three extractors are `@mozilla/readability` over jsdom, a semantic-container selector, and a text-density scorer written in place. The proposal named `linkedom` and `defuddle`. jsdom was already a dependency.
+- The semantic selector takes the first non-empty `main` or `[role=main]`. For `article` it takes the element with the most chrome-stripped text, and only when that holds at least 20% of the body's text. Otherwise it falls back to the body.
+- Two conditions fail before any comparison: Readability declines the document, or returns fewer than 500 characters (its `charThreshold`).
+- `isProbablyReaderable` is not called. `parse()` answers the same question definitively.
+- Agreement is pairwise Jaccard over five-word shingles. The 0.6 to 0.8 warn band is this implementation's.
+- The applicability gate measures the page's whole visible text. Asking an extractor would decide the question with the tool under test.
+- Only the entry page is compared.
 
 ## Deferred
 
-- **Hidden text in the heuristic extractors.** Readability drops `hidden` and
-  `aria-hidden` subtrees; the semantic and density extractors remove only
-  chrome. A page with a large hidden panel therefore reads differently to the
-  two, and agreement falls. Removing hidden subtrees from the shared
-  extractors changes six audits, and no source documents what the products
-  they stand in for do with hidden text. It stays open until one does.
-- **A fourth extractor.** Two heuristics plus readability already separate "one
-  article" from "three answers". A fourth adds cost without adding a verdict.
-- **Per-template sampling.** Extraction determinism is a property of the
-  template. Sampling one page per detected template needs template detection,
-  which this wave does not build.
+- Hidden text in the heuristic extractors. Readability drops `hidden` and `aria-hidden` subtrees; the semantic and density extractors remove only chrome. Changing the shared extractors moves six audits, and no source documents what the products they stand in for do with hidden text.
+- Per-template sampling. It needs template detection.

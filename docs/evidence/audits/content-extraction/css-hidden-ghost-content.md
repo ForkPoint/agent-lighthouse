@@ -41,14 +41,6 @@ This is provable from source, not inferred. Readability's visibility test consul
 - **[mozilla/readability](https://github.com/mozilla/readability)** — Mozilla (repo, URL verified 2026-08-20)
   - parse() returns title, content, textContent, length, excerpt, byline, dir, siteName, lang, publishedTime; charThreshold default 500 chars below which no article is returned; isProbablyReaderable uses minContentLength 140 and minScore 20. Gives concrete pass/fail hooks (null result, length, title) for an extractability check.
 
-## Competitor coverage
-
-Accessibility audits (including Lighthouse's a11y and its accessibility-for-agents checks) reason about hidden content from the opposite direction — whether hidden things are correctly hidden from AT — never about hidden text being over-ingested by non-rendering consumers. Google's structured-data policy covers hidden markup but not hidden DOM text volume. Nobody sizes it in tokens.
-
-## Implementation sketch
-
-Fetch HTML plus every same-origin <link rel=stylesheet> and inline <style>. Parse CSS with postcss; collect selectors whose declarations include display:none, visibility:hidden, content-visibility:hidden, or clip-path/position:absolute with 1px sizing (the sr-only idiom). Match those selectors against the DOM with css-select over linkedom, excluding nodes that already carry an inline hidden marker (those are the ones Readability handles). Sum textContent tokens of matched subtrees. For duplication, shingle each hidden block against the visible text. Known approximation: no cascade or specificity resolution and no media-query evaluation — mitigate by ignoring rules inside print media and by reporting matched selector text as evidence so a human can adjudicate. Exact resolution via getComputedStyle is a headless roadmap upgrade.
-
 ## Example failure
 
 A SaaS pricing page ships desktop nav, mobile nav and a hidden search-overlay menu. It also ships all four collapsed FAQ answers, and a `.legacy-pricing` block kept in the DOM behind display:none. 3,900 of the page's 5,600 text tokens are never seen by a human. An agent asked 'how much is the Pro plan' reads the legacy $29 from the hidden block alongside the live $49, and reports the wrong price with confidence.
@@ -57,89 +49,21 @@ A SaaS pricing page ships desktop nav, mobile nav and a hidden search-overlay me
 
 Tier per evidence policy: **scored** — grade A meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
-- **No `postcss`, `linkedom` or `css-select`.** The global constraint forbids new
-  runtime dependencies, so stylesheet scanning uses the local
-  `packages/core/src/gatherers/css-rules.ts` scanner (selector list +
-  declaration block, at-rule prelude retained) and selector matching uses
-  cheerio's `$(selector)`.
-- **No tokenizer.** Token counts are `characters / 4` (`CHARS_PER_TOKEN = 4`),
-  the same estimator `content-extraction/token-ratio` uses. Counts are labelled
-  `est. tokens` everywhere they surface.
-- **No cascade, no specificity, no media-query evaluation.** The scanner asks
-  only whether _any_ rule that could apply to an element declares a hiding
-  property. Rules inside `@media print` are ignored, and at-rule bodies that
-  hold declarations rather than selectors (`@font-face`, `@keyframes`, `@page`)
-  are skipped wholesale. The matched selector text is reported verbatim in the
-  finding so a human can adjudicate a match the scanner cannot resolve exactly.
-- **Cross-origin stylesheets are never fetched.** Their count is appended to the
-  `found` string, so a result built on partial CSS says so.
-- Elements already carrying an inline hidden marker (`hidden`, `aria-hidden="true"`,
-  inline `display:none` / `visibility:hidden`) are excluded: Readability honours
-  those, so their text is not ingested and costs nothing.
-- Nested matches are counted once — only the outermost hidden element of a
-  subtree contributes tokens.
-- 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. It read the stylesheet rules over the scanned pages,
-  and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked
-  domain a broker's page from another host, on a walled or throttled origin
-  nothing at all. It now consults `scanReadTheSite()` and returns
-  `notApplicable` carrying the gate's own reason.
-  Verdicts that moved on the five nothing-obtained contract states: redirected
-  away pass → na, non-HTML homepage pass → na, HTTP 200 bot challenge pass →
-  na. Found by `packages/core/src/tests/hostile-state-contract.test.ts`.
-
-### `display` is resolved per selector (2026-10-06)
-
-The scanner counted a rule as hiding when `display:none` appeared anywhere in
-its block. A large retail site ships blocks like
-`.box{display:none;position:relative;display:block}`, where the later
-declaration wins and the box is visible. Counting it reported text a human
-sees as ghost content.
-
-`display` is now resolved per selector. Within a block the last declaration
-wins. A selector list is split on its top-level commas. A later rule for the
-identical selector in the same at-rule context overrides an earlier one, and
-`!important` outranks a plain declaration. This supersedes "no cascade" for
-that one case only. There is still no specificity: different selectors are
-never ranked against each other. A collapsed panel hidden by
-`.panel{display:none}` and opened by `.panel.open{display:block}` stays
-counted, as the mechanism requires. An override inside a media query does not
-cancel a base rule, so parallel desktop and mobile copies stay counted.
-
-Source order follows the document: inline `<style>` blocks and linked
-same-origin sheets keep their relative positions. A later inline block can
-override an earlier linked sheet, and the reverse order works the same way.
-The five-sheet cap and the URL safety checks remain in force.
-
-### Inline markers use the shared resolver (2026-10-06)
-
-The inline check that skips text Readability already drops matched
-`display:none` anywhere in the `style` attribute. Readability reads the
-resolved style, so `display:none;display:block` is kept and its text is
-ingested. The audit now resolves inline declarations with the same helper as
-`dom-visibility.ts`: the last valid declaration at the winning `!important`
-priority wins, and an invalid value is dropped. Stylesheet `display` rules
-use the same helper, so an invalid later value no longer cancels an earlier
-`display:none`. A `var()` value is valid when parsed, so it does cancel one:
-`display:none; display:var(--layout, block)` is not counted as hidden.
+- No `postcss`, `linkedom` or `css-select`. Stylesheets are read by the local `gatherers/css-rules.ts` scanner, and selectors are matched with cheerio.
+- No tokenizer. Token counts are `characters / 4`, labelled `est. tokens`.
+- No specificity and no media-query evaluation. Rules inside `@media print` are ignored. Declaration-only at-rules (`@font-face`, `@keyframes`, `@page`) are skipped. The matched selector is reported so a human can adjudicate.
+- `display` is resolved per selector. Within a block the last declaration wins. A later rule for the identical selector in the same at-rule context overrides an earlier one, and `!important` outranks a plain declaration.
+- Different selectors are never ranked. `.panel{display:none}` stays counted even when `.panel.open{display:block}` exists. A media-query override does not cancel a base rule.
+- Inline `<style>` blocks and linked same-origin sheets keep document order. At most five sheets are read.
+- Cross-origin stylesheets are never fetched. Their count is appended to the `found` string.
+- Elements with an inline hidden marker (`hidden`, `aria-hidden="true"`, a resolved inline `display:none` or `visibility:hidden`) are excluded. Readability already drops them. Inline styles use the same resolver as `dom-visibility.ts`.
+- Nested matches count once, through the outermost hidden element.
+- Contradiction risk (prices, availability, dated claims in hidden text) is reported as a signal, not adjudicated against the visible copy.
 
 ## Deferred
 
-- Exact style resolution through `getComputedStyle` in a headless browser stays
-  a roadmap item; it would replace the scanner, not supplement it.
-- Contradiction risk is reported as a signal (prices, availability, dated
-  claims found inside hidden text) rather than adjudicated against the visible
-  copy.
-- Specificity between different selectors. `.box p{display:none}` and
-  `.box p:first-of-type{display:block}` both match the first paragraph, and
-  the scanner still counts it hidden. Ranking them needs a specificity
-  calculator, and exact resolution belongs to the headless tier above.
-- `operability-safety/invisible-instruction-scan` carries its own
-  `display:none` pattern and has the same anywhere-in-the-block reading. It
-  asks a different question (wording, not size), so it was left alone here.
+- Exact resolution through `getComputedStyle` in a headless browser. It would replace the scanner.
+- Specificity between different selectors, such as `.box p` against `.box p:first-of-type`.
+- `operability-safety/invisible-instruction-scan` still matches `display:none` anywhere in a block.

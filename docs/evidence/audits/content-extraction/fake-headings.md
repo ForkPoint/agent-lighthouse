@@ -39,38 +39,6 @@ sources:
 
 AI agents chunk and outline page content by reading real <h1>–<h6> tags. A page can style a <div>, <span>, <p> or <b> to look like a heading — large text, bold weight, "heading" classes — instead of using a semantic heading element. That text is then invisible to the agent's document outline. Sections cannot be navigated, summarized or cited correctly. This audit is distinct from the sequential-heading check (6.2). 6.2 verifies that real headings appear in the right order. This audit catches content that impersonates headings without using heading tags at all. Replace styled generic elements with the appropriate <h1>–<h6> level.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Best idea in the category, wrecked by the detection regex. FAKE_HEADING_CLASS = /(text-(xl|2xl|3xl|4xl|5xl)|font-(bold|semibold|extrabold)|heading|headline)/i is an unanchored substring match against Tailwind's most common utilities. it was checked against 'text-xl text-gray-600' (a lead paragraph), 'price font-bold' (a price), 'md:text-2xl' (a responsive variant), and 'subheading'. Any element under 120 chars carrying those classes and not inside nav/footer/button/a is reported as a fake heading — and the fail threshold is only 5 across the ENTIRE crawl, so any Tailwind site of more than a couple of pages fails automatically. At the same time it misses 'section-title' and 'card-title' (verified false) — the single most common heading-impersonator class names — and every non-English convention ('titulo', 'ueberschrift') and Bootstrap's 'fw-bold'. It is simultaneously over- and under-inclusive.
-
-**Required fix:** Stop inferring from class names. Require corroborating structure before flagging: the element must be a direct child of a content container, be followed by sibling prose or a list, and sit in a section that contains no real heading — i.e. flag only where a heading is structurally missing, not merely where bold text exists. Anchor any class matching to whole tokens (/(^|\s|:)(text-(xl|\dxl)|font-(bold|semibold|extrabold))(\s|$)/) and add 'title' to the vocabulary. Extend EXCLUDED_ANCESTORS well beyond 'nav, footer, button, a' to include header, aside, label, form, table, figcaption, summary, dialog, [role=navigation], [role=banner], [aria-hidden=true]. Make the fail threshold per-page and density-relative rather than an absolute 5 across the crawl.
-
-**False-positive risks:**
-
-- Verified: 'text-xl text-gray-600' on a short lead paragraph matches FAKE_HEADING_CLASS → flagged, though it is body copy.
-- Verified: 'price font-bold' on a <span> containing '$49' matches → a price is reported as a fake heading.
-- Verified: 'md:text-2xl' matches — responsive variants are treated as heading evidence.
-- EXCLUDED_ANCESTORS is only 'nav, footer, button, a': a site logo in <header><div class="font-bold">Acme</div></header>, a <label><span class="font-bold">Email</span></label>, a bold table cell span, and a <figcaption class="font-bold"> are all flagged.
-- 'if (found.length >= 5)' counts across all pages, so a 10-page Tailwind site accumulates dozens of hits and fails regardless of quality — the verdict is driven by crawl size and CSS framework, not by missing structure.
-- Verified false negatives: 'section-title' and 'card-title' do not match, and neither does Bootstrap's 'fw-bold' — the most common real impersonators pass.
-- English-only class vocabulary ('heading', 'headline'): German/Spanish/French design systems ('ueberschrift', 'titulo', 'titre') are never detected.
-- Inline-style detection only parses px ('font-size\s*:\s*(\d+(?:\.\d+)?)px'), so rem, em, and clamp() sizes are missed entirely.
-- font-weight:bold on a <b>/<strong> used for genuine emphasis is flagged as a fake heading.
-- CSS-file-driven styling (the normal case outside utility frameworks) is invisible, so the audit effectively only fires on Tailwind-class sites — a framework-specific penalty.
-
-**Test gaps:**
-
-- No Tailwind lead-paragraph fixture ('<p class="text-xl text-gray-600">short intro</p>') — the dominant false positive is untested.
-- No price / stat / badge fixture with font-bold.
-- No <header> logo, <label>, <table>, or <figcaption> fixture (all missing from EXCLUDED_ANCESTORS).
-- No 'section-title' / 'card-title' fixture — the false negatives are untested.
-- No non-English class-name fixture.
-- No rem/em/clamp inline-style fixture.
-- The multi-page test ('counts fake headings across multiple pages') asserts the crawl-size-driven fail as correct rather than questioning it.
-- No realistic full-page Tailwind fixture showing how many hits a normal marketing page produces.
-
-**Overlaps with:** `6.2`, `6.7`, `6.1`
-
 ## Evidence
 
 ### Signal: Heading hierarchy (h1–h6) for LLM parsing and chunking — grade B (semantic-dom-a11y)
@@ -85,48 +53,14 @@ Best idea in the category, wrecked by the detection regex. FAKE_HEADING_CLASS = 
 
 ## Implementation deviations
 
-- 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. It read the heading-like text on the scanned pages,
-  and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked
-  domain a broker's page from another host, on a walled or throttled origin
-  nothing at all. It now consults `scanReadTheSite()` and returns
-  `notApplicable` carrying the gate's own reason.
-  Verdicts that moved on the five nothing-obtained contract states: walled
-  pass → na, throttled pass → na, redirected away pass → na, non-HTML homepage
-  pass → na, HTTP 200 bot challenge pass → na. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
-- 2026-08-28 — heading-like text is body text, and a JS shell serves none, so
-  such a page holds neither fake headings nor real ones to have got right. The
-  empty-findings branch now returns `notApplicable` when `scanReadPageText()` is
-  false; every reported fake heading still fails as before. Verdict moved on the
-  shell contract state: pass → na. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
+- With no findings, the audit consults `scanReadPageText()`. A page that served no readable text returns `notApplicable`, not a pass.
+- Text made only of figures and punctuation (a statistic, a rating, a price) is a value, not a title, and is skipped.
+- Excluded ancestors: `nav`, `footer`, `header`, `aside`, `button`, `a`, `label`, `figcaption`, `summary`, `dialog`, `[role=dialog]`, `[role=navigation]`, `[role=banner]`.
+- Subtrees hidden from readers are skipped through the shared `hiddenFromReaders()` helper.
+- Bold text inside a `section` or `article` that already has a real heading is emphasis, and is skipped.
 
-- 2026-10-06 — three parts of the required fix above now ship. A small
-  marketing site failed on seven hits, and none was a missing heading: bold
-  statistics (`25,000+`, `4.9 / 5`, `87%`), brand labels in interface chrome,
-  and a label inside a hidden dialog.
-  - Text made only of figures and punctuation is a value, not a title, and is
-    skipped.
-  - The excluded ancestors grow to the list the fix names: `header`, `aside`,
-    `label`, `figcaption`, `summary`, `dialog`, `[role=dialog]`,
-    `[role=navigation]` and `[role=banner]`, beside `nav`, `footer`, `button`
-    and `a`.
-  - Subtrees the markup hides (`hidden`, `aria-hidden="true"`, inline
-    `display:none`, a closed `<dialog>`, `<template>`) are skipped, through the
-    shared `hiddenFromReaders()` helper.
-  - Bold text inside a `section` or `article` that already has a real heading
-    is emphasis within that section. The fix flags only "where a heading is
-    structurally missing", so it is skipped.
-    Five real-page corpus verdicts moved, every one away from a false hit:
-    prices on a plans page (fail → warn; one "Custom" price label remains),
-    syntax-highlighted code tokens (fail → pass), menu headlines in a retail
-    header (fail → pass), template placeholders (warn → pass), and inline
-    `<strong>` emphasis in documentation prose (fail → pass).
-    Still open from the required fix: whole-token class matching, the extra
-    class vocabulary, and a per-page threshold.
+## Deferred
 
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+- Whole-token class matching. `FAKE_HEADING_CLASS` still matches substrings.
+- A wider class vocabulary for heading impersonators.
+- A per-page threshold. Five findings across the whole sample fail.

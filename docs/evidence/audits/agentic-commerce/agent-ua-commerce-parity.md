@@ -35,14 +35,6 @@ Falsifiable claim: OpenAI operates four separately-tokened agents with separatel
 - **[ACP Concepts: Security](https://agenticcommerce.dev/docs/concepts/security)** — Agentic Commerce Protocol (spec, URL verified 2026-08-20)
   - All ACP endpoints use HTTPS and send/receive JSON. Bearer-token authentication between agent and seller; sellers retrieve tokens through the agent's application. Mandatory headers: Authorization: Bearer <token>, Content-Type: application/json, Accept: application/json.
 
-## Competitor coverage
-
-Every AI-SEO tool (Semrush AI toolkit, Ahrefs Brand Radar, Otterly) parses robots.txt for GPTBot/ClaudeBot/PerplexityBot strings — that is commodity and we already do it. NOBODY issues the differential live fetch that catches Cloudflare/Akamai/PerimeterX blocking an agent whose robots.txt rules are permissive. Lighthouse's agentic category does not make network requests under alternate user agents at all.
-
-## Implementation sketch
-
-Target set: homepage, 2 sampled PDPs, /cart (platform-fingerprinted), and the terms_of_use + privacy_policy URLs from the link-surface check. For each target issue paired GETs — baseline modern Chrome UA, then `Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ChatGPT-User/1.0; +https://openai.com/bot`, then the OAI-SearchBot UA. Fail conditions, evaluated per (target, agent-UA): (a) status class differs from baseline; (b) agent UA gets 403/429/503; (c) body matches challenge fingerprints — 'Just a moment...', cf-chl-, __cf_chl, _Incapsula_, px-captcha, /akam/ ; (d) extracted-text length ratio agent/baseline < 0.6, which catches soft cloaking where a stub page is served. Separately parse robots.txt with correct per-token longest-match semantics for all four OpenAI tokens plus wildcard, and report the ASYMMETRY explicitly: GPTBot disallowed while OAI-SearchBot allowed is an intentional, legitimate posture (opt out of training, stay in search); OAI-SearchBot or ChatGPT-User disallowed on PDP paths is a commerce-fatal misconfiguration. When a block is found, fetch https://openai.com/searchbot.json and https://openai.com/chatgpt-user.json and emit the exact CIDR list the merchant should allowlist. Throttle to <=1 req/s per host and honour Retry-After.
-
 ## Example failure
 
 A merchant sets `User-agent: * / Allow: /` and passes every robots.txt audit, but its Cloudflare Bot Fight Mode returns a 403 'Just a moment...' interstitial to ChatGPT-User. The site scores 100 on competitor AI-readiness tools while ChatGPT literally cannot open any product page. Second pattern: robots.txt blocks GPTBot only, but the WAF rule was written against a substring match on 'GPT' and therefore also blocks nothing visible in robots.txt while silently 429ing OAI-SearchBot.
@@ -51,22 +43,27 @@ A merchant sets `User-agent: * / Allow: /` and passes every robots.txt audit, bu
 
 Tier per evidence policy: **scored** — grade A meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
-Recorded at graduation (2026-08-22, Plan 5 Task 25).
-
-- **Per-host throttling and `Retry-After` are not implemented.** The sketch asked for at most 1 request per second per host with `Retry-After` honoured. A sleep inside a single audit serialises the whole scan, because every audit shares one scan budget and the live-site verification suite cannot absorb the added wall-clock. The paired probes instead go through the shared `sharedUaProbes` cache in `packages/core/src/gatherers/ua-parity.ts`, so each (URL, User-Agent) pair is fetched at most once per scan and the audits that need the same probes reuse them.
-- **The two OpenAI CIDR endpoints are named, never fetched.** `https://openai.com/searchbot.json` and `https://openai.com/chatgpt-user.json` appear in the failure message and in the fix guidance as the sources the operator should allowlist from. Fetching them would add two off-site requests per scan and would tell the audit nothing it can act on, since the scanner is not the agent whose address matters.
-- **Two of the four OpenAI tokens are probed.** OAI-SearchBot and ChatGPT-User are the two a purchase depends on. GPTBot is read from robots.txt only, and OAI-AdsBot is out of scope: a paid-ads landing-page validator is not on the organic commerce path.
-- **The GPTBot posture is reported, never scored.** `Disallow` for GPTBot while OAI-SearchBot stays allowed is the documented way to opt out of training without leaving search. The audit appends a sentence naming it and takes nothing off the score, on a pass or a fail.
-- **Blocking is decided by one reason per probe, in fixed order**: a challenge-body fingerprint first, then an HTTP status class mismatch, then an extracted-text ratio under 0.6. One target therefore contributes at most one finding per agent, so a Cloudflare interstitial is not also counted as a text-ratio failure.
+- Probes go through the shared `sharedUaProbes` cache in
+  `packages/core/src/gatherers/ua-parity.ts`. Each (URL, User-Agent) pair is
+  fetched at most once per scan.
+- The sampled product pages are the first two scanned pages. The audit does
+  not filter them by page type.
+- OAI-SearchBot and ChatGPT-User are probed. GPTBot is read from robots.txt
+  only. OAI-AdsBot is out of scope: ad landing-page validation is not on the
+  organic commerce path.
+- The GPTBot training opt-out is reported, never scored.
+- The OpenAI CIDR files are named in the message and the fix, never fetched.
+  The scanner is not the agent whose address matters.
+- One reason per probe, in fixed order: challenge-body marker, blocking
+  status, status-class mismatch, text ratio under 0.6. A target yields at most
+  one finding per agent.
 
 ## Deferred
 
-- Per-host rate limiting with `Retry-After` support, if the scanner ever grows a shared request scheduler that all audits go through.
-- OAI-AdsBot probing, which would only matter for a site that runs paid placements into ChatGPT.
-- Fetching and diffing the published CIDR ranges against the site's observed edge behaviour. That needs the scan to run from a known address, which it does not.
+- Per-host throttling with `Retry-After`. It needs a shared request scheduler.
+  A sleep inside one audit would serialise the whole scan.
+- OAI-AdsBot probing, for sites that run paid placements into ChatGPT.
+- Diffing the published CIDR ranges against observed edge behaviour. That
+  needs the scan to run from a known address.

@@ -41,14 +41,6 @@ Falsifiable claim. A submenu revealed only by an ancestor :hover rule is display
 - **[MCP Specification 2026-07-28 — Streamable HTTP Transport](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/streamable-http)** — Model Context Protocol (Anthropic / MCP Working Groups) (spec, URL verified 2026-08-20)
   - Revision 2026-07-28 removed the GET stream endpoint and protocol-level sessions (Mcp-Session-Id, Last-Event-ID). Server MUST expose one POST endpoint. Server MUST validate Origin; if Origin is present and invalid it MUST return 403 Forbidden. Every POST MUST carry MCP-Protocol-Version, Mcp-Method, and (for tools/call, resources/read, prompts/get) Mcp-Name headers; these are 'REQUIRED for compliance'. Header value MUST match the _meta body value or server MUST return 400 + JSON-RPC code -32020 HeaderMismatch. Unknown protocol version -> 400 + UnsupportedProtocolVersionError. Unknown method -> 404 + -32601. x-mcp-header constraints defined; clients MUST reject (exclude from tools/list) tools that violate them. Servers SHOULD send X-Accel-Buffering: no on SSE. GET/DELETE to endpoint SHOULD now return 405.
 
-## Competitor coverage
-
-Not covered. Lighthouse's agentic a11y audit runs axe rules that never evaluate CSS visibility predicates; SEO crawlers do follow <a href> inside hidden submenus (so this never surfaces as an SEO issue), which is exactly why the problem persists — it is invisible to the entire existing toolchain while being fatal to snapshot-based agents.
-
-## Implementation sketch
-
-Static parse of HTML plus all linked stylesheets. Build the set of selectors that make an element visible (display/visibility/opacity/transform/max-height transitions) and check whether the only such rule for a given submenu container is predicated on :hover on itself or an ancestor. Fail when: the submenu's trigger carries no aria-expanded and no aria-haspopup; and no :focus, :focus-within or [aria-expanded="true"]/[data-open] selector produces an equivalent visible state; and no JS-toggled class is plausible (heuristic: the trigger has no click/keydown listener attribute and no id referenced by aria-controls). Separately flag information carried only by title attributes on non-form elements, and hover-card containers (class matching /tooltip|popover|hovercard/) not referenced by aria-describedby from a focusable element. Report each unreachable destination URL, since those are the pages an agent will never discover. Headless tier raises precision by comparing the a11y snapshot at rest against the snapshot after dispatching a synthetic hover on each nav trigger and diffing the exposed link set.
-
 ## Example failure
 
 A B2B site puts its entire product catalogue behind a mega-menu revealed by .nav-item:hover .mega-panel { display:block }, with the top-level 'Products' element being an <a> without href. A Playwright-MCP agent asked to 'find the pricing for the Enterprise tier' sees a nav containing only Home, About and Contact, concludes the site has no product pages, and falls back to a web search.
@@ -57,59 +49,17 @@ A B2B site puts its entire product catalogue behind a mega-menu revealed by .nav
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
-The shipped audit is `operability-safety/hover-only-content-and-navigation`, in
-the `operability-safety` category: the proposal's `agent-operability` domain is
-a research grouping, not one of the eight v2 categories.
-
-A `:hover` rule is only a finding when the element it reveals is also hidden at
-rest by a rule with no state pseudo-class. A hover rule that merely changes an
-opacity from 0.8 to 1 reveals nothing and is not counted.
-
-"No JS toggle is plausible" is read from three markers on the elements around
-the submenu: an `aria-expanded` or `aria-haspopup` attribute, an inline
-click/keydown/focus handler, or an `aria-controls` reference to the submenu's
-id. Any one of them is enough to stop the finding, because the audit does not
-run scripts and must not report a menu it cannot prove is unreachable.
-
-A `title` attribute that repeats what the element already says is not
-counted: it carries no information that would be lost. "Already says" covers
-the element's text, its `aria-label`, the text its `aria-labelledby` names and
-the `alt` of an image inside it, in any letter case. A title whose content
-words (three letters or more) all appear there also repeats it: "Veste Ski" on
-a link reading "Veste de Ski". Until 2026-10-17 only an exact, case-sensitive
-match against the element's text counted, which reported 38 of 51 titles on
-one homepage that added nothing (issue #125). Form controls, `<iframe>` and
-`<abbr>` are exempt, because their `title` is a label the platform already
-exposes rather than content.
-
-The two halves are graded apart. A lost destination fails; a title-only string
-or an unreferenced hover card warns, because the agent still reaches every page.
+- The audit sits in `operability-safety`. The proposal's `agent-operability` domain is a research grouping, not a category.
+- A `:hover` rule is a finding only when the element it reveals is also hidden at rest by a rule with no state pseudo-class. A hover that only changes opacity from 0.8 to 1 reveals nothing.
+- "No JS toggle is plausible" is read from three markers around the submenu: `aria-expanded` or `aria-haspopup`, an inline click, keydown, mousedown or focus handler, or an `aria-controls` reference to the submenu's id. Any one stops the finding. The audit does not run scripts, so it must not report a menu it cannot prove unreachable.
+- A `title` that repeats what the element already says is not counted. That covers its text, `aria-label`, `aria-labelledby` target text and the `alt` of an image inside it, in any letter case. A title whose content words (three letters or more) all appear there also repeats it.
+- Form controls, `<iframe>`, `<frame>`, `<link>` and `<abbr>` are exempt from the title check. Their `title` is a label the platform already exposes.
+- The two halves are graded apart. A lost destination fails. A title-only string or an unreferenced hover card warns, because the agent still reaches every page.
 
 ## Deferred
 
-- **Unescaped `id` in the trigger selectors.** Both hover checks build a
-  selector from a page-supplied `id` — `[aria-controls~="${id}"]` and
-  `[aria-labelledby~="${id}"]`. An `id` carrying a quote or a backslash makes
-  css-what throw inside `$()`, the throw escapes the audit, and the runner
-  replaces the result with a `scan-error` stub. No corpus fixture carries such
-  an `id`, so nothing throws today; the class is live and latent. Two
-  neighbours already solve it (`form-actionability` has `escapeAttrValue`,
-  `form-autofill-token-coverage` has `cssEscape`), so the fix is to reuse one,
-  not to write one. Found by the real-page corpus snapshot, which caught the
-  same shape throwing for real in `answer-readiness/extractor-survival-recall`.
-
-- **Headless snapshot diff.** The sketch's higher-precision tier dispatches a
-  synthetic hover on each nav trigger and diffs the exposed link set against the
-  resting snapshot. That needs a live browser, which the scanner does not drive.
-- **Transition-revealed menus.** A submenu revealed by a `transform` or a
-  `transition` on hover is not detected: whether the end state is visible
-  depends on layout, which does not exist before rendering.
-- **Cross-origin stylesheets.** A scan never fetches a third party's CSS on the
-  scanned site's behalf. When a sheet is skipped the result says so, so a
-  partial read does not read as a clean one.
+- **Headless snapshot diff.** Dispatching a synthetic hover on each nav trigger and diffing the exposed link set needs a live browser, which the scanner does not drive.
+- **Transition-revealed menus.** A submenu revealed by `transform` or `transition` on hover is not detected. Its end state depends on layout.
+- **Cross-origin stylesheets.** A scan never fetches a third party's CSS. The result says when a sheet was skipped, so a partial read does not read as clean.

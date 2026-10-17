@@ -23,33 +23,6 @@ sources:
 
 Bot-detection services like Cloudflare Turnstile, DataDome, and reCAPTCHA can block legitimate AI agents from accessing your content. Configure your service to allowlist known AI user-agents.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Two audits in one file with opposite quality. The WAF branch (`ctx.wafProtection?.isBlocked`) is the most valuable check in the entire category — it observes actual blocking behavior rather than declared intent — and should be kept. The page-scan branch below it is a substring hunt that fires constantly on healthy sites: `html.includes('recaptcha')` flags any page whose contact form, comment box or newsletter signup uses reCAPTCHA, even though a form widget does not impede crawler access to the page at all. The logic is self-refuting: the page is in `ctx.pages` only because the scanner successfully fetched and parsed it, which is direct evidence it was not blocked, yet the audit issues a high-priority warning that agents may be unable to access it. Worse, the audit is structurally unable to detect the dominant real-world mechanism — since 2024, sites block AI by user-agent at the edge (Cloudflare's one-click AI-scraper toggle), and the scanner fetches everything as `AgentLighthouse/1.0`, so such a site scans clean and PASSes while GPTBot receives a 403.
-
-**Required fix:** Replace the page-scan branch with an active UA probe: refetch the homepage (and one interior page) as `GPTBot`, `ChatGPT-User`, `ClaudeBot` and `PerplexityBot`, and FAIL on status divergence or a large body-length delta versus the baseline `AgentLighthouse` fetch. That measures the real behavior. Demote script-presence detection to informational, and require the pattern to appear in a `<script src>` attribute rather than anywhere in the body — and only warn when the widget gates the main content (e.g. body text below a plausibility threshold), not when a form uses it. Align the pattern list with `waf-detector.ts`. Add tests for the `wafProtection` branch.
-
-**False-positive risks:**
-
-- `html.includes('recaptcha')` matches the literal word anywhere in the document: a GDPR cookie-consent vendor table listing 'Google reCAPTCHA', a privacy policy paragraph naming it, a CSP header echoed into the page, or an analytics blocklist. Prose about reCAPTCHA triggers a high-priority warning. Extremely common on EU sites.
-- A reCAPTCHA or Turnstile widget scoped to a single form is treated as site-wide agent blocking; the page it sits on is fully readable and was in fact read.
-- `'datadome.co'` is a bare substring and also matches `datadome.com` and any URL containing that sequence.
-- `'challenges.cloudflare.com'` matches Turnstile used purely for form spam protection, which never challenges a crawler fetching HTML.
-- Cannot observe UA-based edge blocking — the single most common way AI agents are actually blocked in 2026 — because every request uses `SCANNER_USER_AGENT`. Clean PASS on a site where GPTBot is 403'd.
-- The page-scan pattern list (4 entries) is inconsistent with `waf-detector.ts`, which knows Akamai, PerimeterX/HUMAN, Imperva, Kasada and AWS WAF; the two branches of the same audit disagree about what counts as bot defense.
-- `page.fetchResult.body` is lowercased per page with no length guard, so the check runs over the full 5MB-capped body including inline scripts and JSON blobs.
-
-**Test gaps:**
-
-- No test with reCAPTCHA mentioned in prose (privacy policy / cookie banner vendor list) — the highest-frequency false positive.
-- No test with a captcha scoped to a single form on an otherwise fully-readable page.
-- No test of the `ctx.wafProtection.isBlocked` branch at all — the audit's most valuable path is entirely uncovered by the suite.
-- No test for Akamai/PerimeterX/Kasada/Imperva, which the WAF detector knows and the page scan does not.
-- No UA-probe scenario (site returns 200 to the scanner, 403 to GPTBot).
-- No `datadome.com` near-miss case.
-
-**Overlaps with:** _none_
-
 ## Evidence
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
@@ -83,99 +56,17 @@ a pause is the only way to get a verdict from a rate-limited origin.
 
 ## Implementation deviations
 
-### A loader on a readable page passes (2026-10-06)
+- `requires` is empty. A 403 denies `origin-reachable`, and the gate would otherwise skip this audit before it could report the wall that produced the 403.
+- The `wafProtection.isBlocked` branch runs first, so a walled scan still fails and names the firewall.
+- A challenge loader is reported only on a page that served no readable text, judged by `renderedByPage` (or `pageRendersText` when absent). A loader on a readable page is named in a pass. The counter-evidence grades a form-scoped widget D.
+- Finding no loader on a page with no readable text is not applicable. The substring search cannot see a loader inside a JS bundle, and the gate does not decline this case because `requires` is empty.
+- The shared `waf-detector.ts` judges the wall from the pages the scan read. Root files count only when the homepage itself failed.
+- A vendor marker counts only with a refusal status or on a page with no readable text. "Access denied" names Akamai only beside an Akamai header.
+- The `challenges.cloudflare.com` hostname alone is not proof of a wall. A Turnstile loader for forms is common on open pages.
+- An `x-amzn-waf-action` header (`challenge` or `captcha`) names AWS WAF. A homepage chain ending on `PX-Show` or `DDUser-Challenge` names PerimeterX or DataDome.
+- DNS, refused-port, TLS, certificate and connect-timeout failures are not a bot wall. The evidence gate reports them as an unreachable homepage.
 
-The page-script branch warned at weight 1 on any page whose HTML contained a
-challenge host, including `challenges.cloudflare.com`. The counter-evidence
-grades that sub-signal D, and the required fix says to warn only when the
-widget gates the main content. A loader is now reported only on a page that
-served no readable text, using the per-page `renderedByPage` verdict from the
-scan evidence (`pageRendersText` when it is absent). A loader on a page the
-scan read is named in a pass, because no wall was observed and the page was
-read. The `wafProtection` branch, which carries the A grade, is unchanged.
-Script-`src` scoping and a UA probe are still open items from the review above.
+## Deferred
 
-- 2026-10-17 — an AWS WAF Challenge or CAPTCHA response is a wall. AWS
-  documents both rule actions as answering a request without a valid token
-  with the header `x-amzn-waf-action` (`challenge` with HTTP 202, `captcha`
-  with HTTP 405); see
-  https://docs.aws.amazon.com/waf/latest/developerguide/waf-captcha-and-challenge-actions.html
-  (verified 2026-10-17). A corpus site answered the scanner with an empty
-  HTTP 202 and that header. The scan reported it as a page with too little
-  evidence; it now names AWS WAF. Like every vendor marker, the header on a
-  root file counts only when the homepage failed.
-
-- 2026-10-16 — a homepage chain that ends on a storefront platform's
-  challenge route is a wall: `PX-Show` names PerimeterX and
-  `DDUser-Challenge` names DataDome. The route page answered 404 with the
-  shop's error page, or 200 with a script-only challenge, so the scan said
-  "HTTP 404" without naming the vendor. The same day the fetcher began to
-  send cookies back along one redirect chain and to follow 20 hops, as
-  browsers do. Sites that looped until a locale cookie came back now load;
-  some of those chains end on the DataDome route above.
-
-- 2026-10-16 — the shared WAF detector judges the wall from the pages the
-  scan read. A live run over 684 corpus sites found 12 sites reported as walled
-  although the homepage answered 200 and was read: a 403 S3 `AccessDenied`
-  document for a missing `/.well-known/` file read as Akamai, a Cloudflare rule
-  on one sitemap or `/agents.md`, an Imperva path named in `robots.txt`, and
-  the DataDome tag on an open page. Root files now count only when the homepage
-  itself failed. A vendor marker counts only with a refusal status or on a page
-  with no readable text, and "access denied" names Akamai only beside an
-  Akamai header. A 200 Akamai page titled "Access Denied" with no readable
-  text, which one site served to every client as a geo block, is now a wall.
-  A challenge on the homepage is named before a 429 on a root file, and a
-  vendor's own challenge before a bare Cloudflare 403. DNS, refused-port, TLS,
-  certificate and connect-timeout failures are no longer reported as a bot
-  wall; the evidence gate reports them as an unreachable homepage. The A-grade
-  branch still reads observed blocking; these corrections make the observation
-  match the fetch the scan made.
-
-- 2026-10-06 — the shared WAF detector no longer treats the
-  `challenges.cloudflare.com` hostname as proof of an access wall. A live fetch
-  of a storefront returned HTTP 200 with the storefront HTML and a
-  Turnstile loader configured for login, registration and newsletter forms.
-  The detector still recognises challenge headers, refusal responses and
-  managed challenge-page loaders. The page-script warning remains separate;
-  this correction removes the false wall and restores content audit evidence.
-  Regression tests cover Turnstile script/preconnect markup, JavaScript
-  Detections, a managed challenge loader and the scan evidence path.
-
-- 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. It read the scripts on the scanned pages, and
-  `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain
-  a broker's page from another host, on a walled or throttled origin nothing
-  at all. It now consults `scanReadTheSite()` and returns `notApplicable`
-  carrying the gate's own reason.
-  The guard sits **below** the `wafProtection.isBlocked` branch, not above it:
-  a bot-defense firewall is this audit's subject, so a walled scan still fails
-  and names the firewall. `requires` is now empty and the gate exemption drops
-  `origin-reachable` too — a 403 denies that key, so the gate had been
-  skipping this audit before it could report the very wall that produced the 403.
-  Verdicts that moved on the five nothing-obtained contract states: redirected
-  away pass → na, non-HTML homepage pass → na, HTTP 200 bot challenge
-  unchanged. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
-- 2026-08-28 — the "found nothing" branch declines a page that served no
-  readable text. The detection is a substring search over the served HTML, and
-  a JS shell serves a mount point and a bundle: the Turnstile or DataDome
-  loader a user's agent meets is inside that bundle, where the search cannot
-  reach it. Before this the audit returned `pass "No aggressive bot-detection
-scripts found on scanned pages."` at weight 1.0 about every client-rendered
-  site. `requires` is empty so the wall branch stays reachable behind a 403,
-  which means the evidence gate does not decline this case — the audit has to.
-  The wall and detection branches above still run first, so a shell that does
-  ship a challenge loader statically is still reported. Measured on the shell
-  contract state: pass → na.
-- 2026-08-28 — `scanReadTheSite()` now reads `evidence.judgeable`
-  (`origin-reachable && unblocked-fetches`) rather than `origin-reachable`
-  alone, because a Cloudflare managed challenge is served at HTTP 200,
-  `text/html`, from the requested host. This audit's verdict on that state is
-  unchanged: the wall branch above the guard reports the firewall either way.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
-- 2026-08-21 — evidence graded **A** (mechanism research pass); grade applies to the WAF-observation branch only.
-- 2026-08-25 — HTTP 429 separated from bot defense. Found by scanning 48 live storefronts back to back: 36 came back reported as a Cloudflare managed challenge, and a single-request `curl` with the same user-agent got HTTP 200 from every one of them. The scan was being throttled, and the audit was reading throttling as a firewall.
+- Scoping the page-script search to script `src` attributes, instead of a substring search over the whole HTML.
+- A UA probe for the edge classification the same-UA scan cannot see.

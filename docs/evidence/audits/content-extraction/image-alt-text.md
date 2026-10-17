@@ -43,34 +43,6 @@ This measures the accessible name, not the `alt` attribute alone: `aria-labelled
 
 A multimodal agent that fetches the image bytes can caption it without a text alternative. A text-only crawler or a snapshot-driven agent cannot.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-The decorative-exclusion logic is careful and correct (it properly distinguishes hasAlt===false from alt===''), which makes the gaps stand out. It ignores the other valid accessible-name sources — aria-label, aria-labelledby, and title on the <img> — so an image named via aria-label is scored as missing alt. It ignores aria-hidden="true" (which extractImages does capture and which sibling audit 6.16 does honor), so genuinely hidden images count against coverage. The zero-image branch returns pass() rather than notApplicable(), inflating the score for image-free sites. And results are pooled across all pages with no URL attribution, so a 200-thumbnail gallery page sinks the site-wide number with no indication of where.
-
-**Required fix:** Treat aria-label / aria-labelledby (with id resolution) / title as satisfying the accessible name, and exclude aria-hidden="true" images from the denominator the same way role=presentation is excluded. Swap the totalImages===0 pass() for notApplicable(). Record per-page counts and emit the worst offending URLs in `found`. Consider flagging non-informative alt values ('image', 'photo', the file name) since alt="IMG_2024.jpg" currently scores as full coverage.
-
-**False-positive risks:**
-
-- aria-label / aria-labelledby / title on an <img> are not accepted — false fail on correctly-named images.
-- aria-hidden="true" images are counted in the denominator, unlike in audit 6.16 which does honor ariaHidden — the two audits disagree about the same image.
-- 'if (totalImages === 0) return this.pass(...)' — free scored 1.0 for image-free sites.
-- alt="IMG_2024.jpg", alt="image", alt="photo", or the raw filename all count as descriptive alt text.
-- Lazy-loading themes emit <img data-src=… > placeholders and sometimes duplicate <noscript><img> copies; both are counted, double-penalizing or double-crediting the same visual.
-- Pooled across pages: one gallery page with 200 unlabeled thumbs drops a 20-page site below 80% and the report names no URL.
-- CSR SPAs have no server-rendered <img> → 'No non-decorative images' pass.
-
-**Test gaps:**
-
-- No aria-label / aria-labelledby / title fixture.
-- No aria-hidden="true" fixture (and no test of the disagreement with 6.16).
-- No test asserting na vs pass for the zero-image case.
-- No junk-alt fixture (alt="IMG_1234.jpg").
-- No multi-page crawl and no test that `found` identifies offending pages.
-- No boundary test at exactly 80% coverage.
-- No <noscript>/lazy-load duplicate-image fixture.
-
-**Overlaps with:** `6.16`, `6.17`
-
 ## Evidence
 
 ### Signal: Image alt text as the machine-readable representation of images — grade A (semantic-dom-a11y)
@@ -83,84 +55,10 @@ The decorative-exclusion logic is careful and correct (it properly distinguishes
 
 **Counter-evidence:** The 'multimodal AI' framing is where this overreaches. Neither OpenAI nor Anthropic documents consuming alt text anywhere, and Google's AI-features page says no special optimizations are needed for AI Overviews [google-ai-features-docs]. Vercel's data shows ClaudeBot spends 35.17% of its fetches on images [vercel-ai-crawler-study]. Image bytes are therefore being retrieved, and can plausibly be captioned by a vision model with no alt at all. Capable multimodal systems can substitute for alt in a way they cannot substitute for a missing heading. So grade A rests on Google's explicit statement, not on a general 'all AI reads alt' claim; the audit should say so. Also note alt='' is correct, not a failure, for decorative images (30% of alt attributes are legitimately empty [web-almanac-2024-accessibility]) — an audit that flags empty alt as missing alt is wrong.
 
-## Pass-rule correction (contradiction sweep, 2026-08-24)
-
-The grade is earned by the accessible-name computation; the rule measured one
-of its four sources.
-
-This dossier's evidence grades the mechanism A on a standard: accname "lists
-HTML alt among the native host-language text-alternative sources ranked below
-aria-labelledby/aria-label", and HTML-AAM maps `img[alt='']` to
-none/presentation. The audit tested for a non-empty `alt` attribute and nothing
-else, so it failed two configurations the cited standard ranks _above_ `alt`,
-plus the `title` fallback it maps below. An image named `aria-label="Sales by
-quarter"` has an accessible name by the very document the grade rests on, and
-the audit called it a failure at weight 1.0.
-
-The rule now computes the name the standard defines: `aria-labelledby` (ids
-resolved against the page), then `aria-label`, then `alt`, then `title`. Only an
-image that ends with no name at all counts against coverage.
-
-Three further corrections, each asked for by name in this dossier's own required
-fix:
-
-- **`aria-hidden="true"` images leave the denominator.** They are not in the
-  accessibility tree, so none of the snapshot consumers in the consumer list can
-  see them. Counting them scored a site down for images the mechanism does not
-  reach.
-- **An empty population is not applicable, not a pass.** The old rule returned a
-  scored 1.0 when a site had no non-decorative images — a free full mark for
-  image-free pages and for every client-rendered site whose served HTML carries
-  no `<img>` at all.
-- **Failures name the pages they came from.** Coverage is pooled across every
-  scanned page, so a single gallery page could sink a whole site with no
-  indication of where the problem was. The message now names the worst offending
-  URLs and the result carries the worst page's URL. This is attribution only; no
-  threshold moved, because no source sets one.
-
-One boundary is deliberate. A global ARIA name defeats a decorative marker —
-`<img alt="" aria-label="Sales by quarter">` is a named node under ARIA's
-presentational-role conflict resolution, so it enters the denominator as
-covered. `title` does not have that effect: it names an image that already
-counts, but it does not pull a decorative one back in.
-
-**The user-facing claim was withdrawn.** The description and the failure copy
-asserted that "Most AI agents are text-only and rely entirely on alt text" and
-that missing alt text makes content "invisible to AI systems". This dossier's
-own counter-evidence rejects it: "Neither OpenAI nor Anthropic documents
-consuming alt text anywhere, and Google's AI-features page says no special
-optimizations are needed for AI Overviews … So grade A rests on Google's
-explicit statement, not on a general 'all AI reads alt' claim; the audit should
-say so." It now says so, and it names the accessibility-tree consumers the
-research actually found.
-
-Two things were considered and left out. The junk-alt heuristic the 2026-08-20
-review suggested — failing `alt="IMG_2024.jpg"` — would _widen_ the pass rule
-with a test no cited source defines, which is the opposite of what this sweep is
-for; it needs its own research. And the pooled-coverage aggregation was left
-alone for the same reason: no source sets a threshold or an aggregation unit, so
-the answer to the gallery-page problem is attribution, not new scoring maths.
-
-Grade, tier and weight are unchanged at A, scored, 1.0. The 2026-08-20 review's
-reference to audit 6.16 honouring `ariaHidden` is now stale — that audit,
-`semantic-html/decorative-images`, was sunset in v2 — so the exclusion here
-rests on the accessibility-tree mechanism alone, which carries it.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
-- 2026-08-24 — contradiction sweep: pass rule narrowed from the `alt` attribute to the accessible name the grade rests on.
-
 ## Deferred
 
-- Images inside a container hidden by an external stylesheet are still
-  counted. A large retail site ships an unfilled popup template, hidden by an
-  id rule in its stylesheet, holding `<img src="">` with no alt. The audit
-  reads no CSS, and the stylesheet scanner in `gatherers/css-rules.ts`
-  resolves no specificity and no media queries. Skipping on its answer would
-  also drop images a desktop-viewport agent does see. Exact resolution waits
-  for the headless tier.
+- Images inside a container hidden by an external stylesheet are still counted. The audit reads no CSS, and the stylesheet scanner resolves no specificity or media queries. Exact resolution waits for the headless tier.
+- A junk-alt test (such as `alt="IMG_2024.jpg"`). No cited source defines one, so it needs its own research.
 
 ## Limits
 
@@ -172,4 +70,9 @@ The individual evidence review and limits appear in [Browser-rendered snapshot a
 
 ## Implementation deviations
 
-Browser snapshots provide serialized markup observations only. The browser assessment uses informative display and weight 0. It does not extend the dossier's crawler scoring claim to browser task success. Truncated, redacted, and still-loading captures produce missing-evidence records rather than verdicts.
+- The rule computes the accessible name in accname order: `aria-labelledby` (ids resolved on the page), `aria-label`, `alt`, `title`.
+- A global ARIA name defeats a decorative marker, so `<img alt="" aria-label="...">` counts as named. `title` does not pull a decorative image back in.
+- `aria-hidden="true"` images leave the denominator. They are not in the accessibility tree.
+- No eligible image returns `notApplicable`, not a pass.
+- Coverage is pooled across pages. No source sets a threshold or an aggregation unit, so failures name the worst pages and the result carries the worst page's URL.
+- Browser snapshots provide serialized markup observations only. The browser assessment is informative with weight 0. Truncated, redacted and still-loading captures produce missing-evidence records rather than verdicts.

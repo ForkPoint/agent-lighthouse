@@ -40,37 +40,9 @@ twenty working operations and one `null` path item passes on its twenty, and
 the skipped entry is named in the report. A path item that is legal and
 declares nothing — `{"/x": {}}` — is an empty document, not a broken one.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Measures whether the spec found by 5.1 has at least one operation — a thin derivative of 5.1 that mostly re-reports the same fact, and does so through a private copy of getOpenApiSpec() that (unlike 5.1) cannot read YAML, guaranteeing contradictory results on YAML-only sites.
-
-**Required fix:** Move to the shared `_openapi.ts` loader so YAML and non-root specs resolve identically to 5.1; return `notApplicable()` (not `fail`) when no spec exists so the absence is charged exactly once, by 5.1; resolve `$ref` path items and count OpenAPI 3.1 `webhooks`. Consider folding the operation count into 5.1's result as a detail rather than keeping a separate scored audit.
-
-**False-positive risks:**
-
-- Local `getOpenApiSpec()` (lines 22-31) reads only `/openapi.json`. A site with a valid `/openapi.yaml` passes 5.1 and fails here with 'No parseable OpenAPI JSON spec found' — two audits, one input, opposite verdicts.
-- `getOperations()` does not resolve `$ref` path items (`"/pets": {"$ref": "#/components/pathItems/Pets"}`, legal in OpenAPI 3.1) or webhooks; such specs report '0 operations'.
-- Hard `fail` at `high` priority when no spec exists at all — duplicating 5.1's zero and double-penalizing the same absence.
-- Passing is trivially easy and near-meaningless: any spec that exists at all almost always has ≥1 operation, so the audit adds no discriminating information beyond 5.1.
-
-**Test gaps:**
-
-- No YAML-spec fixture demonstrating the divergence from 5.1
-- No `$ref` path-item fixture
-- No OpenAPI 3.1 `webhooks` fixture
-- No fixture with a spec containing only `components` (a valid shared-schema-only spec)
-
-**Overlaps with:** `5.1`, `5.3`, `5.6`, `5.26`
-
 ## Evidence
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
-- 2026-08-21 — evidence graded (see below).
 
 ## Evidence (2026-08-21)
 
@@ -88,52 +60,16 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Implementation deviations
 
-**2026-08-29 — absence is `notApplicable`, not `fail`.** This dossier's own
-required fix asked for it in 2026-08-20: _"return `notApplicable()` (not
-`fail`) when no spec exists so the absence is charged exactly once, by 5.1"_.
-It is now done. A site that publishes no OpenAPI document gets no verdict from
-this audit and the audit carries no weight there.
-
-A menu with no items is still a finding: a document that exists and declares
-no operations still `fail`s, and that is the check the grade B is for.
-
-**Present and broken is not absent.** `paths` is classified in one place,
-`readOpenApiPaths` in `gatherers/openapi.ts`. It separates what it could read
-from what was defective, and the verdict follows what survives:
-
-- Nothing readable and something broken — `paths` is not a Paths Object, or
-  every entry under it is defective — is `malformed`. It `fail`s, and the
-  report names the defect in `found` instead of calling it "0 operations".
-- At least one readable operation is graded on the operations it read. The
-  defects are named in the message and counted in `found`; they do not change
-  the verdict. Released `main` passed such a document on its readable
-  operations and so does this audit.
-- Nothing broken and nothing declared is `empty`, and `{"/x": {}}` is legal
-  OpenAPI that lands there.
-
-A defect counts at either level: a non-object where a Path Item Object belongs
-and a non-object where an Operation Object belongs are the same error one level
-apart. Specification-extension keys (`x-`) are skipped rather than judged —
-OpenAPI 3.1 §4.8.8 lets them hold any value — and inside a path item only the
-eight method keys are judged, because `summary`, `parameters`, `servers` and
-`$ref` are legal members that are not Operation Objects.
-
-**The read moved to `packages/core/src/gatherers/openapi.ts`**, shared with the
-six other audits that had a byte-identical copy of it. The precondition lives
-beside the read; `gatherers/openapi.ts` records why it is not a runner
-precondition and not an `EvidenceKey`.
-
-**A 200 with an unparseable body is treated as an absence**, because it is a
-document this audit never read. `agent-interfaces/openapi-exists` reports a
-spec advertised but unreadable, once.
-
-**The decline says what was observed.** The shared `notApplicable` line reads
-"No readable OpenAPI document at /openapi.json". The read also comes back empty
-for a 200 whose body will not parse, and a site that publishes a broken
-document has not published none.
+- No OpenAPI document is `notApplicable`. `openapi-exists` charges the absence once.
+- A 200 whose body does not parse is also treated as absent. `openapi-exists` reports the unreadable spec.
+- A document that declares no operations fails. That is the check grade B is for.
+- `paths` is classified by `readOpenApiPaths` in `gatherers/openapi.ts`:
+  - nothing readable and something broken is `malformed` and fails, naming the defect;
+  - at least one readable operation is graded on what was read, with defects named but not changing the verdict;
+  - nothing broken and nothing declared is `empty`. `{"/x": {}}` lands there.
+- A non-object path item and a non-object operation are both defects. `x-` keys are skipped. Inside a path item only the eight method keys are judged.
 
 ## Deferred
 
-The rest of the required fix stands: the shared read is still JSON-only, so the
-YAML divergence from `openapi-exists` is unchanged, and `$ref` path items and
-OpenAPI 3.1 `webhooks` are still uncounted.
+- The shared read is JSON-only, so a YAML-only spec is invisible here.
+- `$ref` path items and OpenAPI 3.1 `webhooks` are not counted.

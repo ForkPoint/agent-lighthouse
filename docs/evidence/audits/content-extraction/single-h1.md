@@ -39,31 +39,6 @@ sources:
 
 AI agents use the single <h1> as the authoritative title of the page for content indexing and answer generation. Ensure exactly one <h1> per page.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Title and description promise 'Single h1 per page' but the code only ever inspects ctx.pages[0] ('const homepage = ctx.pages[0]'), so a 20-page crawl where 19 pages have three h1s each reports a green pass. It also treats zero h1 and five h1 identically (both hard fail, priority high) although zero-h1 is a materially worse problem, and hard-fails the extremely common responsive pattern of duplicate desktop/mobile h1 markup where only one is visible. Signal is real but the audit under-delivers on its own stated scope.
-
-**Required fix:** Loop all ctx.pages like the sibling audits do and report an X/Y ratio with offending URLs. Split the verdict: 0 h1 = fail (high), 2+ h1 = warn (medium) rather than fail. Exclude h1s inside <template>, and inside subtrees hidden via hidden/[aria-hidden=true]/style="display:none" so responsive duplicates are not double-counted.
-
-**False-positive risks:**
-
-- Only the homepage is audited despite the 'per page' title — 'const homepage = ctx.pages[0]; const h1Count = $('h1').length'. Deep-page h1 problems are invisible; users get false reassurance.
-- Responsive themes that render a desktop h1 and a mobile h1 (one CSS-hidden) count as 2 → fail, though exactly one is visible and exactly one is in the accessibility tree.
-- Cookie banners, off-canvas menus, and modal dialogs injected server-side often carry their own h1 → fail on an otherwise correct page.
-- CSR SPAs served as an empty shell have 0 h1 in server HTML → fail, though the rendered page an agentic browser sees has one.
-- A WAF/Cloudflare challenge page ('Checking your browser…') typically has 1 h1 → PASS. ctx.wafProtection is never consulted.
-- h1 inside <svg><title> is not an issue, but h1 inside <template> IS counted by cheerio and is not rendered.
-
-**Test gaps:**
-
-- No test asserting the homepage-only limitation (a multi-page ctx where page 2 has three h1s still passes) — the bug is invisible to the suite.
-- No hidden/responsive duplicate-h1 fixture.
-- No h1-inside-<template> or h1-inside-modal fixture.
-- No SPA shell or WAF interstitial fixture.
-- No non-English page.
-
-**Overlaps with:** `6.2`, `6.20`
-
 ## Evidence
 
 ### Signal: Heading hierarchy (h1–h6) for LLM parsing and chunking — grade B (semantic-dom-a11y)
@@ -78,32 +53,9 @@ Title and description promise 'Single h1 per page' but the code only ever inspec
 
 ## Implementation deviations
 
-- 2026-10-07 — the scope pilot for 7.0.0 checks every selected page instead of
-  only `ctx.pages[0]`. Results report the fraction with exactly one `<h1>` and
-  list affected URLs with their heading counts in sorted order. `pageUrl` names
-  the first sorted affected URL. An empty sample returns `notApplicable`. The
-  wording describes scanned pages rather than assuming a homepage. Evidence
-  text uses the existing result length limit and its truncation marker.
-
-- 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. It read the headings of the first scanned page, and
-  `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain
-  a broker's page from another host, on a walled or throttled origin nothing
-  at all. It now consults `scanReadTheSite()` and returns `notApplicable`
-  carrying the gate's own reason.
-  Verdicts that moved on the five nothing-obtained contract states: walled
-  fail → na, throttled fail → na, redirected away pass → na, non-HTML homepage
-  fail → na, HTTP 200 bot challenge pass → na. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
+- Every sampled page is judged through `judgePages`. Affected URLs are listed with their `<h1>` counts.
 
 ## Deferred
 
-- The 7.0.0 applicability review must align the multiple-heading verdict with
-  the warning described in this dossier and exclude hidden/template headings.
-  This scope-only correction retains the existing binary verdict and raw
-  element count. It does not claim the severity or visibility defects are fixed.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+- Multiple `<h1>` elements fail. Grading that case as a warning is open; the verdict stays binary.
+- Hidden and `<template>` headings are still counted.

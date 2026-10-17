@@ -41,14 +41,6 @@ These blobs are inlined into every HTML response by design, and the framework ve
 - **[Web Almanac 2024 — Page Weight](https://almanac.httparchive.org/en/2024/page-weight)** — HTTP Archive (dataset, URL verified 2026-08-20)
   - Median total page 2,652 kB desktop / 2,311 kB mobile; p90 8,375 kB / 7,680 kB; median desktop homepage loads ~18 kB of HTML against ~1,054 kB images and ~613 kB JS. Useful contrast: for a rendering browser HTML is ~1% of weight, but for a non-rendering AI crawler that HTML document is ~100% of what gets tokenized — so HTML-internal waste is the entire agent-side cost.
 
-## Competitor coverage
-
-Lighthouse performance flags 'unused JavaScript' and total byte weight but has no notion of inlined serialized state, and its Agentic Browsing category does not touch payload composition. SEO crawlers ignore script content entirely except for JSON-LD. No AI-readiness tool inspects **NEXT_DATA**/flight payloads.
-
-## Implementation sketch
-
-Static fetch, parse with cheerio. Select script nodes by id/type and by regex on the source for the known globals; for RSC flight, concatenate all self.__next_f.push( argument strings. Byte-size each payload (compare against 128,000 to reuse the vendor threshold verbatim) and tokenize each at o200k_base. For the duplication condition, unescape the JSON string values, normalize whitespace, shingle at 5-grams, and compute the fraction of main-content shingles that also appear inside the state payload. Report per-payload so the fix is targeted ('**NEXT_DATA** carries the full 6,200-token article body already present in <article>').
-
 ## Example failure
 
 A Pages-Router e-commerce category page ships a 410 kB **NEXT_DATA** containing every product's full description, all image CDN variants and the whole nav tree. Tokenized: ~118k tokens of JSON against ~1.4k tokens of visible content, and the top 3 product descriptions appear twice in the agent's context — cost 80x, information gain zero.
@@ -57,57 +49,18 @@ A Pages-Router e-commerce category page ships a 410 kB **NEXT_DATA** containing 
 
 Tier per evidence policy: **scored** — grade A meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
-- 2026-10-07 — the 7.0.0 scope review found that the named-payload map merged
-  scripts across page responses. Two pages with approximately 70 kB of
-  `__NEXT_DATA__` each passed alone but failed together as a fictitious 140 kB
-  single payload. The map now belongs to one page. Same-page flight frames
-  still combine; different pages contribute distinct payloads. Size ties sort
-  by page URL and payload name so the representative URL is stable. This fixes
-  the single-payload limit and attribution without changing thresholds or weight.
-
-- 2026-10-16 — the string-literal read is one forward pass instead of a
-  regex. The scan cuts a payload at 512 KiB. When the cut fell inside a
-  literal, the regex found no closing quote and restarted at every later
-  quote. On one RSC flight payload from the live corpus it ran for 41 s,
-  blocked every scan in the same process, and returned no strings at all, so
-  duplication read as zero. A literal the cut leaves open is now read up to
-  the cut. Thresholds and weight are unchanged; a page whose duplicated prose
-  sat in that literal can now fail the duplication check it passed before.
-
-- **No tokenizer.** The dossier sizes payloads at `o200k_base`; the shipped
-  audit uses the repo-wide estimator `characters / 4` (`CHARS_PER_TOKEN = 4`),
-  because the global constraint forbids new runtime dependencies. Counts are
-  labelled `est. tokens` wherever they surface. The 128 kB single-payload
-  ceiling is unaffected: it is a byte threshold, taken verbatim from the vendor.
-- **Share is measured in characters, not tokens.** Serialized-state characters
-  over document characters. For a fixed estimator the two ratios are the same
-  number, so the 30% ceiling keeps its meaning.
-- **RSC flight frames are summed by script body, not by parsed argument.**
-  Every `<script>` containing `self.__next_f.push(` contributes its whole body
-  to one payload. The wrapper adds a constant few dozen bytes per frame and
-  removes a fragile argument-boundary parse.
-- **Duplication reads JSON string literals only**, unescaped and stripped of
-  markup, then compares 5-gram shingles against `getMainContentText`. Keys and
-  type metadata are excluded, so the reported fraction is about prose shipped
-  twice rather than about JSON shape.
-
-- 2026-08-26 — the shared text helper this audit reads, `getMainContentText`, changed its selection. Among several `<main>` elements it now returns the one holding the most text rather than the first, it ignores a `<main>` inside a `<template>`, and it falls back to the whole `<body>` only when no `<main>` holds any text. Measured cause (scan evidence gate design, section 2.4): storefronts ship empty or fragmented `<main>` wrappers, and the first one is often a stub. Two consequences for this audit. A page whose real content sits in a later `<main>` is now measured on that content. A page whose every `<main>` is empty is now measured on its body text, page chrome included, where it previously measured as empty.
+- No tokenizer. Token counts are `characters / 4`, labelled `est. tokens`. The 128 kB single-payload ceiling is a byte threshold and is unaffected.
+- Share is measured in characters, not tokens. For a fixed estimator the two ratios are the same number.
+- Named payloads belong to one page. Same-page RSC flight frames combine; different pages contribute distinct payloads. Size ties sort by page URL and payload name.
+- RSC flight frames are summed by script body. Every `<script>` containing `self.__next_f.push(` contributes its whole body.
+- A payload is scanned up to 512 KiB. String literals are read in one forward pass, and a literal the cut leaves open is read up to the cut.
+- Duplication reads JSON string literals only, unescaped and stripped of markup, and compares 5-gram shingles against `getMainContentText`. Keys and type metadata are excluded.
+- `getMainContentText` reads the `<main>` holding the most text, and falls back to the whole `<body>` when none holds text.
+- Svelte props are matched through the `__sveltekit_*` assignment. The `<astro-island props>` attribute is sized directly.
 
 ## Deferred
 
-- Total state share and duplication still aggregate across the selected pages.
-  Per-page ratios and duplication ownership remain part of the 7.0.0 scope
-  review. This correction does not fix cross-page dilution or infer which
-  page supplied duplicated prose. The character-based size estimator remains.
-
-- Per-payload duplication attribution (which payload repeats the body) is
-  reported at the aggregate level; the per-payload breakdown needs the state
-  parsed into a tree rather than scanned for literals.
-- Svelte island props are matched through the `__sveltekit_*` assignment; the
-  `<astro-island props>` attribute form is sized directly.
+- Total state share and duplication aggregate across the selected pages. Per-page ratios and duplication ownership are open.
+- Per-payload duplication attribution. It needs the state parsed into a tree rather than scanned for literals.

@@ -29,79 +29,21 @@ All selected pages with a non-empty declaration pass. Any missing or blank
 declaration fails. An empty sample is not applicable. Different pages can declare
 different languages; this check does not require a site-wide language value.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Cheap and worth keeping, but the check is presence-only: `if (lang.trim().length > 0)` accepts any string at all. An invalid or templated lang value is arguably worse than a missing one — it actively misinforms consumers — and this audit awards it a full pass. The description's claim that agents 'select the correct tokenizer' from this attribute is overstated but harmless.
-
-**Required fix:** 1) Validate against BCP 47 rather than emptiness: reject `lang="english"`, `lang="en_US"` (underscore is invalid; must be `en-US`), `lang="{{ locale }}"`, `lang="undefined"`, and bare region codes. A minimal regex `^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$` plus a check against a known primary-subtag list catches nearly all real errors. 2) Warn (not pass) when the declared language visibly conflicts with the content — e.g. `lang="en"` on a page whose text is majority CJK — since a wrong lang is the case that actually hurts. 3) Iterate all `ctx.pages` and flag inconsistency across pages of one site. 4) Fall back to `xml:lang` and `<meta http-equiv="content-language">` before failing.
-
-**False-positive risks:**
-
-- Invalid values pass: `const lang = $?.('html').attr('lang') ?? ''; if (lang.trim().length > 0)` — `lang="english"`, `lang="en_US"`, `lang="EN-us "`, `lang="{{page.lang}}"` and `lang="undefined"` (all seen in the wild from templating bugs) score 1.0 while telling consumers something false.
-- Wrong-language declarations pass: a German site that copied a starter template and left `lang="en"` is reported as correct — the exact scenario the audit's own rationale says causes 'poor translations'.
-- Only `ctx.pages[0]` is checked; a multilingual site with per-locale subpaths where only the landing page sets lang passes.
-- `xml:lang`-only documents (XHTML served as text/html) and `<meta http-equiv="content-language">` fallbacks are not consulted → false fail.
-- SPA shells that set `document.documentElement.lang` in JS have no lang in the fetched HTML → false fail on a site that renders correctly for any JS-executing agent.
-- WAF interstitial pages typically omit lang → false fail bundled with the other 17.
-
-**Test gaps:**
-
-- No invalid-value tests at all (`en_US`, `english`, template token, whitespace-only).
-- No `xml:lang`-only or `http-equiv="content-language"` case.
-- No multi-page/multilingual site case.
-- No test for `lang=""` (explicitly empty, which is valid HTML meaning 'unknown').
-- Only 3 tests.
-
-**Overlaps with:** _none_
-
 ## Evidence
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
 
 ## Implementation deviations
 
-- 2026-10-07 — the 7.0.0 scope review replaces the first-page read with
-  `judgePages` over the selected sample. Missing and blank declarations now
-  contribute equally on every page. Results report coverage and sorted affected
-  URLs, with the first affected URL as `pageUrl`. Empty samples return
-  `notApplicable`; existing result limits bound long findings. The body-readability
-  exemption remains because the attribute exists independently of body text.
-  The description and impact text now state the documented accessibility
-  mechanism. They no longer claim AI model or tokenizer selection.
-
-- 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. It read the `<html lang>` of the first scanned page,
-  and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked
-  domain a broker's page from another host, on a walled or throttled origin
-  nothing at all. It now consults `scanReadTheSite()` and returns
-  `notApplicable` carrying the gate's own reason.
-  Verdicts that moved on the five nothing-obtained contract states: walled
-  fail → na, throttled fail → na, redirected away pass → na, non-HTML homepage
-  fail → na, HTTP 200 bot challenge pass → na. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
-- 2026-08-28 — `requires` drops `rendered-body` and `sample-adequate` and is now
-  `['origin-reachable', 'unblocked-fetches']`. The `lang` attribute is an
-  attribute of `<html>`, served before any body renders, so whether a page
-  rendered text has no bearing on whether it declared its language. Recorded as a
-  gate exemption in `scripts/lib/requires-analysis.mjs`. The verdict itself
-  does not move, but the gate is on for every scan, so a client-rendered scan
-  is now scored on its `lang` attribute at weight 1.0 instead of being skipped.
-  With `server-responsiveness`, this is what takes the `content-extraction`
-  category from unscored to 73 on the shell contract state. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
+- Every sampled page is judged through `judgePages`. Missing and blank declarations count alike.
+- `requires` is `[OriginReachable, UnblockedFetches]` only. `<html lang>` is served before any body renders, so a client-rendered page is still judged. The exemption is recorded in `scripts/lib/requires-analysis.ts`.
 
 ## Deferred
 
-- BCP 47 validation and declared-versus-observed language agreement remain open.
-  This correction retains the non-empty-attribute predicate and binary mode.
-  The later evidence below governs the old review's fallback proposal: a
-  `meta http-equiv="Content-Language"` element does not replace `<html lang>`.
-  XML document handling needs its own parsing and evidence contract.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+- BCP 47 validation.
+- Agreement between the declared and the observed language.
+- XML document handling. It needs its own parsing and evidence contract.
+- A `meta http-equiv="Content-Language"` element is not a fallback for `<html lang>`, per the evidence below.
 
 ## Evidence (2026-08-21)
 

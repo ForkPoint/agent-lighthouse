@@ -48,14 +48,6 @@ Falsifiable claim. ACP makes `fulfillment_options` and `totals` REQUIRED on ever
 - **[Merchant listing (Product) structured data](https://developers.google.com/search/docs/appearance/structured-data/merchant-listing)** — Google (vendor-doc, URL verified 2026-08-20)
   - Required: name, image, offers; within offers price (or priceSpecification.price) and priceCurrency (3-letter ISO 4217). Recommended: gtin|gtin8|gtin12|gtin13|gtin14, mpn, sku, availability, priceValidUntil (ISO 8601), itemCondition, url, validFrom/validThrough, hasMerchantReturnPolicy, shippingDetails (OfferShippingDetails), aggregateRating, review, description, brand. Policies are recommended at Organization level.
 
-## Competitor coverage
-
-Google's Rich Results Test validates shippingDetails and hasMerchantReturnPolicy syntax, and Merchant Center nags for them — that is the overlap, and I am flagging it honestly. What no tool ships is the agentic framing: requiring both legs simultaneously as a landed-cost precondition, requiring deliveryTime.handlingTime AND deliveryTime.transitTime as bounded QuantitativeValues (not just any shippingDetails node), requiring merchantReturnDays as an integer rather than accepting a merchantReturnLink escape hatch, and emitting the ACP positional `shipping` string. Lighthouse ships none of it.
-
-## Implementation sketch
-
-Parse all JSON-LD/microdata on 2 sampled PDPs plus the Organization node on the homepage. SHIPPING leg — require offers.shippingDetails (OfferShippingDetails) with: shippingRate as MonetaryAmount having numeric value + currency (or doesNotShip:true, which is a legitimate explicit answer); shippingDestination.addressCountry present; and traverse deliveryTime (type ShippingDeliveryTime) requiring both handlingTime and transitTime as QuantitativeValue with numeric minValue and maxValue and unitCode 'DAY' — note handlingTime/transitTime are nested under deliveryTime, not direct properties of OfferShippingDetails. RETURNS leg — require hasMerchantReturnPolicy (Organization or Offer level) with applicableCountry (ISO 3166-1 alpha-2) AND returnPolicyCategory from the 3-value enum; when category is MerchantReturnFiniteReturnWindow, merchantReturnDays MUST be a positive integer. Downgrade (do not pass) policies that satisfy Google only via merchantReturnLink, because a URL is not a number an agent can compare. Recommended sub-scores for returnFees and returnMethod. OUTPUT — synthesise and show the merchant the exact feed values this maps to: the positional `shipping` string US::standard:5.99:1:3 and return_deadline_in_days=30, so remediation is copy-paste.
-
 ## Example failure
 
 A PDP carries hasMerchantReturnPolicy with only merchantReturnLink pointing at a prose /returns page, and shippingDetails with a shippingRate but no deliveryTime. An agent asked 'which of these three arrives before Friday and can I send it back' can answer for neither, so it recommends a competitor whose markup carries transitTime maxValue 2 and merchantReturnDays 60.
@@ -64,37 +56,22 @@ A PDP carries hasMerchantReturnPolicy with only merchantReturnLink pointing at a
 
 Tier per evidence policy: **scored** — grade A meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
-- **Scope is the scan context, not a fresh sample.** The audit reads the product
-  pages already in the scan plus any `Organization` node on any scanned page,
-  rather than issuing its own two-PDP sample fetch.
-- **`unitCode` accepts `DAY` and `D`**; any other unit is treated as absent,
-  because the feed's positional string counts days.
-- **The feed string uses `maxValue`** for both handling and transit days — the
-  worst case is what an agent must plan around. `service_class` comes from the
-  `OfferShippingDetails` `name`, defaulting to `standard`; `region` comes from
-  `shippingDestination.addressRegion` and is left empty when absent, which is
-  what produces the `US::standard:` shape.
-- **`merchantReturnLink`-only policies warn and never pass**, and their other
-  shape problems are not also reported: reporting "no returnPolicyCategory" next
-  to "a URL is not a number" would be the same finding twice.
-- **`returnPolicyCategory`** is accepted bare or as a schema.org URL; only the
-  final path segment is compared against the three-value enum.
+- The audit reads the product pages already in the scan, plus any
+  `Organization` node on any scanned page. It issues no sample fetches.
+- Offers come from the merged `structuredData` (JSON-LD and microdata),
+  through the shared `resolveProducts`.
+- `unitCode` accepts `DAY` and `D`. Any other unit is treated as absent.
+- The feed string uses `maxValue` for handling and transit days.
+  `service_class` comes from the `OfferShippingDetails` `name`, defaulting to
+  `standard`. `region` comes from `addressRegion` and stays empty when absent.
+- A `merchantReturnLink`-only policy warns and never passes. Its other shape
+  problems are not reported on top.
+- `returnPolicyCategory` is accepted bare or as a schema.org URL. Only the last
+  path segment is compared.
 
 ## Deferred
 
-- `returnFees` and `returnMethod` are not scored. They are recommended rather
-  than required, and a sub-score would move the total on a field Google itself
-  treats as optional.
-- Microdata and RDFa offers are read only through the shared JSON-LD-shaped
-  normalization; no separate microdata traversal is performed.
-- Until 2026-10-09 the code read `page.jsonLd` only, so a product marked up in
-  microdata read as "no Offer" despite the line above. It now reads the merged
-  `structuredData`, takes the offer of the page's own product first through
-  the shared `resolveProducts`, and falls back to the first `Offer` node only
-  when no product carries one.
+- `returnFees` and `returnMethod` are not scored. Both are recommended, not
+  required.

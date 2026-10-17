@@ -33,31 +33,6 @@ sources:
 
 AI agents increasingly handle tasks like "contact this company for a quote" on behalf of users. Without a machine-submittable contact form, agents cannot complete these requests, sending users to competitors who have one. Provide an HTML form or an API endpoint.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Real user-facing signal — 'contact this company for a quote' is a genuine agent task — but detection is an English-only substring scan over `JSON.stringify(form)`, which both false-passes on unrelated forms and false-fails every non-English site.
-
-**Required fix:** Score on form SHAPE rather than keyword substrings: a form is contact-like when it contains an email-ish field plus a free-text field (textarea or a long text input) and posts via POST. Keep keywords only as a confidence booster, extend them with major non-English equivalents, and match them against structured fields (action path, input names, label text) rather than a stringified blob. Detect iframe/third-party form embeds (hsforms.net, typeform.com, jotform) as a partial pass rather than a fail. Use the shared OpenAPI loader.
-
-**False-positive risks:**
-
-- `const formStr = JSON.stringify(form).toLowerCase(); CONTACT_INDICATORS.find(ind => formStr.includes(ind))` matches anywhere in the serialized form — action, method, every input name, type, and label. A newsletter form with `<textarea name="message">`, a chat-widget form, or a search form on a page posting to `/newsletter?src=support` all yield a PASS for 'contact form found'. `'message'`, `'support'`, `'feedback'`, and `'lead'` are especially promiscuous ('lead' is a substring of nothing useful but matches inputs named `leadtime`, `download`).
-- English-only indicators. German `kontakt` / `kontaktformular` contains no 'contact' substring; Japanese お問い合わせ, Chinese 联系我们, Russian Контакты, Polish `kontakt`, Swedish `kontakta` (matches) vs Dutch `contactformulier` (matches) — coverage is accidental and locale-dependent. A German or Japanese site with a perfect contact form FAILS.
-- JS-rendered forms are invisible. React/Vue/HubSpot/Typeform embed forms as `<div id="hbspt-form">` or an iframe; `extractForms($)` finds nothing → 'No contact form detected' on sites that plainly have one.
-- Multi-page coverage is luck-based: only pages the orchestrator discovered are scanned, and /contact is not guaranteed to be among them. A site whose contact form lives only at /kontakt/anfrage fails.
-- The OpenAPI branch requires `method === 'post'` and a contact substring in the PATH. A real contact endpoint at `POST /v1/leads/submit` matches ('lead'), but `POST /v1/messages` matches too ('message') even if it is a chat API.
-- Reuses the JSON-only `getOpenApiSpec()` copy, so YAML-spec sites lose the OpenAPI fallback.
-
-**Test gaps:**
-
-- No non-English fixture (kontakt / お問い合わせ / contacto / контакты)
-- No false-positive fixture — e.g. a newsletter form containing name="message", or a search form on a /support page
-- No JS-rendered / iframe-embedded form fixture (HubSpot, Typeform)
-- No multi-page fixture where the contact form is on an undiscovered page
-- No YAML-spec fixture
-
-**Overlaps with:** `5.19`, `5.27`
-
 ## Evidence
 
 ### Signal: Contact and service endpoint discoverability (tel:/mailto: links, server-rendered contact forms, schema.org ContactPoint) for agent task completion — grade C (discovery-infra)
@@ -68,48 +43,14 @@ Real user-facing signal — 'contact this company for a quote' is a genuine agen
 
 **Counter-evidence:** No AI vendor documents consuming ContactPoint, tel:, or mailto: for task completion. Google's AI-features page states outright that no special schema.org structured data is needed for AI features, and its Organization page ties contact properties to knowledge-panel display with no AI claim. Architecturally the premise is questionable for the leading agent. ChatGPT agent operates over screenshots of a virtual browser, and interacts through a simulated mouse and keyboard. It engages the rendered form visually rather than parsing machine-readable endpoints, so machine-readable contact metadata is not on its execution path at all. BrowserArena's live-web evaluation finds agent failures concentrated in CAPTCHAs, pop-up banners and direct URL navigation, i.e. in interaction friction rather than in missing contact metadata, so removing modals and keeping forms server-rendered likely matters far more than adding ContactPoint JSON-LD. Keep this informative: the markup is cheap and correct, but no measured agent-completion lift exists.
 
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
-
 ## Implementation deviations
 
-### Not observed is not absent (2026-10-06)
-
-The review above names the false negative: only the sampled pages are
-scanned, so a form at `/support/` fails the site. A small marketing site
-linked "Contact" from its header to a support page with a working form. The
-scan held only the homepage and reported "No contact/lead form".
-
-When no sampled page carries a contact form and no OpenAPI path matches, the
-audit now reads the sampled pages' same-origin links. A link whose path or
-text names a contact page (`contact`, `kontakt`, `support`, `inquiry`,
-`enquiry`, `get in touch`, `reach out`) and that the scan did not fetch makes
-the verdict `notApplicable`. The finding names up to three such links. A
-form there was not observed, so its absence is not established. A site with
-no form and no such link still fails.
-
-Verdicts that moved in the real-page corpus: 18 single-page fixtures fail →
-na, every one a page linking to a contact or support page outside the sample.
+- Only sampled pages are scanned, so a contact form on an unsampled page is not observed.
+- When no sampled page has a contact form and no OpenAPI path matches, the audit reads same-origin links.
+- A link whose path or text names a contact page (`contact`, `kontakt`, `support`, `inquiry`, `enquiry`, `get in touch`, `reach out`) and that the scan did not fetch makes the verdict `notApplicable`.
+- The finding names up to three such links. A site with no form and no such link still fails.
 
 ## Deferred
 
-- **Unescaped `id` in `extractForms`.** The shared form parser builds a
-  selector from a page-supplied `id` to find a control's label, the
-  `label[for="..."]` lookup in `parser.ts`. An `id` carrying a quote or a
-  backslash makes css-what throw inside `$()`; the throw escapes
-  `extractForms`, so both audits that consume it — `forms-no-js` and
-  `contact-form` — become `scan-error` stubs and the site is told nothing
-  about either. No corpus fixture carries such an `id`, so nothing throws
-  today; the class is live and latent. Two audits in this category already
-  escape their interpolated values (`form-actionability` has
-  `escapeAttrValue`, `form-autofill-token-coverage` has `cssEscape`), so the
-  fix is to reuse one at the parser call site. Found by the real-page corpus
-  snapshot, which caught the same shape throwing for real in
-  `answer-readiness/extractor-survival-recall`.
-- Following the unscanned contact link within a bounded fetch budget, so the
-  form there is observed rather than inferred.
-- A genuine absence still fails at high priority, though no documented
-  consumer backs the grade-C claim. Moving it to `notApplicable` or `warn` is
-  a separate decision.
+- Follow the unscanned contact link within a bounded fetch budget, so the form there is observed rather than inferred.
+- A genuine absence still fails at high priority, though no documented consumer backs the grade-C claim. Moving it to `notApplicable` or `warn` is a separate decision.

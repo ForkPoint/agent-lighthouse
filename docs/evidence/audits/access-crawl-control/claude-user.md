@@ -27,28 +27,6 @@ sources:
 
 Reads the robots.txt rules that apply to Claude-User — its own group if it has one, otherwise the catch-all — and reports whether they let it fetch the site root. A named group is not required: under RFC 9309 §2.2.1 an open catch-all grants the same access.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Genuinely valuable signal — Claude-User is the live fetcher behind Claude's web access, and blocking it prevents Claude from reading the page during a user's session. Same base-class implementation defects, same missing UA probe, and the same underweighting relative to training crawlers. Note it also overlaps in concept with 2.3, which conflates the whole Anthropic family under a deprecated token.
-
-**Required fix:** Implement prefix matching in `isAllowed` so `User-agent: Claude` is attributed to all Claude-family tokens. Raise weight above the training tier. Add the `Claude-User` UA probe. Apply the shared helper fixes from 2.1.
-
-**False-positive risks:**
-
-- Edge UA blocking of `Claude-User` is invisible to the `AgentLighthouse/1.0` scanner — clean PASS on a site Claude cannot actually read.
-- Prefix collision: a site writing `User-agent: Claude` (intending the whole family) matches neither `Claude-User`, `Claude-SearchBot` nor `ClaudeBot`; the deliberate block reads as 'allowed by default' across all three audits at once.
-- Exact-match miss on versioned tokens.
-- Shared BOM / soft-404 / `Disallow: /*` misreads.
-
-**Test gaps:**
-
-- No `User-agent: Claude` prefix-family case — a single robots.txt line that should block three audited tokens and currently blocks none of them.
-- No versioned-token case.
-- No UA-probe coverage.
-- Same missing real-world robots.txt variants as 2.1.
-
-**Overlaps with:** `2.3`, `2.21`, `2.22`, `2.28`
-
 ## Evidence
 
 ### Signal: Claude-User allow/block state in robots.txt — grade A (robots-ai-crawlers)
@@ -61,46 +39,14 @@ Genuinely valuable signal — Claude-User is the live fetcher behind Claude's we
 
 **Counter-evidence:** Anthropic does not publish a separate per-agent compliance statement, only a blanket one, so the Claude-User guarantee is weaker than a dedicated sentence. No independent audit has specifically measured Claude-User disallow compliance the way TollBit did for ChatGPT-User, so the honoring claim is vendor-asserted and untested.
 
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
-
 ## Implementation deviations
 
-### Inherited access passes (2026-10-06)
+The shared base class `_crawler-bot-audit.ts` grades access, not the shape of the file.
 
-The audit scored the shape of the file, not the access it grants. The shared
-base class `_crawler-bot-audit.ts` passed only when a group named Claude-User. It
-warned at 0.5 when Claude-User was allowed through `User-agent: *` or by no rule
-at all.
-
-Nothing in the evidence supports that split. The grade rests on what a
-disallow does, which is a fact about the block state. RFC 9309 §2.2.1 makes a
-crawler obey the group that names its product token and fall back to `*`
-only when none does. An open catch-all therefore grants the same access a
-named group would.
-
-The rule now asks one question: do the rules that apply to Claude-User permit `/`?
-Allowed by its own group, through the catch-all, or by no applicable group
-all pass. The message names which one applied. A disallow that reaches the
-token still fails.
-
-An unreadable robots.txt is not applicable rather than a warn: missing,
-non-200, an empty body, or a 200 that parses to no groups and no directives.
-RFC 9309 §2.3.1.3 lets a crawler access everything when the file is
-unavailable, and no source here documents a cost for its absence.
-
-The old fix, add `User-agent: Claude-User` / `Allow: /`, is withdrawn as advice for
-an allowed site. A named group replaces the catch-all for that bot, so it
-drops every catch-all `Disallow` the site still meant to apply. The fail
-remedy now says so.
-
-`access-crawl-control/meta-external-agent` and
-`access-crawl-control/anthropic-ai` made the same change on 2026-08-24. The
-base class now matches them.
-
-Grade, tier and weight are unchanged.
+- The audit passes when the rules that apply to Claude-User permit `/`: its own group, the catch-all, or no applicable group. Under RFC 9309 §2.2.1 an open catch-all grants the same access a named group would.
+- The message names which of the three applied. A disallow that reaches the token fails.
+- An unreadable robots.txt is not applicable: missing, non-200, an empty body, or a 200 that parses to no groups and no sitemaps. RFC 9309 §2.3.1.3 lets a crawler access everything when the file is unavailable.
+- The fail remedy warns that a named `Allow: /` group replaces the catch-all for that bot and drops its catch-all `Disallow` lines.
 
 ## Deferred
 

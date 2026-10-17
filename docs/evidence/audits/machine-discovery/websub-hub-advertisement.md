@@ -35,14 +35,6 @@ WebSub is a W3C Recommendation requiring publishers to advertise at least one re
 - **[schema.org DataFeed](https://schema.org/DataFeed)** — schema.org (spec, URL verified 2026-08-20)
   - DataFeed = 'a single feed providing structured information about one or more entities or topics'; hierarchy Thing > CreativeWork > Dataset > DataFeed; primary property dataFeedElement accepting DataFeedItem/Text/Thing; DataFeedItem examples use dateCreated, dateModified, item. Adoption is only 1K-10K domains per Google's web index (July 2026 aggregation) — too thin to score against.
 
-## Competitor coverage
-
-The W3C Feed Validator flags a missing atom:link rel=self but does not compare it to the fetch URL, does not check Link headers, and does not liveness-probe the hub. No SEO or AI-visibility product covers WebSub at all.
-
-## Implementation sketch
-
-For each discovered feed: (1) inspect HTTP Link response headers first (per the spec's precedence order) for rel=hub and rel=self; (2) fall back to <link rel="hub"> / <atom:link rel="self"> elements inside the feed document, and for HTML pages accept them only within <head>. (3) Assert exactly one rel=self and that its href is absolute and, after normalization, equal to the URL the feed was fetched from (FAIL on relative hrefs, http-vs-https mismatch, or a self-link pointing at a different path). (4) Assert at least one rel=hub with an absolute HTTPS href; HEAD the hub URL and accept 2xx/400/405 as alive, FAIL on DNS failure, connection refused, or 5xx. (5) When no hub is declared, emit INFO with a remediation pointing at hosted hubs, never a FAIL. Report as an advisory badge outside the scored total until an AI-side subscriber is documented.
-
 ## Example failure
 
 A WordPress site with the PubSubHubbub plugin emits `<atom:link rel="hub" href="https://pubsubhubbub.appspot.com/"/>` alongside `<atom:link rel="self" href="/feed/"/>` — a relative href. Every hub subscription attempt fails verification because the topic URL cannot be resolved to the canonical feed, so the site has push infrastructure installed, a plugin reporting success, and zero actual fanout.
@@ -51,65 +43,23 @@ A WordPress site with the PubSubHubbub plugin emits `<atom:link rel="hub" href="
 
 Tier per evidence policy: **informative (weight 0)** — grade C does not meet the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
-**Renamed** from `websub-hub-advertisement-and-self-link-correctness`, which
-would make a 68-character id. Both halves ship.
-
-All five steps of the sketch ship: `Link:` headers read before the document,
-the exactly-one absolute `rel=self` assertion with normalized comparison
-against the URL the feed was fetched from, the HTTPS `rel=hub` assertion, the
-HEAD probe accepting 2xx/400/405, and the never-a-failure rule for a feed that
-declares no hub.
-
-**Nothing here is a failure.** The sketch reserves FAIL for the conformance
-arms, but the audit ships `tier: 'informative'` with `weight: 0`, so a `fail`
-would render as a red finding that cannot move the score — which reads as a
-bug. Every finding is a `warn`, and a test asserts no input produces `fail`.
-When an AI-side WebSub subscriber is documented, the tier moves and the arms
-can be reclassified in one place.
-
-**The hub HEAD is the one cross-origin request in this wave.** A hub is by
-definition somebody else's host. The audit sends a HEAD and reads the status;
-it never subscribes, never POSTs, and never presents a callback URL.
-
-**Discovery-link parsing lives in `gatherers/feeds.ts`.** `FeedDocument` gained
-`selfLinksRaw` and `hubLinksRaw` — the hrefs exactly as declared — because the
-resolved forms cannot tell a relative href from an absolute one, which is one
-of the defects this audit reports.
-
-**Evidence hygiene.** Only the first source, the WebSub Recommendation, bears
-on this audit. The RFC 4287 entry belongs to
-`machine-discovery/feed-entry-identity-and-canonical-integrity` and the
-schema.org DataFeed entry to neither; nothing here rests on them.
-
-### `atom:link` in RSS is read (2026-10-06)
-
-Step 2 of the sketch names `<atom:link rel="self">`, but the gatherer selected
-`link[rel="self"]`. In an XML parse an RSS channel's element is literally
-`atom:link`, so that selector never matched it. A small marketing site whose
-RSS feed carries a correct `atom:link rel="self"` was reported as having no
-self link. The selector also searched the whole document, so an Atom entry's
-own `rel="self"` would have counted as a second feed self link.
-
-Feed links are now read only from the direct children of the Atom `feed` or
-the RSS `channel`. A link counts when it is unprefixed, or its prefix is bound
-to the Atom namespace (`http://www.w3.org/2005/Atom`) under any name. A
-`link` under a prefix bound to another namespace is not read. `rel` is matched
-as a space-separated token list. Response-header precedence is unchanged.
-
-## Deferred
-
-- **Completing a subscription.** Verification needs a callback URL the scanner
-  would have to host and a hub POST. The audit measures the advertisement, not
-  the round trip.
-- **HTML page discovery links.** The sketch accepts `<link rel="hub">` in an
-  HTML `<head>`; this audit reads feeds, where WebSub's own examples put them.
-  An HTML topic URL is a different topic from the feed and would need its own
-  self-link comparison.
-- **More than two hubs per feed.** Each is a cross-origin request. A feed with
-  three hubs has the same advertisement defect as one with two.
+- **Renamed** from `websub-hub-advertisement-and-self-link-correctness`, which
+  exceeds the 64-character id cap. Both halves ship.
+- **Nothing here is a failure.** The audit is informative at weight 0, so every
+  finding is a `warn`. A test asserts no input produces `fail`.
+- **The hub HEAD is a cross-origin request.** The audit reads the status only.
+  It never subscribes, POSTs or presents a callback URL. At most two hubs per
+  feed are probed.
+- **Raw hrefs are kept.** `FeedDocument` in `gatherers/feeds.ts` carries
+  `selfLinksRaw` and `hubLinksRaw` as declared, so a relative href can be
+  reported.
+- **Feed links are read from the direct children of the Atom `feed` or RSS
+  `channel` only.** An entry's own `rel="self"` does not count.
+- **`atom:link` in RSS is read.** A link counts when it is unprefixed or its
+  prefix binds the Atom namespace. `rel` is a token list.
+- **HTML page discovery links are not read.** WebSub's examples put them in the
+  feed, and an HTML topic would need its own self-link comparison.
+- **Only the WebSub Recommendation bears on this audit.** The RFC 4287 and
+  schema.org DataFeed sources carry nothing here.

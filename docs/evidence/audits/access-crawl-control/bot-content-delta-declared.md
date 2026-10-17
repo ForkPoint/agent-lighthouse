@@ -33,14 +33,6 @@ Google states that `isAccessibleForFree: false` with `hasPart`/`cssSelector` mar
 - **[OpenAI crawlers and user agents](https://developers.openai.com/api/docs/bots)** — OpenAI (vendor-doc, URL verified 2026-08-20)
   - Exact UA strings and published IP-range JSONs. OAI-SearchBot (…compatible; OAI-SearchBot/1.4; +https://openai.com/searchbot) → https://openai.com/searchbot.json. GPTBot (…compatible; GPTBot/1.4; +https://openai.com/gptbot) → https://openai.com/gptbot.json. ChatGPT-User (…compatible; ChatGPT-User/1.0; +https://openai.com/bot) → https://openai.com/chatgpt-user.json. OAI-AdsBot → https://openai.com/adsbot.json. All four JSON endpoints return HTTP 200 (curl-verified). No mention of Web Bot Auth. Note Google-Extended has no UA at all, so it cannot be probed by request.
 
-## Competitor coverage
-
-None found in the 2026-08 competitor survey.
-
-## Implementation sketch
-
-Multi-page, no JS required. 1) Sample 3-5 content URLs (sitemap or internal links), preferring article/product pages. 2) For each, fetch with baseline Chrome UA and with GPTBot/1.4, ClaudeBot and PerplexityBot, identical headers otherwise. 3) Extract main text with the existing parser; normalise whitespace and strip nav/footer. 4) Compute (a) character-count ratio bot/browser and (b) 5-gram shingle Jaccard similarity. Flag a delta when ratio < 0.6 or Jaccard < 0.7 — two metrics because a stub and a reordered-but-equivalent page look identical on length alone. 5) When a delta is found, parse JSON-LD from the browser response and require: a CreativeWork subtype (Article, NewsArticle, Blog, WebPage, Course, HowTo, Review, Comment, Message) with `isAccessibleForFree: false`, plus a `hasPart` of `@type: WebPageElement` with `isAccessibleForFree: false` and a `cssSelector`. 6) Then verify the selector actually resolves — run it against the served DOM with cheerio; a selector matching zero elements is a silent no-op and should be its own finding. 7) Verdict: pass when there is no delta, or a delta with complete and resolving markup. Fail on delta without markup. Separately flag the inverse case (bot text materially LONGER than browser text), which indicates a bot-only keyword-stuffed variant.
-
 ## Example failure
 
 An article renders 6,200 chars of body text to Chrome. The same URL fetched as `GPTBot/1.4` returns 200 with 480 chars — headline, dek, and a subscribe prompt — and the page's JSON-LD NewsArticle omits `isAccessibleForFree` entirely. The site reads as cloaking to Google's spam policy, and ChatGPT/Perplexity ingest and cite the 480-char stub as if it were the article.
@@ -49,51 +41,24 @@ An article renders 6,200 chars of body text to Chrome. The same URL fetched as `
 
 Tier per evidence policy: **scored** — grade A meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
-### Subpath sitemap scope (2026-10-05)
-
-The shared sitemap gatherer uses the scanned homepage directory as the site root when it is a detected or declared subpath homepage. It reads declarations from the origin's robots.txt, then tries the conventional sitemap names under that directory before the origin fallbacks. Shared sitemap files contribute only absolute URLs on the same origin and under that directory. Filtering precedes the entry cap and sampling. Relative or malformed loc values associated with this site remain available to content audits. A sibling-only sitemap does not prove that this site has a sitemap. The child-fetch cap remains in force even when all children cover siblings.
-
-Content-page scans do not infer a mount. Origin files, origin probes, feed discovery, explicit page overrides, and redirect handling keep their existing scope. This change limits sitemap-derived evidence; it does not make every scan request subpath-only.
-
-- **Three crawler UAs, three sampled URLs.** The sketch says 3-5 URLs; three
-  keeps the probe count at nine per scan, and every probe is shared with the
-  other UA-parity audits through `sharedUaProbes`, so overlapping URLs cost one
-  request between them.
-- **URLs come from the sitemap sample.** The sketch allows internal links as a
-  fallback; the sitemap sample is deterministic (`sampleEntries`, even stride),
-  so a re-scan compares the same pages.
-- **A `soft-block` probe is compared, not discarded.** The shared gatherer gives
-  that class to a 200 carrying under 40% of the baseline text — which is exactly
-  the delta this audit adjudicates. Every other block class means the crawler
-  never got a page at all, and that is
-  `access-crawl-control/ai-crawler-edge-parity`'s finding, not this one's.
-- **`isAccessibleForFree` is read as both a boolean and the strings
-  "false"/"False"**, which is how CMS templates emit it.
-- **The `cssSelector` is resolved with cheerio against the exact body the
-  browser baseline received**, not against the crawler response — the
-  declaration describes what a reader sees and the crawler does not.
-- **An unparseable selector counts as resolving to nothing.** It cannot match an
-  element, and reporting a parse error separately would split one defect in two.
+- Three crawler UAs and three sampled URLs. The sketch said 3-5 URLs. Probes are shared with the other UA-parity audits through `sharedUaProbes`.
+- URLs come from the sitemap sample only (`sampleEntries`, even stride), so a re-scan compares the same pages. On a subpath homepage the shared sitemap gatherer keeps only same-origin URLs under that directory.
+- A `soft-block` probe is compared, not discarded: it is exactly the delta this audit judges. Every other block class is `access-crawl-control/ai-crawler-edge-parity`'s finding.
+- `isAccessibleForFree` is read as a boolean and as the strings "false"/"False".
+- The `cssSelector` is resolved with cheerio against the body the browser baseline received.
+- An unparseable selector counts as resolving to nothing.
 
 ## Deferred
 
-- **No JavaScript execution.** A site that injects the restricted body after
-  hydration serves an empty selector target in the HTML, and reads here as a
-  silent no-op. That is the honest reading of the served DOM, but a headless
-  browser would settle it.
+- **No JavaScript execution.** A restricted body injected after hydration reads
+  as a selector that resolves to nothing. A headless browser would settle it.
 - **The thresholds are fixed** at a 0.6 length ratio and 0.7 shingle
-  similarity, per the sketch. A page whose boilerplate dominates its main
-  content can cross either line without a real delta; both metrics are always
-  reported so the reader can see which one fired.
-- **Only the first complete declaration is read.** A page carrying several
-  CreativeWork nodes with different `hasPart` selectors is judged on the first
-  that validates.
+  similarity. Boilerplate-heavy pages can cross either line without a real
+  delta. Both metrics are always reported.
+- **Only the first complete declaration is read.** A page with several
+  CreativeWork nodes is judged on the first that validates.
 - **The inverse case is reported, not diagnosed.** Bot text materially longer
-  than the browser text is flagged as a bot-only variant; deciding whether it is
-  keyword stuffing or a legitimately expanded print view needs a human.
+  than browser text is flagged. Telling keyword stuffing from an expanded print
+  view needs a human.

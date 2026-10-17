@@ -38,4 +38,4 @@ Consumers that keyed on these check ids should read [`packages/core/migration-ma
 | 8.21  | `technical-readiness/framework-detection` | [dossier](./technical-readiness/framework-detection.md) |
 | 10.12 | `generative-engine/pagination-links`      | [dossier](./generative-engine/pagination-links.md)      |
 
-The other 14 audits from the same delete-candidate batch were **not** sunset — nine were redeemed and kept, five stayed as informative. Their research lives in [deletions/](../deletions/README.md).
+The other 14 audits from the same delete-candidate batch were **not** sunset — nine were redeemed and kept, five stayed as informative. Their dossiers under [audits/](../audits/README.md) record the outcome.

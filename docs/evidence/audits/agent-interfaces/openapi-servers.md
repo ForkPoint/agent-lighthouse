@@ -31,40 +31,9 @@ A site that publishes no OpenAPI document at all is **not** a failure here.
 This audit judges a document's contents; with no document, it returns
 "not applicable" and takes no weight off the score.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Correct premise (agents need a base URL) wrecked by liveness probing that misreads normal API behavior as breakage. It GETs the bare server URL and treats anything outside 2xx/3xx as a problem, so healthy production APIs that 401/404/405 on their base path are reported as broken at high priority.
-
-**Required fix:** Stop treating a bare GET as a liveness test. Validate structure instead: servers array non-empty, each `url` parseable (resolving relative URLs against `ctx.baseUrl` and substituting `variables` defaults), and https for production. If a liveness probe is kept, probe a concrete path from `paths` rather than the base, accept 401/403/405 as 'reachable', skip localhost/example.com entries, and downgrade unreachable to informational.
-
-**False-positive risks:**
-
-- `await ctx.fetch({ url: serverUrl })` then `result.status >= 200 && < 400` — most REST base URLs return 404 (no route at /v1), 401 (auth required), or 405 (method not allowed) for a bare GET. `https://api.stripe.com/v1` style bases warn as 'returned HTTP 401/404' despite being perfectly reachable and correct.
-- Relative server URLs are legal in OpenAPI 3 (`"servers": [{"url": "/api"}]`). `ctx.fetch({url: '/api'})` has no base to resolve against → undici throws or 0-status → 'could not be reached' warn on a fully valid spec.
-- Server URL templating is legal and common (`"url": "https://{region}.api.example.com/{version}"` with a `variables` object). The literal braces are never substituted, so the fetch targets a nonexistent host → false warn.
-- Only the FIRST entry with a url is probed (`servers.find(...)`). Specs conventionally list a mock/sandbox or `http://localhost:8080` first for local dev; that entry fails while production is fine.
-- A WAF or rate-limiter answering the probe with 403/429 produces the same warn as a genuinely dead server; `ctx.wafProtection` unused.
-- Same JSON-only loader bug as 5.2-5.6.
-
-**Test gaps:**
-
-- No relative-URL server fixture (`{"url": "/api"}`)
-- No server-variables/templated-URL fixture
-- No 401/405 fixture (the two most common healthy responses to a bare base GET)
-- No multi-server fixture with localhost or a sandbox first
-- Test at line 32 asserts 404 → warn, i.e. it locks in the false positive rather than exposing it
-
-**Overlaps with:** `5.1`, `5.9`
-
 ## Evidence
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
-- 2026-08-21 — evidence graded (see below).
 
 ## Evidence (2026-08-21)
 
@@ -82,35 +51,11 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Implementation deviations
 
-**2026-08-29 — absence is `notApplicable`, not `fail`.** The audit returned
-`fail` at `priority: 'high'` when the site published no OpenAPI document at
-all. That verdict was never documented here. This dossier's counter-evidence
-argues the opposite for the weaker case — a document that _exists_ with no
-`servers` key, which OpenAPI 3.1 makes legal and resolvable against the
-document's own location. No source says a site without an API is worse off for
-having no `servers` array, so the audit now returns `notApplicable` when no
-document is read, and carries no weight on that site.
-
-Every verdict on a document that exists is unchanged: no `servers` array,
-entries without a `url`, and an unreachable or non-2xx server URL all still
-`fail` or `warn` as before. That is the structural leg the grade B rests on.
-
-**The read moved to `packages/core/src/gatherers/openapi.ts`.** Seven audits
-carried a byte-identical private `getOpenApiSpec`. There is now one, and the
-precondition lives beside it with the reasoning for why it is not a runner
-precondition and not an `EvidenceKey`.
-
-**A 200 with an unparseable body is treated as an absence**, because it is a
-document this audit never read. `agent-interfaces/openapi-exists` is where a
-spec advertised but unreadable is reported, and it reports it once.
+- No OpenAPI document, or a 200 whose body does not parse, is `notApplicable`. `openapi-exists` reports an unreadable spec.
+- A document with no `servers` array still fails, though OpenAPI 3.1 defaults it to `/`. See Deferred.
+- Only the first server with a `url` is probed, with a GET on the base URL. 2xx and 3xx pass; any other status or no answer warns.
 
 ## Deferred
 
-The YAML blind spot stands: the shared read still looks only at
-`/openapi.json`, so a site serving `/openapi.yaml` is invisible to this audit
-while `openapi-exists` finds it. Widening the read moves verdicts for the whole
-family and is its own change.
-
-The liveness probe stands too. This dossier's required fix — probe a concrete
-path rather than the base URL, accept 401/403/405, skip templated and relative
-URLs — is untouched by this change.
+- The shared read is JSON-only, so a YAML-only spec is invisible here.
+- The dossier's required fix: treat a missing `servers` array as `/`, probe a concrete path rather than the base URL, accept 401, 403 and 405, and skip templated and relative URLs.

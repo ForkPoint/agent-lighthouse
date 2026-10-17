@@ -38,14 +38,6 @@ Plausible-convention claim: an agent arriving with no cookies must spend its fir
 - **[Playwright: Auto-waiting / Actionability checks](https://playwright.dev/docs/actionability)** — Microsoft (vendor-doc, URL verified 2026-08-20)
   - Before click/check/fill/selectOption, Playwright enforces five checks: Visible (non-empty bounding box, not visibility:hidden), Stable (same bounding box over 2 animation frames), Receives Events (element is the hit target at the action point — overlays cause failure), Enabled (not [disabled]/aria-disabled), Editable (not readonly/aria-readonly). Fill requires visible+enabled+editable. This is the exact gate every Playwright-based agent (Playwright-MCP, browser-use, most CUA harnesses) passes through, so each check is a directly testable site-side failure cause.
 
-## Competitor coverage
-
-Not covered. Consent-layer auditing exists in the privacy-compliance tool space (Cookiebot scanners, CMP validators) but is scored against GDPR/TCF conformance, never against agent operability or action cost. Lighthouse's agentic category ignores interstitials entirely.
-
-## Implementation sketch
-
-Static tier: fetch with no cookies and no consent signals. Detect a CMP by script host or global (__tcfapi, OneTrust/otSDKStub, Cookiebot, Didomi, Quantcast/quantcast choice, Osano, Usercentrics, Sourcepoint). Then assert: (a) the page's primary content (article body, product data, or main landmark text) is present in the returned HTML rather than replaced by an interstitial — compare content length and presence of the JSON-LD main entity against a second fetch carrying a consent cookie; (b) the consent dialog's accept and reject controls resolve to elements with a button/link role and a non-empty accessible name, in the top document; fail when the dialog root is an <iframe> with a cross-origin src; (c) main content is not marked inert or aria-hidden=true for the duration; (d) the dialog is dismissible without a scroll-inside-iframe or a multi-step 'manage preferences' journey — count the minimum clicks to reject. Headless tier verifies (c) and (d) by actually running the dismissal and counting actions. Report as a diagnostic with an action-cost number rather than a pass/fail score.
-
 ## Example failure
 
 A news site loads a Sourcepoint dialog in a cross-origin iframe and sets aria-hidden="true" on <main>. An agent reading page text via DOM extraction gets the article, because the text is in the DOM. But its accessibility snapshot is empty except for an unnamed iframe, so it cannot find any clickable element. Asked to click 'Reject all', it reports that no such control exists on the page.
@@ -54,40 +46,13 @@ A news site loads a Sourcepoint dialog in a cross-origin iframe and sets aria-hi
 
 Tier per evidence policy: **informative (weight 0)** — grade C does not meet the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
-The shipped audit is `operability-safety/first-contact-consent-gate-operability`,
-in the `operability-safety` category: the proposal's `agent-operability` domain
-is a research grouping, not one of the eight v2 categories.
-
-It is registered in the `informative` tier with weight 0, as grade C requires.
-The sketch already asks for "a diagnostic with an action-cost number rather than
-a pass/fail score", so the tier and the sketch agree.
-
-The consent-cookie comparison in arm (a) is not made. The sketch fetches the
-page a second time carrying a consent cookie and diffs the two. Sending a
-fabricated consent signal is a claim about a visitor's choice that a scanner has
-no standing to make, so content presence is judged from the single served
-response: a main landmark or article holding at least 200 characters, or a
-JSON-LD main entity beside shorter text.
-
-The action cost is read from the controls rendered in the top document: a
-control whose accessible name, id or class reads as a refusal costs one click, a
-"manage preferences" journey costs two, and a layer with neither is reported as
-having no refusal control at all rather than being given a number.
+- No second fetch with a consent cookie is made. A scanner has no standing to fabricate a visitor's consent choice. Content presence is judged from the single response: a main landmark or article with at least 200 characters, or a JSON-LD main entity beside shorter text.
+- The action cost is read from the controls in the top document. A refusal control costs one click, a "manage preferences" journey costs two. A layer with neither is reported as having no refusal control, not given a number.
 
 ## Deferred
 
-- **Headless verification of arms (c) and (d).** The sketch runs the dismissal
-  and counts the actions it really takes. That needs a live browser, so the
-  shipped audit counts the controls the markup declares instead.
-- **Controls inside a cross-origin iframe.** When the layer is in a third-party
-  frame, its controls cannot be read at all — which is itself the finding. No
-  action cost is attributed in that case.
-- **Scroll-inside-iframe dismissal.** Whether the dialog needs a scroll before
-  its buttons come into reach depends on layout, which does not exist before
-  rendering.
+- Headless verification of arms (c) and (d). The audit counts the controls the markup declares, not the actions a browser really takes.
+- A layer inside a cross-origin iframe gets no action cost. Its controls cannot be read, which is itself the finding.
+- Scroll-inside-iframe dismissal. It depends on layout, which needs rendering.

@@ -27,30 +27,6 @@ sources:
 
 AI agents use Offer schema to answer pricing queries with exact numbers. Without price and priceCurrency in structured data, agents must scrape and guess pricing from page text, which often produces inaccurate or outdated results in AI-generated comparisons.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Price and currency in structured data is one of the few schema signals with clear agentic-commerce value, but a short-circuit bug makes the audit judge a stray hoisted Offer node instead of the product's real offer, and it rejects the schema.org-correct AggregateOffer lowPrice/highPrice form used by every multi-variant product.
-
-**Required fix:** Remove the short-circuit: evaluate whether ANY Offer reachable from the page's primary Product satisfies price+currency, rather than testing only the first hoisted Offer node. Accept `AggregateOffer` with `lowPrice`/`highPrice` as satisfying the price requirement. Add an explicit `/pricing|/plans|/preise|/tarifs` URL fallback so SaaS pricing pages are actually assessed, matching the audit's title.
-
-**False-positive risks:**
-
-- `if (hasOfferSchema) { const first = schemas.find(isOffer); return first['price'] !== undefined && !!first['priceCurrency']; }` short-circuits and never evaluates `hasOfferProp`. Because `flattenJsonLd` hoists nested Offers, `schemas.find(isOffer)` returns whichever Offer appears first in DFS order — commonly a related-products carousel Offer, a `seller`-only Offer stub, or a ProductGroup variant Offer. If that stray offer lacks price/priceCurrency the page is failed even though the primary Product's `offers` block is complete. Concrete, high-frequency false fail on Shopify ProductGroup/hasVariant markup.
-- `offerObj['price'] !== undefined && offerObj['priceCurrency']` rejects `AggregateOffer` with `lowPrice`/`highPrice`/`offerCount` and no `price` — the schema.org-canonical form for a variant price range. Multi-variant products marked up correctly are failed.
-- The applicability gate `p.pageType === 'product'` inherits `detectPageType`'s loose heuristics: any page with an `[class*="add-to-cart"]` element and a `.price` element is typed 'product' (parser.ts:541-551), so category pages and homepages with product carousels are mis-typed and then failed for lacking Offer schema.
-- The audit is titled 'Offer schema on pricing pages' and the inline comment claims the product-type gate 'already covers SaaS pricing pages' — but `detectPageType` has no `/pricing` or `/plans` rule and SaaS pricing pages have no add-to-cart markup, so they are typed 'content' and the audit returns `na`. The audit does not do what its own title says.
-- `price: 0` is accepted (`!== undefined`), so a free-tier Offer passes, while `price: "0.00"` on a broken template also passes — no sanity check on the value.
-
-**Test gaps:**
-
-- No test where a stray/nested Offer precedes the product's real offers (the short-circuit bug)
-- No test for `AggregateOffer` with `lowPrice`/`highPrice`
-- No test for `ProductGroup` + `hasVariant[].offers`
-- No test for a SaaS `/pricing` page (which the audit claims to cover but returns `na` on)
-- No test for a category page mis-typed as 'product' by detectPageType
-
-**Overlaps with:** `3.24`, `3.22`
-
 ## Evidence
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
@@ -72,34 +48,20 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Counter-evidence:** No LLM-assistant vendor documents reading on-page Offer markup. Google states of its AI features: "You don't need to create new machine readable files, AI text files, or markup to appear in these features. There's also no special schema.org structured data that you need to add" (https://developers.google.com/search/docs/appearance/ai-features, verified 2026-08-21). OpenAI's commerce documentation routes product price and availability into ChatGPT through a product feed: "Provide a structured product feed so ChatGPT accurately indexes and displays your products with up-to-date price and availability". It never mentions schema.org page markup (https://developers.openai.com/commerce/ and https://developers.openai.com/commerce/specs/feed, verified 2026-08-21). The proven consumer path is Google's search/shopping pipeline, not a chat agent parsing the page.
 
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
-- 2026-08-21 — evidence graded **A** (documented Google extractor behavior for Offer price/priceCurrency).
-- 2026-10-09 — ProductGroup variants resolved through `resolveProducts`; see Implementation deviations.
-
 ## Implementation deviations
 
-- **ProductGroup variants are read as products.** Products come from the
-  shared `resolveProducts` in `packages/core/src/product-schema.ts`. Each
-  `hasVariant` entry (or a Product joined through `isVariantOf` or
-  `inProductGroupWithID`) is read with the group's shared properties beneath
-  its own, as Google's product variant documentation lays them out
-  (https://developers.google.com/search/docs/appearance/structured-data/product-variants,
-  verified 2026-10-09). A `ProductGroup` with no variants is read as the
-  product. Before this, a brand or category declared once on the group was
-  invisible, and a page whose only top-level product was a `ProductGroup`
-  read as having no product.
-- **The short-circuit is removed.** A page passes when any offer reachable
-  from its products is priced: an `Offer` with `price`, or an `AggregateOffer`
-  with `lowPrice`, each with `priceCurrency`. An `Offer` whose `itemOffered`
-  is a product also counts. A stray `Offer` attached to nothing does not pass
-  a page that has product markup. A page with no product markup is judged on
-  its standalone `Offer` nodes.
+- Products come from the shared `resolveProducts` in
+  `packages/core/src/product-schema.ts`. Each `ProductGroup` variant is read
+  with the group's shared properties beneath its own. A `ProductGroup` with no
+  variants is read as the product.
+- A page passes when any offer reachable from its products is priced: an
+  `Offer` with `price`, or an `AggregateOffer` with `lowPrice`, each with
+  `priceCurrency`. An `Offer` whose `itemOffered` is a product also counts.
+- A stray `Offer` attached to nothing does not pass a page with product
+  markup. A page with no product markup is judged on its standalone `Offer`
+  nodes.
 
 ## Deferred
 
-- The `/pricing|/plans|/preise|/tarifs` URL fallback named in the 2026-08-20
-  required fix. SaaS pricing pages are still assessed only when a page is
-  typed `product`.
+- A `/pricing`, `/plans`, `/preise` or `/tarifs` URL fallback. SaaS pricing
+  pages are assessed only when the page is typed `product`.

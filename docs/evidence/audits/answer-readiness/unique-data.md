@@ -23,58 +23,18 @@ The v7 runner includes `article` and `general` pages in this check's existing pa
 
 AI generative engines prioritize content with original, citable data points over vague claims. Include specific statistics and metrics.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-There is thin published support for 'statistics make content more citable in generative answers' (the 2024 GEO study), so the signal is not invented, and the comment shows the pattern was tightened once already. But the tightened pattern still counts prices and any comma-grouped number, so every e-commerce and pricing page trivially clears the 3-match bar with `$29.99`, `$1,200`, `1,000+` — the audit rewards a product grid as 'unique data or statistics'. It measures numeral density while the title, description and guidance all promise originality.
-
-**Required fix:** 1) Drop the bare currency branch, or require currency figures to sit in sentence context rather than in a price/grid element (exclude matches inside elements whose class or itemprop indicates a price). 2) Add non-USD symbols and European separator formats keyed off `lang`/`Offer.priceCurrency`. 3) Count per page and require a single page to clear the threshold instead of summing across pages. 4) Rename to what it measures ('Quantified claims in content') and rewrite the guidance to stop promising originality the code cannot assess. 5) Exclude nav/header/footer from the text root. 6) Scope to `pageType === 'content'`.
-
-**False-positive risks:**
-
-- `\$[\d,]+(?:\.\d{2})?` counts product prices. A shop page listing three items PASSES 'Unique data or statistics' with 'Examples: $29.99, $1,200, $45.00', telling the user their content has citable original research.
-- `\b\d{1,3}(?:,\d{3})+\b` matches any comma-grouped number: review counts ('1,234 reviews'), follower counts, SKU numbers, page-view badges.
-- The currency branch is USD-only. A European site writing `1.200 €` or `£29.99`, or a Japanese `¥1,200`, matches only incidentally; the German thousands form `1.200` matches nothing → false FAIL on a site full of figures.
-- The percent branch matches discount badges ('20% off'), which are marketing, not data.
-- No originality signal whatsoever despite `title: 'Unique data or statistics'` — a page quoting a widely-copied third-party statistic scores identically to primary research. The audit cannot distinguish them and the copy shouldn't claim it does.
-- `allMatches.push(...matches.slice(0, 10))` caps per page, then `allMatches.length >= 3` aggregates ACROSS pages, so three pages with one price each PASS as though one page were data-rich.
-- No `applicablePageTypes`, so category/product pages are graded by a rule framed for editorial content.
-- `getMainContentText` falls back to `<body>` when there is no `<main>`, so nav badges, promo banners and footer stats count as content data; on an SPA shell there is no text at all → hard FAIL.
-
-**Test gaps:**
-
-- No test for a product/pricing page passing on prices alone — the dominant false-pass path.
-- No test for non-USD currency or European decimal/thousands separators.
-- No test for discount badges ('20% off') in nav or a promo banner.
-- No test for the cross-page aggregation making three one-figure pages pass.
-- No test for an SPA shell.
-- Only 4 tests, all single-sentence bodies.
-
-**Overlaps with:** _none_
-
 ## Implementation deviations
 
-- 2026-08-26 — the shared text helper this audit reads, `getMainContentText`, changed its selection. Among several `<main>` elements it now returns the one holding the most text rather than the first, it ignores a `<main>` inside a `<template>`, and it falls back to the whole `<body>` only when no `<main>` holds any text. Measured cause (scan evidence gate design, section 2.4): storefronts ship empty or fragmented `<main>` wrappers, and the first one is often a stub. Two consequences for this audit. A page whose real content sits in a later `<main>` is now measured on that content. A page whose every `<main>` is empty is now measured on its body text, page chrome included, where it previously measured as empty.
-
-### Scoped to article and general pages; euro, pound and comma-decimal amounts (2026-10-06)
-
-Required fix #6 lands. The audit declares `applicablePageTypes: ["content"]`
-(now `general` and `article`), so the runner hands it those pages only and returns not applicable when the
-scan holds none. A large retail site's homepage was failed for carrying no
-statistics.
-
-Required fix #2 lands. A currency figure now reads `$`, `€` and `£`, leading
-or trailing, with comma or dot decimals and comma, dot or no-break-space
-thousands groups. `49,99 €`, `1.200,50 €` and `£29.99` each count once. A
-percentage may use a comma decimal and a space before the sign (`12,5 %`). A
-bare comma decimal with no unit still counts as nothing.
+- Figures are matched in the text of the largest `<main>`, or of the body when no `<main>` holds text (`getMainContentText`).
+- A currency figure reads `$`, `€` and `£`, leading or trailing, with comma or dot decimals and comma, dot or no-break-space thousands groups. A percentage may use a comma decimal and a space before the sign. A bare comma decimal with no unit counts as nothing.
+- The page-type list (`general`, `article`) keeps the old general-content population. It is a holding scope, not the final feature gate.
 
 ## Deferred
 
-- **Prices still count as figures (fix #1).** An article or general page that lists
-  prices can pass on them. The page scope removes the product-grid
-  path; the in-sentence test is not built.
-- **Per-page threshold (fix #3), rename (fix #4) and chrome exclusion
-  (fix #5)** are unchanged.
+- Prices still count as figures. An article or general page that lists prices can pass on them. The in-sentence test is not built.
+- The threshold is three figures summed across all pages, not per page.
+- The audit is not renamed.
+- Page chrome is not excluded when the body fallback applies.
 
 ## Evidence
 
@@ -93,12 +53,3 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - Google's content guidance asks directly for the originality half of the audit's title: "Does the content provide original information, reporting, research, or analysis?" — https://developers.google.com/search/docs/fundamentals/creating-helpful-content (verified 2026-08-21)
 
 **Counter-evidence:** The survey's integrity warning applies squarely to a presence-counting check: "adding a fabricated statistic may increase reuse while degrading epistemic quality", and it finds the gains conditional on "time-sensitive or commercial queries" while lacking universal applicability (https://arxiv.org/html/2607.14035v1, verified 2026-08-21). The GEO measurements are taken inside a fixed retrieval context and share an add-content confound across all three winning methods, so length is not separated from the statistic itself. Critically, nothing in the evidence supports the _unique/original_ framing the audit's title and guidance promise — no source distinguishes primary research from a re-quoted third-party figure, and none supports counting product prices or comma-grouped numbers as statistics.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
-
-## Implementation deviations (v7 P3, 2026-10-07)
-
-The added labels preserve the old general-content population while classification changes. This is not the final feature-gate migration. The evidence grade, tier, weight, and audit ID stay unchanged.

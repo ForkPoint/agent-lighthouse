@@ -27,27 +27,6 @@ sources:
 
 Reads the robots.txt rules that apply to PerplexityBot — its own group if it has one, otherwise the catch-all — and reports whether they let it fetch the site root. A named group is not required: under RFC 9309 §2.2.1 an open catch-all grants the same access.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Perplexity is a genuinely high-value citation surface, so the signal is worth keeping, but the taxonomy is wrong and the roster is half-missing. `PerplexityBot` is registered as `category: 'training'` in `TRAINING_CRAWLERS` — it is Perplexity's search-index crawler, not a training crawler — and `Perplexity-User`, the realtime fetcher that actually produces the citations and referral clicks users care about, is not audited at all. Because 2.28 (agent-governance) derives its whole training-vs-realtime verdict from these two arrays, the miscategorization propagates: a site with correct Perplexity governance is scored against the wrong bucket.
-
-**Required fix:** Move PerplexityBot to `REALTIME_CRAWLERS` (or add a third `search-index` category) and add a `Perplexity-User` audit to `REALTIME_CRAWLERS`. Apply the shared helper fixes from 2.1.
-
-**False-positive risks:**
-
-- Miscategorization as `training` feeds `TRAINING_CRAWLERS` into 2.28's `categoryBlocked`, so a site allowing PerplexityBot for search while blocking real training crawlers reads as inconsistent training policy.
-- Shared exact-match miss on `User-agent: PerplexityBot/1.0`.
-- Perplexity has been repeatedly documented crawling from undeclared UAs and rotating IPs; a robots.txt-only verdict overstates what the directive actually controls.
-- Shared BOM / soft-404 / `Disallow: /*` misreads.
-
-**Test gaps:**
-
-- No test asserting the bot's category classification.
-- No coverage of `Perplexity-User` (the token absent from the roster).
-- Same missing real-world robots.txt variants as 2.1.
-
-**Overlaps with:** `2.22`, `2.28`
-
 ## Evidence
 
 ### Signal: PerplexityBot allow/block state in robots.txt — grade A (robots-ai-crawlers)
@@ -60,46 +39,14 @@ Perplexity is a genuinely high-value citation surface, so the signal is worth ke
 
 **Counter-evidence:** Perplexity has been publicly accused of crawling from undeclared user agents and rotating IPs to evade blocks (a widely reported 2025 dispute), so a PerplexityBot disallow may not be sufficient to prevent access. Independent 2026 reporting also indicates Perplexity's crawl-to-refer ratio has worsened (~225:1), eroding the referral argument. The 'not used for training' claim is vendor-asserted and unverifiable externally.
 
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
-
 ## Implementation deviations
 
-### Inherited access passes (2026-10-06)
+The shared base class `_crawler-bot-audit.ts` grades access, not the shape of the file.
 
-The audit scored the shape of the file, not the access it grants. The shared
-base class `_crawler-bot-audit.ts` passed only when a group named PerplexityBot. It
-warned at 0.5 when PerplexityBot was allowed through `User-agent: *` or by no rule
-at all.
-
-Nothing in the evidence supports that split. The grade rests on what a
-disallow does, which is a fact about the block state. RFC 9309 §2.2.1 makes a
-crawler obey the group that names its product token and fall back to `*`
-only when none does. An open catch-all therefore grants the same access a
-named group would.
-
-The rule now asks one question: do the rules that apply to PerplexityBot permit `/`?
-Allowed by its own group, through the catch-all, or by no applicable group
-all pass. The message names which one applied. A disallow that reaches the
-token still fails.
-
-An unreadable robots.txt is not applicable rather than a warn: missing,
-non-200, an empty body, or a 200 that parses to no groups and no directives.
-RFC 9309 §2.3.1.3 lets a crawler access everything when the file is
-unavailable, and no source here documents a cost for its absence.
-
-The old fix, add `User-agent: PerplexityBot` / `Allow: /`, is withdrawn as advice for
-an allowed site. A named group replaces the catch-all for that bot, so it
-drops every catch-all `Disallow` the site still meant to apply. The fail
-remedy now says so.
-
-`access-crawl-control/meta-external-agent` and
-`access-crawl-control/anthropic-ai` made the same change on 2026-08-24. The
-base class now matches them.
-
-Grade, tier and weight are unchanged.
+- The audit passes when the rules that apply to PerplexityBot permit `/`: its own group, the catch-all, or no applicable group. Under RFC 9309 §2.2.1 an open catch-all grants the same access a named group would.
+- The message names which of the three applied. A disallow that reaches the token fails.
+- An unreadable robots.txt is not applicable: missing, non-200, an empty body, or a 200 that parses to no groups and no sitemaps. RFC 9309 §2.3.1.3 lets a crawler access everything when the file is unavailable.
+- The fail remedy warns that a named `Allow: /` group replaces the catch-all for that bot and drops its catch-all `Disallow` lines.
 
 ## Deferred
 

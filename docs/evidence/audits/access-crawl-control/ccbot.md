@@ -27,25 +27,6 @@ sources:
 
 Reads the robots.txt rules that apply to CCBot — its own group if it has one, otherwise the catch-all — and reports whether they let it fetch the site root. A named group is not required: under RFC 9309 §2.2.1 an open catch-all grants the same access.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-CCBot is still active and Common Crawl still feeds many downstream training sets, so the signal is real — but this is the audit where the shared exact-match bug bites hardest. `User-agent: CCBot/2.0` is the form propagated by years of copy-pasted robots.txt snippets and by Common Crawl's own historical documentation, and it is invisible to `isAllowed`. A site that deliberately blocks Common Crawl with `User-agent: CCBot/2.0\nDisallow: /` is reported as 'allowed by default' — the audit tells the user their content is reachable when it is not.
-
-**Required fix:** Ship the version-token normalization in `_robots-txt-helpers.ts` (strip `/<version>` before comparison) and add `CCBot/2.0` as an explicit regression test. Soften `impact` to reflect the multi-month lag between a Common Crawl snapshot and any model that consumes it.
-
-**False-positive risks:**
-
-- `g.userAgent.toLowerCase() === 'ccbot'` fails against the extremely common `User-agent: CCBot/2.0`, inverting block detection.
-- Passing this audit gives no near-term AI benefit: Common Crawl snapshots enter model corpora on a multi-month-to-multi-year lag, so the `impact` framing of reach across AI systems is not actionable for current visibility.
-- Shared BOM / soft-404 / `Disallow: /*` misreads.
-
-**Test gaps:**
-
-- No `User-agent: CCBot/2.0` test — the single most likely real-world form for this specific bot.
-- Same missing real-world robots.txt variants as 2.1.
-
-**Overlaps with:** `2.22`, `2.28`
-
 ## Evidence
 
 ### Signal: CCBot allow/block state in robots.txt — grade A (robots-ai-crawlers)
@@ -58,46 +39,14 @@ CCBot is still active and Common Crawl still feeds many downstream training sets
 
 **Counter-evidence:** Blocking CCBot is retroactively useless — historical Common Crawl snapshots are already published and permanently redistributable, so a block only affects future crawls. Common Crawl warns that 'crawlers falsely identifying themselves as CCBot' exist, so a disallow does not stop spoofers; operators should verify by reverse DNS against published IP ranges. Common Crawl's own page states no crawl-delay position and does not frame itself as AI training infrastructure.
 
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
-
 ## Implementation deviations
 
-### Inherited access passes (2026-10-06)
+The shared base class `_crawler-bot-audit.ts` grades access, not the shape of the file.
 
-The audit scored the shape of the file, not the access it grants. The shared
-base class `_crawler-bot-audit.ts` passed only when a group named CCBot. It
-warned at 0.5 when CCBot was allowed through `User-agent: *` or by no rule
-at all.
-
-Nothing in the evidence supports that split. The grade rests on what a
-disallow does, which is a fact about the block state. RFC 9309 §2.2.1 makes a
-crawler obey the group that names its product token and fall back to `*`
-only when none does. An open catch-all therefore grants the same access a
-named group would.
-
-The rule now asks one question: do the rules that apply to CCBot permit `/`?
-Allowed by its own group, through the catch-all, or by no applicable group
-all pass. The message names which one applied. A disallow that reaches the
-token still fails.
-
-An unreadable robots.txt is not applicable rather than a warn: missing,
-non-200, an empty body, or a 200 that parses to no groups and no directives.
-RFC 9309 §2.3.1.3 lets a crawler access everything when the file is
-unavailable, and no source here documents a cost for its absence.
-
-The old fix, add `User-agent: CCBot` / `Allow: /`, is withdrawn as advice for
-an allowed site. A named group replaces the catch-all for that bot, so it
-drops every catch-all `Disallow` the site still meant to apply. The fail
-remedy now says so.
-
-`access-crawl-control/meta-external-agent` and
-`access-crawl-control/anthropic-ai` made the same change on 2026-08-24. The
-base class now matches them.
-
-Grade, tier and weight are unchanged.
+- The audit passes when the rules that apply to CCBot permit `/`: its own group, the catch-all, or no applicable group. Under RFC 9309 §2.2.1 an open catch-all grants the same access a named group would.
+- The message names which of the three applied. A disallow that reaches the token fails.
+- An unreadable robots.txt is not applicable: missing, non-200, an empty body, or a 200 that parses to no groups and no sitemaps. RFC 9309 §2.3.1.3 lets a crawler access everything when the file is unavailable.
+- The fail remedy warns that a named `Allow: /` group replaces the catch-all for that bot and drops its catch-all `Disallow` lines.
 
 ## Deferred
 
