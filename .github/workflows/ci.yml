@@ -57,6 +57,9 @@ jobs:
       - name: Check enum constants replace magic strings
         run: pnpm check:enums
 
+      - name: Check for unused files, exports and dependencies
+        run: pnpm knip
+
       - name: Check docs for retired page type names
         run: pnpm check:retired-names
 

@@ -7,14 +7,7 @@
  * degrade to their jsdom (zero-layout) values, so data/layout classification
  * stays stable for our fixtures.
  */
-import {
-  VNode,
-  toVNode,
-  escapeSelector,
-  memoize,
-  findUp,
-  type AnyNode,
-} from "./core";
+import { VNode, toVNode, memoize, findUp, type AnyNode } from "./core";
 import { getExplicitRole, getRoleType } from "./aria";
 import { idrefs, isFocusable } from "./dom";
 
@@ -75,7 +68,6 @@ function toGridImpl(node: Table): Cell[][] {
 }
 
 export const toGrid = memoize(toGridImpl);
-export const toArray = toGrid;
 
 function getCellPositionImpl(
   cell: Cell,
@@ -135,20 +127,6 @@ export function isDataCell(cell: Cell): boolean {
   const role = getExplicitRole(cell);
   if (role) return ["cell", "gridcell"].includes(role);
   return cell.nodeName.toUpperCase() === "TD";
-}
-
-export function isHeader(cell: Cell): boolean {
-  if (isColumnHeader(cell) || isRowHeader(cell)) return true;
-  const id = cell.getAttribute("id");
-  if (id) {
-    const doc = (
-      cell as unknown as {
-        ownerDocument: { querySelector: (s: string) => unknown };
-      }
-    ).ownerDocument;
-    return !!doc.querySelector(`[headers~="${escapeSelector(id)}"]`);
-  }
-  return false;
 }
 
 const HeaderType = {

@@ -7,17 +7,12 @@ import { isPathAllowed, matchesUserAgent } from "#core/gatherers/robots";
 
 // ── Types ─────────────────────────────────────────────────────
 
-export type {
-  RobotsRule as RobotsTxtRule,
-  RobotsGroup as RobotsTxtGroup,
-} from "#core/gatherers/robots";
+export type { RobotsGroup as RobotsTxtGroup } from "#core/gatherers/robots";
 
 // ── Re-exported gatherer primitives ───────────────────────────
 
 export {
   parseRobots as parseRobotsTxt,
-  matchesUserAgent,
-  groupsForBot,
   isPathAllowed,
 } from "#core/gatherers/robots";
 
@@ -233,9 +228,4 @@ export const REALTIME_CRAWLERS: CrawlerBot[] = [
     displayName: "Claude-SearchBot",
     category: CrawlerPurpose.Realtime,
   },
-];
-
-export const ALL_CRAWLERS: CrawlerBot[] = [
-  ...TRAINING_CRAWLERS,
-  ...REALTIME_CRAWLERS,
 ];

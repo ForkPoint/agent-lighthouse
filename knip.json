@@ -1,0 +1,22 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignoreExportsUsedInFile": true,
+  "ignoreIssues": {
+    "packages/core/src/audits/*/index.ts": ["exports"],
+    "packages/core/src/logger.ts": ["duplicates"],
+    "packages/core/src/parser.ts": ["duplicates"]
+  },
+  "workspaces": {
+    ".": {
+      "entry": ["scripts/*.{ts,mjs}", "scripts/spike/*.ts"],
+      "project": ["scripts/**/*.{ts,mjs}"]
+    },
+    "packages/core": {
+      "ignore": ["src/audits/proposed/**"]
+    },
+    "packages/website": {
+      "entry": ["scripts/*.mjs"]
+    },
+    "packages/*": {}
+  }
+}
