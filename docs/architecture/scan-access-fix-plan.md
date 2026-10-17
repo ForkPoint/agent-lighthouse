@@ -1,7 +1,7 @@
 # Scan access fix plan
 
-Status: 2026-10-17. F1-F12 are merged and confirmed on the full corpus.
-F13-F17 are merged and checked on the sites that found them.
+Status: 2026-10-17. F1-F17 are merged and confirmed on the full corpus.
+F18 is merged and checked on the site that found it.
 Open items are at the end.
 
 This plan records why corpus sites were skipped or left unscored, what was
@@ -64,6 +64,7 @@ robots-skipped sites were not scanned at all.
 | F15 | RC22        | #149 (`95891cb4`) | The connection-drop reason says what the one homepage attempt saw                                        | patch     |
 | F16 | RC23        | #150 (`31339980`) | `x-amzn-waf-action: challenge` or `captcha` names AWS WAF                                                | patch     |
 | F17 | RC24        | #151 (`3f6d916d`) | The F7 gateway also follows a target on the `www` or apex twin of the host                               | patch     |
+| F18 | RC25        | #152 (`60926eea`) | `robots.txt` goes first and alone; two connect failures mean no other root file is sent                  | patch     |
 
 Related clean-ups: #142 removed the multi-page scan leftovers
 (`MAX_PAGES_PER_SCAN`, `maxPages`) and the six-page wording in the docs. #145
@@ -164,6 +165,14 @@ user agent. The verdict stays; only the wording changed.
 refresh to `https://www.<site>`. Now scored 66. A subdomain, another scheme,
 another port or a look-alike host is still not followed.
 
+**F18.** The root-file phase sent 26 requests at once. undici does not cancel
+a request that waits for a connection, so on a host that accepts none each
+file waited out the connect timeout in turn. An abort signal did not help:
+queued requests still ended at 21 s and 31 s. `robots.txt` now goes first and
+alone, with one retry on a connect failure. Two connect failures mean the
+other root files are not sent. The site that found it went from about 120 s
+to 32 s per origin, same verdict. Cost: one serial request per scan.
+
 ## Root causes
 
 | ID   | Kind           | Sites | Summary                                                                      | Fixed by |
@@ -192,7 +201,7 @@ another port or a look-alike host is still not followed.
 | RC22 | label bug      |     5 | A single homepage timeout described as repeated                              | F15      |
 | RC23 | label bug      |     1 | AWS WAF challenge (empty HTTP 202) reported as too little evidence           | F16      |
 | RC24 | scanner bug    |     1 | Gateway meta refresh to the `www` twin not followed                          | F17      |
-| RC25 | scanner bug    |     1 | The site's own host never connects; every root-file probe waits it out       | open     |
+| RC25 | scanner bug    |     1 | The site's own host never connects; every root-file probe waits it out       | F18      |
 
 Site counts come from the run that found or confirmed each cause. RC5 is the
 14 sites that RC18 later explained. RC18 counts the 11 budget overruns and 4
@@ -259,19 +268,11 @@ Compared with the `b355ab45` run:
 
 ## Open items
 
-1. **Own host that never connects (RC25).** One site's apex host refuses
-   every connection. F13 never records the site's own hosts, so 27 root-file
-   and about-page probes each wait out the connect timeout (12-15 s, in
-   batches of 5) before the homepage fetch fails. The origin fallback then
-   repeats the wait on the `www` host. The scan takes 240 s, over the 180 s
-   budget, in both the `b355ab45` and `3f6d916d` runs. Likely fix: fetch the
-   homepage before the root files, or stop the root-file phase after the
-   first connect-level failure on the scanned host.
-2. **Smaller synchronous cost.** The `cursor:pointer` check in
+1. **Smaller synchronous cost.** The `cursor:pointer` check in
    `packages/core/src/audits/operability-safety/_agent-affordances.ts` took
    about 0.7 s of one busy streak. Below the threshold that blocks scans.
-3. **Geo redirects (RC10).** These depend on the scan location. A run from
+2. **Geo redirects (RC10).** These depend on the scan location. A run from
    another country would show which sites redirect only from BG. 6 sites
    still redirect to another site without a permanent redirect.
-4. **Intermittent walls (RC16).** No fix. The corpus result for these sites
+3. **Intermittent walls (RC16).** No fix. The corpus result for these sites
    depends on the run.
