@@ -21,13 +21,18 @@ import {
   ScoreDisplayMode,
 } from "#core/types";
 
-/** Character caps the feed spec rejects rows on. */
+/**
+ * Length limits the feed spec states. The OpenAI format frames these as "aim
+ * for at most"; the Google-compatible profile states them as limits. item_id
+ * and brand carry no limit in the current spec.
+ */
 const CAPS = {
-  item_id: 100,
   title: 150,
   description: 5_000,
-  brand: 70,
 } as const;
+
+/** The spec takes absolute HTTP or HTTPS URLs and prefers HTTPS. */
+const ABSOLUTE_HTTP_URL = /^https?:\/\//i;
 
 /** schema.org availability values that map onto a feed enum value. */
 const AVAILABILITY_MAP: Record<string, string> = {
@@ -36,9 +41,6 @@ const AVAILABILITY_MAP: Record<string, string> = {
   PreOrder: "pre_order",
   BackOrder: "backorder",
 };
-
-/** Feed enum values that require a date before the row is accepted. */
-const DATED_AVAILABILITY = new Set(["pre_order", "backorder"]);
 
 const GTIN_KEYS = ["gtin", "gtin8", "gtin12", "gtin13", "gtin14"] as const;
 const GTIN_LENGTHS = new Set([8, 12, 13, 14]);
@@ -132,10 +134,6 @@ function assess(
     problems.push(
       "no item_id source: the Product carries no sku, mpn or productID",
     );
-  } else if (itemId.length > CAPS.item_id) {
-    problems.push(
-      `item_id is ${itemId.length} characters, over the ${CAPS.item_id}-character cap`,
-    );
   } else {
     row.item_id = itemId;
   }
@@ -158,16 +156,12 @@ function assess(
 
   const brand = text(product["brand"]);
   if (!brand) problems.push("no brand name");
-  else if (brand.length > CAPS.brand) {
-    problems.push(
-      `brand is ${brand.length} characters, over the ${CAPS.brand}-character cap`,
-    );
-  } else row.brand = brand;
+  else row.brand = brand;
 
   // ── url and image ───────────────────────────────────────────
   const url = text(product["url"]) ?? page.url;
-  if (!/^https:\/\//i.test(url))
-    problems.push("url is not an absolute HTTPS URL");
+  if (!ABSOLUTE_HTTP_URL.test(url))
+    problems.push("url is not an absolute HTTP or HTTPS URL");
   else row.url = url;
   const canonical = page.$('link[rel="canonical"]').attr("href");
   if (
@@ -182,8 +176,8 @@ function assess(
 
   const image = text(product["image"]);
   if (!image) problems.push("no image");
-  else if (!/^https:\/\//i.test(image))
-    problems.push("image_url is not an absolute HTTPS URL");
+  else if (!ABSOLUTE_HTTP_URL.test(image))
+    problems.push("image_url is not an absolute HTTP or HTTPS URL");
   else if (!/\.(jpe?g|png|webp)(\?|$)/i.test(image)) {
     ambiguous.push(
       `image_url ${image} is not a JPEG, PNG or WebP by extension`,
@@ -222,7 +216,8 @@ function assess(
       );
     } else row.currency = currency;
 
-    // A sale price above the list price rejects the row and misprices the offer.
+    // The feed ignores a sale price that is not strictly below the regular
+    // price, so the row carries the regular price instead of the page's.
     const spec = first(offer["priceSpecification"]);
     const listFromSpec =
       spec &&
@@ -240,7 +235,7 @@ function assess(
       price > listPrice
     ) {
       problems.push(
-        `the sale price ${price} is higher than the list price ${listPrice}`,
+        `the sale price ${price} is higher than the list price ${listPrice}, so the feed would ignore it and show the list price`,
       );
     }
 
@@ -256,28 +251,17 @@ function assess(
         );
       } else {
         row.availability = mapped;
-        if (
-          DATED_AVAILABILITY.has(mapped) &&
-          !text(offer["availabilityStarts"])
-        ) {
-          problems.push(
-            `availability maps to ${mapped}, which requires an availabilityStarts date the feed can send as availability_date`,
-          );
-        }
       }
     }
   }
 
   // ── identifiers ─────────────────────────────────────────────
+  // gtin and mpn are optional in the OpenAI format; gtin-or-mpn applies only
+  // to the Google-compatible profile. A GTIN that is supplied must be valid.
   const gtinKey = GTIN_KEYS.find((key) => text(product[key]));
   const gtin = gtinKey
     ? text(product[gtinKey])!.replace(/\s|-/g, "")
     : undefined;
-  if (!gtin && !text(product["mpn"])) {
-    problems.push(
-      "no gtin and no mpn, so the row is rejected unless identifier_exists is set to no",
-    );
-  }
   if (gtin) {
     if (!/^\d+$/.test(gtin) || !GTIN_LENGTHS.has(gtin.length)) {
       problems.push(`${gtinKey} "${gtin}" is not 8, 12, 13 or 14 digits`);
@@ -312,7 +296,7 @@ function feedRow(row: Row): string {
 }
 
 const EXPECTED =
-  "The product page maps onto a feed row that passes validation: identity and copy within their character caps, a single numeric price with an ISO 4217 currency, an availability value the feed enum accepts, and a valid GTIN or MPN";
+  "The product page maps onto a feed row that passes validation: every required field the page can supply, title and description within their length limits, a single numeric price with an ISO 4217 currency, an availability value the feed enum accepts, and a valid check digit on any GTIN";
 
 const SAMPLE = `{
   "@type": "Product",
@@ -337,7 +321,7 @@ export class CheckoutOfferFieldMappingAudit extends Audit {
     title: "Checkout-eligible offer field mapping",
     failureTitle: "Checkout-eligible offer field mapping",
     description:
-      "Audits the first scanned product page with Product markup against the required-and-conditional field set of the OpenAI product feed spec, including its character caps and its conditional triggers, so the merchant learns why its feed row would be rejected before uploading a feed.",
+      "Audits the first scanned product page with Product markup against the required fields of the OpenAI product feed spec and the format rules it states for them, so the merchant learns why its feed row would be rejected or misread before uploading a feed.",
     scoreDisplayMode: ScoreDisplayMode.Ternary,
     weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
     evidenceGrade: EvidenceGrade.A,
@@ -354,8 +338,8 @@ export class CheckoutOfferFieldMappingAudit extends Audit {
     defaultPriority: CheckPriority.High,
     guidance: {
       impact:
-        "Falsifiable claim: the OpenAI feed spec enumerates a closed set of required fields (item_id <=100, title <=150, description <=5000, brand <=70, url, image_url, price with ISO 4217 currency, availability from a 5-value enum, target_countries) plus three conditional triggers that reject rows: gtin-or-mpn required unless identifier_exists=no; availability_date required when availability is pre_order or backorder; seller_privacy_policy and seller_tos required when is_eligible_checkout=true. Validation is row-by-row, so individual products fail silently while the feed as a whole succeeds. A PDP that cannot supply these values forces the merchant to hand-author or scrape them, which is precisely where price mismatch enters. Disproof condition: rows lacking gtin/mpn and identifier_exists being accepted as checkout-eligible.",
-      fix: "Publish the feed values on the PDP itself so the row is derived rather than hand-authored: a sku or mpn under 100 characters, a name under 150, a brand name under 70, an absolute HTTPS image URL, a bare decimal price with a 3-letter ISO 4217 priceCurrency, and an availability value from InStock / OutOfStock / PreOrder / BackOrder. Replace AggregateOffer with a per-variant Offer so the price resolves to one number. Add availabilityStarts whenever the offer is a pre-order or backorder, and check the GTIN check digit before publishing.",
+        "Falsifiable claim: the OpenAI feed spec requires nine fields on every row (item_id, title, description, url, brand, seller_name, image_url, availability, and price as a decimal amount with an ISO 4217 currency). An omitted or unrecognised availability rejects the row, a sale price not strictly below the regular price is not used, and a supplied GTIN needs a valid check digit. Titles and descriptions should stay within 150 and 5,000 characters. Validation is row-by-row, so one product can be rejected while the rest of the feed processes. A PDP that cannot supply these values forces the merchant to hand-author or scrape them, which is where price mismatch enters. Disproof condition: rows with no availability, or a price with no ISO 4217 currency, being accepted into discovery.",
+      fix: "Publish the feed values on the PDP itself so the row is derived rather than hand-authored: a sku, mpn or productID, a name under 150 characters, a description under 5,000, a brand name, an absolute image URL, a bare decimal price with a 3-letter ISO 4217 priceCurrency, and an availability value from InStock / OutOfStock / PreOrder / BackOrder. Replace AggregateOffer with a per-variant Offer so the price resolves to one number. If you publish a GTIN, check its check digit before publishing.",
       code: SAMPLE,
       effort: FixEffort.Moderate,
       docsUrl:

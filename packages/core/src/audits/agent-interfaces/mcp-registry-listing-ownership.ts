@@ -23,7 +23,11 @@ import {
 /** The public registry clients resolve "the MCP server for this domain" against. */
 const REGISTRY = "https://registry.modelcontextprotocol.io/v0.1/servers";
 
-/** The file that proves control of a reverse-DNS namespace. */
+/**
+ * One of two ways to prove control of a reverse-DNS namespace; the other is a
+ * DNS TXT record. The registry checks either at login and requires neither to
+ * stay published, so this file is reported but never required.
+ */
 const PROOF_PATH = "/.well-known/mcp-registry-auth";
 
 /** The grammar that proof file must carry. */
@@ -109,7 +113,7 @@ export class McpRegistryListingOwnershipAudit extends Audit {
     failureTitle:
       "This site’s MCP server is missing from the registry, or listed under a namespace it does not own",
     description:
-      "Searches the official MCP Registry for servers whose `remotes[].url` lives on this domain, classifies each listing by namespace — reverse-DNS of this domain, an individual’s GitHub account, or a third-party aggregator — and checks that the domain-control proof the reverse-DNS namespace requires is actually being served at `/.well-known/mcp-registry-auth`.",
+      "Searches the official MCP Registry for servers whose `remotes[].url` lives on this domain, classifies each listing by namespace — reverse-DNS of this domain, an individual’s GitHub account, or a third-party aggregator — and reports whether the optional domain-control proof file is served at `/.well-known/mcp-registry-auth`. The registry grants the reverse-DNS namespace only after checking a DNS TXT or HTTP proof at login, so the namespace itself is the ownership signal.",
     scoreDisplayMode: ScoreDisplayMode.Ternary,
     tier: AuditTier.Scored,
     evidenceGrade: EvidenceGrade.B,
@@ -120,8 +124,8 @@ export class McpRegistryListingOwnershipAudit extends Audit {
     requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
     guidance: {
       impact:
-        'The registry is the index a client resolves "the MCP server for this domain" against. A domain with no first-party entry is absent from it, so the only path to the server is a URL somebody pastes by hand. A listing under an aggregator’s namespace is worse than absent in one way: the brand cannot update or revoke it, and agents routed through it reach a proxy rather than the origin. The reverse-DNS namespace that fixes this is granted on proof of domain control, and that proof has to keep being served.',
-      fix: "Publish the server under your own reverse-DNS namespace (`com.example/...`), serve the proof at `/.well-known/mcp-registry-auth` in the exact `v=MCPv1; k=ed25519; p=<base64>` form and keep serving it after DNS migrations, keep the listing’s version in step with what the server reports, and offer a `streamable-http` remote rather than only the deprecated `sse`.",
+        'The registry is the index a client resolves "the MCP server for this domain" against. A domain with no first-party entry is absent from it, so the only path to the server is a URL somebody pastes by hand. A listing under an aggregator’s namespace is worse than absent in one way: the brand cannot update or revoke it, and agents routed through it reach a proxy rather than the origin. The reverse-DNS namespace that fixes this is granted only on proof of domain control.',
+      fix: "Publish the server under your own reverse-DNS namespace (`com.example/...`), proving domain control with a DNS TXT record or a `/.well-known/mcp-registry-auth` file in the exact `v=MCPv1; k=ed25519; p=<base64>` form, keep the listing’s version in step with what the server reports, and offer a `streamable-http` remote rather than only the deprecated `sse`.",
       effort: FixEffort.Moderate,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/agent-interfaces/mcp-registry-listing-ownership/",
@@ -230,7 +234,9 @@ export class McpRegistryListingOwnershipAudit extends Audit {
       }
     }
 
-    // The ownership proof, verified independently of what the registry says.
+    // The HTTP ownership proof, reported for the record. The registry checks it
+    // (or a DNS TXT record, which audits cannot query) at login only, so its
+    // absence costs a listing nothing and never fails one.
     let proof = "";
     const proofUrl = `https://${apex}${PROOF_PATH}`;
     // Fetched rather than read from `ctx.rootFiles`: the proof belongs to the
@@ -253,10 +259,6 @@ export class McpRegistryListingOwnershipAudit extends Audit {
       failures.push(
         `No registry listing names a server on ${apex}, so a client resolving "the MCP server for ${apex}" finds nothing`,
       );
-    } else if (firstParty.length > 0 && proof !== "valid") {
-      failures.push(
-        `${firstParty[0]!.name} claims a namespace granted on proof of domain control, but ${proofUrl} is ${proof}`,
-      );
     } else if (
       firstParty.length === 0 &&
       listings.some((l) => namespaceKind(l.name, apex) === Namespace.Aggregator)
@@ -270,6 +272,15 @@ export class McpRegistryListingOwnershipAudit extends Audit {
       );
     }
 
+    // A served but malformed file is a defect the publisher left behind; it
+    // would not work for a later HTTP login. A warning, not a failure: the
+    // registry does not read the file after login.
+    if (firstParty.length > 0 && proof === "malformed") {
+      warnings.push(
+        `${proofUrl} is served but does not match the v=MCPv1; k=<alg>; p=<base64> form`,
+      );
+    }
+
     const details = {
       apex,
       searchesSent: searched,
@@ -280,8 +291,8 @@ export class McpRegistryListingOwnershipAudit extends Audit {
       warnings: warnings.slice(0, 10),
     };
     const expected =
-      "At least one registry listing under this domain’s reverse-DNS namespace, with the ownership proof served and a streamable-http remote";
-    const foundText = `${listings.length} listing(s) pointing at ${apex}, ${firstParty.length} first-party; ownership proof ${proof}.`;
+      "At least one registry listing under this domain’s reverse-DNS namespace, with a streamable-http remote";
+    const foundText = `${listings.length} listing(s) pointing at ${apex}, ${firstParty.length} first-party; ownership proof file ${proof}.`;
     const displayValue = `${firstParty.length} first-party listing(s)`;
 
     if (failures.length > 0) {
@@ -290,7 +301,7 @@ export class McpRegistryListingOwnershipAudit extends Audit {
           failures[0]!,
           expected,
           foundText,
-          "Register the server under your own reverse-DNS namespace and keep serving the proof at /.well-known/mcp-registry-auth.",
+          "Register the server under your own reverse-DNS namespace, proving domain control by DNS TXT record or /.well-known/mcp-registry-auth.",
         ),
         displayValue,
         details,
@@ -303,7 +314,7 @@ export class McpRegistryListingOwnershipAudit extends Audit {
           warnings[0]!,
           expected,
           foundText,
-          "Keep the listing current and offer a streamable-http remote alongside anything deprecated.",
+          "Keep the listing current, offer a streamable-http remote alongside anything deprecated, and fix or remove a malformed proof file.",
         ),
         displayValue,
         details,
@@ -312,7 +323,7 @@ export class McpRegistryListingOwnershipAudit extends Audit {
 
     return {
       ...this.pass(
-        `${apex} is listed in the official registry under a namespace it owns, with the proof served.`,
+        `${apex} is listed in the official registry under a namespace it owns.`,
         expected,
         foundText,
       ),

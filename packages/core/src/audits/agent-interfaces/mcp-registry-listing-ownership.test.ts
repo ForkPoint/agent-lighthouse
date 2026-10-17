@@ -13,6 +13,7 @@ import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
 import type { FetchOptions, FetchResult } from "#core/fetcher";
 import type { AuditResult } from "#core/types";
 import { CheckStatus } from "#core/types";
+import { AuditResultSchema } from "#core/schemas";
 
 vi.mock("#core/fetcher", async (importOriginal) => {
   const actual = await importOriginal<typeof import("#core/fetcher")>();
@@ -130,24 +131,30 @@ describe("McpRegistryListingOwnershipAudit", () => {
     expect(r.details?.["firstPartyListings"]).toBe(1);
   });
 
-  it("fails a first-party listing whose proof is missing", async () => {
+  // The registry checks the proof at login, by DNS TXT or HTTP file, and
+  // requires neither to persist. A TXT-only domain serves no file.
+  it("passes a first-party listing whose proof file is not served", async () => {
     const { result } = run({ servers: [FIRST_PARTY()] });
-    const r = await result;
-    expect(r.status).toBe(CheckStatus.Fail);
+    const r = AuditResultSchema.parse(await result);
+    expect(r.status).toBe(CheckStatus.Pass);
     expect(r.details?.["ownershipProof"]).toBe("absent");
-    expect(strings(r, "failures")[0]).toContain(
-      "/.well-known/mcp-registry-auth",
-    );
+    expect(r.details?.["failures"]).toEqual([]);
+    expect(r.details?.["warnings"]).toEqual([]);
+    expect(r.found).toContain("ownership proof file absent");
   });
 
-  it("fails a first-party listing whose proof does not match the grammar", async () => {
+  it("warns rather than fails when a served proof file does not match the grammar", async () => {
     const { result } = run({
       servers: [FIRST_PARTY()],
       proof: "MCPv1 ed25519 abc",
     });
-    const r = await result;
-    expect(r.status).toBe(CheckStatus.Fail);
+    const raw = await result;
+    const r = AuditResultSchema.parse(raw);
+    expect(r.status).toBe(CheckStatus.Warn);
     expect(r.details?.["ownershipProof"]).toBe("malformed");
+    expect(strings(raw, "warnings")[0]).toContain(
+      "/.well-known/mcp-registry-auth",
+    );
   });
 
   it("fails when no registry listing names a server on this domain", async () => {

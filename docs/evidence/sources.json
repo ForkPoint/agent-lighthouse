@@ -4468,6 +4468,15 @@
       "keyFindings": "Quotes OpenAI's help-centre wording: 'On March 19, 2024, you will no longer be able to install new plugins or create new conversations with existing plugins. You will be able to continue existing conversations until April 9, 2024.' Note: OpenAI's own help.openai.com article (8988022) and openai.com return HTTP 403 to automated fetches, so this forum thread is the fetchable carrier of the primary quote."
     },
     {
+      "id": "openai-chat-completions-create",
+      "title": "OpenAI API reference — create chat completion",
+      "url": "https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create",
+      "type": "vendor-doc",
+      "publisher": "OpenAI",
+      "verified": "2026-10-17",
+      "keyFindings": "Function tool `name`: \"The name of the function to be called. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64.\""
+    },
+    {
       "id": "openai-computer-use-guide",
       "title": "Computer use — OpenAI API guide",
       "url": "https://developers.openai.com/api/docs/guides/tools-computer-use",
@@ -4537,9 +4546,9 @@
       "url": "https://developers.openai.com/commerce/specs/feed",
       "publisher": "OpenAI",
       "type": "vendor-doc",
-      "keyFindings": "Requires tab- or comma-delimited flat files; 'JSON, spreadsheet, XML, RSS, and Atom sources are not part of this compatibility path.' Confirms OpenAI's commerce stack does not consume JSON-LD of any kind.",
-      "verified": "2026-08-21",
-      "accessed": "2026-08-21"
+      "keyFindings": "The Google-compatible profile takes tab- or comma-delimited flat files only: 'JSON, spreadsheets, XML, RSS, and Atom are not supported by this compatibility path.' Feeds are uploaded; nothing reads JSON-LD from the page. The OpenAI format requires nine fields per row (item_id, title, description, url, brand, seller_name, image_url, availability, price as 'amount CURRENCY'); titles and descriptions 'aim for at most 150 and 5,000 characters'; no item_id or brand length cap; gtin, mpn and target_countries are optional; a supplied gtin needs 8, 12, 13 or 14 digits and a valid check digit; an omitted or unrecognised availability rejects the row; a sale_price not strictly below price is not used. gtin-or-mpn unless identifier_exists=no and availability_date for preorder/backorder apply only to the Google-compatible profile.",
+      "verified": "2026-10-17",
+      "accessed": "2026-10-17"
     },
     {
       "id": "openai-function-calling",
