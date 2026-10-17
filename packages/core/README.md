@@ -11,8 +11,10 @@ import { runScan } from "@forkpoint/agent-lighthouse-core";
 
 const report = await runScan("https://example.com");
 
-console.log(report.overallScore);
+console.log(report.overallScore); // null when the scan saw too little to judge
 ```
+
+Options (categories, page declarations, budget, logger, cancellation) are in the [configuration reference](https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/config.md#programmatic-options).
 
 The engine runs deterministic audits for AI crawler access, machine discovery (`llms.txt`, sitemaps, feeds), content extraction, Schema.org structured data, answer readiness, agent interfaces (WebMCP, MCP, OpenAPI discovery), agentic commerce, and agent operability & safety.
 

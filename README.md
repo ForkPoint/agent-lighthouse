@@ -22,12 +22,9 @@
   </p>
 </div>
 
-Logo files, icons, and usage rules: [brand guide](packages/website/public/brand/BRAND.md).
-Download the [complete brand kit](https://github.com/ForkPoint/agent-lighthouse/raw/refs/heads/main/packages/website/public/brand/agent-lighthouse-brand-kit.zip).
-
 ![Agent Lighthouse HTML report with the AI lighthouse logo, score summary, and website checks](docs/assets/report-screenshot.png)
 
-Example report from a scan of zapier.com on 2 September 2026. Scores describe that scan, not the site's current state.
+An example report. Its scores describe one past scan, not the site's current state.
 
 ---
 
@@ -35,30 +32,26 @@ Example report from a scan of zapier.com on 2 September 2026. Scores describe th
 
 Requires Node.js 22.22.2+ (22.x), 24.15.0+ (24.x), or 26+.
 
-Run a zero-install scan directly in your terminal. The `--view` flag opens the standalone HTML report for screenshots, stakeholder review, and pull-request artifacts.
-
 ```bash
-# Instant audit (prints terminal report & generates HTML + JSON reports)
-npx @forkpoint/agent-lighthouse https://yourstore.com
+# Terminal report, plus HTML and JSON reports in ./reports
+npx @forkpoint/agent-lighthouse https://example.com
 
-# Open the standalone HTML report in your browser
-npx @forkpoint/agent-lighthouse https://yourstore.com --view
+# Open the HTML report in your browser
+npx @forkpoint/agent-lighthouse https://example.com --view
 
-# Run in CI and fail if score is below threshold
-npx @forkpoint/agent-lighthouse https://staging.yourstore.com --min-score 85
+# Fail (exit 1) below a score, for CI
+npx @forkpoint/agent-lighthouse https://staging.example.com --min-score 85
 ```
 
-Agent Lighthouse checks 215 audits covering `llms.txt`, robots.txt crawler policy, Schema.org, OpenAPI discovery, WebMCP action surfaces, AEO/GEO content structure, agentic commerce, and operability.
+215 audits cover `llms.txt`, robots.txt crawler policy, Schema.org, OpenAPI discovery, WebMCP action surfaces, AEO/GEO content structure, agentic commerce, and operability. Every flag is in the [CLI reference](docs/cli.md); config files and SDK options are in [configuration](docs/config.md); how the score is built is in [scoring](docs/scoring.md).
 
 ---
 
 ## Agentic readiness skill
 
-Use the [`agent-lighthouse` skill](plugins/agent-lighthouse/skills/agent-lighthouse/SKILL.md) with a coding agent to turn an Agent Lighthouse report into code review and verified fixes. It supports any website stack.
+The [`agent-lighthouse` skill](plugins/agent-lighthouse/skills/agent-lighthouse/SKILL.md) lets a coding agent turn a report into verified fixes, on any website stack. It traces findings through source files and hosting settings, and keeps local fixes apart from deployed scan results.
 
-The skill reads the report, traces findings through source files and hosting settings, checks related routes, and verifies requested changes. It keeps local fixes separate from deployed scan results.
-
-Install the plugin from this repository's marketplace. In Claude Code:
+Install it from this repository's marketplace. In Claude Code:
 
 ```sh
 claude plugin marketplace add ForkPoint/agent-lighthouse
@@ -72,11 +65,7 @@ codex plugin marketplace add ForkPoint/agent-lighthouse
 codex plugin add agent-lighthouse@agent-lighthouse
 ```
 
-To install from a local checkout, pass `/absolute/path/to/agent-lighthouse` to `marketplace add` instead, then run the same install command. Start a new chat after installation.
-
-Example: “Use the `agent-lighthouse` skill to assess this site's Agent Lighthouse report and source code. Fix confirmed issues and verify the changes.”
-
-Read the [installation and workflow guide](packages/website/src/content/readiness-skill.md). The marketplace packages the skill and its references. The CLI and MCP npm packages remain separate.
+From a local checkout, pass `/absolute/path/to/agent-lighthouse` to `marketplace add`. Start a new chat after installing. The CLI and MCP npm packages are separate. See the [installation and workflow guide](packages/website/src/content/readiness-skill.md).
 
 ---
 
@@ -104,7 +93,7 @@ Agent Lighthouse evaluates websites across **8 agent-journey categories** groupe
 
 ## 📦 Packages & Architecture
 
-This repository is organized as a lightweight pnpm monorepo published under the **`@forkpoint`** scope:
+A pnpm monorepo published under the **`@forkpoint`** scope:
 
 | Package               | npm Package                                                                                              | Description                                                     |
 | :-------------------- | :------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------- |
@@ -117,29 +106,15 @@ This repository is organized as a lightweight pnpm monorepo published under the 
 
 ## 🛡️ GitHub Actions CI
 
-Use Agent Lighthouse as a pull-request gate for agentic readiness regressions:
-
 ```yaml
-name: Agent Lighthouse
-
-on:
-  pull_request:
-    branches: [main]
-
-jobs:
-  agent-lighthouse:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: ForkPoint/agent-lighthouse@main
-        with:
-          url: https://staging.yourstore.com
-          min-score: "85"
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+- uses: ForkPoint/agent-lighthouse@main
+  with:
+    url: https://staging.example.com
+    min-score: "85"
+    github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-The action generates terminal, HTML, JSON, and Markdown reports. Set `comment-on-pr: true` with `github-token` to post the Markdown summary on pull requests. See the [marketplace setup guide](docs/github-action.md) for release-ready examples.
+The action writes terminal, HTML, JSON, and Markdown reports. With `github-token` it comments the Markdown summary on the pull request. Inputs and pinning are in the [GitHub Action guide](docs/github-action.md).
 
 ---
 
@@ -155,17 +130,19 @@ import {
 const report = await runScan("https://example.com");
 const view = buildReportView(report);
 
+// overallScore is null when the scan saw too little to judge the site
 console.log(`Overall Score: ${view.overallScore}/100 (${view.scoreTier})`);
 
-// Generate standalone HTML report
-const html = generateHtmlReport(report);
+const html = generateHtmlReport(report); // standalone HTML report
 ```
+
+Options are in [programmatic options](docs/config.md#programmatic-options).
 
 ---
 
 ## 🤖 Model Context Protocol (MCP) Server
 
-Add Agent Lighthouse to your Claude Desktop or Cursor IDE to let AI coding agents audit live staging URLs:
+Let Claude Desktop, Cursor or another MCP client run scans through the `audit_website` tool:
 
 ```json
 {
@@ -182,44 +159,23 @@ Add Agent Lighthouse to your Claude Desktop or Cursor IDE to let AI coding agent
 
 ## 📣 Share Your Score
 
-Generated reports are standalone files, so teams can attach them to pull requests, send them to clients, or publish before/after improvements.
+Reports are standalone files: attach them to pull requests, send them to clients, or publish a before/after. Put the score in a README with a [badge](docs/badge.md). Share a public site's result through the [site score template](https://github.com/ForkPoint/agent-lighthouse/issues/new?template=site-score.yml).
 
-```markdown
-[![Agent Lighthouse](https://img.shields.io/badge/Agent%20Lighthouse-ready-4f46e5)](https://github.com/ForkPoint/agent-lighthouse)
-```
-
-If you run Agent Lighthouse on a public site, share the result through the [site score template](https://github.com/ForkPoint/agent-lighthouse/issues/new?template=site-score.yml). Good examples help other developers learn what agent-ready sites look like.
-
-More material lives in:
-
-- [Media kit](docs/media-kit.md)
-- [Benchmark report](docs/benchmark.md)
-- [Badge generator notes](docs/badge.md)
-- [Terminal demo transcript](docs/assets/terminal-demo.txt)
-- [Docs homepage screenshot](docs/assets/docs-home-screenshot.png)
-- [Generated report screenshot](docs/assets/report-screenshot.png)
-- [Badge generator screenshot](docs/assets/badge-generator-screenshot.png)
-- [Report preview asset](docs/assets/report-preview.svg)
-- [MCP setup screenshot asset](docs/assets/mcp-setup.svg)
+More: [media kit](docs/media-kit.md) (boilerplate, screenshots, logos) · [store benchmark](docs/benchmark.md) · [brand guide](packages/website/public/brand/BRAND.md) · [brand kit download](https://github.com/ForkPoint/agent-lighthouse/raw/refs/heads/main/packages/website/public/brand/agent-lighthouse-brand-kit.zip)
 
 ---
 
 ## 🛠️ Development
 
 ```bash
-# Clone the repository
 git clone https://github.com/ForkPoint/agent-lighthouse.git
 cd agent-lighthouse
-
-# Install dependencies
 pnpm install
-
-# Build all packages
 pnpm build
-
-# Run unit tests
-pnpm test
+pnpm test   # AL_SKIP_NETWORK=1 skips the live-site scans
 ```
+
+Contributor rules, including how to add an audit, are in [CLAUDE.md](CLAUDE.md).
 
 ---
 

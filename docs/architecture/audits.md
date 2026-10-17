@@ -1,22 +1,13 @@
 # How an audit is built
 
-The architecture behind every check Agent Lighthouse runs: what an audit is,
-what it may claim, and which rule stops it claiming more.
-
-> **Status.** This file is the canonical design record. All sections below are
-> **Enforced** in `main`. The six-phase audit architecture migration and
-> standing debts are fully implemented, verified across test gates, and shipped.
-> Git history keeps the full review dialogue and every superseded draft.
-
----
+What an audit is, what it may claim, and which rule stops it claiming more. Every section describes code in `main` and names the gate that enforces it.
 
 ## The one rule above the rest
 
 > **An audit may only claim what a source documents.** If no vendor documents a
 > consumer, the check does not affect a site's score. Ever.
 
-Everything below is that rule applied to a different surface: to absence, to
-page classification, to network addresses, to the score itself.
+Everything below applies that rule to one surface: absence, page classification, network addresses, the score.
 
 ---
 
@@ -47,7 +38,7 @@ One claim about a site, backed by one source, in six parts.
                     └────────────┘
 ```
 
-Warrant and cost are one part, not two, because the weight is derived:
+Warrant and cost are one part, because the weight is derived:
 
 ```
        evidence grade          tier              weight
@@ -60,13 +51,13 @@ Warrant and cost are one part, not two, because the weight is derived:
                   weight = weightForGrade(grade, tier)
 ```
 
-There is one knob — the grade — and the weight follows it. Never hand-set one.
+The grade is the one knob. Never hand-set a weight. [Scoring](../scoring.md) shows how weights become a score.
 
 ---
 
 ## 2. Three sentences
 
-Every law is one of these.
+Every law here is one of these.
 
 ```
   ┌───────────────────────────────────────────────────────────────────┐
@@ -83,17 +74,11 @@ Every law is one of these.
   └───────────────────────────────────────────────────────────────────┘
 ```
 
-The third is why this file exists. An architecture proposal was once built on
-four wrong facts, because nothing in the repository answered _which rules are
-load-bearing?_ Three of its numbers were grep artifacts over fields the schema
-already required.
-
 ---
 
-## 3. The four-way read _(enforced)_
+## 3. The four-way read
 
-The shared vocabulary for reading any artifact — a file, or a page's structured
-data. The gatherer that reads it owns the classification; the audit only judges.
+The gatherer that reads an artifact classifies it; the audit only judges.
 
 ```
                     ┌───────────────────────┐
@@ -126,69 +111,41 @@ data. The gatherer that reads it owns the classification; the audit only judges.
 //                         "/b": { "get": "yes" } } }     one good, one broken
 ```
 
-Two rules follow. Both are implemented in `packages/core/src/gatherers/openapi.ts`
-and `packages/core/src/gatherers/sitemap.ts` and enforced in `main`:
+`packages/core/src/gatherers/openapi.ts` and `gatherers/sitemap.ts` implement it. Two rules follow:
 
-- **Broken is judged over what survives the read, not over the whole artifact.**
-  One malformed entry beside twenty good ones does not erase the twenty.
-- **The decline states what the read observed, not what the site did.** _"No
-  readable OpenAPI document at `/openapi.json`"_ — not _"the site publishes no
-  OpenAPI document"_, which the read never established.
+- **Broken is judged over what survives the read.** One malformed entry beside twenty good ones does not erase the twenty.
+- **The decline states what the read observed.** _"No readable OpenAPI document at `/openapi.json`"_, not _"the site publishes no OpenAPI document"_.
 
-### Why this exists
-
-Four `openapi-*` audits used to `fail` on every site with no OpenAPI document —
-2.4 combined weight telling a bakery to add a `servers` array to a spec it had
-never written.
-
-The same shape sits in `main` today: `machine-discovery/sitemap-lastmod`, grade
-A at weight 1.0, returns `fail` at `priority: 'critical'` when a site has no
-sitemap.
+Four `openapi-*` audits once failed every site with no OpenAPI document: 2.4 combined weight telling a bakery to add a `servers` array to a spec it never wrote.
 
 ---
 
-## 4. The declaration is a guard, not a field _(enforced)_
+## 4. The declaration is a guard, not a field
 
-A declaration that _describes_ can be true while the code contradicts it.
+A field that _describes_ can be true while the code contradicts it. A guard runs before the judgement, so the author never writes the absent case.
 
 ```
    ┌─── A FIELD ─────────────────────────────────────────────────┐
-   │                                                             │
    │   meta: { subject: 'artifact-contents', artifact: 'sitemap' }│
-   │            ✓ typechecks                                     │
-   │                                                             │
    │   audit(ctx) {                                              │
    │     if (!getSitemapResult(ctx))                             │
    │       return this.fail('No sitemap found');   ✓ typechecks  │
    │   }                                            ✗ WRONG      │
-   │                                                             │
-   │   The bug is a VALUE bug inside audit().                    │
-   │   No type on meta reaches it.                               │
    └─────────────────────────────────────────────────────────────┘
 
    ┌─── A GUARD ─────────────────────────────────────────────────┐
-   │                                                             │
    │   static reads = openApiContents;   ← runs before judge()   │
-   │                                                             │
    │   judge(spec, ctx) {                                        │
    │     const servers = spec['servers'];   ← guaranteed readable│
-   │     …only the judgement lives here                          │
    │   }                                                         │
-   │                                                             │
-   │   The author never writes the absent case,                  │
-   │   and therefore cannot write it wrong.                      │
    └─────────────────────────────────────────────────────────────┘
 ```
 
-`packages/core/src/tests/absent-artifact-contract.test.ts` enforces this in `main`,
-keying audit membership on the _import_ rather than on a list:
-
-> The shared precondition constant is the closest thing to a declaration, so a
-> family pins its own instance by exporting one and importing it.
+`packages/core/src/tests/absent-artifact-contract.test.ts` enforces it. Membership is keyed on the import of the shared precondition constant, not on a list.
 
 ---
 
-## 5. Consent _(enforced)_
+## 5. Consent
 
 The tool may guess. **A guess may never move a score.**
 
@@ -203,104 +160,50 @@ The tool may guess. **A guess may never move a score.**
       ├───────────────────┤             ├───────────────────┤
       │ shown, marked as  │             │ shown, marked as  │
       │ a guess           │             │ declared          │
-      │                   │             │                   │
       │ NEVER moves       │             │ MAY move          │
       │ a score           │             │ a score           │
       └───────────────────┘             └───────────────────┘
 ```
 
-This resolves two unrelated-looking problems the same way.
-
 ### 5.1 Page type
 
-The v7 P3 classifier returns purpose evidence as `{ type, source, confidence,
-signals }`. Its fallback is `general`, with confidence `unknown` when nothing
-matched. `article` is a distinct purpose.
-A root or mounted homepage keeps the same identity regardless of crawl order.
-Open Graph article metadata or primary article prose can establish article purpose
-without requiring the author, dates, or Article schema that an audit will inspect.
-URL-only and schema-only matches remain hints. Conflicting strong product/article
-signals produce a `general` page. Signal strength does not grant scoring authority.
+The five page types are `homepage`, `category`, `product`, `article` and `general`. `article` is an editorial page (post, news story, guide) with author and date obligations. `general` is every other page. The word "content" also names the `content` readiness vital and the `content-extraction` category; write "article page" or "general page", never "content page".
 
-The public `detectPageType` wrapper still returns a type and accepts its historical
-final argument. That argument no longer changes the result. The CLI, SDK and MCP
-accept `article` and `general`. The pre-v7 names `unknown` and `content` are refused
-as input; stored reports that carry them read as `general` (`LEGACY_PAGE_TYPES`,
-`StoredPageTypeSchema`), and no missing evidence is inferred for them.
+The classifier returns `{ type, source, confidence, signals }`:
 
-The five page types are `homepage`, `category`, `product`, `article` and
-`general`. `article` means an editorial page: a post, news story or guide that
-carries author and date obligations. `general` means every other page: about,
-FAQ, help, contact, policy and landing pages. Two other names use the word
-"content" and are not page types: the `content` readiness vital and the
-`content-extraction` audit category. Write "article page" or "general page" in
-audit copy and dossiers, never "content page".
+- The fallback is `general`, with confidence `unknown` when nothing matched.
+- A root or mounted homepage keeps its identity regardless of crawl order.
+- Open Graph article metadata or article prose can establish `article` without the author, dates or schema an audit will inspect.
+- URL-only and schema-only matches are hints. Conflicting strong product and article signals give `general`.
+- Signal strength never grants scoring authority.
 
-The runner canonicalizes `applicablePageTypes` on a metadata copy. It accepts the
-legacy `pageTypes` alias. If both aliases occur, their sets must match, including
-empty sets, or planning throws a configuration error. An absent or empty set means
-universal scope. Twelve article obligations now name `article`. Ten other checks
-retain coverage across `general` and `article` pages while their
-feature-specific guards await the ledger's follow-up work.
+The public `detectPageType` still returns a type and ignores its historical last argument. Input names `unknown` and `content` are refused. Stored reports that carry them read as `general` (`LEGACY_PAGE_TYPES`, `StoredPageTypeSchema`), and no missing evidence is inferred.
+
+The runner canonicalizes `applicablePageTypes` on a copy of the metadata. It accepts the legacy `pageTypes` alias; if both are set, they must match, or planning throws. An absent or empty set means every page type.
 
 ### 5.1.1 Default scope and page-type restrictions
 
-**An audit applies to every page type unless its documented obligation requires
-one specific population.** Most checks should omit `applicablePageTypes`.
-The absence of a type gate does not remove evidence requirements, artifact
-preconditions, readable-body guards, or the audit's own page selection.
+**An audit applies to every page type unless its documented obligation requires one specific population.** Most checks omit `applicablePageTypes`. No type gate does not remove evidence requirements, artifact preconditions, readable-body guards or the audit's own page selection.
 
-Use a short inclusion list for a purpose-specific obligation. Article authors
-and product offers are examples. The dossier must explain why that obligation
-belongs to the selected population. List length alone is not proof: even a
-single-type restriction needs evidence.
+- Use a short inclusion list for a purpose-specific obligation, such as article authors or product offers. The dossier must say why the obligation belongs to that population. Even a one-type list needs evidence.
+- Never list most or all page types to mean "everywhere", and never build a list as the complement of one excluded type. Such lists silently exclude future types. An absent field includes them. Empty lists mean the same at runtime, but new audits omit the field.
+- A feature check selects pages by the feature it measures. Code blocks, dates, definitions, supplementary content, service intent and site hierarchy occur on many page types. Keep that precondition beside the read, in the audit or its gatherer. Count only relevant pages in the numerator and denominator. Return `notApplicable` when the feature or obligation is absent.
+- A check about missing required markup must establish intent without that markup, or the missing markup hides its own check.
+- A genuine exception needs a documented reason and a local evidence condition. There is no `excludedPageTypes` field; adding one is a contract change, never a way to replace a broad list.
 
-Do not list most or all page types to express universal scope. Do not construct
-an inclusion list as the complement of an excluded type. Such lists silently
-exclude future page types and tie a common check to classification. An absent
-field includes future types without a registry edit. Empty lists currently have
-the same runtime meaning; new audits should omit the field for clarity.
+Moving from typed to common scope is a behaviour change, not a cleanup. Typed scope splits declared and detected populations and keeps detected results informative; common scope uses the audit's normal display mode. Removing a list can admit new inputs and change scores with no change to the audit body. Review the dossier, population selection, absence verdict and aggregation first, and follow the changeset rules. Test these cases:
 
-A feature check should select pages by the feature it measures. Code blocks,
-dates, definitions, supplementary content, service intent, and site hierarchy
-can occur on more than one page type. Keep that precondition beside the read in
-the audit or shared gatherer. Select only relevant pages for its numerator and
-denominator. Return `notApplicable` when no applicable feature or obligation is
-present. A check about missing required markup must establish intent independently
-of that markup; otherwise the missing markup would make its own check disappear.
-
-A genuine exception needs a documented reason and a local evidence condition.
-The current metadata supports inclusion lists only; there is no
-`excludedPageTypes` field. Adding one would require a separate contract change.
-Do not add an exclusion API merely to replace a broad inclusion list.
-
-Changing from typed scope to common scope is a behavior change, not a formatting
-cleanup. Typed scope separates declared and detected populations; detected
-results are informative. Common scope uses the audit's normal display mode.
-Removing a list can therefore admit new inputs and change scoring even when the
-audit body is unchanged. Review the dossier, population selection, absence
-verdict, and aggregation before changing metadata. Follow the repository's
-changeset rules for the final contract change.
-
-Before a scope change, verify these cases:
-
-- The relevant feature occurs on each current page type, including `general`.
-- No relevant feature occurs; the audit returns `notApplicable`.
+- The feature occurs on each current page type, including `general`.
+- No feature occurs; the audit returns `notApplicable`.
 - Required markup is missing despite independently established intent.
-- A mixed sample contains relevant, irrelevant, and unread pages; only relevant
-  readable inputs decide the content verdict and its denominator.
+- A mixed sample of relevant, irrelevant and unread pages; only relevant readable inputs decide the verdict and its denominator.
 - Declared and detected inputs produce the intended result mode and score.
 
 ### 5.1.2 Inspection of current inclusion lists
 
-Inspection date: 2026-10-07. The registry has 215 audits: 179 have no page-type
-gate and 36 have an inclusion list. The 36 consist of 12 article-only, 8
-product-only, 3 homepage-only, 1 category-only, 2 homepage/product, and 10 broad
-migration lists. This is a metadata inventory, not approval of every restriction.
+Counted 2026-10-17 from the built registry. Of 215 audits, 179 have no page-type gate and 36 have an inclusion list: 12 article-only, 8 product-only, 3 homepage-only, 1 category-only, 2 homepage/product, and 10 broad lists kept from the old general-content population. This is an inventory, not approval of every restriction.
 
-P3 retained the following 10 broad lists to preserve the old general-content
-population. Their dossiers record the migration as a deviation. They are
-follow-up review targets, not the recommended pattern for new audits.
+The 10 broad lists are review targets, not a pattern for new audits. Their dossiers record them as deviations.
 
 | Audit                                 | Current inclusion list              | Evidence condition to review before changing scope                                                                                 |
 | ------------------------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
@@ -315,123 +218,44 @@ follow-up review targets, not the recommended pattern for new audits.
 | `structured-data/howto-schema`        | general, article                    | Review the existing sequential-heading intent test and its absent-feature warning.                                                 |
 | `structured-data/service-schema`      | homepage, general, article          | The body already tests service intent. Confirm selection and aggregation across other types before removing the list.              |
 
-This inspection changes documentation only. It does not remove lists, add
-exclusions, change verdicts, or complete the deferred feature-gate migration.
+### 5.1.3 Populations
 
-Under consent, result mode is one pure function:
+Every `PageContext` carries its `pageType` and a `pageTypeSource` of `declared` or `detected`. The target is declared by `--page-type`, each `ScanOptions.pages` URL by its entry, and everything the crawl found is detected. CLI config, SDK and MCP share these declarations, validated by `PageScopeOptionsSchema` before any fetch.
 
-Provenance travels with each page, not with the scan: every `PageContext` keeps
-its `pageType` and gains a `pageTypeSource` of `declared` or `detected`. The
-scan target is `declared` from `--page-type`, each URL named in
-`ScanOptions.pages` is `declared` from its override, and everything the crawl
-found is `detected`.
-
-The runner selects a primary population and, when needed, an advisory population.
-It puts the scan target first in each input set and sorts the rest by URL code point, so `pages[0]` stays the target whenever the target is in the set. A universal audit uses all matching readable input
-under its existing evidence requirements. A typed audit uses declared matches for
-its primary result. Detected matches run as informative even when declared matches
-exist. A detected-only scan has one informative primary result.
-
-Each population gets a fresh audit instance, its own page set, and page evidence
-restricted to that set. Readable text on an excluded page cannot satisfy
-`rendered-body` or `sample-adequate`. Audits that need body text receive only readable
-pages. Header-only checks and origin/artifact checks keep their existing exemptions.
-The global unread-site guard still precedes execution. The `allEvidenceMet()`
-diagnostic/test helper still bypasses measurement; scoping does not turn its global
-flags into invented per-URL measurements.
-
-There is exactly one top-level `CheckResult` per registration. Mixed scans preserve
-the detected population under `advisoryResults`, always with informative display
-mode. Category counts and evidence mass use the primary result once. A failed or
-unread primary population is never promoted to a scored result by a readable
-advisory population. Errors and budget skips remain visible in the population where
-they occurred; they do not erase a completed result for another population.
-
-Each executed or gated population has `coverage`:
-
-- `provenance`: `all`, `declared`, or `detected`.
-- `selectedUrls`: the population considered, including known failed attempts.
-- `inputUrls`: the URLs supplied to the audit body; empty for a gated or not-started
-  population. This does not assert that a custom audit inspected every input.
-- `unreadUrls`: selected pages without measured readable text, plus failed fetches.
-  Header-only audits may still inspect a page listed here.
-
-`ScanReport.pageAttempts` preserves each requested page's URL, purpose provenance,
-HTTP status, and whether parsing produced a page context. A failed undeclared page
-is a `general` page with unknown confidence and remains in common coverage; it cannot be assigned to a
-specialist population without evidence. Older reports may omit both new fields.
-
-An `AuditPlan` still has `runnable` and `skipped` arrays. Each runnable entry now also
-carries its planned populations. Registry metadata and caller context stay unchanged.
-Every registration emits one progress event and one trace, including skipped audits.
-Traces carry primary coverage and advisory results. Shared origin and URL fetch
-caches retain the original scan owner; page-derived feed discovery reads the actual
-scoped input each time. No whole-page-set cache requires a new key in this slice.
-
-CLI config, SDK, and MCP accept the same `pageType` and `pages` declarations,
-validated by `PageScopeOptionsSchema` before fetching. The CLI flag overrides its
-config target declaration. A top-level target declaration overrides a matching
-`pages` entry. Invalid types and malformed override URLs fail explicitly.
-
-The report view keeps `pageScope` separate from score and audit counts. HTML and
-Markdown expose expandable population details, including primary NA results and
-nested advisory errors. The terminal prints classifications and extra findings;
-`--debug-audit` shows each population's URL sets. MCP returns the structured view.
-The browser JSON inspector shows a bounded text preview without parsing uploaded
-markup. Hydration preserves classification and fetch attempts when recorded and
-never invents missing coverage for older rows. The public schemas accept old
-pages without classification and new pages with explicit evidence.
-
-Detection confidence remains diagnostic; this stage does not grant new scoring
-permission to heuristic page classification. Section 5.2's network safety rules
-remain unchanged.
+- A universal audit uses all matching readable input. A typed audit's primary result uses declared matches. Detected matches run as informative, even beside declared ones. A detected-only scan has one informative primary result.
+- Each input set puts the scan target first and sorts the rest by URL, so `pages[0]` is the target whenever it is in the set.
+- Each population gets a fresh audit instance, its own pages, and evidence limited to them. Readable text on an excluded page cannot satisfy `rendered-body` or `sample-adequate`. Header-only and origin checks keep their exemptions.
+- There is one top-level `CheckResult` per audit. A mixed scan keeps the detected population in `advisoryResults`, always informative. Counts and mass use the primary result once. A readable advisory population never promotes a failed or unread primary one.
+- Each population has `coverage`: `provenance` (`all`, `declared`, `detected`), `selectedUrls` (including failed attempts), `inputUrls` (handed to the audit; empty when gated or not started), and `unreadUrls` (no readable text, or failed).
+- `ScanReport.pageAttempts` records each requested page's URL, provenance, HTTP status and whether it parsed. A failed undeclared page is `general` with unknown confidence.
+- Every audit emits one progress event and one trace, including skipped audits.
+- Report views keep `pageScope` apart from score and counts. Older reports without these fields still load; nothing is invented for them.
 
 ### Stable audit mass, conditional participation
 
-An audit keeps one intrinsic weight from its grade and tier. That weight never
-changes when the audit scores. An `informative` or `na` result does not
-participate in the score, so its effective mass for that scan is zero.
-
-The scorer therefore keeps two values instead of using one value for two jobs:
+An audit keeps one weight from its grade and tier. A `na` or informative result does not participate, so its effective mass for that scan is zero.
 
 ```ts
 registryMass = sum(registeredAudits.map((audit) => audit.meta.weight));
-
-assessedChecks = category.checks.filter(
-  (check) => check.status !== "na" && !isInformative(check),
+assessedMass = sum(
+  category.checks
+    .filter((check) => check.status !== "na" && !isInformative(check))
+    .map((check) => check.weight),
 );
-assessedMass = sum(assessedChecks.map((check) => check.weight));
-```
-
-- `registryMass` measures coverage. It never weights the overall score.
-- `assessedMass` weights the category in the overall score.
-- `gatedMass` stays separate and still decides when missing evidence makes the
-  honest result `overallScore: null`.
-
-The overall formula is:
-
-```ts
 overallScore =
-  sum(categories.map((category) => category.score * category.assessedMass)) /
-  sum(categories.map((category) => category.assessedMass));
+  sum(categories.map((c) => c.score * c.assessedMass)) /
+  sum(categories.map((c) => c.assessedMass));
 ```
 
-If the total assessed mass is zero, the report returns no overall score.
+- `registryMass` measures coverage and never weights the score.
+- `assessedMass` weights each category in the overall score.
+- `gatedMass` decides when missing evidence makes the result `overallScore: null`. Consent is not missing evidence and does not add to it.
 
-This correction is required for consent. Structured Data has 9.6 registered
-mass, of which 7.6 is page-typed. On a scan with only 2.0 assessed mass, applying
-the static 9.6 category mass makes those remaining audits act 4.8 times heavier.
-Using `assessedMass` preserves each audit's declared weight.
-
-`isInformative` remains the single predicate for _"shown to the user, never
-influences a score"_. Consent does not count as missing evidence and therefore
-does not increase `gatedMass`.
+Weighting by registry mass would inflate a category whose page-typed audits did not run: Structured Data has 9.6 registry mass, 7.6 of it page-typed, so a scan assessing 2.0 would make the rest count 4.8 times. `isInformative` stays the one predicate for "shown, never scored".
 
 ### 5.2 Network address
 
-The same distinction, one layer down: **the operator's URL is trusted, a URL
-taken from scanned content is not.** Scanning `http://localhost:3000` before a
-deploy is a first-class use, so the rule keys on **origin**, not address class.
+**The operator's URL is trusted; a URL taken from scanned content is not.** Scanning `http://localhost:3000` before a deploy is a first-class use, so the rule keys on origin, not address class.
 
 ```
    scan target: http://localhost:3000
@@ -446,23 +270,13 @@ deploy is a first-class use, so the rule keys on **origin**, not address class.
                                                         harvested from a page
 ```
 
-The fetcher already states the principle at `fetcher.ts:292`:
-
-> The gate is armed only when the starting URL is itself public: an operator who
-> deliberately points the scanner at a dev host gains nothing from having its
-> redirects refused.
-
-The application keeps its pre-request DNS check and repeats the check on every
-redirect. It does not pin the checked IP inside the HTTP client. A hosted or
-multi-tenant deployment must also deny outbound connections to localhost,
-private networks and metadata endpoints at the network boundary. The local CLI
-may allow the operator-selected local origin so development scans keep working.
+The fetcher checks DNS before each request and again on every redirect hop. The redirect gate is armed only when the starting URL is public. It does not pin the checked IP inside the HTTP client, so a hosted or multi-tenant deployment must also deny outbound traffic to localhost, private networks and metadata endpoints at the network boundary.
 
 ---
 
-## 6. Scope _(enforced)_
+## 6. Scope
 
-An audit's subject is either one document or one origin.
+An audit's subject is one document or one origin.
 
 ```
    ┌─────────────────────────────┐     ┌─────────────────────────────┐
@@ -472,46 +286,25 @@ An audit's subject is either one document or one origin.
    │ the operator gave           │     │ llms.txt     openapi.json   │
    │                             │     │ /.well-known/*   MCP        │
    │ cache key:  URL             │     │ cache key: origin + version │
-   │ 134 audits · 88.4 mass      │     │  76 audits · 42.8 mass      │
-   │ 66.0%                       │     │ 32.0%                       │
+   │ 149 audits · 91.6 mass      │     │  66 audits · 42.4 mass      │
    └─────────────────────────────┘     └─────────────────────────────┘
 ```
 
-Twenty-six audits read both. They are **not** dual-subject — they are origin
-audits that also scrape a page for a discovery link. `openapi-exists` reads
-`/openapi.json` **and** `<link rel="service-desc">`.
+The split counts an audit as page-scoped when it requires `rendered-body` or `sample-adequate` or has a page-type list, as the report's `conditions.coverage` does.
 
-Under per-URL scans that breaks origin idempotence:
+Some origin audits also read a discovery link from a page: `openapi-exists` reads `/openapi.json` and `<link rel="service-desc">`. They are origin audits, so they read the origin's homepage, never the scanned page. Otherwise one origin would get different verdicts depending on which URL the operator typed.
 
-```
-   scan https://shop.example/            ► <link rel="service-desc"> found
-   scan https://shop.example/p/bread     ► not found
+> **An origin fact must be idempotent per origin.**
 
-   Same origin. Same artifact. Different verdict,
-   decided by which URL the operator happened to type.
-```
+- The shared origin cache serves only the anonymous request profile. URL credentials, an authorization header or prefetched evidence bypass it. Credentials never enter a cache key.
+- The cache key includes `ORIGIN_EVIDENCE_VERSION`. Every record stores `readAt` and expires by its TTL.
+- The unread-scan guard runs before every audit and has no opt-out. The narrower `requires` gate can be turned off with `ScanOptions.enforceEvidenceGate: false`, for diagnosis only.
 
-> **An origin fact must be idempotent per origin.** Those 26 belong to the origin
-> scan and read the origin's homepage, never the scanned page.
+### 6.1 The scan evidence gate
 
-Shared origin caching applies only to the canonical anonymous request profile.
-An origin scan with URL credentials, an authorization header or explicit
-prefetched evidence bypasses the shared cache. Raw credentials never enter a
-cache key. The anonymous key includes `ORIGIN_EVIDENCE_VERSION`; every record
-stores `readAt` and expires by the phase's stated TTL.
+An audit cannot tell "this page has no `<main>`" from "the scanner never got this page's HTML". Without a gate, missing evidence gives false failures or vacuous passes, such as a captcha wall passing `no-blocking-captcha`.
 
-The unread-scan guard is unconditional. It runs before every audit and has no
-production opt-out. The narrower `requires` gate defaults on.
-`ScanOptions.enforceEvidenceGate: false` remains a documented diagnostic
-opt-out for comparing gated and ungated evidence. It never bypasses the
-unread-scan guard. A full-registry bypass exists only in a test helper that the
-package does not export.
-
-### 6.1 The scan evidence gate _(enforced)_
-
-An audit cannot tell "this page has no `<main>` element" from "the scanner never obtained this page's HTML". Without gating, missing evidence produces either false failures or vacuous passes (e.g. a site behind a Cloudflare captcha wall passing `no-blocking-captcha`).
-
-Before audits run, `buildScanEvidence()` in `packages/core/src/scan-evidence.ts` constructs a pure evidence record evaluating four orthogonal requirements:
+`buildScanEvidence()` in `packages/core/src/scan-evidence.ts` evaluates four requirements before audits run:
 
 | Requirement         | What it proves                                                                                                                   | Failure condition                                                                                                      |
 | :------------------ | :------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------- |
@@ -520,36 +313,21 @@ Before audits run, `buildScanEvidence()` in `packages/core/src/scan-evidence.ts`
 | `rendered-body`     | At least one fetched page served text a non-JS consumer can read (>50 words or >200 characters).                                 | Empty client-side rendered JavaScript SPA shell (empty root container).                                                |
 | `sample-adequate`   | At least one page of an applicable page type served readable text.                                                               | Pages fetched, but none usable for the required page types.                                                            |
 
-**Attribution (`judgeable`).** A scan is judgeable only when both `origin-reachable` and `unblocked-fetches` hold. If either fails, the scan obtained nothing attributable to the site; `planAudits()` marks all page-fed audits `notApplicable` with a human-readable `Not assessed: <reason>` explanation.
-
-**Handling JavaScript shells.** An empty JS shell is not an empty scan: the response arrived and the headers and root files exist. What is missing is the rendered body document. An audit whose population lives in the body (`token-ratio`, `content-depth`, `figure-figcaption`, etc.) declares `rendered-body` and is cleanly skipped.
-
-**Deliberate exemptions (`GATE_EXEMPTIONS`).** Audits whose subject _is_ the missing evidence declare exemptions in `scripts/lib/requires-analysis.ts`:
-
-- `content-extraction/server-rendered` drops `rendered-body` because reporting an unrendered shell is its explicit purpose.
-- `operability-safety/no-blocking-captcha` and `access-crawl-control/no-bot-detection` drop `rendered-body` and `unblocked-fetches` so they can report the presence of defense interstitials.
-- `content-extraction/server-responsiveness` measures TTFB from the response envelope and does not need rendered text.
-
-**Ratchet enforcement.** `pnpm check:requires` uses static AST parsing to prove that every audit source's `requires` matches what it actually reads, refusing drift at build time.
+- **Judgeable** means `origin-reachable` and `unblocked-fetches` both hold. Otherwise `planAudits()` marks every page-fed audit `notApplicable` with `Not assessed: <reason>`, and the scan is unscored.
+- **A JavaScript shell** is not an empty scan: headers and root files arrived. Audits that read the body declare `rendered-body` and are skipped.
+- **Exemptions** (`GATE_EXEMPTIONS` in `scripts/lib/requires-analysis.ts`) cover audits whose subject is the missing evidence: `content-extraction/server-rendered` drops `rendered-body`; `operability-safety/no-blocking-captcha` and `access-crawl-control/no-bot-detection` drop `rendered-body` and `unblocked-fetches`; `content-extraction/server-responsiveness` needs no rendered text.
+- **`pnpm check:requires`** parses every audit source and fails when its `requires` disagrees with what it reads.
 
 ---
 
-## 7. The score states its conditions _(enforced)_
+## 7. The score states its conditions
 
-Two scan units, **one score**. Origin files genuinely affect every page — a
-`robots.txt` blocking GPTBot degrades every URL on the host — so folding that
-mass into each page's score is accurate, not a distortion.
-
-The repository already scores conditionally: past
-`GATED_MASS_UNSCORED_THRESHOLD = 0.35`, the honest output is
-`overallScore: null`.
+Two scan units, **one score**. Origin files affect every page — a `robots.txt` blocking GPTBot degrades every URL on the host — so folding origin mass into a page's score is accurate.
 
 > **A score states the conditions under which it holds. Where the conditions
 > cannot be stated, there is no score.**
 
-The score uses `assessedMass`. Coverage compares `assessedMass` with
-`registryMass`, while `gatedMass` states what the scan could not read. Category
-names group findings; they never inflate an audit's intrinsic weight.
+Past `GATED_MASS_UNSCORED_THRESHOLD = 0.35` the output is `overallScore: null`. Coverage compares `assessedMass` with `registryMass`; `gatedMass` states what the scan could not read. The report's `conditions` carry them:
 
 ```
    ┌──────────────────────────────────────────────────────────┐
@@ -557,100 +335,52 @@ names group findings; they never inflate an audit's intrinsic weight.
    ├──────────────────────────────────────────────────────────┤
    │  url       https://shop.example/p/sourdough              │
    │            └─ the score is about ONE document            │
-   │                                                          │
    │  pageType  product  (declared)                           │
    │            └─ decides what counted at all                │
-   │                                                          │
    │  origin    read 2026-08-30T14:02:11Z, cached             │
    │            └─ a cached fact is a fact from EARLIER       │
-   │                                                          │
-   │  coverage  page 88.4 · origin 42.8 · gated 0.0           │
-   │            └─ already computed, never shown until now    │
-   │                                                          │
+   │  coverage  assessed / registry mass, gated mass          │
    │  unscored  12 audits informative: page type not declared │
    └──────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 8. Audits do not reach the network _(enforced)_
+## 8. Audits do not reach the network
 
-Gatherers do. One layer issues requests, so it is the only layer that needs the
-origin gate and the only layer that can be counted.
+Gatherers do. One layer issues requests, so it is the only layer that needs the origin gate and the only one that can be counted, budgeted and cached.
 
 ```
-   BEFORE                                AFTER
-   ────────────────────────────          ────────────────────────────
-   audit ──┐                             audit ──┐
-   audit ──┼──► ctx.fetch ──► net        audit ──┼──► gatherer ──► net
-   audit ──┘                             audit ──┘         ▲
-    …36 audits reach net                    …one layer     │
-      6 fetch a content URL                             gated once
-        with no isSafeUrl                              counted once
-     14 verified named limits                           cached once
-      other limits vary
-      no shared budget
+   audit ──┐
+   audit ──┼──► gatherer ──► net
+   audit ──┘         ▲
+                gated once, counted once, cached once
 ```
 
-A gatherer with exactly one consumer is still correct. The fetch becomes
-**visible** to the scan instead of hidden in a private constant, **countable**
-so a budget can be enforced rather than declared, and **cacheable** the moment a
-second consumer appears — which is precisely how the OpenAPI family reached
-seven byte-identical copies of `getOpenApiSpec`.
+A gatherer with one consumer is still right: the fetch is visible to the scan and cacheable the moment a second consumer appears. That is how the OpenAPI family once reached seven identical copies of `getOpenApiSpec`.
 
-It also removes the possibility of the duplication it was cloned from: with no
-audit able to reach the network, a private reader has nowhere to live.
-
-**How the 36 is counted.** A _network-reaching audit_ is a registered audit that
-can issue a request, directly or through a helper. 31 call `ctx.fetch` in their
-own file. The other 5 — `mcp-version-downgrade`, `mcp-tool-description-coverage`,
-`mcp-tool-contract-validity`, `mcp-tools-list-determinism`,
-`mcp-modern-era-reachability` — name no fetch at all and reach the network
-through `agent-interfaces/_mcp-client.ts`, a shared helper that lives inside the
-audit tree and is registered as no audit. Counting files that call `ctx.fetch`
-gives 32 and counts that helper as an audit; counting registered audits that can
-reach the network gives 36. The second is the number this document uses.
-
-The enforcing source gate parses every production TypeScript file under the audit
-tree — audit sources **and** the private helpers beside them, `_mcp-client.ts`
-included — and rejects `ctx.fetch`, destructured or global `fetch`, imports from
-the fetcher, and imports from direct HTTP clients. Scanning the whole tree is
-what makes the gate complete without an import graph, so the rule that keeps it
-complete is: an audit's network helper stays inside the audit tree until Phase 4b
-moves it into a gatherer, and never lands in some third directory the gate does
-not read. The project does not add a second fetch-free audit context type; the
-source gate remains necessary even with such a type and is the smaller complete
-boundary. The gate runs in CI as `pnpm check:audit-boundaries`.
+`pnpm check:audit-boundaries` parses every production `.ts` file under `packages/core/src/audits/`, helpers included, and rejects `ctx.fetch`, destructured or global `fetch`, fetcher imports and direct HTTP client imports. Scanning the whole tree keeps the gate complete without an import graph, so a network helper must live in `gatherers/`, never in a directory the gate does not read. CI does not run the script today; run it before committing audit changes.
 
 ---
 
-## 9. The warrant expires _(enforced)_
+## 9. The warrant expires
 
-A grade is a claim with a date. Specs gain adoption; vendors document consumers
-they previously did not. Every audit is re-reviewed every **6 months**.
+A grade is a claim with a date. Every dossier carries a `reviewed:` date, and every audit is due for review every **6 months**.
 
 ```
-   scheduled workflow
+   monthly workflow (.github/workflows/audit-review-sweep.yml)
           │
           ▼
    sweep `reviewed:` across docs/evidence/audits/
           │
           ▼
-   open or UPDATE one rolling issue
-   ─────────────────────────────────────────────
-     · oldest first, with grade and category
-     · one issue, updated in place
+   open or update one rolling issue
+     · audits older than 180 days, oldest first, with grade and category
      · never fails a build
      · never moves a score
 ```
 
-Deliberately the weakest enforcement of any law here. A stale grade is not a
-broken build, and a score must not move because nobody did paperwork. The gate's
-only job is to make the debt impossible to forget.
-
-Today 215 of 216 dossiers carry a `reviewed:` date, and every one falls between
-2026-08-20 and 2026-08-24 — a single research sprint. The stamp exists, is fully
-populated, and nothing reads it.
+This is the weakest enforcement here on purpose. A stale grade is not a broken build, and a score must not move because nobody did paperwork. The sweep only makes the debt impossible to forget.
 
 ---
 
@@ -671,49 +401,14 @@ Recorded so they are not proposed again.
 
 ---
 
-## 11. Standing debts _(all resolved in main)_
+## 11. Writing an audit today
 
-Measured 2026-08-30 across 215 registered audits. **All resolved in main** across
-the six architecture migration phases:
-
-| debt                                                                           | resolution in `main`                                                                                                                                                                   |
-| :----------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| An audit's own code does not stop it verdicting on a scan that reached nothing | **Resolved (Phase 1):** Universal unread-scan precondition in `planAudits`; enforced whole-registry by `unreachable-contract.test.ts` with no exemptions.                              |
-| The empty-scan fixture contradicts itself                                      | **Resolved (Phase 1):** Truthful fixtures (`fixtureA` & `fixtureB`) in `packages/core/src/tests/fixtures.ts`.                                                                          |
-| An artifact-contents audit fails on absence                                    | **Resolved (Phase 2):** Four-way read (`absent`, `empty`, `malformed`, `readable`) in `gatherers/openapi.ts` and `gatherers/sitemap.ts`; pinned by `absent-artifact-contract.test.ts`. |
-| The page-type gate is doing the absence rule's job                             | **Resolved (Phase 3):** User consent via `--page-type`; detected page types run informative (weight 0).                                                                                |
-| Private readers duplicate a gatherer                                           | **Resolved (Phases 2 & 4b):** All private readers centralized in `gatherers/`; zero duplication.                                                                                       |
-| Content-harvested URLs reach the network ungated                               | **Resolved (Phase 4a):** `isSafeUrl()` enforced inside `ctx.fetch` keyed on scan origin.                                                                                               |
-| Fetching is unbounded in aggregate                                             | **Resolved (Phase 4b):** All 36 network-reaching audits moved to gatherers; `pnpm check:audit-boundaries` AST gate enforces zero network calls in production audits.                   |
-| The warrant has no expiry                                                      | **Resolved (Phase 6):** Automated 6-month review sweep in `.github/workflows/audit-review-sweep.yml`.                                                                                  |
-
----
-
-## 12. Writing an audit today
-
-These hold in `main` today:
-
-- **Absence is `notApplicable`, not `fail`.** Only a present-and-defective
-  artifact may fail. Handled via the four-way read in gatherers and enforced
-  by `tests/absent-artifact-contract.test.ts`.
-- **Put the precondition beside the read**, in the gatherer, with the reasoning
-  written down. Two places it must not go. **Not the runner** — `planAudits`
-  knows page types and `EvidenceKey`s, both scan-level and domain-neutral, and
-  teaching it one artifact type invites every other to follow. **Never an
-  `EvidenceKey`** — `gatedMassShare` counts skipped-for-no-evidence mass toward
-  the 0.35 threshold, so an `openapi-spec-present` key would push that weight
-  into the numerator on every site without an API.
-- **`details` values are scalars or arrays of strings.** The catchall accepts
-  `string | number | boolean | string[]`, and `validate()` calls `.parse`, which
-  **throws** — the runner then logs `Audit error` (component `audit`) and emits an errored
-  `na` stub, so one bad value costs the whole result. Unit tests call
-  `audit.audit(ctx)` directly and never reach `toCheckResult`, so parse through
-  `AuditResultSchema` in the test whenever `details` carries anything structured.
-- **Reuse the gatherers.** A per-audit read that duplicates one costs every scan
-  and drifts.
-- **Gate every URL taken from scanned content with `isSafeUrl()`.** Test suites
-  `vi.mock` the fetcher and stub it; no test performs real DNS.
+- **Absence is `notApplicable`, not `fail`.** Only a present-and-defective artifact may fail (§3).
+- **Put the precondition beside the read**, in the gatherer, with the reasoning written down. **Not in the runner**: `planAudits` knows page types and `EvidenceKey`s, both scan-level and domain-neutral. **Never as an `EvidenceKey`**: `gatedMassShare` counts skipped-for-no-evidence mass toward the 0.35 threshold, so an `openapi-spec-present` key would push weight into it on every site without an API.
+- **`details` values are scalars or arrays of strings.** The schema accepts `string | number | boolean | string[]`. Anything else throws in `validate()`; the runner logs `Audit error` (component `audit`) and emits an errored `na` stub. Unit tests that call `audit.audit(ctx)` never reach `toCheckResult`, so parse through `AuditResultSchema` in the test whenever `details` is structured.
+- **Reuse the gatherers.** A private read costs every scan and drifts.
+- **Gate every URL taken from scanned content with `isSafeUrl()`.** Tests `vi.mock` the fetcher; no test performs real DNS.
 
 ## Browser snapshot evidence
 
-The optional snapshot path reuses this audit engine. It keeps crawler evidence and browser DOM evidence separate. See [Browser-rendered snapshot assessment](browser-snapshots.md) for the public contract, the six reviewed audit IDs, evidence gates, coverage, serialization limits, and compatibility proof. Snapshot findings never enter crawler scoring.
+The optional snapshot path reuses this engine and keeps crawler and browser DOM evidence apart. Snapshot findings never enter crawler scoring. See [Browser-rendered snapshot assessment](browser-snapshots.md).

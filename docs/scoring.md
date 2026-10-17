@@ -1,12 +1,10 @@
 # Scoring
 
-Agent Lighthouse turns a scan into one number between 0 and 100. This document explains exactly how that number is produced, from a single audit result up to the headline score, so that any score in a report can be traced back to the checks that caused it.
-
-Everything below is implemented in [`packages/core/src/scorer.ts`](../packages/core/src/scorer.ts), [`packages/core/src/audit-config.ts`](../packages/core/src/audit-config.ts) and [`packages/core/src/orchestrator.ts`](../packages/core/src/orchestrator.ts). Where this page and the code disagree, the code is right — please open an issue.
+A scan produces one number from 0 to 100, or no number when it saw too little. This page traces that number from one audit result to the headline. The code is in [`scorer.ts`](../packages/core/src/scorer.ts) and [`orchestrator.ts`](../packages/core/src/orchestrator.ts); where this page and the code disagree, the code is right.
 
 ## The weight law
 
-An audit's influence on a score is not a hand-tuned number. It is a pure function of two things the audit's evidence dossier assigns: its **evidence grade** and its **scoring tier**.
+An audit's weight is a function of its **evidence grade** and **tier**, both set by its dossier. Nobody hand-sets a weight.
 
 ```ts
 export function weightForGrade(grade: EvidenceGrade, tier: AuditTier): number {
@@ -15,148 +13,100 @@ export function weightForGrade(grade: EvidenceGrade, tier: AuditTier): number {
 }
 ```
 
-That is the whole law. Read as a table:
-
 | Tier           | Grade A | Grade B | Grade C | Grade D |
 | :------------- | :------ | :------ | :------ | :------ |
-| `scored`       | **1.0** | **0.6** | 0       | 0       |
+| `scored`       | 1.0     | 0.6     | 0       | 0       |
 | `informative`  | 0       | 0       | 0       | 0       |
 | `experimental` | 0       | 0       | 0       | 0       |
 
-Two consequences worth stating plainly:
-
-- **The tier gate comes first.** An audit with grade A that has been moved to the `informative` tier — a signal that was once scored and has since been demoted — carries weight 0 like every other informative check.
-- **Nothing outside grades A and B can move a score.** There is no partial credit for a plausible-but-unproven signal.
-
-The weight is stamped onto every check result at the single place a result is built from its metadata (`Audit.toCheckResult` in [`packages/core/src/audit.ts`](../packages/core/src/audit.ts)), so the weight a report shows is the weight the scorer used.
+Only grades A and B in the `scored` tier move a score. The weight in a report is the weight the scorer used.
 
 ## Evidence grades
 
-Grades are assigned in each audit's dossier under [`docs/evidence/`](./evidence/) and are governed by the [evidence policy](./evidence/policy.md). In short:
+Each dossier under [`docs/evidence/`](./evidence/) assigns a grade, following the [evidence policy](./evidence/policy.md):
 
-| Grade | Bar                                                                                                                                    |
-| :---- | :------------------------------------------------------------------------------------------------------------------------------------- |
-| **A** | Documented consumer behaviour — a vendor doc states that a named agent reads the signal — or a ratified standard with known consumers. |
-| **B** | A draft standard with meaningful adoption, or strong empirical evidence of an effect.                                                  |
-| **C** | A community convention with partial adoption; plausible, but no proven consumer.                                                       |
-| **D** | Speculative or invented; no known consumer and no adoption evidence.                                                                   |
+| Grade | Bar                                                                                                 |
+| :---- | :-------------------------------------------------------------------------------------------------- |
+| **A** | A vendor documents that a named agent reads the signal, or a ratified standard has known consumers. |
+| **B** | A draft standard with real adoption, or strong empirical evidence of an effect.                     |
+| **C** | A community convention with no proven consumer.                                                     |
+| **D** | Speculative; no known consumer or adoption.                                                         |
 
-The policy also fixes what each grade is allowed to do: A and B are scored, C is informative, D ships only if it has an active draft-spec trajectory and then only as experimental, and D without one is not shipped at all.
+A and B are scored. C is informative. D ships only as experimental, and only with an active draft-spec trajectory.
 
 ## The three tiers
 
-Every registered audit carries exactly one tier.
+- **`scored`**: counts toward its category with weight 1.0 (A) or 0.6 (B).
+- **`informative`**: runs and is reported, with weight 0. It is left out of category scores, the overall score, top passes and fails, recommendations and readiness vitals. `isInformative()` is the one predicate every surface uses.
+- **`experimental`**: runs only with `--experimental` (CLI) or `includeExperimental: true` (SDK), and is never scored. See [cli.md](./cli.md#--experimental) and [config.md](./config.md#experimental-audits).
 
-**`scored`** — the audit contributes to its category score with weight 1.0 (grade A) or 0.6 (grade B). This is the only tier that moves a number.
+## Category score
 
-**`informative`** — the audit runs and its result appears in the report, but its weight is 0 and it is filtered out of every ranking surface: category scores, the overall score, top passes, top fails, recommendations and the readiness vitals. A check is treated as advisory when its `scoreDisplayMode` is `informative`, which is the single predicate `isInformative()` that every surface calls, so the rule cannot drift between packages.
-
-**`experimental`** — the audit is behind a flag. It does not run at all unless the scan is started with `--experimental` (CLI) or `includeExperimental: true` (SDK). When it does run it is reported and never scored. See [cli.md](./cli.md#--experimental) and [config.md](./config.md#experimental-audits).
-
-## From a check result to a category score
-
-Each audit returns one of four statuses, and each status has a fixed score between 0 and 1:
-
-| Status | Score | Meaning                                                                        |
-| :----- | :---- | :----------------------------------------------------------------------------- |
-| `pass` | 1.0   | The signal is present and correct.                                             |
-| `warn` | 0.5   | The signal is present but incomplete or partially wrong.                       |
-| `fail` | 0.0   | The signal is absent or broken.                                                |
-| `na`   | —     | The audit's precondition does not exist on this site. Excluded from the score. |
-
-A category score is the weighted mean of its assessable checks, expressed as a percentage:
+| Status | Score | Meaning                                      |
+| :----- | :---- | :------------------------------------------- |
+| `pass` | 1.0   | The signal is present and correct.           |
+| `warn` | 0.5   | Present but incomplete or partly wrong.      |
+| `fail` | 0.0   | Absent where required, or broken.            |
+| `na`   | —     | Nothing to assess on this site. Not counted. |
 
 ```
 categoryScore = round( Σ(checkScore · weight) / Σ(weight) × 100 )
 ```
 
-where the sum runs over checks that are neither `na` nor informative. If the total weight is zero — every check was advisory, or the category had nothing assessable — the category scores 0, which is the "no data" value used consistently across the codebase.
+The sums run over checks that are neither `na` nor informative. A grade-A failure costs about 1.7 times a grade-B failure. A category with no such check is **not assessed**: it shows no score, and its stored `0` means "no data".
 
-Because weights are 1.0 and 0.6, a grade-A failure costs roughly one and two-thirds as much as a grade-B failure in the same category.
+`na` is never a pass or a fail. An audit whose precondition is missing returns `notApplicable`, so a site is neither rewarded nor punished for an absent feature.
 
-## Not applicable is not a failure
-
-An `na` result leaves the denominator entirely. It is neither a pass nor a fail: nothing was there to assess, so nothing moves.
-
-This matters more than it sounds. A vacuous `pass()` would reward a site for not having a feature; a `fail()` would punish a site for the same absence. Both are wrong, so audits that find their precondition missing return `notApplicable()` instead.
-
-The same rule is applied one level up. A category in which _every_ check came back `na` — Agentic Commerce on a site with no checkout, for example — drops out of the overall score's numerator and denominator together. Without that rule, a blog paid the full agentic-commerce evidence mass at score 0 and was scored down for not being a shop.
-
-## Category scores to the overall score
-
-The overall score is the mean of the category scores weighted by **evidence mass**:
+## Overall score
 
 ```
-overallScore = round( Σ(categoryScore · mass) / Σ(mass) )
+overallScore = round( Σ(categoryScore · assessedMass) / Σ(assessedMass) )
 ```
 
-A category's evidence mass is simply the sum of the weights of the audits registered in it (`CATEGORY_MASS`). There are no hand-assigned category percentages. A category earns influence over the headline score by carrying proven audits, which means:
+A category's **assessed mass** is the summed weight of its checks that reached a scored verdict. Its **registry mass** is the summed weight of every audit registered in it. Registry mass measures coverage; only assessed mass weights the score. So an audit keeps its own weight whichever category it sits in, and a category that was not assessed drops out. With no assessed mass anywhere, the score is 0.
 
-- Moving an audit from one category to another moves its mass with it, and nothing else changes.
-- A category built entirely from informative and experimental audits has mass 0 and cannot move the overall score at all.
-- A category with mass, but with no assessable check in this particular scan, is skipped for that scan.
+Each category in the JSON report carries `registryMass` and `assessedMass` for the run. The current registry has 215 audits: 164 scored, 48 informative, 3 experimental, with a total registry mass of 134.0:
 
-If no category has any mass, the overall score is 0.
+| Category                   | Audits | Scored | Registry mass |
+| :------------------------- | -----: | -----: | ------------: |
+| Agent Operability & Safety |     46 |     39 |          32.2 |
+| Access & Crawl Control     |     37 |     32 |          29.2 |
+| Content Extraction         |     27 |     23 |          17.0 |
+| Answer Readiness           |     33 |     19 |          13.0 |
+| Machine Discovery          |     24 |     15 |          12.2 |
+| Agent Interfaces           |     24 |     16 |          12.0 |
+| Structured Data            |     14 |     10 |           9.6 |
+| Agentic Commerce           |     10 |     10 |           8.8 |
 
-### Evidence mass in the current registry
+### No score (`overallScore: null`)
 
-The mass distribution is derived from the registry, not written down anywhere, so it shifts whenever audits are added, re-graded or moved. As of the current registry — 215 audits, of which 164 are scored, 48 informative and 3 experimental — the total mass is 134.0 and it is distributed like this:
+A scan only scores what it read. The report sets `overallScore` and `scoreTier` to `null`, with an `unscoredReason`, when:
 
-| Category                   | Audits | Scored | Mass | Share of the overall score |
-| :------------------------- | -----: | -----: | ---: | -------------------------: |
-| Agent Operability & Safety |     46 |     39 | 32.2 |                     24.0 % |
-| Access & Crawl Control     |     37 |     32 | 29.2 |                     21.8 % |
-| Content Extraction         |     27 |     23 | 17.0 |                     12.7 % |
-| Answer Readiness           |     33 |     19 | 13.0 |                      9.7 % |
-| Machine Discovery          |     24 |     15 | 12.2 |                      9.1 % |
-| Agent Interfaces           |     24 |     16 | 12.0 |                      9.0 % |
-| Structured Data            |     14 |     10 |  9.6 |                      7.2 % |
-| Agentic Commerce           |     10 |     10 |  8.8 |                      6.6 % |
+- the scan never reached the site: connection failure, a bot wall, or a response not attributable to the site;
+- the evidence gate removed more than 35% of the registry's scored mass (`GATED_MASS_UNSCORED_THRESHOLD = 0.35`); or
+- the scan budget's cut and the gate together left more than 35% unassessed.
 
-Every scan reports the live figure rather than this snapshot: each category in the JSON report carries its own `weight`, which is its evidence mass for that run.
+Dropping gated audits instead would raise the score of a site nobody could read. Page-type skips are a legitimate absence and do not count toward the threshold.
 
-### The evidence gate and unscorable scans (`overallScore: null`)
+## Page scope
 
-A scan judges a site from what the fetch phase returned. If the fetch phase never reached the site (e.g., connection refusal, network error, or a bot defense wall) or received a degenerate response, the scanner must not invent a score from an unread run.
+Common checks use every eligible page. Type-specific checks use pages whose type matches their documented population. `general` pages never carry article obligations.
 
-When missing scan evidence causes audits to be gated out, dropping those audits from the denominator would artificially inflate the score of a site nobody could read (for example, a bot wall or empty shell scoring 70+ while real stores score 50–60).
-
-To prevent this distortion, the scorer monitors **gated mass share** (`gatedMassShare` in `packages/core/src/scorer.ts`):
-
-- `GATED_MASS_UNSCORED_THRESHOLD = 0.35` (35% of total registry evidence mass).
-- If the share of evidence mass gated out by missing evidence exceeds 35%, the scan is declared **unscorable**: `overallScore` is set to `null` (with `scoreTier: null`) rather than an artificial numerical score.
-- Legitimate domain absence (such as page-type skips on a site with no blog or storefront) does not count toward the threshold; only mass withheld by the evidence gate is counted.
-
-## Page scope in 7.0.0
-
-Common checks use all eligible pages. Type-specific checks use the pages whose purpose matches their documented population. General pages (`general`) do not inherit article obligations. The type `article` requires independent purpose evidence or an explicit declaration.
-
-When a scan contains both declared and detected matches, one top-level audit result covers the declared pages. Its `advisoryResults` retain detected-page findings with `scoreDisplayMode: "informative"`. Only the primary result may enter the weighted average. Do not flatten these populations into scored checks, duplicate the audit's weight, or infer a second audit from a nested result. Detected-only type-specific checks remain informative even when detection confidence is strong.
-
-`coverage` belongs to each result population:
-
-- `provenance` names `all`, `declared`, or `detected`.
-- `selectedUrls` lists the selected page sample, including failed fetches.
-- `inputUrls` lists the page contexts supplied to the audit. It does not prove that the audit inspected every field or produced a verdict. Origin checks may also use origin evidence.
-- `unreadUrls` lists selected pages without measured readable text and failed fetches. A header check can still use such a page.
-
-`pageAttempts` records fetch status and whether parsing produced a page context. `pagesScanned[].classification` records purpose, source, confidence, and signals. Read the two together: a parsed page can still lack readable text. Missing fields in saved pre-v7 reports mean **not recorded**, never zero coverage or an inferred pass.
-
-The HTML and Markdown scope panels and MCP `pageScope` expose these fields without changing score or audit counts. The terminal prints scope and extra advisory findings; its debugger prints URL sets. The website JSON inspector provides a bounded text preview.
+- A declared page can move a score. A detected page cannot: its type-specific findings stay informative.
+- When a scan has both, one top-level result covers the declared pages. Detected findings sit in its `advisoryResults`, as informative. Only the top-level result is scored; never count nested results as extra audits.
+- Each result has `coverage`: `provenance` (`all`, `declared` or `detected`), `selectedUrls` (including failed fetches), `inputUrls` (pages handed to the audit), and `unreadUrls` (no readable text, or failed).
+- `pageAttempts` records each fetch and whether it parsed. `pagesScanned[].classification` records type, source, confidence and signals.
+- A field missing from a saved pre-v7 report means "not recorded", never zero coverage.
 
 ### Migration from 6.x
 
-- Replace `content` and `unknown` declarations: editorial pages become `article`, every other page becomes `general`. Saved reports that carry `unknown` or `content` still load, read as `general`.
-- Keep top-level audit ids as the counting and scoring unit. Read nested advisory results separately.
-- Accept optional coverage/classification/attempt fields when loading saved reports. Never fill missing fields from current detection rules.
-- Invalid manual types and malformed override URLs now fail at the input boundary on all clients. Correct the input before retrying.
-- Compare scores only with matching versions, page samples, and declarations. Changed applicability can change the score without a site edit.
-
-The release workflow applies package versions. These are the v7 branch semantics, not a claim that 7.0.0 has been published.
+- Replace `content` and `unknown`: editorial pages become `article`, all others `general`. Saved reports with the old names still load, read as `general`.
+- Count and score by top-level audit ids. Read nested advisory results separately.
+- Treat coverage, classification and attempt fields as optional in saved reports. Never fill them from current detection.
+- Invalid page types and malformed override URLs now fail at input on every client.
+- Compare scores only across matching versions, page samples and declarations. Changed applicability can move a score without a site edit.
 
 ## Score tiers
-
-The headline score is also labelled, using fixed bands:
 
 | Score    | Tier              | Label           |
 | :------- | :---------------- | :-------------- |
@@ -165,33 +115,28 @@ The headline score is also labelled, using fixed bands:
 | 50 – 69  | `needs-work`      | Needs Work      |
 | 0 – 49   | `not-ready`       | Not Ready       |
 
-These bands are also what the [score badge](./badge.md) colours itself by.
+The [score badge](./badge.md) uses the same bands.
 
 ## Readiness vitals
 
-Alongside the overall score, a report carries four **readiness vitals** and a `readinessScore` derived from them. They answer a different question — "how ready is this site in each of four practical areas?" — and they are computed separately from the weighted score above.
+A report also carries four vitals and a `readinessScore`. They are computed apart from the weighted score:
 
-| Vital              | Weight in `readinessScore` | Averaged over                                                                                                                                   |
-| :----------------- | -------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `commerce`         |                       0.40 | Six named audits covering offer schema, product identifiers, advanced product details, review schema, service schema and transaction certainty. |
-| `content`          |                       0.25 | A named list of `llms.txt`, sitemap and answer-readiness audits.                                                                                |
-| `botAccessibility` |                       0.20 | Every applicable check in the Access & Crawl Control category.                                                                                  |
-| `technical`        |                       0.15 | Every applicable check in the Content Extraction category.                                                                                      |
+| Vital              | Weight | Averaged over                                                                                            |
+| :----------------- | -----: | :------------------------------------------------------------------------------------------------------- |
+| `commerce`         |   0.40 | Six audits: offer schema, product identifiers, product details, reviews, services, transaction certainty |
+| `content`          |   0.25 | A list of `llms.txt`, sitemap and answer-readiness audits                                                |
+| `botAccessibility` |   0.20 | Every applicable Access & Crawl Control check                                                            |
+| `technical`        |   0.15 | Every applicable Content Extraction check                                                                |
 
 ```
 readinessScore = round( commerce·0.40 + content·0.25 + botAccessibility·0.20 + technical·0.15 )
 ```
 
-Two differences from the category scoring above are deliberate:
+A vital is an unweighted mean of its checks' scores. `na` and informative checks are excluded. A vital with no applicable check reads 0, meaning "no data". The id lists are `READINESS_VITAL_IDS` in `orchestrator.ts`.
 
-- A vital is an **unweighted** mean of its checks' scores. Evidence mass does not enter here; each contributing check counts once.
-- `na` and informative checks are excluded, exactly as in category scoring. A vital with no applicable checks reads as 0, meaning "no data" — the same neutral value the report view-model and the scan summary substitute for an absent vital. Awarding 100 for zero evidence was rejected, because it would inflate the headline of any site that simply has nothing to measure.
+## Worked example
 
-The audit id lists behind `commerce` and `content` live in `READINESS_VITAL_IDS` in [`packages/core/src/orchestrator.ts`](../packages/core/src/orchestrator.ts), and a test asserts that every id in them still resolves to a registered audit.
-
-## A worked example
-
-Take five real audits from Access & Crawl Control — four scored, one advisory:
+Five Access & Crawl Control audits, four scored and one informative:
 
 | Audit                                    | Grade | Tier          | Weight | Status | Score |
 | :--------------------------------------- | :---- | :------------ | -----: | :----- | ----: |
@@ -201,25 +146,10 @@ Take five real audits from Access & Crawl Control — four scored, one advisory:
 | `access-crawl-control/no-blanket-block`  | B     | `scored`      |    0.6 | pass   |   1.0 |
 | `access-crawl-control/crawl-delay`       | C     | `informative` |    0.0 | fail   |   0.0 |
 
-The informative check is dropped before anything is summed. The rest give:
-
 ```
 Σ(score · weight) = 1.0·1.0 + 0.5·1.0 + 0.0·0.6 + 1.0·0.6 = 2.1
-Σ(weight)         = 1.0 + 1.0 + 0.6 + 0.6                  = 3.2
+Σ(weight)         = 1.0 + 1.0 + 0.6 + 0.6                  = 3.2   (assessed mass)
 categoryScore     = round(2.1 / 3.2 × 100)                  = 66
 ```
 
-If this category carried mass 30.2 out of a total of 139.4, and every other category scored 80, the overall score would be `round((66·30.2 + 80·109.2) / 139.4) = 77` — Partially Ready.
-
-## Where to look in the code
-
-| Question                                    | File                                                                        |
-| :------------------------------------------ | :-------------------------------------------------------------------------- |
-| The weight law and both score aggregations  | [`packages/core/src/scorer.ts`](../packages/core/src/scorer.ts)             |
-| Status → score, and where weight is stamped | [`packages/core/src/audit.ts`](../packages/core/src/audit.ts)               |
-| Evidence mass per category                  | [`packages/core/src/audit-config.ts`](../packages/core/src/audit-config.ts) |
-| Score-tier bands and vital weights          | [`packages/core/src/constants.ts`](../packages/core/src/constants.ts)       |
-| Readiness vitals                            | [`packages/core/src/orchestrator.ts`](../packages/core/src/orchestrator.ts) |
-| What a grade is allowed to do               | [`docs/evidence/policy.md`](./evidence/policy.md)                           |
-
-See also: [cli.md](./cli.md) for running a scan and asserting on its score in CI, and [config.md](./config.md) for narrowing a scan to specific categories.
+If the other categories assessed 60.0 mass at a score of 80, the overall score is `round((66·3.2 + 80·60.0) / 63.2) = 79`: Partially Ready.

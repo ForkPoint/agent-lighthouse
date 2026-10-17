@@ -1,10 +1,10 @@
 # Browser-rendered snapshot assessment
 
-This document describes the implemented snapshot path. It does not describe a browser collector or an extension upload endpoint.
+A caller can hand the scan HTML that a browser rendered. Six reviewed audits then run on that DOM, and the report shows their findings apart from the crawler score. The engine includes no browser collector and no upload endpoint.
 
 ## Public contract
 
-`runScan(url, { snapshots })` accepts `BrowserSnapshots` from the root API or the browser-safe `@forkpoint/agent-lighthouse-core/contracts` entry. Validation schemas live in the browser-safe `@forkpoint/agent-lighthouse-core/schemas` entry. Both entries exclude the scanner and Node dependencies.
+`runScan(url, { snapshots })` accepts `BrowserSnapshots`. The types come from the root API or the browser-safe `@forkpoint/agent-lighthouse-core/contracts` entry; the validation schemas from the browser-safe `@forkpoint/agent-lighthouse-core/schemas` entry. Neither entry pulls in the scanner or Node dependencies.
 
 ```ts
 interface BrowserSnapshots {
@@ -24,47 +24,56 @@ interface BrowserSnapshot {
 }
 ```
 
-The source defines these shapes in `packages/core/src/contracts.ts`. `BrowserSnapshotSchema`, `BrowserSnapshotsSchema`, `SnapshotCaptureSchema`, `SnapshotScanOptionsSchema`, `BrowserAssessmentSchema`, and `ScanReportSchema` validate the input and saved output. `browserSnapshotsJsonSchema()` supplies the MCP schema on first use. JSON Schema describes the shape; runtime validation also checks byte size and URL associations.
+The shapes live in `packages/core/src/contracts.ts`. `BrowserSnapshotsSchema` and `SnapshotScanOptionsSchema` validate input; `BrowserAssessmentSchema` and `ScanReportSchema` validate output. `browserSnapshotsJsonSchema()` supplies the MCP tool schema. Runtime validation also checks byte sizes and URL associations, which JSON Schema cannot.
 
-All metadata comes from the client. The engine does not verify who captured a page, when it was captured, or whether a fresh browser had an empty cookie jar. No status code, response header, cookie, redirect chain, or network timing comes from the snapshot.
+The CLI reads the same `snapshots` field from its [config file](../config.md#keys). The MCP `audit_website` tool accepts it and returns the browser assessment.
+
+All metadata is the client's claim. The engine does not verify who captured a page, when, or with what cookies. No status code, header, cookie, redirect or timing comes from a snapshot.
 
 ## Input limits
 
-- One to six snapshots. One snapshot per associated URL.
-- Maximum HTML size: 2,097,152 UTF-8 bytes per page.
-- Maximum HTML batch size: 6,291,456 UTF-8 bytes.
-- Maximum URL length: 2,048 characters. Only absolute HTTP(S) URLs without credentials qualify.
-- `requestedUrl` must match the scan target or an explicit `options.pages[].url` declaration. Other scanned pages, such as a gateway target, do not authorize extra snapshot associations.
-- `capturedUrl` must match `requestedUrl` after URL normalization and fragment removal. Path, query, scheme, and origin must match. A redirected capture needs a new scan of its captured URL. Snapshot metadata never proves a redirect.
-- Collector name and version: 1–100 nonblank characters each.
-- Capture time: a valid ISO date and time with a timezone. The engine sets no freshness window. The report exposes the claimed capture time.
-- Redaction fields: at most 100 strings, each 1–100 characters. An unredacted capture must have an empty list.
-- `originalBytes`, when present, must be a nonnegative integer at least as large as the supplied HTML bytes. It describes the serialization size before truncation.
-- Unknown input metadata keys, unsupported versions, malformed metadata, invalid schemes, credentials, duplicate associations, and size violations throw before any fetch starts.
+Any violation throws before the first fetch.
 
-A valid truncated, redacted, or still-loading capture remains in the report. It contributes no browser findings. Each eligible audit receives a missing-evidence reason. Partial or removed DOM cannot prove absence. An interactive or complete capture can run static checks; neither state proves that late scripts or network work finished.
+| Rule                    | Limit                                                                                                   |
+| :---------------------- | :------------------------------------------------------------------------------------------------------ |
+| Snapshots               | 1 to 6, one per associated URL                                                                          |
+| HTML size               | 2 MiB (2,097,152 UTF-8 bytes) per page; 6 MiB per batch                                                 |
+| URLs                    | Absolute HTTP(S), no credentials, at most 2,048 characters                                              |
+| `requestedUrl`          | The scan target or an explicit `pages[].url`. A gateway target does not qualify.                        |
+| `capturedUrl`           | Equal to `requestedUrl` apart from the fragment. A redirected capture needs a scan of its captured URL. |
+| Collector name, version | 1–100 nonblank characters each                                                                          |
+| `capturedAt`            | A valid date and time with a timezone. No freshness window applies.                                     |
+| Redaction fields        | At most 100 strings of 1–100 characters; empty when not redacted                                        |
+| `originalBytes`         | A nonnegative integer, at least the supplied HTML size                                                  |
+| Other                   | Unknown keys, unsupported versions, duplicate associations and bad schemes are refused                  |
 
-Raw HTML can contain private data. Collectors must disclose and obtain consent for the upload. The engine does not perform redaction. It does not retain raw HTML in the report. A redacted capture deliberately produces coverage reasons rather than unsupported absence findings.
+URLs associate without fragment, credentials or trailing path slash; the query must match exactly.
 
-## Execution and evidence separation
+A truncated, redacted or still-loading capture stays in the report but yields no findings: each eligible audit records missing evidence, because a partial DOM cannot prove absence. An `interactive` or `complete` capture can run static checks; neither proves late scripts finished.
 
-The existing path remains `runScan` → HTTP fetches → page parsing → `buildScanEvidence` → `planAudits` → `runAudits` → crawler scoring and report assembly.
+Raw HTML can hold private data. Collectors must disclose the upload and obtain consent. The engine does no redaction and keeps no raw HTML in the report.
 
-The optional path follows crawler assembly: `assessBrowserSnapshots` → the same `parsePageContext` → `buildSnapshotEvidence` → the same `runAudits`. The parser reuses JSON-LD, Microdata, RDFa, metadata, head-link extraction, and page classification. Existing audits retain their implementation and DOM helpers. The runner still selects pages and applies evidence gates. No dispatcher returns uploaded HTML as an HTTP response.
+## How a snapshot runs
 
-Each snapshot runs independently. Each has a separate DOM, empty root-file context, its own cache owner, and its own evidence object. There is no HTTP origin cache reuse. Explicit page declarations apply only to the matching URL. DOM classification uses the snapshot itself.
+The crawler path is unchanged: fetch, parse, `buildScanEvidence`, `planAudits`, `runAudits`, scoring. After it, `assessBrowserSnapshots` runs each snapshot through the same `parsePageContext` and `runAudits`, with evidence from `buildSnapshotEvidence`.
 
-`DomPageContext` contains shared parsed fields. The legacy audit API still names `PageContext.fetchResult`; snapshot adapters guard that property with an error. An accidental HTTP read fails closed. The snapshot fetch function also throws. It cannot fetch uploaded resource URLs. HTTP fetches retain all existing URL, DNS, and redirect safety checks.
+- Each snapshot is independent: its own DOM, empty root-file context, cache owner and evidence. No HTTP cache is shared.
+- A snapshot context cannot fetch. Reading `PageContext.fetchResult` or calling fetch throws, so an accidental HTTP read fails closed.
+- Snapshot evidence keeps `origin-reachable` and `unblocked-fetches` false. Its readability gate drops content the static visibility helper treats as hidden.
+- An audit runs only if its id is in `SNAPSHOT_AUDITS` (`packages/core/src/snapshot-eligibility.ts`), even with `enforceEvidenceGate: false`. Every eligible audit needs readable snapshot text, so a consent wall or empty shell proves nothing.
+- Ineligible audits are listed once per assessment under `notEligible`.
+- A failure in one capture becomes missing evidence for that capture only. Other captures and the crawler report stand.
+- Caller cancellation also ends snapshot work. A blocked crawl or exhausted budget neither adds nor removes DOM evidence.
 
-Snapshot evidence keeps `origin-reachable` and `unblocked-fetches` false. Its readability gate removes content hidden by the existing static visibility helper. This extra snapshot gate does not change HTTP readability or the existing server-rendered audit.
+HTTP pages and captures share `DOM_WORK_LIMITS`, checked before extraction and classification:
 
-The runner admits a snapshot audit only when its exact ID occurs in `SNAPSHOT_AUDITS`. That record supplies reviewed DOM requirements instead of HTTP attribution requirements. Unknown audits remain gated even with `enforceEvidenceGate: false`. Every eligible audit requires readable snapshot text, as its crawler path does. A consent wall, error page, or empty shell captured as complete cannot prove absence. No category implies eligibility. The report lists ineligible audits once per assessment, under `notEligible`, not once per capture. A failure in one capture becomes missing evidence for that capture only. Other captures keep their findings, and the crawler report stays. HTTP pages and browser captures share a DOM work guard, `DOM_WORK_LIMITS`, before structured-data extraction or page classification. The depth check runs while the parser builds the tree, because HTML parsing itself slows quadratically with depth. The parse stops at the first element deeper than 512, so such a DOM never enters accessibility analysis or audits. Summed element depth is limited to 3,000,000 for a served page and 1,000,000 for one browser capture, because up to six captures run in one scan. Audits that fetch a page again with another user agent parse it within the same limits. A page over a limit is reported as not assessed, without a verdict. These are scanner analysis limits. A browser capture receives missing-evidence records. An HTTP page remains an unread analysis input with its real HTTP status. The scan retains HTTP access evidence and other usable pages. DOM audits climb ancestors for each element, so excessive nesting would stall the scan. Snapshot URLs associate with the target and page declarations without fragments, credentials, or a trailing path slash. The query stays exact. A requested and a captured URL may differ only by fragment.
-
-Browser parsing is bounded by the input limits. Browser work has no network requests. The existing crawler budget, duration, coverage, validity, score, suppression reason, category results, rankings, recommendations, and page attempts retain their server meaning. Caller cancellation also ends snapshot assessment. A blocked HTTP scan or an exhausted crawler budget does not supply or remove DOM evidence.
+- Depth: parsing stops at the first element deeper than 512.
+- Summed element depth: 3,000,000 for a served page, 1,000,000 per capture.
+- A page over a limit is reported as not assessed, without a verdict. An HTTP page keeps its real status; a capture gets missing-evidence records.
 
 ## Supported audit inventory
 
-Each row names the existing audit and its dossier under `docs/evidence/audits/<id>.md`. The inventory lives in `packages/core/src/snapshot-eligibility.ts`.
+Each row names an existing audit; its dossier is `docs/evidence/audits/<id>.md`.
 
 | Audit ID                                          | DOM evidence                                                                                   | Gate and limits                                                                                                                                                                  |
 | ------------------------------------------------- | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -75,15 +84,11 @@ Each row names the existing audit and its dossier under `docs/evidence/audits/<i
 | `structured-data/schema-validation`               | Existing context/type checks on parsed JSON-LD, Microdata, and RDFa                            | Complete unredacted DOM. This is the existing heuristic, not complete JSON-LD validation. Nested-node and absence limitations remain.                                            |
 | `operability-safety/form-autofill-token-coverage` | Serialized labels, field identities, types, autocomplete tokens, constraints, and error wiring | Complete unredacted DOM. No input filling, current value, constraint execution, event handling, or submission proof.                                                             |
 
-The dossiers already document DOM, markup, extraction, or browser-consumer mechanisms for these observations. They do not establish a browser readiness score. Original grades, tiers, and crawler weights stay unchanged. Each browser finding uses informative display and weight 0.
-
-`content-extraction/server-rendered` always uses the actual HTTP response. Headers, status, redirects, robots policy, network checks, and action execution stay outside snapshot evidence. The output names every other selected audit as missing its reviewed snapshot contract. This includes other DOM-based audits whose snapshot eligibility has not yet been reviewed. It is not a claim that those audits can never support snapshots.
-
-Adding support requires an individual source/dossier review, an explicit inventory entry, and regression proof for its evidence limits. No second audit engine exists.
+Grades, tiers and crawler weights are unchanged. Every browser finding is informative, with weight 0. `content-extraction/server-rendered` always uses the real HTTP response; headers, status, redirects, robots policy and actions never come from a snapshot. Other audits are reported as lacking a reviewed snapshot contract, which is not a claim they can never support one. Adding an audit takes a source and dossier review, an inventory entry, and tests for its evidence limits.
 
 ## Output and scoring
 
-All existing `ScanReport` fields retain their meaning. Only a supplied snapshot adds `browserAssessment`:
+A scan with snapshots adds `browserAssessment` to the report. Every other field keeps its crawler meaning.
 
 ```ts
 interface BrowserAssessment {
@@ -108,11 +113,11 @@ interface BrowserAssessment {
 }
 ```
 
-Each finding names its source, page URL, and capture source. Each missing-evidence record names the audit and page. Unsupported audits do not enter the browser coverage denominator. Truncated/redacted/loading captures remain eligible pairs but unassessed. Missing readability, page-purpose gates, and audit errors also remain unassessed.
-
-No calibrated browser score exists. Static checks cover only six reviewed rules. They cannot measure browser-agent task success or access independent of a logged-in tab. The output therefore has a null browser score and an explicit explanation. Audit-local numeric verdicts remain evidence from the original rule, not browser readiness scores.
-
-JSON serialization, `ScanReportSchema`, `hydrateReport`, and `buildReportView` preserve the browser assessment. HTML, Markdown, and terminal reports display it separately. Current-tab and fresh-browser labels identify client claims. HTML/Markdown escape all browser report text. Terminal output strips client control characters. Snapshot scripts and event handlers never execute. Uploaded HTML never becomes a report template.
+- There is no browser score. Six static checks cannot measure agent task success.
+- Unsupported audits stay out of the coverage denominator. Truncated, redacted and loading captures count as eligible but unassessed, as do unreadable pages, page-purpose gates and audit errors.
+- JSON, `ScanReportSchema`, `hydrateReport` and `buildReportView` keep the assessment. HTML, Markdown and terminal reports show it in its own section.
+- Report text from a snapshot is escaped (HTML, Markdown) or stripped of control characters (terminal). Snapshot scripts and handlers never run.
+- A URL-only scan adds no browser fields, and saved reports without one still validate.
 
 ## Server-side usage
 
@@ -147,18 +152,10 @@ const report = await runScan(url, { snapshots });
 // report.browserAssessment describes supplied static DOM evidence only.
 ```
 
-CLI JSON config accepts the same `snapshots` field: `agent-lighthouse audit https://example.com/ --config scan.json`. MCP `audit_website` accepts the same field and returns the browser assessment in its summary. Neither adapter implements a collector.
+## Limits of serialized HTML
 
-## Fidelity and compatibility
-
-HTML serialization cannot establish computed appearance, a complete accessibility tree, event handlers, frame content, shadow roots, live form state, login independence, working controls, or action success. Inline visibility markers are static evidence only. A fresh-browser label does not authenticate capture conditions. Absence from serialized HTML does not prove absence from another frame or shadow tree.
-
-URL-only calls add no browser fields. Existing audit IDs, grades, tiers, weights, and crawler findings remain unchanged. Saved reports without a browser assessment still validate and hydrate. The new contracts and schema entry grow the public surface. The changeset uses a major bump under this repository's result-schema release rule.
-
-## Regression proof
-
-Deterministic fixtures cover HTTP shells, blocked HTTP access, browser-only JSON-LD, independent page contexts/cache owners, multiple supplied URLs, HTTP-only gates, input rejection before fetching, UTF-8 and aggregate limits, truncated/redacted/loading captures, hidden prose, serialized form attributes, non-executed scripts and handlers, unsafe snapshot resource/action URLs, source labels, schema round trips, browser-safe bundles, hydration, all affected renderers, CLI/MCP forwarding, and URL-only compatibility. Live sites are not regression fixtures.
+Serialized HTML cannot show computed appearance, a full accessibility tree, event handlers, frames, shadow roots, live form state, login independence or whether controls work. Absence from the HTML does not prove absence from a frame or shadow tree. A `fresh-browser` label does not authenticate capture conditions.
 
 ## Deferred
 
-The other registered audits have no reviewed snapshot contract. Full browser automation, computed styles, accessibility-tree input, shadow-root/frame capture, action traces, authenticated collector provenance, capture freshness policy, browser scoring, extension collection, and upload/storage endpoints belong to separate work.
+Not built: snapshot contracts for the other audits, browser automation, computed styles, accessibility-tree input, shadow-root and frame capture, action traces, authenticated collector provenance, a freshness policy, a browser score, an extension collector, and upload or storage endpoints.

@@ -1,178 +1,139 @@
 # Configuration
 
-Use this reference to choose scan categories, report formats, and time limits. It separates settings for the command-line tool from options for your own application.
-
-See the [command-line options](./cli.md) for individual commands and [understand your score](./scoring.md) for the results.
+Scan settings for the CLI config file, the SDK and the environment. Flags are in the [CLI reference](./cli.md); results are explained in [understand your score](./scoring.md).
 
 ## The config file
 
-A config file lets a repository keep its scan settings under version control instead of in a long command line. The CLI looks for these names in the working directory, in this order, and uses the first that exists:
+The CLI uses the first of these files in the working directory:
 
 1. `agent-lighthouse.config.json`
 2. `.agent-lighthouserc.json`
 3. `.agent-lighthouserc`
 
-All three are parsed as **JSON**. An auto-discovered file that fails to parse is reported as a warning and ignored, and the scan continues with defaults.
-
-`--config <path>` overrides the search with an explicit file. In that case the file must exist and must parse: a missing path or invalid JSON is a fatal error rather than a fall back to auto-discovery.
+All three are JSON. An auto-discovered file that fails to parse logs a warning, and the CLI tries the next name. `--config <path>` names the file instead; a missing or invalid file is then fatal.
 
 ```json
 {
-  "url": "https://staging.yourstore.com",
+  "url": "https://staging.example.com",
   "minScore": 80,
-  "assertCategories": {
-    "structured-data": 90,
-    "access-crawl-control": 75
-  },
+  "assertCategories": { "structured-data": 90, "access-crawl-control": 75 },
   "output": ["terminal", "html", "json", "md"],
   "outputDir": "./reports"
 }
 ```
 
-With that file in place, `agent-lighthouse audit` — the sub-command with no URL after it — scans the declared URL and enforces the declared budgets. Any invocation whose first argument is a flag reads the file too, so `agent-lighthouse --silent` and `agent-lighthouse --config ./ci/staging.json` also pick the URL up from it.
-
-A bare `agent-lighthouse` with no arguments at all does **not**: it prints the usage block and exits 1 before the config file is opened. See [cli.md](./cli.md#invocation).
+`agent-lighthouse audit`, or any command made only of flags, scans the file's `url`. A bare `agent-lighthouse` prints help instead. See [invocation](./cli.md#invocation).
 
 ### Keys
 
-| Key                | Type                                            | Default                        | Effect                                                                                                       |
-| :----------------- | :---------------------------------------------- | :----------------------------- | :----------------------------------------------------------------------------------------------------------- |
-| `url`              | `string`                                        | none                           | Target URL, used when the invocation gives none — see [cli.md](./cli.md#invocation) for which forms read it. |
-| `minScore`         | `number` (0–100)                                | `0`                            | Overall-score budget; the run exits 1 below it.                                                              |
-| `assertCategories` | `Record<string, number>`                        | `{}`                           | Per-category budgets, keyed by category id.                                                                  |
-| `output`           | `Array<"terminal" \| "html" \| "json" \| "md">` | `["terminal", "html", "json"]` | Report formats to produce.                                                                                   |
-| `outputDir`        | `string`                                        | `"./reports"`                  | Where report files are written.                                                                              |
-| `timeout`          | `number` (seconds)                              | `180`                          | Wall-clock budget for the scan; `0` disables it. `--timeout` overrides it.                                   |
-| `pageType`         | `PageType`                                      | none                           | Explicit purpose of the target URL. `--page-type` overrides it.                                              |
-| `pages`            | `PageOverride[] \| null`                        | none                           | Explicit URL/type pairs, read as pages next to the target URL.                                               |
-| `categories`       | `string[]`                                      | —                              | **Not read by the CLI.** Use the `--categories` flag instead.                                                |
+| Key                | Type                     | Default                        | Effect                                                                                    |
+| :----------------- | :----------------------- | :----------------------------- | :---------------------------------------------------------------------------------------- |
+| `url`              | `string`                 | none                           | Target URL when the command gives none.                                                   |
+| `minScore`         | `number` (0–100)         | `0`                            | Exit 1 below this overall score. `--min-score` overrides it.                              |
+| `assertCategories` | `Record<string, number>` | `{}`                           | Per-category thresholds. Merged with `--assert-category`; a flag wins.                    |
+| `output`           | `string[]`               | `["terminal", "html", "json"]` | Report formats: `terminal`, `html`, `json`, `md`.                                         |
+| `outputDir`        | `string`                 | `"./reports"`                  | Where report files go.                                                                    |
+| `timeout`          | `number` (seconds)       | `180`                          | Scan budget; `0` disables it. `--timeout` overrides it.                                   |
+| `pageType`         | `PageType`               | detected                       | Type of the target URL. `--page-type` overrides it.                                       |
+| `pages`            | `PageOverride[] \| null` | none                           | More URLs with a declared type, read next to the target.                                  |
+| `snapshots`        | `BrowserSnapshots`       | none                           | Browser-rendered DOM input; see [browser snapshots](./architecture/browser-snapshots.md). |
 
-The config file accepts `categories`, but it does not change the scan. Use the `--categories` command-line option to limit categories. A scan reads one target URL; see [Fixed limits](#fixed-limits).
+The CLI does not read a `categories` key. Use `--categories`.
 
-### Precedence
-
-For every setting that both surfaces expose, the order is:
-
-**command-line flag → config file → built-in default.**
-
-`assertCategories` is the one exception, and it merges rather than overrides: thresholds from the config file and thresholds from repeated `--assert-category` flags are combined, with a flag winning for a category named in both.
-
-### `defineConfig`
-
-`@forkpoint/agent-lighthouse-core` exports a `defineConfig` identity helper for authoring a config object in TypeScript with full type checking:
-
-```ts
-import { defineConfig } from "@forkpoint/agent-lighthouse-core";
-
-export default defineConfig({
-  url: "https://staging.yourstore.com",
-  minScore: 80,
-});
-```
-
-Note that the CLI's loader reads JSON only — it does not import a `.ts` or `.js` config. Use `defineConfig` when you build the object in your own script (and, if you want the CLI to read it, write the result out as JSON).
+`defineConfig` from `@forkpoint/agent-lighthouse-core` types a config object in TypeScript. The CLI reads JSON only, so write the object out as JSON for it to use.
 
 ## The eight categories
 
-Every audit belongs to exactly one category. These ids are what `--categories` and `assertCategories` accept, and what the JSON report keys its category results by.
+Every audit belongs to one category. `--categories`, `assertCategories` and the JSON report use these ids.
 
-| Id                     | Name                       | What it covers                                                                                                                                                                                                 |
-| :--------------------- | :------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `access-crawl-control` | Access & Crawl Control     | Whether named AI crawlers and agents are allowed in at all: `robots.txt` groups for GPTBot, ClaudeBot, PerplexityBot and their peers, blanket blocks, bot walls, edge parity, HTTPS, and declared usage terms. |
-| `content-extraction`   | Content Extraction         | Whether a fetched page yields clean text: server-rendered HTML, a findable main content region, semantic structure, and the cost of getting to it.                                                             |
-| `machine-discovery`    | Machine Discovery          | The machine-readable index of the site: `llms.txt` and `llms-full.txt`, sitemaps and their freshness, feeds, and `.well-known` surfaces.                                                                       |
-| `structured-data`      | Structured Data            | Schema.org correctness: valid JSON-LD, Product, Offer, Organization, identifiers such as SKU and GTIN, and review and service markup.                                                                          |
-| `answer-readiness`     | Answer Readiness           | Whether the content can be quoted as an answer: direct definitions, question headings, first-paragraph answers, comparison tables, dated and specific claims, trust signals.                                   |
-| `agent-interfaces`     | Agent Interfaces           | The programmatic surface an agent can call: WebMCP tools, MCP server declarations, OpenAPI specs and their discovery, `agents.json`, and search actions.                                                       |
-| `agentic-commerce`     | Agentic Commerce           | Whether a transaction can be completed by an agent: offer truth, availability, product identifiers, checkout eligibility and payment surfaces.                                                                 |
-| `operability-safety`   | Agent Operability & Safety | Whether an agent can operate the site without breaking it: reachable endpoints, stability, accessible controls, `security.txt`, `tdmrep`, and safety signals.                                                  |
+| Id                     | Name                       | Covers                                                                                                          |
+| :--------------------- | :------------------------- | :-------------------------------------------------------------------------------------------------------------- |
+| `access-crawl-control` | Access & Crawl Control     | `robots.txt` rules for named AI crawlers, blanket blocks, bot walls, edge parity, HTTPS and usage terms.        |
+| `content-extraction`   | Content Extraction         | Server-rendered HTML, a findable main region, semantic structure, and the cost of reading it.                   |
+| `machine-discovery`    | Machine Discovery          | `llms.txt`, `llms-full.txt`, sitemaps and their freshness, feeds and `.well-known` files.                       |
+| `structured-data`      | Structured Data            | Valid JSON-LD and Schema.org types: Product, Offer, Organization, identifiers, reviews, services.               |
+| `answer-readiness`     | Answer Readiness           | Quotable content: definitions, question headings, first-paragraph answers, tables, dated claims, trust signals. |
+| `agent-interfaces`     | Agent Interfaces           | WebMCP tools, MCP server declarations, OpenAPI specs and their discovery, `agents.json`, search actions.        |
+| `agentic-commerce`     | Agentic Commerce           | Offer truth, availability, product identifiers, checkout and payment surfaces.                                  |
+| `operability-safety`   | Agent Operability & Safety | Reachable endpoints, stability, accessible controls, `security.txt`, `tdmrep` and safety signals.               |
 
-Narrow a scan with the flag:
-
-```bash
-agent-lighthouse https://yourstore.com --categories structured-data,agentic-commerce
-```
-
-Unlisted categories are not scanned at all, so their audits appear nowhere in the report and contribute nothing to the score. An unknown id is rejected before the scan starts, with the valid list printed and exit code 1.
+Unlisted categories do not run and do not count. An unknown id exits 1.
 
 ## Experimental audits
 
-`--categories` and `--experimental` are two independent filters over the same registry, applied together.
-
-- `--categories` decides **which categories run**.
-- `--experimental` decides **whether experimental-tier audits are part of the run**. They are excluded by default.
-
-An experimental audit carries weight 0 whether or not it runs, so this flag can never move a score — it only adds results to the report. See [scoring.md](./scoring.md#the-three-tiers) for the tiers and the [evidence policy](./evidence/policy.md) for what puts an audit in each one.
+`--categories` picks which categories run. `--experimental` adds experimental-tier audits, which are excluded by default. The two filters combine. An experimental audit carries weight 0, so the flag never moves a score. See [the three tiers](./scoring.md#the-three-tiers) and the [evidence policy](./evidence/policy.md).
 
 ## Programmatic options
 
-`runScan(url, options)` from `@forkpoint/agent-lighthouse-core` takes the same decisions as `ScanOptions`:
+`runScan(url, options)` from `@forkpoint/agent-lighthouse-core` takes these `ScanOptions`:
 
-| Option                | Type                         | Default   | Effect                                                                                                                            |
-| :-------------------- | :--------------------------- | :-------- | :-------------------------------------------------------------------------------------------------------------------------------- |
-| `categories`          | `string[]`                   | all eight | Restrict the scan to these category ids. Unknown ids match nothing — validate them at your entry point so a typo is heard.        |
-| `includeExperimental` | `boolean`                    | `false`   | Include experimental-tier audits, reported but never scored.                                                                      |
-| `onEvent`             | `(event: ScanEvent) => void` | none      | Progress callback; the CLI's progress display and its NDJSON stream are both built on it.                                         |
-| `pageType`            | `PageType`                   | none      | Declare the target URL's purpose. Takes precedence over a matching entry in `pages`.                                              |
-| `pages`               | `PageOverride[] \| null`     | none      | Scan these exact URLs with a declared page type, next to the target URL.                                                          |
-| `signal`              | `AbortSignal`                | none      | Cancel an in-flight scan.                                                                                                         |
-| `timeoutMs`           | `number`                     | `180000`  | Wall-clock budget. When it runs out the scan finishes with what it has and records it under `conditions.budget`; `0` disables it. |
+| Option                | Type                          | Default  | Effect                                                                             |
+| :-------------------- | :---------------------------- | :------- | :--------------------------------------------------------------------------------- |
+| `categories`          | `string[]`                    | all      | Category ids to run. Unknown ids match nothing; validate them yourself.            |
+| `includeExperimental` | `boolean`                     | `false`  | Run experimental-tier audits, reported but never scored.                           |
+| `pageType`            | `PageType`                    | detected | Type of the target URL. Wins over a matching `pages` entry.                        |
+| `pages`               | `PageOverride[] \| null`      | none     | More URLs with a declared type.                                                    |
+| `snapshots`           | `BrowserSnapshots`            | none     | Browser-rendered DOM input; adds `browserAssessment` to the report.                |
+| `timeoutMs`           | `number`                      | `180000` | Scan budget. Recorded under `conditions.budget` when it runs out; `0` disables it. |
+| `signal`              | `AbortSignal`                 | none     | Cancel the scan. `runScan` then throws.                                            |
+| `onEvent`             | `(event: ScanEvent) => void`  | none     | Progress callback. The CLI's progress display and NDJSON stream use it.            |
+| `onAuditTrace`        | `(trace: AuditTrace) => void` | none     | One record per audit, as `--trace` writes.                                         |
+| `logger`              | pino-compatible logger        | built-in | Every log line of the scan goes here, with `site`, `scan` and `component` fields.  |
+| `scanId`              | `string`                      | random   | The report's `scanId` and the `scan` log field.                                    |
+| `enforceEvidenceGate` | `boolean`                     | `true`   | `false` runs audits whose required evidence is missing. Diagnostic use only.       |
+| `dispatcher`          | undici `Dispatcher`           | default  | Dispatcher for every request the scan makes.                                       |
+| `maxConcurrent`       | `number`                      | no limit | Requests the scan may have in flight at once.                                      |
+| `headers`             | `Record<string, string>`      | none     | Extra request headers on every fetch.                                              |
+| `bypassOriginCache`   | `boolean`                     | `false`  | Skip the shared origin evidence cache.                                             |
+| `originCache`         | `OriginCache`                 | shared   | A custom origin evidence cache.                                                    |
+| `robotsTxt`           | `FetchResult`                 | none     | A `robots.txt` response the caller already has, used instead of fetching it.       |
 
 ```ts
+import pino from "pino";
 import { runScan } from "@forkpoint/agent-lighthouse-core";
 
-const report = await runScan("https://yourstore.com", {
+const report = await runScan("https://example.com", {
   categories: ["structured-data", "agentic-commerce"],
-  includeExperimental: false,
   pages: [
-    { url: "https://yourstore.com/products/blue-widget", pageType: "product" },
-    { url: "https://yourstore.com/collections/widgets", pageType: "category" },
+    { url: "https://example.com/products/blue-widget", pageType: "product" },
+    { url: "https://example.com/collections/widgets", pageType: "category" },
   ],
-  onEvent: (event) => console.error(JSON.stringify(event)),
+  logger: pino({ level: "debug" }),
 });
 
 console.log(report.overallScore, report.scoreTier);
 ```
 
-A `PageOverride` declares `{ url, pageType }`. Supported types are `homepage`, `category`, `product`, `article` and `general`. `article` is an editorial page: a blog post, news story or guide. `general` is any other page — about, FAQ, help, contact, policy — and never carries article obligations. The pre-v7 names `unknown` and `content` fail validation.
+### Page declarations
 
-The CLI config, SDK, and MCP tool accept the same `pageType` and `pages` fields. Invalid types or non-absolute override URLs fail validation before fetching. Older SDK versions silently skipped malformed override URLs; v7 reports the error.
+A `PageOverride` is `{ url, pageType }`. Types are `homepage`, `category`, `product`, `article` and `general`. `article` is an editorial page: post, news story or guide. `general` is any other page and never carries article obligations.
 
-Overrides are de-duplicated ignoring a trailing slash. A target-URL entry supplies its declaration unless top-level `pageType` overrides it. Duplicate extra URLs keep their first declaration. A declaration does not bypass evidence gates. Failed fetches remain in `pageAttempts` and audit coverage.
-
-```json
-{
-  "url": "https://example.com/guide",
-  "pageType": "article",
-  "pages": [
-    { "url": "https://example.com/products/widget", "pageType": "product" }
-  ]
-}
-```
-
-Omit the declaration to use detection. Type-specific checks on detected pages remain advisory. Common checks still use all eligible pages. Detection confidence and signals explain the classification; they do not grant scoring permission.
-
-Field-level product verification (`report.productFields`) is only produced when a page override with `pageType: 'product'` is supplied. Without one, the report marks it skipped rather than guessing from another scanned page.
+- The CLI config, SDK and MCP tool accept the same `pageType` and `pages`.
+- An invalid type, a pre-v7 name (`unknown`, `content`) or a non-absolute URL fails before any fetch.
+- Duplicates are matched ignoring a trailing slash. The first declaration wins; top-level `pageType` wins for the target.
+- A declaration does not bypass evidence gates. Failed fetches stay in `pageAttempts` and coverage.
+- Without a declaration, type-specific checks on detected pages stay advisory. Common checks use every eligible page.
+- `report.productFields` is produced only when a page is declared `product`.
 
 ## Environment variables
 
-| Variable                 | Default | Effect                                                                                                                                                                                                                             |
-| :----------------------- | :------ | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `LOG_LEVEL`              | `info`  | Engine log verbosity: `silent`, `error`, `warn`, `info`, `debug` or `trace`. An unknown value warns and falls back to `info`. The CLI uses `warn` when it is unset. `--log-level` overrides it; `--progress-json` forces `silent`. |
-| `LOG_FORMAT`             | `text`  | Log line format on stderr: `text` or `json` (one object per line).                                                                                                                                                                 |
-| `SCANNER_A11Y_MAX_PAGES` | `3`     | How many pages get the jsdom-based accessibility pass. Accessibility problems are template-wide, so the first few pages are representative; `0` disables the pass entirely and its audits degrade to not-applicable.               |
-| `A11Y_CONCURRENCY`       | `3`     | How many of those accessibility passes run at once.                                                                                                                                                                                |
+| Variable                 | Default | Effect                                                                                                                                                 |
+| :----------------------- | :------ | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LOG_LEVEL`              | `info`  | `silent`, `error`, `warn`, `info`, `debug` or `trace`. The CLI uses `warn` when unset; `--log-level` overrides. An unknown value warns and falls back. |
+| `LOG_FORMAT`             | `text`  | Log format on stderr: `text` or `json`.                                                                                                                |
+| `SCANNER_A11Y_MAX_PAGES` | `3`     | Pages that get the jsdom accessibility pass. `0` disables it; its audits become not applicable.                                                        |
+| `A11Y_CONCURRENCY`       | `3`     | Accessibility passes run at once.                                                                                                                      |
 
 ## Fixed limits
 
-These are compile-time constants in [`packages/core/src/constants.ts`](../packages/core/src/constants.ts) and [`packages/core/src/fetcher.ts`](../packages/core/src/fetcher.ts). There is no flag, config key or environment variable for them. The scan budget is the one exception: its default is a constant, and `--timeout`, the `timeout` key and `timeoutMs` change it.
+These are constants in [`constants.ts`](../packages/core/src/constants.ts). Only the scan budget can be changed.
 
 | Limit              | Value                                                                  |
 | :----------------- | :--------------------------------------------------------------------- |
-| Pages per scan     | The target URL, plus declared `pages` and at most one gateway target   |
-| Request timeout    | 10 seconds per request                                                 |
-| Scan budget        | 180 seconds per scan by default; see `--timeout` in [cli.md](./cli.md) |
-| Response body read | 5 MB, after which the body is truncated                                |
-| Scanner user agent | `AgentLighthouse/1.0 (+https://github.com/ForkPoint/agent-lighthouse)` |
+| Pages per scan     | The target URL, declared `pages`, and at most one gateway target       |
+| Request timeout    | 10 seconds                                                             |
+| Scan budget        | 180 seconds by default                                                 |
+| Response body read | 5 MB, then truncated                                                   |
+| User agent         | `AgentLighthouse/1.0 (+https://github.com/ForkPoint/agent-lighthouse)` |
 
-The user agent is deliberately identifiable so that site owners can recognise, rate-limit or allow a scan in their logs. Individual audits that probe crawler parity send other user agents on purpose, to compare how the site answers a named AI crawler versus an ordinary browser.
+The user agent is identifiable so site owners can recognise a scan. Crawler-parity audits send other user agents on purpose, to compare how the site answers a named AI crawler and a browser.

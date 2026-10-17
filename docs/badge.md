@@ -1,6 +1,6 @@
 # Agent Lighthouse Badge
 
-Use a badge when you want to show a current Agent Lighthouse score in a README, docs page, launch post, or client report.
+Show a current score in a README, docs page or client report.
 
 ## Static Markdown Badge
 
@@ -17,14 +17,14 @@ Use a badge when you want to show a current Agent Lighthouse score in a README, 
 |  50-69 | `f59e0b` | Needs work  |
 |   0-49 | `ef4444` | Blocked     |
 
-## CLI Workflow
+The bands match the [score tiers](./scoring.md#score-tiers).
+
+## From a scan
 
 ```bash
 npx @forkpoint/agent-lighthouse https://example.com --output json --output-dir ./reports
 ```
 
-Take the `overallScore` from `reports/agent-lighthouse-report.json`, choose a color from the table, and update the badge.
+Read `overallScore` from `reports/agent-lighthouse-report.json`, pick the color from the table, and update the badge. A `null` score means the scan was not scored; do not publish a badge for it.
 
-The docs site also includes an interactive badge generator.
-
-Preview asset: [`docs/assets/badge-generator-screenshot.png`](assets/badge-generator-screenshot.png)
+The docs site has an interactive badge generator ([screenshot](assets/badge-generator-screenshot.png)).
