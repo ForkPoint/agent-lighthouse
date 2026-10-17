@@ -31,7 +31,7 @@ import {
 } from "./dom";
 import { getElementSpec, getAriaRolesByType } from "./stdhelpers";
 import { sanitize, accessibleTextVirtual } from "./text";
-import { isDataTable, toArray } from "./table";
+import { isDataTable, toGrid } from "./table";
 import { checks, setDocument, CheckBuilder, type CheckDef } from "./checks";
 import { CheckStatus } from "#core/types";
 
@@ -121,7 +121,7 @@ const nestedInteractiveMatch: MatchFn = (_node, vNode) => {
 
 const dataTableLargeMatch: MatchFn = (node) => {
   if (isDataTable(node as never)) {
-    const tableArray = toArray(node as never);
+    const tableArray = toGrid(node as never);
     return (
       tableArray.length >= 3 &&
       (tableArray[0]?.length ?? 0) >= 3 &&

@@ -42,10 +42,6 @@ const STRUCK_SELECTOR =
 export const OUT_OF_STOCK_PHRASES =
   /(sold\s*out|out of stock|notify me when|back in stock|currently unavailable|no longer available)/i;
 
-/** Phrases that say it can. */
-export const IN_STOCK_PHRASES =
-  /(in stock|add to (cart|bag|basket)|buy now|available now)/i;
-
 export interface PriceCandidate {
   /** The parsed amount. */
   value: number;

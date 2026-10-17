@@ -28,16 +28,6 @@ import type { CheckContext } from "#core/check-context";
 /** The only location a documented consumer (hf-discover) resolves. */
 export const AI_CATALOG_PATH = "/.well-known/ai-catalog.json";
 
-/** Media type the spec says the manifest SHOULD be served with (§3.3). */
-export const AI_CATALOG_MEDIA_TYPE = "application/ai-catalog+json";
-
-/** The three top-level fields ARD §4.1 makes mandatory. */
-export const ARD_REQUIRED_TOP_LEVEL = [
-  "specVersion",
-  "host",
-  "entries",
-] as const;
-
 /** Optional fields are undefined when the manifest entry omits them or leaves them blank. */
 export interface ArdEntry {
   identifier?: string | undefined;

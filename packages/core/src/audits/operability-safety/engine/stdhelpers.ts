@@ -12,12 +12,6 @@ export function getAriaRolesByType(type: string): string[] {
   );
 }
 
-export function getAriaRolesSupportingNameFromContent(): string[] {
-  return Object.keys(ariaRoles).filter(
-    (roleName) => ariaRoles[roleName].nameFromContent,
-  );
-}
-
 export function getGlobalAriaAttrs(): string[] {
   return Object.keys(ariaAttrs).filter(
     (attrName) => ariaAttrs[attrName].global,

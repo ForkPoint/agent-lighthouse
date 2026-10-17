@@ -37,7 +37,7 @@ export interface A11yAuditSpec {
 }
 
 /** Base class: aggregates this audit's a11y rules across all scanned pages. */
-export abstract class A11yBackedAudit extends Audit {
+abstract class A11yBackedAudit extends Audit {
   protected abstract rules: string[];
 
   audit(ctx: CheckContext): AuditResult {

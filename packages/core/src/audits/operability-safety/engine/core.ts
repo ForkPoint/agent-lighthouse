@@ -12,8 +12,6 @@
  * Shadow DOM is intentionally ignored: scanned HTML is parsed with
  * `runScripts:'outside-only'` and contains no shadow roots.
  */
-import { ariaAttrs } from "./standards";
-
 export type AnyNode = Node;
 
 /** Optional fields copy DOM properties, which jsdom leaves undefined where an element lacks them. */
@@ -455,6 +453,3 @@ export function isHtmlElement(node: VNode | Element): boolean {
 
 // Imported here (not at top) to keep isHtmlElement's standards access explicit.
 import { htmlElms as htmlElmsRef } from "./standards";
-
-/** Expose ariaAttrs for callers needing attribute metadata via core. */
-export { ariaAttrs };

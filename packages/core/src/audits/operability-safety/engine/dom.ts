@@ -29,12 +29,6 @@ export function getRootNode(node: AnyNode): Document | DocumentFragment {
   return utilGetRootNode(node);
 }
 
-export function getComposedParent(element: AnyNode): AnyNode | null {
-  const el = element as unknown as { parentNode: AnyNode | null };
-  if (el.parentNode && el.parentNode.nodeType === 1) return el.parentNode;
-  return null;
-}
-
 // ── idref resolution ─────────────────────────────────────────────
 
 export function idrefs(

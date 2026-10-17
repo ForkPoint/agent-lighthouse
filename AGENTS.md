@@ -51,6 +51,7 @@ pnpm check:dossiers     # registry <-> dossier agreement, both directions
 pnpm check:requires     # each audit's `requires` matches what its source reads
 pnpm check:audit-map    # audit map <-> codebase & dossier agreement
 pnpm check:enums        # no string literal where an enum constant exists
+pnpm knip               # no unused file, export or dependency
 pnpm check:retired-names # user docs name no retired page type
 pnpm check:package-types # published .d.ts resolve like the JS (after build)
 pnpm changeset          # one per user-visible change
@@ -232,10 +233,10 @@ Write for a reader, not for a researcher:
 
 ## Before you commit
 
-All ten, in order:
+All eleven, in order:
 
 ```bash
-pnpm build && pnpm test && pnpm typecheck && pnpm lint && pnpm check:dossiers && pnpm check:requires && pnpm check:audit-map && pnpm check:enums && pnpm check:retired-names && pnpm check:package-types
+pnpm build && pnpm test && pnpm typecheck && pnpm lint && pnpm check:dossiers && pnpm check:requires && pnpm check:audit-map && pnpm check:enums && pnpm knip && pnpm check:retired-names && pnpm check:package-types
 ```
 
 `check:dossiers`, `check:requires`, `check:package-types` and the type-aware

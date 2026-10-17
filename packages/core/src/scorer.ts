@@ -1,9 +1,5 @@
 import type { CheckResult, CategoryResult } from "./types";
-import {
-  CATEGORY_NAMES,
-  getScoreTier,
-  TAG_SKIPPED_NO_EVIDENCE,
-} from "./constants";
+import { CATEGORY_NAMES, TAG_SKIPPED_NO_EVIDENCE } from "./constants";
 import {
   AuditTier,
   CheckStatus,
@@ -198,5 +194,3 @@ export function skippedMassShare(checks: CheckResult[], tag: string): number {
   }
   return total === 0 ? 0 : skipped / total;
 }
-
-export { getScoreTier };
