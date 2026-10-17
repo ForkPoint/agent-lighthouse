@@ -20,7 +20,9 @@ sources:
 
 ## What it checks
 
-Issues paired live requests to PDPs, cart and policy URLs with a baseline browser UA versus each documented OpenAI agent UA, detecting WAF/CDN blocks and bot challenges that robots.txt-only audits are structurally blind to.
+Issues paired live requests with a browser User-Agent and with two OpenAI agent User-Agents: ChatGPT-User and OAI-SearchBot. These are the two agents a purchase depends on. GPTBot is a training crawler and is read from robots.txt only. OAI-AdsBot visits only pages submitted as ads, so it is not probed.
+
+The targets are the homepage, the first two scanned pages, `/cart`, and the linked terms and privacy pages. The two sampled pages are not filtered by page type. A probe fails on a bot-challenge marker in the body, a 403, 429 or 503 status, a status class that differs from the browser's, or under 60% of the browser's text. robots.txt is also read: a rule that disallows either agent on a sampled page or the cart fails the audit. These blocks live at the WAF or CDN edge, where a robots.txt-only audit cannot see them.
 
 ## Claimed mechanism (falsifiable)
 
@@ -28,7 +30,7 @@ Falsifiable claim: OpenAI operates four separately-tokened agents with separatel
 
 ## Evidence
 
-- **[OpenAI Bots / Crawler documentation](https://developers.openai.com/api/docs/bots)** — OpenAI (vendor-doc, URL verified 2026-08-20)
+- **[OpenAI Bots / Crawler documentation](https://developers.openai.com/api/docs/bots)** — OpenAI (vendor-doc, verified 2026-10-17)
   - Four distinct user agents with separate robots.txt tokens and separate published IP-range files: OAI-SearchBot (surfaces sites in ChatGPT search — https://openai.com/searchbot.json), OAI-AdsBot (validates ad landing pages — https://openai.com/adsbot.json), GPTBot (model training — https://openai.com/gptbot.json), ChatGPT-User (user-initiated actions: web visits and GPT Actions — https://openai.com/chatgpt-user.json). ChatGPT-User is the agent that fetches on a shopper's behalf. Crucially these are separately controllable: blocking GPTBot does not block OAI-SearchBot or ChatGPT-User, and vice versa.
 - **[OAI-SearchBot published IP ranges](https://openai.com/searchbot.json)** — OpenAI (dataset, URL verified 2026-08-20)
   - Live JSON with creationTime (2026-01-02T11:00:00.000000) and a prefixes[] array of 35 IPv4 CIDR blocks (/24 to /28), e.g. 104.210.140.128/28 and 172.182.193.224/28. Machine-consumable, so an auditor can both spoof the documented UA and tell a merchant exactly which ranges to allowlist at the WAF.

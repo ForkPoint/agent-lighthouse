@@ -6598,6 +6598,24 @@
       "publisher": "Cyrus Shepard, Zyppy",
       "verified": "2026-08-20",
       "keyFindings": "Meta-analysis of ~54 published experiments, studies and patents across ChatGPT, Gemini and Perplexity, scored 2.0–9.5 on repeatability, strength of evidence and official documentation support. Relevant scores: 'AI-ready Structure' (headings, sections, tables) 8.6; 'Factually Specific' (concrete numbers over vague statements) 8.3; freshness/dates 7.0; word count 6.7 (inconsistent — longer content performed better but risked incomplete retrieval); schema/structured data 5.6 with effect described as 'typically small'; llms.txt 2.0 (deemed unreliable). FAQ format and meta description were not measured at all — an evidence gap, not a null result."
+    },
+    {
+      "id": "azure-search-chunk-documents",
+      "title": "Chunk Documents - Azure AI Search",
+      "url": "https://learn.microsoft.com/en-us/azure/search/vector-search-how-to-chunk-documents",
+      "type": "vendor-doc",
+      "publisher": "Microsoft",
+      "verified": "2026-10-17",
+      "keyFindings": "'We recommend starting with a chunk size of 512 tokens (approximately 2,000 characters) and an initial overlap of 25%, which equals 128 tokens.' Default Text Split skill parameters: pages mode, maximumPageLength 2000 characters, pageOverlapLength 500. Lists variable-sized chunking where 'Embedded markup, like HTML or Markdown, have heading syntax that can be used to chunk data by sections', and appending the document title to mid-document chunks 'to prevent context loss'."
+    },
+    {
+      "id": "google-factcheck-doc",
+      "title": "Fact Check (ClaimReview) structured data",
+      "url": "https://developers.google.com/search/docs/appearance/structured-data/factcheck",
+      "type": "vendor-doc",
+      "publisher": "Google Search Central",
+      "verified": "2026-10-17",
+      "keyFindings": "'We're phasing out support for ClaimReview markup in Google Search.' 'However, this markup remains supported by the Factcheck Explorer Tool.' No phase-out date. 'A page must only have one ClaimReview element' to be eligible for the single fact check rich result. Required ClaimReview properties: claimReviewed, reviewRating, url; Rating.alternateName carries the truthfulness rating as a short phrase such as 'Mostly true'."
     }
   ]
 }

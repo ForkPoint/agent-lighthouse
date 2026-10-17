@@ -312,7 +312,7 @@ function feedRow(row: Row): string {
 }
 
 const EXPECTED =
-  "Every product page maps onto a feed row that passes validation: identity and copy within their character caps, a single numeric price with an ISO 4217 currency, an availability value the feed enum accepts, and a valid GTIN or MPN";
+  "The product page maps onto a feed row that passes validation: identity and copy within their character caps, a single numeric price with an ISO 4217 currency, an availability value the feed enum accepts, and a valid GTIN or MPN";
 
 const SAMPLE = `{
   "@type": "Product",
@@ -337,7 +337,7 @@ export class CheckoutOfferFieldMappingAudit extends Audit {
     title: "Checkout-eligible offer field mapping",
     failureTitle: "Checkout-eligible offer field mapping",
     description:
-      "Audits each PDP against the exact required-and-conditional field set of the OpenAI product feed spec, including its character caps and its conditional triggers, so the merchant learns which rows will be rejected before uploading a feed.",
+      "Audits the first scanned product page with Product markup against the required-and-conditional field set of the OpenAI product feed spec, including its character caps and its conditional triggers, so the merchant learns why its feed row would be rejected before uploading a feed.",
     scoreDisplayMode: ScoreDisplayMode.Ternary,
     weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
     evidenceGrade: EvidenceGrade.A,

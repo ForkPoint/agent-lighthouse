@@ -35,6 +35,10 @@ describe("RssFeedAudit", () => {
     const result = await audit.audit(ctx);
     expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("No RSS or Atom feed");
+    // The message names every path the shared gatherer probes, not a subset.
+    expect(result.message).toContain(
+      "/feed, /feed.xml, /rss.xml, /atom.xml, /index.xml",
+    );
   });
 
   // True positive: an advertised feed that does not answer is broken.

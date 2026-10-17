@@ -10,7 +10,8 @@ reviewed: 2026-08-20
 graduated: 2026-08-23
 sources:
   - rfc4287
-  - google-sitemap-formats
+  - rss-2-specification
+  - google-consolidate-duplicate-urls
 ---
 
 # Feed entry identity and canonical integrity
@@ -29,8 +30,10 @@ RFC 4287 makes atom:id mandatory, exactly one per entry, 'permanent, universally
 
 - **[RFC 4287 — The Atom Syndication Format](https://www.rfc-editor.org/rfc/rfc4287)** — IETF (spec, URL verified 2026-08-20)
   - Sec 4.1.2: atom:entry MUST contain exactly one atom:id and exactly one atom:updated. The id is a permanent, universally unique IRI that 'must not change across different instantiations of the entry'. The updated time is the 'most recent modification time that the publisher considers significant'. atom:entry MUST also contain atom:summary in two cases: when atom:content carries a src attribute, and is thus empty, and when content is Base64-encoded. MUST NOT contain more than one atom:summary.
-- **[Build and submit a sitemap](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap)** — Google Search Central (vendor-doc, URL verified 2026-08-20)
-  - Direct quote: 'Google uses the <lastmod> value if it's consistently and verifiably (for example by comparing to the last modification of the page) accurate.' The value 'should reflect the date and time of the last significant update to the page… an update to the copyright date is not [significant].' priority and changefreq are ignored. The limit per sitemap file is 50MB uncompressed and 50,000 URLs.
+- **[RSS 2.0 Specification](https://www.rssboard.org/rss-specification)** — RSS Advisory Board (spec, verified 2026-10-17)
+  - `<guid>` is a string that uniquely identifies the item. Aggregators may use it to decide whether an item is new. `isPermaLink` defaults to true, and then the reader may assume the guid is a permalink to the item. This is the rule behind the check that a permalink guid is an absolute URL.
+- **[Consolidate duplicate URLs](https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls)** — Google Search Central (vendor-doc, verified 2026-10-17)
+  - `rel="canonical"` is a strong signal of which URL should become canonical, and a redirect is a strong signal that its target should. The page uses a `gclid` tracking URL as its example of a non-preferred duplicate. A feed link that redirects, or that differs from the page's canonical, therefore advertises an address Google consolidates away.
 
 ## Example failure
 
@@ -61,5 +64,6 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 - **The stub-feed length ratio** belongs to `machine-discovery/rss-feed-content`.
 - **JSON Feed** gets the duplicate-id, missing-id and link rules. It has no
   `isPermaLink` or summary-when-src rule to assert.
-- **The Google sitemap source carries no weight here.** RFC 4287 §4.1.2 and the
-  RSS 2.0 `<guid>` rule carry every assertion.
+- **Sources.** RFC 4287 §4.1.2 and the RSS 2.0 `<guid>` rule carry the
+  identity assertions. Google's duplicate-URL guidance carries the canonical
+  and redirect assertions.
