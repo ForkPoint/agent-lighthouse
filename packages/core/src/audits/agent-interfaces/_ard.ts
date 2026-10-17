@@ -19,8 +19,7 @@
  *     `metadata` and `trustManifest` are optional.
  *
  * The framework previously asserted a top-level `services` array, which appears
- * in no revision of the spec and in no live manifest — see
- * docs/evidence/deletions/agent-tools/ai-catalog-exists.md.
+ * in no revision of the spec and in no live manifest.
  */
 
 import type { CheckContext } from "#core/check-context";

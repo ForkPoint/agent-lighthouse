@@ -56,7 +56,7 @@ Checks `ctx.rootFiles['/.well-known/security.txt']` for a 200 and fails otherwis
 
 ## Adversarial redemption research (2026-08-21)
 
-This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/deletions/technical-readiness/security-txt.md](../../deletions/technical-readiness/security-txt.md). Outcome: **dead-but-informative-candidate**, grade C.
+This audit was a delete candidate and went through dedicated adversarial research. Outcome: **dead-but-informative-candidate**, grade C.
 
 ## Review history
 
