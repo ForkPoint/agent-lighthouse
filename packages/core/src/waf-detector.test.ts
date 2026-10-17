@@ -185,6 +185,24 @@ describe("detectWafProtection", () => {
       },
     );
 
+    it("says what the single attempt saw, and never claims a repeat", () => {
+      const timedOut = onHomepage(
+        { status: 0, error: "The operation was aborted due to timeout" },
+        0,
+      );
+      expect(timedOut?.reason).toBe(
+        "The connection opened, but the homepage sent no response before the timeout",
+      );
+      const closed = onHomepage(
+        { status: 0, error: "other side closed (UND_ERR_SOCKET)" },
+        0,
+      );
+      expect(closed?.reason).toBe(
+        "The server closed the connection without a response",
+      );
+      expect(`${timedOut?.reason} ${closed?.reason}`).not.toMatch(/repeated/);
+    });
+
     it("returns null for an ordinary 404 with no other marker", () => {
       expect(onHomepage({ status: 404 }, 0)).toBeNull();
     });
