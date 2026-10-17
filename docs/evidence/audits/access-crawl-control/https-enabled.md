@@ -44,7 +44,15 @@ sources:
 
 ## What it checks
 
-Enterprise AI frameworks refuse to interact with non-HTTPS sites due to security policies. GPTBot, ClaudeBot, and enterprise RAG systems all skip HTTP-only sites entirely, making your content invisible to AI-generated answers. Enable HTTPS with a valid TLS certificate.
+Whether the site is served over HTTPS.
+
+| State                                             | Result                      |
+| :------------------------------------------------ | :-------------------------- |
+| the scanned URL uses plain `http://`              | `fail`, priority `critical` |
+| HTTPS, and the homepage returned a document       | `pass`                      |
+| HTTPS, and the homepage answered with no document | `warn`, priority `high`     |
+
+The claim behind it is narrower than "AI crawlers refuse HTTP". No AI crawler vendor documents that, and GPTBot, ClaudeBot and PerplexityBot are ordinary HTTP clients that fetch `http://` URLs. What is documented is that agent protocols and HTTPS-only well-known files require TLS, and that browser-based agents inherit Chromium's mixed-content and HTTPS-First behaviour.
 
 ## Evidence
 
@@ -54,9 +62,9 @@ Enterprise AI frameworks refuse to interact with non-HTTPS sites due to security
 
 **Grade: B** — The evidence is strong but it comes from agent-adjacent specifications rather than from crawler documentation. MCP states that "All authorization server endpoints MUST be served over HTTPS". The well-known agent and security files are defined HTTPS-only. Browser-based agents inherit Chromium's mixed-content and HTTPS-First behaviour. An agent surface that requires HTTPS genuinely cannot be reached without it. What is missing for an A is a crawler vendor saying so: OpenAI's, Anthropic's and Perplexity's crawler documents say nothing about TLS, and their crawlers are ordinary HTTP clients that will fetch `http://` URLs. The strict claim "AI crawlers refuse HTTP" is unproven, and the audit does not make it.
 
-**Evidence:** Strongest evidence is from agent-adjacent ratified/near-ratified specs rather than crawler docs. MCP (2025-11-25) states plainly: 'All authorization server endpoints MUST be served over HTTPS', and 'All redirect URIs MUST be either localhost or use HTTPS'. Client ID Metadata Documents are required at HTTPS URLs. Any MCP-exposed site capability is therefore unreachable without TLS. RFC 9116 requires security.txt to be 'accessed exclusively via HTTPS'. Browser-resident agents (ChatGPT Atlas, Comet, Gemini-in-Chrome, Claude in Chrome) run on Chromium and therefore inherit mixed-content blocking and HTTPS-First warnings, so an HTTP-only page degrades for the fastest-growing agent class. Google's AI-features eligibility runs through normal Search indexing, where HTTPS has been a documented positive signal since 2014.
+**Evidence:** Strongest evidence is from agent-adjacent ratified/near-ratified specs rather than crawler docs. MCP (2025-11-25) states plainly: 'All authorization server endpoints MUST be served over HTTPS', and 'All redirect URIs MUST be either localhost or use HTTPS' (https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization, verified 2026-10-17). Client ID Metadata Documents are required at HTTPS URLs. Any MCP-exposed site capability is therefore unreachable without TLS. RFC 9116 requires security.txt to be 'accessed exclusively via HTTPS'. Browser-resident agents (ChatGPT Atlas, Comet, Gemini-in-Chrome, Claude in Chrome) run on Chromium and therefore inherit mixed-content blocking and HTTPS-First warnings, so an HTTP-only page degrades for the fastest-growing agent class. Google's AI-features eligibility runs through normal Search indexing, where HTTPS has been a documented positive signal since 2014.
 
-**Counter-evidence:** No AI crawler vendor documents HTTPS as a requirement. developers.openai.com/api/docs/bots, Anthropic's crawler support article and docs.perplexity.ai all say nothing about TLS; GPTBot, ClaudeBot and PerplexityBot are ordinary HTTP clients and will fetch http:// URLs. So the strict claim 'AI crawlers refuse HTTP' is unproven and should not be asserted. The honest claim is narrower: HTTPS is mandatory for agent protocols and browser-based agents, and is a universal baseline (>95% of page loads) such that its absence is a strong negative quality signal. HSTS specifically has no documented AI consumer at all — see the security-headers signal.
+**Counter-evidence:** No AI crawler vendor documents HTTPS as a requirement. OpenAI's crawler documentation (https://developers.openai.com/api/docs/bots), Anthropic's crawler support article (https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler) and Perplexity's (https://docs.perplexity.ai/guides/bots) all say nothing about TLS (all verified 2026-10-17); GPTBot, ClaudeBot and PerplexityBot are ordinary HTTP clients and will fetch http:// URLs. So the strict claim 'AI crawlers refuse HTTP' is unproven and should not be asserted. The honest claim is narrower: HTTPS is mandatory for agent protocols and browser-based agents, and is a universal baseline (>95% of page loads) such that its absence is a strong negative quality signal. HSTS specifically has no documented AI consumer at all — see the security-headers signal.
 
 ### Signal: WAF / bot-management blocking AI agents (Cloudflare AI Crawl Control, default blocks, pay-per-crawl 402) — grade A (technical-infra)
 

@@ -49,6 +49,24 @@ describe("HttpsEnabledAudit", () => {
     expect(result.message).toContain("not served over HTTPS");
   });
 
+  // The dossier records that no AI crawler vendor documents refusing plain
+  // HTTP, so the copy must not claim that GPTBot or ClaudeBot skip such sites.
+  it("does not claim that AI crawlers refuse plain HTTP", () => {
+    const ctx = mockCheckContext([]);
+    ctx.baseUrl = "http://example.com";
+    const result = audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Fail);
+    const meta = HttpsEnabledAudit.meta;
+    const copy = [
+      result.message,
+      result.remediation ?? "",
+      meta.description,
+      meta.guidance?.impact ?? "",
+    ].join(" ");
+    expect(copy).not.toMatch(/GPTBot|ClaudeBot|skip HTTP-only/);
+    expect(copy).toContain("MCP");
+  });
+
   // The only state that reaches the warn. Attribution holds — the homepage
   // answered a 2xx as HTML from this host — and no page survived the
   // orchestrator's `status === 200 && body` filter. The connection is fine;

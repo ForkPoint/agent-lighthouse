@@ -81,17 +81,14 @@ export class NoBotDetectionAudit extends Audit {
       );
     }
 
+    // No wall was detected and no page was read, so there is neither a firewall
+    // nor a script to judge. A scan that read nothing says nothing about the
+    // site's bot defenses, and must not warn about them.
     if (!ctx.pages || ctx.pages.length === 0) {
-      return this.warn(
-        "No pages were scanned to check for bot-detection scripts.",
+      return this.notApplicable(
+        "No pages were scanned and no bot wall was detected, so there is nothing to judge.",
         "No JavaScript-based bot challenges that would block legitimate AI agents",
         "No pages scanned",
-        {
-          priority: CheckPriority.Low,
-          description:
-            "Aggressive bot-detection scripts can block legitimate AI agents like ChatGPT Browse, Google Mariner, and Claude from accessing your pages. Ensure your security settings allowlist known AI user-agents.",
-          code: '// Example: allowlist AI agents in your WAF/CDN config\n// Cloudflare: Security > WAF > Custom Rules\n// Allow User-Agent contains "GPTBot" OR "ChatGPT-User" OR "Claude-User"',
-        },
       );
     }
 

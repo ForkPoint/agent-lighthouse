@@ -703,7 +703,7 @@
       "category": "access-crawl-control",
       "slug": "https-enabled",
       "title": "HTTPS enabled",
-      "purpose": "Enterprise AI frameworks refuse to interact with non-HTTPS sites due to security policies. GPTBot, ClaudeBot, and enterprise RAG systems all skip HTTP-only sites entirely, making your content invisible to AI-generated answers. Enable HTTPS with a valid TLS certificate.",
+      "purpose": "Agent protocols require HTTPS: MCP requires every authorization server endpoint to be served over HTTPS, and browser-based agents inherit Chromium's mixed-content blocking and HTTPS-First warnings. No AI crawler vendor documents refusing plain HTTP, so the risk is to agents that act on the site, not to crawling. Enable HTTPS with a valid TLS certificate.",
       "features": [
         "critical",
         "https",
