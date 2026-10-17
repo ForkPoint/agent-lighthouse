@@ -36,6 +36,7 @@ vi.mock("./fetcher", async (original) => ({
   isSafeUrl: async (value: string) =>
     new URL(value).hostname === "example.test",
   createFetcher: () => ({
+    inFlight: () => [],
     fetch: async ({ url }: { url: string }): Promise<FetchResult> => {
       state.calls.push(url);
       const target = url === "https://example.test/";

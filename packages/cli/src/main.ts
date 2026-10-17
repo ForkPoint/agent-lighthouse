@@ -14,6 +14,7 @@ import {
   CheckStatus,
   LEGACY_PAGE_TYPES,
   LogLevel,
+  LogFormat,
 } from "@forkpoint/agent-lighthouse-core";
 import { createProgressRenderer } from "./progress-renderer";
 import {
@@ -40,6 +41,8 @@ import {
   readFileSync,
   appendFileSync,
   rmSync,
+  openSync,
+  writeSync,
 } from "node:fs";
 import { resolve } from "node:path";
 import { exec } from "node:child_process";
@@ -97,6 +100,10 @@ Options:
   --min-score <number>         Minimum score (0-100) required to pass CI assertions
   --assert-category <id:min>   Per-category assertions (e.g. --assert-category structured-data:90)
   --silent                     Suppress progress output
+  --log-level <level>          Terminal log level: silent, error, warn, info, debug
+                               [default: LOG_LEVEL or info]. Logs go to stderr.
+  --log-file <path>            Append every log line, at debug level, as JSON lines.
+                               Each line names its scan and site
   --progress-json              Stream scan progress as NDJSON (one ScanEvent per line) to stderr
                                and suppress the interactive progress display. Stderr is used so
                                NDJSON never interleaves with the terminal report on stdout;
@@ -140,8 +147,25 @@ async function audit(targetUrl?: string) {
     outputDir,
     tracePath,
   } = opts;
+  if (opts.invalidLogLevel !== undefined) {
+    console.error(
+      `\x1b[31mUnknown log level: ${opts.invalidLogLevel}\x1b[0m\nValid levels: ${Object.values(LogLevel).join(", ")}`,
+    );
+    process.exit(1);
+  }
+  if (opts.logLevel) logger.level = opts.logLevel;
   // Keep the NDJSON stream clean: scanner logs also go to stderr.
   if (progressJson) logger.level = LogLevel.Silent;
+  if (opts.logFile) {
+    // Every line at debug, as JSON, whatever the terminal shows. A file that
+    // cannot be opened ends the run before any scan work starts.
+    const fd = openSync(opts.logFile, "a");
+    logger.addSink({
+      level: LogLevel.Debug,
+      format: LogFormat.Json,
+      write: (line) => writeSync(fd, `${line}\n`),
+    });
+  }
 
   const assertions = parseCategoryAssertions(args, fileConfig);
 

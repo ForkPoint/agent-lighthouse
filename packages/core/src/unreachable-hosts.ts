@@ -20,6 +20,9 @@
  * One instance lives for one scan, so nothing is shared between scans.
  */
 import type { FetchResult } from "#core/fetcher";
+import { logger } from "#core/logger";
+
+const log = logger.child({ component: "scan" });
 
 const CONNECT_FAILURES = [
   "UND_ERR_CONNECT_TIMEOUT",
@@ -76,6 +79,10 @@ export class UnreachableHosts {
     if (!isConnectFailure(result)) return;
     const host = hostOf(url);
     if (host === undefined || this.isOwn(host) || this.dead.has(host)) return;
+    log.debug("Host refused a connection; no more requests to it", {
+      host,
+      error: result.error,
+    });
     this.dead.set(
       host,
       `${host} refused a connection earlier in this scan: ${result.error}`,

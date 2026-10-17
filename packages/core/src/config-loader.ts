@@ -2,6 +2,9 @@ import type { BrowserSnapshots } from "./contracts";
 import type { PageType, PageOverride } from "./types";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { logger } from "./logger";
+
+const log = logger.child({ component: "config" });
 
 export const OUTPUT_FORMATS = ["terminal", "html", "json", "md"] as const;
 
@@ -63,7 +66,7 @@ export function loadConfigFile(customPath?: string): AgentLighthouseConfig {
         const content = readFileSync(fullPath, "utf8");
         return JSON.parse(content) as AgentLighthouseConfig;
       } catch (err) {
-        console.warn(`[config] Failed to parse ${filename}:`, err);
+        log.warn(`Failed to parse ${filename}`, { err });
       }
     }
   }

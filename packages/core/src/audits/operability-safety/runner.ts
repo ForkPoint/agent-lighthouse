@@ -13,6 +13,8 @@
  */
 import { JSDOM } from "jsdom";
 import { logger } from "#core/logger";
+
+const log = logger.child({ component: "a11y" });
 import { runRules } from "./engine/rules";
 import { RuleStatus } from "./engine/rules";
 
@@ -107,10 +109,10 @@ export async function runA11yForHtml(
     }
     return out;
   } catch (err) {
-    logger.warn(
-      { err, url },
-      "[a11y-runner] accessibility run failed; treating rules as not-applicable",
-    );
+    log.warn("Accessibility run failed; rules read as not applicable", {
+      url,
+      err,
+    });
     return {};
   } finally {
     try {

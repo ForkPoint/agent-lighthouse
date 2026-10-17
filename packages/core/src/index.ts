@@ -114,7 +114,16 @@ export * from "./url-utils";
 export * from "./config-loader";
 export * from "./origin-cache";
 export { detectWafProtection, WafProvider } from "./waf-detector";
-export { logger, LogLevel } from "./logger";
+export {
+  logger,
+  LogLevel,
+  LogFormat,
+  withLogContext,
+  formatLogRecord,
+  parseLogLevel,
+  parseLogFormat,
+} from "./logger";
+export type { LogFields, LogRecord, LogSink } from "./logger";
 
 // ACP policy-link resolution, reused by the checkout-eligibility audits.
 export {

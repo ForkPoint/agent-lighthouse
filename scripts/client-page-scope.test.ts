@@ -11,6 +11,7 @@ vi.mock("#core/fetcher", async (original) => ({
   ...(await original<typeof import("#core/fetcher")>()),
   isSafeUrl: async () => true,
   createFetcher: () => ({
+    inFlight: () => [],
     fetch: async ({ url }: { url: string }) => {
       h.calls.push(url);
       return (

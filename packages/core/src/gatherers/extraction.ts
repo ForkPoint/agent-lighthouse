@@ -6,6 +6,8 @@ import { parseHtml } from "#core/parser";
 import { stripStyles } from "#core/audits/operability-safety/runner";
 import { logger } from "#core/logger";
 
+const log = logger.child({ component: "extraction" });
+
 /**
  * Three independent main-content extractors.
  *
@@ -93,7 +95,10 @@ export function readabilityArticle(
       source: "readability",
     };
   } catch (error) {
-    logger.debug(`readability extraction failed for ${url}: ${String(error)}`);
+    log.debug("Readability extraction failed", {
+      url,
+      err: error,
+    });
     return null;
   }
 }

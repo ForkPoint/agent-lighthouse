@@ -35,6 +35,7 @@ vi.mock("#core/fetcher", async (importOriginal) => {
     ...actual,
     isSafeUrl: async () => true,
     createFetcher: () => ({
+      inFlight: () => [],
       fetch: async ({ url }: { url: string }) => {
         fetchedUrls.push(url);
         const found = h.map.get(url);

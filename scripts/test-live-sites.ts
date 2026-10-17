@@ -25,7 +25,7 @@ import type { SiteEntry } from "#core/tests/site-list";
 import type { EvidenceKey } from "#core/types";
 import { excludedDomains, type CorpusStatus } from "#core/tests/corpus-status";
 import { SiteSource } from "#core/tests/site-list";
-import { scanDomain, scanLocation, startRequestLog } from "./lib/live-scan";
+import { scanDomain, scanLocation, startLogFile } from "./lib/live-scan";
 
 const SITES_PATH = path.resolve(
   process.cwd(),
@@ -42,7 +42,7 @@ interface CliOptions {
   outPath: string;
   verbose: boolean;
   help: boolean;
-  requestLog?: string;
+  logFile?: string;
   stratified: boolean;
   shuffle: boolean;
   loop: number;
@@ -131,8 +131,9 @@ function parseCliArgs(argv: string[]): CliOptions {
       case "out":
         options.outPath = path.resolve(process.cwd(), val.trim());
         break;
+      case "log":
       case "request-log":
-        options.requestLog = path.resolve(process.cwd(), val.trim());
+        options.logFile = path.resolve(process.cwd(), val.trim());
         break;
       case "tier":
         if (val.trim().toLowerCase() !== "smoke") {
@@ -168,7 +169,9 @@ Options:
   --loop=<n>          Repeat the selection n times (default: 1)
   --shuffle, -r       Shuffle the pool before selecting
   --out=<path>        Output JSON file path (default: reports/live-sites-test.json)
-  --request-log=<path> Append every HTTP request of the run to a JSON-lines file
+  --log=<path>        Append every log line of the run, at debug level, to a
+                      JSON-lines file: each request, phase and verdict, per scan
+                      and site (--request-log is the old name)
   --verbose, -v       Print detailed per-check breakdown
   --help, -h          Show this help message
 
@@ -176,7 +179,7 @@ Examples:
   pnpm test:live --limit=3
   pnpm test:live --stratified --limit=30 --concurrency=4
   pnpm test:live --category=storefront --limit=5 --concurrency=2
-  pnpm test:live --domain=theguardian.com --request-log=reports/requests.jsonl
+  pnpm test:live --domain=theguardian.com --log=reports/scan-log.jsonl
   pnpm test:live --domain=theguardian.com --verbose
   pnpm test:live --tier=smoke --limit=100 --concurrency=4
 `);
@@ -255,8 +258,8 @@ async function main(): Promise<void> {
   if (options.tier) console.log(`Tier: ${options.tier} (${pool.length} sites)`);
   const location = await scanLocation();
   console.log(`Scan location: ${location ?? "unknown"}`);
-  const stopRequestLog = options.requestLog
-    ? startRequestLog(options.requestLog)
+  const stopLogFile = options.logFile
+    ? startLogFile(options.logFile)
     : undefined;
   const grandStartTime = Date.now();
   const allOutcomes: TestSiteOutcome[] = [];
@@ -461,7 +464,7 @@ async function main(): Promise<void> {
     }
   }
 
-  stopRequestLog?.();
+  stopLogFile?.();
   const totalDurationMs = Date.now() - grandStartTime;
   const scannedOutcomes = allOutcomes;
 

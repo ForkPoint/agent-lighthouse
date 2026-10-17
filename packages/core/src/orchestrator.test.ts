@@ -61,6 +61,7 @@ vi.mock("./fetcher", async (importOriginal) => {
         if (signal?.aborted) return abortedResult(url);
         return h.map.get(url) ?? notFound(url);
       },
+      inFlight: () => [],
     }),
   };
 });
@@ -132,6 +133,7 @@ import {
   ScoreDisplayMode,
 } from "./types";
 import { PhaseId } from "./progress";
+import { captureLogs } from "./tests/capture-logs";
 
 beforeEach(() => {
   h.map.clear();
@@ -1860,5 +1862,37 @@ describe("runScan — burst-limit 428 on the homepage", () => {
       statusCode: 428,
     });
     expect(report.scanValidity?.unscoredReason).toContain("throttled");
+  });
+});
+
+describe("runScan — logging", () => {
+  it("names the scan and site on every line it logs", async () => {
+    set("https://example.com/", CONTENT_HTML);
+    const logs = captureLogs();
+    try {
+      await runScan("https://user:secret@example.com/");
+    } finally {
+      logs.restore();
+    }
+    const lines = logs.lines;
+
+    expect(lines.length).toBeGreaterThan(5);
+    const scans = new Set(lines.map((l) => l["scan"]));
+    expect(scans.size).toBe(1);
+    expect([...scans][0]).toMatch(/^[0-9a-f]{8}$/);
+    expect(lines.every((l) => l["site"] === "example.com")).toBe(true);
+    expect(lines.filter((l) => JSON.stringify(l).includes("secret"))).toEqual(
+      [],
+    );
+    const phases = lines.filter(
+      (l) => l["component"] === "orchestrator" && l["msg"] === "Phase done",
+    );
+    expect(phases.map((l) => l["phase"])).toContain(PhaseId.Audits);
+    expect(lines.at(-1)).toMatchObject({
+      component: "orchestrator",
+      msg: "Scan finished",
+      pages: expect.any(Number),
+      budgetExhausted: false,
+    });
   });
 });

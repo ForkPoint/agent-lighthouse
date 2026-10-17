@@ -151,7 +151,7 @@ community convention nothing documents consuming; **D** is speculative.
   `applicablePageTypes` or return `notApplicable`.
 - **`details` values must be scalars or arrays of strings.** A number array is
   dropped by the result schema; an array of objects _throws_, and the runner
-  reports `[scanner] Audit error` instead of a result. Unit tests call
+  reports `Audit error` (component `audit`) instead of a result. Unit tests call
   `audit.audit(ctx)` directly and never reach `toCheckResult`, so parse the
   result through `AuditResultSchema` in the test whenever `details` carries
   anything structured.

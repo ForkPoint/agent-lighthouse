@@ -158,7 +158,8 @@ Field-level product verification (`report.productFields`) is only produced when 
 
 | Variable                 | Default | Effect                                                                                                                                                                                                               |
 | :----------------------- | :------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `LOG_LEVEL`              | `info`  | Engine log verbosity: `silent`, `error`, `warn`, `info` or `debug`. `--progress-json` forces `silent`.                                                                                                               |
+| `LOG_LEVEL`              | `info`  | Engine log verbosity: `silent`, `error`, `warn`, `info` or `debug`. An unknown value warns and falls back to `info`. `--log-level` overrides it; `--progress-json` forces `silent`.                                  |
+| `LOG_FORMAT`             | `text`  | Log line format on stderr: `text` or `json` (one object per line).                                                                                                                                                   |
 | `SCANNER_A11Y_MAX_PAGES` | `3`     | How many pages get the jsdom-based accessibility pass. Accessibility problems are template-wide, so the first few pages are representative; `0` disables the pass entirely and its audits degrade to not-applicable. |
 | `A11Y_CONCURRENCY`       | `3`     | How many of those accessibility passes run at once.                                                                                                                                                                  |
 

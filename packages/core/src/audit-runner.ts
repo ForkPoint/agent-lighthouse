@@ -7,6 +7,8 @@ import type {
   AuditCoverage,
 } from "./types";
 import { logger, LogLevel } from "./logger";
+
+const log = logger.child({ component: "audit" });
 import {
   TAG_SKIPPED_PAGE_TYPE,
   TAG_SCAN_ERROR,
@@ -24,7 +26,7 @@ import {
   calculateCategoryScore,
   calculateOverallScore,
 } from "./scorer";
-import { traceFromCheck, formatTrace, type AuditTrace } from "./audit-trace";
+import { traceFromCheck, type AuditTrace } from "./audit-trace";
 import {
   scanReadTheSite,
   unreadSiteReason,
@@ -405,10 +407,10 @@ export function planAudits(
       } catch (err) {
         // One malformed custom audit degrades to its own stub, like any other
         // per-audit failure, instead of aborting the whole scan.
-        logger.error(
-          { err, auditId: registration.meta.id },
-          "[scanner] Audit error",
-        );
+        log.error("Audit error", {
+          auditId: registration.meta.id,
+          err,
+        });
         skipped.push(
           stubCheck(
             registration.meta,
@@ -546,11 +548,19 @@ export async function runAudits(
       : stub;
   };
 
-  const tracing = Boolean(onTrace) || logger.level === LogLevel.Debug;
+  const tracing = Boolean(onTrace) || logger.enabled(LogLevel.Debug);
   const trace = (check: CheckResult, durationMs: number): void => {
     if (!tracing) return;
     const record = traceFromCheck(check, durationMs);
-    logger.debug(formatTrace(record));
+    log.debug("Audit finished", {
+      audit: record.id,
+      outcome: record.outcome,
+      status: record.status,
+      score: record.score,
+      weight: record.weight,
+      durationMs: record.durationMs,
+      displayValue: record.displayValue,
+    });
     onTrace?.(record);
   };
 
@@ -624,10 +634,10 @@ export async function runAudits(
               finish(instance.toCheckResult(result, mode)),
             ) as CheckResult;
           } catch (err) {
-            logger.error(
-              { err, auditId: reg.meta.id },
-              "[scanner] Audit error",
-            );
+            log.error("Audit error", {
+              auditId: reg.meta.id,
+              err,
+            });
             return finish(
               stubCheck(
                 reg.meta,

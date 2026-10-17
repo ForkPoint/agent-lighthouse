@@ -7,6 +7,8 @@ import {
 } from "./constants";
 import { isPrivateIp } from "./url-utils";
 import { logger } from "./logger";
+
+const log = logger.child({ component: "fetcher" });
 import { RedirectCookieJar } from "./redirect-cookies";
 import { HttpMethod } from "./types";
 
@@ -254,6 +256,7 @@ export function mergeHeaders(
 
 export function createFetcher(fetcherOptions: FetcherOptions = {}) {
   const dispatcher = fetcherOptions.dispatcher ?? noRedirectAgent;
+  const pending = new Set<{ url: string; since: number }>();
   const gate =
     fetcherOptions.maxConcurrent && fetcherOptions.maxConcurrent > 0
       ? createGate(Math.floor(fetcherOptions.maxConcurrent))
@@ -265,13 +268,32 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
    * the deadline and out of `ttfbMs`.
    */
   async function fetch(options: FetchOptions): Promise<FetchResult> {
-    if (!gate) return issue(options);
-    const release = await gate.acquire();
+    const entry = { url: options.url, since: performance.now() };
+    pending.add(entry);
     try {
-      return await issue(options);
+      if (!gate) return await issue(options);
+      const release = await gate.acquire();
+      try {
+        return await issue(options);
+      } finally {
+        release();
+      }
     } finally {
-      release();
+      pending.delete(entry);
     }
+  }
+
+  /**
+   * Requests not yet answered, oldest first, with how long each has waited.
+   * A request that never ends writes no "finished" line, so a scan that ends
+   * with some still open names them here.
+   */
+  function inFlight(): Array<{ url: string; ms: number }> {
+    const now = performance.now();
+    return [...pending].map((entry) => ({
+      url: splitCredentials(entry.url).url,
+      ms: Math.round(now - entry.since),
+    }));
   }
 
   async function issue(options: FetchOptions): Promise<FetchResult> {
@@ -320,10 +342,12 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
         setHeader(reqHeaders, "Content-Type", contentType);
       }
 
-      logger.debug(
-        { url: targetUrl, method },
-        `[fetcher] Starting fetch: ${method} ${targetUrl}`,
-      );
+      const ua = reqHeaders["User-Agent"];
+      log.debug("Request started", {
+        method,
+        url: targetUrl,
+        ua,
+      });
 
       let currentUrl = targetUrl;
       let currentMethod = method;
@@ -378,9 +402,10 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
         gateArmed ??= await isSafeUrl(targetUrl);
         if (gateArmed && !(await isSafeUrl(next))) {
           await response.body.dump();
-          logger.warn(
-            `[fetcher] Refusing redirect out of public address space: ${targetUrl} -> ${next}`,
-          );
+          log.warn("Refusing redirect out of public address space", {
+            url: targetUrl,
+            to: next,
+          });
           const refusedMs = performance.now() - start;
           return {
             url: targetUrl,
@@ -460,15 +485,16 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
       }
       const totalMs = performance.now() - start;
 
-      logger.debug(
-        {
-          url: targetUrl,
-          finalUrl: currentUrl,
-          status: response.statusCode,
-          totalMs: Math.round(totalMs),
-        },
-        `[fetcher] Fetch complete: ${currentUrl} (${response.statusCode}) in ${Math.round(totalMs)}ms`,
-      );
+      log.debug("Request finished", {
+        method,
+        url: targetUrl,
+        ...(currentUrl !== targetUrl && { finalUrl: currentUrl }),
+        status: response.statusCode,
+        ms: Math.round(totalMs),
+        ttfbMs: Math.round(ttfbMs),
+        ...(hops > 0 && { hops }),
+        ua,
+      });
 
       const truncatedBody =
         body.length > MAX_RESPONSE_BODY_BYTES
@@ -515,11 +541,12 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
       // A failed fetch is a result, not a fault: the caller reads `error` and
       // decides. One line at warn names it; the object and its stack are
       // debug material, or every walled site prints a screen of frames.
-      logger.warn(`[fetcher] Fetch error: ${targetUrl} - ${detail}`);
-      logger.debug(
-        { url: targetUrl, err, code, totalMs: Math.round(totalMs) },
-        `[fetcher] Fetch error detail: ${targetUrl}`,
-      );
+      log.warn("Request failed", {
+        method,
+        url: targetUrl,
+        error: detail,
+        ms: Math.round(totalMs),
+      });
 
       return {
         url: targetUrl,
@@ -536,5 +563,5 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
     }
   }
 
-  return { fetch };
+  return { fetch, inFlight };
 }
