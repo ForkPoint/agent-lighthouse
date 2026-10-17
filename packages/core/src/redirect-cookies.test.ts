@@ -68,4 +68,57 @@ describe("RedirectCookieJar", () => {
     jar.store(["=1", "novalue"], "https://example.com/");
     expect(jar.header("https://example.com/")).toBeUndefined();
   });
+
+  // Only whitespace before the `=` is still no name: the jar must not send
+  // a bare `=1` pair the server never named.
+  it("ignores a header whose name is only whitespace", () => {
+    const jar = new RedirectCookieJar();
+    jar.store("  =1; Path=/", "https://example.com/");
+    expect(jar.header("https://example.com/")).toBeUndefined();
+  });
+
+  it("keeps a cookie whose Expires or Max-Age lies in the future", () => {
+    const jar = new RedirectCookieJar();
+    jar.store(
+      [
+        "a=1; Expires=Fri, 01 Jan 2100 00:00:00 GMT; Path=/",
+        "b=2; Max-Age=3600; Path=/",
+      ],
+      "https://example.com/",
+    );
+    expect(jar.header("https://example.com/")).toBe("a=1; b=2");
+  });
+
+  // A date the jar cannot read says nothing about expiry. Dropping the cookie
+  // would end the chain's session as surely as never storing it.
+  it("keeps a cookie whose Expires it cannot parse or whose Max-Age is not a number", () => {
+    const jar = new RedirectCookieJar();
+    jar.store(
+      ["a=1; Expires=soon; Path=/", "b=2; Max-Age=never; Path=/"],
+      "https://example.com/",
+    );
+    expect(jar.header("https://example.com/")).toBe("a=1; b=2");
+  });
+
+  // A removal names the cookie by name, domain and path. One with the same
+  // name on another path is a different cookie and stays.
+  it("removes only the cookie with the same name, domain and path", () => {
+    const jar = new RedirectCookieJar();
+    jar.store(["a=1; Path=/", "a=2; Path=/shop"], "https://example.com/");
+    jar.store("a=; Max-Age=0; Path=/shop", "https://example.com/");
+    expect(jar.header("https://example.com/shop/item")).toBe("a=1");
+  });
+
+  // RFC 6265 section 5.3, step 3: Max-Age wins over Expires whatever their
+  // order. The jar reads them in order, so a past Expires written after a
+  // positive Max-Age drops a cookie a browser keeps. Left unfixed: these are
+  // tests only. A server that sends both usually sends them consistent.
+  it.fails("lets Max-Age win over a past Expires written after it", () => {
+    const jar = new RedirectCookieJar();
+    jar.store(
+      "a=1; Max-Age=3600; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/",
+      "https://example.com/",
+    );
+    expect(jar.header("https://example.com/")).toBe("a=1");
+  });
 });

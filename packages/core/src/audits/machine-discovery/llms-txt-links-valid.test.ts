@@ -160,6 +160,22 @@ describe("LlmsTxtLinksValidAudit", () => {
     expect(result.found).toContain("4 could not be verified");
   });
 
+  // A fetch that throws gets no answer at all, the same as a status of 0. It
+  // says nothing about the link, so it is unverifiable, not broken.
+  it("counts a link whose fetch threw as unverifiable, not broken", async () => {
+    const ctx = mockCheckContext([], {
+      "/llms.txt": mockFetchResult(listing(["/", "/throws"]), 200),
+    });
+    ctx.fetch = async ({ url }) => {
+      if (url === "https://example.com/throws") throw new Error("socket hang");
+      return mockFetchResult("", 200);
+    };
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.found).toContain("1 could not be verified");
+    expect(result.found).toContain("https://example.com/throws (0)");
+  });
+
   it("is not applicable when no checked link could be verified", async () => {
     const ctx = mockCheckContext([], {
       "/llms.txt": mockFetchResult(listing(["/a", "/b"]), 200),

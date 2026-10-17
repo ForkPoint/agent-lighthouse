@@ -70,6 +70,27 @@ describe("UnreachableHosts", () => {
     expect(hosts.refusal("https://notexample.com/")).toBeDefined();
   });
 
+  // Audits fetch URLs read out of the site, and some do not parse. Such a URL
+  // has no host to refuse, so it is neither recorded nor refused, and the
+  // fetch reports its own error.
+  it("neither records nor refuses a URL it cannot parse", () => {
+    const hosts = new UnreachableHosts(["https://example.com/", "not a url"]);
+    expect(() => hosts.record("not a url", failed(TIMEOUT))).not.toThrow();
+    expect(hosts.refusal("not a url")).toBeUndefined();
+    // The unparseable site URL did not make every host the site's own.
+    hosts.record("https://dead.test/", failed(TIMEOUT));
+    expect(hosts.refusal("https://dead.test/")).toBeDefined();
+  });
+
+  it("keeps the first error it saw for a host", () => {
+    const hosts = new UnreachableHosts(["https://example.com/"]);
+    hosts.record("https://dead.test/a", failed(TIMEOUT));
+    hosts.record("https://dead.test/b", failed("fetch failed (ECONNREFUSED)"));
+    const refusal = hosts.refusal("https://dead.test/c");
+    expect(refusal).toContain("UND_ERR_CONNECT_TIMEOUT");
+    expect(refusal).toContain("dead.test refused a connection earlier");
+  });
+
   it("starts every scan empty", () => {
     const first = new UnreachableHosts(["https://example.com/"]);
     first.record("https://dead.test/", failed(TIMEOUT));
