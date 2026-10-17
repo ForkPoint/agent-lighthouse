@@ -10,6 +10,7 @@ import {
   unreachedSiteContext,
 } from "#core/__tests__/test-utils";
 import { CheckStatus } from "#core/types";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
 
 describe("NoRedirectChainsAudit", () => {
   const audit = new NoRedirectChainsAudit();
@@ -50,11 +51,16 @@ describe("NoRedirectChainsAudit", () => {
     expect(result.message).toContain("involve redirects");
   });
 
-  it("fails when no pages were scanned", () => {
+  // Absent artifact, absent verdict: with no page there is no hop to judge.
+  it("is not applicable when no pages were scanned", () => {
     const ctx = mockCheckContext([]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.message).toContain("No pages scanned");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.message).toContain("No pages were scanned");
+  });
+
+  it("is not applicable on a scan that read nothing", async () => {
+    await expectNotApplicableOnEmpty(audit);
   });
 
   it('shows "+N more" suffix in fail path when more than 5 pages are redirected', () => {

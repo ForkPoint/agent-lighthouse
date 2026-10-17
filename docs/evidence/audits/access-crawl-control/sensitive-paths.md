@@ -26,7 +26,21 @@ sources:
 
 ## What it checks
 
-Without robots.txt, AI crawlers can access sensitive paths like /api/ and /admin/. This may expose internal endpoints, admin panels, or debug information in AI training data and search results.
+Whether the low-value URL families a site actually has are kept out of AI crawls by robots.txt. This is crawl hygiene, not security. RFC 9309 states that robots.txt "is not a substitute for valid content security measures", and anything that needs protecting belongs behind HTTP authentication.
+
+The audit looks for five families: cart and checkout, site search, authentication, account areas and admin surfaces. It finds them in the crawled page URLs, the same-origin links on those pages and the sitemap. A family the crawl never observed is never asked for. API paths are not a low-value family. Agents need them, and the audit never asks a site to disallow them.
+
+Each observed path is matched with RFC 9309 rules against six AI crawler tokens: GPTBot, ClaudeBot, Applebot-Extended, meta-externalagent, Google-Extended and PerplexityBot. A path counts as excluded only when all six are disallowed from it.
+
+| State                                                   | Result                                      |
+| :------------------------------------------------------ | :------------------------------------------ |
+| no low-value family observed                            | `na`                                        |
+| robots.txt blocks all six crawlers at the root          | `na` — `no-blanket-block` owns that finding |
+| every observed family excluded                          | `pass`                                      |
+| some families excluded, others still crawlable          | `warn`, priority `low`                      |
+| no observed family excluded, or no robots.txt is served | `fail`, priority `low`                      |
+
+A warn or fail carries the `Disallow` lines that would make the audit pass.
 
 ## Evidence
 

@@ -26,15 +26,26 @@ sources:
 Whether your site publishes a **TDM-Rep** declaration — a machine-readable
 text-and-data-mining reservation — and, if so, in which direction it points.
 
-The declaration lives in one of two places: a `<meta name="tdm-reservation">`
-tag, or a `/.well-known/tdmrep.json` policy file, which is validated against the
-shape the specification defines (an array of objects, each carrying `location`
-and `tdm-reservation`, optionally `tdm-policy`).
+The audit reads three channels, in this order, and reports the first one that
+carries a declaration:
+
+1. a `tdm-reservation` response header (with `tdm-policy`), which the
+   specification calls "currently the preferred technique";
+2. a `/.well-known/tdmrep.json` policy file, validated against the shape the
+   specification defines: an array of objects, each carrying `location` and
+   `tdm-reservation`, optionally `tdm-policy`;
+3. a `<meta name="tdm-reservation">` tag, collected across every scanned page.
+
+The file is read only when it is served as JSON or plain text and does not
+start with `<`, so an HTML catch-all page is not mistaken for a policy.
 
 The two directions are reported as distinct outcomes, never as the same one:
-`tdm-reservation="1"` reserves your mining rights, `"0"` permits mining. A site
-that publishes no declaration is **not applicable**, not a failure — nothing is
-documented to read the file, so its absence is not a defect.
+`tdm-reservation="1"` reserves your mining rights, `"0"` permits mining. Any
+other value is a protocol error and warns. A file that does not parse, a file
+with the wrong shape, pages that disagree, and a file with different
+reservations per `location` also warn. The audit never fails. A site that
+publishes no declaration is **not applicable**, not a failure — nothing is
+documented to read it, so its absence is not a defect.
 
 Nothing here changes your score. TDM-Rep is a W3C Community Group Final Report,
 explicitly not a W3C Standard, and its value is legal evidence of an opt-out
@@ -52,11 +63,11 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Evidence:**
 
-- W3C TDM Reservation Protocol, Community Group Final Report (10 May 2024). Its own status section says: "It is not a W3C Standard nor is it on the W3C Standards Track." It defines exactly the three signalling methods the audit looks for. A `/.well-known/tdmrep.json` well-known file. A `tdm-reservation` HTTP response header, described in the report as "currently the preferred technique". And `<meta name="tdm-reservation">` or `<meta name="tdm-policy">` in HTML — https://www.w3.org/community/reports/tdmrep/CG-FINAL-tdmrep-20240510/ (verified 2026-08-21)
-- Spec-defined file shape: an **array of objects**, each with mandatory `location` and `tdm-reservation` and optional `tdm-policy` — so the audit's `Record<string, unknown>` parse accepts non-conforming documents (same URL, verified 2026-08-21)
+- W3C TDM Reservation Protocol, Community Group Final Report (10 May 2024). Its own status section says: "It is not a W3C Standard nor is it on the W3C Standards Track." It defines exactly the three signalling methods the audit looks for. A `/.well-known/tdmrep.json` well-known file. A `tdm-reservation` HTTP response header, described in the report as "currently the preferred technique". And `<meta name="tdm-reservation">` or `<meta name="tdm-policy">` in HTML — https://www.w3.org/community/reports/tdmrep/CG-FINAL-tdmrep-20240510/ (verified 2026-10-17)
+- Spec-defined file shape: "This file contains an array of JSON objects". Each object requires `location` and `tdm-reservation`, and `tdm-policy` is optional. The array is required even for a single rule. For `tdm-reservation`, `1` reserves the rights, `0` does not, and "Other values are considered protocol errors". The audit validates the file against this shape and warns on anything else (same URL, verified 2026-10-17)
 - Adoption is publisher-side, not crawler-side. The CG names Mondadori, Penguin Random House, the STM association, Copyright Clearance Center, Taylor & Francis and the BBC among participants. It records that "Spawning AI has already integrated partially the opt-out solution developed by the TDM Rep CG in their service" — the only named consuming implementer found — https://www.w3.org/community/tdmrep/ (verified 2026-08-21)
 
-**Counter-evidence:** No major AI vendor documents honoring the protocol. OpenAI's crawler documentation describes robots.txt and published IP ranges only, with no mention of TDM signals (https://developers.openai.com/api/docs/bots); Anthropic's crawler article describes robots.txt directives and `Crawl-delay` only (https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler); Perplexity's documents robots.txt and WAF allowlisting only (https://docs.perplexity.ai/guides/bots) — all verified 2026-08-21. Standardization momentum has also moved elsewhere. The IETF **AIPREF** working group is chartered to standardize AI-preference expression via "Well-Known URIs ([RFC 8615](https://www.rfc-editor.org/rfc/rfc8615.html)) such as the Robots Exclusion Protocol ([RFC 9309](https://www.rfc-editor.org/rfc/rfc9309.html)), and HTTP response header fields", with IESG submission targeted for 31 August 2026. Its charter does not reference TDM-Rep — https://datatracker.ietf.org/wg/aipref/about/ (verified 2026-08-21). Finally, the signal is directionally orthogonal to agent readiness: a reservation value of `1` denies mining, and the audit passes it identically to `0`.
+**Counter-evidence:** No major AI vendor documents honoring the protocol. OpenAI's crawler documentation describes robots.txt and published IP ranges only, with no mention of TDM signals (https://developers.openai.com/api/docs/bots); Anthropic's crawler article describes robots.txt directives and `Crawl-delay` only (https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler); Perplexity's documents robots.txt and WAF allowlisting only (https://docs.perplexity.ai/guides/bots) — all verified 2026-08-21. Standardization momentum has also moved elsewhere. The IETF **AIPREF** working group is chartered to standardize AI-preference expression via "Well-Known URIs ([RFC 8615](https://www.rfc-editor.org/rfc/rfc8615.html)) such as the Robots Exclusion Protocol ([RFC 9309](https://www.rfc-editor.org/rfc/rfc9309.html)), and HTTP response header fields", with IESG submission targeted for 31 August 2026. Its charter does not reference TDM-Rep — https://datatracker.ietf.org/wg/aipref/about/ (verified 2026-08-21). Finally, the signal is directionally orthogonal to agent readiness: a reservation value of `1` denies mining and `0` permits it. The audit names the direction in its message and scores neither.
 
 ## Implementation deviations
 

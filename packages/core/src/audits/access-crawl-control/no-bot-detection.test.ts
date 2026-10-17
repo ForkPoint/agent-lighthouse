@@ -11,6 +11,7 @@ import {
   walledSiteContext,
 } from "#core/__tests__/test-utils";
 import { CheckStatus } from "#core/types";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
 import { WafProvider } from "#core/waf-detector";
 
 describe("NoBotDetectionAudit", () => {
@@ -73,11 +74,17 @@ describe("NoBotDetectionAudit", () => {
     expect(result.message).toContain("Cloudflare Turnstile");
   });
 
-  it("warns when no pages were scanned", () => {
+  // Absent artifact, absent verdict: no wall detected and no page read leaves
+  // nothing to judge, so the audit must not warn about bot defenses.
+  it("is not applicable when no pages were scanned and no wall was seen", () => {
     const ctx = mockCheckContext([]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("No pages were scanned");
+  });
+
+  it("is not applicable on a scan that read nothing", async () => {
+    await expectNotApplicableOnEmpty(audit);
   });
 
   it("aggregates a bot-detection service detected across multiple pages", () => {
