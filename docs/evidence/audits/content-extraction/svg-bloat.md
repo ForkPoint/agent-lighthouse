@@ -34,32 +34,6 @@ sources:
 
 When an LLM converts your HTML to Markdown or reads raw markup, every inline SVG is inlined as thousands of path-data tokens. Decorative icon sprites, charts, and complex illustrations can silently consume tens of thousands of tokens of agent context per page — "SVG context poisoning" — crowding out the actual content the agent should read. SVGs marked aria-hidden="true" or role="presentation" are stripped by most accessibility-tree extractors and do not count. Keep visible SVGs small, move decorative ones behind aria-hidden, and prefer raster images or CSS for complex graphics.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-The best-engineered audit in the directory — correct notApplicable, byte accounting, offender snippets with URLs, and calibrated thresholds. The flaw is the exemption rule: 'if ($el.attr('aria-hidden') === 'true' || $el.attr('role') === 'presentation') return;' skips the SVG's bytes entirely. But the token cost being measured is the cost of an agent reading the raw HTML, and aria-hidden does not remove a single byte from that HTML. Meanwhile the extractors that DO honor aria-hidden (Readability, Turndown, Jina Reader) strip essentially all <svg> regardless of aria-hidden. So the audit is exempting on a property that changes nothing for either class of consumer — a site can 'fix' a 60KB inline sprite by adding one attribute while an agent pays exactly the same tokens. The test suite locks this in ('passes when large SVGs are aria-hidden').
-
-**Required fix:** Measure and report total inline-SVG bytes regardless of aria-hidden, and split the verdict into two dimensions: raw byte weight (what a raw-HTML reader pays, no exemption) and unhidden count (what an accessibility-tree reader sees). Do not award a pass for adding aria-hidden to a 30KB SVG. Also de-duplicate nested <svg> (the '$('svg')' selector matches inner SVGs and double-counts their bytes into the parent's total) and de-duplicate identical sprite markup repeated across pages so a shared sprite is not counted N times in the crawl total.
-
-**False-positive risks:**
-
-- aria-hidden exemption is not grounded in any consumer's behavior — it lets a site zero out real token cost with one attribute, and conversely fails a site whose SVGs are correctly exposed via role="img" + aria-label (the accessible pattern) purely for being visible.
-- '$('svg')' matches nested <svg> inside <svg>; the inner element's bytes are counted once inside the parent's serialization and again on its own.
-- A single shared icon sprite included on every page is counted once per page toward TOTAL_FAIL_BYTES (20KB), so the fail is triggered by crawl breadth rather than page weight — a 5-page crawl fails where a 2-page crawl of the same site passes.
-- Byte count is taken from cheerio's re-serialization ('page.$.html(el)'), which normalizes quoting and entities and can differ from the bytes actually transferred.
-- A hidden sprite block (style="display:none") without aria-hidden is charged full price although it renders nothing — arguably correct for raw-HTML readers but the audit does not explain that, and the offered fix (aria-hidden) would not reduce the real cost.
-- SVGs injected client-side are invisible to the HTTP-only fetcher, so heavy-SVG SPAs pass.
-
-**Test gaps:**
-
-- The 'passes when large SVGs are aria-hidden' test codifies the questionable exemption rather than probing it.
-- No nested-<svg> fixture (double counting untested).
-- No shared-sprite-across-N-pages fixture showing crawl size drives the verdict.
-- No role="img" + aria-label fixture (the accessible pattern that is penalized).
-- No boundary tests at exactly 2048 / 10240 / 20480 bytes.
-- No <use xlink:href> sprite-reference fixture.
-
-**Overlaps with:** `6.19`
-
 ## Evidence
 
 ### Signal: Inline SVG and DOM bloat consuming LLM context — grade B (semantic-dom-a11y)
@@ -71,11 +45,6 @@ The best-engineered audit in the directory — correct notApplicable, byte accou
 **Evidence:** Truncation is documented first-party: Anthropic's read_page caps output at 50,000 characters, truncates at a line boundary, and offers depth (default 15) and ref-scoping as the remedy — an explicit admission that page size forces partial reads [anthropic-browser-use-tool]. The scale of the problem is measured: 'Some real world DOMs surpass the size of a megabyte', roughly 1e6 tokens, against 1e3 to 1e4 after downsampling. The D2Snap ablation found DOM hierarchy 'the strongest among those features' for LLM performance. Its attribute filter preserves alt, href and aria-*, and discards the rest [dom-downsampling-paper]. Token magnitudes corroborated at ~56,653 HTML tokens per step [observation-reduction-paper] and by Cloudflare's 80% markdown reduction attributed to semantically empty wrappers and scripts [cloudflare-markdown-for-agents].
 
 **Counter-evidence:** The SVG-specific half is materially weaker than the DOM-size half and should be graded C on its own. No vendor doc, spec or study located for this dossier singles out inline SVG as an agent problem. Mechanically the cost is asymmetric. An inline <svg> without a title or aria-label collapses to a single unnamed node in the accessibility tree, or is omitted from it. Its bloat therefore lands on raw-HTML and markdown consumers, not on the a11y-tree agents that dominate this domain. An SVG-bloat audit is really a payload-weight audit, not an agent-perception audit. And bigger is not uniformly worse: strong models gained double-digit points from the larger HTML observation [observation-reduction-paper]. Recommend scoring total serialized DOM size / node depth with the truncation cap as the documented anchor, and demoting the SVG-specific rule to an informative sub-check unless the SVG is also unnamed where it acts as a control.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 
 ## Absorbed proposal — Data-URI and inline-SVG token bloat
 

@@ -35,31 +35,6 @@ This reads the robots.txt rules that actually apply to `ClaudeBot` — its own g
 
 The legacy `anthropic-ai` and `Claude-Web` tokens are detected and reported on the result when a group names them, but they never change the status or the score.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-The only bot audit with custom alias logic, and that logic can invert the result. `isAnthropicAllowed` returns `allowed: result1.allowed || result2.allowed` when both tokens are explicit — so a site with `User-agent: anthropic-ai\nAllow: /` and `User-agent: ClaudeBot\nDisallow: /` is reported as a PASS, 'explicitly allowed', while Anthropic's actual production crawler is fully blocked. The OR should be an AND. Compounding this, `botName` is the retired `anthropic-ai` token: Anthropic's live tokens in 2026 are ClaudeBot (training), Claude-User (user-initiated fetch) and Claude-SearchBot (search index). The `fix`/`code` guidance still leads with `User-agent: anthropic-ai`, teaching users to write a directive nothing reads.
-
-**Required fix:** Make ClaudeBot the primary `botName` and `anthropic-ai` the (legacy) alias. Change the combination rule from OR to AND — a bot family is allowed only if no live token is blocked — and report which token caused the block. Update `code`/`fix` guidance to lead with ClaudeBot and mark anthropic-ai as legacy. Add the versioned-token and BOM helper fixes.
-
-> **Status, 2026-08-24 (contradiction sweep):** partly discharged, partly superseded. ClaudeBot is now the only token the audit scores and the `code`/`fix` guidance leads with it; versioned tokens and BOM-prefixed files are handled by the shared RFC 9309 gatherer. The instruction to keep `anthropic-ai` as a scoring alias and change the OR to an AND was **not** carried out and is withdrawn: the audit's own grade-C research records `anthropic-ai` with `Consumers: none-known` and instructs that no points be awarded or deducted for it, so an AND would still let a token with no documented consumer fail a site. There is no combination rule left to report on. See [Pass-rule correction (contradiction sweep, 2026-08-24)](#pass-rule-correction-contradiction-sweep-2026-08-24).
-
-**False-positive risks:**
-
-- `allowed: result1.allowed || result2.allowed` — PASS reported while ClaudeBot is blocked. Concrete inverted result, not merely imprecise.
-- Legacy-only block: a site with `User-agent: anthropic-ai\nDisallow: /` (a stale 2023-era line) and no ClaudeBot group gets a high-priority FAIL, though ClaudeBot is unaffected and crawls freely.
-- `explicitlyNamed`-style alias handling is absent from `isAllowed` itself, so `User-agent: ClaudeBot/1.0` (versioned) is missed entirely.
-- Shared BOM / soft-404 / `Disallow: /*` misreads.
-
-**Test gaps:**
-
-- The existing test `passes if either alias is allowed when both are explicit` codifies the bug as intended behavior — it asserts `allowed: true` for anthropic-ai blocked + ClaudeBot allowed, but never tests the dangerous inverse (anthropic-ai allowed + ClaudeBot blocked).
-- No test for legacy-only `anthropic-ai` block with no ClaudeBot group.
-- No versioned-token or BOM case.
-
-> **Status, 2026-08-24 (contradiction sweep):** closed. The test that codified the OR as intended behaviour was removed along with the rule; the dangerous inverse, the legacy-only block with no ClaudeBot group, and the versioned token `ClaudeBot/1.0` are each pinned by a test in `anthropic-ai.test.ts`. BOM handling is covered by the shared gatherer and by the `bom-prefixed` fixture in `_robots-consumers.differential.test.ts`.
-
-**Overlaps with:** `2.15`, `2.21`, `2.22`, `2.28`
-
 ## Evidence
 
 ### Signal: ClaudeBot allow/block state in robots.txt — grade A (robots-ai-crawlers)
@@ -251,9 +226,3 @@ token the score depended on and what counted as passing, not the grade.
 - `isAnthropicAllowed` in `_robots-txt-helpers.ts` and the alias branch in
   `_crawler-bot-audit.ts` are now dead: no shipped `CrawlerBot` declares
   `aliases`. Harmless, removable with the item above.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
-- 2026-08-24 — contradiction sweep: narrowed the scored signal to ClaudeBot, demoted the legacy `anthropic-ai` / `Claude-Web` tokens to a non-scoring note, replaced the explicit-group pass criterion with the RFC 9309 access state, and made an unreadable robots.txt not applicable. Grade A / scored / weight 1.0 unchanged.

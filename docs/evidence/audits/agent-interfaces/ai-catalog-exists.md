@@ -33,27 +33,6 @@ sources:
 
 The AI catalog is the central discovery file that tells AI agents what capabilities your site offers. Think of it as a table of contents for your APIs, tools, and services. Without it, agents must probe multiple endpoints to understand what your site can do.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Invented standard. `/.well-known/ai-catalog.json` is not registered with IANA, is not published by any working group, and is consumed by no crawler or agent. The audit hard-fails effectively every website on the internet at medium priority and tells owners to author a file with a schema this framework made up.
-
-**Required fix:** Delete this audit and its two dependents (5.8, 5.9). If discovery coverage is wanted, spend the weight on real signals: a linked OpenAPI spec, an MCP endpoint, or a well-formed llms.txt.
-
-**False-positive risks:**
-
-- 100% false-fail rate on real sites: no site in the sample publishes this file, so the audit is a constant zero that carries no information about the site.
-- Even when present, `Array.isArray(parsed['services'])` is the only validation — `{"services": []}` passes as 'AI catalog found with 0 service(s)', a vacuous pass.
-- A SPA catch-all returning 200 text/html means JSON.parse fails and the user is told 'ai-catalog.json is not valid JSON' when in fact there is no such file — a confusing, wrong diagnosis.
-- WAF 403 on /.well-known/* reads as 'not found'; `ctx.wafProtection` unused.
-
-**Test gaps:**
-
-- No test that an empty services array is a vacuous pass
-- No HTML-soft-404 fixture
-- No content-type assertion
-
-**Overlaps with:** `5.8`, `5.9`, `5.10`, `4.19` (now absorbed here)
-
 ## The merge (Plan 4, Task 7, 2026-08-22)
 
 **Scope note first: this was the fold only.** 5.7's own required rework — the pass condition becoming ARD §4.1's `specVersion` + `host` + `entries[]` instead of a `services` array, and the guidance/code samples being replaced with the real schema — was not done here. It landed in Task 10, recorded in the next section. Everything below concerns 4.19's advertisement check and nothing else.
@@ -124,11 +103,3 @@ Task 7 recorded that the A/`scored`/1.0 meta was only defensible once this rewri
 ## Adversarial redemption research (2026-08-21)
 
 This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/deletions/agent-tools/ai-catalog-exists.md](../../deletions/agent-tools/ai-catalog-exists.md). Outcome: **redeemable**, grade A.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — adversarial redemption research; user accepted verdict (grade A, rewrite required).
-- 2026-08-21 — approved: 4.19 merges away into 5.7 (v2 audit map).
-- 2026-08-22 — merged (Plan 4, Task 7): 4.19 folded in, grade and tier unchanged; registry 158 → 157 for this fold. The ARD §4.1 rewrite remained open for Task 10.
-- 2026-08-22 — rewritten (Plan 4, Task 10): pass condition is ARD §4.1 (`specVersion` + `host` + non-empty `entries[]`), guidance and code sample replaced with the real schema, parsing extracted to `_ard.ts`. Grade **A**, tier `scored`, weight 1.0 — unchanged, and now defensible on a conformant site. `TODO(redeem)` header removed; entry dropped from rework-todo.md.

@@ -50,31 +50,6 @@ sources:
 
 Valid links in llms.txt ensure AI agents can navigate to your content without encountering dead ends.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Fetches every llms.txt link and fails if any is not 200. Genuinely valuable signal (dead links in llms.txt do waste an agent's context), but it silently validates only absolute links, has no concurrency cap, and equates any non-200 with 'broken' — so WAF 403s, 429 rate limits and gated 401 pages are reported to the user as broken links they must fix.
-
-**Required fix:** Resolve relative links against ctx.baseUrl rather than dropping them; use the same set for the denominator and the fetch list. Cap concurrency (e.g. 5) and prefer HEAD with GET fallback. Classify results: only 4xx/5xx excluding 401/403/429 count as broken; 401/403/429/0 report as 'unverifiable' and, when `ctx.wafProtection?.isBlocked`, return notApplicable instead of fail. Report the count of skipped/unsafe links explicitly.
-
-**False-positive risks:**
-
-- Relative links are dropped upstream by `extractMarkdownLinks()`, so a file of relative links produces WARN 'No links found in llms.txt to validate' — the audit reports it validated nothing while claiming coverage. Worse, `links.length` (pre-filter) is used as the denominator in the fail message while `resolved` (post-filter) is what actually got fetched, so 'N/M link(s) are broken' can print inconsistent counts.
-- `await Promise.all(resolved.map((url) => ctx.fetch({ url })))` — unbounded parallel GETs against one origin. A 100-link llms.txt fires 100 simultaneous requests; the resulting 429s are reported as broken links.
-- `broken = results.filter((r) => !isOk(r))` treats 401/403/429/503 and the fetcher's own `status: 0` timeout result as broken. On any Cloudflare/Akamai-protected site the audit lists the site's own pages as dead. `ctx.wafProtection` is available and ignored.
-- `isSafeUrl()` does a live DNS lookup per link inside the loop, sequentially (`for … await`), adding seconds of latency and silently dropping links whose DNS is slow or fails transiently — those links are never reported as broken OR as skipped.
-- Links to legitimately non-200 resources (a PDF behind 302 to a CDN that 403s the scanner UA, an intentionally 410'd page) are indistinguishable from mistakes.
-
-**Test gaps:**
-
-- Relative links in llms.txt (never fetched, silently 'no links')
-- 403/429/503 responses vs genuine 404
-- Timeout/status:0 results from the fetcher
-- A link list large enough to trigger the unbounded-parallelism problem
-- Redirecting links (301 → 200) — should pass but is untested
-- Mismatch between `links.length` and the actually-fetched `resolved.length` in the fail message
-
-**Overlaps with:** `1.4`, `1.20`
-
 ## Evidence
 
 ### Signal: /llms.txt existence at domain root (llmstxt.org proposal) — grade C (llms-txt)
@@ -162,10 +137,3 @@ Changes, all from the required fix of the 2026-08-20 review:
   of relative links still reads as "No links found". Not changed here.
 - `ctx.wafProtection` is not read. The unverifiable class covers the same
   answers link by link.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
-- 2026-08-24 — evidence sweep: grade B → C, tier scored → informative, weight 0.6 → 0. The B belonged to conformance checks this audit does not implement; link validity has no known enforcing consumer.
-- 2026-10-17 — link-burst fix: at most 20 links, 4 at a time; refused and unanswered links unverifiable; redirects followed; broken URLs named correctly.

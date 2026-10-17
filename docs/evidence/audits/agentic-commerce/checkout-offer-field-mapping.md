@@ -55,11 +55,6 @@ A 900-SKU store has clean Product markup but no gtin, mpn or sku anywhere, and p
 
 Tier per evidence policy: **scored** — grade A meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-- 2026-10-09 — ProductGroup variants resolved through `resolveProducts`; see Implementation deviations.
-
 ## Relationship to `machine-discovery/agent-commerce-feed-parity`
 
 The overlap is deliberate. This audit judges the offer graph of the scanned

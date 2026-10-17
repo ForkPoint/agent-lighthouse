@@ -57,10 +57,6 @@ A publisher wants an opt-out of AI training. Their robots.txt (or Cloudflare's p
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
 The sketch's six steps ship: collection at file scope and per group, the leading

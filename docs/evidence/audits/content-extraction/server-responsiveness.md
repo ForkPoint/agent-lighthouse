@@ -44,32 +44,6 @@ One TTFB audit: the **median** across every page the crawl actually measured, gr
 
 Pages whose fetch errored are excluded from the sample rather than charged the timeout value, and the `found` string states that the figure includes DNS, TCP and TLS setup measured from the scanner's location.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Fails when any page's TTFB exceeds 1800ms, warns above an 800ms average. The underlying concern is legitimate, but the measurement is a single unrepeated sample taken while the scanner fetches many pages of the same origin in parallel — the audit substantially creates the latency it then reports — and the fetcher's ttfbMs also folds in DNS and TLS. Verdicts vary run to run.
-
-**Required fix:** Sample each page's TTFB at least twice (discard the first, cold-cache request) and grade on the median rather than the max. Serialize or throttle the timing requests so the scanner's own concurrency is not measured. Exclude pages whose fetch errored (status 0) from the TTFB set instead of charging them the timeout value. State the scanner's region in the message, and require more than one slow page before failing.
-
-**False-positive risks:**
-
-- One sample per page, no median/retry. Serverless cold starts, a first-hit CDN miss, or one transient GC pause flips the verdict from PASS to FAIL with no site change.
-- The orchestrator fetches pages concurrently, so the scanner's own parallel load inflates every TTFB. Origins with per-IP connection limits or rate limiting are systematically over-reported as slow.
-- `ttfbMs = performance.now() - start` is measured around undici's `request()` and therefore includes DNS resolution and the TLS handshake — a slow resolver or a distant scanner region is charged to the site.
-- Geography is unmodelled: a site correctly served from a regional origin is failed when scanned from another continent.
-- `slowPages.length > 0` means ONE slow page out of twenty produces a category-wide FAIL, while the 'avg' figure quoted in the same message can be comfortably fast — internally inconsistent reporting.
-- 800/1800ms thresholds are hardcoded with no rationale and no allowance for uncached first-request behaviour.
-- On fetch error the fetcher returns ttfbMs = totalMs (the full timeout, ~10000ms), so a page that failed to load is reported as an extreme-TTFB slow page rather than an error.
-
-**Test gaps:**
-
-- Errored fetch (status 0) inflating ttfbMs to the full timeout — currently reported as a slow page
-- One slow page among many while the average is fast (inconsistent messaging)
-- Cold-start vs warm-cache repeat measurement
-- Behaviour under scanner-induced parallel load
-- Threshold boundaries at exactly 800/1800ms
-
-**Overlaps with:** `8.12` (now absorbed here)
-
 ## Evidence
 
 ### Signal: TTFB / server response time effect on AI crawl rate and agent abandonment — grade B (technical-infra)
@@ -107,13 +81,6 @@ Fails when any page's TTFB exceeds 1800ms, warns above an 800ms average. The und
   scan, so a client-rendered scan now carries its TTFB judgement at weight 0.6
   instead of a skip. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
-- 2026-08-21 — approved: 1.19 and 8.12 collapse into one banded median-TTFB audit (the `TODO(rewrite)` header).
-- 2026-08-22 — merged and rewritten (Plan 4, Task 8); registry 152 → 151 for this fold.
 
 ## The merge + rewrite (Plan 4, Task 8, 2026-08-22)
 

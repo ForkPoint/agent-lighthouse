@@ -27,26 +27,6 @@ sources:
 
 Applebot-Extended is a robots.txt usage-control token, not a crawler: no request carries it. This check reads the rules that apply to it — its own group if it has one, otherwise the catch-all — and reports whether they disallow the site root. A named group is not required: under RFC 9309 §2.2.1 an open catch-all grants the same permission.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Live signal, correct-in-kind guidance, but the same base-class defects and one scope error: like Google-Extended, Applebot-Extended governs Apple Intelligence _training_ only. Blocking it does not remove a site from Siri answers or Safari — those come from base `Applebot`, which the category never audits. The `impact` text ('prevents your content from being used in Apple Intelligence features, Siri AI answers, and Safari Highlights') overstates the consequence and will push publishers to give up a training opt-out for visibility they never lose.
-
-**Required fix:** Correct `impact` to state that Applebot-Extended controls Apple Intelligence training only and does not affect Siri/Spotlight/Safari indexing (that is base Applebot). Apply the shared helper fixes; add explicit handling so an `Applebot` group is not confused with `Applebot-Extended`.
-
-**False-positive risks:**
-
-- `impact` conflates Applebot-Extended (training opt-out) with Applebot (indexing) — a site correctly blocking only the former gets a high-priority FAIL about lost Siri visibility.
-- Exact-match UA lookup misses `User-agent: Applebot-Extended/1.0`.
-- The hyphenated token is a prefix relationship with `Applebot`: a site with only `User-agent: Applebot\nDisallow: /` is read as having no Applebot-Extended rules and falls through to wildcard, reporting 'allowed by default'.
-- Shared BOM / soft-404 / `Disallow: /*` misreads.
-
-**Test gaps:**
-
-- No Applebot-vs-Applebot-Extended prefix-collision case.
-- Same missing real-world robots.txt variants as 2.1.
-
-**Overlaps with:** `2.22`, `2.28`
-
 ## Evidence
 
 ### Signal: Applebot-Extended allow/block state in robots.txt — grade A (robots-ai-crawlers)
@@ -58,11 +38,6 @@ Live signal, correct-in-kind guidance, but the same base-class defects and one s
 **Evidence:** Apple maintains two dedicated support pages for this: 'About Applebot' (support.apple.com/en-us/119829) and 'Applebot model training and individual privacy rights' (support.apple.com/en-us/120320). Apple's stated position is that web publishers can use standard robots.txt directives either to stop Applebot crawling, or separately to direct Apple not to use their content to train Apple's foundation models. The two tokens are independent — an Applebot allow does not imply an Applebot-Extended allow. Because it is not a fetching crawler, no traffic-share data exists or should be expected.
 
 **Counter-evidence:** One caveat on this verification: both Apple support pages are client-side rendered, and the automated fetcher recovered only the document titles, not the body text. The URLs resolve and are unambiguously Apple's canonical Applebot documentation, but Apple's exact sentences could not be quoted; the specifics above are corroborated by secondary sources rather than by direct extraction. The wording should be confirmed before any of it is published as a verbatim quote. Additionally, because Applebot-Extended emits no requests, its effect is entirely unobservable from server logs — publishers cannot verify Apple honors it.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 
 ## Implementation deviations
 

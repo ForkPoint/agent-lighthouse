@@ -45,11 +45,6 @@ A regional news site publishes trust.txt with datatrainingallowed=no and belongt
 
 Tier per evidence policy: **informative (weight 0)** — grade C does not meet the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-- 2026-10-17 — an HTML answer at `/trust.txt` or `/.well-known/trust.txt` counts as no trust.txt (`gatherers/root-files.ts` `isRootArtifact`). A homepage redirect had been parsed into 1,960 attributes, starting with `<html lang`.
-
 ## Implementation deviations
 
 **Renamed** from `trust-txt-reciprocity-and-ai-policy-coherence`, which would

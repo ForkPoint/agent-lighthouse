@@ -47,10 +47,6 @@ Extract: all alt values; aria-label; text of aria-labelledby/aria-describedby ta
 
 Tier per evidence policy: **scored** — grade A meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
 Shipped as `operability-safety/aria-layer-injection-scan`: v2 has no

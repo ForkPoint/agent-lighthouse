@@ -59,10 +59,6 @@ A B2B analytics vendor runs a solid MCP server at https://analytics.example.com/
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
 - **The Evidence block above does not belong to this check.** Its four sources — the Lighthouse `agent-accessibility-tree` audit, the WebSuite agent study, the web.dev text-fragments article and browser-use's DOM extractor — are about accessibility trees and agent DOM parsing. None of them says anything about the MCP Registry, namespaces or ownership proofs. The block was mis-pasted during the proposal pass; the mechanism, the sketch and the failure example are the ones that were reviewed, and they are what the implementation follows. The evidence grade is held at **B** on the strength of the registry API itself being directly observable, not on the strength of the block above.

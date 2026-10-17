@@ -48,10 +48,6 @@ A publisher adopts RSL and adds `License: /license.xml` to robots.txt. The spec 
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
 **Renamed.** The proposal's slug — `rsl-licensing-terms-discoverable-and-conformant` —

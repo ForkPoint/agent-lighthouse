@@ -59,10 +59,6 @@ A site fronted by a strict WAF rule that rejects requests with unrecognised head
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
 **Renamed.** `signed-agent-web-bot-auth-request-tolerance` makes a 64-character

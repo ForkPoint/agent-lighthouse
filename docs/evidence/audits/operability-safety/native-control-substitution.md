@@ -57,10 +57,6 @@ A checkout ships a styled country picker: <div class="dropdown" tabindex="0"> pl
 
 Tier per evidence policy: **scored** — grade A meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
 The shipped audit is `operability-safety/native-control-substitution`; the

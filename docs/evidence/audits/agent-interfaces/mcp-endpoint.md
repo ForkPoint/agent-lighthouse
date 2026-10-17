@@ -38,33 +38,6 @@ One MCP endpoint audit, over one connection: find the endpoint the site _declare
 
 `tools/list` is only called when the server negotiates the `tools` capability, and a `tools/list` that does not answer is reported, never punished.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-The most valuable audit in the category in principle — it actually speaks the protocol — but the handshake it sends is not spec-compliant, so a correctly implemented Streamable HTTP MCP server answers it with 406 or an SSE body and gets reported as broken. This is the clearest case of the framework producing a false negative against a site that is doing everything right.
-
-**Required fix:** Send a spec-compliant handshake: `acceptHeader: 'application/json, text/event-stream'`, a current `protocolVersion`, and handle `Mcp-Session-Id`. Parse SSE-framed responses by extracting the `data:` payload before JSON.parse. Treat 401 with `WWW-Authenticate` as PASS-with-note ('server present, authorization required') rather than fail. Discover the endpoint independently of servers.json (probe /mcp, /api/mcp, /sse). Gate the POST behind `isSafeUrl()` from fetcher.ts.
-
-**False-positive risks:**
-
-- The request omits the required Accept header. MCP Streamable HTTP requires the client to send `Accept: application/json, text/event-stream`; the official TypeScript SDK's StreamableHTTPServerTransport rejects requests lacking both with 406 Not Acceptable. `ctx.fetch({url, method:'POST', body, contentType:'application/json'})` never sets `acceptHeader`, so fetcher.ts defaults to `*/*` → 406 → `this.fail('MCP endpoint ... returned HTTP 406')` against a perfectly healthy server.
-- Even on success, a Streamable HTTP server may reply with `Content-Type: text/event-stream` and a framed body (`event: message\ndata: {...}`). `tryParseJson(response.body)` fails on the SSE framing → `warn('returned HTTP 200 but response is not valid JSON-RPC')` for a valid response. The SSE frame is never unwrapped.
-- OAuth-protected MCP servers (the norm for anything non-public in 2026) answer an unauthenticated initialize with 401 + `WWW-Authenticate`. That is correct, secure behavior, reported here as a hard FAIL at high priority.
-- `Mcp-Session-Id` handling is absent; servers requiring session initialization semantics may 400.
-- `protocolVersion: '2024-11-05'` is hardcoded and stale; servers that reject unsupported protocol versions return a JSON-RPC error → the `!('error' in respBody)` guard turns it into a warn.
-- Endpoint discovery is entirely dependent on the non-standard servers.json from 5.12, so a real MCP server is usually never probed at all — 'No MCP servers.json found' is a fail about a missing file, dressed up as a fail about a broken endpoint.
-- POSTing a JSON-RPC body to a URL harvested from a site-controlled file is an SSRF-adjacent operation; `isSafeUrl()` exists in fetcher.ts:84 and is not called here.
-
-**Test gaps:**
-
-- No test asserting the request carries `Accept: application/json, text/event-stream` — the defect that makes this audit fail real servers
-- No SSE-framed (`text/event-stream`) response fixture
-- No 401 + WWW-Authenticate (OAuth-protected server) fixture
-- No 406 fixture
-- No test that the harvested URL is validated with isSafeUrl before POSTing
-- No session-id / protocol-version-negotiation fixture
-
-**Overlaps with:** `5.12`, `5.14` (now absorbed here), `5.24` (now absorbed here)
-
 ## Evidence
 
 ### Signal: nlweb-endpoint — grade C (agent-action-surfaces)
@@ -112,10 +85,3 @@ The signal now comes off a live `tools/list` response, and the check is the one 
 - **`server/discover` is not used.** The current spec makes it mandatory for servers, but `initialize` remains the interoperable path across the deployed base, and it is the call this audit already made.
 - **`untrustedContentHint` is not required.** It is the other half of WebMCP's `ToolAnnotations`, but 5.24's fix names `readOnlyHint` as the requirement, and MCP itself warns that annotations from untrusted servers must not be relied on — so this reports declaration hygiene, not a safety guarantee.
 - **`destructiveHint`, `idempotentHint` and `openWorldHint` are no longer scored.** Three of the four annotations 5.24 counted are MCP-only and absent from WebMCP's dictionary; requiring them would penalise a spec-conformant WebMCP tool.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
-- 2026-08-21 — approved: 5.14 and 5.24 merge away into 5.13 (§5).
-- 2026-08-22 — merged (Plan 4, Task 7); registry 157 → 155 for this fold.

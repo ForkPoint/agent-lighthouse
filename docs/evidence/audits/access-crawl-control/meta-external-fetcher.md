@@ -31,27 +31,6 @@ sources:
 
 Reads the robots.txt rules that apply to Meta-ExternalFetcher — its own group if it has one, otherwise the catch-all — and reports whether they let it fetch the site root. A named group is not required: under RFC 9309 §2.2.1 an open catch-all grants the same access.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Live token backing Meta AI's link fetching; a reasonable check to keep, though its citation value is materially lower than the OpenAI/Anthropic/Perplexity realtime fetchers while carrying identical weight. Unmodified base class, so all shared defects apply. Overlaps closely with 2.7 — both audit the same vendor's robots.txt posture and, on most real sites, return the same verdict from adjacent lines in the same file.
-
-**Required fix:** Apply the shared helper fixes from 2.1 with prefix matching for the Meta family. Consider merging with 2.7 into a single vendor-level 'Meta AI crawlers' audit reporting both tokens in `details`, since they are near-always configured together.
-
-**False-positive risks:**
-
-- Prefix shorthand `User-agent: Meta-External` matches neither this token nor Meta-ExternalAgent, so a deliberate Meta-wide block reads as 'allowed by default' in both audits.
-- Exact-match miss on versioned tokens.
-- Edge UA blocking invisible to the scanner.
-- Shared BOM / soft-404 / `Disallow: /*` misreads.
-
-**Test gaps:**
-
-- No Meta-family prefix/shorthand case.
-- No test distinguishing this token's verdict from 2.7's on the same fixture.
-- Same missing real-world robots.txt variants as 2.1.
-
-**Overlaps with:** `2.7`, `2.22`, `2.28`
-
 ## Evidence
 
 ### Signal: Meta-ExternalAgent allow/block state in robots.txt (and meta-externalfetcher / Meta-WebIndexer) — grade A (robots-ai-crawlers)
@@ -63,11 +42,6 @@ Live token backing Meta AI's link fetching; a reasonable check to keep, though i
 **Evidence:** Meta's web crawlers page documents meta-externalagent as crawling 'for use cases such as training foundation AI models or improving products by indexing content directly', with no stated robots.txt exemption. The newer Meta-WebIndexer 'navigates the web to improve Meta AI search result quality for users' and helps 'cite and link to your content in Meta AI's responses'. That makes Meta-WebIndexer the allow-side visibility token and meta-externalagent the training-side block token. Cloudflare Radar confirms Meta-ExternalAgent among the top five AI crawlers overall and at 13.9% share in the Computer & Electronics vertical (Aug 2025), so it is documented ACTIVE at scale.
 
 **Counter-evidence:** Two documented robots.txt exemptions in the same family must not be conflated with meta-externalagent. meta-externalfetcher 'fetches individual links at a user's request', and 'may bypass robots.txt rules'. facebookexternalhit may bypass robots.txt for 'security or integrity checks, such as checking for malware or malicious content'. A meta-externalfetcher disallow should therefore be reported informatively, not scored as an effective control.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 
 ## Implementation deviations
 

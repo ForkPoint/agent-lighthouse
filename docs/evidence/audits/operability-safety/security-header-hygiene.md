@@ -179,10 +179,3 @@ Three things this task deliberately did not do, because they touch shared files:
 ### Not done here
 
 RFC 9116 also requires the file to be served as `text/plain` with UTF-8 and to be "accessed exclusively via HTTPS". Neither is checked today and neither is added now: this task removes a contradiction, and adding checks would be an expansion. Both are candidates for a later pass if the file's conformity signal is ever worth strengthening.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources) on the four source audits.
-- 2026-08-21 — dispositions approved: 8.2/8.4 merge, 8.7 informative weight 0, 8.3 fix-then-fold.
-- 2026-08-22 — consolidated into this audit (Plan 4, Task 3); registry 177 → 174.
-- 2026-08-24 — contradiction sweep: narrowed to security.txt; the HSTS, CSP and X-Content-Type-Options rows removed; grade B → C, tier and weight unchanged; a site with no security.txt became `na` instead of `warn`.

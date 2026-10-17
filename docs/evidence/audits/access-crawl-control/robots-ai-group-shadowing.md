@@ -70,10 +70,6 @@ A retailer's robots.txt reads `User-agent: *` / `Disallow: /checkout/` / `Disall
 
 Tier per evidence policy: **scored** — grade A meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
 - **`_robots-txt-helpers.ts` is deliberately not used.** Its `categoryBlocked()`

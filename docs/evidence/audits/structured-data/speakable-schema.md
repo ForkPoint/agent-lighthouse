@@ -28,28 +28,6 @@ Google Assistant uses the speakable property to pick which sentences of a news a
 
 _(The pre-rewrite description named Alexa and Siri as consumers. That claim was fabricated and is quoted, with its refutation, in the rewrite section below.)_
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Checks a schema.org property whose only ever production consumer — Google Assistant news readouts, limited to US English news publishers — has been retired, and whose impact text names two consumers (Alexa, Siri) that never read schema.org speakable at all. It is `binary` with no `notApplicable` path, so essentially every site takes a hard 0, and the implementation additionally rejects the valid single-string `cssSelector` form.
-
-**Required fix:** Delete the audit and remove it from the structured-data index. If any voice-related signal is wanted, replace it with something with a live consumer (e.g. a clean `<main>`/heading outline check in semantic-html), not schema.org speakable.
-
-**False-positive risks:**
-
-- `return sp && Array.isArray(sp['cssSelector'])` requires an ARRAY. schema.org permits `cssSelector` as a single value, and it permits `xpath` as the alternative selector property entirely. A site with correct `"speakable":{"@type":"SpeakableSpecification","cssSelector":".article-body"}` or with `"xpath"` fails. The test file explicitly asserts the string form is a fail, codifying the bug as intended behaviour.
-- No `notApplicable` branch and `scoreDisplayMode: 'binary'` with weight 1.0 means ~100% of real sites take score 0 on this check, deflating the whole structured-data category by roughly 5 points for a signal with no consumer.
-- Does not check that `speakable` is attached to an Article/WebPage (the only types where it is defined), so a speakable on an arbitrary node passes.
-- The guidance text tells users that 'Google Assistant, Alexa, Siri use the speakable property' — Alexa and Siri have never had any schema.org speakable support. This is fabricated impact copy shipped to customers.
-
-**Test gaps:**
-
-- Tests assert the WRONG contract: 'fails when speakable cssSelector is not an array' encodes a false negative as expected behaviour
-- No test for the `xpath` alternative
-- No test that speakable is attached to a valid host type
-- No coverage of what a user is supposed to gain from passing
-
-**Overlaps with:** _none_
-
 ## The news/article-gating rewrite (Plan 4, Task 12, 2026-08-22)
 
 The required rework from the [redemption dossier](../../deletions/structured-data/speakable-schema.md) is executed, together with the false-positive fixes the code review attached to the same audit. The mechanism the grade rests on is untouched — Google Search Central's live speakable doc names Google Assistant as the agent that reads the marked sections aloud with TTS — but the audit's applicability, its detection rules and its impact copy were all wrong.
@@ -134,13 +112,6 @@ article page still returns `notApplicable`. The audit's re-check trigger — Gem
 for Home replacing Google Assistant with no speakable successor statement —
 stands, and if it fires the audit loses its consumer entirely rather than one
 grade.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — adversarial redemption research; user accepted verdict (disposition above).
-- 2026-08-22 — required rework executed (Plan 4, Task 12): page-type gate to news/article publishers, Alexa/Siri claim deleted, single-string `cssSelector` and `xpath` accepted, host type enforced, coverage judged per page, `binary` → `ternary`. Grade A, tier `scored`, weight 1.0 unchanged. `TODO(redeem)` marker removed from the source file.
-- 2026-08-24 — re-graded A → B, weight 1.0 → 0.6. The Google Assistant consumer is live and documented, but Google labels the feature beta and scopes it to U.S. English news publishers. Not retired.
 
 ## Implementation deviations (v7 P3, 2026-10-07)
 

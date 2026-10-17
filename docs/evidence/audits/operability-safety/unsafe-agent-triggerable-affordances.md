@@ -55,10 +55,6 @@ A store renders 'Remove' in the cart as <a href="/cart?action=remove&item=482">.
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
 The shipped audit is `operability-safety/unsafe-agent-triggerable-affordances`,

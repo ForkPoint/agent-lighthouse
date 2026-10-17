@@ -57,10 +57,6 @@ A booking server exposes `create_reservation` with a good tool-level description
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
 - **One of the two Evidence sources does not belong to this check.** The Playwright actionability entry is about browser click gating and says nothing about MCP tool metadata; it was mis-pasted during the proposal pass. The second source — the MCP 2026-07-28 tools specification — is the one the mechanism rests on, and it is accurate. The grade stays **B**: the metrics are counts of directly observable fields, and only the pass thresholds are this project's convention.

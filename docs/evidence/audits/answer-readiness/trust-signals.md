@@ -43,34 +43,6 @@ Both must be present to pass; one is a warning and neither is a failure. The hom
 
 The audit runs only on the homepage, and reports `notApplicable` rather than a verdict when no homepage was scanned or when the page declares a non-English `lang` — the detectors are English-language patterns. It deliberately does not check client logos, testimonials, awards, certification badges or promotional phrasing: those were the v1 patterns, and the same study found promotional tone's effect too small and too inconsistent across models to guide anyone. Comparison content is not scored here either; `answer-readiness/comparison-tables` reports it, unscored.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Falsy and near-constantly PASSING. The claimed mechanism — 'AI engines scan homepages for trust signals and rank you lower without them' — is unsupported folklore, and the regex list is broad enough that ordinary site chrome clears the 2-signal bar on essentially every commercial homepage: `/\bpartner(s|ed|ship)?\b/i` matches a 'Partners' nav item, `/\b(secure checkout|free returns|free shipping)\b/i` matches a shipping banner, `/\bclients\b/i` matches a footer link. An audit that passes almost everything, on a mechanism that does not exist, is pure noise in the report — and on non-English sites it flips to a confidently wrong FAIL.
-
-**Required fix:** Not salvageable as a scored audit. If it must survive: demote to `scoreDisplayMode: 'informative'` so it is score-excluded, scope strictly to `pageType === 'homepage'`, delete the adjective and shipping/returns patterns, require structural evidence (a testimonial block with attribution, a logo grid inside a section whose heading matches a trust phrase, or Review/AggregateRating schema) instead of free-text regex, and gate on the page `lang` until other languages are supported. Otherwise delete.
-
-**False-positive risks:**
-
-- The 12 TRUST_PATTERNS match navigation and legal boilerplate, not trust content. A homepage with a 'Partners' nav link and a 'Free shipping over $50' banner scores 2 signals → PASS 'Found 2 trust signal(s) on homepage', with no testimonials, logos, awards or case studies. This is the modal outcome for e-commerce.
-- `/\baward/i` has no trailing boundary, so it matches 'awarded'/'awards' anywhere including legal text; `/\bcertif(ied|icate|ication)\b/i` matches 'SSL certificate' in a security blurb.
-- `/\b(sustainable|organic|fair\s+trade|b\s+corp|handcrafted|handmade)\b/i` treats marketing adjectives as trust signals — 'organic' matches an organic-food product name or the phrase 'organic traffic' in a marketing site's own copy.
-- English-only. A German, French, Japanese or Spanish homepage with a full testimonial wall, client logo grid and award badges scores 0 and receives 'No trust signals found on the homepage.' — an outright wrong verdict driven only by language.
-- The logo-grid heuristic `$('[class*="logo"], [class*="client"], [class*="partner"], [class*="trust"]').find('img')` is case-sensitive and semantic-class-dependent: `class="Logo"`, styled-components or CSS-Modules hashes, or Tailwind-only markup yield 0 → false negative. Conversely `[class*="logo"]` matches the header logo wrapper, and if that wrapper also holds payment icons the count can reach 3 and fabricate an 'image grid (3 logos)' signal.
-- `ctx.pages[0]` is assumed to be the homepage. With user-supplied `PageOverride`s it can be any page, yet the verdict text always says 'on the homepage'.
-- No `applicablePageTypes` at all, so the audit runs on every scan regardless of what was scanned, and examines only pages[0].
-- The `reviews|customer rating|verified buyer` pattern double-counts the same page fact that audit 10.8 scores independently.
-
-**Test gaps:**
-
-- No test with a realistic commercial homepage (nav + shipping banner) demonstrating the trivial 2-signal pass.
-- No test for a non-English homepage with abundant real trust content.
-- No test for Tailwind/CSS-Modules/styled-components markup where the logo-grid selector finds nothing.
-- No test for the header-logo wrapper inflating `imgInGrids`.
-- No test where `ctx.pages[0]` is not the homepage.
-- Only 5 tests, all with one-sentence hand-written bodies — none resembles real page markup.
-
-**Overlaps with:** `10.4`, `10.8`
-
 ## The GEO-benchmark rebuild (Plan 4, Task 11, 2026-08-22)
 
 The [redemption dossier](../../deletions/generative-engine/trust-signals.md) found something the 2026-08-20 review had not: the _mechanism_ is real and quantified — arXiv 2605.25517 ran 252,000 paired trials across six LLMs in a controlled RAG testbed and measured which content factors change citation. What it also found is that this audit checked none of them. So the audit is not repaired, it is re-specified against the measured factor list.
@@ -180,10 +152,3 @@ Note for anyone reading the two audits together: `findReviewNodes` was tightened
 2. _Gate the social-proof factor to commerce pages,_ following the rating-markup signal's counter-evidence that ratings should "Score only on product/offer/local pages". Rejected — that scope limit is about machine-readable rating markup and its named commerce consumers, which this audit defers away. What is scored here is the benchmark's retrieved-text factor, and 2605.25517 ran on generic RAG documents rather than commerce pages, so the homepage scope is the one its evidence covers.
 
 **What moves for real sites.** A homepage that passed on a comparison table plus one measured factor now warns. A homepage whose only signal was a comparison table or a "X vs Y" heading now fails instead of warning. Homepages that already carried a quantified rating or review count together with outbound citations or attributed sources are unaffected. This audit is a member of the content readiness vital set, so those sites' content readiness figure moves along with the category and overall score.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — adversarial redemption research; user accepted verdict (grade B, rewrite required).
-- 2026-08-22 — required rework executed (Plan 4, Task 11): rebuilt on the three arXiv 2605.25517 factors, promotional-puffery patterns deleted, social proof deferred to `answer-readiness/review-signals` when review markup is present, scoped to the homepage, non-English homepages `na`, `defaultPriority` `medium` → `low`. Grade B / tier `scored` / weight 0.6 unchanged; `TODO(redeem)` marker removed from the source file.
-- 2026-08-24 — comparison factor dropped from the scored tally (contradiction sweep); pass now requires both measured factors, `warn` one, `fail` neither. Grade B / tier `scored` / weight 0.6 / `scoreDisplayMode` `ternary` unchanged.

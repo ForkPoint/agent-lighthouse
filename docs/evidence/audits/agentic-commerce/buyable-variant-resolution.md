@@ -58,10 +58,6 @@ A clothing PDP offers 5 sizes x 3 colours via <select> menus. Its JSON-LD contai
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
 - **No network calls.** The sketch mentions fetching `/products/{handle}.js` for Shopify variant JSON. The audit reads only pages the scan already fetched: the Shopify variant array is counted out of the inline `window.ShopifyAnalytics` script, and WooCommerce out of `data-product_variations` on the variations form. BigCommerce `productOptions` and Magento are covered only through the `<select>` and data-attribute arms.

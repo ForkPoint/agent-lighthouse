@@ -36,33 +36,6 @@ A placeholder `og:site_name` is treated as missing. A placeholder is an unrender
 
 **Informational — Twitter Cards.** `twitter:card`, `twitter:title`, `twitter:description` and `twitter:image` are reported in the `found` block, each labelled with the `og:*` property it falls back to. These rows never change the status, the score or the priority: no consumer is documented to read a `twitter:*` tag that has an `og:*` equivalent.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Reasonable presence check, but it validates nothing beyond non-emptiness — notably it does not enforce the absolute og:image URL that its own `guidance.fix` demands, so a relative og:image (which no social/AI consumer can resolve) scores a full pass. Single-page evaluation again. The AI-impact framing ('agents cannot display proper titles… in AI-generated responses') is somewhat speculative — OG is primarily a social-preview standard — but the tags are cheap and genuinely reused, so keep the audit.
-
-**Required fix:** 1) Enforce what the guidance already promises: `guidance.fix` says 'og:image (with an absolute URL)' but the loop is only `if (val.trim()) present.push(tag)`. Add an absolute-URL check for og:image and og:url and warn on relative values. 2) Accept `og:image:url` / `og:image:secure_url` as satisfying og:image (valid per ogp.me, emitted by several CMSes) before reporting og:image missing. 3) Verify og:url resolves to the same origin as `page.url`; a stale og:url pointing at a dev domain is a common real bug that currently passes. 4) Iterate all `ctx.pages`. 5) Return `notApplicable` when `ctx.wafProtection?.isBlocked` rather than a 4-tag hard fail. 6) Reference `meta.guidance` instead of re-embedding a second copy of the description/code strings in the warn and fail branches.
-
-**False-positive risks:**
-
-- Relative og:image passes: the loop is `const val = page?.meta?.[tag] ?? ''; if (val.trim()) present.push(tag)`. `<meta property="og:image" content="/img/card.png">` is unresolvable by every OG consumer, yet scores a full pass while the audit's own fix text demands an absolute URL.
-- `og:image:url` / `og:image:secure_url` only (valid OGP, emitted by some CMSes) → reported as og:image missing.
-- Stale/wrong og:url (pointing at a staging domain or the homepage) passes — no comparison to `page.url`.
-- Multiple `<meta property="og:image">` tags (the standard way to offer several images) collapse to last-wins in `extractMetaTags`; the audit sees only one, which is fine here but hides a broken first entry.
-- Only `ctx.pages[0]` checked: homepage has all four, interior templates have none → pass.
-- WAF interstitial or a JS-injected OG head (SPA) → all four reported missing, priority 'high', on a site whose rendered pages are correct.
-- Non-HTML entry URL (PDF, JSON API root) still parses through cheerio and reports four missing OG tags rather than declaring itself inapplicable.
-
-**Test gaps:**
-
-- No relative-og:image test — the exact case the guidance calls out.
-- No `og:image:secure_url`-only test.
-- No multi-page test.
-- No duplicate-og-tag test.
-- No whitespace-only content test (would pass the `.trim()` guard correctly, but untested).
-- No `name="og:title"` instead of `property=` test (the parser accepts both; the behavior is untested).
-
-**Overlaps with:** `4.7`, `4.8`, `4.9` — `4.8` is now absorbed here, so that overlap is resolved.
-
 ## Evidence
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
@@ -112,10 +85,3 @@ The C-grade half is not silently averaged into that weight — it is excluded fr
 - **Still single-page.** `ctx.pages[0]` only, as before. Multi-page iteration is required fix #4 on 4.6's own review (and appears in 4.8's "if kept standalone" list), not part of the fold; 4.6 is a `move` row with an open `fix` verdict, so its remaining required fixes — absolute-URL enforcement on `og:image`/`og:url`, the `og:image:url` / `og:image:secure_url` alias, `notApplicable` under WAF protection, all-pages iteration — stay open and are not claimed here.
 - **No `pass` requires twitter tags, and no `fail` mentions them.** A site that deliberately ships no `twitter:*` markup is correct by X's own fallback rules and is reported as such.
 - **Empty page list still returns `fail`**, not `na`, matching the pre-merge behavior and its test. The other Plan 4 folds that switched to `na` did so where the review asked for it; neither review here does.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
-- 2026-08-21 — approved: 4.8 folds in (§5); 4.10 redeemed as the informational half of the social-meta diagnostic.
-- 2026-08-22 — merged (Plan 4, Task 6); registry 165 → 163 for this fold.

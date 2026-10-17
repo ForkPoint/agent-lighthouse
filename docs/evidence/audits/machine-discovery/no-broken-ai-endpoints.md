@@ -44,34 +44,6 @@ sources:
 
 AI agents follow URLs in your ai-catalog.json, llms.txt, and navigation.json to build a map of your site's AI-consumable resources. Broken links cause agents to lose trust in your manifest files entirely, potentially ignoring all listed endpoints. Fix or remove broken URLs.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Genuinely valuable signal — a llms.txt full of 404s does degrade agent trust — and the Markdown-link extraction has clearly been hardened once already (the comment documents the old `/https?:\/\/[^\s)>]+/g` regex fabricating phantom endpoints). But a broad bare-URL sweep was left in alongside it, and the audit still validates every URL it finds regardless of whose domain it belongs to. The result is that third-party links — the schema.org, GitHub, or docs URLs that legitimately appear in an llms.txt — get HEAD/GET-probed by a bot user agent, get 403'd by their own Cloudflare, and are then reported to the user as 'AI endpoint URLs are broken' on the user's site, at priority `high`. Combined with the SPA soft-404 case it is a reliable false-failure generator.
-
-**Required fix:** Restrict validation to same-origin URLs by default (report off-origin links separately as informational, never as a site failure). Drop the bare-URL sweep in favor of the already-integrated `extractMarkdownLinks`, or gate the sweep on the body actually looking like text/markdown rather than HTML. Treat 401/403 as `warn: auth-gated, not broken` rather than broken. Apply `slice(0, 20)` AFTER the safety filter and state the truncation in the result message. Handle protocol-relative and non-http schemes in the navigation.json walker before concatenating onto baseUrl. Serialize or throttle the probes instead of firing all 20 through `Promise.all`.
-
-**False-positive risks:**
-
-- Third-party URLs judged as the site's own defects: no same-origin filter. `urlsToCheck` accepts any absolute URL from llms.txt. External links that 403 bot UAs (Cloudflare-fronted docs, LinkedIn, Twitter/X, many vendor sites) or that rate-limit are reported as the site's broken AI endpoints.
-- Soft-404 amplification: when an SPA host serves index.html with 200 for /llms.txt, the bare-URL sweep `llmsTxt.body.match(/https?:\/\/[^\s)\]>`"']+/g)` harvests every absolute href in that HTML — analytics, CDN, social, font origins — and probes up to 20 of them, near-guaranteeing a broken-endpoint verdict about a file that does not exist.
-- Auth-gated endpoints counted as broken: a real MCP or API endpoint answering 401/403 to an unauthenticated probe is `>= 400` ⇒ broken. The JSON-RPC POST rescue only fires for URLs containing '/mcp' or '/api/', so an MCP server at /agent or /rpc is mis-flagged.
-- HEAD-hostile origins: `HEAD` first, `GET` on `>= 400` — good — but hosts that return 405 to HEAD _and_ rate-limit the immediate GET retry still land as broken; there is no backoff and all URLs are probed concurrently via `Promise.all`, which can trip the target's own rate limiter and manufacture failures.
-- Silent truncation: `Array.from(urlsToCheck).slice(0, 20)` is applied BEFORE the `isSafeUrl` filter, so a manifest with 100 links has 80 silently unchecked and the pass message ('All N AI endpoint URL(s) are reachable') overstates coverage.
-- navigation.json recursion grabs any `url`/`href` key at any depth including non-endpoint metadata, and `value.startsWith('http')` treats a protocol-relative `//cdn…` or a mailto:/tel: value as relative and concatenates it onto baseUrl, producing a nonsense URL that then reports as broken.
-- navigation.json itself has essentially no adoption (see obsolete note), so a third of the input surface is speculative.
-
-**Test gaps:**
-
-- No test with an external/third-party URL in llms.txt (the top false-positive source).
-- No test where llms.txt is actually the SPA HTML fallback.
-- No test for a 401/403 auth-gated endpoint that is healthy.
-- No test for a 405-on-HEAD host.
-- No test for >20 URLs (truncation is invisible and the pass message is misleading).
-- No test for protocol-relative `//host/path` or `mailto:` values in navigation.json.
-- No test for the MCP JSON-RPC POST rescue path on a URL that does not contain '/mcp' or '/api/'.
-
-**Overlaps with:** _none_
-
 ## Evidence
 
 ### Signal: Soft-404 / SPA catch-all rewrite (HTTP 200 for everything) as a false-result source — grade A (technical-infra)
@@ -114,8 +86,3 @@ Genuinely valuable signal — a llms.txt full of 404s does degrade agent trust �
   (`gatherers/root-files.ts` `isRootArtifact`). A homepage redirect at
   `/llms.txt` had supplied the homepage's links as "AI endpoints", and the
   site passed on them.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.

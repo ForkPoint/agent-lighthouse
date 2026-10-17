@@ -69,10 +69,6 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 
 A site that publishes no AI-usage signal in any channel is not applicable: with nothing declared there is nothing to contradict. The AIPREF vocabulary reads an absent preference as unknown and Content Signals reads omission as no preference, so neither documents a cost for silence.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Absorbed proposal
 
 `competitor-gap-verify/content-signal-coherence` folded into this audit on

@@ -42,27 +42,6 @@ The v7 runner includes `article` and `general` pages in this check's existing pa
 
 AI agents use <aside> to distinguish supplementary content (sidebars, callouts, related links) from primary content. Without it, sidebar content may be mixed into the main content extraction, diluting the primary message in AI-generated summaries.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Falsy audit with no discriminative power. It passes if a single <aside> exists on any page of the crawl ('const hasAside = pagesWithAside > 0') and otherwise warns; it can never fail. Crucially it cannot detect the failure it describes — sidebar content marked up as <div class="sidebar"> is indistinguishable to this code from a site that genuinely has no supplementary content, and both get the same warn. Meanwhile a site with one decorative <aside> and nine div-based sidebars gets a full 1.0. Passing this audit cannot plausibly change any agent outcome.
-
-**Required fix:** _none — audit is sound as implemented_
-
-**False-positive risks:**
-
-- 'pagesWithAside > 0' — one <aside> anywhere in a 50-page crawl yields a full pass regardless of the other 49 pages.
-- Declares applicablePageTypes ['content'] but loops all pages, so the denominator in the pass message ('X/ctx.pages.length') mixes page types.
-- Warns on sites that correctly have no supplementary content (landing pages, docs, checkout flows) — unactionable noise, since the only 'fix' is to invent a sidebar.
-- Cannot distinguish 'no sidebar' from 'sidebar in a div', which is the entire stated point of the check.
-
-**Test gaps:**
-
-- Two tests only; no fixture with a div-based sidebar (the failure mode the audit claims to catch).
-- No multi-page crawl showing that one <aside> on page 1 passes the whole site.
-- No test of the applicablePageTypes/loop mismatch.
-
-**Overlaps with:** `6.12`, `6.13`, `6.3`, `6.5`
-
 ## The conditional-check rewrite (Plan 4, Task 11, 2026-08-22)
 
 The [redemption dossier](../../deletions/semantic-html/aside-element.md) is unusual in this batch: it found the audit's _stated mechanism_ "essentially verbatim correct" and put the entire fault in the implementation. So the description and guidance keep their claim and gain its sources; the check underneath is replaced.
@@ -126,12 +105,6 @@ Neither the redeem note nor the REWORK-TODO row asks for a grade or tier change;
 ## Adversarial redemption research (2026-08-21)
 
 This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/deletions/semantic-html/aside-element.md](../../deletions/semantic-html/aside-element.md). Outcome: **redeemable**, grade B.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — adversarial redemption research; user accepted verdict (grade B, rewrite required).
-- 2026-08-22 — required rework executed (Plan 4, Task 11): check made conditional on detected supplementary content, `na` when a page legitimately has none, page-type filter aligned with `applicablePageTypes`, `binary` → `ternary`, guidance now states that Readability and trafilatura discard `<aside>` content. Grade B / tier `scored` / weight 0.6 unchanged; `TODO(redeem)` marker removed from the source file.
 
 ## Implementation deviations (v7 P3, 2026-10-07)
 

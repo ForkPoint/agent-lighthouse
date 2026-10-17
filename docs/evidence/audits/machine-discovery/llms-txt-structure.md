@@ -98,9 +98,3 @@ Both absorbed dossiers are kept verbatim as the record of why each half moved:
 
 - [llms-txt-blockquote (1.2)](../../merged/machine-discovery/llms-txt-blockquote.md) — grade C
 - [llms-txt-sections (1.3)](../../merged/machine-discovery/llms-txt-sections.md) — grade C
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources) on both source audits.
-- 2026-08-21 — dispositions approved: 1.2 and 1.3 merge into one llms.txt structure audit.
-- 2026-08-22 — merged into this audit (Plan 4, Task 4); registry 174 → 173.

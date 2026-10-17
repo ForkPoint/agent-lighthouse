@@ -54,10 +54,6 @@ A marketplace publishes leiCode on its about page. GLEIF resolves the code to a 
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
 **Renamed** from `organization-identifier-resolves-in-the-authoritative-regist`

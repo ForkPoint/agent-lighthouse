@@ -54,10 +54,6 @@ A media site loads 14 third-party tags, no CSP, no SRI. One ad-tech vendor is co
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
 The shipped audit is `operability-safety/third-party-dom-write-blast-radius`, in

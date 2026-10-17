@@ -62,10 +62,6 @@ A Shopify store's Product JSON-LD emits `"availability": "InStock"` — a bare t
 
 Tier per evidence policy: **scored** — grade A meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Relationship to `agentic-commerce/checkout-offer-field-mapping`
 
 The overlap is deliberate. The two audits look at the same spec from opposite

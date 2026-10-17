@@ -46,28 +46,6 @@ sources:
 
 Enterprise AI frameworks refuse to interact with non-HTTPS sites due to security policies. GPTBot, ClaudeBot, and enterprise RAG systems all skip HTTP-only sites entirely, making your content invisible to AI-generated answers. Enable HTTPS with a valid TLS certificate.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-The signal is real and important (AI crawlers do require valid TLS), but the implementation never inspects TLS at all — it does a string test on the URL the user typed: `const isHttps = ctx.baseUrl.startsWith('https://')`. Since the CLI passes the argument through verbatim (`main.ts` only calls `new URL(url)` to validate; `normalizeUrl` exists in url-utils.ts but is imported nowhere), a user who runs the scanner against `http://example.com` gets a CRITICAL 'Site is not served over HTTPS' failure even when the origin 301-redirects everything to HTTPS and every single fetch in the scan actually travelled over TLS. Passing this audit as written proves nothing beyond 'the operator typed https://'.
-
-**Required fix:** Stop deriving the verdict from the input string. (a) Make the fetcher record the real post-redirect URL (undici's redirect interceptor exposes the redirect history; or perform a manual `redirect: 'manual'` loop) and populate `finalUrl` truthfully, then judge on `new URL(page.fetchResult.finalUrl).protocol === 'https:'`. (b) When the input is http://, actively probe `https://<host>/` before failing, and pass if it serves 200 — reporting instead a low-priority note that the http→https redirect exists. (c) Split the current warn branch: only report a TLS problem when `fetchResult.error` carries a TLS error code (CERT__, ERR_TLS__, EPROTO); report other non-200s as 'homepage unreachable (HTTP n)' with no TLS claim. (d) Return `na` when `ctx.wafProtection?.isBlocked`.
-
-**False-positive risks:**
-
-- Input scheme, not actual scheme: `ctx.baseUrl.startsWith('https://')` where baseUrl = `new URL(url).origin` from raw CLI input. `http://site.com` that 301s to HTTPS → critical FAIL. The fetcher cannot correct this because it hardcodes `finalUrl: targetUrl` after following redirects.
-- Misattributed warn: the `isHttps && !status200` branch says 'Possible TLS or server error' for ANY non-200. A Cloudflare 403 challenge, a 429 rate-limit, a geo-block, or a homepage that legitimately 404s on the apex all get reported as a TLS problem. Nothing distinguishes a certificate failure from an application status code.
-- Genuinely broken TLS is scored more leniently than a typo: an expired/self-signed cert makes the fetch throw → `status: 0` → the audit reports `warn` (0.5), while a working HTTPS site reached via an http:// argument reports `fail` (0.0).
-- Homepage-only: mixed-content subresources, HTTP-only subdomains, and HTTPS pages that hard-redirect to an HTTP checkout are all invisible.
-
-**Test gaps:**
-
-- No test for an `http://` input against a site that redirects to HTTPS — the primary false positive.
-- No test for `status: 0` + `error: 'CERT_HAS_EXPIRED'` (a real TLS failure), which is the case the audit's own copy claims to catch.
-- No test for 403/503 WAF challenge, which currently renders as 'Possible TLS or server error'.
-- No test asserting behavior differs between a redirect chain http→https and a genuinely HTTP-only origin.
-
-**Overlaps with:** `8.12`
-
 ## Evidence
 
 ### Signal: HTTPS requirement (TLS, valid certificate, HTTP→HTTPS redirect) — grade B (technical-infra)
@@ -119,8 +97,3 @@ The signal is real and important (AI crawlers do require valid TLS), but the imp
   is known: the response carried no document. Plumbing the homepage status onto
   `CheckContext` was considered and not done; it would make every caller that
   builds a context carry a field one branch of one audit reads.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.

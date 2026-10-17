@@ -55,32 +55,6 @@ sources:
 
 Claude computer use and browser agents rely on ARIA landmarks to identify page regions (navigation, main content, footer). Missing landmarks force agents to guess page structure from raw HTML, leading to misclicked elements and incorrect content extraction.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Requires all four of banner/header, main, navigation, contentinfo/footer on the homepage. The underlying signal (region identification via landmarks) is genuinely useful to browser agents, but the implementation is a bare tag-presence count that both over- and under-reports, evaluates only `ctx.pages[0]`, and the `<footer>`/`<header>` checks do not model landmark scoping — so it is wrong on a large class of real sites while being scored at 'high' priority.
-
-**Required fix:** Scope the header/footer checks to top-level elements (`body > header`, `header:not(article header, section header, aside header, nav header, main header)` and the same for footer). Evaluate every scanned page and report per-page, or state explicitly that the result is homepage-only. Return `na` (not `fail`) when the fetched body has no meaningful content (SPA shell: e.g. <500 chars of text and a single root div) or when `ctx.wafProtection?.isBlocked`. Weight `main` far above `footer` instead of a raw count cliff. Remove the duplicate `<nav>` requirement here since 7.3 already reports it.
-
-**False-positive risks:**
-
-- Landmark scoping ignored: `$('header').length > 0` counts a `<header>` nested inside `<article>`/`<section>`, which is not a banner landmark. A blog index whose only `<header>` elements are per-post card headers passes 'banner' falsely; the same bug applies to `<footer>` inside `<article>` (not contentinfo).
-- Inverse: a site that puts its masthead in `<div class="header">` with no role fails 'banner' even though agents locate it fine from `<nav>`+`<h1>`; missing `<footer>` alone is common on landing pages and single-purpose pages and is reported at 'high' priority.
-- Only `ctx.pages[0]` is inspected (`const $ = ctx.pages[0].$;`), yet the verdict is presented as a site-wide fact. A homepage built from a hero-only template fails the whole site.
-- CSR SPA: the fetched shell has no landmarks at all → 'fail' with 2+ missing, on sites that render all four landmarks after hydration. Guaranteed false fail for React/Vue/Angular CSR apps.
-- WAF/CDN interstitial (Cloudflare 'Just a moment…' at HTTP 200) → all four missing → hard fail.
-- `$('[role="main"]')` is an exact attribute-value match: `role="doc-main main"` or any token-list role value is missed (rare but legal).
-- The `missing.length <= 1 ? warn : fail` cliff is arbitrary — missing `main` alone (the most consequential landmark) is only a warn, while missing `header`+`footer` (cosmetic) is a hard fail.
-
-**Test gaps:**
-
-- No fixture with `<header>`/`<footer>` nested inside `<article>`/`<section>` (the scoping bug).
-- No SPA-shell fixture.
-- No multi-page fixture demonstrating that only page[0] is inspected.
-- No fixture with `role` token lists.
-- No fixture asserting the severity ordering is sensible (missing `main` vs missing `footer`).
-
-**Overlaps with:** `7.3`, `7.4`
-
 ## Evidence
 
 ### Signal: Landmark elements (main, nav, header, footer, article, aside) as extraction boundaries — grade A (semantic-dom-a11y)
@@ -102,8 +76,3 @@ Requires all four of banner/header, main, navigation, contentinfo/footer on the 
 **Evidence:** Three independent major-vendor harnesses, all first-party. Anthropic's read_page 'Return[s] the page's accessibility tree as text with each element tagged with a reference such as [ref_2]'. The security guidance instructs implementers to 'build page reads from what the page renders (the accessibility tree or visible text), not raw DOM source' [anthropic-browser-use-tool]. Microsoft: 'Uses Playwright's accessibility tree, not pixel-based input' [playwright-mcp-repo], with snapshot mode the default and vision mode reserved for 'pages with poor accessibility markup' [playwright-mcp-snapshots]. Google: chrome-devtools-mcp take_snapshot is 'a text snapshot… based on the a11y tree… along with a unique identifier (uid)' [chrome-devtools-mcp-tool-reference]. The dominant OSS library resolves interactivity from ARIA roles, role/tabindex attributes, ARIA state and the accessibility properties 'focusable, editable, settable' [browser-use-clickable-elements]. The standard research benchmark exposes observation_type='accessibility_tree' [webarena-repo, webarena-paper]. The tree's contents are governed by ratified specs [w3c-wai-aria-1-2, w3c-accname, w3c-html-aam].
 
 **Counter-evidence:** The claim must be scoped to browser-embedded agents, and even there it is contested. Some consumers are pixel-only. Anthropic's desktop computer-use tool is screenshot-only, with no DOM and no a11y access [anthropic-computer-use-tool]. OpenAI's computer-use tool takes base64 PNG screenshots, and 'the model looks at the current UI through a screenshot' with no structured input [openai-computer-use-guide, openai-cua-announcement]. Gemini Computer Use is likewise screenshots plus action history [gemini-computer-use-docs]. And the a11y tree is not even always the better representation. A 2026 study measured Claude Sonnet 4.6 gaining +14.6pp, and GPT-5.1 at high reasoning gaining +17.5pp, when given raw HTML instead of the accessibility tree. Strong models 'exploit layout information in HTML for better action grounding'. The a11y tree only won for lower-capability models [observation-reduction-paper]. So a11y-tree quality is a strong, well-documented determinant for one large and growing class of agent, not a universal precondition.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.

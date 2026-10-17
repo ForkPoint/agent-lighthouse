@@ -48,10 +48,6 @@ A Hugo site regenerates every page on each deploy, so sitemap.xml lists 4,000 UR
 
 Tier per evidence policy: **scored** — grade A meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Not a duplicate of `machine-discovery/sitemap-lastmod`
 
 The two audits ask different questions and must not be collapsed into one:

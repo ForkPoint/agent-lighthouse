@@ -54,27 +54,6 @@ warning, at weight 0, when what is served is something else:
 The check never returns a failure. Its evidence grade is **C**, so it carries weight 0 and cannot
 move a score in any direction.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Checks a real-but-stillborn convention, and checks it wrong: it validates nothing beyond 'is parseable JSON', while the remediation prescribes a schema that is not the actual agents.json schema. Any JSON file at that path passes, and anyone following the fix produces a file the real agents.json tooling cannot read.
-
-**Required fix:** Delete. If retained despite near-zero adoption, it must at minimum (a) validate the real schema — `info` object plus a `sources` or `flows` array — instead of accepting any JSON, (b) correct `guidance.code` to the actual spec shape, and (c) become `informative`/`na` rather than a scored failure.
-
-**False-positive risks:**
-
-- Validation is `isObject(parsed) || Array.isArray(parsed)` — literally any parseable JSON passes. `[]`, `{}`, `null`-free garbage, or an unrelated config file at that path all yield 'agents.json found with valid JSON content'. This is a vacuous pass with no signal.
-- The prescribed shape in `guidance.code` (`protocols`, `authentication`, `rate_limits`, `endpoints`) is invented. The actual agents.json spec is built around `$schema`, `info`, `sources` (pointing at OpenAPI documents) and `flows`. A user who follows this remediation writes a file no agents.json consumer can parse — actively harmful advice.
-- Hard `fail` at medium priority for every site, since adoption is negligible.
-- SPA catch-all HTML → 'agents.json is not valid JSON' rather than 'not present'.
-
-**Test gaps:**
-
-- No test that `[]` or `{}` passes (it does — the vacuous-pass hole is untested and unnoticed)
-- No test validating against the real agents.json schema (`info`/`sources`/`flows`)
-- No HTML-soft-404 fixture
-
-**Overlaps with:** `5.7`, `5.11`, `5.12`
-
 ## Evidence
 
 ### Signal: agents-json — grade D (agent-action-surfaces)
@@ -220,9 +199,3 @@ None. No audit is added or removed; the count stays at 215 audits and 215 dossie
 set is unchanged — this audit was already weight 0. What moves is what a report says: every scanned
 site without the file loses a failure row, and sites publishing placeholder JSON at that path lose
 a pass.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — adversarial redemption research; user accepted verdict (disposition above).
-- 2026-08-24 — contradiction sweep: absence becomes `notApplicable`, the vacuous JSON pass is closed against the real v0.1.0 shape, the HTML-200 soft-404 case is named correctly, `fail` is removed, and the invented remediation and dead `agentsjson.org` link are replaced. Grade C / informative / weight 0 confirmed, not raised.

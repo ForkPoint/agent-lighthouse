@@ -42,31 +42,6 @@ The verdict is the ratio. Every fetched page served: pass. Some but not all: war
 
 The measurement covers the whole body, page chrome included. A shell that serves only a navigation bar and a footer is the case the audit exists to catch, so that chrome has to be counted, not subtracted.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-The most valuable premise in the category — whether meaningful content exists in the initial HTML is genuinely decisive for AI crawlers — implemented with a threshold so low it barely discriminates. `if (wordCount > 50 || mainText.length > 200)` passes, where `getMainContentText` falls back to the whole `<body>` when there is no `<main>`. A React/Vue SPA shell that server-renders only its nav, cookie banner and footer clears 200 characters effortlessly and is reported as having 'meaningful server-rendered content' — the exact failure mode the audit exists to catch, waved through. In the other direction a legitimately image-led or short landing page is hit with a `critical` 0.0.
-
-**Required fix:** Score the content region, not the whole body: when there is no `<main>`, subtract `header`/`nav`/`footer`/`[role=banner]`/`[role=contentinfo]`/cookie-banner nodes before measuring, and raise the bar to something discriminating (e.g. ≥ 150 words of non-boilerplate text, or ≥ 60% of the visible text living outside chrome). Replace the OR with an AND, or make the char branch a CJK-only fallback using a segmenter (`Intl.Segmenter`) so word counts are meaningful in non-space-delimited scripts. Evaluate every page in `ctx.pages` and report the worst/most-common outcome by page type rather than the homepage alone. Return `na` when WAF-blocked.
-
-**False-positive risks:**
-
-- Passes true CSR apps: no `<main>` ⇒ text is harvested from the entire `<body>`, so a nav + cookie notice + footer in the shell (well over 200 chars on any modern template) satisfies the gate while the actual product/article content is JS-only.
-- OR-ed thresholds make the weaker one decisive: `wordCount > 50 || mainText.length > 200` — 200 characters is roughly 30 words of boilerplate, so the word test almost never binds.
-- CJK/Thai word counting is broken: `getWordCount` does `text.split(/\s+/)` — an unsegmented Chinese or Japanese homepage counts as ~1 word and only survives via the character branch; a 150-character Japanese page with ample content fails as `critical`.
-- Homepage-only: sites that SSR the marketing homepage and CSR every product/article page — a very common Next.js/Nuxt split — pass on the one page that was rendered and the crawlable-content problem on the pages that matter goes unreported, even though `ctx.pages` holds them.
-- Hydration payloads are correctly excluded (`clone.find('script, style, noscript, template').remove()`), but text injected via `<template>` or shadow-DOM-only components is invisible to both the audit and, correctly, to crawlers — no distinction is drawn for the user.
-- WAF challenge pages are short ⇒ reported as 'no server-rendered content, critical'.
-
-**Test gaps:**
-
-- No test with a realistic SPA shell (nav + footer + empty root div) — the case the audit is supposed to catch and currently passes.
-- No test with a `<main>` element present but empty while `<body>` is full.
-- No CJK/no-space-language test.
-- No multi-page test (SSR homepage + CSR product page).
-- No test comparing initial HTML against a rendered DOM, or any test of the 50-word branch independently of the 200-char branch.
-
-**Overlaps with:** `8.14`, `8.21`
-
 ## Evidence
 
 ### Signal: SSR vs CSR — do GPTBot/ClaudeBot/PerplexityBot execute JavaScript? — grade B (technical-infra)
@@ -102,13 +77,6 @@ The most valuable premise in the category — whether meaningful content exists 
 - Turning the `or` into an `and`, as the code review below asks. The character branch is the only path a page written in a non-space-delimited script can take, so removing it would fail CJK homepages that carry ample content.
 - Scoring the content region rather than the served body, as the code review below asks. The audit's subject is what a non-rendering crawler receives, and a shell that ships only a navigation bar and a footer is what it exists to catch, so the chrome is part of the measurement. The consequence is stated plainly: a template whose chrome alone clears 200 characters passes this check. Raising the bar is a separate change, and the evidence gate design (section 6.3) keeps this rule as the single implementation.
 - Raising the threshold itself. A page clears the bar at 51 words, which is a low bar for a real page; what the right number is has not been measured, so the shipped rule keeps the one the evidence gate design fixed as the single implementation.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
-- 2026-08-26 — text metric split; see Implementation deviations.
-- 2026-08-26 — judgement widened from the homepage to every fetched page; see Implementation deviations.
 
 ## Browser snapshot boundary
 

@@ -54,31 +54,6 @@ pages. These limits remain pending. The finding asks for a policy review, not
 removal of every intentional restriction. Metadata and response headers remain
 checkable when the page body has no readable text.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Title and guidance promise 'No nofollow on important links' and advise reserving nofollow 'for untrusted external links', but the code never inspects a single anchor — it only reads page-level meta robots / X-Robots-Tag. The user is graded on one thing and advised about another. Marginal value even when fixed: page-level nofollow is rare and, in 2026, a weak lever compared with noindex or robots.txt disallow.
-
-**Required fix:** Either (a) implement what the title says — count `rel="nofollow"` on internal anchors and flag only internal links that are nofollowed — or (b) rename the audit to 'No page-level nofollow directive' and align the guidance text with the code. Add `content="none"` detection, tokenize the directive list instead of substring matching, and exempt known utility page types (login/cart/search) from the count.
-
-**False-positive risks:**
-
-- Implementation/description mismatch: `metaRobots.includes('nofollow')` on page meta only. `rel="nofollow"` / `rel="ugc"` / `rel="sponsored"` on anchors — what the title and fix text describe — is never examined.
-- `content="none"` (which implies nofollow) is not detected → false PASS.
-- Substring matching on the raw content string: a value like `max-snippet:-1, nofollowups` would match, and per-bot directives are not distinguished.
-- Same repeated-X-Robots-Tag drop as 1.13 (fetcher keeps only string-typed header values).
-- Legitimate uses are penalized: a login, cart, search-results or paginated page carrying `index,nofollow` is normal practice; the audit surfaces it as an AI-discoverability problem at medium priority.
-- Reports 'All N pages have nofollow' as a hard FAIL when N could be 1 (a single-page scan), making a one-page site's normal configuration look site-wide catastrophic.
-
-**Test gaps:**
-
-- rel="nofollow" on internal anchors — the audit's stated subject, entirely untested
-- content="none"
-- Per-bot nofollow directives
-- Utility pages (login/cart) legitimately carrying nofollow
-- Single-page scan producing a site-wide FAIL
-
-**Overlaps with:** `1.13`, `1.15`
-
 ## Evidence
 
 ### Signal: nofollow on internal links / meta robots nofollow suppressing AI crawler link traversal — grade A (discovery-infra)
@@ -122,11 +97,6 @@ Title and guidance promise 'No nofollow on important links' and advise reserving
   one instead of being skipped. It is scored at weight 1.0, so a shell scan
   that reported nothing about its nofollow directives now reports and scores
   them. Found by `packages/core/src/tests/hostile-state-contract.test.ts`.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 
 ## Deferred
 

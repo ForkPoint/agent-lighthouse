@@ -54,31 +54,6 @@ A file counts as cacheable when it carries a `Cache-Control` with a non-zero `ma
 
 At `tier: informative` / `weight 0` none of these outcomes moves a score.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-The most defensible audit in the category — an llms.txt served as `application/octet-stream` or an OpenAPI doc served as `text/html` genuinely does break downstream parsers, and the check itself (`ct = file.contentType.toLowerCase().split(';')[0].trim()`, then substring match against an allow-list) is sound and correctly tolerant of charset suffixes. The flaw is that it cannot tell a mis-typed file from a file that does not exist: SPA/Jamstack hosts answer unknown paths with 200 + index.html, so `/openapi.json` comes back as `text/html` and the audit reports 'Incorrect Content-Type … expected application/json, got text/html' about a file the site never published. It also silently skips half the AI files the scan already fetched.
-
-**Required fix:** Add a body-shape guard before judging: if the declared type is wrong AND the body parses as the expected shape (JSON.parse succeeds / starts with `<?xml`/`<urlset`), report a genuine mis-typing; if the body is the site's HTML shell (starts with `<!doctype html` or equals the homepage body), treat the file as absent and skip it instead of failing. Extend `expectations` to the other AI files the orchestrator already fetched (llms-full.txt, agents.md, sitemap-index.xml, rss/feed, .well-known/mcp/servers.json). Split the openapi entry so .json expects JSON and .yaml expects YAML. Return `notApplicable()` when `checked === 0`.
-
-**False-positive risks:**
-
-- Soft-404 blindness: `if (!file || file.status !== 200) continue;` treats an SPA catch-all 200 as a real file. Netlify/Vercel/React-Router rewrites → every unpublished AI file is reported as having the wrong Content-Type, with a fix instruction the user cannot act on. This is the single most likely false failure on modern hosting.
-- Content is never sampled: a body starting `<!doctype html>` would immediately disprove the 'JSON file with wrong header' reading, but `file.body` is not inspected.
-- Coverage gaps: `/llms-full.txt`, `/agents.md`, `/rss.xml`, `/feed.xml`, `/sitemap-index.xml`, `/robots.txt`, `/.well-known/mcp/servers.json` are all fetched by the orchestrator and all skipped here, so a site can mis-serve most of its AI surface and still pass on the four checked paths.
-- `application/yaml`/`text/yaml` are accepted for `/openapi.json` — a .json path serving YAML is a real defect being waved through, and the reverse (openapi.yaml) is not checked at all since only /openapi.json is in the list.
-- Gzipped sitemaps (`sitemap.xml.gz`, or sitemap.xml served `application/x-gzip`) and `application/rss+xml`-style variants are outside the allow-list.
-- Absence penalized: `checked === 0` ⇒ `warn` (0.5) rather than `na`, so sites with no AI files lose points for having nothing to check.
-
-**Test gaps:**
-
-- No test for the SPA 200-HTML fallback — the dominant false-positive case.
-- No test for `application/octet-stream` on llms.txt, which is the exact failure the guidance copy describes.
-- No test for the un-checked paths (llms-full.txt, agents.md, sitemap-index.xml, feeds).
-- No test for gzip/compressed sitemap content types.
-- No test that `checked === 0` should be `na` rather than a scored warn.
-
-**Overlaps with:** `8.11`, `8.8`, `8.4`
-
 ## Evidence
 
 ### Signal: Correct Content-Type for llms.txt and .md files — grade C (technical-infra)
@@ -123,9 +98,3 @@ From 8.10's own review:
 - **nosniff sub-signal (v2 map row 8.4 → 8.10).** When a mis-typed file is also served with `X-Content-Type-Options: nosniff`, the message says so: nosniff removes a client's ability to recover from the wrong type, which is the one place that header changes a parsing outcome. Homepage-level nosniff hygiene stays in `operability-safety/security-header-hygiene`.
 
 Not addressed by this fold (8.10's remaining backlog): extending the path list to `/llms-full.txt`, `/agents.md`, `/sitemap-index.xml` and the feeds; splitting the openapi entry so `.json` expects JSON and `.yaml` expects YAML; and gzipped-sitemap content types.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources) on both source audits.
-- 2026-08-21 — dispositions approved: 8.10 keep-with-fixes, 8.11 merge into it.
-- 2026-08-22 — 8.11 folded in, grade raised C → B at tier informative, both reviews' required fixes landed (Plan 4, Task 4); registry 170 → 169.

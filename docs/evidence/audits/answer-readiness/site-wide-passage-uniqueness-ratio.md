@@ -60,10 +60,6 @@ A location-directory site publishes 400 'Service in {City}' pages that are byte-
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
 Sentence-level boilerplate, `uniqueFraction`, the five-gram near-duplicate

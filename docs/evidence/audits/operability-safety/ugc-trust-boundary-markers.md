@@ -54,10 +54,6 @@ A B2B blog runs open comments with an HTML-permitting editor and no data-nosnipp
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
 The shipped audit is `operability-safety/ugc-trust-boundary-markers`, in the

@@ -32,27 +32,6 @@ Meta-ExternalAgent collects pages for Meta's foundation-model training and for i
 
 This reads the robots.txt rules that actually apply to the token — its own group if it has one, otherwise the catch-all — and reports whether they let it fetch the site root. A named group is not required: under RFC 9309 §2.2.1 an open catch-all grants a named crawler the same access a named group would.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Meta-ExternalAgent is a live token (Llama training and Meta AI corpora) so the signal stands, but it inherits every base-class defect and the pass criterion remains the cargo-cult 'explicit Allow: /'. Additional nuance the audit ignores: Meta operates several tokens (Meta-ExternalAgent, Meta-ExternalFetcher, and the legacy facebookexternalhit) with different purposes, and only two are audited — a site can be fully open to the audited pair while blocking the fetcher that actually renders link previews.
-
-**Required fix:** Apply the shared helper fixes from 2.1 (BOM strip, prefix matching, `/*` blanket forms) and add prefix-match so a shorthand `Meta-External*` group is attributed to both Meta tokens.
-
-**False-positive risks:**
-
-- Exact-match miss on `User-agent: meta-externalagent` variants with version suffixes.
-- Prefix collision: `User-agent: Meta-External` (a shorthand some sites use to cover both Meta tokens) matches neither audited token, so a deliberate Meta block reads as 'allowed by default'.
-- Shared BOM / soft-404 / `Disallow: /*` misreads.
-- Cloudflare/edge UA blocking is invisible to the scanner's `AgentLighthouse/1.0` fetch.
-
-**Test gaps:**
-
-- No prefix/shorthand token case.
-- No test covering the Meta-ExternalAgent vs Meta-ExternalFetcher distinction.
-- Same missing real-world robots.txt variants as 2.1.
-
-**Overlaps with:** `2.17`, `2.22`, `2.28`
-
 ## Evidence
 
 ### Signal: Meta-ExternalAgent allow/block state in robots.txt (and meta-externalfetcher / Meta-WebIndexer) — grade A (robots-ai-crawlers)
@@ -136,9 +115,3 @@ That is intended — only this one has a recorded pass-rule finding, and
 `chatgpt-user` and `anthropic-ai` are handled separately — but a reader
 comparing two bot rows in one report will see one pass where another warns. The
 passing messages carry the reason.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
-- 2026-08-24 — contradiction sweep: pass rule narrowed from the explicit-group criterion to the access state RFC 9309 defines.

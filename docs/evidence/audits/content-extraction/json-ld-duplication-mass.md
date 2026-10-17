@@ -57,10 +57,6 @@ A publisher emits Article with a full articleBody, an identical NewsArticle grap
 
 Tier per evidence policy: **informative (weight 0)** — grade C does not meet the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
 The shipped audit is `content-extraction/json-ld-duplication-mass`: the

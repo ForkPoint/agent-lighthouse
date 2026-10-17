@@ -47,31 +47,6 @@ A destination is counted once per page, keyed on host-without-`www` plus lower-c
 | _no_ page has a single in-content internal link     | `fail`, priority `medium` |
 | no pages scanned                                    | `na`                      |
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Counts internal anchors per page and fails only when a page has literally zero. Because same-page fragment links resolve to the page's own host, a lone 'skip to content' #main link satisfies the check — and every templated site has a nav and footer — so this audit passes essentially 100% of real sites and carries near-zero discriminating power. The guidance even prescribes '3-5 internal links per page', a threshold the code never enforces.
-
-**Required fix:** Exclude same-page fragments (`resolved.href` equal to the page URL after stripping the hash) and exclude links inside <nav>/<footer> from the primary count so the metric reflects contextual linking. Enforce the threshold the guidance already states (warn below ~3 distinct internal destinations per page) instead of only failing at zero. Normalize www/bare-host before the internal test.
-
-**False-positive risks:**
-
-- `new URL(href, page.url)` resolves `#main`, `#content` and `javascript:`-adjacent fragments to the page's own URL, whose hostname matches the domain → counted as internal links. A page whose only anchor is an accessibility skip-link is graded as well-interlinked.
-- Nav/footer links are counted identically to contextual body links, so the metric measures 'has a template' rather than 'has internal linking'. Combined with the zero-threshold rule, PASS is the near-universal outcome.
-- `resolved.hostname === domain || resolved.hostname.endsWith('.'+domain)` with `domain = new URL(url).hostname`: scanning `https://www.example.com` while the markup links to bare `example.com` classifies every link as external → false FAIL 'No scanned pages have internal links'.
-- SPA/client-routed sites that render navigation with onClick handlers or `<button>` elements have no `<a href>` in the SSR HTML → false FAIL, when agents using a headless browser would see the links.
-- The catch-branch heuristic ('Relative URLs that fail to parse are likely internal') is nearly dead code — `new URL(href, page.url)` throws only when page.url itself is invalid — and the tests reach it only by artificially setting `page.url = ''`.
-- Reported `avgLinks` is computed but never used in any threshold, so the 'avg N per page' figure influences nothing.
-
-**Test gaps:**
-
-- Page whose only anchor is '#main' (currently a false PASS)
-- Nav/footer-only linking with no contextual body links
-- www vs bare-host absolute internal links
-- SPA with JS-routed navigation and no <a href>
-- Verification that the 'avg 3-5 links' guidance corresponds to any code path
-
-**Overlaps with:** `1.20`, `1.22`
-
 ## Evidence
 
 ### Signal: Internal linking depth and absence of orphan pages (every indexable page reachable via crawlable <a href>) — grade A (discovery-infra)
@@ -114,9 +89,3 @@ Also out of scope: this audit does not read `rel="nofollow"` or `<meta name="rob
 10.11 graded **B**; this audit's own link-graph evidence grades **A** on two vendor-documented consumer paths (Google: "Google can only crawl your link if it's an `<a>` HTML element with an href attribute"; Apple: links are an explicit Apple Search ranking factor) plus the Vercel/MERJ measurement that the major AI crawlers do not execute JavaScript. The absorbed evidence is weaker, so nothing is raised: **A**, `tier: scored`, `weight 1.0`.
 
 Note that the rewrite makes the audit _harder_ to pass at unchanged weight — deliberately. The A grade prices a real mechanism; it was previously spent on a check that could not fail a templated site.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources) on both source audits.
-- 2026-08-21 — approved: 1.15 + 10.11 collapse into one rewritten `in-content-links` (in-content links only).
-- 2026-08-22 — rewritten and merged (Plan 4, Task 4); registry 169 → 168.

@@ -24,26 +24,6 @@ sources:
 
 Complete metadata helps AI agents understand who owns the service, when it was last updated, and what it can do. Missing fields reduce agent confidence in your services and may cause them to skip your site in favor of better-documented alternatives.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Quality check on the invented file from 5.7, grading it against an equally invented required-field list. Adds a second and third automatic zero for the same nonexistent file, and its 'missing most metadata' failure implies a real standard is being violated when none exists.
-
-**Required fix:** Delete along with 5.7 and 5.9.
-
-**False-positive risks:**
-
-- Hard `fail` when the file is absent (line 50) — a second zero charged for the identical absence already charged by 5.7, tripled once 5.9 also fails. One missing nonexistent file produces three failures.
-- The seven 'required' fields (version, name, description, capabilities, owner, contact, lastUpdated) are asserted by no specification. Reporting them as 'required' is fabricated authority.
-- `parsed[f] !== undefined && !== null && !== ''` counts `"capabilities": []` and `"owner": " "` as present — presence, not quality.
-- `present.length >= requiredFields.length / 2` gives warn at exactly 4/7, an arbitrary cliff with no grounding.
-
-**Test gaps:**
-
-- No test that whitespace-only or empty-array field values are rejected
-- No test of the triple-penalty interaction with 5.7/5.9
-
-**Overlaps with:** `5.7`, `5.9`
-
 ## The rewrite (Plan 4, Task 10, 2026-08-22)
 
 The required rework from the [redemption dossier](../../deletions/agent-tools/ai-catalog-metadata.md) is executed: _"require specVersion + host{displayName,identifier} + entries[], and score entry quality on description, tags, capabilities and representativeQueries (the exact keys hf-discover indexes), with updatedAt/trustManifest as optional bonuses. Drop owner/contact/lastUpdated/services entirely."_
@@ -99,10 +79,3 @@ Source: the [redemption dossier's verdict](../../deletions/agent-tools/ai-catalo
 ## Adversarial redemption research (2026-08-21)
 
 This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/deletions/agent-tools/ai-catalog-metadata.md](../../deletions/agent-tools/ai-catalog-metadata.md). Outcome: **redeemable**, grade B.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — adversarial redemption research; user accepted verdict (disposition above).
-- 2026-08-22 — rewritten (Plan 4, Task 10): scores ARD §4.2's real metadata keys, `owner`/`contact`/`lastUpdated`/`services` dropped, absence downgraded from `fail` to `na`. Grade **B**, tier `scored`, weight 0.6 — unchanged. `TODO(redeem)` header removed; entry dropped from rework-todo.md.
-- 2026-08-22 — review fix (Task 10, round 1): the first cut read `updatedAt` and `trustManifest` at the manifest root, which the ARD schema does not define. Both are now read at their spec-defined levels — `updatedAt` per entry (§4.2), `trustManifest` on the entry (§4.2) or the host (§4.3) — in `_ard.ts`, in the code sample and in the fix guidance, with tests pinning that a root-level copy does not count.

@@ -58,10 +58,6 @@ A seasonal item sells out. The storefront template flips the button to a disable
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Absorbed proposal
 
 `competitor-gap-verify/offer-dom-price-parity` was folded into this audit rather than shipped beside it. Both proposals reconcile the same two artifacts — the Offer in the markup and the price and stock the raw HTML renders — and shipping both would have reported one cached-catalogue bug twice, under two names, with two remediations. The absorbed dossier is kept verbatim at [`../../merged/agentic-commerce/offer-dom-price-parity.md`](../../merged/agentic-commerce/offer-dom-price-parity.md); it carries the Google structured-data policy quotation ("Your structured data must be a true representation of the page content") and the Vercel/Merj crawler study showing that no major AI crawler executes JavaScript, which is why the JS-only arm is reported at all.

@@ -52,10 +52,6 @@ A WordPress site installs a bot-blocking plugin that appends `User-agent: GPTBot
 
 Tier per evidence policy: **scored** — grade A meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
 ### Subpath sitemap scope (2026-10-05)

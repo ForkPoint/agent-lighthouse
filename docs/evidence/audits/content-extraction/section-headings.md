@@ -39,31 +39,6 @@ sources:
 
 AI agents use section headings to build a topic map of your page for retrieval-augmented generation (RAG). Unlabeled sections are opaque to AI systems that chunk content by semantic boundaries, reducing the quality of retrieved context for answer generation.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Two defects make it close to vacuous, plus one that penalizes correct markup. The heading test is 'find('> h1..h6').length > 0 || find('h1..h6').length > 0' — the second clause is a strict superset of the first, so the first is dead code and ANY heading at ANY depth counts, including a heading inside a nested <article>, <aside>, or footer that has nothing to do with labelling the section. Almost every real <section> therefore counts as labeled. Separately, when a site uses zero <section> elements it gets a warn telling it to adopt <section> — but <div> + <h2> conveys identical structure to every extractor, and a <section> without an accessible name is not even exposed as a region, so the advice is cargo cult.
-
-**Required fix:** Replace the two-clause test with a real first-child check: the first element child of the section must be h1–h6, or the section must carry a non-blank aria-label / an aria-labelledby whose target id actually exists in the document. Trim aria-label before accepting it ('!!$(el).attr('aria-label')' currently accepts ' '). Change the zero-sections branch from warn to notApplicable() — absence of <section> is not a defect.
-
-**False-positive risks:**
-
-- '|| $(el).find('h1, h2, h3, h4, h5, h6').length > 0' matches a heading nested arbitrarily deep — e.g. <section><div class="cards"><article><h3>…</h3></article></div></section> counts as labeled although the section itself has no accessible name.
-- aria-labelledby pointing at a nonexistent or removed id is accepted ('!!$(el).attr('aria-labelledby')') — no id resolution.
-- aria-label=" " (whitespace) is truthy and accepted.
-- Page builders (Elementor, Divi, Webflow, Tailwind templates) emit <section> purely as layout wrappers; those get counted in the denominator and drag a well-structured page to fail.
-- Zero-<section> sites are warned into adopting an element that provides no benefit unless named — actively misleading guidance.
-- Sections pooled across all pages with no per-page/per-URL attribution in `found`, so '7/20 labeled sections' is not actionable.
-
-**Test gaps:**
-
-- No fixture with a deeply nested heading inside an unnamed section (the dominant false pass).
-- No aria-labelledby-with-missing-target fixture.
-- No whitespace-only aria-label fixture.
-- No page-builder layout fixture (dozens of wrapper <section>s).
-- No multi-page crawl.
-
-**Overlaps with:** `6.2`, `6.20`
-
 ## Evidence
 
 ### Signal: Heading hierarchy (h1–h6) for LLM parsing and chunking — grade B (semantic-dom-a11y)
@@ -101,11 +76,6 @@ passes, a majority warns, the rest fails. The review sets no other threshold.
   any depth. The required fix's first-element-child rule is not applied here.
 - **Label validation.** A whitespace-only `aria-label` and an
   `aria-labelledby` pointing at a missing id are still accepted.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 
 ## Limits
 

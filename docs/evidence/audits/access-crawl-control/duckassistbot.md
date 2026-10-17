@@ -27,26 +27,6 @@ sources:
 
 Reads the robots.txt rules that apply to DuckAssistBot — its own group if it has one, otherwise the catch-all — and reports whether they let it fetch the site root. A named group is not required: under RFC 9309 §2.2.1 an open catch-all grants the same access.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Real, active token behind DuckDuckGo's DuckAssist answers — a legitimate keep, but a modest surface that does not warrant weight parity with GPTBot. Note DuckAssist is substantially grounded in DuckDuckGo's existing index (which derives from Bing), so a site's DuckAssistBot directive is not the only or even the primary gate on appearing there; the audit's implied causality is stronger than reality. Unmodified base class, all shared defects apply.
-
-**Required fix:** Reduce weight relative to the top-tier realtime fetchers and soften the `impact` causality claim. Apply the shared helper fixes from 2.1.
-
-**False-positive risks:**
-
-- `impact` implies DuckAssistBot access is the gate on DuckAssist visibility, when DuckDuckGo's underlying index (Bing-derived) is the larger determinant — a site can be blocked here and still appear.
-- Exact-match miss on versioned tokens.
-- Weight 1.0 equal to GPTBot.
-- Shared BOM / soft-404 / `Disallow: /*` misreads.
-
-**Test gaps:**
-
-- No versioned-token case.
-- Template-only coverage; same missing real-world robots.txt variants as 2.1.
-
-**Overlaps with:** `2.22`, `2.28`
-
 ## Evidence
 
 ### Signal: DuckAssistBot allow/block state in robots.txt — grade A (robots-ai-crawlers)
@@ -58,11 +38,6 @@ Real, active token behind DuckDuckGo's DuckAssist answers — a legitimate keep,
 **Evidence:** DuckDuckGo publishes an unusually precise help page. It names the token, 'DuckAssistBot/1.2; (+http://duckduckgo.com/duckassistbot.html)', and the purpose: 'DuckAssistBot is a web crawler for DuckDuckGo Search that crawls pages in real-time for our AI-assisted answers'. It rules out training use: 'This data is not used in any way to train AI models'. It states the latency of an opt-out. A disallow 'will take effect after 72 hours and DuckAssistBot will stop crawling your site'. It also gives a decoupling guarantee: 'Opting out of DuckAssistBot does not impact organic search rankings.' All three audit-relevant facts — compliance, latency and non-training use — are vendor-stated and falsifiable.
 
 **Counter-evidence:** DuckAssistBot does not appear in Cloudflare Radar's named AI-crawler top-five breakdowns, so its traffic volume — and therefore the practical stakes of allowing or blocking it — is small relative to GPTBot/ClaudeBot/ChatGPT-User. The 72-hour enforcement lag means a disallow is not immediate.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 
 ## Implementation deviations
 

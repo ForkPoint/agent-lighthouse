@@ -54,10 +54,6 @@ A publisher configures its CMS to stamp every AI-illustrated article header with
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
 **Renamed** from `synthetic-media-disclosure-is-valid-and-self-consistent`,

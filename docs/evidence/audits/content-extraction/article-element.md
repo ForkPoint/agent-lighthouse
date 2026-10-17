@@ -42,29 +42,6 @@ The v7 runner selects article-purpose pages for this check. A `general` declarat
 
 RAG systems chunk content by <article> boundaries for vector embedding, treating each article as an independent retrieval unit. Without <article> tags, AI chunking algorithms fall back to arbitrary text splitting, which fragments related content across multiple embeddings and reduces answer quality.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Declares applicablePageTypes ['content'] but then loops every page in the crawl ('for (const page of ctx.pages) { if (page.$('article').length > 0) …}'), so homepage, product, and category pages are counted in the denominator. A shop with one blog post and nine commerce pages is told '1/10 page(s) use <article> elements' and fails. The impact text ('RAG systems chunk content by <article> boundaries for vector embedding') describes a mechanism that LangChain, LlamaIndex, Firecrawl, and Jina Reader do not implement — they chunk on headings and token windows — so the urgency conveyed is invented.
-
-**Required fix:** Filter the loop to pages whose pageType is in meta.applicablePageTypes before computing the ratio. Guard ctx.pages.length === 0 with notApplicable(). Rewrite the impact copy to the defensible claim (Readability-class extractors score <article> when selecting the content root) instead of the RAG-chunking assertion. Consider requiring the <article> to contain a heading, since a bare <article> wrapper carries no boundary information.
-
-**False-positive risks:**
-
-- applicablePageTypes is only a run-gate (audit-runner.ts:64); the loop still counts non-article pages → systematic false fails on mixed-content sites.
-- detectPageType falls back to 'content' for anything not matched as product/category, so About/Contact/Pricing/Legal pages are all classed 'content' and expected to carry <article>.
-- Documentation sites, SaaS marketing pages, and single-page apps legitimately have no self-contained article units → fail with no correct remediation.
-- The inverse is also unhandled: a page wrapping its nav or its whole body in <article> scores full marks.
-- Empty ctx.pages → 'allPass = pagesWithArticle === ctx.pages.length' → 0 === 0 → pass.
-
-**Test gaps:**
-
-- No mixed-page-type crawl proving the applicablePageTypes filter does not apply inside the loop.
-- No fixture where <article> wraps non-article content (false pass).
-- No empty-ctx.pages test.
-- No docs-site/marketing-site fixture where absence of <article> is correct.
-
-**Overlaps with:** `6.3`, `6.5`, `6.6`
-
 ## Evidence
 
 ### Signal: Landmark elements (main, nav, header, footer, article, aside) as extraction boundaries — grade A (semantic-dom-a11y)
@@ -89,11 +66,6 @@ Declares applicablePageTypes ['content'] but then loops every page in the crawl 
   pass → na, throttled pass → na, redirected away fail → na, non-HTML homepage
   fail → na, HTTP 200 bot challenge unchanged. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 
 ## Implementation deviations (v7 P3, 2026-10-07)
 

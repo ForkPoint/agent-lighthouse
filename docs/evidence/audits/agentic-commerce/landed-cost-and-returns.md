@@ -64,10 +64,6 @@ A PDP carries hasMerchantReturnPolicy with only merchantReturnLink pointing at a
 
 Tier per evidence policy: **scored** — grade A meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
 - **Scope is the scan context, not a fresh sample.** The audit reads the product

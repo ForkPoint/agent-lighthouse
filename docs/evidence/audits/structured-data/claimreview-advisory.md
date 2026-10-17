@@ -45,10 +45,6 @@ A fact-checking desk plans a quarter of engineering work to extend ClaimReview m
 
 Tier per evidence policy: **informative (weight 0)** — grade A does not meet the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
 **Category.** The Plan 5 task sheet filed this under `operability-safety`. It

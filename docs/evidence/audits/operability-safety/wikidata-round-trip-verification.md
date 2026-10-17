@@ -51,10 +51,6 @@ A SaaS company's Organization JSON-LD lists sameAs: https://www.wikidata.org/wik
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
 **Renamed** from `wikidata-round-trip-entity-verification` for symmetry with

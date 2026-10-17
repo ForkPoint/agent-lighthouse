@@ -63,29 +63,6 @@ Whether the site publishes an MCP discovery document at `/.well-known/mcp/server
 
 Reported, not scored. Neither path is registered or specified, and no shipping MCP client is documented as fetching either, so a site with a working MCP server discovered by another route is not less agent-ready for publishing no such file. What an MCP server's actual reachability is checked by is `agent-interfaces/mcp-modern-era-reachability` and `mcp-oauth-discovery-chain`.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-MCP is the one protocol in this category that genuinely matters in 2026, but the audit looks for it at a path that is not standardized, and its fallback branch passes on any JSON at /.well-known/ucp with zero validation. So it produces false failures for sites that really do run MCP servers and vacuous passes for sites that publish an unrelated file.
-
-**Required fix:** Detect MCP the way clients actually do: probe a small set of conventional endpoints (/mcp, /api/mcp, /sse) with a real initialize handshake, honor `/.well-known/oauth-protected-resource` (the one well-known path MCP genuinely defines for authorization discovery), and accept a `<link rel="mcp-server">`-style hint if the project wants one. Keep servers.json only as a secondary hint. Require the UCP branch to validate a `services` or `capabilities` object with at least one entry before passing, and reject empty `servers` arrays. Return `notApplicable` rather than `fail` for sites with no API surface at all.
-
-**False-positive risks:**
-
-- `/.well-known/mcp/servers.json` is not a registered or spec'd MCP discovery path. Sites that genuinely expose an MCP server — at /mcp, /api/mcp, /sse, advertised via the MCP registry, via `/.well-known/oauth-protected-resource`, or via a `mcp.json` config — all report 'MCP server discovery file not found' at medium priority. This is a false FAIL on precisely the sites that are most agent-ready.
-- The UCP fallback (lines 93-107) passes on ANY parseable JSON object at /.well-known/ucp: `if (isObject(ucpParsed))` → immediate `this.pass(...)`. No `services`, no `capabilities`, no version required — `{}` at that path yields 'UCP/MCP discovery profile found with 0 services and 0 capabilities' as a PASS. Vacuous pass with a confident message.
-- `ucpParsed['services'] || ucpObj['services']` uses `||` so a legitimately empty object/array falls through to the other source; combined with the no-validation pass this makes the reported counts arbitrary.
-- Success path only checks `Array.isArray(parsed['servers'])` — `{"servers": []}` passes as 'found with 0 server(s)'.
-- WAF 403 on /.well-known/* → 'not found'.
-
-**Test gaps:**
-
-- No test that `{}` at /.well-known/ucp produces a vacuous pass (it does)
-- No test for `{"servers": []}` being a vacuous pass
-- No fixture for a site whose MCP server is discoverable by any other means (registry entry, /mcp probe, oauth-protected-resource)
-- No WAF/403 fixture
-
-**Overlaps with:** `5.13`, `5.14`
-
 ## Evidence
 
 ### Signal: mcp-discovery-ai-catalog-well-known — grade C (agent-action-surfaces)
@@ -197,9 +174,3 @@ speculatively, by design.
 Registry effect: none. No audit added or removed; 215 audits, 215 dossiers. The
 scored set drops by one, from 167 to 166, and the evidence mass in
 [`docs/scoring.md`](../../../scoring.md) is refreshed to match.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
-- 2026-08-24 — contradiction sweep: dropped A/scored/1.0 to C/informative/0; absence became `notApplicable`; two vacuous passes removed.

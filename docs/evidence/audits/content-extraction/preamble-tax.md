@@ -58,10 +58,6 @@ A news article inlines critical CSS plus an ad-stack config object plus a consen
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
 The shipped audit is `content-extraction/preamble-tax`: the proposal's

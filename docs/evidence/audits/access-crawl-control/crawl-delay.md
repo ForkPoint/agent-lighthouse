@@ -31,31 +31,6 @@ sources:
 
 Excessive Crawl-delay values (over 10 seconds) dramatically slow AI indexing, meaning your latest content may take days or weeks to appear in AI search results.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Produces frequent, confident, high-priority FAILs on correctly configured sites. `groups.filter(g => g.crawlDelay !== undefined)` collects Crawl-delay from EVERY user-agent group, so the near-universal ops practice of throttling SEO scrapers — `User-agent: SemrushBot\nCrawl-delay: 60`, `User-agent: AhrefsBot\nCrawl-delay: 30`, `User-agent: MJ12bot\nCrawl-delay: 20` — triggers a high-priority failure claiming 'your latest content may take days or weeks to appear in AI search results'. Not one AI crawler is affected by those lines. Compounding the error, Crawl-delay is not honored by Google, and OpenAI and Anthropic do not document honoring it either; it is a Bing/Yandex-era directive. The audit therefore issues its most alarming verdict about a directive that mostly does not apply to the crawlers it names.
-
-**Required fix:** Scope the check to groups matching `ALL_CRAWLERS` tokens plus `*`, and ignore Crawl-delay on unrelated bots entirely. Downgrade the verdict from high-priority FAIL to `warn`, and rewrite the copy to state which crawlers actually honor Crawl-delay (Bing, Yandex) and which do not (Google, OpenAI, Anthropic). Fix `scoreDisplayMode` to `'ternary'`. Return `notApplicable` rather than `warn` when robots.txt is absent.
-
-**False-positive risks:**
-
-- `groups.filter((g) => g.crawlDelay !== undefined)` is unscoped: a Crawl-delay on SemrushBot/AhrefsBot/Bingbot fails the audit with AI-visibility language. This is the single most likely false FAIL in the category on real sites.
-- The `impact` claim that excessive Crawl-delay 'dramatically slows AI indexing' is false for Google-Extended, GPTBot and ClaudeBot, none of which document Crawl-delay support.
-- Hard threshold `d.crawlDelay > 10` with no tolerance: `Crawl-delay: 10.5` fails, `10` passes — arbitrary cliff presented as a definitive verdict.
-- `parseRobotsTxt` assigns one `crawlDelay` per group and duplicates it across consecutive shared User-agent lines, so `User-agent: A\nUser-agent: B\nCrawl-delay: 60` reports the violation twice, overstating scope in the message.
-- `scoreDisplayMode: 'binary'` is declared but the audit returns `warn` (0.5) on missing robots.txt — a mode/behavior mismatch.
-- BOM'd or soft-404 robots.txt parses to zero groups → 'No Crawl-delay directives found' → PASS regardless of the real file.
-
-**Test gaps:**
-
-- No test with Crawl-delay on a non-AI bot (SemrushBot/AhrefsBot) — the dominant real-world case, and the one that produces the false FAIL.
-- No test with per-bot Crawl-delay scoped to an AI crawler.
-- No fractional threshold case (10.0 / 10.5).
-- No multi-group file mixing AI and non-AI delays.
-- No BOM or soft-404 case.
-
-**Overlaps with:** _none_
-
 ## Evidence
 
 ### Signal: Crawl-delay directive in robots.txt — grade C (robots-ai-crawlers)
@@ -78,8 +53,3 @@ Produces frequent, confident, high-priority FAILs on correctly configured sites.
   warn → na, throttled warn → na, redirected away pass → na, non-HTML homepage
   warn → na, HTTP 200 bot challenge pass → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.

@@ -34,29 +34,6 @@ Where a site declares how AI systems may use its content. The IETF AIPREF work a
 
 _(The pre-rewrite description asserted that `<meta name="ai-content-declaration">` is "how AI systems discover your llms.txt or AI usage policy" and that GPTBot and ClaudeBot read it. That was false; it is quoted with its refutation in the rewrite section below.)_
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Invented signal with an actively false justification. The description asserts that this tag is 'how AI systems discover your llms.txt or AI usage policy' and that GPTBot and ClaudeBot use it to find your content preferences. That is not true: GPTBot and ClaudeBot read robots.txt, and neither documents any meta-tag policy channel. Telling users at 'medium' priority that AI systems 'cannot respect your content preferences automatically' without this tag is misinformation that could lead a site owner to believe they have expressed an opt-out they have not expressed. Delete.
-
-**Required fix:** Delete the audit. If the maintainer wants to keep an AI-policy-discovery check, put it where the real mechanism lives: robots.txt user-agent directives (crawler-permissions) and, where applicable, the TDM Reservation Protocol / `tdm-reservation` signals — not an invented meta tag. At absolute minimum, if retained, the description must stop claiming GPTBot/ClaudeBot consume it and the priority must drop to 'low'/informational.
-
-**False-positive risks:**
-
-- Every correctly configured site fails: no site emits this tag because it does not exist as a standard, so this is a guaranteed 'medium' priority failure on 100% of real-world scans — pure score noise.
-- Dangerous misinformation: the fail text says AI systems 'cannot respect your content preferences automatically' without it. A site owner who adds the tag may believe they have declared an AI usage policy when no crawler will ever read it, while the mechanism that does work (robots.txt) goes unaddressed.
-- The URL validation is also crude: `value.startsWith('http://') || value.startsWith('https://')` rejects a protocol-relative `//example.com/llms.txt` and a root-relative `/llms.txt` — both perfectly resolvable — downgrading them to a warn for a tag that has no spec defining what a valid value even is.
-- Only `ctx.pages[0]` is examined.
-- Name collision risk: if a site DID adopt the real aicontentdeclaration.org convention (whose value is a disclosure string, not a URL), this audit would emit a 'not a valid URL' warn against markup that is correct for the actual proposal.
-
-**Test gaps:**
-
-- No test against the real aicontentdeclaration.org value format (the name collision).
-- No protocol-relative or root-relative URL test.
-- No evidence-based test that any consumer reads this tag — which is the gap that matters: the tests validate the invented contract rather than questioning it.
-- Only 4 tests, all single-page.
-
-**Overlaps with:** `4.14`
-
 ## The real-directive-names rewrite (Plan 4, Task 16, 2026-08-22)
 
 **Old pass condition:** `ctx.pages[0]` carries `<meta name="ai-content-declaration">` whose value starts with `http://` or `https://`. A present-but-non-URL value warned; anything else — which is every site on the web, since the name has no specification — **failed** at `medium` priority.
@@ -111,9 +88,3 @@ AIPREF is chartered with an IESG submission target of 31 August 2026. If `Conten
   returns `notApplicable` carrying the gate's own reason. Measured merge-base
   to here on a text-rich HTTP 200 wall: pass → na (informative, weight 0).
   Found by `packages/core/src/tests/hostile-state-contract.test.ts`.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
-- 2026-08-22 — user approved the pending-triage redeem; required rework executed (Plan 4, Task 16): the invented meta name is replaced by the AIPREF `Content-Usage` attachment (pass) and the noai/noimageai convention (warn, caveat stated), the GPTBot/ClaudeBot claim is deleted, absence is `na` rather than a universal fail, all pages are scanned instead of `pages[0]`, value-format judgement is dropped, and `tdm-reservation` is left to `tdm-rep`. Grade D, tier `experimental`, weight 0 unchanged; `defaultPriority` `medium` → `low`. `TODO(redeem)` marker removed from the source file.

@@ -57,10 +57,6 @@ A SaaS pricing page ships desktop nav, mobile nav and a hidden search-overlay me
 
 Tier per evidence policy: **scored** — grade A meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
 - **No `postcss`, `linkedom` or `css-select`.** The global constraint forbids new

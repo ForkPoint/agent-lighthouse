@@ -35,33 +35,6 @@ sources:
 
 Whether the site publishes a reachable RSS/Atom feed — discovered from the `<head>` autodiscovery links of every scanned page, then from the well-known paths (`/rss.xml`, `/feed.xml`, `/atom.xml`). The autodiscovery link's own state is appended to `found` (`autodiscovery <link> present (<url>)` or `no autodiscovery <link> in <head>`); it is reported, never scored on its own.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Looks for a feed via <link rel=alternate> then /rss.xml, /feed.xml, /atom.xml. Feeds remain a genuine freshness channel, so the signal is worth keeping — but discovery uses exact case-sensitive string equality on rel/type, only resolves '/'-prefixed hrefs, and passes on a bare 200 with zero validation that the body is a feed. It also fails brochure sites that have no periodic content and for which a feed is meaningless.
-
-**Required fix:** Extract `findFeedResult()` into a shared `_feed.ts` used by 1.11 and 1.12 (one discovery pass per scan). Tokenize and lowercase rel, match type by prefix, and resolve hrefs with `new URL(href, page.url)`. Add `/feed/`, `/index.xml`, `/rss`, `/feed.atom` to the candidate list. Require the body to parse as XML with an `<rss>`/`<feed>`/`<rdf:RDF>` root before passing. Return notApplicable when no article/blog-type pages were scanned.
-
-**False-positive risks:**
-
-- `link.rel === 'alternate'` — `extractHeadLinks()` does not lowercase or tokenize rel, so `rel="Alternate"`, `rel="alternate home"` (WordPress emits multi-token rels) miss entirely.
-- `link.type === 'application/rss+xml'` exact — `application/rss+xml; charset=utf-8`, `application/atom+xml;charset=UTF-8`, `text/xml` and `application/xml` all miss.
-- `if (feedUrl.startsWith('/')) feedUrl = baseUrl + feedUrl` — hrefs like `feed.xml`, `./rss`, or `../feed` are passed unresolved to ctx.fetch and fail. Should be `new URL(link.href, page.url)`.
-- No content validation: a 200 HTML soft-404 at /rss.xml (SPA catch-all) yields PASS 'RSS/Atom feed found at https://…/rss.xml'.
-- Common real paths are missing: `/feed/`, `/blog/rss.xml`, `/index.xml` (Hugo), `/feed.atom`, `/rss` — a Hugo or WordPress site with a working feed is reported as having none.
-- No page-type gating: a single-page brochure or SaaS landing site with no periodic content is failed at medium priority for lacking a feed, which improves nothing.
-- Fires an extra live /atom.xml request even after rootFiles already answered, and audit 1.12 repeats the whole discovery independently — duplicate load on the scanned origin.
-
-**Test gaps:**
-
-- rel="alternate home" / rel="Alternate" (multi-token, mixed case)
-- type with a charset parameter
-- Relative href without a leading slash ('feed.xml', './rss')
-- 200 HTML soft-404 at /rss.xml — currently a false PASS
-- Hugo /index.xml and WordPress /feed/ paths
-- A site with no blog at all (should be N/A, currently FAIL)
-
-**Overlaps with:** `1.12`
-
 ## Evidence
 
 ### Signal: RSS/Atom feed published (with autodiscovery link) as an AI content-ingestion surface — grade B (discovery-infra)
@@ -121,9 +94,3 @@ decision above requires. The message names the advertised URL.
 The narrower page-type gate the required fix suggests ("no article/blog-type
 pages") is not used. Advertising is the site's own statement that a feed
 exists, and the scan observes it directly.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources) on both source audits.
-- 2026-08-21 — dispositions approved: 1.11 keep-with-fixes, 4.16 folds in (C3 collapse).
-- 2026-08-22 — 4.16 folded in with its required fixes (Plan 4, Task 4); registry 171 → 170.

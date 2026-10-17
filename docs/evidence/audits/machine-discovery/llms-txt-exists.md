@@ -74,29 +74,6 @@ sources:
 
 The discovery `<link>` is appended to `found` in every branch, as either `discovery <link> → <href>` or `no discovery <link> in <head>`. When the file is missing _and_ a link points at it, the message says so. A link to a file that is not served is the one case where the absorbed signal changes what the user reads.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Checks GET /llms.txt returns 200 and the body starts with '#'. The signal is defensible in 2026 (llms.txt is widely published — Anthropic, Stripe, Cloudflare, Mintlify auto-generation), but no major agent vendor has confirmed consuming it, so labelling it 'the primary way AI agents discover your site content' at CRITICAL priority overstates the evidence and mis-ranks the user's fix queue. Implementation is status-only with no content-type check, so SPA catch-all HTML soft-404s are graded as a malformed llms.txt rather than a missing one.
-
-**Required fix:** Add a content-type/body sniff to a shared `_root-file.ts` helper: treat 200 + `text/html` or a body starting with `<` as not FOUND rather than malformed. Accept front-matter and setext headings before requiring '#'. Downgrade defaultPriority from critical to medium and rewrite the impact copy to 'a growing convention some agent tooling reads' instead of asserting agents depend on it.
-
-**False-positive risks:**
-
-- `isOk` is `result.status === 200` with no content-type check. Netlify/Vercel/Next.js SPA rewrites return 200 + `<!doctype html>` for /llms.txt; the audit then reports WARN 'llms.txt missing markdown heading' — telling the user to fix a file that does not exist.
-- `result.body.trimStart().startsWith('#')` accepts `#` with no space (`#Site`, or a `#comment` line) but rejects a valid file that opens with YAML front-matter (`---`), an HTML comment, or a setext H1 (`Site\n====`).
-- No handling of a 200 that is a CDN interstitial/challenge page, nor of servers that return 403/503 to the scanner UA — those become 'llms.txt not found', identical messaging to a genuine 404.
-- Case/path variants (`/LLMS.txt`, `/.well-known/llms.txt`) and llms.txt referenced from robots.txt or a `<link>` are never consulted.
-
-**Test gaps:**
-
-- 200 response serving an HTML SPA shell (the dominant real-world false result)
-- 403/503/challenge page from a WAF instead of 404
-- Body with YAML front-matter, BOM, CRLF line endings, or leading blank lines
-- Non-UTF8 / gzip-encoded body
-- llms.txt declared at a non-root path or via robots.txt
-
-**Overlaps with:** `1.2`, `1.3`, `1.4`, `1.5`
-
 ## Evidence
 
 ### Signal: /llms.txt existence at domain root (llmstxt.org proposal) — grade C (llms-txt)
@@ -241,11 +218,3 @@ exact shipping checker whose source was re-read on 2026-08-24. If a scored
 llms.txt signal is ever wanted, that is the only defensible one, and it must be
 scored as "the file you published is mechanically parseable", conditional on the
 file existing. The existence of the file cannot be scored.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources) on both source audits.
-- 2026-08-21 — dispositions approved: 1.1 keep-with-fixes, 4.11 folds in (C3 collapse).
-- 2026-08-22 — 4.11 folded in with its required fixes (Plan 4, Task 4); registry 172 → 171.
-- 2026-08-24 — evidence sweep: grade A → C, tier scored → informative, weight 1.0 → 0. Absence is now not applicable. No AI vendor documents a consumer; Chrome Lighthouse checks the file as an auditor and scores a missing one not-applicable.
-- 2026-10-17 — a 200 whose body opens as an HTML document (a homepage redirect or an SPA catch-all) now reads as no llms.txt, through `gatherers/root-files.ts` `isRootArtifact`. It used to warn "llms.txt missing markdown heading" about the homepage. Closes the status-only finding above.

@@ -28,26 +28,6 @@ sources:
 
 Google-Extended is a robots.txt usage-control token, not a crawler: no request carries it. This check reads the rules that apply to it — its own group if it has one, otherwise the catch-all — and reports whether they disallow the site root. A named group is not required: under RFC 9309 §2.2.1 an open catch-all grants the same permission.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Inherits every base-class defect, and its guidance text is factually wrong in a way that will make users act against their interests. `impact` states 'Blocking Google-Extended prevents your content from being used in Google's AI features like Gemini and AI Overviews.' Google has stated the opposite since 2023: Google-Extended controls Gemini training and grounding only, and has no effect on inclusion in Search, AI Overviews, or AI Mode — those are governed by Googlebot. A publisher who reads this and unblocks Google-Extended believes they are buying AI Overview visibility they already had, and gives up training-data opt-out for nothing. Meanwhile `Googlebot`, the token that actually gates AI Overviews and AI Mode, is not audited anywhere in the category.
-
-**Required fix:** Rewrite `impact` to state accurately that Google-Extended governs Gemini training and grounding only and does not affect Search, AI Overviews or AI Mode inclusion. Add a separate `Googlebot allowed` audit — that is the token that actually gates AI Overviews. Apply the shared helper fixes from 2.1.
-
-**False-positive risks:**
-
-- Same exact-match/BOM/soft-404/`Disallow: /*` misreads as 2.1, from the shared `CrawlerBotAudit` + `isAllowed` path.
-- Sites that deliberately and correctly block Google-Extended (a mainstream publisher stance) while remaining fully open to Googlebot get a high-priority FAIL claiming lost AI Overview visibility they have not lost.
-- Wildcard fallback: a site with only `User-agent: *\nAllow: /` gets a 0.5 warn even though Google-Extended is fully permitted — the maximally-permissive state is penalized.
-
-**Test gaps:**
-
-- No assertion on guidance/impact correctness (the factual error is untested and unnoticed).
-- No case distinguishing Google-Extended from Googlebot policy.
-- Same missing real-world robots.txt variants as 2.1 (BOM, versioned token, soft-404, `Disallow: /*`).
-
-**Overlaps with:** `2.22`, `2.28`
-
 ## Evidence
 
 ### Signal: Google-Extended allow/block state in robots.txt — grade A (robots-ai-crawlers)
@@ -59,11 +39,6 @@ Inherits every base-class defect, and its guidance text is factually wrong in a 
 **Evidence:** Google documents Google-Extended as 'a standalone product token that web publishers can use to manage whether content Google crawls from their sites may be used for training future generations of Gemini models'. Those are the models 'that power Gemini Apps and Vertex AI API for Gemini and for grounding ... in Gemini Apps and Grounding with Google Search on Vertex AI'. It also states that the token 'does not impact a site's inclusion in Google Search nor is it used as a ranking signal'. It is a robots.txt token only — no crawler fetches with that UA — so it is safe to block without traffic loss.
 
 **Counter-evidence:** Critical, widely-misreported limitation: Google-Extended does not control AI Overviews or AI Mode. Google's AI-features page states 'robots.txt directives for Googlebot is the control for site owners to manage access to how their sites are crawled for Search' and directs publishers to nosnippet / data-nosnippet / max-snippet / noindex for AI feature control. Any audit implying a Google-Extended disallow keeps content out of AI Overviews is wrong. Also, BuzzStream measured 92.3% citation retention among sites blocking Google-Extended — the highest of any bot studied.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 
 ## Implementation deviations
 

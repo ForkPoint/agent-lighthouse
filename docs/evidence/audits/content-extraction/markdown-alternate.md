@@ -59,34 +59,6 @@ Interactive coding agents read markdown when a site offers it, and it costs them
 
 A site that serves no markdown version is reported as not applicable rather than failed. The consumers documented for this mechanism are coding agents, and no source measures a cost to a site that offers no markdown at all.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Best of the AI-specific link audits — the underlying practice is real and does help agents. The implementation is the same brittle exact-match template as its siblings and recognizes only one of the several ways sites actually expose Markdown, so it will report 'not found' on sites that do serve Markdown correctly.
-
-**Required fix:** 1) `l.type === 'text/markdown'` is an exact match: accept `text/markdown; charset=utf-8` (strip at `;`), `text/x-markdown`, and `text/plain` when the href ends in `.md`. 2) Accept href-based discovery with no type attribute: `rel="alternate"` + href matching `/\.mdx?$/i`. 3) Normalize `rel` (lowercase/trim/split) — exact `l.rel === 'alternate'` fails on `rel="Alternate"`. 4) Optionally verify the target resolves via `ctx.fetch` before passing; a dangling .md link is worse than none. 5) Iterate `ctx.pages` — a Markdown alternate is inherently per-page, and checking only `ctx.pages[0]` (usually a homepage, which rarely has one) makes this fail even on docs sites that provide .md for every article. 6) Return `notApplicable` for page types where a Markdown twin is meaningless (checkout, search) rather than a flat fail.
-
-**False-positive risks:**
-
-- MIME parameter breaks the match: `l.type === 'text/markdown'` fails on `type="text/markdown; charset=utf-8"`, which any server appending a charset will emit.
-- `text/x-markdown` (still widely used) is not accepted.
-- Type-less discovery ignored: `<link rel="alternate" href="/guide.md">` — a common minimal form — fails because the audit requires the type attribute.
-- Homepage bias: `const page = ctx.pages[0]` is normally the marketing homepage, which almost never has a Markdown twin even on sites where every docs page does. The audit therefore reports 'medium' priority failure on exactly the docs sites that pioneered this practice.
-- `rel` exact/case-sensitive comparison.
-- `extractHeadLinks` scans the whole document, so a `.md` link in body content counts as a head link.
-- Sites that expose Markdown by content negotiation (`Accept: text/markdown`) or by an implicit `.md` suffix convention with no link tag — both real patterns — are reported as having no Markdown alternate at all.
-- No verification that the linked .md exists; a stale link passes.
-
-**Test gaps:**
-
-- No charset-parameter MIME test.
-- No `text/x-markdown` test.
-- No type-less `.md` href test.
-- No uppercase/multi-token `rel` test.
-- No multi-page test where the homepage lacks the alternate but interior pages have it — the production case.
-- No dangling-link test.
-
-**Overlaps with:** _none_
-
 ## Evidence
 
 ### Signal: HTML <link> tags pointing to llms.txt / markdown alternates (rel="describedby", rel="alternate" type="text/markdown") — grade C (llms-txt)
@@ -188,13 +160,6 @@ needs no adjustment. One caution for anyone reading the counter-evidence as
 markdown 34.8% of the time via `.md` URLs. That is consumption when served,
 which is the mechanism being scored — not a cost of absence, which is the claim
 the audit no longer makes.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
-- 2026-08-24 — contradiction sweep: pass rule narrowed to the population the grade covers, and the grade-C link relation demoted to a discovery route.
-- 2026-08-24 — component detection stopped reading quoted JSX out of code fences and inline spans.
 
 ## Component-detection correction (2026-08-24)
 

@@ -39,31 +39,6 @@ sources:
 
 AI agents use the single <h1> as the authoritative title of the page for content indexing and answer generation. Ensure exactly one <h1> per page.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Title and description promise 'Single h1 per page' but the code only ever inspects ctx.pages[0] ('const homepage = ctx.pages[0]'), so a 20-page crawl where 19 pages have three h1s each reports a green pass. It also treats zero h1 and five h1 identically (both hard fail, priority high) although zero-h1 is a materially worse problem, and hard-fails the extremely common responsive pattern of duplicate desktop/mobile h1 markup where only one is visible. Signal is real but the audit under-delivers on its own stated scope.
-
-**Required fix:** Loop all ctx.pages like the sibling audits do and report an X/Y ratio with offending URLs. Split the verdict: 0 h1 = fail (high), 2+ h1 = warn (medium) rather than fail. Exclude h1s inside <template>, and inside subtrees hidden via hidden/[aria-hidden=true]/style="display:none" so responsive duplicates are not double-counted.
-
-**False-positive risks:**
-
-- Only the homepage is audited despite the 'per page' title — 'const homepage = ctx.pages[0]; const h1Count = $('h1').length'. Deep-page h1 problems are invisible; users get false reassurance.
-- Responsive themes that render a desktop h1 and a mobile h1 (one CSS-hidden) count as 2 → fail, though exactly one is visible and exactly one is in the accessibility tree.
-- Cookie banners, off-canvas menus, and modal dialogs injected server-side often carry their own h1 → fail on an otherwise correct page.
-- CSR SPAs served as an empty shell have 0 h1 in server HTML → fail, though the rendered page an agentic browser sees has one.
-- A WAF/Cloudflare challenge page ('Checking your browser…') typically has 1 h1 → PASS. ctx.wafProtection is never consulted.
-- h1 inside <svg><title> is not an issue, but h1 inside <template> IS counted by cheerio and is not rendered.
-
-**Test gaps:**
-
-- No test asserting the homepage-only limitation (a multi-page ctx where page 2 has three h1s still passes) — the bug is invisible to the suite.
-- No hidden/responsive duplicate-h1 fixture.
-- No h1-inside-<template> or h1-inside-modal fixture.
-- No SPA shell or WAF interstitial fixture.
-- No non-English page.
-
-**Overlaps with:** `6.2`, `6.20`
-
 ## Evidence
 
 ### Signal: Heading hierarchy (h1–h6) for LLM parsing and chunking — grade B (semantic-dom-a11y)
@@ -102,8 +77,3 @@ Title and description promise 'Single h1 per page' but the code only ever inspec
   the warning described in this dossier and exclude hidden/template headings.
   This scope-only correction retains the existing binary verdict and raw
   element count. It does not claim the severity or visibility defects are fixed.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.

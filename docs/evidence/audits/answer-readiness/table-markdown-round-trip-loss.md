@@ -61,10 +61,6 @@ A pricing comparison table uses a two-row header where 'Monthly' and 'Annual' si
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
 Every DOM-level flag in the sketch ships except `thScopeCoverage`: the round

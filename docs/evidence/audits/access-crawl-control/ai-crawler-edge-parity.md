@@ -58,10 +58,6 @@ robots.txt contains `User-agent: PerplexityBot` / `Allow: /`. `GET /pricing` wit
 
 Tier per evidence policy: **scored** — grade A meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Merged
 
 `docs/evidence/merged/access-crawl-control/ai-crawler-edge-parity.md` holds the

@@ -58,10 +58,6 @@ A Shopify store renders its refund policy at /policies/refund-policy but the PDP
 
 Tier per evidence policy: **scored** — grade A meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
 - **The fetcher's declared `followRedirects` option was inert.** It is now

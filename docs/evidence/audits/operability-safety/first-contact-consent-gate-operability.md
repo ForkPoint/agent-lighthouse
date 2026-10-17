@@ -54,10 +54,6 @@ A news site loads a Sourcepoint dialog in a cross-origin iframe and sets aria-hi
 
 Tier per evidence policy: **informative (weight 0)** — grade C does not meet the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
 The shipped audit is `operability-safety/first-contact-consent-gate-operability`,

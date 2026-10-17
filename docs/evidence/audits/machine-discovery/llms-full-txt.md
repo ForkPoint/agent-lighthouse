@@ -30,29 +30,6 @@ sources:
 
 llms-full.txt provides the complete content of your site in a single file, allowing AI agents to ingest everything in one request instead of crawling page by page.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Fails any site lacking /llms-full.txt, at HIGH priority, on the strength of a 200 status alone — no content check whatsoever. llms-full.txt is a real convention (Mintlify and several doc platforms emit it) but it is explicitly optional even in the llms.txt spec, is only meaningful for documentation-shaped sites, and is actively inappropriate for large or commerce sites. Failing every site for its absence at high priority is misleading; passing any 200 makes the pass meaningless.
-
-**Required fix:** Require 200 AND a non-HTML content-type AND a markdown-shaped body over a minimum size (say 2KB) to pass. Return notApplicable() rather than fail() when the file is absent — it is an optional enhancement, not a defect — or gate it to documentation-type sites. Drop defaultPriority from high to low.
-
-**False-positive risks:**
-
-- `isOk` status-only: an SPA catch-all serving `<!doctype html>` at /llms-full.txt yields PASS 'llms-full.txt exists and returns HTTP 200'. So does a 200 error page, a redirect to the homepage, or a 0-byte file.
-- No size or format floor — a one-line placeholder file scores identically to a genuine full-content dump, so the audit rewards the gesture rather than the content.
-- A 30k-page ecommerce catalogue cannot meaningfully produce llms-full.txt; the audit still marks it a HIGH-priority failure with 'moderate' effort guidance that is not actionable.
-- Body is truncated at MAX_RESPONSE_BODY_BYTES (5MB) by the fetcher, so any real llms-full.txt of consequence is partially read — currently harmless because nothing is inspected, but it blocks any future content check.
-
-**Test gaps:**
-
-- 200 + HTML soft-404 (currently a false PASS)
-- Empty or 1-line placeholder file (currently a false PASS)
-- Redirect to homepage returning 200
-- Very large body hitting the 5MB fetcher truncation
-- Non-markdown content types
-
-**Overlaps with:** `1.1`
-
 ## Evidence
 
 ### Signal: /llms-full.txt (full concatenated documentation file) — grade D (llms-txt)
@@ -106,9 +83,3 @@ could not be re-verified. CI's link checker will flag it.
   above says. It used to fail at high priority. A 200 whose body opens as an
   HTML document counts as absent (`gatherers/root-files.ts`
   `isRootArtifact`); a homepage redirect at `/llms-full.txt` used to pass.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — adversarial redemption research; user accepted verdict (disposition above).
-- 2026-08-24 — evidence sweep: re-checked, no change. C / informative / weight 0 stands.

@@ -39,34 +39,6 @@ sources:
 
 Broken internal links create dead ends for AI crawlers and waste their limited crawl budget.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Fetches up to 20 internal links and reports any non-200 as broken. Valuable in principle, but the sample is the first 20 URLs in DOM order — i.e. the nav, which is never broken — so genuine breakage in body content is systematically missed, while WAF 403s, 429s from its own 20-way parallel burst, and legitimately gated 401 pages are printed to the user as broken links to fix. Both error directions at once.
-
-**Required fix:** Sample randomly (or stratify: some nav, some body-content links per page) rather than taking the first 20 in DOM order, and say which strategy was used. Throttle to ~5 concurrent requests and prefer HEAD with a GET fallback. Classify: only 404/410 and 5xx count as broken; 401/403/429/0 report as 'could not verify' and, when `ctx.wafProtection?.isBlocked`, return notApplicable. Add the `isSafeUrl()` guard already used by 1.5. Normalize www/bare host and strip tracking params before deduping.
-
-**False-positive risks:**
-
-- `Array.from(internalUrls).slice(0, 20)` takes insertion order, which is DOM order from the first scanned page — nearly always the header/nav. Broken links in article bodies or footers are never sampled → false PASS. This is not a random sample despite the report saying 'sampled'.
-- `broken = results.filter((r) => !isOk(r))` treats 401 (gated account pages), 403 (Cloudflare/Akamai bot challenge against the scanner UA), 429 (rate limit), 410 (intentional), 503 and the fetcher's `status: 0` timeout as broken. `ctx.wafProtection` is available in CheckContext and completely ignored here.
-- `Promise.all` over 20 URLs fires 20 simultaneous requests at one origin — a common trigger for exactly the 429/403 responses the audit then reports as the site's own defects.
-- Host matching `resolved.hostname === domain || resolved.hostname.endsWith('.'+domain)` misclassifies bare-host links when the scan started at www (and vice versa), so real internal links are skipped as external → 'No internal links found to validate'.
-- Query strings are retained while hashes are stripped, so tracking-parameter variants of one page are checked as distinct links, consuming the 20-link budget on duplicates.
-- `endsWith('.' + domain)` on an attacker-controlled subdomain also permits fetching a host that resolves to a private IP — this audit, unlike llms-txt-links-valid, performs no `isSafeUrl()` check before fetching.
-- `broken.length > urlsToCheck.length / 2` on a 2-link page turns one broken link into a hard FAIL.
-
-**Test gaps:**
-
-- 403/429/401 responses (currently reported as broken links)
-- WAF-protected site with ctx.wafProtection set
-- status:0 timeout results
-- More than 20 internal links, with the broken ones outside the first 20 (false PASS)
-- www vs bare-host internal links
-- Query-string variants consuming the sample budget
-- Redirecting internal links
-
-**Overlaps with:** `1.5`, `1.15`
-
 ## Evidence
 
 ### Signal: Soft-404 / SPA catch-all rewrite (HTTP 200 for everything) as a false-result source — grade A (technical-infra)
@@ -88,8 +60,3 @@ Fetches up to 20 internal links and reports any non-200 as broken. Valuable in p
 **Evidence:** This is the best-measured signal in the domain. Vercel and MERJ found ChatGPT spends 34.82% of its fetches on 404 pages and 14.36% following redirects, and Claude 34.16% on 404s — against Googlebot's 8.22% and 1.49%. Roughly a third of all LLM-crawler effort on a site is landing on nothing. Apple documents the consequence as vendor policy: "Applebot's crawl rate adjusts automatically when a site slows down or returns errors." It adds that 'Identifying content that doesn't need to be crawled lowers infrastructure costs for site owners'. Error rate directly throttles how much of your site Apple fetches. Oncrawl's production logs show the acute form: 988 ChatGPT-User requests returning 404 concentrated over a few hours on a single retailer. Cloudflare's crawl-to-refer data establishes why the waste matters economically — AI platforms already fetch orders of magnitude more HTML than they refer back, so every dead fetch is pure cost. On the agent side, BrowserArena's live-web evaluation identifies direct URL navigation as one of three consistent failure categories, concluding that current web agents are brittle on real-world navigation.
 
 **Counter-evidence:** An attribution caveat must be published with the claim. The Vercel 404 rates measure URLs the crawlers requested. Oncrawl shows that a large share of those are model-hallucinated or stale-memory paths which the site never linked — 'ChatGPT inventing URLs'. So the headline 34.82% figure does not isolate the effect of on-site broken links, and fixing every internal 404 would not bring it near Googlebot's 8.22%. No study demonstrates that repairing internal broken links raises AI citation rate. Google's nofollow guidance separately notes pages 'may be found through other means', reinforcing that the crawler's URL set is not solely derived from your link graph. The correct scored claim is crawl-efficiency and agent-navigation reliability, not citation lift; serving a proper 404/410 and maintaining redirects is the actionable core.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.

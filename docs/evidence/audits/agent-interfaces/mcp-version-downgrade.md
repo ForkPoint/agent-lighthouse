@@ -50,10 +50,6 @@ A SaaS vendor's server supports 2025-11-25 and 2026-07-28. Sent `1900-01-01`, it
 
 Tier per evidence policy: **scored** — grade A meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
 Recorded at graduation (2026-08-22, Plan 5 Task 30).

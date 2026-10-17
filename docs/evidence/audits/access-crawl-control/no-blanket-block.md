@@ -35,30 +35,6 @@ sources:
 
 A blanket Disallow: / under User-agent: * blocks every crawler, including all AI agents. Your site becomes invisible to AI search engines, ChatGPT Browse, Perplexity, and others.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-The most defensible audit in the category — a wildcard `Disallow: /` genuinely destroys AI discoverability and critical priority is appropriate. Two problems keep it from 'keep'. First, the title and description say 'No blanket AI block' but the code only inspects `groups.filter(g => g.userAgent === '*')`; a site with `User-agent: GPTBot\nDisallow: /`, `User-agent: ClaudeBot\nDisallow: /` and `User-agent: *\nAllow: /` has blanket-blocked AI and receives a PASS titled 'No blanket AI block'. Second, the missing-robots.txt branch is wrong-signed: no robots.txt means nothing is blocked, which is a pass for this specific criterion, yet it returns `warn` and drags the score down.
-
-**Required fix:** Strip the BOM in `parseRobotsTxt`; extend `isBlanketBlocked` to `/`, `/*`, `*`. Add a content-type + leading-`<` guard so an HTML soft-404 is reported as 'no robots.txt' rather than parsed. Change the missing-robots.txt branch from `warn` to `pass` (nothing is blocked) or `notApplicable`. Either rename the audit to 'No wildcard blanket block' or extend it to fail when every AI token in `ALL_CRAWLERS` is disallowed.
-
-**False-positive risks:**
-
-- BOM'd robots.txt parses to zero groups → `wildcardGroups` empty → `isBlanketBlocked([])` false → PASS on a site that blocks the entire web. Highest-impact single false result in the category.
-- `isBlanketBlocked` matches only `r.path === '/'`; `User-agent: *\nDisallow: /*` and `Disallow: *` are real-world blanket blocks reported as PASS.
-- SPA soft-404 serving HTML at /robots.txt with status 200 parses to zero groups → PASS, and the user is told crawler permissions were verified when no robots.txt exists.
-- Title/criterion mismatch: AI-specific blanket blocks pass an audit named 'No blanket AI block'.
-- `warn` on missing robots.txt penalizes the most permissive possible configuration.
-
-**Test gaps:**
-
-- No BOM fixture (the case that silently inverts the result).
-- No `Disallow: /*` or `Disallow: *` case.
-- No HTML soft-404 body at /robots.txt.
-- No AI-specific blanket block case (all AI bots disallowed, wildcard allowed) to expose the title/criterion mismatch.
-- No CRLF-only line endings.
-
-**Overlaps with:** `2.23`, `2.28`
-
 ## Evidence
 
 ### Signal: Blanket-blocking all AI bots (User-agent: * Disallow: / for AI tokens, or long AI-bot denylists) as a negative signal — grade B (robots-ai-crawlers)
@@ -83,8 +59,3 @@ The most defensible audit in the category — a wildcard `Disallow: /` genuinely
   warn → na, throttled warn → na, redirected away pass → na, non-HTML homepage
   warn → na, HTTP 200 bot challenge pass → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.

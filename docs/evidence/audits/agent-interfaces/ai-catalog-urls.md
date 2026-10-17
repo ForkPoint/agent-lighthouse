@@ -23,29 +23,6 @@ sources:
 
 Broken service URLs in your AI catalog cause agents to fail when trying to use your services, creating a poor user experience. Verify all URLs are correct, deployed, and returning HTTP 200.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Third zero for the same nonexistent file, and the liveness probing it adds would generate false failures even if the file existed — it demands HTTP 200 from GETs against API endpoints that normally answer 401, 404, or 405.
-
-**Required fix:** Delete along with 5.7 and 5.8. (If URL-liveness checking is preserved anywhere — e.g. in 5.5 — accept 2xx/3xx/401/403/405 as 'reachable', resolve relative URLs against ctx.baseUrl, and cap concurrency.)
-
-**False-positive risks:**
-
-- `r.status === 200` is the only accepted outcome. A correctly deployed POST-only contact endpoint returns 405 to the audit's GET; an authenticated endpoint returns 401. Both are reported as 'unreachable', producing warn/fail for a healthy catalog.
-- Fires N unthrottled parallel `ctx.fetch` calls via `Promise.all(urls.map(...))` against the target's own API with no cap — a large catalog turns the audit into a small burst load, which can itself trigger 429/WAF blocking and then be reported as the site's fault.
-- Relative service URLs (`"url": "/api/search"`) are unfetchable and score as status 0 → 'None reachable'.
-- Hard `fail` when ai-catalog.json is absent — the third penalty for one nonexistent file.
-- Failure message interpolates every failed URL into `message` unbounded; a large catalog produces a message truncated by `validate()` at 5000 chars mid-URL.
-
-**Test gaps:**
-
-- No 401/405 fixture (the realistic responses for API endpoints)
-- No relative-URL fixture
-- No concurrency/rate-limit fixture
-- No large-catalog message-truncation test
-
-**Overlaps with:** `5.7`, `5.8`, `5.5`
-
 ## The rewrite (Plan 4, Task 10, 2026-08-22)
 
 The required rework from the [redemption dossier](../../deletions/agent-tools/ai-catalog-urls.md) is executed: _"re-point it at `entries[].url` (skipping entries that use embedded `data`), and treat non-200-but-reachable auth-gated MCP endpoints carefully to avoid false failures."_
@@ -96,9 +73,3 @@ Source: the [redemption dossier's verdict](../../deletions/agent-tools/ai-catalo
 ## Adversarial redemption research (2026-08-21)
 
 This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/deletions/agent-tools/ai-catalog-urls.md](../../deletions/agent-tools/ai-catalog-urls.md). Outcome: **redeemable**, grade B.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — adversarial redemption research; user accepted verdict (disposition above).
-- 2026-08-22 — rewritten (Plan 4, Task 10): probes `entries[].url` (inline `data` entries skipped), accepts auth-gated 401/403/405/429 as reachable, `isSafeUrl()`-gated, concurrency capped at 5, absence downgraded from `fail` to `na`. Grade **B**, tier `scored`, weight 0.6 — unchanged. `TODO(redeem)` header removed; entry dropped from rework-todo.md.

@@ -46,29 +46,6 @@ One audit over every list-shaped block of content: is it marked up as a list, or
 
 Navigation, breadcrumb, pagination, tab, carousel and table-of-contents lists are excluded from both sides of the ratio — by region (`nav`/`header`/`footer`/`aside`, the matching ARIA roles), by class name, and by `BreadcrumbList`/`SiteNavigationElement` microdata. `<dl>` counts as a semantic list only with a paired `<dt>`/`<dd>`; `<ol>` with ≥3 items is additionally reported as a step list; `<dfn>` is reported as a definition element.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-The description promises to catch 'content formatted as styled divs instead of semantic lists', but the code never looks at a single div: 'const hasLists = $('ul').length > 0 || $('ol').length > 0 || $('dl').length > 0'. Every site on the web has a <ul> in its navigation, so this passes essentially 100% of real sites — including the exact sites whose feature lists and step-by-step content are all div-based, which is the failure mode it claims to detect. It is a green light that means nothing, which is worse than no audit because the user reads it as 'my lists are fine'.
-
-**Required fix:** Actually detect pseudo-lists: find parents with 3+ sibling children that share a class and each contain short text or a leading bullet/number character ('•', '-', '1.'), and are not inside nav/header/footer; report the ratio of semantic lists to (semantic + pseudo) lists. Exclude nav/header/footer <ul> from the 'has semantic lists' numerator so navigation menus cannot satisfy the check. If that detector is not built, delete the audit rather than ship a check that cannot fail.
-
-**False-positive risks:**
-
-- Any navigation menu's <ul> satisfies the check — near-universal vacuous pass, including on sites made entirely of div-lists.
-- The stated failure mode (styled divs used as lists) is never tested for; the audit and its description do not describe the same check.
-- Empty ctx.pages → 'allPass = pagesWithSemanticLists === ctx.pages.length' → 0 === 0 → pass.
-- A single <dl> emitted by a Shopify product-spec block satisfies the check, and also satisfies audit 6.13 — one incidental element passes two audits.
-- CSR SPAs with no server-rendered list markup fail even though the rendered page is list-rich.
-
-**Test gaps:**
-
-- No fixture with div-based pseudo-lists — the audit's own stated subject is untested.
-- No fixture where the only <ul> is in <nav> (the near-universal vacuous pass).
-- No empty-ctx.pages test.
-- No test distinguishing a content list from a nav list.
-
-**Overlaps with:** `6.13` (now absorbed here), `9.6` (now absorbed here)
-
 ## Evidence
 
 ### Signal: Semantic lists and tables versus div soup — grade B (semantic-dom-a11y)
@@ -102,13 +79,6 @@ keys of one shortcut are one item.
 Verdicts that moved in the real-page corpus: `allbirds-com-collection`
 pass → na, whose only content lists were in hidden panels;
 `gov-uk-vehicle-tax` warn → pass, whose pseudo-list was hidden.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
-- 2026-08-21 — approved: 6.13 merges away into 6.8 (§5).
-- 2026-08-22 — merged (Plan 4, Task 8), and 9.6 folded here as a late addition on its own grading; registry 154 → 152 for this fold.
 
 ## The merge (Plan 4, Task 8, 2026-08-22)
 

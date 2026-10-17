@@ -43,31 +43,6 @@ Every scanned page must appear in at least one _discovery index_: the sitemap (i
 
 Both sides of the comparison go through one key — host without `www.`, lower-cased decoded path, no trailing slash, no scheme, query or fragment — and a page also matches on its declared `<link rel="canonical">`.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Compares scanned page URLs against sitemap <loc> values. Two disqualifying flaws: a sitemap index short-circuits to an unconditional PASS without checking a single URL (vacuous pass on the most common real configuration), and URL matching is raw string equality with only trailing-slash variants, so protocol/host/case/encoding differences produce phantom 'missing' pages. Compounded by circularity — the page list was largely seeded from this same sitemap.
-
-**Required fix:** Fetch (cap ~10) sub-sitemaps when a <sitemapindex> is detected and merge their <loc> sets before comparing — never pass on the index alone. Replace raw string matching with a normalizer (lowercase host, strip default port, unify protocol, strip trailing slash and tracking query params, decodeURI the path) applied to both sides. Note the discovery circularity in the message, or restrict the comparison to nav-discovered pages so the result is not self-fulfilling.
-
-**False-positive risks:**
-
-- `if (isSitemapIndex) { … return this.pass('Sitemap index file found linking to N sub-sitemap(s)') }` — sub-sitemaps are never fetched. Every Shopify/WordPress/Next.js site with an index gets a free PASS on an audit that checked nothing. A site whose sub-sitemaps are empty or 404 also passes.
-- `const variants = [pageUrl, pageUrl.replace(/\/$/, ''), pageUrl + '/']; variants.some((v) => sitemapUrls.has(v))` — exact string membership only. `http://` vs `https://`, `www.` vs bare host, `%20` vs `+`, uppercase path segments, and `?utm_source` query strings all yield false 'missing from sitemap'.
-- Sitemap `<loc>` values are frequently XML-escaped (`&amp;` in query strings); cheerio's `.text()` unescapes, but the scanned page URL retains the browser-normalized form — another mismatch class.
-- Denominator `ctx.pages.length` includes pages the orchestrator discovered _from_ nav links only; conversely, pages discovered from the sitemap are guaranteed present. The ratio measures the discovery mix more than the sitemap's quality.
-- 0.5 ratio boundary is arbitrary: 6/10 missing = FAIL, 5/10 missing = WARN, with no documented rationale.
-- Sitemap body truncated at 5MB silently drops trailing `<loc>` entries → false 'missing' on large sites.
-
-**Test gaps:**
-
-- Sitemap index whose sub-sitemaps are empty or 404 (currently a false PASS)
-- http vs https, www vs bare host, uppercase path, percent-encoding differences
-- XML-escaped &amp; in <loc> query strings
-- URLs with tracking query params
-- Truncated (>5MB) sitemap body
-
-**Overlaps with:** `1.22`, `1.7`
-
 ## Evidence
 
 ### Signal: sitemap.xml for AI crawler discovery — grade B (technical-infra)
@@ -102,12 +77,6 @@ Both source reviews' required fixes shipped with the fold:
 - **Canonical actually read.** v1's `page.meta['canonical']` was dead code (`extractMetaTags` reads `<meta>`, canonical is a `<link>`); the canonical is now read from `link[rel=canonical]`.
 - **llms.txt relative links counted.** `extractMarkdownLinks` keeps absolute URLs only, so `- [About](/about)` made the llms.txt half of the comparison empty; links are now resolved against the base URL.
 - **One penalty per missing file.** An absent sitemap used to fail here at priority `critical` on top of sitemap-exists (1.7); with no index of any kind the audit now warns.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources) on both source audits.
-- 2026-08-21 — dispositions approved: 1.8 keep-with-fixes, 1.22 merge into it.
-- 2026-08-22 — 1.22 folded in and both reviews' required fixes landed (Plan 4, Task 4); registry 173 → 172.
 
 ## Implementation deviations
 

@@ -41,32 +41,6 @@ sources:
 
 AI agents use <thead> and <th> elements to understand column headers and interpret table data correctly. Without proper structure, agents cannot map cell values to their column meanings, leading to garbled data extraction in AI-generated comparisons and summaries.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Correct core logic (parse5 auto-inserts <tbody>, so the '<table><tr><th>' pattern is handled), but three problems. The zero-table branch returns 'this.pass('No data tables found — check not applicable')' — a scored 1.0 for absence, when audit.ts explicitly provides notApplicable() for this. The counters descend into nested tables ('$(el).find('th')'), so a layout table wrapping a data table inherits its headers and is scored proper. And a layout table (still common in legacy/govt/email-style pages) is counted in the denominator, dragging pages to fail for a table that carries no data to label.
-
-**Required fix:** Swap the zero-table pass() for notApplicable(). Scope the header lookups to the immediate table using ':scope' semantics or by filtering out th/thead whose closest('table') is not this element. Skip probable layout tables (role=presentation/none, or no th anywhere and single row/column) instead of counting them as failures. Include page URLs in `found`.
-
-**False-positive risks:**
-
-- 'if (totalTables === 0) return this.pass(...)' — sites with no tables at all receive a free scored 1.0, inflating the category score.
-- '$(el).find('th')' / 'find('thead')' cross nested-table boundaries: an outer layout table containing a proper inner table is credited as properly structured.
-- Layout tables and pricing-grid tables are counted in the denominator; there is no role=presentation exclusion.
-- Div-based data grids (AG Grid, TanStack Table, role="grid"), which are extremely common in 2026 apps, are invisible — the audit reports 'No data tables found' and passes.
-- A single stray <th> inside a layout table makes it 'proper'.
-- Tables pooled across pages with no URL attribution.
-
-**Test gaps:**
-
-- No test asserting notApplicable vs pass for the zero-table case (the current test locks in the inflating behavior: expect(result.status).toBe('pass')).
-- No nested-table fixture.
-- No layout-table / role=presentation fixture.
-- No div-based role="grid" fixture.
-- No <thead> containing <td> instead of <th> fixture.
-- No multi-page crawl.
-
-**Overlaps with:** _none_
-
 ## Evidence
 
 ### Signal: Semantic lists and tables versus div soup — grade B (semantic-dom-a11y)
@@ -109,8 +83,3 @@ Correct core logic (parse5 auto-inserts <tbody>, so the '<table><tr><th>' patter
   every branch that found a table is untouched. Verdict moved on the shell
   contract state: pass → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.

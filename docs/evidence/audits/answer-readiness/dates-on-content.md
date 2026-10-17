@@ -34,36 +34,6 @@ One freshness question per article page, scored once: **can a date extractor dat
 
 The update signal wins wherever it is found: every article page is checked for one before the first publication-only date is reported.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-The strongest audit in the category: it prefers machine-readable sources (<time datetime>, JSON-LD datePublished/dateModified/uploadDate/dateCreated, article:published_time meta) before falling back to a body-text date regex, and it correctly returns `na` rather than a vacuous pass when no article page exists. Freshness is a real ranking input for recency-sensitive answers. What undermines it: it takes the FIRST <time> on the page as the publication date, it passes the whole site on the first dated page it finds, its text fallback knows only English month names, and it inherits the leaky 'content = fallback pageType' scoping.
-
-**Required fix:** Prefer a <time> that is inside <article> or adjacent to the H1/byline over the first in source order, and prefer the JSON-LD node whose @type is Article/BlogPosting/NewsArticle (or whose mainEntityOfPage matches the URL) over the first node with any date field. Require the numeric branch to parse to a plausible date (year 1990–current+1) before accepting it, which also removes the SKU match. Add locale month names driven by the page `lang`, returning `na` for unsupported languages. Report per-page coverage instead of short-circuiting on the first dated page. Tighten `isArticleContentPage` (shared by four audits) to require a real article signal. Consider surfacing the parsed age, since the guidance is about recency but the check only proves existence.
-
-**False-positive risks:**
-
-- Wrong date, reported confidently: `p.$('time[datetime]').first()` takes the first <time> in source order. On a blog page that is often a related-posts card, a comment timestamp, an event date, or a delivery-estimate <time> — the audit reports 'Found a structured date (<time datetime>)' with a value that is not the page's publication date.
-- Same problem in JSON-LD: `findJsonLdDate` walks `flattenJsonLd` and returns the first node with any date field — on a page with an embedded ItemList/Event/VideoObject graph, the date can belong to a different entity than the page.
-- English-only text fallback: DATE_PATTERN lists only English month names, so German '15. Januar 2025', French '15 janvier 2025', Spanish '15 de enero de 2025' and Japanese '2025年1月15日' are invisible. A non-English blog without structured dates false-fails.
-- The numeric branch matches non-dates: `\d{1,2}[/-]\d{1,2}[/-]\d{2,4}` matches SKUs, model numbers and part codes like '12-34-5678', so the audit can PASS on a page with no date at all and print the SKU as its evidence.
-- Ambiguous DD/MM vs MM/DD is never resolved, and the matched string is surfaced verbatim as proof of freshness with no recency validation — a 2011 date passes exactly like a 2026 one, despite the guidance being entirely about recency.
-- Site-wide first-hit short-circuit: the loop returns pass on the first dated article page, so a site where only one article is dated reports the whole site as dated; undated pages are never listed.
-- Scoping: `isArticleContentPage` accepts every fallback-typed page, so /contact, /privacy-policy and /pricing are treated as content requiring publication dates, and the failure's pageUrl (`contentPages[0].url`) may point at one of them.
-- SPA/CSR: dates rendered client-side → false fail.
-
-**Test gaps:**
-
-- No page where the first <time> is a comment/related-post/event timestamp (the main wrong-value risk).
-- No non-English visible date.
-- No SKU/model-number string ('12-34-5678') proving the numeric branch false-passes.
-- No JSON-LD @graph where the date belongs to a nested non-page entity.
-- No stale date (2011) — nothing asserts recency is or isn't evaluated.
-- No multi-page scan with one dated and several undated articles, showing the first-hit short-circuit.
-- No /contact- or /privacy-style page reaching the audit as an 'article page'.
-- No empty-SPA-shell test.
-
-**Overlaps with:** `9.10` — now absorbed here, so the overlap is resolved.
-
 ## Implementation deviations
 
 - 2026-08-26 — the shared text helper this audit reads, `getMainContentText`, changed its selection. Among several `<main>` elements it now returns the one holding the most text rather than the first, it ignores a `<main>` inside a `<template>`, and it falls back to the whole `<body>` only when no `<main>` holds any text. Measured cause (scan evidence gate design, section 2.4): storefronts ship empty or fragmented `<main>` wrappers, and the first one is often a stub. Two consequences for this audit. A page whose real content sits in a later `<main>` is now measured on that content. A page whose every `<main>` is empty is now measured on its body text, page chrome included, where it previously measured as empty.
@@ -115,13 +85,6 @@ The strongest **proven** path is 9.8's extraction claim, graded **A** — a vend
 - **9.10's "if the merge is rejected" list is deliberately not implemented.** Those fixes — constraining the `<time>` keyword scope from `.parent().text()` to the immediate sibling, dropping the incidental-prose warn path, gating both patterns on the page `lang` — are prefixed in the review with "If the merge is rejected, at minimum". The merge was approved. The warn path is gone (above); the parent-scope looseness and the English-only patterns are carried over unchanged and remain open, shared with 9.8's own required fixes.
 - **9.8's own required fixes stay open**, as they did before the fold: preferring a `<time>` inside `<article>` over the first in source order, preferring the `Article`/`BlogPosting` JSON-LD node, plausibility-checking the numeric branch, locale month names, per-page coverage instead of a first-hit short-circuit, and tightening `isArticleContentPage` (shared by four audits). 9.8 is a `move` row with an open `fix` verdict; the fold does not claim them.
 - **The first-hit short-circuit is retained**, now on the update signal first and the publication date second. Per-page coverage reporting is part of 9.8's open fix list, not of this fold.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
-- 2026-08-21 — approved: 9.10 folds into 9.8 as one graded freshness audit (§5).
-- 2026-08-22 — merged (Plan 4, Task 6); registry 163 → 162 for this fold.
 
 ## Implementation deviations (v7 P3, 2026-10-07)
 

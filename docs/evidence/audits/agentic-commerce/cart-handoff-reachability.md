@@ -59,10 +59,6 @@ A store's /cart renders fine but /checkout issues a 302 to /account/login?checko
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
 - **Read-only, and it stops at the document.** Every request is a GET. The audit never POSTs to add-to-cart, never submits a form and never follows a checkout button. What it measures is whether the cart document can be read at all, not whether a purchase completes.

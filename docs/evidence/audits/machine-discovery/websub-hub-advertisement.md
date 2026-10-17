@@ -51,10 +51,6 @@ A WordPress site with the PubSubHubbub plugin emits `<atom:link rel="hub" href="
 
 Tier per evidence policy: **informative (weight 0)** — grade C does not meet the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-
 ## Implementation deviations
 
 **Renamed** from `websub-hub-advertisement-and-self-link-correctness`, which

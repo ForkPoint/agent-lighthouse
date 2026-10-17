@@ -40,30 +40,6 @@ sources:
 
 AI scrapers use <main> to identify primary content and discard nav/footer chrome, reducing hallucination risk from boilerplate text. Without <main>, agents must guess which content is primary versus navigational, often ingesting menus and footers into their context window.
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Checks only the literal tag — 'page.$('main').length > 0' — so <div role="main"> and <div id="main" role="main"> (still emitted by many older themes and by every framework that predates the element) are scored as failures despite being exactly equivalent in the accessibility tree that the audit's own impact text invokes. It also passes vacuously on an empty crawl ('allPass = pagesWithMain === ctx.pages.length' → 0 === 0), and passes a page with three <main> elements even though the guidance demands exactly one.
-
-**Required fix:** Match 'main, [role="main"]' instead of 'main'. Guard ctx.pages.length === 0 with notApplicable(). Add a warn when a page has more than one main/role=main, matching the stated 'exactly one <main> per page' guidance. Include the offending page URLs in `found` — currently the report says '3/10 pages' with no way to know which 7.
-
-**False-positive risks:**
-
-- role="main" on a div is not accepted — a false fail for a semantically correct page.
-- Empty ctx.pages → '0 === 0' → pass with '0/0 pages with <main>'. A WAF-blocked crawl reports success.
-- CSR SPA shells (<div id="root"></div>) fail although the hydrated DOM has <main>; the fetcher does no JS rendering.
-- Multiple <main> elements (invalid HTML, common when a layout and a page template both emit one) score as pass.
-- found/message report only counts, never URLs, so the result is not actionable on a multi-page crawl.
-
-**Test gaps:**
-
-- No <div role="main"> fixture.
-- No empty-ctx.pages test (the false pass is unguarded and unnoticed).
-- No multiple-<main> fixture.
-- No SPA-shell fixture.
-- Only 1- and 2-page crawls tested; the warn/fail boundary on larger crawls is unexercised.
-
-**Overlaps with:** `6.4`, `6.5`, `6.6`
-
 ## Evidence
 
 ### Signal: Landmark elements (main, nav, header, footer, article, aside) as extraction boundaries — grade A (semantic-dom-a11y)
@@ -102,8 +78,3 @@ Checks only the literal tag — 'page.$('main').length > 0' — so <div role="ma
   landmarks and hidden landmarks. This scope-only correction retains the
   existing literal `<main>` predicate. It does not claim those semantic defects
   are fixed or that fetched HTML represents a hydrated browser DOM.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.

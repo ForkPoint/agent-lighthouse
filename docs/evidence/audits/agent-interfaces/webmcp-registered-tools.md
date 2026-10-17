@@ -41,28 +41,6 @@ WebMCP lets a page register agent-callable tools at runtime through `navigator.m
 
 _(The pre-rewrite audit demanded a `/.well-known/webmcp` manifest file. That artifact is invented; the grade-D evidence for it is below, unchanged, and the rewrite section records what replaced it.)_
 
-## Code review findings (2026-08-20, 11-agent pass)
-
-Self-admittedly not a standard — the description says the file is 'an emerging convention (not yet in the formal spec)' — yet it is scored as a binary hard FAIL at high priority for effectively every website. Real WebMCP is a JavaScript API with no well-known file, so this cannot be satisfied by any site actually implementing WebMCP.
-
-**Required fix:** Delete, along with the five dependent WebMCP audits. A static scanner cannot audit a JS-registration API; if the project wants WebMCP coverage it needs a headless-browser probe of `navigator.modelContext` after page load, which is a different capability entirely. Until then, publishing nothing here is the honest result.
-
-**False-positive risks:**
-
-- Universal false fail: no meaningful population of sites publishes /.well-known/webmcp, and a site that correctly implements real WebMCP (`navigator.modelContext.registerTool()`) still fails, because the real API leaves no static artifact for a non-JS scanner to find. The audit is unsatisfiable by correct implementations.
-- `defaultPriority: 'high'` on an admittedly non-standard convention means it surfaces in top failures and recommendations ahead of genuinely actionable items.
-- Even the pass path validates only `typeof t['name'] === 'string'` — no `description`, no `inputSchema`. A manifest of nameplates with no callable surface passes as 'WebMCP manifest found with N valid tool(s)'.
-- SPA catch-all 200 HTML at /.well-known/webmcp → 'not valid JSON', a misleading diagnosis of a file that does not exist.
-- Anchors five downstream audits (5.21-5.25) to the same fictional artifact, compounding the score damage.
-
-**Test gaps:**
-
-- No test acknowledging that a real WebMCP implementation (JS API, no file) exists and should not fail
-- No inputSchema/description validation test
-- No HTML-soft-404 fixture
-
-**Overlaps with:** `5.21`, `5.22`, `5.23`, `5.24`, `5.25`
-
 ## The registered-tools rewrite (Plan 4, Task 16, 2026-08-22)
 
 **Old pass condition:** `/.well-known/webmcp` returns 200 with JSON containing a `tools` array holding at least one object with a `name` string. Anything else — including a 404, which is what essentially every site on the web returns — was a binary hard **fail** at `high` priority, weight 1.0 as originally shipped.
@@ -153,10 +131,3 @@ is 0. `packages/core/src/audits/rework-todo.md` recorded the same conclusion on
 dossiers under `docs/evidence/deletions/`, which describe this audit before the
 Plan 4 rework of 2026-08-22 rebuilt it. Re-checked against the shipped code on
 2026-08-24, it no longer meets the bar.
-
-## Review history
-
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
-- 2026-08-22 — user approved the pending-triage redeem; required rework executed (Plan 4, Task 16): the `/.well-known/webmcp` manifest check is deleted and replaced by runtime `navigator.modelContext` registration detection, absence is `na` with the JS-runtime limitation stated, declarative forms defer to `webmcp-declarative-forms`, and the path was removed from the orchestrator's `rootFilePaths`. Grade **A → B**, tier `experimental`, weight 0, `defaultPriority` `high` → `low`. Class renamed `WebmcpManifestAudit` → `WebmcpRegisteredToolsAudit`. `TODO(redeem)` marker removed from the source file.
-- 2026-08-24 — contradiction sweep Task 10: checked as a composite, no split needed. The grade-D manifest signal was deleted with its code on 2026-08-22; the grade-A soft-404 signal is a meta-rule for audits that read a well-known path, which this one no longer does. B / experimental / 0 unchanged. Retirement also off.

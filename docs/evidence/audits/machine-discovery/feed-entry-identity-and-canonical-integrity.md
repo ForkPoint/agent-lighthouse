@@ -48,11 +48,6 @@ A headless CMS emits `<guid>https://example.com/blog/post?preview_id=8812</guid>
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Review history
-
-- 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
-- 2026-10-06 — a generic XML media type stopped returning `warn`; no source documents a consumer penalty, and `application/rss+xml` is unregistered.
-
 ## Implementation deviations
 
 Steps 1–5 of the sketch ship in full: autodiscovery from every crawled page's
