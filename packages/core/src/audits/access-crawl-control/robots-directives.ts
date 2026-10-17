@@ -43,10 +43,19 @@ const BLOCKING_TOKENS = new Set(["noindex", "none"]);
 /**
  * Directives that permit indexing but forbid quoting. Google documents that
  * `nosnippet` "will also prevent the content from being used as a direct input
- * for AI Overviews and AI Mode"; Bing documents that `noarchive` content "will
- * not be included in Bing Chat answers".
+ * for AI Overviews and AI Mode"; Bing documents `noarchive` as "Do not link in
+ * Chat and Copilot".
  */
-const SUPPRESSING_TOKENS = new Set(["nosnippet", "noarchive", "nocache"]);
+const SUPPRESSING_TOKENS = new Set(["nosnippet", "noarchive"]);
+
+/**
+ * Bing's `nocache` limits use without forbidding quotation: "Display only
+ * URL/Snippet/Title in Chat or Copilot". Bing also states "If content has both
+ * NOCACHE and NOARCHIVE tags, we will treat it as NOCACHE", so on a page that
+ * carries `nocache` a `noarchive` no longer keeps it out of Copilot answers.
+ */
+const LIMITING_TOKEN = "nocache";
+const OVERRIDDEN_BY_LIMITING = "noarchive";
 
 /** Directives whose value follows a colon, so a colon here is not a bot prefix. */
 const VALUED_DIRECTIVES = new Set([
@@ -152,6 +161,8 @@ interface PageVerdict {
   isUtility: boolean;
   blocking: Directive[];
   suppressing: Directive[];
+  /** `nocache`: still linked and quoted by snippet, so named but not scored. */
+  limiting: Directive[];
 }
 
 function describe(verdict: PageVerdict, directives: Directive[]): string {
@@ -202,13 +213,19 @@ export class MetaRobotsNotBlockingAudit extends Audit {
 
     const verdicts: PageVerdict[] = ctx.pages.map((page) => {
       const directives = directivesFor(page);
+      const limiting = directives.filter((d) => d.token === LIMITING_TOKEN);
       return {
         url: page.url,
         isHomepage:
           page.url.replace(/\/$/, "") === ctx.baseUrl.replace(/\/$/, ""),
         isUtility: isUtilityRoute(page.url),
         blocking: directives.filter((d) => BLOCKING_TOKENS.has(d.token)),
-        suppressing: directives.filter((d) => suppressesSnippets(d.token)),
+        suppressing: directives.filter(
+          (d) =>
+            suppressesSnippets(d.token) &&
+            !(limiting.length > 0 && d.token === OVERRIDDEN_BY_LIMITING),
+        ),
+        limiting,
       };
     });
 
@@ -262,9 +279,16 @@ export class MetaRobotsNotBlockingAudit extends Audit {
       blockedUtility.length > 0
         ? ` ${blockedUtility.length} utility route(s) carry noindex, which is the correct configuration for them.`
         : "";
+    const limitedContent = verdicts.filter(
+      (v) => v.limiting.length > 0 && v.blocking.length === 0 && !v.isUtility,
+    );
+    const limitingNote =
+      limitedContent.length > 0
+        ? ` ${limitedContent.length} non-utility page(s) carry nocache, which Bing documents as still showing the URL, title and snippet in Copilot answers.`
+        : "";
 
     return this.pass(
-      `No scanned non-utility page carries a blocking or snippet-suppressing robots directive.${utilityNote}`,
+      `No scanned non-utility page carries a blocking or snippet-suppressing robots directive.${limitingNote}${utilityNote}`,
       "No blocking robots directive on non-utility pages",
       `Checked ${ctx.pages.length} page(s) — meta robots, per-bot meta tags and X-Robots-Tag`,
     );
