@@ -4468,6 +4468,15 @@
       "keyFindings": "Quotes OpenAI's help-centre wording: 'On March 19, 2024, you will no longer be able to install new plugins or create new conversations with existing plugins. You will be able to continue existing conversations until April 9, 2024.' Note: OpenAI's own help.openai.com article (8988022) and openai.com return HTTP 403 to automated fetches, so this forum thread is the fetchable carrier of the primary quote."
     },
     {
+      "id": "openai-chat-completions-create",
+      "title": "OpenAI API reference — create chat completion",
+      "url": "https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create",
+      "type": "vendor-doc",
+      "publisher": "OpenAI",
+      "verified": "2026-10-17",
+      "keyFindings": "Function tool `name`: \"The name of the function to be called. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64.\""
+    },
+    {
       "id": "openai-computer-use-guide",
       "title": "Computer use — OpenAI API guide",
       "url": "https://developers.openai.com/api/docs/guides/tools-computer-use",

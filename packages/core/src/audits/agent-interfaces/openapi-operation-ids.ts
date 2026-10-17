@@ -21,11 +21,14 @@ import {
 /**
  * The naming rule folded in from v1 5.23 (webmcp-tool-naming) on 2026-08-22.
  *
- * An operationId is the function name a tool-calling runtime registers, and
- * Anthropic's tool `name` "must match the regex `^[a-zA-Z0-9_-]{1,64}$`", with
- * Gemini asking for "descriptive names without spaces or special characters".
- * An id outside this shape cannot be registered verbatim, so it is a harder
- * breakage than a missing id (which converters synthesize from method + path).
+ * An operationId is the function name a tool-calling runtime registers. The
+ * pattern is the strictest documented consumer: OpenAI's function `name` "Must
+ * be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length
+ * of 64". Anthropic allows the same characters up to 128 (it allowed 64 until
+ * 2026), and Gemini asks for "descriptive names without spaces or special
+ * characters". An id outside this shape cannot be registered verbatim by every
+ * runtime, so it is a harder breakage than a missing id (which converters
+ * synthesize from method + path).
  *
  * 5.23's English-verb allowlist and its 20-character description floor are
  * deliberately NOT ported: no spec or vendor doc constrains naming style or
@@ -170,7 +173,7 @@ export class OpenApiOperationIdsAudit extends Audit {
         {
           priority: CheckPriority.Medium,
           description:
-            "A tool-calling runtime registers each operationId as a function name. Anthropic requires that name to match ^[a-zA-Z0-9_-]{1,64}$, so an operationId carrying spaces, punctuation or more than 64 characters cannot be registered verbatim and the operation is unreachable.",
+            "A tool-calling runtime registers each operationId as a function name. OpenAI limits that name to letters, digits, underscores and dashes, at most 64 characters (Anthropic allows the same characters up to 128), so an operationId carrying spaces, punctuation or more than 64 characters cannot be registered verbatim by every runtime.",
           code: `"paths": {\n  "/contact": {\n    "post": {\n      "operationId": "submitContactForm"\n    }\n  }\n}`,
         },
       );

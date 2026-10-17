@@ -71,8 +71,9 @@ describe("OpenApiOperationIdsAudit", () => {
 
   // The naming rule folded in from 5.23 (webmcp-tool-naming) on 2026-08-22.
   // It is the structural, consumer-documented half: an operationId is the
-  // function name a tool-calling runtime registers, and Anthropic requires
-  // `^[a-zA-Z0-9_-]{1,64}$` for that name. 5.23's English-verb allowlist and
+  // function name a tool-calling runtime registers, and OpenAI, the strictest
+  // documented consumer, limits that name to `^[a-zA-Z0-9_-]{1,64}$`
+  // (Anthropic allows up to 128). 5.23's English-verb allowlist and
   // 20-character description floor are NOT ported — no spec or vendor doc
   // constrains either.
   describe("operationId legality (naming rule ported from 5.23)", () => {
@@ -97,6 +98,15 @@ describe("OpenApiOperationIdsAudit", () => {
     it("fails an operationId longer than 64 characters", () => {
       const result = audit.audit(ctxWith(["a".repeat(65)]));
       expect(result.status).toBe(CheckStatus.Fail);
+    });
+
+    // The 64 cap is OpenAI's documented limit; Anthropic's is 128. The
+    // fix text must name the source that actually sets the cap.
+    it("attributes the 64-character cap to OpenAI, not Anthropic", () => {
+      const result = audit.audit(ctxWith(["a".repeat(100)]));
+      expect(result.status).toBe(CheckStatus.Fail);
+      expect(result.remediation).toContain("OpenAI");
+      expect(result.remediation).not.toContain("Anthropic requires");
     });
 
     it("accepts exactly 64 characters (boundary)", () => {
