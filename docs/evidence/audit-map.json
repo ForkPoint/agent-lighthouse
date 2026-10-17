@@ -957,7 +957,7 @@
       "category": "access-crawl-control",
       "slug": "no-redirect-chains",
       "title": "No redirect chains",
-      "purpose": "Redirect chains waste AI crawler budget and slow down content discovery. Each page should resolve in a single redirect at most.",
+      "purpose": "Redirect chains waste AI crawler budget and slow down content discovery. Each page should resolve in a single same-site redirect at most.",
       "features": [
         "discoverability",
         "performance",
