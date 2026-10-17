@@ -4,7 +4,9 @@ import type { Cheerio, CheerioAPI } from "cheerio";
 import type { Element } from "domhandler";
 import { parseHtml } from "#core/parser";
 import { stripStyles } from "#core/audits/operability-safety/runner";
-import { logger } from "#core/logger";
+import { LogField, logger } from "#core/logger";
+
+const log = logger.child({ [LogField.Component]: "extraction" });
 
 /**
  * Three independent main-content extractors.
@@ -93,7 +95,10 @@ export function readabilityArticle(
       source: "readability",
     };
   } catch (error) {
-    logger.debug(`readability extraction failed for ${url}: ${String(error)}`);
+    log.debug(
+      { [LogField.Url]: url, [LogField.Error]: error },
+      "Readability extraction failed",
+    );
     return null;
   }
 }

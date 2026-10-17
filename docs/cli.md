@@ -61,22 +61,24 @@ Short and long spellings are interchangeable (`-o json` and `--output json` are 
 
 ## Flags
 
-| Flag                         | Value               | Default              | What it does                                                           |
-| :--------------------------- | :------------------ | :------------------- | :--------------------------------------------------------------------- |
-| `-h`, `--help`               | —                   | —                    | Print usage and exit. Recognised only as the first argument.           |
-| `-c`, `--config <path>`      | file path           | auto-discovered      | Load configuration from an explicit file.                              |
-| `--categories <list>`        | comma-separated ids | all eight            | Restrict the scan to these categories.                                 |
-| `--experimental`             | —                   | off                  | Also run experimental-tier audits (reported, never scored).            |
-| `-o`, `--output <formats>`   | comma-separated     | `terminal,html,json` | Which report formats to produce.                                       |
-| `-d`, `--output-dir <path>`  | directory path      | `./reports`          | Where report files are written.                                        |
-| `-v`, `--view`               | —                   | off                  | Open the generated HTML report in the default browser.                 |
-| `--timeout <seconds>`        | seconds             | `180`                | Wall-clock budget for the scan; `0` disables it.                       |
-| `--min-score <number>`       | 0–100               | `0` (no assertion)   | Fail the run if the overall score is below this.                       |
-| `--assert-category <id:min>` | `id:number`         | none                 | Fail the run if a category scores below its threshold. Repeatable.     |
-| `--debug-audit <id\|fails>`  | audit id or `fails` | none                 | Print a deep diagnostic breakdown for matching audits.                 |
-| `--trace [path]`             | file path           | off                  | Write one NDJSON record per audit, including skipped and errored ones. |
-| `--silent`                   | —                   | off                  | Suppress banner, progress and terminal report.                         |
-| `--progress-json`            | —                   | off                  | Stream scan progress as NDJSON on stderr.                              |
+| Flag                         | Value               | Default               | What it does                                                           |
+| :--------------------------- | :------------------ | :-------------------- | :--------------------------------------------------------------------- |
+| `-h`, `--help`               | —                   | —                     | Print usage and exit. Recognised only as the first argument.           |
+| `-c`, `--config <path>`      | file path           | auto-discovered       | Load configuration from an explicit file.                              |
+| `--categories <list>`        | comma-separated ids | all eight             | Restrict the scan to these categories.                                 |
+| `--experimental`             | —                   | off                   | Also run experimental-tier audits (reported, never scored).            |
+| `-o`, `--output <formats>`   | comma-separated     | `terminal,html,json`  | Which report formats to produce.                                       |
+| `-d`, `--output-dir <path>`  | directory path      | `./reports`           | Where report files are written.                                        |
+| `-v`, `--view`               | —                   | off                   | Open the generated HTML report in the default browser.                 |
+| `--timeout <seconds>`        | seconds             | `180`                 | Wall-clock budget for the scan; `0` disables it.                       |
+| `--min-score <number>`       | 0–100               | `0` (no assertion)    | Fail the run if the overall score is below this.                       |
+| `--assert-category <id:min>` | `id:number`         | none                  | Fail the run if a category scores below its threshold. Repeatable.     |
+| `--debug-audit <id\|fails>`  | audit id or `fails` | none                  | Print a deep diagnostic breakdown for matching audits.                 |
+| `--trace [path]`             | file path           | off                   | Write one NDJSON record per audit, including skipped and errored ones. |
+| `--silent`                   | —                   | off                   | Suppress banner, progress and terminal report.                         |
+| `--progress-json`            | —                   | off                   | Stream scan progress as NDJSON on stderr.                              |
+| `--log-level <level>`        | `silent` … `debug`  | `LOG_LEVEL` or `info` | Terminal log level. Logs go to stderr.                                 |
+| `--log-file <path>`          | file path           | off                   | Append every log line, at debug level, as JSON lines.                  |
 
 ### `-h`, `--help`
 
@@ -249,16 +251,81 @@ jq 'select(.id == "structured-data/faqpage-schema")' trace.ndjson
 ```
 
 For a one-line-per-audit summary on stderr instead of a file, set
-`LOG_LEVEL=debug`. The runner logs one line per audit at debug level whether or
-not a trace file is open, alongside the rest of the debug output:
+`LOG_LEVEL=trace`. The runner logs one line per audit at trace level, under the
+`audit` component, whether or not a trace file is open:
 
 ```bash
-LOG_LEVEL=debug agent-lighthouse https://yourstore.com --silent 2>&1 | grep '\[audit\]'
+LOG_LEVEL=trace agent-lighthouse https://yourstore.com --silent 2>&1 | grep ' audit: '
 ```
 
 ```
-[DEBUG] [audit] machine-discovery/llms-txt-exists ran/na score=0 weight=0 17ms — HTTP 404; no discovery <link> in <head>
-[DEBUG] [audit] structured-data/product-schema skipped/na score=0 weight=0
+07:12:03.456 TRACE [yourstore.com a1b2c3d4] audit: Audit finished audit=machine-discovery/llms-txt-exists outcome=ran status=na score=0 weight=0 durationMs=17 displayValue="HTTP 404; no discovery <link> in <head>"
+07:12:03.457 TRACE [yourstore.com a1b2c3d4] audit: Audit finished audit=structured-data/product-schema outcome=skipped status=na score=0 weight=0 durationMs=0
+```
+
+### `--log-level <level>`
+
+Sets the terminal log level. It overrides `LOG_LEVEL`. Without either, the
+CLI shows `warn` and `error` only: the report is the output. Logs always go to
+stderr, so they never mix with a report written to stdout. `--progress-json`
+still forces `silent`.
+
+| Level   | What it adds                                                       |
+| :------ | :----------------------------------------------------------------- |
+| `error` | Faults in the scanner, such as an audit that threw, with its stack |
+| `warn`  | What changes a result: a budget that ran out, failed requests      |
+| `info`  | One line per scan: score, pages, duration                          |
+| `debug` | Decisions and phases: bot walls, hosts dropped, time per phase     |
+| `trace` | One line per request and per audit                                 |
+
+Each line starts with the time, the level, the site and the first 8
+characters of the scan id, then the component that wrote it:
+
+```
+07:12:03.456 WARN  [yourstore.com a1b2c3d4] orchestrator: Some requests got no answer failed=3 requests=212 failures={"UND_ERR_CONNECT_TIMEOUT":3}
+```
+
+The components are `orchestrator`, `fetcher`, `audit`, `scan`, `ua-parity`,
+`extraction`, `a11y` and `config`. Set `LOG_FORMAT=json` to get one JSON
+object per line instead. Field names follow OpenTelemetry where it has one:
+`http.request.method`, `url.full`, `http.response.status_code`,
+`user_agent.original`. Durations are `durationMs`; errors are `err`, with
+`type`, `message`, `stack` and `code`. The scan id is the report's `scanId`,
+so a log line and its report join on it.
+
+The logger removes credentials before it writes: a URL's `user:password@`, and
+the value of any key named like a secret (`authorization`, `cookie`, `token`
+and similar).
+
+### `--log-file <path>`
+
+Appends every log line to a file, down to `trace` and as JSON, whatever the
+terminal level is. The file shows each request when it starts and when it
+ends, the time each phase took, a detected bot wall, requests the scan chose
+not to send, and any request still open when the audits finished.
+
+```bash
+agent-lighthouse https://yourstore.com --silent --log-file ./scan-log.jsonl
+
+# the ten slowest requests
+jq -r 'select(.msg == "Request finished") | [.durationMs, ."http.response.status_code", ."url.full"] | @tsv' scan-log.jsonl | sort -rn | head
+
+# time per phase
+jq -r 'select(.msg == "Phase done") | "\(.phase)\t\(.durationMs)ms"' scan-log.jsonl
+```
+
+### Logging from your own code
+
+`runScan` takes a `logger` option. Any logger with pino's methods works, pino
+included, and every line of that scan goes to it instead of to stderr:
+
+```ts
+import pino from "pino";
+import { runScan } from "@forkpoint/agent-lighthouse-core";
+
+const report = await runScan("https://yourstore.com", {
+  logger: pino({ level: "debug" }),
+});
 ```
 
 ### `--silent`

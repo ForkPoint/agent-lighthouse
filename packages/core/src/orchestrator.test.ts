@@ -61,6 +61,7 @@ vi.mock("./fetcher", async (importOriginal) => {
         if (signal?.aborted) return abortedResult(url);
         return h.map.get(url) ?? notFound(url);
       },
+      summary: () => ({ requests: 0, statuses: {}, failures: {}, open: [] }),
     }),
   };
 });
@@ -132,6 +133,7 @@ import {
   ScoreDisplayMode,
 } from "./types";
 import { PhaseId } from "./progress";
+import { captureLogs } from "./tests/capture-logs";
 
 beforeEach(() => {
   h.map.clear();
@@ -1860,5 +1862,82 @@ describe("runScan — burst-limit 428 on the homepage", () => {
       statusCode: 428,
     });
     expect(report.scanValidity?.unscoredReason).toContain("throttled");
+  });
+});
+
+describe("runScan — logging", () => {
+  it("names the scan and site on every line, and shares the id with the report", async () => {
+    set("https://example.com/", CONTENT_HTML);
+    const logs = captureLogs();
+    let report;
+    try {
+      report = await runScan("https://user:secret@example.com/");
+    } finally {
+      logs.restore();
+    }
+    const lines = logs.lines;
+
+    expect(lines.length).toBeGreaterThan(5);
+    const scans = new Set(lines.map((l) => l["scan"]));
+    expect([...scans]).toEqual([report.scanId]);
+    expect(report.scanId).toMatch(/^[0-9a-f-]{36}$/);
+    expect(lines.every((l) => l["site"] === "example.com")).toBe(true);
+    expect(lines.filter((l) => JSON.stringify(l).includes("secret"))).toEqual(
+      [],
+    );
+    const phases = lines.filter(
+      (l) => l["component"] === "orchestrator" && l["msg"] === "Phase done",
+    );
+    expect(phases.map((l) => l["phase"])).toContain(PhaseId.Audits);
+    expect(lines.at(-1)).toMatchObject({
+      level: "info",
+      component: "orchestrator",
+      msg: "Scan finished",
+      pages: expect.any(Number),
+      budgetExhausted: false,
+    });
+  });
+
+  it("uses the caller's scan id and logger", async () => {
+    set("https://example.com/", CONTENT_HTML);
+    const calls: Array<{
+      level: string;
+      fields: Record<string, unknown>;
+      msg?: string;
+    }> = [];
+    const method =
+      (level: string) =>
+      (fields: Record<string, unknown> | string, msg?: string) => {
+        calls.push(
+          typeof fields === "string"
+            ? { level, fields: {}, msg: fields }
+            : { level, fields, ...(msg !== undefined && { msg }) },
+        );
+      };
+    const target = {
+      error: method("error"),
+      warn: method("warn"),
+      info: method("info"),
+      debug: method("debug"),
+      trace: method("trace"),
+      child: () => target,
+      isLevelEnabled: () => true,
+    };
+    const logs = captureLogs();
+    let report;
+    try {
+      report = await runScan("https://example.com/", {
+        logger: target,
+        scanId: "run-42",
+      });
+    } finally {
+      logs.restore();
+    }
+
+    expect(report.scanId).toBe("run-42");
+    expect(logs.lines).toEqual([]);
+    expect(calls.length).toBeGreaterThan(5);
+    expect(calls.every((c) => c.fields["scan"] === "run-42")).toBe(true);
+    expect(calls.at(-1)).toMatchObject({ level: "info", msg: "Scan finished" });
   });
 });

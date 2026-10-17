@@ -6,7 +6,9 @@ import type {
   AuditMeta,
   AuditCoverage,
 } from "./types";
-import { logger, LogLevel } from "./logger";
+import { LogField, logger, LogLevel } from "./logger";
+
+const log = logger.child({ [LogField.Component]: "audit" });
 import {
   TAG_SKIPPED_PAGE_TYPE,
   TAG_SCAN_ERROR,
@@ -24,7 +26,7 @@ import {
   calculateCategoryScore,
   calculateOverallScore,
 } from "./scorer";
-import { traceFromCheck, formatTrace, type AuditTrace } from "./audit-trace";
+import { traceFromCheck, type AuditTrace } from "./audit-trace";
 import {
   scanReadTheSite,
   unreadSiteReason,
@@ -405,9 +407,9 @@ export function planAudits(
       } catch (err) {
         // One malformed custom audit degrades to its own stub, like any other
         // per-audit failure, instead of aborting the whole scan.
-        logger.error(
-          { err, auditId: registration.meta.id },
-          "[scanner] Audit error",
+        log.error(
+          { audit: registration.meta.id, [LogField.Error]: err },
+          "Audit error",
         );
         skipped.push(
           stubCheck(
@@ -546,11 +548,22 @@ export async function runAudits(
       : stub;
   };
 
-  const tracing = Boolean(onTrace) || logger.level === LogLevel.Debug;
+  const tracing = Boolean(onTrace) || log.isLevelEnabled(LogLevel.Trace);
   const trace = (check: CheckResult, durationMs: number): void => {
     if (!tracing) return;
     const record = traceFromCheck(check, durationMs);
-    logger.debug(formatTrace(record));
+    log.trace(
+      {
+        audit: record.id,
+        outcome: record.outcome,
+        status: record.status,
+        score: record.score,
+        weight: record.weight,
+        [LogField.DurationMs]: record.durationMs,
+        displayValue: record.displayValue,
+      },
+      "Audit finished",
+    );
     onTrace?.(record);
   };
 
@@ -624,9 +637,9 @@ export async function runAudits(
               finish(instance.toCheckResult(result, mode)),
             ) as CheckResult;
           } catch (err) {
-            logger.error(
-              { err, auditId: reg.meta.id },
-              "[scanner] Audit error",
+            log.error(
+              { audit: reg.meta.id, [LogField.Error]: err },
+              "Audit error",
             );
             return finish(
               stubCheck(

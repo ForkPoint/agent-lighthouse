@@ -8,6 +8,8 @@ import {
   type PageOverride,
   type PageType,
   CheckStatus,
+  parseLogLevel,
+  type LogLevel,
 } from "@forkpoint/agent-lighthouse-core";
 
 /** Every value `--page-type` accepts, in the order the help text lists them. */
@@ -80,6 +82,12 @@ export interface CliOptions {
   timeoutSeconds: number | undefined;
   /** A `--timeout` value that is not a non-negative number; `main` refuses it. */
   invalidTimeout: string | undefined;
+  /** Terminal log level from `--log-level`; unset keeps `LOG_LEVEL`. */
+  logLevel: LogLevel | undefined;
+  /** A `--log-level` value that names no level; `main` refuses it. */
+  invalidLogLevel: string | undefined;
+  /** Where `--log-file` appends every log line, as JSON, at debug level. */
+  logFile: string | undefined;
 }
 
 /**
@@ -183,6 +191,7 @@ export function parseCliOptions(
   fileConfig: FileConfig = {},
 ): CliOptions {
   const categories = splitList(getArgValue(args, "", "--categories"));
+  const logLevelArg = getArgValue(args, "", "--log-level");
   // Validate every occurrence before applying getArgValue's existing precedence.
   // Otherwise one valid flag can hide a malformed or missing repeated value.
   for (const [index, arg] of args.entries()) {
@@ -271,6 +280,12 @@ export function parseCliOptions(
     tracePath: args.includes("--trace")
       ? (getArgValue(args, "", "--trace") ?? DEFAULT_TRACE_FILE)
       : getArgValue(args, "", "--trace"),
+    logLevel: parseLogLevel(logLevelArg),
+    invalidLogLevel:
+      logLevelArg !== undefined && parseLogLevel(logLevelArg) === undefined
+        ? logLevelArg
+        : undefined,
+    logFile: getArgValue(args, "", "--log-file"),
     timeoutSeconds: timeoutValid
       ? Number(timeoutArg)
       : fileTimeoutValid

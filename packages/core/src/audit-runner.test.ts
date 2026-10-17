@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import type { AuditMeta, AuditResult } from "./types";
-import { logger, LogLevel } from "./logger";
+import { LogLevel, type LogFields } from "./logger";
+import { captureLogs } from "./tests/capture-logs";
 import { Audit } from "./audit";
 import type { CheckContext } from "./check-context";
 import {
@@ -89,7 +90,7 @@ function ctxWith(pageTypes: PageType[]): CheckContext {
 
 describe("runAudits", () => {
   it("filters by page type, handles sync/async/throwing audits, and scores categories", async () => {
-    const errorSpy = vi.spyOn(logger, "error").mockImplementation(() => logger);
+    const logs = captureLogs(LogLevel.Error);
 
     const config: ScanConfig = {
       categories: [
@@ -149,7 +150,9 @@ describe("runAudits", () => {
     // s1 skipped (na stub) + t1 throws (na stub) + 4 real checks = 6 total.
     // 5 audits execute (s1 never runs); t1's throw is logged once.
     expect(out.checks).toHaveLength(6);
-    expect(errorSpy).toHaveBeenCalledTimes(1);
+    expect(logs.lines.filter((l) => l["msg"] === "Audit error")).toHaveLength(
+      1,
+    );
     expect(events.filter((e) => e.type === "unit:done")).toHaveLength(5);
     const fails = events.filter((e) => e.type === "unit:fail");
     expect(fails).toHaveLength(1);
@@ -182,11 +185,11 @@ describe("runAudits", () => {
     // fallback it used to be round(90*0.5 + 0*0.5) = 45.
     expect(out.overallScore).toBe(90);
 
-    errorSpy.mockRestore();
+    logs.restore();
   });
 
   it("stamps meta.weight onto every produced check, real results and na stubs alike", async () => {
-    const errorSpy = vi.spyOn(logger, "error").mockImplementation(() => logger);
+    const logs = captureLogs(LogLevel.Error);
 
     const config: ScanConfig = {
       categories: [{ id: "w", name: "W", weight: 1 }],
@@ -226,7 +229,7 @@ describe("runAudits", () => {
     // Only `real` contributes: 1*0.6 / 0.6 → 100
     expect(out.categories[0]!.score).toBe(100);
 
-    errorSpy.mockRestore();
+    logs.restore();
   });
 
   it("returns zeroed categories for empty input and works without onProgress", async () => {
@@ -552,14 +555,14 @@ describe("gatherer cache identity", () => {
 describe("scan-error explanations", () => {
   /** Run one audit that fails the given way, and return its stub. */
   async function stubFor(fail: () => never) {
-    const errorSpy = vi.spyOn(logger, "error").mockImplementation(() => {});
+    const logs = captureLogs(LogLevel.Error);
     const m = meta({ id: "x1", category: "cat1" });
     const config: ScanConfig = {
       categories: [{ id: "cat1", name: "Cat 1", weight: 1 }],
       audits: { cat1: [makeReg(m, fail)] },
     };
     const out = await runAudits(ctxWith([PageType.Homepage]), config);
-    errorSpy.mockRestore();
+    logs.restore();
     return out.checks.find((c) => c.id === "x1")!;
   }
 
@@ -687,7 +690,7 @@ describe("audit tracing", () => {
   }
 
   async function tracesOf() {
-    const errorSpy = vi.spyOn(logger, "error").mockImplementation(() => {});
+    const logs = captureLogs(LogLevel.Error);
     const traces: AuditTrace[] = [];
     await runAudits(
       ctxWith([PageType.Homepage]),
@@ -696,7 +699,7 @@ describe("audit tracing", () => {
       undefined,
       (t) => traces.push(t),
     );
-    errorSpy.mockRestore();
+    logs.restore();
     return traces;
   }
 
@@ -731,32 +734,30 @@ describe("audit tracing", () => {
   });
 
   // Building a record per audit is not free, so nothing is built when nobody
-  // is listening and the logger is not at debug level.
+  // is listening and the logger is not at trace level.
+  /** The per-audit debug lines a run of the tracing config writes. */
+  async function auditLines(level: LogLevel): Promise<LogFields[]> {
+    const logs = captureLogs(level);
+    try {
+      await runAudits(ctxWith([PageType.Homepage]), tracingConfig());
+    } finally {
+      logs.restore();
+    }
+    return logs.lines.filter((l) => l["msg"] === "Audit finished");
+  }
+
   it("builds nothing when no handler is given and the logger is quiet", async () => {
-    const debugSpy = vi.spyOn(logger, "debug").mockImplementation(() => {});
-    const errorSpy = vi.spyOn(logger, "error").mockImplementation(() => {});
-    const previous = logger.level;
-    logger.level = LogLevel.Info;
-    await runAudits(ctxWith([PageType.Homepage]), tracingConfig());
-    logger.level = previous;
-    errorSpy.mockRestore();
-    expect(debugSpy).not.toHaveBeenCalled();
-    debugSpy.mockRestore();
+    expect(await auditLines(LogLevel.Debug)).toEqual([]);
   });
 
-  it("logs one debug line per audit when the level asks for it", async () => {
-    const debugSpy = vi.spyOn(logger, "debug").mockImplementation(() => {});
-    const errorSpy = vi.spyOn(logger, "error").mockImplementation(() => {});
-    const previous = logger.level;
-    logger.level = LogLevel.Debug;
-    await runAudits(ctxWith([PageType.Homepage]), tracingConfig());
-    logger.level = previous;
-    errorSpy.mockRestore();
-    const lines = debugSpy.mock.calls.map((c) =>
-      typeof c[0] === "string" ? c[0] : "",
-    );
-    expect(lines.filter((l) => l.startsWith("[audit] "))).toHaveLength(3);
-    debugSpy.mockRestore();
+  it("logs one trace line per audit when the level asks for it", async () => {
+    const lines = await auditLines(LogLevel.Trace);
+    expect(lines).toHaveLength(3);
+    expect(lines[0]).toMatchObject({
+      component: "audit",
+      audit: expect.any(String),
+      outcome: expect.any(String),
+    });
   });
 });
 

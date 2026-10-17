@@ -12,7 +12,9 @@
  * the jsdom window, so there is no heavyweight runtime to load per page.
  */
 import { JSDOM } from "jsdom";
-import { logger } from "#core/logger";
+import { LogField, logger } from "#core/logger";
+
+const log = logger.child({ [LogField.Component]: "a11y" });
 import { runRules } from "./engine/rules";
 import { RuleStatus } from "./engine/rules";
 
@@ -107,9 +109,9 @@ export async function runA11yForHtml(
     }
     return out;
   } catch (err) {
-    logger.warn(
-      { err, url },
-      "[a11y-runner] accessibility run failed; treating rules as not-applicable",
+    log.warn(
+      { [LogField.Url]: url, [LogField.Error]: err },
+      "Accessibility run failed; rules read as not applicable",
     );
     return {};
   } finally {

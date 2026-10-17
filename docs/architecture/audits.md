@@ -705,7 +705,7 @@ These hold in `main` today:
   into the numerator on every site without an API.
 - **`details` values are scalars or arrays of strings.** The catchall accepts
   `string | number | boolean | string[]`, and `validate()` calls `.parse`, which
-  **throws** — the runner then logs `[scanner] Audit error` and emits an errored
+  **throws** — the runner then logs `Audit error` (component `audit`) and emits an errored
   `na` stub, so one bad value costs the whole result. Unit tests call
   `audit.audit(ctx)` directly and never reach `toCheckResult`, so parse through
   `AuditResultSchema` in the test whenever `details` carries anything structured.

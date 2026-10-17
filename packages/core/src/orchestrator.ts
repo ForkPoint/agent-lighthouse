@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { DomWorkLimitError } from "./dom-work";
 import { SnapshotScanOptionsSchema, snapshotUrlKey } from "./schemas";
 import type { BrowserSnapshots } from "./contracts";
@@ -14,7 +15,9 @@ import {
   TAG_SKIPPED_PAGE_TYPE,
   TAG_SKIPPED_SCAN_BUDGET,
 } from "./constants";
-import { logger } from "./logger";
+import { LogField, logger, withLogContext, type LoggerLike } from "./logger";
+
+const log = logger.child({ [LogField.Component]: "orchestrator" });
 import { createFetcher, isSafeUrl, splitCredentials } from "./fetcher";
 import { UnreachableHosts, isConnectFailure } from "./unreachable-hosts";
 import { gatewayTarget } from "./gateway";
@@ -109,6 +112,17 @@ export interface ScanOptions {
    */
   onAuditTrace?: AuditTraceHandler | undefined;
   /**
+   * Where this scan logs. Any logger with pino's methods works, pino itself
+   * included; every line of the scan goes to it, with `site`, `scan` and
+   * `component` fields. Omitted, the scan logs to the built-in logger.
+   */
+  logger?: LoggerLike | undefined;
+  /**
+   * The id this scan reports as `scanId` and logs as `scan`. Omitted, the
+   * scan makes a random UUID, so a log line and its report share one id.
+   */
+  scanId?: string | undefined;
+  /**
    * Skip audits the scan could not feed, instead of running them blind.
    *
    * On by default. An audit whose required evidence the scan never obtained
@@ -200,9 +214,9 @@ async function fetchPageWithRetry(
       ? Math.min(header * 1000, MAX_RETRY_AFTER_MS)
       : RATE_LIMIT_BACKOFF_MS;
 
-  logger.debug(
-    { url, waitMs },
-    `[orchestrator] Page answered ${first.status}; retrying once in ${waitMs}ms`,
+  log.debug(
+    { [LogField.Url]: url, [LogField.HttpStatus]: first.status, waitMs },
+    "Page throttled; retrying once",
   );
   // The wait ends early when either signal fires, and is skipped when one
   // already has: an aborted signal never dispatches `abort` again, and the
@@ -253,29 +267,70 @@ export async function runScan(
     throw new RangeError(
       `timeoutMs must be a non-negative number of milliseconds, got ${String(options?.timeoutMs)}`,
     );
-  const budget = new AbortController();
-  const timer =
-    limitMs > 0
-      ? setTimeout(() => {
-          const message = `The scan budget of ${formatBudget(limitMs)} ran out.`;
-          logger.warn(`[orchestrator] ${message} ${splitCredentials(url).url}`);
-          budget.abort(new Error(message));
-        }, limitMs)
-      : undefined;
+  // Every line logged during this scan names it, so lines from scans that
+  // run side by side can be told apart.
+  const scanId = options?.scanId ?? randomUUID();
+  return withLogContext(
+    { [LogField.Site]: logSite(url), [LogField.Scan]: scanId },
+    async () => {
+      const started = performance.now();
+      log.debug({ [LogField.Url]: url, budgetMs: limitMs }, "Scan started");
+      const budget = new AbortController();
+      const timer =
+        limitMs > 0
+          ? setTimeout(() => {
+              const message = `The scan budget of ${formatBudget(limitMs)} ran out.`;
+              log.warn({ budgetMs: limitMs }, message);
+              budget.abort(new Error(message));
+            }, limitMs)
+          : undefined;
+      try {
+        const report = await scanWithinBudget(url, options, {
+          signal: budget.signal,
+          limitMs,
+          scanId,
+        });
+        log.info(
+          {
+            [LogField.DurationMs]: Math.round(performance.now() - started),
+            score: report.overallScore,
+            pages: report.pagesScanned.length,
+            budgetExhausted: budget.signal.aborted,
+            unscoredReason: report.scanValidity?.unscoredReason,
+          },
+          "Scan finished",
+        );
+        return report;
+      } catch (error) {
+        log.debug(
+          {
+            [LogField.DurationMs]: Math.round(performance.now() - started),
+            [LogField.Error]: error,
+          },
+          "Scan threw",
+        );
+        throw error;
+      } finally {
+        if (timer !== undefined) clearTimeout(timer);
+      }
+    },
+    options?.logger,
+  );
+}
+
+/** The host a log line names for a scan, without credentials. */
+function logSite(url: string): string {
   try {
-    return await scanWithinBudget(url, options, {
-      signal: budget.signal,
-      limitMs,
-    });
-  } finally {
-    if (timer !== undefined) clearTimeout(timer);
+    return new URL(splitCredentials(url).url).host;
+  } catch {
+    return url;
   }
 }
 
 async function scanWithinBudget(
   url: string,
   options: ScanOptions | undefined,
-  budget: { signal: AbortSignal; limitMs: number },
+  budget: { signal: AbortSignal; limitMs: number; scanId: string },
 ): Promise<ScanReport> {
   const onEvent = options?.onEvent;
   const pageOverrides = options?.pages;
@@ -286,7 +341,17 @@ async function scanWithinBudget(
     ? AbortSignal.any([signal, budget.signal])
     : budget.signal;
 
-  const tracker = new ProgressTracker((event) => onEvent?.(event));
+  const tracker = new ProgressTracker((event) => {
+    if (event.type === "phase:done")
+      log.debug(
+        {
+          phase: event.phase,
+          [LogField.DurationMs]: Math.round(event.durationMs),
+        },
+        "Phase done",
+      );
+    onEvent?.(event);
+  });
   const start = performance.now();
   const fetcher = createFetcher({
     ...(options?.dispatcher !== undefined && {
@@ -323,8 +388,6 @@ async function scanWithinBudget(
     overrideTypeByKey.set(key, ov.pageType);
     overrideUrls.push(resolved);
   }
-
-  logger.debug({ url, domain }, "[orchestrator] Starting runScan");
 
   // ── Phase 1: Root-level file checks & Origin Evidence (parallel) ───────────────
   signal?.throwIfAborted();
@@ -385,15 +448,8 @@ async function scanWithinBudget(
     originReadAt = cachedEvidence.readAt;
     tracker.phaseStart(PhaseId.FetchRoot, 0);
     tracker.phaseDone();
-    logger.debug(
-      { origin: baseUrl },
-      "[orchestrator] Phase 1 complete: Reusing cached origin evidence",
-    );
+    log.debug({ origin: baseUrl }, "Reusing cached origin evidence");
   } else {
-    logger.debug(
-      { count: rootFilePaths.length },
-      "[orchestrator] Phase 1: Fetching root files",
-    );
     tracker.phaseStart(PhaseId.FetchRoot, rootFilePaths.length);
 
     // robots.txt goes first, alone, and the other root files wait for it.
@@ -413,7 +469,7 @@ async function scanWithinBudget(
     const refused = isConnectFailure(robots)
       ? `${new URL(baseUrl).host} did not accept a connection: ${robots.error}`
       : undefined;
-    if (refused) logger.debug(`[orchestrator] Root files not sent: ${refused}`);
+    if (refused) log.debug({ reason: refused }, "Root files not sent");
 
     const rootResults = await Promise.all(
       rootFilePaths.map((path) => {
@@ -448,12 +504,10 @@ async function scanWithinBudget(
     originFresh = true;
 
     tracker.phaseDone();
-    logger.debug("[orchestrator] Phase 1 complete: Root files fetched");
   }
 
   // ── Phase 2: Page-level checks (parallel per page) ───────────
   signal?.throwIfAborted();
-  logger.debug("[orchestrator] Phase 2: Fetching page");
 
   tracker.phaseStart(PhaseId.FetchPages, 1 + overrideUrls.length);
   const pageResult = await fetchPageWithRetry(
@@ -514,9 +568,9 @@ async function scanWithinBudget(
     !overrideTypeByKey.has(gatewayCandidate.replace(/\/$/, "")) &&
     (await isSafeUrl(gatewayCandidate))
   ) {
-    logger.debug(
+    log.debug(
       { from: displayUrl, to: gatewayCandidate },
-      "[orchestrator] Requested page is a gateway; reading its target",
+      "Requested page is a gateway; reading its target",
     );
     gatewayUrls.push(gatewayCandidate);
     tracker.setPhaseTotal(2 + overrideUrls.length);
@@ -593,14 +647,9 @@ async function scanWithinBudget(
   }
 
   tracker.phaseDone();
-  logger.debug(
-    { pageCount: pages.length },
-    "[orchestrator] Phase 2 complete: Pages parsed",
-  );
 
   // ── Phase 3: Run audits against context ──────────────────────
   signal?.throwIfAborted();
-  logger.debug("[orchestrator] Phase 3: Planning and running audits");
 
   const wafProtection = detectWafProtection(
     url,
@@ -609,6 +658,16 @@ async function scanWithinBudget(
     allPageResults.filter((result) => result.status === 200 && result.body)
       .length,
   );
+  if (wafProtection)
+    log.debug(
+      {
+        name: wafProtection.name,
+        blocked: wafProtection.isBlocked,
+        reason: wafProtection.reason,
+        [LogField.HttpStatus]: pageResult.status,
+      },
+      "Bot wall detected",
+    );
 
   const evidence = buildScanEvidence({
     requestedUrl: url,
@@ -641,6 +700,8 @@ async function scanWithinBudget(
     })
     .sort((a, b) => compareCodePoints(a.url, b.url));
 
+  // Requests the scan answered itself instead of sending; logged at the end.
+  const notSent = { budget: 0, unreachable: 0 };
   const unreachableHosts = new UnreachableHosts([
     url,
     pageResult.finalUrl || url,
@@ -661,10 +722,15 @@ async function scanWithinBudget(
     // result at once, the same shape a refused connection gives it. A host
     // that refused a connection earlier in the scan gets the same treatment.
     fetch: async (options) => {
-      if (budget.signal.aborted)
+      if (budget.signal.aborted) {
+        notSent.budget += 1;
         return unsentResult(options.url, budgetReason(budget.signal));
+      }
       const refusal = unreachableHosts.refusal(options.url);
-      if (refusal) return unsentResult(options.url, refusal);
+      if (refusal) {
+        notSent.unreachable += 1;
+        return unsentResult(options.url, refusal);
+      }
       const result = await fetcher.fetch({ ...options, signal: fetchSignal });
       unreachableHosts.record(options.url, result);
       return result;
@@ -720,11 +786,41 @@ async function scanWithinBudget(
   // being assembled cut nothing, and must not say it did.
   const budgetExhausted = budget.signal.aborted;
 
-  logger.debug("[orchestrator] Phase 3 complete: Audits finished");
+  const requests = fetcher.summary();
+  const failed = Object.values(requests.failures).reduce((a, b) => a + b, 0);
+  log.debug(
+    {
+      budgetExhausted,
+      requests: requests.requests,
+      statuses: requests.statuses,
+      failures: requests.failures,
+      notSentBudget: notSent.budget,
+      notSentUnreachable: notSent.unreachable,
+      open: requests.open.length,
+    },
+    "Audits finished",
+  );
+  // One line per scan for every failed request, grouped by error code. Each
+  // failure has its own debug line; at warn they would bury the terminal.
+  if (failed > 0)
+    log.warn(
+      { failed, requests: requests.requests, failures: requests.failures },
+      "Some requests got no answer",
+    );
+  if (requests.open.length > 0)
+    log.warn(
+      {
+        count: requests.open.length,
+        oldest: requests.open
+          .sort((a, b) => b.ms - a.ms)
+          .slice(0, 5)
+          .map((r) => `${r.url} (${r.ms} ms)`),
+      },
+      "Requests still open after the audits",
+    );
 
   // ── Phase 4: Assemble report ─────────────────────────────────
   tracker.phaseStart(PhaseId.Report, 1);
-  logger.debug("[orchestrator] Phase 4: Building final report");
 
   const durationMs = Math.round(performance.now() - start);
 
@@ -931,7 +1027,7 @@ async function scanWithinBudget(
     ? extractProductFieldVerification(pages)
     : undefined;
   const report: ScanReport = {
-    scanId: "", // Set by the caller
+    scanId: budget.scanId,
     url: displayUrl,
     domain,
     overallScore: scored ? overallScore : null,
@@ -994,10 +1090,6 @@ async function scanWithinBudget(
   tracker.unitDone();
   tracker.phaseDone();
   tracker.scanDone(report.overallScore);
-  logger.debug(
-    { durationMs, score: overallScore },
-    "[orchestrator] runScan complete",
-  );
 
   return report;
 }

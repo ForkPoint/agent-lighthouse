@@ -3,6 +3,8 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { defineConfig, loadConfigFile } from "./config-loader";
+import { LogLevel } from "./logger";
+import { captureLogs } from "./tests/capture-logs";
 
 /**
  * Config file discovery.
@@ -95,24 +97,35 @@ describe("loadConfigFile", () => {
   });
 
   it("warns and tries the next name when a discovered file is unparsable", () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const logs = captureLogs(LogLevel.Warn);
     write("agent-lighthouse.config.json", "{ not json");
     write(
       ".agent-lighthouserc.json",
       JSON.stringify({ url: "https://second.test" }),
     );
 
-    expect(loadConfigFile().url).toBe("https://second.test");
-    expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining("agent-lighthouse.config.json"),
-      expect.anything(),
-    );
+    try {
+      expect(loadConfigFile().url).toBe("https://second.test");
+    } finally {
+      logs.restore();
+    }
+    expect(logs.lines).toMatchObject([
+      {
+        component: "config",
+        file: "agent-lighthouse.config.json",
+        err: { type: "SyntaxError" },
+      },
+    ]);
   });
 
   it("returns an empty config when every discovered file is unparsable", () => {
-    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const logs = captureLogs(LogLevel.Warn);
     write("agent-lighthouse.config.json", "{ not json");
-    expect(loadConfigFile()).toEqual({});
+    try {
+      expect(loadConfigFile()).toEqual({});
+    } finally {
+      logs.restore();
+    }
   });
 
   it("keeps every field the config declares", () => {

@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
-import diagnosticsChannel from "node:diagnostics_channel";
 import { runScan, type ScanOptions } from "#core/orchestrator";
 import type { ScanReport } from "#core/types";
+import { LogFormat, LogLevel, logger } from "#core/logger";
 
 /**
  * Shared pieces of the live corpus runners (`test-live-sites.ts` and
@@ -99,101 +99,28 @@ export async function scanLocation(): Promise<string | undefined> {
   }
 }
 
-interface LoggedRequest {
-  started: number;
-  method: string;
-  url: string;
-  userAgent: string;
-}
-
 /**
- * Append one JSON line per HTTP request of the run to `path`, with its method,
- * URL, user agent, status (0 for a failed request) and duration.
+ * Append every log line of the run to `path` as JSON lines, down to trace.
  *
  * Some sites answer a full scan with a 428 or a timeout while single requests
  * and a burst of the same URLs pass. A log of every request a scan made is
- * what tells those apart. It reads undici's diagnostics channels, so it sees
- * every request the scanner's fetcher makes without a hook in the scanner.
+ * what tells those apart. The fetcher logs each request when it starts and
+ * when it ends, with method, URL, user agent, status and duration, and each
+ * line names its scan and site, so the six scans of a parallel run stay apart.
+ * A request that never ends has a "started" line and no "finished" line, and
+ * a scan that ends with requests still open names them.
  *
  * Returns a function that stops logging.
  */
-export function startRequestLog(path: string): () => void {
-  const pending = new WeakMap<object, LoggedRequest>();
-  const write = (entry: LoggedRequest, status: number, error?: string) =>
-    fs.appendFileSync(
-      path,
-      JSON.stringify({
-        at: new Date(entry.started).toISOString(),
-        method: entry.method,
-        url: entry.url,
-        userAgent: entry.userAgent,
-        status,
-        ms: Date.now() - entry.started,
-        ...(error !== undefined && { error }),
-      }) + "\n",
-    );
-
-  const onCreate = (message: unknown) => {
-    const { request } = message as { request: UndiciRequest };
-    pending.set(request, {
-      started: Date.now(),
-      method: request.method,
-      url: `${request.origin}${request.path}`,
-      userAgent: headerValue(request.headers, "user-agent") ?? "",
-    });
-  };
-  const onHeaders = (message: unknown) => {
-    const { request, response } = message as {
-      request: UndiciRequest;
-      response: { statusCode: number };
-    };
-    const entry = pending.get(request);
-    if (!entry) return;
-    pending.delete(request);
-    write(entry, response.statusCode);
-  };
-  const onError = (message: unknown) => {
-    const { request, error } = message as {
-      request: UndiciRequest;
-      error: Error;
-    };
-    const entry = pending.get(request);
-    if (!entry) return;
-    pending.delete(request);
-    write(entry, 0, error.message);
-  };
-
-  diagnosticsChannel.subscribe("undici:request:create", onCreate);
-  diagnosticsChannel.subscribe("undici:request:headers", onHeaders);
-  diagnosticsChannel.subscribe("undici:request:error", onError);
+export function startLogFile(path: string): () => void {
+  const fd = fs.openSync(path, "a");
+  const remove = logger.addSink({
+    level: LogLevel.Trace,
+    format: LogFormat.Json,
+    write: (line) => fs.writeSync(fd, `${line}\n`),
+  });
   return () => {
-    diagnosticsChannel.unsubscribe("undici:request:create", onCreate);
-    diagnosticsChannel.unsubscribe("undici:request:headers", onHeaders);
-    diagnosticsChannel.unsubscribe("undici:request:error", onError);
+    remove();
+    fs.closeSync(fd);
   };
-}
-
-interface UndiciRequest {
-  origin: string;
-  path: string;
-  method: string;
-  headers: string | string[];
-}
-
-/** One header from undici's raw form: a flat `[name, value, ...]` array or a `name: value\r\n` string. */
-function headerValue(
-  headers: string | string[],
-  name: string,
-): string | undefined {
-  if (Array.isArray(headers)) {
-    for (let i = 0; i + 1 < headers.length; i += 2)
-      if (headers[i]!.toLowerCase() === name) return headers[i + 1];
-    return undefined;
-  }
-  for (const line of headers.split("\r\n")) {
-    const colon = line.indexOf(":");
-    if (colon > 0 && line.slice(0, colon).trim().toLowerCase() === name)
-      return line.slice(colon + 1).trim();
-  }
-  return undefined;
 }

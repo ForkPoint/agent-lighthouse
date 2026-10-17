@@ -1,6 +1,9 @@
 import { cacheOwner } from "./cache-owner";
 import type { FetchOptions, FetchResult } from "#core/fetcher";
 import { isSafeUrl } from "#core/fetcher";
+import { LogField, logger } from "#core/logger";
+
+const log = logger.child({ [LogField.Component]: "ua-parity" });
 import { getMainContentText } from "#core/parser";
 import { DomWorkLimitError, parseBoundedHtml } from "#core/dom-work";
 
@@ -224,7 +227,12 @@ function classifyWithinLimits(baseline: FetchResult, probe: FetchResult) {
  * timeout in turn, and a few such sitemap URLs exhaust the scan budget.
  */
 function unanswered(baseline: FetchResult): boolean {
-  return baseline.status === 0;
+  if (baseline.status !== 0) return false;
+  log.debug(
+    { [LogField.Url]: baseline.url, [LogField.Error]: baseline.error },
+    "Baseline got no answer; crawler probes skipped",
+  );
+  return true;
 }
 
 /**
