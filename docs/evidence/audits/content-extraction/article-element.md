@@ -98,7 +98,3 @@ Declares applicablePageTypes ['content'] but then loops every page in the crawl 
 ## Implementation deviations (v7 P3, 2026-10-07)
 
 The page-purpose gate now excludes general pages. Body-level aggregation and narrower specialist populations remain under review in the v7 applicability ledger. This change preserves the evidence grade, tier, weight, and audit ID.
-
-## Deferred (v7 P3)
-
-See `docs/architecture/v7-audit-applicability-ledger.md` for the remaining audit-specific guards, population limits, and aggregation work. P4 will address selected-page evidence and mixed provenance.

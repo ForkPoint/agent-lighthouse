@@ -5,7 +5,6 @@ Canonical inventory and lifecycle map of all Agent Lighthouse audits.
 This document serves as the human-readable index for [`docs/evidence/audit-map.json`](./audit-map.json),
 which is the central machine-readable index for all active, merged, and sunset audits.
 Current fields come from registry metadata. Evidence dossiers govern consumer claims.
-Review notes remain a dated snapshot; they do not establish current behavior or passing tests.
 
 ## Summary
 
@@ -13,7 +12,6 @@ Review notes remain a dated snapshot; they do not establish current behavior or 
 - **Historical v1 Legacy Audits:** 207 (181 carried forward, 26 sunset)
 - **Sunset Dossiers Preserved:** 27 under `docs/evidence/sunset/`
 - **Merged Dossiers Preserved:** 42 under `docs/evidence/merged/`
-- **Audits with Review Notes:** 215; missing: 0
 
 ## Active Audits by Category
 
@@ -38,7 +36,7 @@ Agent Lighthouse audits follow strict evidence governance (defined in [`docs/evi
 
 ## Machine-Readable Dataset
 
-The central index is [`audit-map.json`](./audit-map.json), format version 5.
+The central index is [`audit-map.json`](./audit-map.json), format version 6.
 Start with `readingGuide`, then select records from `audits` by exact ID.
 The format version describes this file, not the package release version.
 
@@ -51,12 +49,9 @@ The format version describes this file, not the package release version.
 | `tier`, `evidenceGrade`, `weight`, `scoreDisplayMode` | Scoring contract; eligibility still depends on the scan. |
 | `enabledByDefault` | False for experimental audits. |
 | `source`, `test`, `dossier` | Repository-relative implementation, test, and evidence paths. |
-| `review` | P2 baseline scope/absence notes, proposed changes, and acceptance criteria. Historical, not current execution proof. |
 | `legacyIds` | Links to preserved migration history. |
 
-Missing reviews appear as `null` and in `summary.auditsWithoutReview`.
-A test file link does not establish test coverage. A review's acceptance criteria
-do not mean those tests exist or pass. The execution record names completed work.
+A test file link does not establish test coverage.
 
 For a small LLM input, select only the records and fields needed:
 
@@ -65,15 +60,14 @@ For a small LLM input, select only the records and fields needed:
 jq '.audits[] | select(.id == "structured-data/article-schema")' docs/evidence/audit-map.json
 
 # All purpose-specific checks, one compact JSON object per line
-jq -c '.audits[] | select(.applicability.pageTypeGate == "restricted") | {id, purpose, applicability, requires, review}' docs/evidence/audit-map.json
+jq -c '.audits[] | select(.applicability.pageTypeGate == "restricted") | {id, purpose, applicability, requires}' docs/evidence/audit-map.json
 
 # Search feature tags
 jq '.audits[] | select(.features | index("article")) | {id, purpose, source, dossier}' docs/evidence/audit-map.json
 ```
 
 Edit runtime fields in the audit's static metadata. Edit evidence and consumer
-limits in its dossier. Preserve the P2 review as a baseline; record completed
-changes in the execution plan. Regenerate the index after edits. The existing
+limits in its dossier. Regenerate the index after edits. The existing
 CI audit-map check rejects stale output and missing source, test, or dossier paths.
 No audit verdict, grade, or weight changes when the index is generated.
 
