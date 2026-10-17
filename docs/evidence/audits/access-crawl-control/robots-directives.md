@@ -12,6 +12,7 @@ sources:
   - rfc9309
   - s18
   - perplexity-bots-docs
+  - bing-chat-controls-2023
 ---
 
 # robots-directives (`2.25`, `1.13`, `4.20`)
@@ -27,13 +28,13 @@ Every robots directive that applies to a scanned page, from both transports and 
 
 Values are tokenized on commas and compared token-wise, so `none` is recognised as noindex+nofollow and `noindexifembedded` is not mistaken for a full block.
 
-| State                                                                  | Result                                                                |
-| :--------------------------------------------------------------------- | :-------------------------------------------------------------------- |
-| a **non-utility** page carries `noindex`/`none`                        | `fail` — `critical` when the homepage is among them, otherwise `high` |
-| a non-utility page carries `nosnippet`, `noarchive` or `max-snippet:0` | `warn`, priority `medium` — indexed but unquotable                    |
-| only utility routes (cart, login, search, account, …) carry `noindex`  | `pass`, naming them                                                   |
-| no directive blocks or suppresses                                      | `pass`                                                                |
-| no pages scanned                                                       | `na`                                                                  |
+| State                                                                             | Result                                                                |
+| :-------------------------------------------------------------------------------- | :-------------------------------------------------------------------- |
+| a **non-utility** page carries `noindex`/`none`                                   | `fail` — `critical` when the homepage is among them, otherwise `high` |
+| a non-utility page carries `nosnippet`, `max-snippet:0`, `noarchive` or `nocache` | `warn`, priority `medium` — indexed but unquotable                    |
+| only utility routes (cart, login, search, account, …) carry `noindex`             | `pass`, naming them                                                   |
+| no directive blocks or suppresses                                                 | `pass`                                                                |
+| no pages scanned                                                                  | `na`                                                                  |
 
 ## Evidence
 
@@ -51,7 +52,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - Google Search Central, AI features and your website: site owners may use the `nosnippet`, `data-nosnippet`, `max-snippet` or `noindex` controls to limit how their content appears in AI features on Search. Eligibility for AI Overviews and AI Mode carries "no additional technical requirements" beyond ordinary Search eligibility — that is, the AI surfaces are fed by the same Search index that `noindex` removes the page from — https://developers.google.com/search/docs/appearance/ai-features (verified 2026-08-21)
 - The directive is a long-standing, cross-vendor indexing control rather than a Google-only convention; RFC 9309 governs the robots.txt half of the same exclusion family and is a ratified standard with named crawler consumers — https://www.rfc-editor.org/rfc/rfc9309.html (verified 2026-08-21)
 
-**Counter-evidence:** `noindex` gates _index-derived_ surfaces only. User-initiated fetchers are unaffected: OpenAI documents that for `ChatGPT-User` "Because these actions are initiated by a user, robots.txt rules may not apply" (https://developers.openai.com/api/docs/bots), and Perplexity documents that `Perplexity-User` "Generally ignores robots.txt rules" (https://docs.perplexity.ai/guides/bots) — both verified 2026-08-21. A noindexed page can therefore still be fetched and quoted live in a chat answer, so the audit's failure language ("blocking AI crawlers") overstates the effect for the conversational-agent path. Separately, the strongest AI-specific directives Google names — `nosnippet`, `data-nosnippet`, `max-snippet:0` — are outside what the current implementation reads, so the A-grade mechanism is only partially instrumented.
+**Counter-evidence:** `noindex` gates _index-derived_ surfaces only. User-initiated fetchers are unaffected: OpenAI documents that for `ChatGPT-User` "Because these actions are initiated by a user, robots.txt rules may not apply" (https://developers.openai.com/api/docs/bots), and Perplexity documents that `Perplexity-User` "Generally ignores robots.txt rules" (https://docs.perplexity.ai/guides/bots) — both verified 2026-08-21. A noindexed page can therefore still be fetched and quoted live in a chat answer, so the audit's failure language ("blocking AI crawlers") overstates the effect for the conversational-agent path. The snippet controls are only partly instrumented. The audit reads `nosnippet` and `max-snippet:0` and warns on them, because Google documents that they keep content out of AI Overviews and AI Mode (https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag, verified 2026-10-17). It also warns on `noarchive` and `nocache`. Google ignores both. Bing documents that "Content tagged NOARCHIVE will not be included in Bing Chat answers", and that NOCACHE content may appear with only its URL, title and snippet (https://blogs.bing.com/webmaster/september-2023/Announcing-new-options-for-webmasters-to-control-usage-of-their-content-in-Bing-Chat, verified 2026-10-17). It does not read element-level `data-nosnippet`, and it does not judge a positive `max-snippet` limit, which narrows rather than removes what an AI answer may quote.
 
 ## Implementation deviations
 
