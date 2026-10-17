@@ -100,6 +100,7 @@ describe("HoverOnlyContentAndNavigationAudit", () => {
     ['<a href="/h" title="Sale Men">Men</a>', "a word the text lacks"],
     ['<a href="/i" title="Info">i</a>', "a different short label"],
     ['<a href="/x" title="OK"></a>', "the only name, with no content word"],
+    ['<a href="/g" title="OK">Go</a>', "short words the name lacks"],
     ['<span title="Ships in 3 days">Delivery</span>', "information"],
   ])("counts a title that adds %s (%s)", async (html) => {
     const result = await audit.audit(page(html));
