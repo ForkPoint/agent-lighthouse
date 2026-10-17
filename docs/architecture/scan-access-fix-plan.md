@@ -20,6 +20,7 @@ scan location BG.
 | Robots-skipped 137 | robots gate off     |   137 |     12 | 119 stop at a real homepage block                                              |
 | Full, request log  | `8eb98ae0` (F1-F8)  |   684 |    443 | 0 invariant violations, 53 origin fallbacks; 140,267 requests logged           |
 | Full, request log  | `b355ab45` (F1-F12) |   684 |    456 | 0 invariant violations, 46 origin fallbacks; 143,547 requests logged           |
+| Full, request log  | `3f6d916d` (F1-F17) |   684 |    459 | 0 invariant violations, 52 origin fallbacks; 140,254 requests logged           |
 
 "Scored" for the two early runs counts scanned sites with a score. Before F4,
 robots-skipped sites were not scanned at all.
@@ -191,6 +192,7 @@ another port or a look-alike host is still not followed.
 | RC22 | label bug      |     5 | A single homepage timeout described as repeated                              | F15      |
 | RC23 | label bug      |     1 | AWS WAF challenge (empty HTTP 202) reported as too little evidence           | F16      |
 | RC24 | scanner bug    |     1 | Gateway meta refresh to the `www` twin not followed                          | F17      |
+| RC25 | scanner bug    |     1 | The site's own host never connects; every root-file probe waits it out       | open     |
 
 Site counts come from the run that found or confirmed each cause. RC5 is the
 14 sites that RC18 later explained. RC18 counts the 11 budget overruns and 4
@@ -205,6 +207,29 @@ ended within 2 ms of each other when one window closed. CPU profiles named
 two causes: the payload regex of F10 (41 s on one payload, and no strings
 read) and the per-ancestor CSS matching of F11 (busy streaks of 8-11 s per
 page).
+
+### `3f6d916d` run: F13-F17 confirmed
+
+Compared with the `b355ab45` run:
+
+- 5 sites newly scored, 2 lost. Both lost sites now stop at a homepage 403
+  (Cloudflare, Akamai) within 3 s: intermittent walls (RC16).
+- Budget overruns fell from 11 to 1. The remaining site answers every request
+  in 4-8 s; 281 requests need 366 s of request time. The verdict is correct.
+- No gap over 15 s in the request log in which no request starts or ends.
+- The highest per-site burst fell from 523 to 499 GETs in 20 s. About 200
+  requests per site in under a minute is the normal scan shape (root files,
+  `/.well-known/` probes, feeds, sampled pages), so "over 100 in 20 s" is not
+  a useful threshold. The site that found F14 now refuses connections from
+  the scan address, so the corpus cannot show its burst; the unit tests pin
+  the 20-link, 4-at-a-time limit.
+- F15: 4 connection drops now read "The connection opened, but the homepage
+  sent no response before the timeout".
+- F16: the AWS WAF site reads "AWS WAF refused the scan: challenge rule
+  action, HTTP 202".
+- F17: the gateway site below the evidence-mass floor is now scored.
+- Remaining scans over 170 s: 13 of 14 scored or correctly unscored near the
+  budget. The 14th is RC25.
 
 ### Verdicts checked and found correct
 
@@ -234,10 +259,14 @@ page).
 
 ## Open items
 
-1. **Confirm F13-F17 on the corpus.** Each fix was checked on the sites that
-   found it. The next full run should show the budget overrun of RC20 and the
-   two RC23/RC24 sites scored or named, and no request burst over 100 page
-   GETs in 20 s on one site.
+1. **Own host that never connects (RC25).** One site's apex host refuses
+   every connection. F13 never records the site's own hosts, so 27 root-file
+   and about-page probes each wait out the connect timeout (12-15 s, in
+   batches of 5) before the homepage fetch fails. The origin fallback then
+   repeats the wait on the `www` host. The scan takes 240 s, over the 180 s
+   budget, in both the `b355ab45` and `3f6d916d` runs. Likely fix: fetch the
+   homepage before the root files, or stop the root-file phase after the
+   first connect-level failure on the scanned host.
 2. **Smaller synchronous cost.** The `cursor:pointer` check in
    `packages/core/src/audits/operability-safety/_agent-affordances.ts` took
    about 0.7 s of one busy streak. Below the threshold that blocks scans.
