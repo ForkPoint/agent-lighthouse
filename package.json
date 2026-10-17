@@ -22,6 +22,7 @@
     "check:enums": "node --import tsx scripts/check-enums.ts",
     "check:retired-names": "node --import tsx scripts/check-retired-names.ts",
     "check:package-types": "node scripts/check-package-types.mjs",
+    "smoke:packages": "node scripts/smoke-packages.mjs",
     "build:audit-map": "node --import tsx scripts/build-audit-map.ts",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md}\"",

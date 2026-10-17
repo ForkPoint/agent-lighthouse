@@ -97,4 +97,59 @@ describe("gatewayTarget", () => {
   it("returns undefined for a short page with no target", () => {
     expect(target(`<title>Coming soon</title>`)).toBeUndefined();
   });
+
+  // Only `refresh` sends a browser anywhere. Another http-equiv whose content
+  // happens to look like a refresh value is not a redirect.
+  it("ignores an http-equiv that is not refresh", () => {
+    expect(
+      target(`<meta http-equiv="content-language" content="0;url=/en/">`),
+    ).toBeUndefined();
+  });
+
+  it("falls back to the canonical when the refresh has no content", () => {
+    expect(
+      target(`<meta http-equiv="refresh"><link rel="canonical" href="/en/">`),
+    ).toBe("https://example.com/en/");
+  });
+
+  it("falls back to the canonical when the refresh URL is an empty quote", () => {
+    expect(
+      target(
+        `<meta http-equiv="refresh" content="0; url=''"><link rel="canonical" href="/en/">`,
+      ),
+    ).toBe("https://example.com/en/");
+  });
+
+  // A malformed candidate is skipped, not fatal: the next one still counts.
+  it("skips a refresh URL that does not parse and reads the canonical", () => {
+    expect(
+      target(
+        `<meta http-equiv="refresh" content="0;url=http://[bad/"><link rel="canonical" href="/en/">`,
+      ),
+    ).toBe("https://example.com/en/");
+  });
+
+  // The refresh wins only when it can be followed. One that leaves the site
+  // does not hide a same-site canonical.
+  it("falls back to a same-site canonical when the refresh leaves the site", () => {
+    expect(
+      target(
+        `<meta http-equiv="refresh" content="0;url=https://other.example/"><link rel="canonical" href="/en/">`,
+      ),
+    ).toBe("https://example.com/en/");
+  });
+
+  it("drops the fragment from the target", () => {
+    expect(target(`<link rel="canonical" href="/en/#main">`)).toBe(
+      "https://example.com/en/",
+    );
+  });
+
+  it("follows a www twin on an explicit non-default port", () => {
+    const html = `<html><head><meta http-equiv="refresh" content="0;url=https://www.example.com:8443/en/"></head><body></body></html>`;
+    const from = "https://example.com:8443/";
+    expect(gatewayTarget(parsePageContext(from, html), from)).toBe(
+      "https://www.example.com:8443/en/",
+    );
+  });
 });

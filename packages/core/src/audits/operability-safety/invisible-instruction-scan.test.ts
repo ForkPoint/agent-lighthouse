@@ -173,6 +173,20 @@ describe("InvisibleInstructionScanAudit", () => {
     expect(result.message).toContain("Ignore all previous instructions");
   });
 
+  // A print stylesheet hides text only on paper. A human browsing the page
+  // still reads it, so it is not hidden from a human.
+  it("ignores a hiding rule that applies only to print", async () => {
+    const result = await run(
+      `<section class="ghost"><p class="ink">${INJECTION}</p></section>`,
+      '<link rel="stylesheet" href="/s.css">',
+      {
+        "https://example.test/s.css":
+          "@media print { .ghost { display: none } .ink { visibility: hidden } }",
+      },
+    );
+    expect(result.status).toBe(CheckStatus.Pass);
+  });
+
   // Each text element used to re-test every ancestor against every rule:
   // 8-11 s on a large storefront page, with the event loop blocked.
   it("judges a deep page with many rules in bounded time", async () => {

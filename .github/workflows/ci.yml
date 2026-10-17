@@ -42,6 +42,9 @@ jobs:
       - name: Check published type declarations
         run: pnpm check:package-types
 
+      - name: Smoke-test the installed packages
+        run: pnpm smoke:packages
+
       - name: Check audit-dossier linkage
         run: pnpm check:dossiers
 

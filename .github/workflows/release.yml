@@ -28,8 +28,8 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 22
-          cache: 'pnpm'
-          registry-url: 'https://registry.npmjs.org'
+          cache: "pnpm"
+          registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -37,14 +37,19 @@ jobs:
       - name: Build packages
         run: pnpm build
 
+      # Publishing ships what npm installs, not what the tests import. 7.3.0
+      # published an MCP command with no shebang that no test could see.
+      - name: Smoke-test the installed packages
+        run: pnpm smoke:packages
+
       - name: Create Release Pull Request or Publish to npm
         id: changesets
         uses: changesets/action@v2
         with:
           version-script: pnpm version-packages
           publish-script: pnpm release
-          pr-title: 'ci(release): version packages'
-          commit-message: 'ci(release): version packages'
+          pr-title: "ci(release): version packages"
+          commit-message: "ci(release): version packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

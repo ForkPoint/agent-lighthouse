@@ -144,6 +144,21 @@ describe("HydrationPayloadShareAudit", () => {
     expect(result.message).toContain("duplicat");
   });
 
+  // Payload strings carry code and markup. A tag match that may run past the
+  // next `<` rescanned the rest of the text once per unclosed `<`: seconds on
+  // a 160 KiB literal, with the event loop blocked for every parallel scan.
+  it("strips tags in linear time when a payload has many unclosed '<'", () => {
+    const body = ARTICLE.repeat(6);
+    const literal = `${ARTICLE}${" x<y".repeat(40_000)}`;
+    const started = performance.now();
+    const result = run(
+      `<main><article>${body}</article></main><script>self.__next_f.push([1,"${literal}"])</script>`,
+    );
+    expect(performance.now() - started).toBeLessThan(1_000);
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("duplicat");
+  });
+
   it("passes a small payload that duplicates nothing", () => {
     const blob = JSON.stringify({
       props: { pageProps: { sku: "AB-1", variants: "q".repeat(2_000) } },

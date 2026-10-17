@@ -5,6 +5,7 @@ import {
   DocumentState,
   CheckStatus,
   LEGACY_PAGE_TYPES,
+  LogLevel,
   PageType,
 } from "@forkpoint/agent-lighthouse-core";
 import {
@@ -245,6 +246,35 @@ describe("parseCliOptions", () => {
     expect(() => parseCliOptions(["--min-score=abc"], undefined)).toThrow(
       /threshold/i,
     );
+  });
+});
+
+// 8.0.0 removed -p/--preset. The CLI ignores an unknown flag, so a script
+// written for 7.x keeps scanning its URL; the old preset name must not be
+// taken as the URL or as the value of another option.
+describe("a 7.x command line with --preset", () => {
+  it.each([
+    [["https://a.test", "--preset", "ecommerce"]],
+    [["https://a.test", "-p", "ecommerce"]],
+    [["audit", "https://a.test", "--preset=ecommerce"]],
+  ])("still scans the URL: %j", (args) => {
+    const { url } = resolveCommand(args);
+    expect(url).toBe("https://a.test");
+    const options = parseCliOptions(args, url);
+    expect(options.url).toBe("https://a.test");
+    expect(options.outputDir).toBe("./reports");
+    expect(options.outputFormats).toEqual(["terminal", "html", "json"]);
+    expect(JSON.stringify(options)).not.toContain("ecommerce");
+  });
+
+  it("reads a 7.x config file's other keys and drops preset and maxPages", () => {
+    const options = parseCliOptions([], "https://a.test", {
+      preset: "ecommerce",
+      maxPages: 6,
+      minScore: 70,
+    } as never);
+    expect(options.minScore).toBe(70);
+    expect(JSON.stringify(options)).not.toMatch(/ecommerce|maxPages/);
   });
 });
 
@@ -556,6 +586,43 @@ describe("--page-type", () => {
       unknown: "general",
       content: "general",
     });
+  });
+});
+
+describe("--log-level and --log-file", () => {
+  it("sets neither when no flag is given", () => {
+    expect(parseCliOptions([], "https://example.com")).toMatchObject({
+      logLevel: undefined,
+      invalidLogLevel: undefined,
+      logFile: undefined,
+    });
+  });
+
+  it.each([
+    [["--log-level", "debug"], LogLevel.Debug],
+    [["--log-level=TRACE"], LogLevel.Trace],
+    [["--log-level", "silent"], LogLevel.Silent],
+  ])("reads %j as a level", (args, level) => {
+    const o = parseCliOptions(args, "https://example.com");
+    expect(o.logLevel).toBe(level);
+    expect(o.invalidLogLevel).toBeUndefined();
+  });
+
+  it("keeps a value that names no level, for main to refuse", () => {
+    const o = parseCliOptions(["--log-level=verbose"], "https://example.com");
+    expect(o.logLevel).toBeUndefined();
+    expect(o.invalidLogLevel).toBe("verbose");
+  });
+
+  it("reads the log file path", () => {
+    expect(
+      parseCliOptions(["--log-file", "scan.jsonl"], "https://example.com")
+        .logFile,
+    ).toBe("scan.jsonl");
+    expect(
+      parseCliOptions(["--log-file=logs/a.jsonl"], "https://example.com")
+        .logFile,
+    ).toBe("logs/a.jsonl");
   });
 });
 
