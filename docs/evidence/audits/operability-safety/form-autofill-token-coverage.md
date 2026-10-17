@@ -9,11 +9,10 @@ disposition: "new in v2 — graduated from proposal 2026-08-22"
 reviewed: 2026-08-20
 graduated: 2026-08-22
 sources:
-  - S4
+  - whatwg-autofill
+  - webdev-learn-forms-autofill
   - S11
   - lh-a11ytree
-  - S9
-  - S19
 ---
 
 # Form Autofill Token Coverage
@@ -22,13 +21,27 @@ sources:
 
 ## What it checks
 
-Per-form score for whether every field an agent must populate carries the machine-readable identity an agent needs:
+Whether each form field that maps to a standard autofill concept declares the matching WHATWG `autocomplete` token. The concept is inferred from the field's type, name, id, placeholder, `aria-label` and label text. A password field expects `new-password` on a signup URL and `current-password` elsewhere.
 
-- a stable name or id;
-- a correct input type;
-- a WHATWG autocomplete token, when the field maps to a standard autofill concept;
-- programmatic constraints;
-- error wiring via aria-invalid and aria-describedby. Scored as covered-fields / autofillable-fields per form.
+A field counts as covered when all three hold:
+
+- its `autocomplete` token matches the inferred concept;
+- it carries a `name` or an `id`;
+- an `email` or `tel` concept sits on an input of that type.
+
+Coverage is one ratio over every scanned form: covered fields over autofillable fields. Search and store-locator forms are skipped, because their fields take a query, not profile data.
+
+Two side findings are counted on every data field, whether or not it maps to a concept:
+
+- a label that marks the field mandatory with an asterisk only, with no `required` or `aria-required="true"`;
+- an element with an `error` or `invalid` class, or `role="alert"`, beside the field that the field does not reference through `aria-errormessage` or `aria-describedby`.
+
+The audit does not read `aria-invalid`, and it does not check programmatic constraints such as `pattern` or `min`.
+
+- No form, or no autofillable field and no side finding, is not applicable.
+- Every field covered and no side finding passes.
+- No autofillable field covered fails.
+- Anything between warns, including a fully covered form with a side finding.
 
 ## Claimed mechanism (falsifiable)
 
@@ -36,16 +49,16 @@ Falsifiable claim: an agent filling a checkout must map each field to a value fr
 
 ## Evidence
 
-- **[MCP Specification 2026-07-28 — Tools](https://modelcontextprotocol.io/specification/2026-07-28/server/tools)** — Model Context Protocol (spec, URL verified 2026-08-20)
-  - tools/list result set MUST NOT vary per-connection or as a side effect of other requests (MAY vary by authorization). Servers SHOULD return tools in deterministic order — rationale given verbatim: enables client caching and 'improves LLM prompt cache hit rates'. inputSchema MUST be a valid JSON Schema object (not null); defaults to JSON Schema 2020-12. Tool names SHOULD be 1-128 chars, case-sensitive, only [A-Za-z0-9_.-], unique within a server. Full x-mcp-header constraint list including static-reachability rule (chain of only `properties` keys; never through items/oneOf/anyOf/allOf/not/if/then/else/$ref). Clients MUST exclude violating tools from tools/list. If outputSchema present, servers MUST conform. Clients MUST treat annotations as untrusted.
-- **[WebSuite: Systematically Evaluating Why Web Agents Fail](https://arxiv.org/html/2406.01623v1)** — arXiv (study, URL verified 2026-08-20)
-  - Per-UI-primitive success rates for natbot and SeeAct. Worst patterns: slider interaction 0% for both agents; tooltip-based information retrieval 0% for both; complex form filling 12.5% (natbot) / 0% (SeeAct). Aggregate: operational actions 85.2%/76.2%, menu navigation 93.8%/81.3%, informational actions 43.8%/40.6%. Taxonomy covers click (button, link, icon button, slider, switch, accordion, dropdown menu, dialog button, snackbar), type (text/date/phone), select (checkbox, multicheck, select, datagrid row).
+- **[HTML Standard — Autofill](https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#autofill)** — WHATWG (spec, verified 2026-10-17)
+  - "User agents sometimes have features for helping users fill forms in". The `autocomplete` attribute is how a page tells the user agent which value a field wants. The standard defines the token vocabulary this audit expects, including `postal-code`, `address-level2`, `cc-number`, `one-time-code`, `new-password` and `current-password`.
+- **[Learn Forms — Autofill](https://web.dev/learn/forms/autofill)** — Google / web.dev (vendor-doc, verified 2026-10-17)
+  - "Using the correct values for `autocomplete` ensures that the browser fills in the correct values for a form." `new-password` lets the browser offer a generated password, and `current-password` a saved one. Browser-resident agents fill through the same browser.
+- **[WebSuite: Systematically Evaluating Why Web Agents Fail](https://arxiv.org/html/2406.01623v1)** — arXiv (study, URL verified 2026-10-17)
+  - Complex form filling succeeded 12.5% for natbot and 0% for SeeAct over 8 trials each, against 85.2% and 76.2% for operational actions. The study does not isolate the `autocomplete` attribute, so it shows the size of the problem, not this fix's effect.
 - **[Lighthouse audit source: agent-accessibility-tree.js](https://raw.githubusercontent.com/GoogleChrome/lighthouse/main/core/audits/agentic/agent-accessibility-tree.js)** — Google Chrome / Lighthouse (repo, URL verified 2026-08-20)
-  - It filters the accessibility violations Lighthouse already collects down to about 37 axe rules: button-name, link-name, input-button-name, label, autocomplete-valid, aria-allowed-attr, aria-required-attr, aria-valid-attr-value, tabindex, and the table and definition-list rules. Binary score: any violation scores 0. Crucially it inherits axe's blind spots — axe cannot fail an element that has no interactive semantics at all, and autocomplete-valid only validates tokens that are already present, never their absence.
-- **[RFC 9728 — OAuth 2.0 Protected Resource Metadata](https://www.rfc-editor.org/rfc/rfc9728.html)** — IETF (spec, URL verified 2026-08-20)
-  - `resource` is the only REQUIRED metadata parameter; scopes_supported and resource_name are RECOMMENDED; authorization_servers is OPTIONAL at the RFC level. Section 3 well-known construction: insert /.well-known/oauth-protected-resource between host and path, removing any terminating slash after the host (https://resource.example.com/resource1 -> https://resource.example.com/.well-known/oauth-protected-resource/resource1). Section 3.3 validation: the retrieved `resource` value MUST be identical to the resource identifier used to build the request URL; on mismatch the response data MUST NOT be used. Section 7.7 recommends blocking private/reserved IP ranges.
-- **[Operator System Card](https://cdn.openai.com/operator_system_card.pdf)** — OpenAI (vendor-doc, URL verified 2026-08-20)
-  - Documents confirmation prompts before 'actions that affect the state of the world (e.g., before completing a purchase or sending an email)', with 92% recall on 607 risky-action tasks and a mistake-risk reduction of about 90%. It also documents watch mode, which forces supervision on high-impact sites, and proactive refusal of high-risk categories. Implication for site authors: an agent must be able to observe and verify state transitions before and after acting, which requires persistent, machine-readable confirmation of what changed.
+  - Lighthouse's agentic category runs axe's `autocomplete-valid` rule. That rule validates a token that is present and never flags a missing one. This audit measures the missing ones.
+
+Counter-evidence: no cited agent tool documents reading `autocomplete` directly. Anthropic's `form_input`, Playwright MCP and browser-use locate fields by accessible name. The token is consumed by the browser's own autofill.
 
 ## Example failure
 
@@ -54,6 +67,8 @@ A signup form uses <input name="f_2" placeholder="ZIP"> and <input name="f_3" pl
 ## Scoring
 
 Tier per evidence policy: **scored** — grade A meets the A/B bar required for scored audits.
+
+**Grade: A** — the token vocabulary is a ratified WHATWG standard, and browsers document consuming it for autofill. The grade rests on that standard-with-consumers path. No agent vendor documents reading the token itself.
 
 ## Implementation deviations
 

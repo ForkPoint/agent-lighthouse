@@ -5771,7 +5771,7 @@
       "category": "operability-safety",
       "slug": "drag-and-slider-dependency",
       "title": "Gesture-only controls with no discrete alternative",
-      "purpose": "Flags interactions on task-critical paths whose only operation path is a continuous pointer gesture — range sliders, drag-to-reorder lists, drag-only upload zones, swipe carousels — with no click, keyboard, or typed-value alternative. Each finding names the discrete control that is missing.",
+      "purpose": "Flags controls whose only operation path is a continuous pointer gesture — range sliders, drag-to-reorder lists on transaction paths, drag-only upload zones, swipe carousels — with no click, keyboard, or typed-value alternative. Each finding names the discrete control that is missing.",
       "features": [
         "actionability",
         "agent-operability",
@@ -5906,7 +5906,7 @@
       "category": "operability-safety",
       "slug": "form-autofill-token-coverage",
       "title": "Form Autofill Token Coverage",
-      "purpose": "Per-form score for whether every field an agent must populate carries the machine-readable identity an agent needs: a stable name/id, a correct input type, a WHATWG autocomplete token when the field maps to a standard autofill concept, programmatic constraints, and error wiring via aria-invalid/aria-describedby. Scored as covered-fields / autofillable-fields per form.",
+      "purpose": "Whether each form field that maps to a standard autofill concept declares the matching WHATWG autocomplete token, a stable name or id, and the matching input type. Scored as covered fields over autofillable fields across the scanned forms. Also counts fields marked mandatory only by an asterisk, and error elements beside a field that the field does not reference.",
       "features": [
         "accessibility",
         "agent-operability",
@@ -6245,7 +6245,7 @@
       "category": "operability-safety",
       "slug": "native-control-substitution",
       "title": "Native Control Substitution Index",
-      "purpose": "Counts choice, date, and file-input controls implemented as custom div widgets instead of the native HTML elements, weighted by whether they sit on a conversion-critical path (search, filter, checkout, signup). Reports each substituted control with the number of agent actions it costs versus its native equivalent.",
+      "purpose": "Counts choice, date and file-input controls built as custom widgets instead of the native HTML elements, weighted by whether they sit on a conversion path (checkout, cart, signup, booking, order, search). Reports the weighted substitution index, and fails a custom widget that lacks a usable ARIA combobox contract or a drop zone with no file input.",
       "features": [
         "accessibility",
         "agent-operability",

@@ -413,7 +413,7 @@ export class FormAutofillTokenCoverageAudit extends Audit {
     title: "Form Autofill Token Coverage",
     failureTitle: "Form Autofill Token Coverage",
     description:
-      "Per-form score for whether every field an agent must populate carries the machine-readable identity an agent needs: a stable name/id, a correct input type, a WHATWG autocomplete token when the field maps to a standard autofill concept, programmatic constraints, and error wiring via aria-invalid/aria-describedby. Scored as covered-fields / autofillable-fields per form.",
+      "Whether each form field that maps to a standard autofill concept declares the matching WHATWG autocomplete token, a stable name or id, and the matching input type. Scored as covered fields over autofillable fields across the scanned forms. Also counts fields marked mandatory only by an asterisk, and error elements beside a field that the field does not reference.",
     scoreDisplayMode: ScoreDisplayMode.Ternary,
     weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
     evidenceGrade: EvidenceGrade.A,

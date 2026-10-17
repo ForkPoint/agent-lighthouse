@@ -66,13 +66,14 @@ One root file, one signal.
 
 ## Scoring
 
-_Superseded on 2026-08-24: the audit's grade is now **C**, taken from the security.txt signal it still measures. The argument below is the 2026-08-22 record of why it was B, and is kept as history — see [Narrowed to security.txt](#narrowed-to-securitytxt-contradiction-sweep-2026-08-24) for why that grade did not survive._
+**Grade C, tier informative, weight 0.** The grade comes from the one signal the audit measures: security.txt.
 
-**B — the strongest proven consumer path among the four sources, not the average.**
+- RFC 9116 is a real IETF document with a defined location and required fields. That earns more than D.
+- RFC 9116 is Informational, adoption is small, and no AI vendor documents reading the file. That keeps it below B.
+- Grade C maps to the informative tier, so `weightForGrade` returns 0. No outcome moves a score.
+- The audit never fails. A conforming file passes. A published but non-conforming file warns at low priority. An absent file is not applicable.
 
-The security-headers signal shared by 8.2, 8.3 and 8.4 grades **D**. No AI vendor documents any agent reading those headers, so nothing supports shipping the check at all. security.txt (8.7) grades **C**: a real RFC, with real but small adoption of about 1.25% of the top 1M in 2025, and zero AI consumers. The HTTPS/transport-security signal behind HSTS grades **B**: MCP, RFC 9116 and Chromium-based agent surfaces all mandate TLS, which is a documented, testable requirement even though no crawler vendor documents HSTS itself.
-
-Grade B therefore prices the evidence, and `tier: informative` prices the _claim_: `weightForGrade('B', 'informative') === 0`. The grade records what the evidence supports; the tier records that nothing here may move a score. A future task that finds a documented AI consumer for any of these headers can promote the tier without re-grading the evidence.
+The audit once shipped at B. That B belonged to the HTTPS signal below, which this audit never measured. HTTPS ships scored as `access-crawl-control/https-enabled`.
 
 ## Evidence
 
@@ -102,7 +103,7 @@ Grade B therefore prices the evidence, and `tier: informative` prices the _claim
 
 ### Signal: Correct Content-Type for llms.txt and .md files — grade C (technical-infra)
 
-Carried here only to record where the `nosniff` sub-signal belongs. `X-Content-Type-Options: nosniff` removes a browser's ability to recover from a wrong `Content-Type`; what an agent actually needs is the correct type, which `machine-discovery/ai-file-delivery` (v1 8.10) measures on the AI files themselves. This audit reports `nosniff` on the homepage response as hygiene and makes no parsing claim.
+Carried here only to record where the `nosniff` sub-signal went. `X-Content-Type-Options: nosniff` removes a browser's ability to recover from a wrong `Content-Type`. What an agent needs is the correct type. `machine-discovery/ai-file-delivery` (v1 8.10) measures that on the AI files themselves, and names `nosniff` when a mis-typed file carries it. This audit does not read `nosniff`, and no audit checks it on the homepage.
 
 ## Implementation deviations
 
@@ -116,5 +117,4 @@ Carried here only to record where the `nosniff` sub-signal belongs. `X-Content-T
 
 - Rename the audit to `operability-safety/security-txt`, with its source, class and dossier.
 - Retire 8.2, 8.3 and 8.4 as `removed`, `not-a-factor`, and move their dossiers to `docs/evidence/sunset/`. The hsts-header record must note that the HTTPS signal survives as `access-crawl-control/https-enabled`.
-- `docs/evidence/merged/README.md` still cites this audit as a grade-B informative precedent. `machine-discovery/ai-file-delivery.md` still says homepage nosniff hygiene lives here.
 - RFC 9116 requires `text/plain` with UTF-8 and HTTPS-only access. Neither is checked.
