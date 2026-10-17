@@ -15,6 +15,7 @@ import {
   isValidUrl,
   parseCliOptions,
   resolveCommand,
+  displayUrl,
   parseCategoryAssertions,
   failedAssertion,
   selectDebugChecks,
@@ -304,6 +305,39 @@ describe("resolveCommand", () => {
 
   it("audits with no URL when the first argument is a flag", () => {
     expect(resolveCommand(["--silent"])).toEqual({ action: "audit" });
+  });
+
+  it.each([
+    [["--timeout", "30", "https://a.test"]],
+    [["-o", "json", "-d", "out", "https://a.test", "--silent"]],
+    [["--silent", "https://a.test"]],
+    [["audit", "--log-level", "debug", "https://a.test"]],
+    [["--trace", "t.ndjson", "https://a.test"]],
+  ])("finds the URL after flags and their values: %j", (args) => {
+    expect(resolveCommand(args)).toEqual({
+      action: "audit",
+      url: "https://a.test",
+    });
+  });
+
+  // A flag the CLI does not know may or may not take a value; the argument
+  // that parses as a URL is the target either way.
+  it.each([
+    [["--preset", "fast", "https://a.test"]],
+    [["-p", "fast", "https://a.test"]],
+  ])("prefers the argument that is a URL: %j", (args) => {
+    expect(resolveCommand(args).url).toBe("https://a.test");
+  });
+
+  it("returns the first argument when none is a URL, for main to refuse", () => {
+    expect(resolveCommand(["--silent", "a.test"]).url).toBe("a.test");
+  });
+
+  it("asks for help on -h or --help anywhere", () => {
+    expect(resolveCommand(["https://a.test", "--help"])).toEqual({
+      action: "help",
+    });
+    expect(resolveCommand(["audit", "-h"])).toEqual({ action: "help" });
   });
 
   it("audits with no URL when audit is given alone, so the config file supplies it", () => {
@@ -883,5 +917,19 @@ describe("browser snapshot config", () => {
     expect(invalid.invalidSnapshots).toBeTruthy();
     expect(invalid.invalidPageScope).toBeUndefined();
     expect(invalid.snapshots).toBeUndefined();
+  });
+});
+
+describe("displayUrl", () => {
+  it("drops a user and password from the echoed target", () => {
+    expect(displayUrl("https://user:hunter2@a.test/shop?x=1")).toBe(
+      "https://a.test/shop?x=1",
+    );
+    expect(displayUrl("https://user:p@ss@a.test/")).toBe("https://a.test/");
+  });
+
+  it("leaves a URL without credentials exactly as typed", () => {
+    expect(displayUrl("https://a.test")).toBe("https://a.test");
+    expect(displayUrl("not a url")).toBe("not a url");
   });
 });

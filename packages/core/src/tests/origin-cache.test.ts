@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
 import {
   OriginCache,
   computeOriginCacheKey,
@@ -7,6 +7,15 @@ import {
 } from "#core/origin-cache";
 
 describe("Phase 5: Origin Cache Architecture", () => {
+  // TTLs are tens of milliseconds. Real sleeps made these tests fail on a
+  // busy machine, so the clock is faked and advanced exactly.
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   describe("computeOriginCacheKey — request headers", () => {
     it("gives a bot-UA scan a different slot from a default scan", () => {
       const plain = computeOriginCacheKey("https://example.com", "v1");
@@ -59,7 +68,7 @@ describe("Phase 5: Origin Cache Architecture", () => {
       for (let i = 0; i < 50; i++) {
         cache.set(`https://s${i}.test|v1`, evidence(`https://s${i}.test`));
       }
-      await new Promise((r) => setTimeout(r, 5));
+      vi.advanceTimersByTime(5);
       cache.set(
         "https://fresh.test|v1",
         evidence("https://fresh.test"),
@@ -322,7 +331,7 @@ describe("Phase 5: Origin Cache Architecture", () => {
       expect(cache.has(shortKey)).toBe(true);
       expect(cache.has(longKey)).toBe(true);
 
-      await new Promise((r) => setTimeout(r, 35));
+      vi.advanceTimersByTime(35);
 
       expect(cache.has(shortKey)).toBe(false);
       expect(cache.get(shortKey)).toBeUndefined();
@@ -338,7 +347,7 @@ describe("Phase 5: Origin Cache Architecture", () => {
       expect(cache.get(key)).toBeDefined();
 
       // Wait 40ms for expiration
-      await new Promise((r) => setTimeout(r, 40));
+      vi.advanceTimersByTime(40);
 
       expect(cache.get(key)).toBeUndefined();
       expect(cache.has(key)).toBe(false);
@@ -372,14 +381,14 @@ describe("Phase 5: Origin Cache Architecture", () => {
       cache.set(key, evidenceA);
       expect(cache.get(key)?.readAt).toBe("2026-09-02T08:00:00.000Z");
 
-      await new Promise((r) => setTimeout(r, 20));
+      vi.advanceTimersByTime(20);
 
       // Overwrite with fresh evidence and fresh TTL
       cache.set(key, evidenceB, 50);
       expect(cache.get(key)?.readAt).toBe("2026-09-02T09:00:00.000Z");
 
       // Wait another 30ms (50ms since first set, but only 30ms since second set)
-      await new Promise((r) => setTimeout(r, 30));
+      vi.advanceTimersByTime(30);
 
       expect(cache.has(key)).toBe(true);
       expect(cache.get(key)?.readAt).toBe("2026-09-02T09:00:00.000Z");

@@ -44,6 +44,48 @@ describe("--log-level", () => {
   });
 });
 
+// The command line itself, on the built binary. The target is a loopback
+// port the scanner refuses to fetch, so each run ends in about a second.
+describe("command line", () => {
+  function run(args: string[]) {
+    return spawnSync(process.execPath, [bin, ...args], {
+      cwd: dir,
+      env: cleanEnv(),
+      encoding: "utf8",
+      timeout: 60_000,
+    });
+  }
+
+  it("prints the usage and exits 0 on --help", () => {
+    const help = run(["--help"]);
+    expect(help.status).toBe(0);
+    expect(help.stdout).toContain("agent-lighthouse <url>");
+  });
+
+  it("still exits 1 with the usage when no URL is given", () => {
+    const missing = run(["--silent"]);
+    expect(missing.status).toBe(1);
+    expect(missing.stderr).toContain("No target URL specified");
+  });
+
+  it("scans a URL given after its flags, and echoes it without a password", () => {
+    const scan = run([
+      "--timeout",
+      "30",
+      "-o",
+      "json",
+      "-d",
+      dir,
+      "--log-level",
+      "silent",
+      "http://scanner:hunter2@127.0.0.1:9/",
+    ]);
+    expect(scan.status).toBe(0);
+    expect(scan.stdout).toContain("http://127.0.0.1:9/");
+    expect(scan.stdout + scan.stderr).not.toContain("hunter2");
+  });
+});
+
 describe("--log-file", () => {
   let server: Server;
   let origin: string;

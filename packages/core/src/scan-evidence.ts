@@ -213,10 +213,23 @@ function unblockedFetches(
         }
       : { met: false, reason: `${waf.name} refused the scan: ${waf.reason}.` };
   }
-  if (homepageResult.status === 429 || homepageResult.status === 428) {
+  // An empty 428 is a burst limit, like a 429. A 428 with a body is the site
+  // asking for a precondition the scan cannot meet; calling it a throttle
+  // would send the user to rescan slower.
+  if (
+    homepageResult.status === 429 ||
+    (homepageResult.status === 428 && !homepageResult.body)
+  ) {
     return {
       met: false,
       reason: `The homepage answered HTTP ${homepageResult.status}: the scan was throttled.`,
+    };
+  }
+  if (homepageResult.status === 428) {
+    return {
+      met: false,
+      reason:
+        "The homepage answered HTTP 428 (Precondition Required) after a retry, so the scan read no page.",
     };
   }
   return { met: true };

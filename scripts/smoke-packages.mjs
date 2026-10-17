@@ -117,12 +117,10 @@ function checkBins(app) {
 function checkCli(app) {
   const bin = join(app, "node_modules", ".bin", "agent-lighthouse");
   // Executed directly, not through `node`, so a missing shebang fails here.
-  // The exit code is not checked: `--help` shares the usage path of a
-  // missing URL, which exits 1. A missing shebang fails before any output.
   const help = run(bin, ["--help"], { cwd: app });
   check(
-    "agent-lighthouse --help prints the usage",
-    help.stdout.includes("agent-lighthouse <url>"),
+    "agent-lighthouse --help prints the usage and exits 0",
+    help.status === 0 && help.stdout.includes("agent-lighthouse <url>"),
     `exit ${help.status}`,
   );
 

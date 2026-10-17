@@ -665,15 +665,24 @@ describe("scan-evidence: how a failed homepage is described", () => {
     );
   });
 
-  // A 428 the detector does not call a throttle (it carries a body) still
-  // reads as one at the gate: the orchestrator retried it once already.
-  it("says a 428 homepage was throttled even without a WAF verdict", () => {
+  // A 428 the detector does not call a throttle (it carries a body) is not
+  // reported as one: rescanning slower would not help.
+  it("does not call a 428 homepage with a body a throttle", () => {
     const evidence = build({
       homepageResult: homepage({ status: 428, body: "Precondition required" }),
     });
     expect(evidence.met[EvidenceKey.UnblockedFetches]).toBe(false);
     expect(evidence.reasons[EvidenceKey.UnblockedFetches]).toBe(
-      "The homepage answered HTTP 428: the scan was throttled.",
+      "The homepage answered HTTP 428 (Precondition Required) after a retry, so the scan read no page.",
+    );
+  });
+
+  it("still calls an empty 428 homepage a throttle", () => {
+    const evidence = build({
+      homepageResult: homepage({ status: 428, body: "" }),
+    });
+    expect(evidence.reasons[EvidenceKey.UnblockedFetches]).toContain(
+      "throttled",
     );
   });
 });

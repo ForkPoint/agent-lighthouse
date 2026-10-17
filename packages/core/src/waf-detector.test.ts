@@ -294,6 +294,40 @@ describe("detectWafProtection", () => {
       expect(waf).toBeNull();
     });
 
+    // The homepage failed with an answer (a 404, no page read), so root files
+    // count. A vendor path named inside a plain-text robots.txt is still the
+    // site's own text, not an Imperva interstitial.
+    it("ignores an Imperva path in robots.txt when the homepage failed", () => {
+      const waf = detectWafProtection(
+        URL,
+        result({ status: 404, body: "<html>Not found</html>" }),
+        {
+          "/robots.txt": result({
+            contentType: "text/plain",
+            body: "User-agent: *\nDisallow: /_Incapsula_Resource\n",
+          }),
+        },
+        0,
+      );
+      expect(waf?.provider).not.toBe(WafProvider.Imperva);
+    });
+
+    it("still names Imperva from its header on a plain-text root file", () => {
+      const waf = detectWafProtection(
+        URL,
+        result({ status: 404, body: "" }),
+        {
+          "/robots.txt": result({
+            contentType: "text/plain",
+            body: "User-agent: *\n",
+            headers: { "x-iinfo": "1-2-3" },
+          }),
+        },
+        0,
+      );
+      expect(waf?.provider).toBe(WafProvider.Imperva);
+    });
+
     // A homepage that answered 200 but yielded no readable page was not read.
     // Its root files are then the only evidence of why.
     it("reads root files when the homepage answered but no page was read", () => {
