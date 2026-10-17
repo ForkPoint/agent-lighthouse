@@ -21,7 +21,16 @@ sources:
 
 ## What it checks
 
-Bot-detection services like Cloudflare Turnstile, DataDome, and reCAPTCHA can block legitimate AI agents from accessing your content. Configure your service to allowlist known AI user-agents.
+Whether a bot-defense wall stopped the scan, and whether a challenge loader sits on a page that served no readable text. Bot-detection services such as Cloudflare Turnstile, DataDome and reCAPTCHA can block legitimate AI agents. Configure the service to allowlist the AI agents you want to admit.
+
+| State                                                     | Result                      |
+| :-------------------------------------------------------- | :-------------------------- |
+| the scan was rate-limited (HTTP 429)                      | `na`                        |
+| a firewall or bot defense refused the scan                | `fail`, priority `critical` |
+| no wall detected and no page scanned                      | `na`                        |
+| a challenge loader on a page that served no readable text | `warn`, priority `high`     |
+| no loader found, but no scanned page served readable text | `na`                        |
+| a loader only on readable pages, or no loader at all      | `pass`                      |
 
 ## Evidence
 
@@ -65,6 +74,8 @@ a pause is the only way to get a verdict from a rate-limited origin.
 - The `challenges.cloudflare.com` hostname alone is not proof of a wall. A Turnstile loader for forms is common on open pages.
 - An `x-amzn-waf-action` header (`challenge` or `captcha`) names AWS WAF. A homepage chain ending on `PX-Show` or `DDUser-Challenge` names PerimeterX or DataDome.
 - DNS, refused-port, TLS, certificate and connect-timeout failures are not a bot wall. The evidence gate reports them as an unreachable homepage.
+
+- No wall detected and no page scanned is not applicable. It used to warn, which judged bot defenses the scan never saw.
 
 ## Deferred
 

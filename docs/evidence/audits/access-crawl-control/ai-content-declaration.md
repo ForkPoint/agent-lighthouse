@@ -32,7 +32,16 @@ sources:
 
 Where a site declares how AI systems may use its content. The IETF AIPREF work attaches that preference to a `Content-Usage` response header or a robots.txt rule and explicitly leaves the HTML head out of scope; the head-level `noai`/`noimageai` convention has real adoption but no documented consumer. The audit reports what a site declares and where, and never treats declaring nothing as a defect.
 
-_(The pre-rewrite description asserted that `<meta name="ai-content-declaration">` is "how AI systems discover your llms.txt or AI usage policy" and that GPTBot and ClaudeBot read it. That was false; it is quoted with its refutation in the rewrite section below.)_
+| State                                                           | Result                                        |
+| :-------------------------------------------------------------- | :-------------------------------------------- |
+| a `Content-Usage` response header or robots.txt rule (AIPREF)   | `pass`                                        |
+| `noai` or `noimageai`, as its own meta name or a `robots` token | `warn` — declared, but no documented consumer |
+| `<meta name="ai-content-declaration">`                          | `warn` — no specification defines this name   |
+| no declaration                                                  | `na`                                          |
+
+The audit never fails. `tdm-reservation` is read by `access-crawl-control/tdm-rep`, not here.
+
+Earlier versions of this audit demanded `<meta name="ai-content-declaration">` and said GPTBot and ClaudeBot read it. No specification defines that name, and neither vendor documents reading it. OpenAI and Anthropic document robots.txt for their crawlers (https://developers.openai.com/api/docs/bots, https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler, both verified 2026-10-17).
 
 ## Evidence
 

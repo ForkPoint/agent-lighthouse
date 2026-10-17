@@ -2,7 +2,11 @@ import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
 import type { CheckContext } from "#core/check-context";
 import { weightForGrade } from "#core/scorer";
-import { discoverFeedHeadUrls, sharedFeeds } from "#core/gatherers/feeds";
+import {
+  CONVENTIONAL_FEED_PATHS,
+  discoverFeedHeadUrls,
+  sharedFeeds,
+} from "#core/gatherers/feeds";
 import {
   AuditTier,
   CheckPriority,
@@ -11,6 +15,9 @@ import {
   FixEffort,
   ScoreDisplayMode,
 } from "#core/types";
+
+/** The conventional paths the shared feed gatherer probes, for messages. */
+const PATHS = CONVENTIONAL_FEED_PATHS.join(", ");
 
 export class RssFeedAudit extends Audit {
   static override meta: AuditMeta = {
@@ -52,14 +59,14 @@ export class RssFeedAudit extends Audit {
     // feed is not judged. An advertised feed that does not answer is broken.
     if (!feed && autodiscoveryUrls.length === 0) {
       return this.notApplicable(
-        "No RSS or Atom feed is published or advertised: no autodiscovery <link> in <head>, and nothing at the common paths (/rss.xml, /feed.xml, /atom.xml). A feed is optional, so its absence is not scored.",
+        `No RSS or Atom feed is published or advertised: no autodiscovery <link> in <head>, and nothing at the common paths (${PATHS}). A feed is optional, so its absence is not scored.`,
         "At least one feed returns HTTP 200 with valid XML",
         `No feed found; ${linkNote}`,
       );
     }
     if (!feed) {
       return this.fail(
-        `An autodiscovery <link> advertises a feed at ${autodiscoveryUrls[0]}, but neither it nor the common paths (/rss.xml, /feed.xml, /atom.xml) return a feed.`,
+        `An autodiscovery <link> advertises a feed at ${autodiscoveryUrls[0]}, but neither it nor the common paths (${PATHS}) return a feed.`,
         "At least one feed returns HTTP 200 with valid XML",
         `No feed found; ${linkNote}`,
         {

@@ -18,14 +18,21 @@ sources:
 
 ## What it checks
 
-Without a servers array, AI agents do not know the base URL for your API. They cannot construct valid request URLs, rendering the entire spec unusable. Add at least your production server URL.
+The audit reads the `servers` member of the OpenAPI document at `/openapi.json`.
+
+- An absent or empty `servers` array passes. OpenAPI 3.0 and 3.1 default it to
+  one server with url `/`, resolved against the document's own location.
+- A `servers` value that is not an array fails.
+- An array whose entries carry no `url` fails. The Server Object requires one.
+- Otherwise the first entry with a `url` is fetched with a GET. A 2xx or 3xx
+  answer passes. Any other status, or no answer, warns.
 
 ## Example failure
 
-A site publishes `/openapi.json` describing three endpoints and omits the
-`servers` array, or lists one whose only entry has a `description` and no
-`url`. An agent has the operations but no base URL to join them to, so it
-cannot address a single request.
+A site publishes `/openapi.json` describing three endpoints. Its `servers`
+array holds one entry with a `description` and no `url`. An agent has the
+operations but no base URL to join them to, so it cannot address a single
+request.
 
 A site that publishes no OpenAPI document at all is **not** a failure here.
 This audit judges a document's contents; with no document, it returns
@@ -47,15 +54,15 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - Microsoft 365 Copilot treats the servers section as the domains an API plugin declares. "The Copilot runtime … doesn't evaluate it against any domains the plugin declares (such as the `servers` section of an API plugin's OpenAPI description)" — https://learn.microsoft.com/en-us/microsoft-365-copilot/extensibility/overview-api-plugins (verified 2026-08-21)
 - OpenAPI 3.1 Server Object defines `url` as the base URL for the API, supports relative URLs and `{variable}` templating with `variables` defaults — https://spec.openapis.org/oas/v3.1.0.html (verified 2026-08-21)
 
-**Counter-evidence:** Strong, on the half of the signal the code actually weights. OpenAPI 3.1 states: "If the `servers` property is not provided, or is an empty array, the default value would be a Server Object with a `url` value of `/`." An absent servers array is therefore legal, and resolvable against the document's own location. It is not the fatal condition the audit's copy claims. No vendor documentation treats a bare `GET` on the base URL as a validity test. `401`, `403`, `404` and `405` are ordinary healthy responses at an API root. Templated server URLs such as `https://{region}.api.example.com`, and relative ones such as `/api`, are legal forms that cannot be fetched literally. The reachability leg of this signal is therefore unsupported; only the structural leg (a parseable base URL is declared or derivable) carries the B.
+**Counter-evidence:** OpenAPI 3.0.3 and 3.1 both state: "If the `servers` property is not provided, or is an empty array, the default value would be a Server Object with a `url` value of `/`." An absent servers array is therefore legal, and resolvable against the document's own location. The audit passes it for that reason — https://spec.openapis.org/oas/v3.0.3.html (verified 2026-10-17). No vendor documentation treats a bare `GET` on the base URL as a validity test. `401`, `403`, `404` and `405` are ordinary healthy responses at an API root. Templated server URLs such as `https://{region}.api.example.com`, and relative ones such as `/api`, are legal forms that cannot be fetched literally. The reachability leg of this signal is therefore unsupported; only the structural leg (a parseable base URL is declared or derivable) carries the B.
 
 ## Implementation deviations
 
 - No OpenAPI document, or a 200 whose body does not parse, is `notApplicable`. `openapi-exists` reports an unreadable spec.
-- A document with no `servers` array still fails, though OpenAPI 3.1 defaults it to `/`. See Deferred.
+- An absent or empty `servers` array passes without a probe, since OpenAPI defaults it to `/` (2026-10-17; it used to fail). A non-array `servers` value fails.
 - Only the first server with a `url` is probed, with a GET on the base URL. 2xx and 3xx pass; any other status or no answer warns.
 
 ## Deferred
 
 - The shared read is JSON-only, so a YAML-only spec is invisible here.
-- The dossier's required fix: treat a missing `servers` array as `/`, probe a concrete path rather than the base URL, accept 401, 403 and 405, and skip templated and relative URLs.
+- The rest of the dossier's required fix: probe a concrete path rather than the base URL, accept 401, 403 and 405, and skip templated and relative URLs.

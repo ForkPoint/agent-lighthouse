@@ -33,7 +33,20 @@ sources:
 
 ## What it checks
 
-Whether the site publishes a reachable RSS/Atom feed — discovered from the `<head>` autodiscovery links of every scanned page, then from the well-known paths (`/rss.xml`, `/feed.xml`, `/atom.xml`). The autodiscovery link's own state is appended to `found` (`autodiscovery <link> present (<url>)` or `no autodiscovery <link> in <head>`); it is reported, never scored on its own.
+Whether the site publishes a reachable feed. RSS, Atom, JSON Feed and RDF count. A feed is found in two places:
+
+- the `<link rel="alternate">` autodiscovery links in the head of every scanned page, on the site's own host;
+- the conventional paths `/feed`, `/feed.xml`, `/rss.xml`, `/atom.xml` and `/index.xml`.
+
+A feed counts when it answers 2xx and parses.
+
+| State                                       | Result          |
+| :------------------------------------------ | :-------------- |
+| a feed answers and parses                   | `pass`          |
+| a head link advertises a feed, none answers | `fail`          |
+| no head link and nothing at the paths       | `notApplicable` |
+
+The autodiscovery link is reported in `found`, as `autodiscovery <link> present (<url>)` or `no autodiscovery <link> in <head>`. On its own it never decides the result.
 
 ## Evidence
 

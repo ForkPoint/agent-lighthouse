@@ -34,7 +34,7 @@ With the handshake removed, one mechanism is left for a client to discover a mut
 
 ## Example failure
 
-A SaaS vendor's server supports 2025-11-25 and 2026-07-28. Sent `1900-01-01`, its framework's generic error handler returns `500 Internal Server Error` with an HTML body. A client that prefers a hypothetical future revision receives no `supported` list, cannot downgrade, and marks the server permanently incompatible — despite 2026-07-28 being available on both ends. The same server also returns 200 for Probe B, so a gateway routing on the header while the app executes on the body can be made to disagree.
+A SaaS vendor's server supports 2025-11-25 and 2026-07-28. Sent `1900-01-01`, its framework's generic error handler returns `500 Internal Server Error` with an HTML body. A client that prefers a hypothetical future revision receives no `supported` list, cannot downgrade, and marks the server permanently incompatible — despite 2026-07-28 being available on both ends. The same server also answers 200 to a request whose `MCP-Protocol-Version` header and `_meta` version disagree, so a gateway routing on the header while the app executes on the body can be made to disagree.
 
 ## Scoring
 

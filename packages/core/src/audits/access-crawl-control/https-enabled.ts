@@ -17,7 +17,7 @@ export class HttpsEnabledAudit extends Audit {
     title: "HTTPS enabled",
     failureTitle: "HTTPS enabled",
     description:
-      "Enterprise AI frameworks refuse to interact with non-HTTPS sites due to security policies. GPTBot, ClaudeBot, and enterprise RAG systems all skip HTTP-only sites entirely, making your content invisible to AI-generated answers. Enable HTTPS with a valid TLS certificate.",
+      "Agent protocols require HTTPS: MCP requires every authorization server endpoint to be served over HTTPS, and browser-based agents inherit Chromium's mixed-content blocking and HTTPS-First warnings. No AI crawler vendor documents refusing plain HTTP, so the risk is to agents that act on the site, not to crawling. Enable HTTPS with a valid TLS certificate.",
     scoreDisplayMode: ScoreDisplayMode.Ternary,
     weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
     evidenceGrade: EvidenceGrade.A,
@@ -29,7 +29,7 @@ export class HttpsEnabledAudit extends Audit {
     defaultPriority: CheckPriority.Critical,
     guidance: {
       impact:
-        "HTTP-only sites are completely excluded from all major AI systems. GPTBot, ClaudeBot, Perplexity, and enterprise RAG pipelines refuse to connect to non-HTTPS origins due to security policies. Your entire site is invisible to AI-generated answers, product recommendations, and agentic workflows.",
+        "An agent protocol such as MCP cannot be offered from a plain-HTTP site, because its specification requires HTTPS, and browser-based agents meet mixed-content blocking and HTTPS-First warnings there. AI crawlers do not document refusing HTTP, so this does not hide the site from crawling; it closes the agent surfaces that act on it.",
       fix: "Enable HTTPS by obtaining a TLS certificate (free via Let's Encrypt) and configuring your web server to serve all traffic over HTTPS. Set up a 301 redirect from HTTP to HTTPS to ensure all traffic is encrypted.",
       code: "# Certbot (Let's Encrypt) quick setup:\nsudo certbot --nginx -d yoursite.com -d www.yoursite.com\n\n# Nginx HTTPS config:\nserver {\n  listen 443 ssl;\n  ssl_certificate /etc/letsencrypt/live/yoursite.com/fullchain.pem;\n  ssl_certificate_key /etc/letsencrypt/live/yoursite.com/privkey.pem;\n}",
       effort: FixEffort.Easy,
@@ -48,13 +48,12 @@ export class HttpsEnabledAudit extends Audit {
     // scan was walled. It therefore runs before the attribution guard.
     if (!isHttps) {
       return this.fail(
-        "Site is not served over HTTPS. AI agents require secure connections.",
+        "Site is not served over HTTPS. Agent protocols such as MCP require it, and browser-based agents warn on or block plain-HTTP pages.",
         "Base URL uses https:// and homepage returns 200",
         `Base URL: ${ctx.baseUrl}`,
         {
           priority: CheckPriority.Critical,
-          description:
-            "Enterprise AI frameworks refuse to interact with non-HTTPS sites due to security policies. GPTBot, ClaudeBot, and enterprise RAG systems all skip HTTP-only sites entirely, making your content invisible to AI-generated answers. Enable HTTPS with a valid TLS certificate.",
+          description: HttpsEnabledAudit.meta.description,
           code: "# For nginx:\nserver {\n  listen 443 ssl;\n  ssl_certificate /path/to/cert.pem;\n  ssl_certificate_key /path/to/key.pem;\n}",
         },
         page?.url,

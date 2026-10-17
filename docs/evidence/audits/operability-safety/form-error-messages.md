@@ -39,7 +39,13 @@ sources:
 
 An agent filling a form reads the accessibility tree, where a message is attached to a field by `aria-errormessage` or `aria-describedby`. Fields the server rendered as `aria-invalid="true"` are checked directly; where no invalid state exists in the served document — the normal case on a GET — the required fields are checked instead, because those are the ones that can fail.
 
-_(The pre-rewrite description claimed to detect live validation errors. A GET cannot observe them; the claim and its replacement are set out in the rewrite section below.)_
+The audit does not see live validation errors. A GET returns the page before any submit, and error messages are usually injected only after a failed one. What the served document does show is whether a field carries the reference that will point at its message.
+
+- The two populations are never averaged. Invalid-state fields are assessed when any exist; otherwise required fields (`required` or `aria-required="true"`) are.
+- A reference counts when `aria-errormessage` or `aria-describedby` resolves to an element in the document.
+- Fields outside a `<form>` count. `hidden`, `submit`, `button`, `reset` and `image` inputs do not.
+- All fields linked passes. None linked fails. Some linked warns.
+- No required or invalid-state field on the scanned pages is not applicable.
 
 ## Evidence
 

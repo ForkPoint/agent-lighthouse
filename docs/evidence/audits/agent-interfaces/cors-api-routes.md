@@ -31,7 +31,9 @@ sources:
 
 CORS matters for one class of AI consumer: agent code running inside a browser origin, such as an OpenAI Apps SDK widget in an isolated iframe under a strict CSP. Server-side crawlers and MCP clients are not browsers and are unaffected. The audit reads the endpoints out of the published OpenAPI document, probes those, and applies only to sites that publish one.
 
-_(The pre-rewrite description claimed a missing ACAO "blocks all agentic workflows". That is false for the majority of the named consumers; the refutation is in the rewrite section below.)_
+It probes at most two declared endpoints. `Access-Control-Allow-Origin: *` passes. A named origin, or no header at all, warns. The audit never fails, and a site with no usable `/openapi.json` is not applicable.
+
+A missing header does not block AI agents in general. Crawlers such as GPTBot and ClaudeBot, and server-side agent backends, do not enforce the same-origin policy, so they read the endpoint either way.
 
 ## Evidence
 

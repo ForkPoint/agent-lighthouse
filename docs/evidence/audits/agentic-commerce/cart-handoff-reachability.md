@@ -22,7 +22,13 @@ sources:
 
 ## What it checks
 
-Tests whether the URL an agent would hand a buyer to — the ACP Cart API's continue_url, or the storefront cart for a computer-use agent — is actually reachable without an account and without a bot challenge.
+Tests whether the storefront cart is reachable without an account and without a bot challenge. This is the page a computer-use agent drives, and the kind of page an ACP Cart API `continue_url` hands a buyer to.
+
+The audit reads the platform's cart paths with a browser User-Agent and with ChatGPT-User. A Shopify store gets `/cart`, WooCommerce `/cart` and `/checkout`, BigCommerce `/cart.php`, Magento `/checkout/cart`. An unrecognised store gets `/cart` and `/checkout`. Every request is a GET. Nothing is added to a cart.
+
+It fails on a 403 or 429, a redirect to a login path, a challenge page in place of the cart, or a challenge widget on a document with almost no readable text. It warns when the cart renders nothing without JavaScript. A path that robots.txt disallows for ChatGPT-User is not fetched.
+
+The ACP `continue_url` itself is not probed. The Cart API returns it only from an authenticated `POST /carts`, which a read-only scan cannot make.
 
 ## Claimed mechanism (falsifiable)
 
@@ -30,7 +36,7 @@ Falsifiable claim: ACP 2026-04-17 adds a seller-hosted Cart API whose response c
 
 ## Evidence
 
-- **[openapi.cart.yaml (spec version 2026-04-17)](https://raw.githubusercontent.com/agentic-commerce-protocol/agentic-commerce-protocol/main/spec/2026-04-17/openapi/openapi.cart.yaml)** — Agentic Commerce Protocol (spec, URL verified 2026-08-20)
+- **[openapi.cart.yaml (spec version 2026-04-17)](https://raw.githubusercontent.com/agentic-commerce-protocol/agentic-commerce-protocol/main/spec/2026-04-17/openapi/openapi.cart.yaml)** — Agentic Commerce Protocol (spec, verified 2026-10-17)
   - Seller-hosted pre-checkout Cart API at https://seller.example.com: POST /carts, GET /carts/{id}, PUT /carts/{id} (full replacement), POST /carts/{id}/cancel. Required headers Authorization (Bearer) and API-Version (e.g. 2026-04-17); Idempotency-Key required on POST; Content-Type application/json on POST/PUT; optional Accept-Language, Request-Id. The cart response carries a `continue_url` (e.g. https://seller.example.com/cart/cart_abc123) used to hand the buyer off to the seller's own checkout UI. No payment configuration in this phase; expired carts return 404. This is the lower-lift adoption path versus full delegated-payment Instant Checkout.
 - **[openapi.agentic_checkout.yaml (spec version 2026-04-17)](https://raw.githubusercontent.com/agentic-commerce-protocol/agentic-commerce-protocol/main/spec/2026-04-17/openapi/openapi.agentic_checkout.yaml)** — Agentic Commerce Protocol (spec, URL verified 2026-08-20)
   - CheckoutSession carries nine REQUIRED fields and three enums.

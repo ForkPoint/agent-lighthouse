@@ -9,8 +9,9 @@ disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
 graduated: 2026-08-23
 sources:
-  - S2
   - S4
+  - mcp-instructions-field
+  - anthropic-define-tools
 ---
 
 # Tool Self-Description Coverage
@@ -27,10 +28,14 @@ A tool description and its parameter descriptions are the entire basis on which 
 
 ## Evidence
 
-- **[Playwright: Auto-waiting / Actionability checks](https://playwright.dev/docs/actionability)** — Microsoft (vendor-doc, URL verified 2026-08-20)
-  - Before click/check/fill/selectOption, Playwright enforces five checks: Visible (non-empty bounding box, not visibility:hidden), Stable (same bounding box over 2 animation frames), Receives Events (element is the hit target at the action point — overlays cause failure), Enabled (not [disabled]/aria-disabled), Editable (not readonly/aria-readonly). Fill requires visible+enabled+editable. This is the exact gate every Playwright-based agent (Playwright-MCP, browser-use, most CUA harnesses) passes through, so each check is a directly testable site-side failure cause.
-- **[MCP Specification 2026-07-28 — Tools](https://modelcontextprotocol.io/specification/2026-07-28/server/tools)** — Model Context Protocol (spec, URL verified 2026-08-20)
-  - tools/list result set MUST NOT vary per-connection or as a side effect of other requests (MAY vary by authorization). Servers SHOULD return tools in deterministic order — rationale given verbatim: enables client caching and 'improves LLM prompt cache hit rates'. inputSchema MUST be a valid JSON Schema object (not null); defaults to JSON Schema 2020-12. Tool names SHOULD be 1-128 chars, case-sensitive, only [A-Za-z0-9_.-], unique within a server. Full x-mcp-header constraint list including static-reachability rule (chain of only `properties` keys; never through items/oneOf/anyOf/allOf/not/if/then/else/$ref). Clients MUST exclude violating tools from tools/list. If outputSchema present, servers MUST conform. Clients MUST treat annotations as untrusted.
+- **[MCP Specification 2026-07-28 — Tools](https://modelcontextprotocol.io/specification/2026-07-28/server/tools)** — Model Context Protocol (spec, verified 2026-10-17)
+  - A tool carries a `description`, an optional `title`, an `inputSchema` and an optional `outputSchema`. Tools are "model-controlled": the model selects and invokes them from what `tools/list` returns. The spec's own examples give every input property a `description`. It states that an output schema helps "clients and LLMs" by "Guiding clients and LLMs to properly parse and utilize the returned data" and "Enabling strict schema validation of responses".
+- **[MCP Specification 2026-07-28 — Discovery](https://modelcontextprotocol.io/specification/2026-07-28/server/discover.md)** — Model Context Protocol (spec, verified 2026-10-17)
+  - `DiscoverResult.instructions` is "Optional natural-language guidance for LLMs on how to use this server effectively".
+- **[Anthropic — define tools](https://platform.claude.com/docs/en/agents-and-tools/tool-use/define-tools)** — Anthropic (vendor-doc, verified 2026-10-17)
+  - A documented consumer of tool descriptions. Claude's tool-use system prompt is built from the tool definitions. The best-practice list says: "Provide extremely detailed descriptions. This is by far the most important factor in tool performance." A good description covers "What each parameter means and how it affects the tool's behavior". The page's poor example is a tool whose parameter has no description.
+
+**Grade: B** — the MCP spec defines every field the audit counts, and Anthropic documents that descriptions drive tool performance. The pass thresholds are this project's convention, not a source's, so the grade is B rather than A.
 
 ## Example failure
 
@@ -42,7 +47,6 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 
 ## Implementation deviations
 
-- The Playwright entry in `## Evidence` does not support this check. The MCP tools specification is the source the mechanism rests on.
 - Only leaf parameters count. The walk passes through object and array-of-object containers, so `line_items[].tax_code` counts and `line_items` does not.
 - A leaf is required only when its immediate parent names it in `required`.
 - Recursion stops at 6 levels. `oneOf`, `anyOf`, `allOf` and `$ref` branches are skipped, since branches may never coexist.

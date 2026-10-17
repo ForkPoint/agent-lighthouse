@@ -263,7 +263,7 @@ export class DragAndSliderDependencyAudit extends Audit {
     title: "Gesture-only controls with no discrete alternative",
     failureTitle: "Gesture-only controls with no discrete alternative",
     description:
-      "Flags interactions on task-critical paths whose only operation path is a continuous pointer gesture — range sliders, drag-to-reorder lists, drag-only upload zones, swipe carousels — with no click, keyboard, or typed-value alternative. Each finding names the discrete control that is missing.",
+      "Flags controls whose only operation path is a continuous pointer gesture — range sliders, drag-to-reorder lists on transaction paths, drag-only upload zones, swipe carousels — with no click, keyboard, or typed-value alternative. Each finding names the discrete control that is missing.",
     scoreDisplayMode: ScoreDisplayMode.Binary,
     weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
     evidenceGrade: EvidenceGrade.B,

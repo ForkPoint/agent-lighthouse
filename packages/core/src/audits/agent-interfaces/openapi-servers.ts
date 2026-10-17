@@ -28,7 +28,7 @@ export class OpenApiServersAudit extends Audit {
     title: "OpenAPI servers array valid",
     failureTitle: "OpenAPI servers array valid",
     description:
-      "Without a servers array, AI agents do not know the base URL for your API. They cannot construct valid request URLs, rendering the entire spec unusable. Add at least your production server URL.",
+      "Agents join each operation path to a server URL to build a request. A servers entry with no url, or a servers value that is not an array, leaves them no base URL. An absent servers array is legal: OpenAPI defaults it to `/`.",
     scoreDisplayMode: ScoreDisplayMode.Ternary,
     weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
     evidenceGrade: EvidenceGrade.B,
@@ -38,8 +38,8 @@ export class OpenApiServersAudit extends Audit {
     defaultPriority: CheckPriority.High,
     guidance: {
       impact:
-        "Without a servers array, AI agents cannot determine the base URL for your API. Even if your endpoints are perfectly documented, agents cannot construct valid request URLs, rendering the entire OpenAPI spec unusable.",
-      fix: "Add a servers array to your OpenAPI spec with at least your production server URL. Include a description for clarity.",
+        "Agents build each request URL from a server URL and the operation path. A servers entry without a url gives them nothing to join the path to. An absent servers array defaults to `/`, which assumes the API lives on the host that serves the document.",
+      fix: "Give every servers entry a url. If the API does not live on the host that serves the document, declare its production server URL explicitly.",
       code: `"servers": [
   {
     "url": "https://yoursite.com/api",
@@ -67,11 +67,25 @@ export class OpenApiServersAudit extends Audit {
     }
 
     const servers = spec["servers"];
-    if (!Array.isArray(servers) || servers.length === 0) {
-      return this.fail(
-        "No servers array in OpenAPI spec.",
+    // OpenAPI 3.0 and 3.1 both default an absent or empty `servers` array to
+    // one Server Object with url `/`, resolved against the document's own
+    // location. The base URL is derivable, so the omission is legal and
+    // passes; there is no declared URL to probe.
+    if (
+      servers === undefined ||
+      (Array.isArray(servers) && servers.length === 0)
+    ) {
+      return this.pass(
+        "No servers array; OpenAPI defaults the base URL to `/`, relative to the document.",
         "servers array has at least one entry with a reachable url",
-        "No servers array",
+        "No servers array (defaults to /)",
+      );
+    }
+    if (!Array.isArray(servers)) {
+      return this.fail(
+        "servers in the OpenAPI spec is not an array.",
+        "servers array has at least one entry with a reachable url",
+        "servers is not an array",
         {
           priority: CheckPriority.High,
           description: OpenApiServersAudit.meta.description,

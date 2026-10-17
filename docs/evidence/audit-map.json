@@ -703,7 +703,7 @@
       "category": "access-crawl-control",
       "slug": "https-enabled",
       "title": "HTTPS enabled",
-      "purpose": "Enterprise AI frameworks refuse to interact with non-HTTPS sites due to security policies. GPTBot, ClaudeBot, and enterprise RAG systems all skip HTTP-only sites entirely, making your content invisible to AI-generated answers. Enable HTTPS with a valid TLS certificate.",
+      "purpose": "Agent protocols require HTTPS: MCP requires every authorization server endpoint to be served over HTTPS, and browser-based agents inherit Chromium's mixed-content blocking and HTTPS-First warnings. No AI crawler vendor documents refusing plain HTTP, so the risk is to agents that act on the site, not to crawling. Enable HTTPS with a valid TLS certificate.",
       "features": [
         "critical",
         "https",
@@ -1911,7 +1911,7 @@
       "category": "agent-interfaces",
       "slug": "openapi-servers",
       "title": "OpenAPI servers array valid",
-      "purpose": "Without a servers array, AI agents do not know the base URL for your API. They cannot construct valid request URLs, rendering the entire spec unusable. Add at least your production server URL.",
+      "purpose": "Agents join each operation path to a server URL to build a request. A servers entry with no url, or a servers value that is not an array, leaves them no base URL. An absent servers array is legal: OpenAPI defaults it to `/`.",
       "features": [
         "api",
         "openapi",
@@ -2186,7 +2186,7 @@
       "category": "agentic-commerce",
       "slug": "checkout-offer-field-mapping",
       "title": "Checkout-eligible offer field mapping",
-      "purpose": "Audits each PDP against the exact required-and-conditional field set of the OpenAI product feed spec, including its character caps and its conditional triggers, so the merchant learns which rows will be rejected before uploading a feed.",
+      "purpose": "Audits the first scanned product page with Product markup against the required-and-conditional field set of the OpenAI product feed spec, including its character caps and its conditional triggers, so the merchant learns why its feed row would be rejected before uploading a feed.",
       "features": [
         "acp",
         "commerce",
@@ -5771,7 +5771,7 @@
       "category": "operability-safety",
       "slug": "drag-and-slider-dependency",
       "title": "Gesture-only controls with no discrete alternative",
-      "purpose": "Flags interactions on task-critical paths whose only operation path is a continuous pointer gesture — range sliders, drag-to-reorder lists, drag-only upload zones, swipe carousels — with no click, keyboard, or typed-value alternative. Each finding names the discrete control that is missing.",
+      "purpose": "Flags controls whose only operation path is a continuous pointer gesture — range sliders, drag-to-reorder lists on transaction paths, drag-only upload zones, swipe carousels — with no click, keyboard, or typed-value alternative. Each finding names the discrete control that is missing.",
       "features": [
         "actionability",
         "agent-operability",
@@ -5906,7 +5906,7 @@
       "category": "operability-safety",
       "slug": "form-autofill-token-coverage",
       "title": "Form Autofill Token Coverage",
-      "purpose": "Per-form score for whether every field an agent must populate carries the machine-readable identity an agent needs: a stable name/id, a correct input type, a WHATWG autocomplete token when the field maps to a standard autofill concept, programmatic constraints, and error wiring via aria-invalid/aria-describedby. Scored as covered-fields / autofillable-fields per form.",
+      "purpose": "Whether each form field that maps to a standard autofill concept declares the matching WHATWG autocomplete token, a stable name or id, and the matching input type. Scored as covered fields over autofillable fields across the scanned forms. Also counts fields marked mandatory only by an asterisk, and error elements beside a field that the field does not reference.",
       "features": [
         "accessibility",
         "agent-operability",
@@ -6245,7 +6245,7 @@
       "category": "operability-safety",
       "slug": "native-control-substitution",
       "title": "Native Control Substitution Index",
-      "purpose": "Counts choice, date, and file-input controls implemented as custom div widgets instead of the native HTML elements, weighted by whether they sit on a conversion-critical path (search, filter, checkout, signup). Reports each substituted control with the number of agent actions it costs versus its native equivalent.",
+      "purpose": "Counts choice, date and file-input controls built as custom widgets instead of the native HTML elements, weighted by whether they sit on a conversion path (checkout, cart, signup, booking, order, search). Reports the weighted substitution index, and fails a custom widget that lacks a usable ARIA combobox contract or a drop zone with no file input.",
       "features": [
         "accessibility",
         "agent-operability",

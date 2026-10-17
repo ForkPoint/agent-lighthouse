@@ -839,8 +839,8 @@
       "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/define-tools",
       "type": "vendor-doc",
       "publisher": "Anthropic",
-      "verified": "2026-08-21",
-      "keyFindings": "A tool `name` \"Must match the regex `^[a-zA-Z0-9_-]{1,64}$`\", so an operationId carrying spaces, punctuation or more than 64 characters cannot be registered verbatim."
+      "verified": "2026-10-17",
+      "keyFindings": "A tool `name` must match `^[a-zA-Z0-9_-]{1,128}$` (it read `{1,64}` on 2026-08-21), so an operationId carrying spaces or punctuation cannot be registered verbatim. Best practice: \"Provide extremely detailed descriptions. This is by far the most important factor in tool performance\", including \"What each parameter means and how it affects the tool's behavior\"."
     },
     {
       "id": "anthropic-docs-head",
@@ -3846,6 +3846,26 @@
       "keyFindings": "7,180 stars, created 2025-02-05, last push 2026-08-19. Registry entries use `server.json`. SEP-2127 states the Registry's server.json 'separately describes registry entries' and is a distinct schema from Server Cards — publication to the registry is a submission workflow, not website-derived discovery."
     },
     {
+      "id": "mcp-registry-authentication",
+      "title": "How to Authenticate When Publishing to the Official MCP Registry",
+      "url": "https://modelcontextprotocol.io/registry/authentication",
+      "type": "vendor-doc",
+      "publisher": "Model Context Protocol",
+      "verified": "2026-10-17",
+      "accessed": "2026-10-17",
+      "keyFindings": "Preview status. GitHub authentication binds a server name to `io.github.<user or org>/*`. Domain authentication binds it to `com.example.*/*`, the reverse-DNS form of the domain, proved either by a DNS TXT record `v=MCPv1; k=ed25519; p=<key>` (or `k=ecdsap384`) or by the same payload served at `https://<domain>/.well-known/mcp-registry-auth`. The proof is checked when the publisher logs in; the page does not say it must stay published afterwards."
+    },
+    {
+      "id": "mcp-registry-about",
+      "title": "The MCP Registry",
+      "url": "https://modelcontextprotocol.io/registry/about",
+      "type": "vendor-doc",
+      "publisher": "Model Context Protocol",
+      "verified": "2026-10-17",
+      "accessed": "2026-10-17",
+      "keyFindings": "Official centralized metadata repository for public MCP servers, in preview. Provides 'Namespace management through DNS verification' and 'A REST API for MCP clients and aggregators to discover available servers'. 'Intended to be consumed primarily by downstream aggregators, such as MCP server marketplaces', and 'not intended to be directly consumed by host applications'. Namespace authentication 'ensures that only the legitimate owner of a GitHub account or domain can publish servers under that namespace'."
+    },
+    {
       "id": "mcp-sep-1649",
       "title": "SEP-1649: MCP Server Cards — HTTP Server Discovery via .well-known (superseded issue)",
       "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/issues/1649",
@@ -6598,6 +6618,105 @@
       "publisher": "Cyrus Shepard, Zyppy",
       "verified": "2026-08-20",
       "keyFindings": "Meta-analysis of ~54 published experiments, studies and patents across ChatGPT, Gemini and Perplexity, scored 2.0–9.5 on repeatability, strength of evidence and official documentation support. Relevant scores: 'AI-ready Structure' (headings, sections, tables) 8.6; 'Factually Specific' (concrete numbers over vague statements) 8.3; freshness/dates 7.0; word count 6.7 (inconsistent — longer content performed better but risked incomplete retrieval); schema/structured data 5.6 with effect described as 'typically small'; llms.txt 2.0 (deemed unreliable). FAQ format and meta description were not measured at all — an evidence gap, not a null result."
+    },
+    {
+      "id": "whatwg-autofill",
+      "title": "HTML Standard — 4.10.19.7 Autofill",
+      "url": "https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#autofill",
+      "type": "spec",
+      "publisher": "WHATWG",
+      "verified": "2026-10-17",
+      "keyFindings": "Opens: \"User agents sometimes have features for helping users fill forms in\". The autocomplete attribute is how an author tells the user agent which value a field wants. Defines the autofill field names, among them postal-code, address-level2, cc-number, one-time-code, new-password and current-password."
+    },
+    {
+      "id": "webdev-learn-forms-autofill",
+      "title": "Learn Forms — Autofill",
+      "url": "https://web.dev/learn/forms/autofill",
+      "type": "vendor-doc",
+      "publisher": "Google / web.dev",
+      "verified": "2026-10-17",
+      "keyFindings": "\"Using the correct values for autocomplete ensures that the browser fills in the correct values for a form.\" autocomplete=\"new-password\" lets browsers offer to generate a password; autocomplete=\"current-password\" lets them fill a saved one."
+    },
+    {
+      "id": "playwright-locator-select-option",
+      "title": "Playwright — locator.selectOption() and locator.setInputFiles()",
+      "url": "https://playwright.dev/docs/api/class-locator#locator-select-option",
+      "type": "vendor-doc",
+      "publisher": "Microsoft",
+      "verified": "2026-10-17",
+      "keyFindings": "selectOption \"Selects option or options in <select>\". \"If the target element is not a <select> element, this method throws an error.\" setInputFiles: \"This method expects Locator to point to an input element.\""
+    },
+    {
+      "id": "anthropic-cu-ui-tips",
+      "title": "Computer use tool — optimize model performance with prompting",
+      "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/computer-use-tool",
+      "type": "vendor-doc",
+      "publisher": "Anthropic",
+      "verified": "2026-10-17",
+      "keyFindings": "\"Some UI elements (such as dropdowns and scrollbars) might be tricky for Claude to manipulate using mouse movements. If you experience this, try prompting the model to use keyboard shortcuts.\""
+    },
+    {
+      "id": "wcag-22-dragging-movements",
+      "title": "Understanding SC 2.5.7: Dragging Movements (Level AA)",
+      "url": "https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements.html",
+      "type": "spec",
+      "publisher": "W3C WAI",
+      "verified": "2026-10-17",
+      "keyFindings": "WCAG 2.2 SC 2.5.7: \"All functionality that uses a dragging movement for operation can be achieved by a single pointer without dragging\", unless dragging is essential. Slider example: \"an input beside a slider could allow any user to enter a precise value for the slider\". Carousel example offers forward and backward buttons."
+    },
+    {
+      "id": "iptc-photo-metadata-2025-1",
+      "title": "IPTC Photo Metadata Standard 2025.1 — Digital Source Type",
+      "url": "https://www.iptc.org/std/photometadata/specification/IPTC-PhotoMetadata-2025.1.html",
+      "type": "spec",
+      "publisher": "IPTC",
+      "verified": "2026-10-17",
+      "keyFindings": "Property 11.13 Digital Source Type. Basic specs: \"Data type: CV-code\". CV note: \"Required: Digital Source Type NewsCodes\" (http://cv.iptc.org/newscodes/digitalsourcetype/). XMP specs: \"Iptc4xmpExt:DigitalSourceType [URI <External>]\"."
+    },
+    {
+      "id": "google-image-metadata",
+      "title": "Google Images SEO: Image Metadata",
+      "url": "https://developers.google.com/search/docs/appearance/structured-data/image-license-metadata",
+      "type": "vendor-doc",
+      "publisher": "Google Search Central",
+      "verified": "2026-10-17",
+      "keyFindings": "Google reads the IPTC Digital Source Type field: \"Google supports the following IPTC NewsCodes\": trainedAlgorithmicMedia, compositeSynthetic, algorithmicMedia, compositeWithTrainedAlgorithmicMedia. The page shows the codes as bare tokens linked to https://cv.iptc.org/newscodes/digitalsourcetype/… URIs and does not say which spellings its parser accepts."
+    },
+    {
+      "id": "wikidata-p856",
+      "title": "Wikidata property P856 — official website",
+      "url": "https://www.wikidata.org/wiki/Property:P856",
+      "type": "dataset",
+      "publisher": "Wikidata / Wikimedia Foundation",
+      "verified": "2026-10-17",
+      "keyFindings": "Label \"official website\"; description \"URL of the official page of an item (current or former)\"; datatype URL."
+    },
+    {
+      "id": "wikidata-wbgetclaims",
+      "title": "Wikidata API — wbgetclaims",
+      "url": "https://www.wikidata.org/w/api.php?action=help&modules=wbgetclaims",
+      "type": "vendor-doc",
+      "publisher": "Wikidata / Wikimedia Foundation",
+      "verified": "2026-10-17",
+      "keyFindings": "\"Gets Wikibase claims.\" entity: \"ID of the entity from which to obtain claims\"; property: \"Optional filter to only return claims with a main snak that has the specified property\"; rank is one of deprecated, normal, preferred."
+    },
+    {
+      "id": "azure-search-chunk-documents",
+      "title": "Chunk Documents - Azure AI Search",
+      "url": "https://learn.microsoft.com/en-us/azure/search/vector-search-how-to-chunk-documents",
+      "type": "vendor-doc",
+      "publisher": "Microsoft",
+      "verified": "2026-10-17",
+      "keyFindings": "'We recommend starting with a chunk size of 512 tokens (approximately 2,000 characters) and an initial overlap of 25%, which equals 128 tokens.' Default Text Split skill parameters: pages mode, maximumPageLength 2000 characters, pageOverlapLength 500. Lists variable-sized chunking where 'Embedded markup, like HTML or Markdown, have heading syntax that can be used to chunk data by sections', and appending the document title to mid-document chunks 'to prevent context loss'."
+    },
+    {
+      "id": "google-factcheck-doc",
+      "title": "Fact Check (ClaimReview) structured data",
+      "url": "https://developers.google.com/search/docs/appearance/structured-data/factcheck",
+      "type": "vendor-doc",
+      "publisher": "Google Search Central",
+      "verified": "2026-10-17",
+      "keyFindings": "'We're phasing out support for ClaimReview markup in Google Search.' 'However, this markup remains supported by the Factcheck Explorer Tool.' No phase-out date. 'A page must only have one ClaimReview element' to be eligible for the single fact check rich result. Required ClaimReview properties: claimReviewed, reviewRating, url; Rating.alternateName carries the truthfulness rating as a short phrase such as 'Mostly true'."
     }
   ]
 }

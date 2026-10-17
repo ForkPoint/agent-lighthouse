@@ -12,6 +12,8 @@ import {
   ScoreDisplayMode,
 } from "#core/types";
 
+const EXPECTED = "If Crawl-delay is present, it is <= 10 seconds";
+
 export class CrawlDelayAudit extends Audit {
   static override meta: AuditMeta = {
     id: "access-crawl-control/crawl-delay",
@@ -41,17 +43,15 @@ export class CrawlDelayAudit extends Audit {
   audit(ctx: CheckContext): AuditResult {
     const robotsFile = ctx.rootFiles["/robots.txt"];
 
+    // Absent artifact, absent verdict. The dossier records that Crawl-delay is
+    // not part of RFC 9309 and that Google and Amazon ignore it, so neither a
+    // missing robots.txt nor a robots.txt without the directive costs the site
+    // anything. Only a value that is present can be judged.
     if (!robotsFile || robotsFile.status !== 200 || !robotsFile.body) {
-      return this.warn(
-        "No robots.txt found — cannot verify crawler permissions.",
-        "If Crawl-delay is present, it is <= 10 seconds",
+      return this.notApplicable(
+        "No robots.txt found, so there is no Crawl-delay to judge.",
+        EXPECTED,
         "No robots.txt found",
-        {
-          priority: CheckPriority.Medium,
-          description:
-            "Without a robots.txt file, there is no way to verify crawl-delay settings. Create a robots.txt file to explicitly manage crawler behavior.",
-          code: "User-agent: *\nAllow: /",
-        },
       );
     }
 
@@ -61,9 +61,9 @@ export class CrawlDelayAudit extends Audit {
       .map((g) => ({ userAgent: g.userAgent, crawlDelay: g.crawlDelay! }));
 
     if (delays.length === 0) {
-      return this.pass(
-        "No Crawl-delay directives found in robots.txt.",
-        "If Crawl-delay is present, it is <= 10 seconds",
+      return this.notApplicable(
+        "robots.txt sets no Crawl-delay, so there is nothing to judge.",
+        EXPECTED,
         "No Crawl-delay directives present",
       );
     }
@@ -76,7 +76,7 @@ export class CrawlDelayAudit extends Audit {
         .join(", ");
       return this.fail(
         `Excessive Crawl-delay values found: ${details}. Values above 10 seconds significantly slow down AI crawlers.`,
-        "If Crawl-delay is present, it is <= 10 seconds",
+        EXPECTED,
         `Excessive delays: ${details}`,
         {
           priority: CheckPriority.High,
@@ -92,7 +92,7 @@ export class CrawlDelayAudit extends Audit {
       .join(", ");
     return this.pass(
       `Crawl-delay values are reasonable: ${allDetails}`,
-      "If Crawl-delay is present, it is <= 10 seconds",
+      EXPECTED,
       `Crawl-delays: ${allDetails}`,
     );
   }

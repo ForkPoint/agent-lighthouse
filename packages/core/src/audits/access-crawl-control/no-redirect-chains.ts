@@ -55,15 +55,13 @@ export class NoRedirectChainsAudit extends Audit {
     }
 
     if (redirected.length === 0) {
+      // No page, no hop to judge. A scan that read nothing says nothing about
+      // the site's redirects, so it must not fail the site.
       if (ctx.pages.length === 0) {
-        return this.fail(
-          "No pages scanned.",
-          "No redirect chains (URL equals finalUrl or single redirect)",
+        return this.notApplicable(
+          "No pages were scanned, so no redirects could be read.",
+          "No redirect chains",
           "No pages scanned",
-          {
-            priority: CheckPriority.Medium,
-            description: NoRedirectChainsAudit.meta.description,
-          },
         );
       }
 

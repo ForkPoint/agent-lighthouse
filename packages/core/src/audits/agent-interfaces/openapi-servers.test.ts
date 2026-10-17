@@ -80,7 +80,9 @@ describe("OpenApiServersAudit", () => {
     await expectNotApplicableOnEmpty(audit);
   });
 
-  it("fails when there is no servers array", async () => {
+  // OpenAPI 3.0 and 3.1 default an absent or empty `servers` array to `/`.
+  // This used to fail; the omission is legal and the base URL is derivable.
+  it("passes when there is no servers array, which defaults to /", async () => {
     const ctx = mockCheckContext([], {
       "/openapi.json": mockFetchResult(
         JSON.stringify({ openapi: "3.0.3", paths: {} }),
@@ -88,8 +90,28 @@ describe("OpenApiServersAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.found).toBe("No servers array (defaults to /)");
+  });
+
+  it("passes when the servers array is empty, which defaults to /", async () => {
+    const ctx = mockCheckContext([], {
+      "/openapi.json": mockFetchResult(specWithServers([]), 200),
+    });
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Pass);
+  });
+
+  it("fails when servers is not an array", async () => {
+    const ctx = mockCheckContext([], {
+      "/openapi.json": mockFetchResult(
+        specWithServers("https://example.com/api"),
+        200,
+      ),
+    });
+    const result = await audit.audit(ctx);
     expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.message).toContain("No servers array");
+    expect(result.found).toBe("servers is not an array");
   });
 
   it("fails when servers entries have no url", async () => {

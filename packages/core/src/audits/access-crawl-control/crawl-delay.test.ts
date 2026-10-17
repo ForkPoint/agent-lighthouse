@@ -9,18 +9,21 @@ import {
   unreachedSiteContext,
 } from "#core/__tests__/test-utils";
 import { CheckStatus } from "#core/types";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
 
 describe("CrawlDelayAudit", () => {
   const audit = new CrawlDelayAudit();
 
-  it("passes when no Crawl-delay directives are present", () => {
+  // Absent artifact, absent verdict: a robots.txt without the directive has
+  // nothing for this audit to judge, and must not read as a pass.
+  it("is not applicable when no Crawl-delay directive is present", () => {
     const robots = "User-agent: *\nAllow: /";
     const ctx = mockCheckContext([], {
       "/robots.txt": mockFetchResult(robots, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Pass);
-    expect(result.message).toContain("No Crawl-delay directives");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.message).toContain("no Crawl-delay");
   });
 
   it("passes when Crawl-delay is reasonable (<= 10s)", () => {
@@ -45,11 +48,17 @@ describe("CrawlDelayAudit", () => {
     expect(result.message).toContain("30s");
   });
 
-  it("warns when robots.txt is missing", () => {
+  // A missing robots.txt is not a defect for this audit: Crawl-delay is not
+  // part of RFC 9309, so there is no value to judge.
+  it("is not applicable when robots.txt is missing", () => {
     const ctx = mockCheckContext([], {});
     const result = audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("No robots.txt found");
+  });
+
+  it("is not applicable on a scan that read nothing", async () => {
+    await expectNotApplicableOnEmpty(audit);
   });
 
   // The scan may hold a readable page that is not this site's — a broker's
@@ -57,6 +66,12 @@ describe("CrawlDelayAudit", () => {
   // and the runner has to honour it rather than run this audit anyway.
   it("declines when no response can be attributed to this site", async () => {
     const { pages, rootFiles } = attributableFixture();
+    // A Crawl-delay gives the reached audit something to judge.
+    rootFiles["/robots.txt"] = mockFetchResult(
+      "User-agent: *\nCrawl-delay: 5\nAllow: /\n",
+      200,
+      "text/plain",
+    );
     const instance = new CrawlDelayAudit();
     const reached = instance.audit(mockCheckContext(pages, rootFiles));
     expect(reached.status, "the same input reached is judged").not.toBe(

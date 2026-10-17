@@ -45,6 +45,7 @@ fail 1   structured-data/schema-validation
 na   0   access-crawl-control/ai-content-declaration
 na   0   access-crawl-control/bravebot
 na   0   access-crawl-control/chatgpt-user
+na   0   access-crawl-control/crawl-delay
 na   0   access-crawl-control/tdm-rep
 na   0   agent-interfaces/agents-json
 na   0   agent-interfaces/cors-api-routes
@@ -203,7 +204,6 @@ pass 1   content-extraction/language-attribute
 pass 1   operability-safety/aria-layer-injection-scan
 pass 1   operability-safety/invisible-instruction-scan
 pass 1   operability-safety/no-blocking-captcha
-warn 0   access-crawl-control/crawl-delay
 warn 0   answer-readiness/brand-name
 warn 0   answer-readiness/og-image-alt
 warn 0   content-extraction/code-language
