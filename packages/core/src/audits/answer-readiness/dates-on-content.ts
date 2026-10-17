@@ -74,7 +74,7 @@ export function findJsonLdDate(jsonLd: object[]): string | null {
  * Resolve a date from structured sources, in priority order:
  *   1. <time datetime>  2. JSON-LD  3. <meta article:*_time>  4. bare <time>.
  * These are machine-readable and far more reliable than scraping body text —
- * e.g. mejuri's blog article exposes datePublished only in JSON-LD/meta.
+ * e.g. a store blog article that exposes datePublished only in JSON-LD/meta.
  */
 export function findStructuredDate(
   p: PageContext,
