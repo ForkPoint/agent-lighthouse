@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { UnreachableHosts } from "./unreachable-hosts";
+import { UnreachableHosts, isConnectFailure } from "./unreachable-hosts";
 import { mockFetchResult } from "#core/__tests__/test-utils";
 import type { FetchResult } from "#core/fetcher";
 
@@ -75,5 +75,23 @@ describe("UnreachableHosts", () => {
     first.record("https://dead.test/", failed(TIMEOUT));
     const second = new UnreachableHosts(["https://example.com/"]);
     expect(second.refusal("https://dead.test/")).toBeUndefined();
+  });
+});
+
+describe("isConnectFailure", () => {
+  it("is true for a failure before the connection opened", () => {
+    expect(isConnectFailure(failed(TIMEOUT))).toBe(true);
+    expect(isConnectFailure(failed("fetch failed (ENOTFOUND)"))).toBe(true);
+  });
+
+  it.each([
+    "The operation was aborted due to timeout",
+    "other side closed (UND_ERR_SOCKET)",
+  ])("is false once the connection opened: %s", (error) => {
+    expect(isConnectFailure(failed(error))).toBe(false);
+  });
+
+  it("is false for any HTTP answer", () => {
+    expect(isConnectFailure(mockFetchResult("", 404))).toBe(false);
   });
 });

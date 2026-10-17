@@ -12,7 +12,14 @@ const h = vi.hoisted(() => ({
   delayMs: 0,
   /** Only calls after this many are slow: 0 slows every call. */
   delayFromCall: 0,
+  /** A host that accepts no connection: every request to it fails to connect. */
+  deadHost: "",
+  /** How many robots.txt requests fail to connect before the host answers. */
+  robotsConnectFailures: 0,
 }));
+
+const CONNECT_TIMEOUT =
+  "Connect Timeout Error (attempted address: example.com:443, timeout: 10000ms) (UND_ERR_CONNECT_TIMEOUT)";
 
 /** What the real fetcher returns for a request its signal cut short. */
 function abortedResult(url: string): FetchResult {
@@ -43,6 +50,12 @@ vi.mock("./fetcher", async (importOriginal) => {
     createFetcher: () => ({
       fetch: async ({ url, signal }: { url: string; signal?: AbortSignal }) => {
         h.calls.push(url);
+        const target = new URL(url);
+        const connectFails =
+          target.hostname === h.deadHost ||
+          (target.pathname === "/robots.txt" && h.robotsConnectFailures-- > 0);
+        if (connectFails)
+          return { ...notFound(url), status: 0, error: CONNECT_TIMEOUT };
         if (h.delayMs > 0 && h.calls.length > h.delayFromCall)
           await new Promise((resolve) => setTimeout(resolve, h.delayMs));
         if (signal?.aborted) return abortedResult(url);
@@ -125,6 +138,8 @@ beforeEach(() => {
   h.calls.length = 0;
   h.delayMs = 0;
   h.delayFromCall = 0;
+  h.deadHost = "";
+  h.robotsConnectFailures = 0;
   defaultOriginCache.clear();
 });
 
@@ -296,6 +311,34 @@ describe("runScan — homepage unreachable", () => {
     expect(report.scanValidity?.judgeable).toBe(false);
     expect(report.scanValidity?.unscoredReason).toBeTruthy();
     expect(typeof report.summary).toBe("string");
+  });
+
+  it("sends no more root files once robots.txt twice fails to connect", async () => {
+    h.deadHost = "example.com";
+
+    const report = await runScan("https://example.com/");
+
+    expect(h.calls).toEqual([
+      "https://example.com/robots.txt",
+      "https://example.com/robots.txt",
+      "https://example.com/",
+    ]);
+    expect(report.pagesScanned).toEqual([]);
+    expect(report.overallScore).toBeNull();
+  });
+
+  it("fetches every root file after one connect failure on robots.txt", async () => {
+    h.robotsConnectFailures = 1;
+    set("https://example.com/", CONTENT_HTML);
+
+    await runScan("https://example.com/");
+
+    expect(h.calls.slice(0, 2)).toEqual([
+      "https://example.com/robots.txt",
+      "https://example.com/robots.txt",
+    ]);
+    expect(h.calls).toContain("https://example.com/llms.txt");
+    expect(h.calls).toContain("https://example.com/.well-known/security.txt");
   });
 });
 

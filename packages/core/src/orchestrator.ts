@@ -16,7 +16,7 @@ import {
 } from "./constants";
 import { logger } from "./logger";
 import { createFetcher, isSafeUrl, splitCredentials } from "./fetcher";
-import { UnreachableHosts } from "./unreachable-hosts";
+import { UnreachableHosts, isConnectFailure } from "./unreachable-hosts";
 import { gatewayTarget } from "./gateway";
 import {
   OriginCache,
@@ -396,15 +396,35 @@ async function scanWithinBudget(
     );
     tracker.phaseStart(PhaseId.FetchRoot, rootFilePaths.length);
 
-    const prefetchedRobots = options?.robotsTxt;
+    // robots.txt goes first, alone, and the other root files wait for it.
+    // undici does not cancel a request that is waiting for a connection, so
+    // on an origin that accepts none, 25 more files sent together each waited
+    // out the connect timeout in turn: 90 s before the homepage fetch, which
+    // then failed too. One connect failure can be a one-off under load, so
+    // robots.txt is tried a second time before the origin is given up on. A
+    // TLS error, a reset or any HTTP status shows the host is there.
+    const robotsUrl = `${baseUrl}/robots.txt`;
+    let robots =
+      options?.robotsTxt ??
+      (await fetcher.fetch({ url: robotsUrl, signal: fetchSignal }));
+    if (isConnectFailure(robots))
+      robots = await fetcher.fetch({ url: robotsUrl, signal: fetchSignal });
+    tracker.unitDone("/robots.txt");
+    const refused = isConnectFailure(robots)
+      ? `${new URL(baseUrl).host} did not accept a connection: ${robots.error}`
+      : undefined;
+    if (refused) logger.debug(`[orchestrator] Root files not sent: ${refused}`);
+
     const rootResults = await Promise.all(
       rootFilePaths.map((path) => {
-        if (path === "/robots.txt" && prefetchedRobots) {
+        if (path === "/robots.txt") return Promise.resolve(robots);
+        const fileUrl = `${baseUrl}${path}`;
+        if (refused) {
           tracker.unitDone(path);
-          return Promise.resolve(prefetchedRobots);
+          return Promise.resolve(unsentResult(fileUrl, refused));
         }
         return fetcher
-          .fetch({ url: `${baseUrl}${path}`, signal: fetchSignal })
+          .fetch({ url: fileUrl, signal: fetchSignal })
           .then((result) => {
             tracker.unitDone(path);
             return result;
