@@ -131,8 +131,41 @@ weight leaves the scored set.
 - Guidance no longer claims broken links waste an agent's context window or
   degrade answers about the site. No agent is documented to read the file.
 
+## Limits
+
+The audit checks at most 20 links, taken evenly from the start to the end of
+the file, with 4 requests in flight at a time. Each link is fetched with
+redirects followed. A link that answers 401, 403 or 429, or does not answer,
+is reported as unverifiable, not broken: the answer is about the scanner, not
+the link. When no checked link can be verified, the result is not applicable.
+
+## Link-burst fix (2026-10-17)
+
+A corpus scan of a site whose llms.txt lists about 300 pages in four
+languages sent every link at once: 304 page requests in 16 s. The site's WAF
+answered 403 to the rest of that scan, and later scans from the same address
+could not connect at all. The audit carries weight 0, so the burst cost the
+other audits their evidence and bought nothing.
+
+Changes, all from the required fix of the 2026-08-20 review:
+
+- At most 20 links are checked, 4 at a time (was every link, all at once).
+- 401, 403, 429 and no answer are unverifiable, not broken.
+- Redirects are followed before a link is judged.
+- The broken list names the right URLs. The old code filtered the results and
+  then took each URL from the filtered index, so it named the link before the
+  broken one.
+
+## Deferred
+
+- Relative links. `extractMarkdownLinks` keeps absolute links only, so a file
+  of relative links still reads as "No links found". Not changed here.
+- `ctx.wafProtection` is not read. The unverifiable class covers the same
+  answers link by link.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 - 2026-08-24 — evidence sweep: grade B → C, tier scored → informative, weight 0.6 → 0. The B belonged to conformance checks this audit does not implement; link validity has no known enforcing consumer.
+- 2026-10-17 — link-burst fix: at most 20 links, 4 at a time; refused and unanswered links unverifiable; redirects followed; broken URLs named correctly.

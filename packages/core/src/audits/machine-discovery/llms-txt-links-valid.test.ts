@@ -85,4 +85,87 @@ describe("LlmsTxtLinksValidAudit", () => {
     expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("return HTTP 200");
   });
+
+  const listing = (paths: string[]) =>
+    "# Site\n\n## Pages\n" +
+    paths.map((p) => `- [Page](https://example.com${p}): Page`).join("\n");
+
+  it("checks at most 20 links, spread over the file, 4 at a time", async () => {
+    const paths = Array.from({ length: 300 }, (_, i) => `/p${i}`);
+    const ctx = mockCheckContext([], {
+      "/llms.txt": mockFetchResult(listing(paths), 200),
+    });
+    const seen: string[] = [];
+    let inFlight = 0;
+    let peak = 0;
+    ctx.fetch = async ({ url }) => {
+      seen.push(url);
+      inFlight += 1;
+      peak = Math.max(peak, inFlight);
+      await new Promise((resolve) => setTimeout(resolve, 1));
+      inFlight -= 1;
+      return mockFetchResult("", 200);
+    };
+    const result = await audit.audit(ctx);
+    expect(seen).toHaveLength(20);
+    expect(seen).toContain("https://example.com/p0");
+    expect(seen).toContain("https://example.com/p285");
+    expect(peak).toBeLessThanOrEqual(4);
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.found).toContain("20 of 300 link(s) checked");
+  });
+
+  it("names the broken link, not the one before it", async () => {
+    const ctx = mockCheckContext([], {
+      "/llms.txt": mockFetchResult(listing(["/", "/gone"]), 200),
+    });
+    ctx.fetch = fetchStub({ "https://example.com/gone": 404 });
+    const result = await audit.audit(ctx);
+    expect(result.found).toContain("https://example.com/gone (404)");
+    expect(result.found).not.toContain("https://example.com/ (404)");
+  });
+
+  it("does not call a refused or unanswered link broken", async () => {
+    const ctx = mockCheckContext([], {
+      "/llms.txt": mockFetchResult(
+        listing(["/", "/login", "/waf", "/slow", "/busy"]),
+        200,
+      ),
+    });
+    ctx.fetch = fetchStub({
+      "https://example.com/login": 401,
+      "https://example.com/waf": 403,
+      "https://example.com/slow": 0,
+      "https://example.com/busy": 429,
+    });
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.found).toContain("4 could not be verified");
+  });
+
+  it("is not applicable when no checked link could be verified", async () => {
+    const ctx = mockCheckContext([], {
+      "/llms.txt": mockFetchResult(listing(["/a", "/b"]), 200),
+    });
+    ctx.fetch = fetchStub({
+      "https://example.com/a": 403,
+      "https://example.com/b": 403,
+    });
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+  });
+
+  it("follows a redirect before judging a link", async () => {
+    const ctx = mockCheckContext([], {
+      "/llms.txt": mockFetchResult(listing(["/moved"]), 200),
+    });
+    const follow: Array<boolean | undefined> = [];
+    ctx.fetch = async ({ followRedirects }) => {
+      follow.push(followRedirects);
+      return mockFetchResult("", followRedirects ? 200 : 301);
+    };
+    const result = await audit.audit(ctx);
+    expect(follow).toEqual([true]);
+    expect(result.status).toBe(CheckStatus.Pass);
+  });
 });

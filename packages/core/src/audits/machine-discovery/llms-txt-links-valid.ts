@@ -17,6 +17,50 @@ function isOk(res: { status: number }): boolean {
   return res.status >= 200 && res.status < 300;
 }
 
+/**
+ * How many links one scan checks. A large llms.txt lists hundreds of pages;
+ * fetching all of them is a crawl, and on a protected site the burst itself
+ * trips the WAF, so every later request of the scan reads 403. Twenty links
+ * spread over the file show whether its links resolve.
+ */
+const MAX_LINKS = 20;
+
+/** Requests in flight at once against the origin. */
+const CONCURRENCY = 4;
+
+/**
+ * Answers that say the scanner was refused or got nothing, not that the link
+ * is wrong: a login wall, a WAF, a rate limit, or no response at all.
+ */
+const UNVERIFIABLE = new Set([0, 401, 403, 429]);
+
+/** An even-strided sample, so a long file is checked from start to end. */
+function evenSample<T>(items: T[], n: number): T[] {
+  if (items.length <= n) return [...items];
+  const stride = items.length / n;
+  return Array.from({ length: n }, (_, i) => items[Math.floor(i * stride)]!);
+}
+
+/** `probe` over every item, at most `limit` at a time, results in order. */
+async function mapLimited<T, R>(
+  items: T[],
+  limit: number,
+  probe: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const out: R[] = [];
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) {
+      const index = next++;
+      out[index] = await probe(items[index]!);
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, worker),
+  );
+  return out;
+}
+
 export class LlmsTxtLinksValidAudit extends Audit {
   static override meta: AuditMeta = {
     id: "machine-discovery/llms-txt-links-valid",
@@ -83,12 +127,28 @@ export class LlmsTxtLinksValidAudit extends Audit {
       }
     }
 
-    const results = await Promise.all(
-      resolved.map((url) => sharedProbeUrl(ctx, url)),
+    const checked = evenSample(resolved, MAX_LINKS);
+    const results = await mapLimited(checked, CONCURRENCY, async (url) => ({
+      url,
+      status:
+        (await sharedProbeUrl(ctx, url, { followRedirects: true }))?.status ??
+        0,
+    }));
+    const unverifiable = results.filter((r) => UNVERIFIABLE.has(r.status));
+    const broken = results.filter(
+      (r) => r.status !== 200 && !UNVERIFIABLE.has(r.status),
     );
-    const broken = results
-      .filter((r) => !r || r.status !== 200)
-      .map((r, i) => ({ url: resolved[i]!, status: r?.status ?? 0 }));
+    const scope =
+      checked.length < links.length
+        ? `${checked.length} of ${links.length} link(s) checked`
+        : `${checked.length} link(s) checked`;
+    const unverifiedNote =
+      unverifiable.length > 0
+        ? `; ${unverifiable.length} could not be verified (${unverifiable
+            .slice(0, 5)
+            .map((r) => `${r.url} (${r.status})`)
+            .join(", ")})`
+        : "";
 
     if (broken.length > 0) {
       const topBroken = broken
@@ -100,9 +160,9 @@ export class LlmsTxtLinksValidAudit extends Audit {
           ? `${topBroken} (+${broken.length - 10} more)`
           : topBroken;
       return this.warn(
-        `${broken.length}/${links.length} link(s) are broken.`,
+        `${broken.length} of ${checked.length} checked link(s) are broken.`,
         "All links return HTTP 200",
-        `Broken: ${brokenSummary}`,
+        `${scope}. Broken: ${brokenSummary}${unverifiedNote}`,
         {
           priority: CheckPriority.Low,
           description:
@@ -112,10 +172,19 @@ export class LlmsTxtLinksValidAudit extends Audit {
       );
     }
 
+    if (results.length > 0 && unverifiable.length === results.length) {
+      return this.notApplicable(
+        "No checked link in llms.txt could be verified: each one was refused or went unanswered, which says nothing about the link itself.",
+        "All links return HTTP 200",
+        `${scope}${unverifiedNote}`,
+      );
+    }
+
+    const valid = results.length - unverifiable.length;
     return this.pass(
-      `All ${links.length} link(s) return HTTP 200.`,
+      `${valid} of ${checked.length} checked link(s) return HTTP 200.`,
       "All links return HTTP 200",
-      `${links.length}/${links.length} valid`,
+      `${scope}; ${valid} valid${unverifiedNote}`,
     );
   }
 }
