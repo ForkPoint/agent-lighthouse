@@ -110,15 +110,34 @@ describe("RedirectCookieJar", () => {
   });
 
   // RFC 6265 section 5.3, step 3: Max-Age wins over Expires whatever their
-  // order. The jar reads them in order, so a past Expires written after a
-  // positive Max-Age drops a cookie a browser keeps. Left unfixed: these are
-  // tests only. A server that sends both usually sends them consistent.
-  it.fails("lets Max-Age win over a past Expires written after it", () => {
+  // order. Read in order, a past Expires written after a positive Max-Age
+  // dropped a cookie a browser keeps.
+  it("lets Max-Age win over a past Expires written after it", () => {
     const jar = new RedirectCookieJar();
     jar.store(
       "a=1; Max-Age=3600; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/",
       "https://example.com/",
     );
     expect(jar.header("https://example.com/")).toBe("a=1");
+  });
+
+  it("lets a Max-Age of 0 remove a cookie whose Expires is in the future", () => {
+    const jar = new RedirectCookieJar();
+    jar.store("a=1; Path=/", "https://example.com/");
+    jar.store(
+      "a=1; Expires=Fri, 01 Jan 2100 00:00:00 GMT; Max-Age=0; Path=/",
+      "https://example.com/",
+    );
+    expect(jar.header("https://example.com/")).toBeUndefined();
+  });
+
+  it("still removes a cookie by a past Expires when there is no Max-Age", () => {
+    const jar = new RedirectCookieJar();
+    jar.store("a=1; Path=/", "https://example.com/");
+    jar.store(
+      "a=1; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/",
+      "https://example.com/",
+    );
+    expect(jar.header("https://example.com/")).toBeUndefined();
   });
 });

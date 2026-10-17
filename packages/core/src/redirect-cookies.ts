@@ -61,7 +61,10 @@ function parse(
   let hostOnly = true;
   let path = defaultPath(from);
   let secure = false;
-  let expired = false;
+  // RFC 6265 section 5.3, step 3: Max-Age wins over Expires, whatever their
+  // order, so each is kept apart and Max-Age decides when it is present.
+  let maxAgeExpired: boolean | undefined;
+  let expiresExpired = false;
   for (const attribute of attributes) {
     const at = attribute.indexOf("=");
     const key = (at === -1 ? attribute : attribute.slice(0, at))
@@ -81,15 +84,15 @@ function parse(
     } else if (key === "secure") {
       secure = true;
     } else if (key === "max-age" && /^-?\d+$/.test(raw)) {
-      expired = Number(raw) <= 0;
+      maxAgeExpired = Number(raw) <= 0;
     } else if (key === "expires" && raw) {
       const when = Date.parse(raw);
-      if (!Number.isNaN(when) && when <= Date.now()) expired = true;
+      expiresExpired = !Number.isNaN(when) && when <= Date.now();
     }
   }
   return {
     cookie: { name, value, domain, hostOnly, path, secure },
-    expired,
+    expired: maxAgeExpired ?? expiresExpired,
   };
 }
 
