@@ -201,6 +201,33 @@ describe("probeUaParity", () => {
     });
   });
 
+  it("sends no crawler probe to a URL whose baseline got no answer", async () => {
+    const r = recorder((o) => (o.url === "https://dead.test/" ? res(0) : ok()));
+    const probes = await probeUaParity(
+      r.fetch,
+      ["https://dead.test/", "https://a.test/"],
+      ["gptbot", "claudebot"],
+    );
+    expect(r.seen.filter((s) => s.url === "https://dead.test/")).toEqual([
+      { url: "https://dead.test/", ua: BASELINE_UA },
+    ]);
+    expect(probes.map((p) => p.url)).toEqual([
+      "https://a.test/",
+      "https://a.test/",
+    ]);
+  });
+
+  it("still probes a URL whose baseline answered with an error status", async () => {
+    const r = recorder(() => res(403));
+    const probes = await probeUaParity(
+      r.fetch,
+      ["https://a.test/"],
+      ["gptbot"],
+    );
+    expect(r.seen).toHaveLength(2);
+    expect(probes[0]).toMatchObject({ baselineStatus: 403, probeStatus: 403 });
+  });
+
   it("records the baseline and probe statuses", async () => {
     const r = recorder((o) => (o.userAgent === BASELINE_UA ? ok() : res(403)));
     const probes = await probeUaParity(
@@ -348,6 +375,23 @@ describe("sharedUaProbes", () => {
       await sharedUaProbes(ctx, ["https://localhost/"], ["gptbot"]),
     ).toEqual([]);
     expect(ctx.calls).toEqual([]);
+  });
+  it("tries an unanswered URL once per scan and probes no crawler there", async () => {
+    const calls: string[] = [];
+    const ctx = {
+      fetch: async (o: FetchOptions) => {
+        calls.push(o.userAgent ?? "");
+        return res(0);
+      },
+    };
+    const tokens = ["gptbot", "claudebot", "perplexitybot"];
+    expect(await sharedUaProbes(ctx, ["https://dead.test/"], tokens)).toEqual(
+      [],
+    );
+    expect(await sharedUaProbes(ctx, ["https://dead.test/"], tokens)).toEqual(
+      [],
+    );
+    expect(calls).toEqual([BASELINE_UA]);
   });
   it("fetches the control bot once per URL per scan", async () => {
     const ctx = scan();

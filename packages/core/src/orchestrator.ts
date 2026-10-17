@@ -16,6 +16,7 @@ import {
 } from "./constants";
 import { logger } from "./logger";
 import { createFetcher, isSafeUrl, splitCredentials } from "./fetcher";
+import { UnreachableHosts } from "./unreachable-hosts";
 import { gatewayTarget } from "./gateway";
 import {
   OriginCache,
@@ -620,6 +621,10 @@ async function scanWithinBudget(
     })
     .sort((a, b) => compareCodePoints(a.url, b.url));
 
+  const unreachableHosts = new UnreachableHosts([
+    url,
+    pageResult.finalUrl || url,
+  ]);
   const siteRootUrl = sitemapSiteRoot(
     pages.find((page) => page.url === displayUrl),
   );
@@ -633,13 +638,17 @@ async function scanWithinBudget(
     baseUrl,
     ...(siteRootUrl !== undefined && { siteRootUrl }),
     // Once the budget is gone no request leaves: the audit reads an error
-    // result at once, the same shape a refused connection gives it.
-    fetch: (options) =>
-      budget.signal.aborted
-        ? Promise.resolve(
-            unsentResult(options.url, budgetReason(budget.signal)),
-          )
-        : fetcher.fetch({ ...options, signal: fetchSignal }),
+    // result at once, the same shape a refused connection gives it. A host
+    // that refused a connection earlier in the scan gets the same treatment.
+    fetch: async (options) => {
+      if (budget.signal.aborted)
+        return unsentResult(options.url, budgetReason(budget.signal));
+      const refusal = unreachableHosts.refusal(options.url);
+      if (refusal) return unsentResult(options.url, refusal);
+      const result = await fetcher.fetch({ ...options, signal: fetchSignal });
+      unreachableHosts.record(options.url, result);
+      return result;
+    },
     ...(wafProtection != null && { wafProtection }),
     evidence,
     originEvidence: {
