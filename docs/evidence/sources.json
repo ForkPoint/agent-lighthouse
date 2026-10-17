@@ -839,8 +839,8 @@
       "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/define-tools",
       "type": "vendor-doc",
       "publisher": "Anthropic",
-      "verified": "2026-08-21",
-      "keyFindings": "A tool `name` \"Must match the regex `^[a-zA-Z0-9_-]{1,64}$`\", so an operationId carrying spaces, punctuation or more than 64 characters cannot be registered verbatim."
+      "verified": "2026-10-17",
+      "keyFindings": "A tool `name` must match `^[a-zA-Z0-9_-]{1,128}$` (it read `{1,64}` on 2026-08-21), so an operationId carrying spaces or punctuation cannot be registered verbatim. Best practice: \"Provide extremely detailed descriptions. This is by far the most important factor in tool performance\", including \"What each parameter means and how it affects the tool's behavior\"."
     },
     {
       "id": "anthropic-docs-head",
@@ -3844,6 +3844,26 @@
       "publisher": "Model Context Protocol",
       "verified": "2026-08-20",
       "keyFindings": "7,180 stars, created 2025-02-05, last push 2026-08-19. Registry entries use `server.json`. SEP-2127 states the Registry's server.json 'separately describes registry entries' and is a distinct schema from Server Cards — publication to the registry is a submission workflow, not website-derived discovery."
+    },
+    {
+      "id": "mcp-registry-authentication",
+      "title": "How to Authenticate When Publishing to the Official MCP Registry",
+      "url": "https://modelcontextprotocol.io/registry/authentication",
+      "type": "vendor-doc",
+      "publisher": "Model Context Protocol",
+      "verified": "2026-10-17",
+      "accessed": "2026-10-17",
+      "keyFindings": "Preview status. GitHub authentication binds a server name to `io.github.<user or org>/*`. Domain authentication binds it to `com.example.*/*`, the reverse-DNS form of the domain, proved either by a DNS TXT record `v=MCPv1; k=ed25519; p=<key>` (or `k=ecdsap384`) or by the same payload served at `https://<domain>/.well-known/mcp-registry-auth`. The proof is checked when the publisher logs in; the page does not say it must stay published afterwards."
+    },
+    {
+      "id": "mcp-registry-about",
+      "title": "The MCP Registry",
+      "url": "https://modelcontextprotocol.io/registry/about",
+      "type": "vendor-doc",
+      "publisher": "Model Context Protocol",
+      "verified": "2026-10-17",
+      "accessed": "2026-10-17",
+      "keyFindings": "Official centralized metadata repository for public MCP servers, in preview. Provides 'Namespace management through DNS verification' and 'A REST API for MCP clients and aggregators to discover available servers'. 'Intended to be consumed primarily by downstream aggregators, such as MCP server marketplaces', and 'not intended to be directly consumed by host applications'. Namespace authentication 'ensures that only the legitimate owner of a GitHub account or domain can publish servers under that namespace'."
     },
     {
       "id": "mcp-sep-1649",

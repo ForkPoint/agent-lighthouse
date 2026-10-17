@@ -568,7 +568,9 @@ describe("publicDossier", () => {
         "What it checks": 215,
         "Why it matters": 215,
         Evidence: 215,
-        Limits: 148,
+        // 149 since 2026-10-17: `mcp-registry-listing-ownership` gained its
+        // counter-evidence when its sources were replaced.
+        Limits: 149,
         // Every scored audit publishes its grade reasoning; the shortfall is
         // in the informative and experimental tiers, which the bar exempts.
         "How it scores": 190,

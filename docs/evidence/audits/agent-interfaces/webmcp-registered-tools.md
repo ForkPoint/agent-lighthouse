@@ -39,7 +39,9 @@ sources:
 
 WebMCP lets a page register agent-callable tools at runtime through `navigator.modelContext`, which is what Chrome exposes to an in-browser agent and what Google Lighthouse reports as "Registered WebMCP tools". This scanner has no JavaScript runtime, so it reports the registrations visible in the served document and treats silence as unknown rather than as absence.
 
-_(The pre-rewrite audit demanded a `/.well-known/webmcp` manifest file. That artifact is invented; the grade-D evidence for it is below, unchanged, and the rewrite section records what replaced it.)_
+A tool name found in an inline `navigator.modelContext` registration passes. A reference to `navigator.modelContext` with no readable tool name warns. No registration in the served document is not applicable, because a tool registered from an external script is invisible here. The audit never fails.
+
+The audit does not read a `/.well-known/webmcp` manifest. The WebMCP specification defines no manifest, so an earlier version's demand for one was dropped. The grade-D evidence below is the record of why.
 
 ## Evidence
 
