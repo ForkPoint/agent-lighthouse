@@ -359,7 +359,7 @@ Gatherers do. One layer issues requests, so it is the only layer that needs the 
 
 A gatherer with one consumer is still right: the fetch is visible to the scan and cacheable the moment a second consumer appears. That is how the OpenAPI family once reached seven identical copies of `getOpenApiSpec`.
 
-`pnpm check:audit-boundaries` parses every production `.ts` file under `packages/core/src/audits/`, helpers included, and rejects `ctx.fetch`, destructured or global `fetch`, fetcher imports and direct HTTP client imports. Scanning the whole tree keeps the gate complete without an import graph, so a network helper must live in `gatherers/`, never in a directory the gate does not read. CI does not run the script today; run it before committing audit changes.
+`pnpm check:audit-boundaries` parses every production `.ts` file under `packages/core/src/audits/`, helpers included, and rejects `ctx.fetch`, destructured or global `fetch`, fetcher imports and direct HTTP client imports. Scanning the whole tree keeps the gate complete without an import graph, so a network helper must live in `gatherers/`, never in a directory the gate does not read. CI runs it on every push.
 
 ---
 

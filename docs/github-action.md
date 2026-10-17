@@ -33,7 +33,7 @@ jobs:
 | `comment-on-pr`   | `"true"`    | Post `agent-lighthouse-report.md` as a PR comment.      |
 | `github-token`    | none        | Token for the comment. Without it no comment is posted. |
 
-- The comment is posted only on `pull_request` events, and only when the scan step succeeded. A failed assertion skips it.
+- The comment is posted only on `pull_request` events. It is posted when a `min-score` or `assert-category` check fails too, so the PR shows why the job failed.
 - The action runs `npx -y @forkpoint/agent-lighthouse`, so it always uses the latest published CLI, whatever ref of the action you pin.
 - The repository publishes no `v*` tags. To pin the action's own steps, use a commit SHA: `ForkPoint/agent-lighthouse@<sha>`.
 - For other flags, or to keep the reports as an artifact, run the CLI directly; see [In CI](./cli.md#in-ci).

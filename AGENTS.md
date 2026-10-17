@@ -44,6 +44,7 @@ pnpm test               # vitest, from the repo root only
 pnpm typecheck          # tsc --noEmit per package
 pnpm lint               # oxlint, type-aware
 pnpm check:dossiers     # registry <-> dossier agreement, both directions
+pnpm check:audit-boundaries # no audit makes its own network call
 pnpm check:requires     # each audit's `requires` matches what its source reads
 pnpm check:audit-map    # audit map <-> codebase & dossier agreement
 pnpm check:enums        # no string literal where an enum constant exists
@@ -229,10 +230,10 @@ Write for a reader, not for a researcher:
 
 ## Before you commit
 
-All eleven, in order:
+All twelve, in order:
 
 ```bash
-pnpm build && pnpm test && pnpm typecheck && pnpm lint && pnpm check:dossiers && pnpm check:requires && pnpm check:audit-map && pnpm check:enums && pnpm knip && pnpm check:retired-names && pnpm check:package-types
+pnpm build && pnpm test && pnpm typecheck && pnpm lint && pnpm check:dossiers && pnpm check:audit-boundaries && pnpm check:requires && pnpm check:audit-map && pnpm check:enums && pnpm knip && pnpm check:retired-names && pnpm check:package-types
 ```
 
 `check:dossiers`, `check:requires`, `check:package-types` and the type-aware

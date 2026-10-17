@@ -48,6 +48,9 @@ jobs:
       - name: Check audit-dossier linkage
         run: pnpm check:dossiers
 
+      - name: Check audits make no direct network calls
+        run: pnpm check:audit-boundaries
+
       - name: Check audit-evidence requirements
         run: pnpm check:requires
 
