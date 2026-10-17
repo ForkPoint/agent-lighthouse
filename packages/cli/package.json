@@ -36,7 +36,7 @@
     "seo"
   ],
   "bin": {
-    "agent-lighthouse": "./dist/main.js"
+    "agent-lighthouse": "./dist/bin.js"
   },
   "main": "./dist/main.js",
   "types": "./dist/main.d.ts",

@@ -2,6 +2,8 @@ import { describe, it, expect, vi } from "vitest";
 import { fetchSampledPage } from "./sampled-pages";
 import { mockFetchResult } from "#core/__tests__/test-utils";
 import type { FetchOptions, FetchResult } from "#core/fetcher";
+import { logger } from "#core/logger";
+import { captureLogs } from "#core/tests/capture-logs";
 
 vi.mock("#core/fetcher", async (importOriginal) => {
   const actual = await importOriginal<typeof import("#core/fetcher")>();
@@ -53,5 +55,26 @@ describe("fetchSampledPage", () => {
     const ctx = ctxWithCounter();
     expect(await fetchSampledPage(ctx, "https://localhost/a")).toBeUndefined();
     expect(ctx.calls).toEqual([]);
+  });
+
+  it("names the gatherer on lines its work writes", async () => {
+    const logs = captureLogs();
+    try {
+      await fetchSampledPage(
+        {
+          fetch: async () => {
+            logger.debug("request");
+            return mockFetchResult("", 200, "text/html");
+          },
+        },
+        "https://example.com/a",
+      );
+    } finally {
+      logs.restore();
+    }
+    expect(logs.lines[0]).toMatchObject({
+      msg: "request",
+      gatherer: "sampled-pages",
+    });
   });
 });

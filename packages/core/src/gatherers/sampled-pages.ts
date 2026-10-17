@@ -1,6 +1,7 @@
 import { cacheOwner } from "./cache-owner";
 import type { FetchOptions, FetchResult } from "#core/fetcher";
 import { isSafeUrl } from "#core/fetcher";
+import { LogField, withLogContext } from "#core/logger";
 
 /** The slice of CheckContext this gatherer needs, kept structural to avoid a cycle. */
 interface FetchingContext {
@@ -32,11 +33,14 @@ export function fetchSampledPage(
   const cached = perScan.get(url);
   if (cached) return cached;
 
-  const pending = (async () => {
-    if (!(await isSafeUrl(url))) return undefined;
-    const result = await ctx.fetch({ url });
-    return result.status === 200 ? result : undefined;
-  })();
+  const pending = withLogContext(
+    { [LogField.Gatherer]: "sampled-pages" },
+    async () => {
+      if (!(await isSafeUrl(url))) return undefined;
+      const result = await ctx.fetch({ url });
+      return result.status === 200 ? result : undefined;
+    },
+  );
   perScan.set(url, pending);
   return pending;
 }

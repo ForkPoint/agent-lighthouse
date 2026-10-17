@@ -1889,6 +1889,9 @@ describe("runScan — logging", () => {
       (l) => l["component"] === "orchestrator" && l["msg"] === "Phase done",
     );
     expect(phases.map((l) => l["phase"])).toContain(PhaseId.Audits);
+    const audits = lines.filter((l) => l["msg"] === "Audit finished");
+    expect(audits.length).toBeGreaterThan(0);
+    expect(audits.every((l) => l["phase"] === PhaseId.Audits)).toBe(true);
     expect(lines.at(-1)).toMatchObject({
       level: "info",
       component: "orchestrator",

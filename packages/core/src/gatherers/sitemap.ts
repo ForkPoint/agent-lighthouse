@@ -4,6 +4,7 @@ import type { FetchOptions, FetchResult } from "#core/fetcher";
 import { isSafeUrl } from "#core/fetcher";
 import { parseRobotsFile } from "./robots";
 import { PageType } from "#core/types";
+import { LogField, withLogContext } from "#core/logger";
 
 /**
  * A homepage directory provides a sitemap scope; an interior page does not.
@@ -418,10 +419,12 @@ export function siteSitemapTree(ctx: SitemapContext): Promise<SitemapTree> {
   const cached = treeCache.get(cacheOwner(ctx));
   if (cached) return cached;
   const { declared, fallbacks } = siteRoots(ctx);
-  const walk = collectSitemapEntries(ctx.fetch, declared, {
-    fallbackRoots: fallbacks,
-    siteRootUrl: ctx.siteRootUrl,
-  });
+  const walk = withLogContext({ [LogField.Gatherer]: "sitemap" }, () =>
+    collectSitemapEntries(ctx.fetch, declared, {
+      fallbackRoots: fallbacks,
+      siteRootUrl: ctx.siteRootUrl,
+    }),
+  );
   treeCache.set(cacheOwner(ctx), walk);
   return walk;
 }
@@ -470,42 +473,45 @@ export async function readSitemap(
   const cached = readResultCache.get(cacheOwner(ctx));
   if (cached) return cached;
 
-  const promise = (async (): Promise<SitemapReadResult> => {
-    const sitemapFile = servedSitemapFile(ctx);
-    const tree = await siteSitemapTree(ctx);
+  const promise = withLogContext(
+    { [LogField.Gatherer]: "sitemap" },
+    async (): Promise<SitemapReadResult> => {
+      const sitemapFile = servedSitemapFile(ctx);
+      const tree = await siteSitemapTree(ctx);
 
-    if (tree.entries.length === 0 && tree.childSitemaps.length === 0) {
-      if (tree.readableFiles.length > 0) {
-        return { kind: "empty", reason: NO_SITEMAP, result: sitemapFile };
+      if (tree.entries.length === 0 && tree.childSitemaps.length === 0) {
+        if (tree.readableFiles.length > 0) {
+          return { kind: "empty", reason: NO_SITEMAP, result: sitemapFile };
+        }
+        if (tree.malformedFiles.length > 0) {
+          return {
+            kind: "malformed",
+            reason:
+              "Sitemap file found but does not contain valid <urlset> or <sitemapindex>.",
+            result: sitemapFile,
+          };
+        }
+        return tree.truncated || tree.scopeIncomplete
+          ? {
+              kind: "absent",
+              reason: tree.truncated
+                ? "The sitemap walk reached its limit before establishing coverage of this site."
+                : "A shared sitemap index has unreadable children, so coverage of this site could not be established.",
+              incomplete: true,
+            }
+          : { kind: "absent", reason: NO_SITEMAP };
       }
-      if (tree.malformedFiles.length > 0) {
-        return {
-          kind: "malformed",
-          reason:
-            "Sitemap file found but does not contain valid <urlset> or <sitemapindex>.",
-          result: sitemapFile,
-        };
+
+      const defects: string[] = [];
+      if (tree.malformedLastmod > 0) {
+        defects.push(
+          `${tree.malformedLastmod} <lastmod> date(s) fail W3C Datetime shape.`,
+        );
       }
-      return tree.truncated || tree.scopeIncomplete
-        ? {
-            kind: "absent",
-            reason: tree.truncated
-              ? "The sitemap walk reached its limit before establishing coverage of this site."
-              : "A shared sitemap index has unreadable children, so coverage of this site could not be established.",
-            incomplete: true,
-          }
-        : { kind: "absent", reason: NO_SITEMAP };
-    }
 
-    const defects: string[] = [];
-    if (tree.malformedLastmod > 0) {
-      defects.push(
-        `${tree.malformedLastmod} <lastmod> date(s) fail W3C Datetime shape.`,
-      );
-    }
-
-    return { kind: "readable", tree, result: sitemapFile, defects };
-  })();
+      return { kind: "readable", tree, result: sitemapFile, defects };
+    },
+  );
 
   readResultCache.set(cacheOwner(ctx), promise);
   return promise;

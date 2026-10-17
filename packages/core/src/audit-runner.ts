@@ -6,7 +6,7 @@ import type {
   AuditMeta,
   AuditCoverage,
 } from "./types";
-import { LogField, logger, LogLevel } from "./logger";
+import { LogField, logger, LogLevel, withLogContext } from "./logger";
 
 const log = logger.child({ [LogField.Component]: "audit" });
 import {
@@ -408,7 +408,7 @@ export function planAudits(
         // One malformed custom audit degrades to its own stub, like any other
         // per-audit failure, instead of aborting the whole scan.
         log.error(
-          { audit: registration.meta.id, [LogField.Error]: err },
+          { [LogField.Audit]: registration.meta.id, [LogField.Error]: err },
           "Audit error",
         );
         skipped.push(
@@ -554,7 +554,7 @@ export async function runAudits(
     const record = traceFromCheck(check, durationMs);
     log.trace(
       {
-        audit: record.id,
+        [LogField.Audit]: record.id,
         outcome: record.outcome,
         status: record.status,
         score: record.score,
@@ -584,90 +584,91 @@ export async function runAudits(
     }
     const batch = runnable.slice(i, i + batchSize);
     const batchResults = await Promise.all(
-      batch.map(async (entry) => {
-        const { reg, scopedPages, scoreDisplayMode, assessments } = entry;
-        if (budget?.aborted) {
-          const stub = budgetStub(entry);
-          trace(stub, 0);
-          return stub;
-        }
-        const label = `${reg.meta.id} ${reg.meta.title}`;
-        const startedAt = tracing ? performance.now() : 0;
-        const elapsed = () =>
-          tracing ? Math.round(performance.now() - startedAt) : 0;
-        const execute = async (
-          assessment?: PlannedAssessment,
-        ): Promise<CheckResult> => {
-          if (assessment?.skipped) return assessment.skipped;
-          const mode = assessment?.scoreDisplayMode ?? scoreDisplayMode;
-          const finish = (check: CheckResult): CheckResult => ({
-            ...check,
-            ...(mode ? { scoreDisplayMode: mode } : {}),
-            ...(assessment ? { coverage: assessment.coverage } : {}),
-          });
-          if (budget?.aborted)
-            return finish(
-              stubCheck(
-                reg.meta,
-                TAG_SKIPPED_SCAN_BUDGET,
-                `Not assessed: ${budgetReason(budget)}`,
-              ),
-            );
-          try {
-            const instance = reg.create();
-            const pages = assessment?.pages ?? scopedPages ?? ctx.pages;
-            const scopedCtx = {
-              ...ctx,
-              pages,
-              evidence: assessment?.evidence ?? ctx.evidence,
-              cacheOwner: cacheOwner(ctx),
-            };
-            const result = await instance.audit(scopedCtx);
+      // Every line an audit's run writes, including its requests and the
+      // gatherer work it starts, names the audit.
+      batch.map((entry) =>
+        withLogContext({ [LogField.Audit]: entry.reg.meta.id }, async () => {
+          const { reg, scopedPages, scoreDisplayMode, assessments } = entry;
+          if (budget?.aborted) {
+            const stub = budgetStub(entry);
+            trace(stub, 0);
+            return stub;
+          }
+          const label = `${reg.meta.id} ${reg.meta.title}`;
+          const startedAt = tracing ? performance.now() : 0;
+          const elapsed = () =>
+            tracing ? Math.round(performance.now() - startedAt) : 0;
+          const execute = async (
+            assessment?: PlannedAssessment,
+          ): Promise<CheckResult> => {
+            if (assessment?.skipped) return assessment.skipped;
+            const mode = assessment?.scoreDisplayMode ?? scoreDisplayMode;
+            const finish = (check: CheckResult): CheckResult => ({
+              ...check,
+              ...(mode ? { scoreDisplayMode: mode } : {}),
+              ...(assessment ? { coverage: assessment.coverage } : {}),
+            });
             if (budget?.aborted)
               return finish(
                 stubCheck(
                   reg.meta,
                   TAG_SKIPPED_SCAN_BUDGET,
-                  `Not assessed: ${budgetReason(budget)} This audit was still running.`,
+                  `Not assessed: ${budgetReason(budget)}`,
                 ),
               );
-            // Zod types optional keys as `T | undefined`; parsing a
-            // `CheckResult` adds no explicit undefined, so the shape holds.
-            return CheckResultSchema.parse(
-              finish(instance.toCheckResult(result, mode)),
-            ) as CheckResult;
-          } catch (err) {
-            log.error(
-              { audit: reg.meta.id, [LogField.Error]: err },
-              "Audit error",
-            );
-            return finish(
-              stubCheck(
-                reg.meta,
-                TAG_SCAN_ERROR,
-                `Audit failed to run: ${describeError(err)}`,
-              ),
-            );
-          }
-        };
-        // Separate instances preserve each population's verdict without sharing audit state.
-        const checks: CheckResult[] = [];
-        for (const assessment of assessments ?? [undefined])
-          checks.push(await execute(assessment));
-        const check = combineAssessments(checks);
-        const failure = checks.find((c) => c.tags?.includes(TAG_SCAN_ERROR));
-        if (failure)
-          onEvent?.({
-            type: "unit:fail",
-            label,
-            error:
-              failure.explanation?.replace(/^Audit failed to run: /, "") ??
-              "Audit error",
-          });
-        else onEvent?.({ type: "unit:done", label });
-        trace(check, elapsed());
-        return check;
-      }),
+            try {
+              const instance = reg.create();
+              const pages = assessment?.pages ?? scopedPages ?? ctx.pages;
+              const scopedCtx = {
+                ...ctx,
+                pages,
+                evidence: assessment?.evidence ?? ctx.evidence,
+                cacheOwner: cacheOwner(ctx),
+              };
+              const result = await instance.audit(scopedCtx);
+              if (budget?.aborted)
+                return finish(
+                  stubCheck(
+                    reg.meta,
+                    TAG_SKIPPED_SCAN_BUDGET,
+                    `Not assessed: ${budgetReason(budget)} This audit was still running.`,
+                  ),
+                );
+              // Zod types optional keys as `T | undefined`; parsing a
+              // `CheckResult` adds no explicit undefined, so the shape holds.
+              return CheckResultSchema.parse(
+                finish(instance.toCheckResult(result, mode)),
+              ) as CheckResult;
+            } catch (err) {
+              log.error({ [LogField.Error]: err }, "Audit error");
+              return finish(
+                stubCheck(
+                  reg.meta,
+                  TAG_SCAN_ERROR,
+                  `Audit failed to run: ${describeError(err)}`,
+                ),
+              );
+            }
+          };
+          // Separate instances preserve each population's verdict without sharing audit state.
+          const checks: CheckResult[] = [];
+          for (const assessment of assessments ?? [undefined])
+            checks.push(await execute(assessment));
+          const check = combineAssessments(checks);
+          const failure = checks.find((c) => c.tags?.includes(TAG_SCAN_ERROR));
+          if (failure)
+            onEvent?.({
+              type: "unit:fail",
+              label,
+              error:
+                failure.explanation?.replace(/^Audit failed to run: /, "") ??
+                "Audit error",
+            });
+          else onEvent?.({ type: "unit:done", label });
+          trace(check, elapsed());
+          return check;
+        }),
+      ),
     );
 
     allChecks.push(...batchResults);

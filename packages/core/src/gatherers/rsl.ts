@@ -3,6 +3,7 @@ import type { CheckContext } from "#core/check-context";
 import type { FetchResult } from "#core/fetcher";
 import { isSafeUrl } from "#core/fetcher";
 import { HttpMethod } from "#core/types";
+import { LogField, withLogContext } from "#core/logger";
 
 const rslProbeCache = new WeakMap<
   object,
@@ -22,7 +23,7 @@ export function probeRsl(
   const key = `${options.method ?? "GET"}|${options.followRedirects ?? false}|${url}`;
   let hit = cache.get(key);
   if (!hit) {
-    hit = (async () => {
+    hit = withLogContext({ [LogField.Gatherer]: "rsl" }, async () => {
       if (!(await isSafeUrl(url))) return undefined;
       try {
         return await ctx.fetch({
@@ -33,7 +34,7 @@ export function probeRsl(
       } catch {
         return undefined;
       }
-    })();
+    });
     cache.set(key, hit);
   }
   return hit;
