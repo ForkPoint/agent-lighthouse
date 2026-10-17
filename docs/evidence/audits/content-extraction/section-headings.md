@@ -53,29 +53,15 @@ AI agents use section headings to build a topic map of your page for retrieval-a
 
 ## Implementation deviations
 
-Browser snapshots provide serialized markup observations only. The browser assessment uses informative display and weight 0. It does not extend the dossier's crawler scoring claim to browser task success. Truncated, redacted, and still-loading captures produce missing-evidence records rather than verdicts.
-
-### Empty layout sections are skipped (2026-10-06)
-
-A `<section>` with no text outside scripts and styles, and no image, video,
-audio, iframe, SVG, canvas, object or embed, is an empty layout slot. It is
-counted in neither side of the ratio. `found` reports how many were skipped.
-A large retail site's homepage carried four empty row slots out of seven and
-failed on them.
-
-### No `<section>` is not applicable (2026-10-06)
-
-The zero-sections branch returns `notApplicable` instead of `warn`, as the
-required fix above asks. A page whose only sections are empty slots is also
-not applicable. The pass / warn / fail split is unchanged: all labeled
-passes, a majority warns, the rest fails. The review sets no other threshold.
+- Browser snapshots provide serialized markup observations only. The browser assessment is informative with weight 0. Truncated, redacted and still-loading captures produce missing-evidence records rather than verdicts.
+- A `<section>` with no text outside scripts and styles, and no image, video, audio, iframe, SVG, canvas, object or embed, is an empty layout slot. It is skipped and counted in `found`.
+- No `<section>`, or only empty slots, returns `notApplicable`. `<div>` plus `<h2>` carries the same structure.
+- All labeled passes, a majority warns, the rest fails. No source sets another threshold.
 
 ## Deferred
 
-- **First-child heading test.** The heading check still accepts a heading at
-  any depth. The required fix's first-element-child rule is not applied here.
-- **Label validation.** A whitespace-only `aria-label` and an
-  `aria-labelledby` pointing at a missing id are still accepted.
+- First-child heading test. A heading at any depth is accepted.
+- Label validation. A whitespace-only `aria-label` and an `aria-labelledby` pointing at a missing id are accepted.
 
 ## Limits
 

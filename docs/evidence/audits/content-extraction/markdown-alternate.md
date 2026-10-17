@@ -81,148 +81,16 @@ A site that serves no markdown version is reported as not applicable rather than
 
 **Counter-evidence:** Grade A applies to interactive coding agents, not to search crawlers or consumer chat — audits should say so. ChatGPT-User takes markdown on just 0.1% of fetches; ChatGPT, Claude.ai, Perplexity, Gemini variants, Grok, Windsurf, Devin, Aider, Cline, v0 and Zed send HTML-only Accept headers. Otterly's 14-day controlled test found 0 crawler visits and 0 citations for .md files versus 137 visits to matched HTML, and Longato's 24-hour two-site CDN check found zero .md requests from GPTBot/ClaudeBot/PerplexityBot. The two best studies also directly contradict each other on which mechanism works: Dries (Jan 2026) states 'No AI crawler uses content negotiation. Not one' and saw markdown taken only via .md URLs. Evil Martians (May-Jul 2026) concluded instead that content negotiation 'is the mechanism actually delivering Markdown to the client that wants it (Claude Code)'. The later date and the crawlers-versus-agents population reconcile the two, and both argue for supporting .md URLs and the Accept header rather than choosing between them. Google states you don't need Markdown to appear in Search or its AI features. Dries also found serving markdown did not reduce bot load; crawl volume rose ~7%.
 
-## Pass-rule correction (contradiction sweep, 2026-08-24)
+## Implementation deviations
 
-Two defects, both recorded in this dossier's own research, both fixed together.
-
-**The rule applied the grade to a population the evidence never covered.** The
-grade-A signal above is explicit: "Grade A applies to interactive coding agents,
-not to search crawlers or consumer chat — audits should say so." The audit said
-no such thing. It failed every site that served no markdown alternate, at weight
-1.0, including a retail store with no coding-agent audience. What the sources
-document is _consumption when the representation is served_ — Anthropic's
-WebFetch preferring markdown, seven agents advertising `text/markdown`, Evil
-Martians' ~40,000 markdown fetches. No cited source measures a cost to a site
-that serves none, and three point the other way: ChatGPT-User takes markdown on
-0.1% of fetches, Otterly's 14-day controlled test found 0 crawler visits and 0
-citations for `.md` against 137 to matched HTML, and Google states markdown is
-not needed to appear in Search or its AI features.
-
-Absence is therefore no longer scored. A page with no markdown alternate on any
-route returns `notApplicable` and leaves the score denominator. A page that
-serves one is scored exactly as before, at grade A and weight 1.0: resolvability
-against RFC 7763, heading and shingle recall at 0.9, unresolved component tags
-as a warn, and the token saving reported.
-
-The gate is the site's own act of serving a markdown document, not a detector
-for a coding-agent audience. No such detector was built, and none should be: this
-dossier records no observable signal that distinguishes that audience, so any
-heuristic would be an invented mechanism with no consumer behind it — the exact
-defect the grading policy exists to prevent. A site that serves an alternate has
-self-selected into the documented population by observable behaviour.
-
-This reverses one sentence written on 2026-08-23 in _Absorbed proposal_: "The
-proposal would have made that case `notApplicable`; this audit's grade-A
-evidence is precisely about the absence of the link, so the shipped meaning
-stands." That reading does not survive its own counter-evidence. The absorbed
-proposal was right and the fold was wrong. The 2026-08-23 text stays above as
-the record of what was decided then.
-
-**The grade-C signal was deciding grade-A outcomes.** Two signals are graded
-here and they are not interchangeable. The link relations — `rel="alternate"
-type="text/markdown"` and `rel="describedby"` — carry `Recommended tier:
-experimental`, with one single-sourced, uncorroborated consumer for the first
-and none-known for the second. The markdown _representation_, reached by a `.md`
-URL or by `Accept: text/markdown`, carries `Recommended tier: scored` and many
-named consumers. The audit let the first decide the second: a declared link
-whose document could not be read returned a full `pass` at weight 1.0, and a
-declared link that 404'd returned a full `fail`.
-
-Both arms are gone. The declaration is now a discovery route and a reported
-detail, never an outcome. It cannot produce a pass, a fail or a warn on its own.
-Two further changes protect that boundary:
-
-- A declared link is no longer the last word. Probing continues past a declared
-  document that fails the fidelity floors, and the best document any route
-  returned is the one scored. `developers.cloudflare.com` declares a single
-  site-wide `index.md` from every page; scoring that against the page being
-  scanned would have failed a site for the alternate it actually serves.
-- "This is the HTML page again" is now decided from the body, not the content
-  type. A `.md` URL answering with the HTML document is a catch-all route and is
-  not an alternate at all; a markdown document served as `text/html` or
-  `text/plain` is a mistyped alternate and still fails, which is what RFC 7763
-  supports. The content type cannot tell those apart — only the body can. A 200
-  response that is neither typed nor shaped as markdown is treated as a soft 404.
-
-Page selection also moved, closing the homepage bias this dossier recorded as
-required fix #5: the audit now prefers a page that declares an alternate, then
-any non-homepage, before falling back to the first page.
-
-_What it checks_ was rewritten to match. It described a check that no longer
-exists — it promised that a markdown alternate "improves the accuracy of
-AI-generated summaries", a claim no source here carries, and it framed the
-`<link>` as the thing being checked.
-
-Grade, tier, weight and display mode are unchanged — A, scored, 1.0, ternary.
-The scored population is now the one the grade-A evidence covers, so the grade
-needs no adjustment. One caution for anyone reading the counter-evidence as
-"crawlers do not take markdown": this dossier also records GPTBot taking
-markdown 34.8% of the time via `.md` URLs. That is consumption when served,
-which is the mechanism being scored — not a cost of absence, which is the claim
-the audit no longer makes.
-
-## Component-detection correction (2026-08-24)
-
-`MDX_COMPONENT` scanned the raw markdown document, so any capitalised tag the
-document _quoted_ counted as a component the renderer had failed to resolve. A
-markdown alternate of a documentation page is the likeliest place in the corpus
-to quote JSX — in a fenced example, or in an inline span such as `` `<Button />` ``
-— so the check reported the faithful case as the broken one, at rank 2 (`warn`,
-score 0.5).
-
-The scan now runs over the document with its fenced blocks and inline code spans
-removed. Indented code blocks are deliberately left in: four leading spaces is
-also how a list item continues, and dropping list bodies would hide real
-unresolved components in order to fix a rarer false positive.
-
-No evidence, grade, tier or weight changes. The signal being measured is
-unchanged — a component tag surviving into the served markdown means the
-alternate was not rendered — and this only stops the audit from reading one out
-of the page's own prose.
-
-## Absorbed proposal — Markdown alternate: discoverable, resolvable, faithful, cheaper
-
-On 2026-08-23 the
-`token-economics/markdown-alternate-discoverable-resolvable-faithful-cheaper`
-proposal (evidence grade **B**, `static-fetch`) was folded into this audit
-rather than shipped beside it. Both are about the same artifact, and two audits
-scoring one `<link rel="alternate">` would have double-counted it.
-
-What the fold changed here:
-
-- Discovery is no longer head-link only. Three routes are tried, in the order an
-  agent would try them: the declared `alternate` link (from the head **or** from
-  a `Link` response header), then `url + ".md"`, then the same URL with
-  `Accept: text/markdown`. A site that serves an alternate without declaring it
-  now passes discovery where it used to fail.
-- The alternate is fetched, not merely counted. At most three read-only `GET`
-  probes per scan, every URL `isSafeUrl()`-gated. A content-negotiation response
-  that comes back as `text/html` is the same page again and does not count.
-- Resolvability: the response must be `text/markdown`, with any parameter
-  allowed after it, per RFC 7763. `text/plain` and `text/html` fail — a client
-  that negotiated for markdown cannot tell it received markdown.
-- Fidelity: heading recall against the page's `h1`–`h6`, and five-word shingle
-  recall against its block-level text, both floored at 0.9. The failing message
-  names the missing headings.
-- Cost: token counts of both documents at `o200k_base`, reported absolutely and
-  as a percentage saving.
-- MDX/JSX component tags warn rather than fail: real-world alternates contain
-  them, but an unresolved component is content the agent cannot interpret.
-
-A declared link whose document cannot be read in the scan — an empty body, or a
-fetch this scanner could not complete — still passes, with `details.verified`
-false and the message saying fidelity was not assessed. A declared link that
-resolves to a 4xx or 5xx fails: that is checkable brokenness, where an
-unreadable probe would be a finding about our own fetch.
-
-What did not change: the audit's id, its grade **A** and weight 1.0, and its
-central verdict — a page with no usable markdown alternate fails. The proposal
-would have made that case `notApplicable`; this audit's grade-A evidence is
-precisely about the absence of the link, so the shipped meaning stands. The
-`scoreDisplayMode` moved from `binary` to `ternary` to carry the new warn band.
-
-The proposal's own finding about the convention is worth recording: the
-`llms.txt` draft specifies the `.md` mirror convention and the
-`type="text/markdown"` link relation, but states no requirement for the file's
-own HTTP `Content-Type`. The resolvability check therefore enforces RFC 7763,
-not `llms.txt`.
+- Absence is not scored. A page with no markdown alternate on any route returns `notApplicable`. The grade-A evidence documents consumption when a representation is served, not a cost when it is absent.
+- The gate is the site's own act of serving markdown. No coding-agent audience detector exists, because no observable signal distinguishes that audience.
+- The `<link rel="alternate">` declaration is a grade-C discovery route and a reported detail. It never produces a pass, warn or fail on its own.
+- Three routes are probed, in order: the declared link (head or `Link` header), `url + ".md"`, and the page URL with `Accept: text/markdown`. At most three `GET` probes run, each gated by `isSafeUrl()`.
+- Probing continues past a declared document that fails the fidelity floors. The best document any route returns is scored.
+- A response whose body is the HTML document is a catch-all route, not an alternate, whatever its content type. A 200 that is neither typed nor shaped as markdown is a soft 404.
+- Resolvability follows RFC 7763: the response must be `text/markdown`, parameters allowed. `llms.txt` states no `Content-Type` requirement.
+- Fidelity is heading recall and five-word shingle recall against the page, both floored at 0.9.
+- Token counts use `o200k_base` and are reported with the saving.
+- Unresolved MDX/JSX component tags warn. Fenced blocks and inline code spans are removed before the scan; indented code blocks are kept, because list continuations share that indentation.
+- Page selection prefers a page that declares an alternate, then any non-homepage, then the first page.

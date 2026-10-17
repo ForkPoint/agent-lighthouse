@@ -54,27 +54,9 @@ AI scrapers use <main> to identify primary content and discard nav/footer chrome
 
 ## Implementation deviations
 
-- 2026-10-07 — the scope pilot for 7.0.0 removes the first page's special
-  role. Every selected page contributes to the same count. All pages with
-  `<main>` pass; partial coverage warns; no pages with `<main>` fail. An empty
-  sample returns `notApplicable`. Results name the missing-page URLs in sorted
-  order and use the first sorted missing URL as `pageUrl`. Evidence text uses
-  the existing result length limit and its truncation marker.
-
-- 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. It read the `<main>` landmark on the scanned pages,
-  and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked
-  domain a broker's page from another host, on a walled or throttled origin
-  nothing at all. It now consults `scanReadTheSite()` and returns
-  `notApplicable` carrying the gate's own reason.
-  Verdicts that moved on the five nothing-obtained contract states: walled
-  pass → na, throttled pass → na, redirected away pass → na, non-HTML homepage
-  fail → na, HTTP 200 bot challenge fail → na. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
+- Every sampled page is judged through `judgePages`. There is no first-page exception. Partial coverage warns; no page with `<main>` fails.
 
 ## Deferred
 
-- The 7.0.0 applicability review must address `[role="main"]`, multiple main
-  landmarks and hidden landmarks. This scope-only correction retains the
-  existing literal `<main>` predicate. It does not claim those semantic defects
-  are fixed or that fetched HTML represents a hydrated browser DOM.
+- The predicate is the literal `<main>`. `[role="main"]`, multiple main landmarks and hidden landmarks are not handled.
+- Fetched HTML does not prove the hydrated browser DOM.

@@ -49,19 +49,6 @@ Result semantics:
 
 `scoreDisplayMode: 'informative'` with `weight: 0` keeps every outcome out of the category score, the readiness vitals and the top-fails list.
 
-## Why the two were merged
-
-The approved v2 map rows for 1.2 and 1.3 both target one combined structure audit ("§5: llms-txt-blockquote + llms-txt-sections → one llms.txt structure audit"). Both were formatting sub-clauses of the same optional file, each scored as a full audit, and each levied its own `critical` failure when the file was simply absent — three critical entries for one missing optional file.
-
-The merge is also where each source review's required fixes land:
-
-- **Blockquote window.** v1 scanned the _entire_ remainder of the file, so a footnote at the bottom of a 400-line llms.txt counted as the summary. Now only the first 3 non-blank lines after the H1 qualify.
-- **`>` without a space.** v1 required a literal `'> '`; the common (and valid CommonMark) `>Summary` was reported missing.
-- **One H1 definition.** v1 required `'# '` while `llms-txt-exists` accepts a bare `#`, so one file could pass 1.1 and fail 1.2 with "No H1 heading found". Both now accept `#Site`.
-- **Fenced blocks.** A file that documents llms.txt syntax scored its own `##` examples as real sections and its quoted `>` example as a summary. Fences are stripped before either search.
-- **Absent file ⇒ `na`.** v1 returned `fail` at priority `critical` from both audits when `/llms.txt` was missing, asserting a malformed file where there was none.
-- **Priority.** The spec makes both elements optional ("zero or more" sections; the H1 is "the only required section"), so a missing element can no longer be reported above `low`.
-
 ## Scoring
 
 **C — the strongest proven path for the merged signal, unchanged from both sources.**
@@ -92,9 +79,13 @@ The grade is additionally capped by that of `llms-txt-exists` (1.1): a formattin
 
 **Counter-evidence:** "Zero or more" makes a section-free llms.txt fully conformant, so the v1 "at least one `##`" bar was stricter than the standard it cited. No source claims a measured difference in agent behaviour between a sectioned and an unsectioned file. Two months of measured server logs recorded only 37 of ~770 llms.txt/llms-full.txt fetches coming from named AI assistants (https://evilmartians.com/chronicles/which-ai-actually-reads-your-site-two-months-of-llm-traffic-measured, verified 2026-08-21). Neither OpenAI's (https://developers.openai.com/api/docs/bots) nor Perplexity's (https://docs.perplexity.ai/docs/resources/perplexity-crawlers) crawler documentation mentions llms.txt at all (both verified 2026-08-21).
 
-## Absorbed evidence — source dossiers
+## Implementation deviations
 
-Both absorbed dossiers are kept verbatim as the record of why each half moved:
-
-- [llms-txt-blockquote (1.2)](../../merged/machine-discovery/llms-txt-blockquote.md) — grade C
-- [llms-txt-sections (1.3)](../../merged/machine-discovery/llms-txt-sections.md) — grade C
+- **Merges `llms-txt-blockquote` (1.2) and `llms-txt-sections` (1.3).** Both
+  dossiers are kept at
+  [merged/machine-discovery/llms-txt-blockquote.md](../../merged/machine-discovery/llms-txt-blockquote.md)
+  and
+  [merged/machine-discovery/llms-txt-sections.md](../../merged/machine-discovery/llms-txt-sections.md).
+- **`>Summary` without a space counts** as a blockquote, as CommonMark allows.
+- **The H1 test matches `llms-txt-exists`.** A bare `#Site` counts, so one file
+  cannot pass one audit and fail the other on the heading.

@@ -68,11 +68,15 @@ The [Sitemaps protocol](https://www.sitemaps.org/protocol.html#location) permits
 
 ## Implementation deviations
 
-### Subpath sitemap scope (2026-10-05)
-
-The shared sitemap gatherer uses the scanned homepage directory as the site root when it is a detected or declared subpath homepage. A homepage served as `index.html` or as a `home` page (`/en/home/`) uses the directory that holds it (`/en/`). It reads declarations from the origin's robots.txt, then tries the conventional sitemap names under that directory before the origin fallbacks. Shared sitemap files contribute only absolute URLs on the same origin and under that directory. Filtering precedes the entry cap and sampling. Relative or malformed loc values associated with this site remain available to content audits. A sibling-only sitemap does not prove that this site has a sitemap. The child-fetch cap remains in force even when all children cover siblings.
-
-Content-page scans do not infer a mount. Origin files, origin probes, feed discovery, explicit page overrides, and redirect handling keep their existing scope. This change limits sitemap-derived evidence; it does not make every scan request subpath-only.
+- **Subpath sitemap scope.** On a subpath homepage, the shared sitemap gatherer
+  treats that directory as the site root. A homepage served as `index.html` or
+  as a `home` page (`/en/home/`) uses the directory that holds it (`/en/`).
+  Robots.txt declarations come from the origin. The conventional sitemap names
+  are tried under that directory before the origin fallbacks.
+- **Only same-origin URLs under that directory are kept**, before the entry cap
+  and sampling. Relative or malformed `loc` values in the site's own files are
+  kept, so content audits can report them.
+- **A sibling-only sitemap does not count** as this site's sitemap.
 
 ## Limits
 
@@ -80,4 +84,5 @@ A content-page scan does not infer a subpath site root. Declare the mount's home
 
 ## Deferred
 
-Gzip sitemap decoding and deeper index traversal remain outside this change. A shared index whose children cannot be read supplies no proof of this mount's coverage. The existence audit returns not applicable in that case instead of claiming that the mount has no sitemap.
+- Gzip sitemap decoding.
+- Index traversal deeper than one level.

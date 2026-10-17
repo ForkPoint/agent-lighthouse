@@ -45,13 +45,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Implementation deviations
 
-- **ProductGroup variants are read as products.** Products come from the
-  shared `resolveProducts` in `packages/core/src/product-schema.ts`. Each
-  `hasVariant` entry (or a Product joined through `isVariantOf` or
-  `inProductGroupWithID`) is read with the group's shared properties beneath
-  its own, as Google's product variant documentation lays them out
-  (https://developers.google.com/search/docs/appearance/structured-data/product-variants,
-  verified 2026-10-09). A `ProductGroup` with no variants is read as the
-  product. Before this, a brand or category declared once on the group was
-  invisible, and a page whose only top-level product was a `ProductGroup`
-  read as having no product.
+- Products come from the shared `resolveProducts` in
+  `packages/core/src/product-schema.ts`. Each `ProductGroup` variant is read
+  with the group's shared properties beneath its own. A `ProductGroup` with no
+  variants is read as the product.

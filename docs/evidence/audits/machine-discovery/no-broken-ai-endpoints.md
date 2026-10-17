@@ -68,21 +68,9 @@ AI agents follow URLs in your ai-catalog.json, llms.txt, and navigation.json to 
 
 ## Implementation deviations
 
-- 2026-08-28 — a list whose every URL the SSRF gate refused is no longer a
-  pass. `isSafeUrl()` drops any URL naming localhost, a private address or a
-  host that does not resolve; when that emptied the list, the audit reported
-  "All 0 AI endpoint URL(s) are reachable" — a pass for a census that never
-  ran. It now warns, naming how many URLs were listed and that none of them
-  could be requested. The older branch for a manifest that lists no URLs at all
-  is unchanged. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`: on a bot wall
-  answering 200 at `/llms.txt`, the wall's own markup supplied the only
-  candidate URL and the audit passed the site behind it.
-- 2026-10-17 — with none of ai-catalog.json, llms.txt or navigation.json
-  published, the audit is not applicable. It used to warn: an optional file
-  the site never published is not a defect, and the audit is about the URLs
-  inside those files. A file that is there and lists no URLs still warns. A
-  200 whose body opens as an HTML document counts as absent
-  (`gatherers/root-files.ts` `isRootArtifact`). A homepage redirect at
-  `/llms.txt` had supplied the homepage's links as "AI endpoints", and the
-  site passed on them.
+- **A list that `isSafeUrl()` emptied warns, not passes.** The message names
+  how many URLs were listed and says none could be requested.
+- **No published manifest is not applicable.** That covers ai-catalog.json,
+  llms.txt and navigation.json. A 200 whose body opens as an HTML document
+  counts as absent (`isRootArtifact`). A published file that lists no URLs
+  still warns.

@@ -44,6 +44,6 @@ AI agents use <time datetime> elements to reliably parse dates for freshness sco
 
 **Counter-evidence:** Substantial, and it caps this at C. (1) HTML-AAM maps <time> to the GENERIC role [w3c-html-aam], meaning the element and its datetime attribute are invisible in the accessibility tree — so Playwright MCP, Chrome DevTools MCP, Anthropic read_page and every other a11y-tree agent never see it. (2) Google's own publication-dates guidance recommends exactly two things, a prominent user-visible date and structured-data datePublished/dateModified, and does not mention <time datetime> [google-publication-dates]. (3) The WHATWG spec defines parsing syntaxes but prescribes no user-agent behaviour for consuming the value [whatwg-time-element]. (4) Even htmldate keys on the element as a text container — its constants match @itemprop and date-ish @class/@id, with no XPath on @datetime itself [htmldate-extractors]. (5) HTML→markdown conversion drops the attribute. The A-grade path to a machine-readable date is JSON-LD datePublished, which belongs to the structured-data domain; <time> is a cheap complement, not a scored requirement.
 
-## Implementation deviations (v7 P3, 2026-10-07)
+## Implementation deviations
 
-The added labels preserve the old general-content population while classification changes. This is not the final feature-gate migration. The evidence grade, tier, weight, and audit ID stay unchanged.
+- The audit runs on article and general pages. That list keeps the old general-content population. It is not the final feature-based gate.

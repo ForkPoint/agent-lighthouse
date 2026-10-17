@@ -42,6 +42,6 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Counter-evidence:** The same survey records a direct upstream contradiction: "citation-oriented rewrites can impair retrieval". It cites SAGEO Arena finding that body-only optimization "reduces average top-20 presence by approximately 9%". A page can therefore gain inside the answer while losing its chance to enter the candidate set (https://arxiv.org/html/2607.14035v1, verified 2026-08-21). The GEO measurements are conditional on the page already sitting in a fixed retrieval context, and every winning method in that study adds content, which confounds the citation manipulation with length. Google states there are "no additional requirements to appear in AI Overviews or AI Mode, nor other special optimizations necessary" (https://developers.google.com/search/docs/appearance/ai-features, verified 2026-08-21). Nothing in the evidence supports the audit's "RAG systems cross-reference your citations against their knowledge graph" wording, and no source supports a ≥2-outbound-anchor threshold as the operationalization of "citation".
 
-## Implementation deviations (v7 P3, 2026-10-07)
+## Implementation deviations
 
-The added labels preserve the old general-content population while classification changes. This is not the final feature-gate migration. The evidence grade, tier, weight, and audit ID stay unchanged.
+The page-type list keeps the old general-content population. It is a holding scope, not the final feature gate.

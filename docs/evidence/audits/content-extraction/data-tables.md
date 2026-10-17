@@ -65,21 +65,4 @@ AI agents use <thead> and <th> elements to understand column headers and interpr
 
 ## Implementation deviations
 
-- 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. It read the tables on the scanned pages, and
-  `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain
-  a broker's page from another host, on a walled or throttled origin nothing
-  at all. It now consults `scanReadTheSite()` and returns `notApplicable`
-  carrying the gate's own reason.
-  Verdicts that moved on the five nothing-obtained contract states: walled
-  pass → na, throttled pass → na, redirected away pass → na, non-HTML homepage
-  pass → na, HTTP 200 bot challenge pass → na. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
-- 2026-08-28 — a page that served no readable text no longer counts as a page
-  with no tables. `<table>` markup arrives inside the body a JS shell withholds,
-  so `totalTables === 0` was the scan reporting its own silence rather than the
-  site publishing nothing to fix. The zero-table branch now consults
-  `scanReadPageText()` and returns `notApplicable` carrying the gate's reason;
-  every branch that found a table is untouched. Verdict moved on the shell
-  contract state: pass → na. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
+- When no table is found, the audit consults `scanReadPageText()`. If the scan read no page text, the verdict is `notApplicable`, not a pass. A JS shell withholds the body that would carry the tables.

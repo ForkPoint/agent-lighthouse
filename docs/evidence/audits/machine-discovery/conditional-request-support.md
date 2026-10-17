@@ -38,14 +38,6 @@ Google documents that on a 304 'Google crawlers signal the next processing syste
 - **[IndexNow Protocol Documentation](https://www.indexnow.org/documentation)** — IndexNow (Microsoft/Yandex) (spec, URL verified 2026-08-20)
   - Ownership is proven by hosting a UTF-8 text file at the host root named {key}.txt whose body is the key. Key must be 8-128 chars from [a-zA-Z0-9-]. Verification is a byte comparison. HTTP 403 is returned when the key is 'not found in the key file' or invalid. 422 signals a host or schema mismatch, 429 a rate limit, and 202 means 'key validation pending'. keyLocation restricts submittable URLs to the key file's directory and deeper. Batch POST accepts up to 10,000 URLs.
 
-## Competitor coverage
-
-No SEO or AI-visibility tool issues conditional requests against sitemaps or feeds or tests validator stability across repeated fetches; log-file analysers can observe the symptom after the fact but only for sites that ship server logs. Lighthouse measures page-level caching for performance, never the discovery-surface polling path.
-
-## Implementation sketch
-
-For each of /robots.txt, every Sitemap: target, each child sitemap (cap 3), and each discovered feed: (1) GET and record ETag, Last-Modified, Content-Length, Content-Encoding, Cache-Control, and a SHA-256 of the decoded body. (2) Immediately GET again with identical Accept-Encoding and assert the body hash is unchanged; if it is unchanged but the ETag differs, FAIL as 'unstable validator' and report both ETag values. (3) Issue a third GET with If-None-Match set to the first ETag (when present) and assert 304 with an empty body; FAIL on 200. (4) Issue a fourth GET with If-Modified-Since set to the Last-Modified value (when present) and assert 304; FAIL on 200. (5) When neither validator is emitted at all, FAIL as 'no revalidation possible' and report the uncompressed byte size that every poll therefore costs. (6) WARN when Cache-Control includes no-store or private on a public discovery surface, and when a sitemap exceeds 50MB uncompressed or 50,000 URLs (hard spec limits that also make the missing-validator cost concrete). (7) Report per-surface: validators_present, honours_inm, honours_ims, validator_stable, bytes_per_poll. Note in the finding text that the 304 semantics are documented for Googlebot and generalized here by analogy — the check itself is a pure HTTP conformance assertion and does not depend on that generalization.
-
 ## Example failure
 
 A 38MB sitemap index tree is served through a CDN configured with `Cache-Control: no-store` and dynamic Brotli compression that generates a fresh weak ETag per request. Six AI crawlers polling hourly each re-download the full tree every time. The origin's WAF starts issuing 429s to the noisiest agents. Per Google's documented handling of 429 and 5xx, that throttles crawling of the whole host — including the product pages the owner actually cares about. Every existing audit reports the sitemap as valid and reachable.
@@ -56,44 +48,19 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 
 ## Implementation deviations
 
-### Subpath sitemap scope (2026-10-05)
-
-The shared sitemap gatherer uses the scanned homepage directory as the site root when it is a detected or declared subpath homepage. It reads declarations from the origin's robots.txt, then tries the conventional sitemap names under that directory before the origin fallbacks. Shared sitemap files contribute only absolute URLs on the same origin and under that directory. Filtering precedes the entry cap and sampling. Relative or malformed loc values associated with this site remain available to content audits. A sibling-only sitemap does not prove that this site has a sitemap. The child-fetch cap remains in force even when all children cover siblings.
-
-Content-page scans do not infer a mount. Origin files, origin probes, feed discovery, explicit page overrides, and redirect handling keep their existing scope. This change limits sitemap-derived evidence; it does not make every scan request subpath-only.
-
-**Renamed.** `conditional-request-support-on-discovery-surfaces` under
-`machine-discovery/` makes a 66-character id, over the 64-character cap.
-
-All seven steps of the sketch ship: the paired identical GETs and the body hash,
-the unstable-validator finding with both `ETag` values, the `If-None-Match` and
-`If-Modified-Since` assertions, the no-validator finding with the bytes every
-poll costs, the `no-store`/`private` warning, the sitemap size limits, and the
-per-surface report of `validatorsPresent`, `honoursIfNoneMatch`,
-`honoursIfModifiedSince`, `validatorStable` and `bytesPerPoll`.
-
-**The probe lives in `gatherers/conditional.ts`**, so a surface probed by this
-audit is probed once for the whole scan. Four requests per surface is the cost,
-and the audit caps the surface set: robots.txt, the declared sitemaps and up to
-three children, and up to two feeds.
-
-**The 50,000-URL limit is checked only when the sitemap walk was not
-truncated.** `siteSitemapTree` caps its walk, so past that cap the audit knows
-the file is large but not how large; reporting a limit breach off a truncated
-count would be arithmetic on a number the scanner does not have.
-
-**The Googlebot caveat is in the finding text**, as the sketch requires: 304
-semantics are documented for Googlebot and generalized here by analogy, while
-the assertion itself is HTTP conformance and does not depend on that
-generalization.
-
-## Deferred
-
-- **`Content-Encoding` negotiation.** The sketch records the header; the two
-  identical requests already hold encoding constant, which is what makes the
-  body-hash comparison meaningful.
-- **Weak versus strong validators.** A `W/`-prefixed `ETag` is accepted. The
-  distinction changes what a cache may do with a range request, not whether a
-  crawler can revalidate.
-- **More than three child sitemaps.** Each costs four requests. A site whose
-  sitemap index has hundreds of children has one caching policy, not hundreds.
+- **Renamed.** `conditional-request-support-on-discovery-surfaces` would exceed
+  the 64-character id cap.
+- **The probe lives in `gatherers/conditional.ts`**, so each surface is probed
+  once per scan. Each surface costs four requests.
+- **The surface set is capped.** It covers robots.txt, at most four sitemap
+  URLs (declared, `/sitemap.xml`, then children), and up to two feeds.
+- **Subpath sitemap scope.** On a subpath homepage, the shared sitemap gatherer
+  limits child sitemaps to that directory.
+- **The 50,000-URL limit is checked only on an untruncated sitemap walk.** Past
+  the walk cap the true count is unknown.
+- **The finding text carries the Googlebot caveat.** 304 semantics are
+  documented for Googlebot. The assertion itself is HTTP conformance.
+- **Weak `W/` validators are accepted.** The distinction matters for range
+  requests, not for revalidation.
+- **`Content-Encoding` is not recorded.** The paired requests hold encoding
+  constant, which keeps the body-hash comparison sound.

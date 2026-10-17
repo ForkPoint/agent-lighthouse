@@ -26,7 +26,10 @@ AI engines use visible dates to assess content freshness. Undated content is dep
 
 ## Implementation deviations
 
-- 2026-08-26 — the shared text helper this audit reads, `getMainContentText`, changed its selection. Among several `<main>` elements it now returns the one holding the most text rather than the first, it ignores a `<main>` inside a `<template>`, and it falls back to the whole `<body>` only when no `<main>` holds any text. Measured cause (scan evidence gate design, section 2.4): storefronts ship empty or fragmented `<main>` wrappers, and the first one is often a stub. Two consequences for this audit. A page whose real content sits in a later `<main>` is now measured on that content. A page whose every `<main>` is empty is now measured on its body text, page chrome included, where it previously measured as empty.
+- The audit checks date presence only. It does not compare a visible date with the structured value.
+- The first article page with any date passes. Structured dates come from `findStructuredDate` in `dates-on-content.ts`.
+- The visible-text fallback reads `getMainContentText`: the largest `<main>`, or the body when no `<main>` holds text.
+- `DATE_PATTERN` is a copy of the one in `dates-on-content.ts`.
 
 ## Evidence
 
@@ -46,7 +49,3 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - The 2026 critical survey rates recency as moderately supported, with effects for "time-sensitive or commercial queries" — https://arxiv.org/html/2607.14035v1 (verified 2026-08-21)
 
 **Counter-evidence:** The two largest datasets contradict each other on Google AI Overviews. Ahrefs measures AI Overviews citing pages averaging 1,432 days, statistically indistinguishable from the 1,416-day organic baseline. Seer reports that "About 85% of AIO's citations are from 2023–2025", the strongest recency bias it found. Platform-specific recency claims are therefore unsafe. Both datasets are correlational: fresher pages may simply cover fresher topics, and the average AI-cited page is still 2.9 years old, making recency a tilt rather than a gate. The survey calls dates "useful but non-universal signals". Google's guidance also treats date manipulation as an anti-pattern, asking whether site owners are "changing the date of pages to make them seem fresh when the content has not substantially changed?" (https://developers.google.com/search/docs/fundamentals/creating-helpful-content, verified 2026-08-21). The defensible scored property is therefore date _presence and visible/structured agreement_, which is what this audit measures — not recency.
-
-## Implementation deviations (v7 P3, 2026-10-07)
-
-The page-purpose gate now excludes general pages. Body-level aggregation and narrower specialist populations remain under review in the v7 applicability ledger. This change preserves the evidence grade, tier, weight, and audit ID.

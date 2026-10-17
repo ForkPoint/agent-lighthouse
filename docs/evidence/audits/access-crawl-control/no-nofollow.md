@@ -68,42 +68,13 @@ checkable when the page body has no readable text.
 
 ## Implementation deviations
 
-- 2026-10-07 — common-page scope correction: empty samples now return
-  `notApplicable`; affected URLs sort before selection; both failure and warning
-  evidence name affected pages and pass through result bounds. The title and
-  guidance describe page directives and the documented Applebot consumer,
-  rather than individual links or guaranteed site-wide invisibility. Existing
-  all/some/none aggregation, grade, tier, weight and metadata requirements stay
-  unchanged. The body-readability exemption has runner tests across all four
-  current page types and both provenance values.
-
-- 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. It read the nofollow directives on the scanned
-  pages, and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a
-  parked domain a broker's page from another host, on a walled or throttled
-  origin nothing at all. It now consults `scanReadTheSite()` and returns
-  `notApplicable` carrying the gate's own reason.
-  Verdicts that moved on the five nothing-obtained contract states: walled
-  fail → na, throttled fail → na, redirected away pass → na, non-HTML homepage
-  pass → na, HTTP 200 bot challenge fail → na. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
-- 2026-08-28 — `requires` drops `rendered-body` and `sample-adequate` and is now
-  `['origin-reachable']`. `check-requires` derived those two keys from the source
-  touching `ctx.pages`, but what it reads there is `<meta name="robots">` and the
-  `X-Robots-Tag` header, both served whole by a page whose body renders nothing.
-  The disagreement is recorded as a gate exemption in
-  `scripts/lib/requires-analysis.mjs`. The verdict itself does not move, but
-  the gate is on for every scan, so this audit now runs on a client-rendered
-  one instead of being skipped. It is scored at weight 1.0, so a shell scan
-  that reported nothing about its nofollow directives now reports and scores
-  them. Found by `packages/core/src/tests/hostile-state-contract.test.ts`.
+- `requires` is `origin-reachable` and `unblocked-fetches` only. The audit reads `<meta name="robots">` and the `X-Robots-Tag` header, which a page whose body renders nothing still serves whole. The exemption is recorded in `scripts/lib/requires-analysis.ts`.
+- The title and guidance describe a page-level directive and its documented Applebot consumer, not individual links or site-wide invisibility.
 
 ## Deferred
 
 - Replace substring matching with directive-aware parsing, including `none` and
-  bot-specific scope. Test this independently of the completed page-scope fix.
+  bot-specific scope.
 - Establish utility/indexable-page eligibility from supported purpose evidence.
-  Preserve intentional restrictions. The current whole-sample severity remains
-  unchanged until that population review has its own tests and evidence.
-- Reconcile the historical scan-gate notes with the current runner-owned
-  `requires` contract during the 7.0.0 architecture update.
+  Preserve intentional restrictions. Whole-sample severity stays as it is until
+  that population review has its own tests and evidence.

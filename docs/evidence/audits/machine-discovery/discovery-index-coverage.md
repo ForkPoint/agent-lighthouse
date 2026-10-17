@@ -55,42 +55,21 @@ Both sides of the comparison go through one key — host without `www.`, lower-c
 
 **Counter-evidence:** No AI crawler vendor documents sitemap consumption. OpenAI's bots page, Anthropic's crawler article and Perplexity's docs never mention sitemaps, and Google's own AI-features page insists there are 'no additional technical requirements' for AI features. Server-log reports that GPTBot and ClaudeBot request /sitemap.xml exist but are single-site blog analyses, not controlled experiments — treat as suggestive only. The defensible framing is: sitemaps are proven for the Google/Bing indexes that ground several AI answer surfaces, and unproven-but-plausible for the direct AI crawlers. Note also that <lastmod> must be the page's real modification date, not the generation date, or the signal is actively misleading.
 
-## Absorbed evidence — no-orphan-pages (1.22)
-
-1.22 checked the same thing from the other side: scanned pages against sitemap `<loc>` values **plus llms.txt links**. That llms.txt half is what the fold carries over — a page listed only in llms.txt is indexed, and v1's 1.8 called it missing.
-
-Its dossier is kept verbatim at [merged/machine-discovery/no-orphan-pages.md](../../merged/machine-discovery/no-orphan-pages.md) (grade **A**).
-
-### Grade decision: stays **B**, the absorbed A does not transfer
-
-1.22 was graded **A** on the signal _"internal linking depth and absence of orphan pages — every indexable page reachable via a crawlable `<a href>`"_. That is a claim about the **link graph**: Google's "Google can only crawl your link if it's an `<a>` HTML element with an href attribute", plus the Vercel/MERJ measurement that no major AI crawler executes JavaScript. The audit named after it never measured link reachability — it measured presence in the sitemap or llms.txt, which is this audit's own signal, graded **B** (sitemaps are proven for the Google/Bing indexes that ground AI answer surfaces, undocumented for the direct AI crawlers).
-
-The meta law raises a target's grade only when the absorbed evidence is stronger _and proven for the merged signal_. The A evidence is proven for the link-graph signal, which now lives in `machine-discovery/in-content-links` (1.15 + 10.11) and `machine-discovery/no-broken-links` — not here. So the merged audit stays **B**, `tier: scored`, `weight 0.6`, and the A-graded orphan evidence is recorded above as context rather than priced in.
-
-## Required fixes — landed 2026-08-22
-
-Both source reviews' required fixes shipped with the fold:
-
-- **No vacuous pass on a `<sitemapindex>`.** v1 returned `pass` on seeing an index without reading a single URL — a free pass for every Shopify/WordPress/Next.js site. Sub-sitemaps are now fetched (capped at 10) and their `<loc>` sets merged before comparing.
-- **The Shopify filename heuristic is gone.** 1.22 guessed coverage from `path.startsWith('/products') && body.includes('sitemap_products')`, so Yoast (`post-sitemap.xml`), Next.js (`sitemap/0.xml`) and any localized path (`/produkte`, `/produits`) had _every_ page reported as an orphan. Fetching the sub-sitemaps replaces the guess.
-- **One normalizer on both sides.** `http`/`https`, `www.`/bare host, case, percent-encoding and tracking query params no longer produce phantom missing pages.
-- **Canonical actually read.** v1's `page.meta['canonical']` was dead code (`extractMetaTags` reads `<meta>`, canonical is a `<link>`); the canonical is now read from `link[rel=canonical]`.
-- **llms.txt relative links counted.** `extractMarkdownLinks` keeps absolute URLs only, so `- [About](/about)` made the llms.txt half of the comparison empty; links are now resolved against the base URL.
-- **One penalty per missing file.** An absent sitemap used to fail here at priority `critical` on top of sitemap-exists (1.7); with no index of any kind the audit now warns.
-
 ## Implementation deviations
 
-### Subpath sitemap scope (2026-10-05)
-
-The shared sitemap gatherer uses the scanned homepage directory as the site root when it is a detected or declared subpath homepage. It reads declarations from the origin's robots.txt, then tries the conventional sitemap names under that directory before the origin fallbacks. Shared sitemap files contribute only absolute URLs on the same origin and under that directory. Filtering precedes the entry cap and sampling. Relative or malformed loc values associated with this site remain available to content audits. A sibling-only sitemap does not prove that this site has a sitemap. The child-fetch cap remains in force even when all children cover siblings.
-
-Content-page scans do not infer a mount. Origin files, origin probes, feed discovery, explicit page overrides, and redirect handling keep their existing scope. This change limits sitemap-derived evidence; it does not make every scan request subpath-only.
-
-### Partial sitemap reads decline the verdict (2026-10-06)
-
-The shared sitemap walk keeps at most 500 entries and reads at most 10 child sitemaps. When it stops early, a page missing from the entries it kept may still be listed in the part it skipped. The audit now returns `na` for that case instead of `fail` or `warn`. Unread children of ordinary origin-level indexes also make coverage incomplete. This includes a failed fetch, malformed child, or nested index beyond the walk limit. The guard applies even when the readable portion contains no URLs. A child that already failed as a root, or under another index, still counts as unread when it is listed again. A page found in the partial read still passes, and a page missing from a complete read still fails.
-
-The trigger was a large retail site. Its index lists a 2455-URL product sitemap before a one-URL sitemap that holds the homepage. The product file filled the cap, and the audit failed the homepage as unindexed.
+- **Absorbs `no-orphan-pages` (1.22).** Its dossier is kept at
+  [merged/machine-discovery/no-orphan-pages.md](../../merged/machine-discovery/no-orphan-pages.md).
+  The llms.txt half of the comparison comes from it.
+- **The grade stays B.** The absorbed A was earned for link-graph
+  reachability, which `in-content-links` and `no-broken-links` measure. This
+  audit measures index presence.
+- **Relative llms.txt links count.** They resolve against the base URL.
+- **Subpath sitemap scope.** On a subpath homepage, the shared sitemap gatherer
+  keeps only same-origin URLs under that directory.
+- **A partial sitemap read declines the verdict.** The walk keeps at most 500
+  entries and 10 child sitemaps. When it stops early, or a child is unread,
+  failed, malformed or a nested index, a missing page returns `na`. A page found
+  in the partial read still passes.
 
 ## Deferred
 

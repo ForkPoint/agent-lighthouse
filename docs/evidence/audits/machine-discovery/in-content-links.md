@@ -67,25 +67,14 @@ A destination is counted once per page, keyed on host-without-`www` plus lower-c
 
 **Counter-evidence:** Two significant qualifications. First, Apple's documented nofollow is the PAGE-LEVEL meta robots directive, not per-link rel="nofollow" — most audits conflate these, and Apple's docs say nothing about the rel attribute on individual anchors. An audit that flags a single rel="nofollow" internal link cannot cite the Applebot page as support. Second, Google demoted nofollow from directive to hint in September 2019. It states plainly that 'the linked pages may be found through other means, such as sitemaps or links from other sites, and thus they may still be crawled'. So nofollow does not reliably prevent discovery even for Google. OpenAI, Anthropic and Perplexity documentation is entirely silent on nofollow, with no evidence GPTBot, ClaudeBot or PerplexityBot honors it in either form. Scope the audit to meta robots nofollow/none on indexable pages, and treat per-link rel=nofollow on internal navigation as a weaker informational finding.
 
-## The rewrite (`TODO(rewrite)`, approved 2026-08-21)
+## Implementation deviations
 
-Both source audits measured the presence of a template, not internal linking, and both passed essentially every real site:
-
-- **1.15 internal-linking** failed a page only when it had _literally zero_ internal anchors. Since `new URL('#main', page.url)` resolves to the page's own host, a lone "skip to content" accessibility link satisfied it. The guidance prescribed "3-5 internal links per page" — a threshold the code never enforced.
-- **10.11 internal-cross-linking** required ≥ 2 internal links per page but counted the whole document, so any site with a header nav cleared the bar on every page. Its review calls it "a near-unconditional PASS running at `defaultPriority: 'high'`, consuming a high-weight report slot while distinguishing nothing".
-
-The rewritten audit measures what both descriptions always claimed: contextual links in the body. Every required fix from the two reviews is in the list above — chrome exclusion, fragment and self-link exclusion, site-root and pagination exclusion, normalize-then-deduplicate (so `/about`, `/about/` and `/about?utm_source=nav` are one destination), www/bare-host normalization on both sides, the ≥ 2 bar applied to _contextual_ links, and `defaultPriority` at `medium` rather than `high`.
-
-**One review finding deliberately not adopted:** both reviews list "SPA whose server HTML contains no anchors" as a false-positive risk. This dossier's own grade-A evidence says the opposite — Vercel and MERJ measured that no major AI crawler executes JavaScript, so a client-rendered nav genuinely is "a link-less void to GPTBot and ClaudeBot". A page with no server-rendered in-content links is a true finding for this audit, and the guidance copy names the cause. The site-wide `fail` still requires _every_ scanned page to be linkless, so a single JS-heavy page only warns.
-
-Also out of scope: this audit does not read `rel="nofollow"` or `<meta name="robots" content="nofollow">`. The second evidence signal below grades that mechanism A for Applebot, but the same source warns that page-level meta-robots and per-link `rel` are different things and that Google treats `rel=nofollow` as a hint; it belongs in a dedicated check, not in a link-count.
-
-## Absorbed evidence — internal-cross-linking (10.11)
-
-10.11's dossier is kept verbatim at [merged/machine-discovery/internal-cross-linking.md](../../merged/machine-discovery/internal-cross-linking.md) (grade **B**). Its signal — internal link structure as the input AI engines use to build topic clusters — is the same claim as this audit's, at a different threshold, which is why the v2 map collapses them into this one rewritten check with 1.15 as the surviving row.
-
-### Grade decision: stays **A**
-
-10.11 graded **B**; this audit's own link-graph evidence grades **A** on two vendor-documented consumer paths (Google: "Google can only crawl your link if it's an `<a>` HTML element with an href attribute"; Apple: links are an explicit Apple Search ranking factor) plus the Vercel/MERJ measurement that the major AI crawlers do not execute JavaScript. The absorbed evidence is weaker, so nothing is raised: **A**, `tier: scored`, `weight 1.0`.
-
-Note that the rewrite makes the audit _harder_ to pass at unchanged weight — deliberately. The A grade prices a real mechanism; it was previously spent on a check that could not fail a templated site.
+- **Absorbs `internal-cross-linking` (10.11).** Its dossier is kept at
+  [merged/machine-discovery/internal-cross-linking.md](../../merged/machine-discovery/internal-cross-linking.md).
+  Its B evidence is weaker, so the grade stays A.
+- **A page with no server-rendered in-content links is a true finding.** The
+  evidence says the major AI crawlers do not execute JavaScript. The site-wide
+  `fail` still needs every scanned page to be linkless.
+- **`nofollow` is not read.** Page-level meta robots and per-link `rel` are
+  different mechanisms, and Google treats `rel=nofollow` as a hint. That
+  belongs in a dedicated check, not a link count.

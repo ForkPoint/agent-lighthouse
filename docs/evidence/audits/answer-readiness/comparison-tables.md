@@ -42,6 +42,6 @@ AI answer engines extract structured table data to generate comparison answers. 
 
 **Counter-evidence:** The strongest counter-evidence in this domain. Format as a Prior measured a cross-model preference hierarchy in which 'semantically rich formats such as texts and KGs are consistently favored over visually structured ones like infoboxes and tables'. Against plain text, tables scored 0.398, KGs 0.336 and infoboxes 0.235. Models systematically preferred prose when the same fact was available both ways. No vendor documents tables as a citation signal, and Google states there are no additional requirements or special optimizations for AI features. No study located isolates the causal effect of converting a styled div-grid into semantic table markup — the specific edit this audit would recommend. The widely circulated claim that 'pages with well-structured comparison tables have a structural advantage' traces only to SEO vendor blogs with no disclosed methodology. Keep the audit as an accessibility/extractability hygiene check (real table markup beats an image or a div grid), not as a citation-rate lever.
 
-## Implementation deviations (v7 P3, 2026-10-07)
+## Implementation deviations
 
-The added labels preserve the old general-content population while classification changes. This is not the final feature-gate migration. The evidence grade, tier, weight, and audit ID stay unchanged.
+The page-type list keeps the old general-content population. It is a holding scope, not the final feature gate.

@@ -41,14 +41,6 @@ Falsifiable claim: an agent operates as observe → act → verify. If a toggle'
 - **[Operator System Card](https://cdn.openai.com/operator_system_card.pdf)** — OpenAI (vendor-doc, URL verified 2026-08-20)
   - Documents confirmation prompts before 'actions that affect the state of the world (e.g., before completing a purchase or sending an email)', with 92% recall on 607 risky-action tasks and a mistake-risk reduction of about 90%. It also documents watch mode, which forces supervision on high-impact sites, and proactive refusal of high-risk categories. Implication for site authors: an agent must be able to observe and verify state transitions before and after acting, which requires persistent, machine-readable confirmation of what changed.
 
-## Competitor coverage
-
-Not covered. axe (and therefore Lighthouse's agentic audit) has aria-required-attr, which fires only once an element already declares role=switch/checkbox — the overwhelmingly common CSS-class-only toggle declares no role and is silently passed. No SEO or answer-engine tool inspects state exposure at all.
-
-## Implementation sketch
-
-Static parse plus a lightweight CSS pass. Enumerate candidate state-bearing controls: (a) elements with role in {switch, checkbox, radio, tab, menuitemcheckbox, menuitemradio, option, treeitem} — fail any missing aria-checked / aria-selected as required by APG; (b) elements with role=button or a click signal whose class list contains a state token matching /(^|[-_])(is-)?(active|selected|on|off|open|expanded|checked|current|enabled)([-_]|$)/ and which carry no aria-pressed, aria-checked, aria-expanded, aria-selected or aria-current — these are CSS-only state; (c) disclosure triggers (a clickable element whose id is referenced by aria-controls, or that sits immediately before a collapsible panel matched by class /accordion|collapse|panel|details-content/) lacking aria-expanded; note that native <details>/<summary> passes automatically; (d) sort/filter controls in tables lacking aria-sort on the <th>. Score = 1 - opaque/(opaque+introspectable). Emit each opaque control with the CSS class that carries its state, since that class name is the exact remediation target.
-
 ## Example failure
 
 A privacy settings page renders 'Share my data' as <div class="toggle toggle--on" onclick="flip()">. The task is 'turn off data sharing'. The agent cannot read the initial state from the snapshot. It clicks once, and sees an identical snapshot: the class changed, but nothing in the AX tree did. It concludes the click failed and clicks again. It leaves sharing enabled, while reporting the task complete.
@@ -59,36 +51,14 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 
 ## Implementation deviations
 
-The shipped audit is `operability-safety/stateful-control-introspectability`, in
-the `operability-safety` category: the proposal's `agent-operability` domain is
-a research grouping, not one of the eight v2 categories.
-
-The state-class vocabulary and the click-signal test live in
-`packages/core/src/audits/operability-safety/_agent-affordances.ts`, shared with
-`ghost-clickable-element-ratio` so the two cannot drift apart.
-
-Native state is treated as introspectable without any ARIA: `<details>`,
-`<select>` and `<input type="checkbox"|"radio">` carry `open`, `selected` and
-`checked` in the DOM, and every snapshot serializer reads them. A `<summary>`
-raises no finding of its own, because its state belongs to its parent
-`<details>`.
-
-The disclosure-trigger rule fires on a clickable element that carries
-`aria-controls`, or that is immediately followed by an element whose class
-matches `/accordion|collapse|panel|details-content/`. The sketch's wider
-"sits before a collapsible panel" wording would need layout to resolve.
-
-A control that lands in more than one bucket is counted once, and an opaque
-verdict wins over an introspectable one: a control that publishes one state and
-hides another is still a control an agent cannot fully read.
+- The audit sits in `operability-safety`. The proposal's `agent-operability` domain is a research grouping, not a category.
+- The state-class vocabulary and the click-signal test live in `_agent-affordances.ts`, shared with `ghost-clickable-element-ratio` so the two cannot drift.
+- Native state counts as introspectable without ARIA: `<details>`, `<select>` and checkbox or radio inputs expose `open`, `selected` and `checked` in the DOM.
+- A `<summary>` raises no finding of its own. Its state belongs to its parent `<details>`.
+- A disclosure trigger is a clickable element with `aria-controls`, or one immediately followed by an element whose class matches `/accordion|collapse|panel|details-content/`. The wider "sits before a collapsible panel" would need layout.
+- A control in more than one bucket is counted once, and opaque wins. A control that publishes one state and hides another is still not fully readable.
 
 ## Deferred
 
-- **Sort and filter controls outside tables.** The sketch names "filter chips"
-  generally. Only `<th>` sort controls are located structurally; a chip is
-  caught by the class-state rule when its class carries the state, and not at
-  all when it does not.
-- **Verifying the state is kept up to date.** Whether the handler that flips the
-  class also flips the attribute is only observable by driving the control,
-  which is the headless-browser tier. The audit checks that the attribute is
-  present, not that it is maintained.
+- **Sort and filter controls outside tables.** Only `<th>` sort controls are located structurally. A filter chip is caught only when its class carries the state.
+- **State kept up to date.** Whether the handler also flips the attribute needs the control driven in a browser. The audit checks presence, not maintenance.

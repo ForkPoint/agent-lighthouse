@@ -40,16 +40,3 @@ Excessive Crawl-delay values (over 10 seconds) dramatically slow AI indexing, me
 **Evidence:** Support is genuinely split and each side is vendor-documented. Supporting: Anthropic explicitly names support for the 'Crawl-delay extension to robots.txt' for its bots; You.com states 'YouBot fully respects robots.txt directives, including user-agent specific rules and crawl-delay settings'. Not supporting: Google states 'Google supports the following fields (other fields such as crawl-delay aren't supported)' — only user-agent, allow, disallow and sitemap; Amazon states of Amazonbot 'They do not support the crawl-delay directive.'
 
 **Counter-evidence:** RFC 9309 defines no crawl-delay directive at all — the only accommodation is §2.2.4, which merely permits crawlers to 'interpret other records that are not part of the robots.txt protocol'. There is no interoperable value semantics (seconds vs. requests-per-second is unspecified), no vendor consensus, and the two highest-volume AI crawlers in Cloudflare's data (GPTBot, ClaudeBot's operator aside) publish no crawl-delay commitment. OpenAI, Perplexity, Meta, Mistral and DuckDuckGo document no crawl-delay support in either direction. A crawl-delay line is at best a per-vendor hint; never score its presence or absence.
-
-## Implementation deviations
-
-- 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. It read the robots.txt served at the root, and
-  `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain
-  a broker's page from another host, on a walled or throttled origin nothing
-  at all. It now consults `scanReadTheSite()` and returns `notApplicable`
-  carrying the gate's own reason.
-  Verdicts that moved on the five nothing-obtained contract states: walled
-  warn → na, throttled warn → na, redirected away pass → na, non-HTML homepage
-  warn → na, HTTP 200 bot challenge pass → na. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.

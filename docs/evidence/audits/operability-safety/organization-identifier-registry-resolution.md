@@ -38,14 +38,6 @@ leiCode / iso6523Code 0199: is the only organization identifier in schema.org ba
 - **[MCP Specification (latest) — index](https://modelcontextprotocol.io/specification/latest)** — Model Context Protocol (spec, URL verified 2026-08-20)
   - Confirms the current authoritative revision is 2026-07-28 (schema/2026-07-28/schema.ts). Lists optional extensions negotiated in capabilities: Tasks (io.modelcontextprotocol/tasks), MCP Apps (io.modelcontextprotocol/ui), Skills over MCP. Restates that annotations describing tool behavior 'should be considered untrusted, unless obtained from a trusted server'.
 
-## Competitor coverage
-
-Structured-data validators check that leiCode is a string; not one performs a live GLEIF lookup, checks registration status, or reconciles registered legal name against the marked-up name. Google's own 0199:/0060: encoding guidance is documented but, as far as I can establish, unimplemented by any third-party auditor. Lighthouse's agentic category has no organization-identity checks.
-
-## Implementation sketch
-
-1. Locate the Organization node (Google recommends home page or a single about-us page — check both). 2) Read leiCode and iso6523Code. Encoding check: iso6523Code must match /^\d{4}:/; if leiCode is present without an iso6523Code '0199:<LEI>' twin, emit an ADVISORY citing Google's documented preference; same for duns vs '0060:'. 3) Syntactic pre-filter on the LEI: /^[A-Z0-9]{18}[0-9]{2}$/ plus the ISO/IEC 7064 MOD 97-10 check digit — treat this only as a cheap local filter, since GLEIF publishes no algorithm detail on its intro page. 4) Authoritative lookup, no API key required: GET https://api.gleif.org/api/v1/lei-records?filter[lei]=<LEI>. 5) Assert exactly one record; attributes.entity.status === 'ACTIVE'; attributes.registration.status === 'ISSUED' (WARN on LAPSED/RETIRED/ANNULLED — a lapsed LEI signals an organization that stopped maintaining its registration). 6) Name agreement: normalize case, punctuation and legal suffixes (Inc/Ltd/GmbH/L.P.), then compare attributes.entity.legalName.name against schema legalName, falling back to name; below a similarity threshold emit FAIL. 7) Optionally surface registration.corroborationLevel and nextRenewalDate as trust context. Cache per LEI for 30 days.
-
 ## Example failure
 
 A marketplace publishes leiCode on its about page. GLEIF resolves the code to a dormant Delaware holding entity with registration.status LAPSED and a legalName sharing no tokens with the consumer-facing brand in the markup. A shopping agent asked to verify the merchant before checkout finds an identifier that technically exists but corroborates nothing — worse than publishing none, because it manufactures false confidence.
@@ -56,43 +48,14 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 
 ## Implementation deviations
 
-**Renamed** from `organization-identifier-resolves-in-the-authoritative-regist`
-— itself a truncation — which would make a 78-character id.
-
-Steps 2 to 6 of the sketch ship in full: the `iso6523Code` prefix check, the
-advisory for a `leiCode` or `duns` published without its `0199:`/`0060:` twin,
-the local LEI shape and ISO/IEC 7064 MOD 97-10 filter, the GLEIF lookup, the
-entity- and registration-status assertions, and the legal-name comparison after
-normalizing case, punctuation and legal form.
-
-**Every Organization node on every crawled page is read**, not the homepage and
-one about page (sketch step 1). The scan already holds its pages; picking two
-of them would look at less evidence for no saving. The same LEI seen twice
-costs one lookup.
-
-**A lapsed registration warns, a wrong name fails.** The sketch marks
-LAPSED/RETIRED/ANNULLED as WARN, which this follows; a registration status
-outside both that set and `ISSUED` fails, because it is a state the audit
-cannot vouch for. A GLEIF record that does not exist fails outright.
-
-**The registry answering badly is a warning, not a failure.** A 503 from GLEIF
-says nothing about the site being audited.
-
-**The lookup goes through `ctx.fetch`**, so the scanner's SSRF gate, timeout
-and budget apply, and the test suite mocks it. Audits do not read environment
-variables.
-
-**Evidence hygiene.** All three sources support the mechanism: the GLEIF API
-is the registry queried, and Google's structured-data documentation carries the
-`iso6523Code` preference the advisory quotes.
+- The id is shortened. The proposal's name would make a 78-character id.
+- Every Organization node on every crawled page is read, not only the homepage and one about page. The same LEI seen twice costs one lookup.
+- A LAPSED, RETIRED or ANNULLED registration warns. Any other status besides `ISSUED` fails, because the audit cannot vouch for it. An entity status other than `ACTIVE` warns.
+- A missing GLEIF record fails. A registry error such as a 503 warns, because it says nothing about the site.
+- The lookup goes through `ctx.fetch` (via `probeSecurityUrl` in `gatherers/security.ts`), so the SSRF gate, timeout and budget apply.
 
 ## Deferred
 
-- **The 30-day per-LEI cache** the sketch suggests. The scanner has no
-  cross-scan store; the cache here is per scan.
-- **`registration.corroborationLevel` and `nextRenewalDate`** as trust context.
-  They are read from the same record and could be surfaced later; neither
-  changes a verdict.
-- **DUNS resolution.** Dun & Bradstreet publishes no free authoritative lookup,
-  which is exactly why the dossier says the LEI is the only identifier whose
-  truth an auditor can establish. The `0060:` advisory is encoding only.
+- **Cross-scan cache.** The suggested 30-day per-LEI cache needs a store the scanner does not have. The cache is per scan.
+- **`registration.corroborationLevel` and `nextRenewalDate`** could be surfaced as trust context. Neither changes a verdict.
+- **DUNS resolution.** Dun & Bradstreet publishes no free authoritative lookup. The `0060:` advisory checks encoding only.

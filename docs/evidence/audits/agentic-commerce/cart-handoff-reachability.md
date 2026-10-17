@@ -43,14 +43,6 @@ Falsifiable claim: ACP 2026-04-17 adds a seller-hosted Cart API whose response c
 - **[ACP Concepts: Architecture](https://agenticcommerce.dev/docs/concepts/architecture)** — Agentic Commerce Protocol (spec, URL verified 2026-08-20)
   - Four roles: Buyer, Agent, Seller (merchant of record, implements Checkout API), Payment Provider (tokenizes credentials with allowance constraints). A negative result worth stating: the architecture documents no seller discovery mechanism — no registry, no .well-known URL, no automatic endpoint discovery. Seller onboarding is out-of-band/manual. This means any 'ACP endpoint discovery' audit check would be speculative today, and endpoint conformance testing must accept an operator-supplied base URL.
 
-## Competitor coverage
-
-Conversion-rate tools measure human checkout friction; none evaluate it from an agent's perspective or under an agent UA. Lighthouse's agentic category checks layout stability and agent accessibility on the rendered page but never navigates a purchase funnel. No AI-visibility vendor touches the cart path.
-
-## Implementation sketch
-
-Fingerprint the platform from response headers and markup (Shopify: x-shopid header, cdn.shopify.com; WooCommerce: wp-content/plugins/woocommerce; BigCommerce: cdn11.bigcommerce.com; Magento: /static/version, Magento_ cookies) and derive candidate paths — Shopify /cart and /cart.js, WooCommerce /cart and /checkout, BigCommerce /cart.php and /checkout, Magento /checkout/cart. GET each with a browser UA and again with the ChatGPT-User UA. FAIL on: (a) redirect whose final path matches /login|/signin|/sign-in|/account\/login|/customer\/account\/login/i, indicating an account wall on the buy path; (b) the cart or checkout DOCUMENT (not a subresource on unrelated pages) referencing a challenge widget — challenges.cloudflare.com/turnstile, www.google.com/recaptcha, hcaptcha.com, or a data-sitekey attribute; (c) 403/429 under either UA; (d) cart path returning 404 under all candidates, meaning no discoverable cart surface. WARN when the checkout document is entirely JS-rendered with an empty <noscript> fallback. Strictly read-only: never POST to add-to-cart, never submit forms, honour robots.txt Disallow on cart paths and report a Disallow there as informational rather than as a fetch. Bound at one request per path per UA.
-
 ## Example failure
 
 A store's /cart renders fine but /checkout issues a 302 to /account/login?checkout_url=... because guest checkout is disabled. Feed data, policy links and structured markup all score perfectly; the agent walks the buyer to a login form for an account they do not have and the purchase dies at the last click. Variant: Cloudflare Turnstile is mounted on the checkout document only, so every other page in the audit passes cleanly.
@@ -61,32 +53,32 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 
 ## Implementation deviations
 
-- **Read-only, and it stops at the document.** Every request is a GET. The audit never POSTs to add-to-cart, never submits a form and never follows a checkout button. What it measures is whether the cart document can be read at all, not whether a purchase completes.
-- **A robots.txt `Disallow` on a cart path is honoured, not overridden.** The path is reported under `details.disallowedByRobots` and never fetched. A storefront that disallows its own cart still fails the audit — no path answered — but the finding says why, and no request was sent.
-- **One request per path per user agent, two user agents.** A browser UA and `ChatGPT-User`. The sketch names a browser UA and ChatGPT-User; the other three OpenAI tokens are `agentic-commerce/agent-ua-commerce-parity`'s job. The browser-UA request shares the per-scan cache that audit already fills, so a `/cart` it probed is not fetched twice.
-- **`/cart.js` is not probed.** The sketch lists it for Shopify. It is a JSON endpoint rather than the document a buyer is handed to, and the failures this audit looks for — a login redirect, a challenge widget — live on the document.
-- **BigCommerce and Magento get one candidate path each** (`/cart.php`, `/checkout/cart`). Their `/checkout` paths are gated behind a cart that has something in it, so an empty-cart probe there measures nothing.
-- **Without a platform fingerprint the audit is not applicable, not failing.** It still probes `/cart` and `/checkout`, but when neither answers it reports `notApplicable`: the paths were a guess. With a fingerprint, an unanswered cart path is a failure, because the platform's own convention says where it should be.
-- **The JS-only arm needs both halves.** A document warns only when its visible text is under 200 characters _and_ it carries no `<noscript>` content. A short page with a real fallback passes.
-
-### A challenge widget fails only when it is the document (2026-10-06)
-
-Sketch item (b) fails a cart document that references a challenge widget by
-URL substring. A large retail site served a readable cart with the Turnstile
-loader (`api.js?render=explicit`) included site-wide for its login and
-newsletter forms. The cart was readable, and the audit failed it.
-
-The claimed mechanism is a handoff that dead-ends on a challenge. The
-guidance asks a site to challenge the payment submission rather than the
-document, and a widget on a form of a readable cart does exactly that. The
-audit now fails in two cases. First, when the shared WAF detector
-(`detectWafProtection`, the logic the scan gate uses) reads the cart response as a
-challenge page. Second, when a widget is mounted on a document with under 200
-characters of visible text, the same threshold the JS-only arm uses, so the
-challenge is all there is to read. A widget on a readable cart passes.
+- Read-only. Every request is a GET. The audit never adds to cart, submits a
+  form or follows a checkout button. It measures whether the cart document can
+  be read, not whether a purchase completes.
+- A robots.txt `Disallow` on a cart path is honoured. The path is listed in
+  `details.disallowedByRobots` and never fetched.
+- Two user agents, one request per path each: a browser UA and
+  `ChatGPT-User`. Both go through the shared per-scan UA cache that
+  `agent-ua-commerce-parity` also fills.
+- `/cart.js` is not probed. It is a JSON endpoint, not the document a buyer
+  is handed.
+- BigCommerce and Magento get one candidate path each (`/cart.php`,
+  `/checkout/cart`). Their checkout paths need a non-empty cart.
+- Without a platform fingerprint, `/cart` and `/checkout` are still probed.
+  When neither answers, the result is `notApplicable`. With a fingerprint, no
+  answering path is a failure.
+- The JS-only warning needs both halves: under 200 characters of visible text
+  and no `<noscript>` content.
+- A challenge fails only when it is the document. The shared
+  `detectWafProtection` verdict reading the response as a challenge page fails.
+  So does a widget mounted on a document under 200 characters of visible text.
+  A widget on a readable cart passes, because it guards a form on the page.
 
 ## Deferred
 
-- **The ACP `continue_url` itself is never probed.** Reaching it needs a Cart API session, which needs credentials and a POST. The audit probes the storefront cart the same handoff lands on.
-- **Guest-checkout detection beyond the redirect.** A store that renders the cart to anonymous buyers but demands an account at the payment step reads as reachable here.
-- **Edge blocks that key on IP rather than UA** are invisible to this audit, as they are to any UA-string probe.
+- The ACP `continue_url` is never probed. Reaching it needs a Cart API
+  session, credentials and a POST.
+- A store that shows the cart to anonymous buyers but demands an account at
+  the payment step reads as reachable.
+- Edge blocks keyed on IP rather than UA are invisible to a UA-string probe.

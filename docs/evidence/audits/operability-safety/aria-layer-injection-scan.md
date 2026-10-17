@@ -35,89 +35,20 @@ Computer-use and browser agents drive pages through the DOM and accessibility tr
 - **[EIA: Environmental Injection Attack on Generalist Web Agents](https://arxiv.org/abs/2409.11295)** — arXiv / ICLR 2025 (study, URL verified 2026-08-20)
   - Injects content into the page environment that blends into the surrounding site. Up to 70% ASR for stealing specific PII, 16% for extracting the full user request, over 177 Mind2Web action steps. Authors report EIA is hard to detect and that well-adapted injections survive human inspection — i.e. detection has to be mechanical, not eyeballed.
 
-## Competitor coverage
-
-axe-core and Lighthouse's accessibility and agentic-accessibility audits check that alt and aria attributes exist, are non-empty, and reference valid ids — they never inspect the content for adversarial instructions, never flag anomalous length, and never compare accessible name against rendered label for semantic contradiction. The presence checks are commodity; the adversarial-content and divergence checks are not shipped anywhere.
-
-## Implementation sketch
-
-Extract: all alt values; aria-label; text of aria-labelledby/aria-describedby targets; aria-description; title; placeholder; input[type=hidden] value; <option> text; <title>; <meta property=og:title|og:description>. Run the instruction lexicon from the Invisible Instruction Payload Scan over each => FAIL on any hit. FAIL when an input[type=hidden] value parses as a natural-language sentence (>=5 tokens containing a finite verb) rather than an identifier, token, nonce, or numeric id. WARN on alt or aria-label exceeding 250 characters — the canonical smuggling slot, since long alt is already an a11y anti-pattern. WARN when an interactive element's aria-label shares under 30% token overlap (Jaccard on lowercased alphanumeric tokens) with its own rendered text content, and FAIL when the two contain opposing action verbs (confirm/cancel, pay/back, delete/keep) — an agent selecting by accessible name will fire the wrong action. Also flag <a> whose href path or query contains lexicon hits (URL-text injection, as Anthropic describes).
-
 ## Scoring
 
 Tier per evidence policy: **scored** — grade A meets the A/B bar required for scored audits.
 
 ## Implementation deviations
 
-Shipped as `operability-safety/aria-layer-injection-scan`: v2 has no
-`injection-safety` category, and the shorter slug keeps the id inside the
-64-character limit `CheckResultSchema` enforces.
-
-The instruction lexicon is **imported** from
-`operability-safety/invisible-instruction-scan` rather than restated. One
-lexicon, two surfaces — hidden body text there, non-visual attributes here — so
-the two cannot drift apart.
-
-**Stopwords before Jaccard.** The sketch specifies "Jaccard on lowercased
-alphanumeric tokens". Raw Jaccard warns on legitimate pairs: `aria-label="Place
-your order now"` against visible text "Submit order" scores 0.2, below the 0.3
-floor, purely because both strings carry function words the other does not.
-Topic-free tokens (a, the, your, now, please, to, ...) are dropped before the
-comparison, which lifts that pair to 0.33 and leaves genuinely unrelated pairs
-below the floor.
-
-**Finite-verb detection.** "A natural-language sentence (>=5 tokens containing a
-finite verb)" is implemented as a closed verb list rather than a parser. A
-security heuristic should miss a sentence sooner than flag a nonce, and no
-part-of-speech tagger is available without a new dependency.
-
-- 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. It read the non-visual values on the scanned pages,
-  and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked
-  domain a broker's page from another host, on a walled or throttled origin
-  nothing at all. It now consults `scanReadTheSite()` and returns
-  `notApplicable` carrying the gate's own reason.
-  Verdicts that moved on the five nothing-obtained contract states: redirected
-  away pass → na, HTTP 200 bot challenge pass → na. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
-- 2026-08-28 — a JS shell serves the head and little else, so alt, aria-label,
-  option labels, hidden input values and links never arrive. The document title
-  alone kept `valuesSeen` above the existing zero-value guard and produced a
-  clean pass over one value. The clean pass now returns `notApplicable` when
-  `scanReadPageText()` is false. It sits after the injection, opposing-verb
-  and anomaly branches on purpose: an instruction planted in a shell's `<title>`
-  or an `og:*` value is served and is still a finding, pinned by the test "still
-  reports an instruction planted in the title of a shell". Verdict moved on the
-  shell contract state: pass → na. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
-
-### The label comparison is scoped to controls (2026-10-06)
-
-The sketch compares "an interactive element's aria-label" with its rendered
-text, because an agent clicks by accessible name. The code compared every
-`aria-label`, including landmarks and containers, with all their descendant
-text. A small marketing site's `nav aria-label="Main"`, a
-`role=tablist aria-label="Simulator views"` and a
-`role=dialog aria-label="Command palette"` were reported as divergent. A
-region's name describes the region. Its children's text is theirs.
-
-The overlap and opposing-verb comparisons now run only for native controls
-(`a[href]`, `button`, `summary`, `input`, `select`, `textarea`) and widget
-roles (`button`, `link`, `menuitem*`, `tab`, `option`, `checkbox`, `radio`,
-`switch`, `treeitem`). Every `aria-label` is still read for the instruction
-lexicon and the length checks.
-
-Verdicts that moved in the real-page corpus, all from landmark, list and
-container labels: `capitalone-com-savings`, `cdc-gov-flu-about`, `chase-com`,
-`kubernetes-docs-pods`, `lobsters-front-page`, `python-docs-json`,
-`react-dev-usestate` and `tattly-com-shell` warn → pass.
+- Shipped as `operability-safety/aria-layer-injection-scan`. The shorter slug keeps the id inside the 64-character limit.
+- The instruction lexicon is imported from `operability-safety/invisible-instruction-scan`. One lexicon serves both surfaces, so they cannot drift apart.
+- Stopwords are dropped before the Jaccard comparison. Raw Jaccard warns on legitimate pairs such as "Place your order now" against "Submit order" only because of function words.
+- The finite-verb test for hidden input values is a closed verb list, not a parser. The heuristic should miss a sentence sooner than flag a nonce.
+- The overlap and opposing-verb comparisons run only on native controls and widget roles. A landmark or container name describes a region, not its children's text. Every `aria-label` is still read for the lexicon and length checks.
+- A clean result on a page with no readable text returns `notApplicable`. That branch runs after the payload branches, because an instruction planted in a shell's `<title>` or `og:*` value is still served.
 
 ## Deferred
 
-- `aria-labelledby`/`aria-describedby` targets are read for lexicon hits, but a
-  divergence check between a _referenced_ label and the element's visible text
-  is not performed — only the inline `aria-label` case is, where the two strings
-  belong to one element unambiguously.
-- The long-value warning applies to `alt` and `aria-label`, the two channels the
-  dossier names as the canonical smuggling slot. A 300-character `title` is an
-  ordinary tooltip and is not warned on.
+- `aria-labelledby` and `aria-describedby` targets are read for lexicon hits only. No divergence check compares a referenced label with the element's visible text.
+- The long-value warning covers `alt` and `aria-label` only. A long `title` is an ordinary tooltip.

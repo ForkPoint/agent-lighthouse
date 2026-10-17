@@ -54,34 +54,17 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Counter-evidence:** The proven consumer path is social/messaging link previews, not AI answer generation — the audit's framing ("agents cannot display proper titles… in AI-generated responses") has no source. OpenAI's crawler documentation covers only robots.txt and user agents, and mentions no Open Graph tags — https://developers.openai.com/api/docs/bots (verified 2026-08-21). Google's AI-features page likewise never mentions Open Graph — https://developers.google.com/search/docs/appearance/ai-features (verified 2026-08-21). And Google's supported-meta-tags list includes no `og:*` property at all, with the note that "Google will ignore `meta` tags that it doesn't support" — https://developers.google.com/search/docs/crawling-indexing/special-tags (verified 2026-08-21). Note also that the grade attaches to _resolvable_ values: the vendor doc's `og:image` contract is a URL the crawler can fetch, which the current non-emptiness check does not enforce.
 
-## The merge (Plan 4, Task 6, 2026-08-22)
+## Implementation deviations
 
-Three v1 audits asked one question — "does this page emit its social-preview metadata" — and charged for it three times. 4.8 `og-site-name` was a 26-line copy of the loop already running here; 4.10 `twitter-card` failed sites for a defect that does not exist. Both are now branches of this audit, and a site with no social metadata at all costs one score instead of three.
+- The audit merges the former `og-site-name` and `twitter-card` audits. Their records are in `docs/evidence/merged/answer-readiness/`.
+- Only `ctx.pages[0]` is read.
+- A core tag counts when it is non-empty. `og:image` and `og:url` are not checked for absolute URLs, and the `og:image:url` and `og:image:secure_url` aliases are not read.
+- A missing or placeholder `og:site_name` only warns, at priority `low`. Google ranks it below `WebSite` structured data and `<title>`.
+- The `twitter:*` tags are read only inside `twitterReport()`, whose output goes into `found`. No status, score or priority path reads them. An absent `twitter:*` tag whose `og:*` counterpart is present is reported as a fallback, not as missing.
+- The C-grade twitter half is text only, so the merged audit keeps grade A and weight 1.0.
+- An empty page list returns `fail`, not `notApplicable`.
 
-### Absorbed evidence — og-site-name (4.8)
+## Deferred
 
-4.8's dossier is kept verbatim at [merged/answer-readiness/og-site-name.md](../../merged/answer-readiness/og-site-name.md) (grade **A**). Its signal is the one Open Graph claim with direct Google documentation: the title-link page lists "Content in `og:title` meta tags" among the sources for a title link, and the site-names page states the system "will also consider content in `og:site_name`, `<title>`, heading elements, and other text on a home page". That adds Googlebot — and with it the AI Overviews / AI Mode source card, which reuses those labels — to this audit's consumer list alongside `facebookexternalhit` and Slack's unfurler.
-
-Its counter-evidence is what fixes the _weight_ of the absorbed half: Google ranks `og:site_name` below `WebSite` structured data ("most important" for the site name) and `og:title` below `<title>` and the visible title, so both are tiebreakers rather than levers. 4.8's own required fix therefore lands as written — "extend the `OG_CORE` loop with a second RECOMMENDED list that downgrades a miss to a warn rather than a standalone fail" — at priority `low`, and the audit no longer repeats 4.8's unsupported claim that a missing `og:site_name` "fragments your brand identity across AI-generated responses". No AI answer engine is documented to build entity association from the tag.
-
-### The twitter-card redemption (4.10)
-
-4.10's `TODO(redeem)` header asked for exactly two things: **fix the `twitter:*`/`og:*` fallback errors** and **fold the check into the social-meta diagnostic alongside core-open-graph, unscored**. Both are done here.
-
-The factual error was structural: `TWITTER_REQUIRED = ['twitter:card','twitter:title','twitter:description']` never consulted the `og:*` head, so the configuration X itself documents as correct — `og:*` complete, `twitter:*` absent — was reported as `warn` "Missing Twitter Card tags", and a site with complete OG and no twitter tags took a hard `fail` at `medium` priority. The archived Cards Markup Tag Reference (Dec 2023, the last public version) documents a fallback for every content-bearing tag: `twitter:title`→`og:title`, `twitter:description`→`og:description`, `twitter:image`→`og:image`, `twitter:card`→`og:type`. The merged audit encodes that table directly: an absent `twitter:*` tag whose `og:*` counterpart is present is reported as _"falls back to og:…"_, not as missing. Only when neither exists does the row say so, and even then it is a statement, not a finding.
-
-The one interaction 4.10's review says actually matters — `twitter:card="summary_large_image"` with no image in either namespace — is the single extra line the twitter block can emit. It is also informational.
-
-**Why the twitter half cannot move the score, mechanically and not only by intent:** the `twitter:*` values are read exclusively inside `twitterReport()`, whose return value is concatenated into `found`. Nothing in the status, score, priority or `code` path reads a `twitter:*` key. Two tests pin it: identical `og:*` markup with and without a complete twitter block returns the same `status`, `score` and `priority`; and a page with full `og:*` plus a lone `twitter:card` still returns `pass` with score 1.
-
-### Grade decision: stays **A**, tier `scored`, weight 1.0
-
-The strongest **proven** path among the three sources is unchanged. 4.6 grades **A** on two named crawlers documenting that they read exactly these four properties; 4.8 also grades **A**, on Google's title-link and site-name docs; 4.10 grades **C**, and its own recommended tier is `informative` ("no live public X Cards specification… no AI vendor doc references `twitter:*` tags"). Absorbing an A and a C alongside an A neither raises nor lowers the merged grade: **A**, `tier: scored`, `weight 1.0` (`weightForGrade('A', 'scored')`).
-
-The C-grade half is not silently averaged into that weight — it is excluded from scoring entirely, which is the only way the meta law (`weight = weightForGrade(grade, tier)`, one weight per audit) can carry two evidence grades in one audit: the weaker signal becomes text. `defaultPriority` stays `high`, which is now only reached through the core-tag branches; the absorbed `og:site_name` branch sets `low` per result.
-
-### Deviations
-
-- **Still single-page.** `ctx.pages[0]` only, as before. Multi-page iteration is required fix #4 on 4.6's own review (and appears in 4.8's "if kept standalone" list), not part of the fold; 4.6 is a `move` row with an open `fix` verdict, so its remaining required fixes — absolute-URL enforcement on `og:image`/`og:url`, the `og:image:url` / `og:image:secure_url` alias, `notApplicable` under WAF protection, all-pages iteration — stay open and are not claimed here.
-- **No `pass` requires twitter tags, and no `fail` mentions them.** A site that deliberately ships no `twitter:*` markup is correct by X's own fallback rules and is reported as such.
-- **Empty page list still returns `fail`**, not `na`, matching the pre-merge behavior and its test. The other Plan 4 folds that switched to `na` did so where the review asked for it; neither review here does.
+- Iterate all sampled pages.
+- Enforce absolute URLs on `og:image` and `og:url`, and read the `og:image:url` and `og:image:secure_url` aliases.

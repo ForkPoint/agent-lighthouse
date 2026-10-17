@@ -54,14 +54,6 @@ RFC 9309 §2.2.1 states the wildcard group is consulted only 'if no matching gro
   - arturseo-geo/mcp-crawl-parity (1 star) — Googlebot against AI crawler parity, from Nginx logs.
   - No project combines active differential fetching with robots.txt policy reconciliation.
 
-## Competitor coverage
-
-Nobody. Lighthouse's SEO category has is-crawlable (meta robots + X-Robots-Tag for the audited URL only) and reads robots.txt merely to look for the ARD Agentmap line in PR #17168. Semrush/Ahrefs robots testers answer 'is URL U allowed for bot B' one URL at a time and never diff a named group against the wildcard. No OSS project in the GitHub census evaluates group precedence divergence.
-
-## Implementation sketch
-
-Pure robots.txt parse, no extra network beyond the sitemap we already fetch. Reuse packages/core/src/audits/crawler-permissions/_robots-txt-helpers.ts — but note its current categoryBlocked() flattens rules across DIFFERENT bots' groups, which is a convenience for governance reporting and must not be reused here; this audit needs strict per-token group isolation. Add a longest-match evaluator: for path p, select the rule with the longest pattern matching p (with '*' and '$' expanded); on equal length, Allow wins. New file packages/core/src/audits/crawler-permissions/ai-group-shadowing.ts, category crawler-permissions.
-
 ## Example failure
 
 A retailer's robots.txt reads `User-agent: *` / `Disallow: /checkout/` / `Disallow: /account/` / `Disallow: /admin/`, and further down someone added `User-agent: GPTBot` / `Crawl-delay: 10` to slow the crawler. Per RFC 9309, GPTBot now matches its own group, that group has no path rules, and the wildcard is never read — so GPTBot is fully permitted to crawl /checkout/, /account/ and /admin/. Every existing robots.txt checker reports this file as valid, and this tool's own per-bot audits report GPTBot as 'allowed', which is technically true and exactly the problem.
@@ -72,44 +64,13 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 
 ## Implementation deviations
 
-- **`_robots-txt-helpers.ts` is deliberately not used.** Its `categoryBlocked()`
-  flattens rules across different bots' groups — correct for governance
-  reporting, wrong here. This audit calls `groupsForBot`, `hasNamedGroup` and
-  `isPathAllowed` from `packages/core/src/gatherers/robots.ts`, which are
-  strictly per-token and already implement longest-match-wins with
-  Allow-winning-on-tie (RFC 9309 §2.2.2).
-- **The wildcard baseline is evaluated by passing a token that appears in no
-  group**, over a group list filtered to `*`. That reproduces "what the wildcard
-  would have said" without duplicating the matcher.
-- **Probe paths** are every `Allow`/`Disallow` literal in any group (with a
-  trailing `$` stripped and the prefix before the first `*` added), plus `/`,
-  plus the pathname of every scanned page, capped at 200. Sitemap URLs are not
-  fetched for this audit; the scanned pages already stand in for real paths.
-- **Three classes, two severities.** A reopened wildcard-protected path and an
-  empty named group both fail: protection the operator wrote is not enforced.
-  A named group that blocks a bot the wildcard allowed warns instead — it is
-  frequently deliberate, and the finding says which reading applies.
-- 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. It read the robots.txt groups served at the root,
-  and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked
-  domain a broker's page from another host, on a walled or throttled origin
-  nothing at all. It now consults `scanReadTheSite()` and returns
-  `notApplicable` carrying the gate's own reason.
-  Verdicts that moved on the five nothing-obtained contract states: redirected
-  away pass → na, HTTP 200 bot challenge pass → na. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
-- 2026-08-28 — `requires` drops `rendered-body` and `sample-adequate` and is now
-  `['origin-reachable']`. The verdict comes from robots.txt; the scanned pages
-  only contribute extra probe paths, so a JS shell narrows the probe set without
-  changing what is judged. Recorded as a gate exemption in
-  `scripts/lib/requires-analysis.mjs`. The verdict itself does not move, but
-  the gate is on for every scan, so a shell scan — whose robots.txt was fetched
-  and read normally — now gets this judgement at weight 1.0 instead of a skip.
-  Found by `packages/core/src/tests/hostile-state-contract.test.ts`.
+- `_robots-txt-helpers.ts` is not used. Its `categoryBlocked()` flattens rules across different bots' groups. The audit calls the strictly per-token `groupsForBot`, `hasNamedGroup` and `isPathAllowed` from `gatherers/robots.ts`.
+- The wildcard baseline is evaluated by passing a token that appears in no group, over the groups filtered to `*`.
+- Probe paths are every `Allow`/`Disallow` literal in any group (trailing `$` stripped, prefix before the first `*` added), plus `/`, plus the pathname of every scanned page, capped at 200. Sitemap URLs are not used.
+- A reopened wildcard-protected path and an empty named group fail. A named group that blocks a bot the wildcard allowed warns, because it is often deliberate.
+- `requires` omits `rendered-body` and `sample-adequate`. The verdict comes from robots.txt. Scanned pages only add probe paths.
 
 ## Deferred
 
-- Group merging across several groups that share one product token relies on
-  `groupsForBot` returning all of them; a token spelled two different ways
-  (`GPTBot` and `gptbot/1.1`) merges, but a typo'd token does not and is
-  reported as no named group.
+- Group merging relies on `groupsForBot` returning every group for a token. A
+  typo'd token does not merge and is reported as no named group.

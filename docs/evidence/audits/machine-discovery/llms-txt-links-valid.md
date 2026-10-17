@@ -68,44 +68,6 @@ Valid links in llms.txt ensure AI agents can navigate to your content without en
 
 **Counter-evidence:** Sharply scope this signal. The blockquote convention is optional in the spec, unchecked by Lighthouse, and not universally followed even by exemplars. Across 7 major vendor files measured for this dossier, all 7 had an H1 and markdown links, but only 5 had a blockquote. Anthropic and Stripe both omit it, so failing sites for a missing blockquote would fail Anthropic's own file. Lighthouse checks no link validity, no per-link descriptions, and no section structure. SEJ's caveat is the honest frame: 'The audit checks whether your file is mechanically parseable. It does not check whether the file describes your website usefully.' And parseability is worth little when the consumer population is near-empty — Lighthouse is an auditor, not an agent, and it scores a 404 as notApplicable. Link-validity checking is also expensive at scale (Vercel's file has 1,872 links).
 
-## Re-grade (evidence sweep, 2026-08-24)
-
-**B → C. Scored → informative. Weight 0.6 → 0.**
-
-### The audit was graded on evidence for checks it does not perform
-
-The B came from the "content quality conventions" signal, whose own mechanism
-paragraph splits the checks explicitly: (a) H1 present, (b) at least one
-`[text](url)` markdown link and (c) length over 50 characters **are enforced by
-a real shipping consumer**; (d) blockquote summary, (e) per-link descriptions
-and **(f) link validity are spec-optional with no known enforcing consumer**.
-
-This audit implements (f). Its own counter-evidence already said so —
-_"Lighthouse checks **no** link validity."_ The Lighthouse audit source was
-re-read on 2026-08-24 and that is still exactly true: three regex and length
-tests, no link is ever fetched.
-
-So the audit was scored at weight 0.6 on a grade earned by different checks,
-for a signal its own dossier records as having no known consumer, inside a file
-whose existence has no known consumer either — see the parallel re-grade in
-[llms-txt-exists](llms-txt-exists.md#re-grade-evidence-sweep-2026-08-24), which
-covers the eleven-vendor sweep behind that last clause.
-
-**Grade C, tier informative, weight 0.** Together with `llms-txt-exists`, 1.6 of
-weight leaves the scored set.
-
-### What the audit does now
-
-- No llms.txt at the site root → **not applicable**. Whether the file exists is
-  `machine-discovery/llms-txt-exists`; reporting it here too made one absent
-  file cost two rows, one of them a `critical` failure telling the site to go
-  create the file.
-- Broken links inside a published file → **warn** at `low`, was `fail` at
-  `high`.
-- An llms.txt with no links at all → **warn** at `low`, was `medium`.
-- Guidance no longer claims broken links waste an agent's context window or
-  degrade answers about the site. No agent is documented to read the file.
-
 ## Limits
 
 The audit checks at most 20 links, taken evenly from the start to the end of
@@ -114,26 +76,19 @@ redirects followed. A link that answers 401, 403 or 429, or does not answer,
 is reported as unverifiable, not broken: the answer is about the scanner, not
 the link. When no checked link can be verified, the result is not applicable.
 
-## Link-burst fix (2026-10-17)
+## Implementation deviations
 
-A corpus scan of a site whose llms.txt lists about 300 pages in four
-languages sent every link at once: 304 page requests in 16 s. The site's WAF
-answered 403 to the rest of that scan, and later scans from the same address
-could not connect at all. The audit carries weight 0, so the burst cost the
-other audits their evidence and bought nothing.
-
-Changes, all from the required fix of the 2026-08-20 review:
-
-- At most 20 links are checked, 4 at a time (was every link, all at once).
-- 401, 403, 429 and no answer are unverifiable, not broken.
-- Redirects are followed before a link is judged.
-- The broken list names the right URLs. The old code filtered the results and
-  then took each URL from the filtered index, so it named the link before the
-  broken one.
+- **Grade C, informative, weight 0.** The B signal's consumer enforces the H1,
+  one-link and length rules. Link validity is spec-optional with no known
+  enforcing consumer, and Chrome Lighthouse fetches no link.
+- **Outcomes.** No llms.txt is not applicable; `llms-txt-exists` owns
+  existence. Broken links warn at `low`. A file with no links warns at `low`.
+- **The link check is bounded** so a long file cannot trip the site's WAF and
+  cost other audits their evidence.
+- **`ctx.wafProtection` is not read.** The unverifiable class covers the same
+  answers link by link.
 
 ## Deferred
 
 - Relative links. `extractMarkdownLinks` keeps absolute links only, so a file
-  of relative links still reads as "No links found". Not changed here.
-- `ctx.wafProtection` is not read. The unverifiable class covers the same
-  answers link by link.
+  of relative links still reads as "No links found".

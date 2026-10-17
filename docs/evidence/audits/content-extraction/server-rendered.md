@@ -56,27 +56,16 @@ The measurement covers the whole body, page chrome included. A shell that serves
 
 ## Implementation deviations
 
-- 2026-08-26 — the text metric was moved off `getMainContentText`. That helper reads a page's main content region, and it returned the first `<main>` element whenever any existed. Measured on real storefronts (design section 2.4): `velasca.com` ships one empty `<main>` with 194 words elsewhere in the body, and `hiutdenim.co.uk` ships four `<main>` elements of which the first holds 49 characters. Both were reported as serving no content. The audit now reads a new helper, `getRenderedText`, which returns the served `<body>` minus `script`, `style`, `noscript` and `template`. The word count comes from that same text.
-- 2026-08-26 — `getMainContentText` itself was corrected in the same change. Among several `<main>` elements it now returns the one holding the most text, and falls back to `<body>` only when none holds any. This affects the content audits that read it, not this one.
-- The threshold is unchanged: more than 50 words or more than 200 characters.
-- 2026-08-26 — the audit now judges every fetched page instead of `ctx.pages[0]`, and reports how many of them served readable text. The code review below records the reason: a site that server-renders its marketing homepage and client-renders every product page passed on the one page that was rendered, while the pages that matter went unreported. The empty URLs are carried in `details.emptyPages`.
-- 2026-08-26 — the per-page decision is read from the scan's evidence record rather than recomputed here, so the rule has one implementation. A page the record does not cover is judged by that same shared function.
-- 2026-08-26 — a scan with no fetched page returns `notApplicable`, where it previously returned `warn`. A warning is a claim about the site; the accurate statement is that nothing was seen.
-- 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. It read the served body of each scanned page, and
-  `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain
-  a broker's page from another host, on a walled or throttled origin nothing
-  at all. It now consults `scanReadTheSite()` and returns `notApplicable`
-  carrying the gate's own reason.
-  Verdicts that moved on the five nothing-obtained contract states: redirected
-  away pass → na, non-HTML homepage fail → na, HTTP 200 bot challenge fail →
-  na. Found by `packages/core/src/tests/hostile-state-contract.test.ts`.
+- The text is the served `<body>` minus `script`, `style`, `noscript` and `template` (`getRenderedText`), not the main content region. A shell that ships only chrome is what the audit exists to catch.
+- The per-page rule is the shared `pageRendersText`: more than 50 words or more than 200 characters.
+- Every fetched page is judged. Empty pages are listed in `details.emptyPages`.
+- A scan with no fetched page returns `notApplicable`.
 
 ## Deferred
 
-- Turning the `or` into an `and`, as the code review below asks. The character branch is the only path a page written in a non-space-delimited script can take, so removing it would fail CJK homepages that carry ample content.
-- Scoring the content region rather than the served body, as the code review below asks. The audit's subject is what a non-rendering crawler receives, and a shell that ships only a navigation bar and a footer is what it exists to catch, so the chrome is part of the measurement. The consequence is stated plainly: a template whose chrome alone clears 200 characters passes this check. Raising the bar is a separate change, and the evidence gate design (section 6.3) keeps this rule as the single implementation.
-- Raising the threshold itself. A page clears the bar at 51 words, which is a low bar for a real page; what the right number is has not been measured, so the shipped rule keeps the one the evidence gate design fixed as the single implementation.
+- Turning the `or` into an `and`. The character branch is the only path for non-space-delimited scripts, so CJK pages would fail.
+- Scoring the content region rather than the served body. A template whose chrome alone clears 200 characters passes.
+- Raising the threshold. The right number has not been measured.
 
 ## Browser snapshot boundary
 

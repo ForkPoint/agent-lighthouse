@@ -28,55 +28,6 @@ sources:
 
 Without robots.txt, AI crawlers can access sensitive paths like /api/ and /admin/. This may expose internal endpoints, admin panels, or debug information in AI training data and search results.
 
-## The crawl-hygiene rewrite (Plan 4, Task 11, 2026-08-22)
-
-The required rework from the [redemption dossier](../../deletions/crawler-permissions/sensitive-paths.md) is executed, together with the four-part fix the code review attached to the same audit. The mechanism the grade rests on is untouched — named AI crawlers do honour path-level `Disallow` — but everything the audit _said about it_ was wrong, so the surgery is on the framing, the path list and the applicability gate.
-
-**Old pass condition:** the wildcard `*` group in robots.txt disallows both of the hardcoded literals `/api/` and `/admin/`. Partial coverage warned, no coverage failed at `high` priority, a missing robots.txt warned. Every site without those two literal directories failed, whether or not it had anything at those paths.
-
-**New pass condition:** every low-value URL family the crawl **actually observed** is disallowed for all six documented AI crawler tokens. When the crawl observed no such family, the audit is `notApplicable`.
-
-### (a) Security/privacy framing dropped
-
-The description, guidance and tags no longer claim protection of anything. The audit is now "Low-value URLs excluded from AI crawls" and the impact text carries RFC 9309's own two caveats verbatim in substance: the protocol "is not a substitute for valid content security measures", listed paths become publicly discoverable, and the fix instruction explicitly says to use HTTP authentication for anything that needs protecting. The `security` tag is replaced by `crawl-hygiene`; `docsUrl` now points at RFC 9309.
-
-### (b) `/api/` removed from the list, not made opt-in
-
-`/api/` is gone outright rather than hidden behind a flag. This is an agent-readiness framework and API surfaces are the thing agents need; there is no configuration in which the tool should be nudging a site to hide them. A dedicated regression test asserts that an `/api/`-heavy crawl produces `na` and that the word `/api/` appears nowhere in the result.
-
-The families that replace it are all session-bearing, non-canonical, or carry nothing citable: cart/checkout (`cart`, `carts`, `checkout`, `basket`), site search (`search`), authentication (`login`, `signin`, `sign-in`, `signup`, `sign-up`, `register`, `logout`, `signout`), account areas (`account`, `my-account`, `dashboard`) and admin surfaces (`admin`, `wp-admin`, `administrator`).
-
-### (c) User-initiated-fetcher caveat stated
-
-`guidance.impact` names both documented exemptions — OpenAI on ChatGPT-User ("Because these actions are initiated by a user, robots.txt rules may not apply") and Perplexity on Perplexity-User ("generally ignores robots.txt rules") — so the check can never be read as protection against agent access.
-
-### (d) `defaultPriority` `high` → `low`
-
-The redeem note allows low or medium. `low` is chosen: the evidence supports the mechanism, not a severity. Nothing here is a security finding, the worst realistic outcome is wasted crawl budget and dead session URLs in an answer, and the audit now only speaks at all when the site demonstrably has the URL family in question. The result-level priorities on the `warn` and `fail` branches match.
-
-### Candidate discovery, applicability, and RFC 9309 matching
-
-- **Paths are discovered, not hardcoded.** Candidates come from the crawled page URLs, every same-origin `<a href>` on those pages, and `<loc>` entries in `/sitemap.xml` (falling back to `/sitemap-index.xml`). Cross-origin and non-HTTP links are ignored, and a leading language/locale segment is skipped so `/en-gb/checkout` classifies as checkout. This is what closes the review's headline false positive: a WordPress site shipping `Disallow: /wp-admin/` now passes on its own rule and is never asked about an `/admin/` it does not have.
-- **The emitted fix rules match the paths that were flagged.** Each candidate carries a `disallow` value — the observed path truncated after the classified segment, built from the raw percent-encoded segments — so the rule is always a literal prefix of the path it came from and therefore always matches it under RFC 9309 prefix semantics. On a locale-prefixed URL that keeps the locale (`Disallow: /en-gb/checkout`); a bare `Disallow: /checkout` would not match, so following the suggested fix would have left the audit still failing. Candidates are deduplicated by rule rather than by segment, so `/en-gb/checkout` and `/de/checkout` each get their own line instead of collapsing into one that covers a single locale. Tests apply the audit's own emitted block back as robots.txt and assert the result flips to `pass`, for both a locale-prefixed and a plain candidate.
-- **`notApplicable` when there is nothing to assess.** A docs site or a brochure site with no cart, search, login or admin URL leaves the score untouched instead of failing.
-- **Matching is the shared RFC 9309 implementation.** The audit calls `isPathAllowed` from `gatherers/robots.ts` (via the `_robots-txt-helpers` shim) — group selection, longest-match arbitration and allow-wins-on-tie are that module's, not re-implemented here. The `path.startsWith(r.path)` inversion the review found had already been removed when parsing moved into the gatherer; a regression test now pins it, asserting that `Disallow:` with an empty value protects nothing.
-- **Coverage is judged per bot, over all six tokens.** GPTBot, ClaudeBot, Applebot-Extended, meta-externalagent, Google-Extended and PerplexityBot — the tokens whose vendors document robots.txt as the control. A rule written only for GPTBot leaves the other five crawling the URL, so it does not count as coverage; the previous `g.userAgent === '*'` filter both missed bot-specific rules and over-credited them.
-- **The self-contradiction with 2.22 is closed.** When robots.txt blanket-blocks the AI crawlers at the root, this audit returns `notApplicable` and points at `access-crawl-control/no-blanket-block`, which owns that finding. Previously the same input passed here and failed critical there.
-- **A soft-404 no longer reads as a rule set.** A 200 response whose body starts with `<` is treated as no robots.txt, and the "no robots.txt is served" note is appended to the reported evidence.
-
-### Grade decision: stays **A**, tier `scored`, weight 1.0
-
-Source: the [redemption dossier's verdict](../../deletions/crawler-permissions/sensitive-paths.md) — "redeemed — keep with rewrite (grade A)" — and the [REWORK-TODO entry](../../../../packages/core/src/audits/rework-todo.md) carrying it. The grade rests on vendor documentation with literal directory examples: Apple's support article 119829 shows `User-agent: Applebot / Allow: / / Disallow: /private/` and `User-agent: Applebot-Extended / Disallow: /private/`; Meta's crawler doc shows `User-agent: meta-externalagent / Allow: / # Allow everything / Disallow: /private/ # Disallow a specific directory`; RFC 9309 is the ratified standard whose path matching all of them implement, and OpenAI and Anthropic both point publishers at it.
-
-Neither the redeem note nor the REWORK-TODO row asks for a tier change — the required changes are to framing, path list, applicability and priority — so the tier stays `scored`. Per the §4 weight law `weightForGrade('A', 'scored') = 1.0`; `scoreDisplayMode` stays `ternary`; `defaultPriority` moves `high` → `low` as instructed.
-
-### Rewrite deviations
-
-- **A missing robots.txt now `fail`s rather than `warn`s, when low-value URLs were observed.** Keeping the old dedicated `warn` would have made deleting robots.txt score better than serving one with no rules — a perverse incentive. Coverage is computed uniformly and absence is reported in the evidence string; at `low` priority and behind the observed-family gate, the finding is honest rather than alarming. "You have no robots.txt at all" remains a separate audit's job.
-- **The `sensitive-paths` id, and therefore the slug and dossier path, are unchanged.** The name no longer describes the check, but the v2 merge plan freezes ids and `migration-map.json` records no rename for this audit.
-- **Locale-prefix handling is a two-letter heuristic.** `/de/cart` and `/en-gb/checkout` classify correctly, and the fix rules they emit carry the locale so they actually match; a site using a three-letter or country-first prefix will simply not produce a candidate, which fails safe to `na`.
-- **Query-only low-value spaces are not detected.** A site whose faceted search lives at `/?s=term` rather than `/search` yields no candidate. Detecting that would require classifying query parameters, which the vendor evidence says nothing about.
-
 ## Evidence
 
 ### Signal: path-level robots.txt Disallow honoured by named AI crawlers — grade A (crawler-permissions)
@@ -95,14 +46,21 @@ Neither the redeem note nor the REWORK-TODO row asks for a tier change — the r
 
 **Counter-evidence:** The mechanism is real; the audit's original _benefit_ — security and privacy, keeping internal endpoints out of training data — is contradicted by the standard it rests on. RFC 9309 states outright that "The Robots Exclusion Protocol is not a substitute for valid content security measures", and warns that listing paths makes them publicly discoverable, directing operators to HTTP authentication instead. The old guidance therefore told site owners to publish a map of their admin surface. The agent traffic most likely to reach `/admin/` or `/api/` is also exempt. OpenAI states that for `ChatGPT-User`, "Because these actions are initiated by a user, robots.txt rules may not apply". Perplexity states that `Perplexity-User` "generally ignores robots.txt rules" (https://docs.perplexity.ai/guides/bots, verified 2026-08-21). Finally there is a domain-fit limit that shaped the rewrite: `/api/` is precisely the surface an agent wants, so a high-priority failure telling every site to disallow it works against the outcome this project exists to improve. All four points are why the audit was rewritten to crawl hygiene over observed URL families, at low priority, rather than kept as a security check.
 
-## Adversarial redemption research (2026-08-21)
-
-This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/deletions/crawler-permissions/sensitive-paths.md](../../deletions/crawler-permissions/sensitive-paths.md). Outcome: **redeemable**, grade A.
-
 ## Implementation deviations
 
-### Subpath sitemap scope (2026-10-05)
-
-The shared sitemap gatherer uses the scanned homepage directory as the site root when it is a detected or declared subpath homepage. It reads declarations from the origin's robots.txt, then tries the conventional sitemap names under that directory before the origin fallbacks. Shared sitemap files contribute only absolute URLs on the same origin and under that directory. Filtering precedes the entry cap and sampling. Relative or malformed loc values associated with this site remain available to content audits. A sibling-only sitemap does not prove that this site has a sitemap. The child-fetch cap remains in force even when all children cover siblings.
-
-Content-page scans do not infer a mount. Origin files, origin probes, feed discovery, explicit page overrides, and redirect handling keep their existing scope. This change limits sitemap-derived evidence; it does not make every scan request subpath-only.
+- The audit is crawl hygiene, not security. Its copy carries RFC 9309's caveat that robots.txt is not an access control, and its fix points at HTTP authentication for anything that needs protecting. The tag is `crawl-hygiene`.
+- `/api/` is not a low-value family. Agents need API surfaces. A test asserts an `/api/`-heavy crawl is not applicable and the result never names `/api/`.
+- The families are cart/checkout, site search, authentication, account areas and admin surfaces.
+- `guidance.impact` names the user-initiated exemptions for ChatGPT-User and Perplexity-User.
+- `defaultPriority` is `low`, and so are the result-level priorities.
+- Candidates are discovered, not hardcoded: crawled page URLs, same-origin `<a href>` on those pages, and the shared sitemap tree. Cross-origin and non-HTTP links are ignored.
+- A leading two-letter locale segment (`/de/`, `/en-gb/`) is skipped when classifying. Other locale shapes produce no candidate, which fails safe to not applicable.
+- Each emitted `Disallow` is a literal prefix of the flagged path, locale included. Rules are deduplicated per rule, not per segment. Tests apply the emitted block back as robots.txt and expect a pass.
+- No observed family is not applicable.
+- Matching uses `isPathAllowed` from the shared RFC 9309 gatherer. A test pins that an empty `Disallow:` protects nothing.
+- Coverage is judged per bot over six tokens: GPTBot, ClaudeBot, Applebot-Extended, meta-externalagent, Google-Extended and PerplexityBot. A rule for one bot does not cover the others.
+- A root-level blanket block of all six is not applicable here. `access-crawl-control/no-blanket-block` owns that finding.
+- A 200 robots.txt whose body starts with `<` is treated as no robots.txt.
+- A missing robots.txt fails when low-value families were observed. A dedicated warn would score deleting robots.txt better than serving an empty one.
+- The `sensitive-paths` id is unchanged, though the name no longer describes the check.
+- Query-only low-value spaces such as `/?s=term` are not detected. The vendor evidence says nothing about query parameters.

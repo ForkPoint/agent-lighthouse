@@ -66,4 +66,8 @@ The individual evidence review and limits appear in [Browser-rendered snapshot a
 
 ## Implementation deviations
 
-Browser snapshots provide serialized markup observations only. The browser assessment uses informative display and weight 0. It does not extend the dossier's crawler scoring claim to browser task success. Truncated, redacted, and still-loading captures produce missing-evidence records rather than verdicts.
+- Browser snapshots provide serialized markup observations only.
+- The browser assessment is informative with weight 0. It does not extend the
+  crawler scoring claim to browser task success.
+- Truncated, redacted and still-loading captures produce missing-evidence
+  records, not verdicts.

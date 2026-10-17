@@ -62,57 +62,16 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Implementation deviations
 
-**2026-08-29 — absence is `notApplicable`, not `fail`.** The audit returned
-`fail` at `priority: 'medium'` on a site with no OpenAPI document, and again on
-a document declaring no operations. Neither is a schema-coverage finding: no
-coverage was ever measured. Both now return `notApplicable`. Nothing in this
-dossier's evidence documents a consumer that is worse off for the absence of a
-document, and `agent-interfaces/openapi-endpoints` is the audit that reports an
-empty one.
-
-Every coverage verdict on a document with operations is unchanged. Low
-coverage still `fail`s, partial coverage still `warn`s, and full coverage still
-passes. That is what carries the grade B.
-
-**The read moved to `packages/core/src/gatherers/openapi.ts`**, shared with the
-six other audits that had a byte-identical copy of it, along with the `paths`
-traversal. The precondition lives beside the read; `gatherers/openapi.ts`
-records why it is not a runner precondition and not an `EvidenceKey`.
-
-**A 200 with an unparseable body is treated as an absence**, because it is a
-document this audit never read.
-
-**Present and broken is not absent.** `paths` is classified in one place,
-`readOpenApiPaths` in `gatherers/openapi.ts`. It separates what it could read
-from what was defective, and the verdict follows what survives:
-
-- Nothing readable and something broken — `paths` is not a Paths Object, or
-  every entry under it is defective — is `malformed`, and it `fail`s with the
-  defect named in `found`. The message ("no operation's schemas can be read") is literally
-  true in that state and only in that state.
-- At least one readable operation is graded on the operations it read. Coverage is a ratio over the readable operations; an entry no agent can walk declares no schemas and is not in the denominator.
-  The defects are named in the message and counted in `found`; they do not
-  change the verdict, because no source says a broken sibling entry costs a
-  site the operations it does publish. Released `main` graded such a document
-  on its readable operations and so does this audit.
-- Nothing broken and nothing declared is `empty`, and this audit declines.
-  `{"/x": {}}` is legal OpenAPI that lands there.
-
-A defect counts at either level: a non-object where a Path Item Object belongs
-and a non-object where an Operation Object belongs are the same error one level
-apart, so `{"/x": {"get": "yes"}}` is a broken document. Specification-extension
-keys (`x-`) are skipped rather than judged — OpenAPI 3.1 §4.8.8 lets them hold
-any value — and inside a path item only the eight method keys are judged,
-because `summary`, `parameters`, `servers` and `$ref` are legal members that
-are not Operation Objects.
-
-**The decline says what was observed.** The shared `notApplicable` line reads
-"No readable OpenAPI document at /openapi.json". The read also comes back empty
-for a 200 whose body will not parse, and a site that publishes a broken
-document has not published none.
+- No document, an unparseable 200, or a document with no operations is `notApplicable`. No coverage is measured there. `openapi-endpoints` reports the empty document.
+- `paths` is classified by `readOpenApiPaths` in `gatherers/openapi.ts`:
+  - nothing readable and something broken is `malformed` and fails, naming the defect;
+  - at least one readable operation is graded on what was read. Coverage is a ratio over readable operations only. Defects are named but do not change the verdict;
+  - nothing broken and nothing declared is `empty`, and the audit declines.
+- `x-` keys are skipped. Inside a path item only the eight method keys are judged.
+- A media type's `schema` counts when present, including a `{"$ref": ...}` schema. The reference is not resolved.
 
 ## Deferred
 
-The standing required fix is untouched: `$ref` responses are still counted as
-schema-less, 204/HEAD/OPTIONS operations are still in the denominator, bodyless
-`POST`s still count against `writeMethods`, and the read is still JSON-only.
+- A response object that is itself a `$ref` (to `components/responses`) is counted as schema-less.
+- 204, `HEAD` and `OPTIONS` operations stay in the denominator. Bodyless `POST`s count against `writeMethods`.
+- The read is JSON-only.

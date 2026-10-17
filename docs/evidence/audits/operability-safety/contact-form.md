@@ -45,41 +45,12 @@ AI agents increasingly handle tasks like "contact this company for a quote" on b
 
 ## Implementation deviations
 
-### Not observed is not absent (2026-10-06)
-
-The review above names the false negative: only the sampled pages are
-scanned, so a form at `/support/` fails the site. A small marketing site
-linked "Contact" from its header to a support page with a working form. The
-scan held only the homepage and reported "No contact/lead form".
-
-When no sampled page carries a contact form and no OpenAPI path matches, the
-audit now reads the sampled pages' same-origin links. A link whose path or
-text names a contact page (`contact`, `kontakt`, `support`, `inquiry`,
-`enquiry`, `get in touch`, `reach out`) and that the scan did not fetch makes
-the verdict `notApplicable`. The finding names up to three such links. A
-form there was not observed, so its absence is not established. A site with
-no form and no such link still fails.
-
-Verdicts that moved in the real-page corpus: 18 single-page fixtures fail →
-na, every one a page linking to a contact or support page outside the sample.
+- Only sampled pages are scanned, so a contact form on an unsampled page is not observed.
+- When no sampled page has a contact form and no OpenAPI path matches, the audit reads same-origin links.
+- A link whose path or text names a contact page (`contact`, `kontakt`, `support`, `inquiry`, `enquiry`, `get in touch`, `reach out`) and that the scan did not fetch makes the verdict `notApplicable`.
+- The finding names up to three such links. A site with no form and no such link still fails.
 
 ## Deferred
 
-- **Unescaped `id` in `extractForms`.** The shared form parser builds a
-  selector from a page-supplied `id` to find a control's label, the
-  `label[for="..."]` lookup in `parser.ts`. An `id` carrying a quote or a
-  backslash makes css-what throw inside `$()`; the throw escapes
-  `extractForms`, so both audits that consume it — `forms-no-js` and
-  `contact-form` — become `scan-error` stubs and the site is told nothing
-  about either. No corpus fixture carries such an `id`, so nothing throws
-  today; the class is live and latent. Two audits in this category already
-  escape their interpolated values (`form-actionability` has
-  `escapeAttrValue`, `form-autofill-token-coverage` has `cssEscape`), so the
-  fix is to reuse one at the parser call site. Found by the real-page corpus
-  snapshot, which caught the same shape throwing for real in
-  `answer-readiness/extractor-survival-recall`.
-- Following the unscanned contact link within a bounded fetch budget, so the
-  form there is observed rather than inferred.
-- A genuine absence still fails at high priority, though no documented
-  consumer backs the grade-C claim. Moving it to `notApplicable` or `warn` is
-  a separate decision.
+- Follow the unscanned contact link within a bounded fetch budget, so the form there is observed rather than inferred.
+- A genuine absence still fails at high priority, though no documented consumer backs the grade-C claim. Moving it to `notApplicable` or `warn` is a separate decision.

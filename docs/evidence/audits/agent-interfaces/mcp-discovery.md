@@ -105,72 +105,10 @@ Reported, not scored. Neither path is registered or specified, and no shipping M
 
 **Counter-evidence:** None found — this is a validation-correctness requirement, not a contested adoption claim. The only nuance is that content negotiation is legitimate. RFC 9727 permits additional formats beyond the mandatory Linkset, so an audit should send an explicit Accept header before concluding a publisher is non-conformant. It should also not penalise a clean 404, which is honest, the way it penalises an HTML 200, which is a lie.
 
-## Tier correction and pass-rule fix (contradiction sweep, 2026-08-24)
+## Implementation deviations
 
-The audit shipped grade A, scored, weight 1.0. Four of its five researched
-signals record `Consumers: none-known` and recommend `informative` or `delete`.
-It now ships grade **C**, `informative`, weight **0**, which is where those four
-point.
-
-### The fifth signal was already implemented, and not here
-
-`agent-surface-soft-404-validation` is the one signal recommending `scored`, and
-the sweep plan proposed splitting it into a new scored audit. That split was not
-made, because the signal is already discharged.
-
-Its own text says what it is: _"This is a meta-signal about how the other audits
-must be implemented"_ — a validation-correctness rule, not an adoption claim. Its
-requirement is that an audit must not read an HTTP 200 carrying HTML as evidence
-of a document. `agent-interfaces/openapi-exists` implements exactly that at the
-ratified path: `servedAsData()` rejects a `text/html` body at
-`/.well-known/api-catalog`, the linkset must parse and carry a non-empty
-`linkset` array, and its tests pin the HTML-200 case. It was built on 2026-08-22
-from the same API Evangelist survey this signal cites.
-
-Building a second audit for it would have done three wrong things. It would have
-duplicated a check that already runs. It would have contradicted the tier
-`openapi-exists` deliberately carries: that audit's own evidence names its tier —
-_"Ratified standard + no known agent consumers = B, and informative rather than
-scored until a consumer is documented"_ — and the 2026-08-22 merge corrected an
-earlier `scored` shipping decision to match it. And a general soft-404 audit
-would have had to pass on _something_: serving `{}` at a well-known path would
-have bought a weight-1.0 win, which is a score **gain** for publishing nothing.
-
-The population argument settles it independently. The harm this signal describes
-requires a client: _"an agent following the standard would get a 200, try to
-parse a LinkSet out of the body, fail, and have no useful recourse"_. At
-`/.well-known/mcp/servers.json`, `/.well-known/ucp` and `/.well-known/agents.json`
-— all recorded `Consumers: none-known` — there is no such client, so an
-unparseable response there lies to nobody. Scoring it would be the same
-population error this sweep exists to remove.
-
-Whether `/.well-known/api-catalog` has since acquired a documented consumer is
-folded into the llms.txt re-research task, which asks the same question of a
-different path.
-
-### The pass rule (Class B marker, folded in here)
-
-Three fixes, all recorded in this dossier's own review:
-
-- **Absence is `notApplicable`, not `fail`.** The audit failed every site
-  without `/.well-known/mcp/servers.json` at weight 1.0 — including every site
-  running a real MCP server at `/mcp`, through the registry, or via
-  `/.well-known/oauth-protected-resource`. The review calls this "a false FAIL
-  on precisely the sites that are most agent-ready". The required fix asked for
-  `notApplicable`; it is now that.
-- **`{}` at `/.well-known/ucp` no longer passes.** It parsed, so it returned a
-  confident pass reading "0 services and 0 capabilities". A profile declaring
-  neither services nor capabilities declares nothing.
-- **`{"servers": []}` no longer passes.** An empty array is the shape of a
-  discovery file without the discovery — the same rule `review-signals` applies
-  to `"review": []`.
-
-The review's other half — probe `/mcp`, `/api/mcp` and `/sse` with a real
-handshake, honour `/.well-known/oauth-protected-resource` — is superseded rather
-than adopted. Those mechanisms are checked by `mcp-modern-era-reachability` and
-`mcp-oauth-discovery-chain`, which exist for them. No audit probes `/mcp`
-speculatively, by design.
-
-Registry effect: none. No audit added or removed; 215 audits, 215 dossiers. The
-scored set drops by one, from 167 to 166, and the evidence mass in
-[`docs/scoring.md`](../../../scoring.md) is refreshed to match.
+- The audit ships grade C, `informative`, weight 0. Four of its five signals record no known consumer.
+- The grade-A soft-404 signal is not split into its own audit. `agent-interfaces/openapi-exists` already applies it at `/.well-known/api-catalog`. At these paths no client exists to be misled.
+- Absence of both documents is `notApplicable`.
+- `{"servers": []}` fails. A UCP document with neither services nor capabilities fails.
+- The audit does not probe `/mcp`, `/api/mcp` or `/sse`. `mcp-modern-era-reachability` and `mcp-oauth-discovery-chain` own those mechanisms.

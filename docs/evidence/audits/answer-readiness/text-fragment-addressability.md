@@ -38,14 +38,6 @@ Google Search auto-generates text-fragment URLs to land users on the exact featu
 - **[MCP Specification 2026-07-28 — Tools](https://modelcontextprotocol.io/specification/2026-07-28/server/tools)** — Model Context Protocol (spec, URL verified 2026-08-20)
   - tools/list result set MUST NOT vary per-connection or as a side effect of other requests (MAY vary by authorization). Servers SHOULD return tools in deterministic order — rationale given verbatim: enables client caching and 'improves LLM prompt cache hit rates'. inputSchema MUST be a valid JSON Schema object (not null); defaults to JSON Schema 2020-12. Tool names SHOULD be 1-128 chars, case-sensitive, only [A-Za-z0-9_.-], unique within a server. Full x-mcp-header constraint list including static-reachability rule (chain of only `properties` keys; never through items/oneOf/anyOf/allOf/not/if/then/else/$ref). Clients MUST exclude violating tools from tools/list. If outputSchema present, servers MUST conform. Clients MUST treat annotations as untrusted.
 
-## Competitor coverage
-
-No SEO or agent-readiness tool audits text-fragment constructibility. Lighthouse's agentic category does not touch fragment directives. `Document-Policy: force-load-at-top` is essentially unaudited anywhere — sites set it via CDN security templates without knowing it kills snippet deep-links. Screaming Frog reports response headers but has no rule for this one and no fragment simulation.
-
-## Implementation sketch
-
-Static fetch (headless only for the JS-injection variant). 1) Read response headers; a `Document-Policy` value containing `force-load-at-top` is an immediate hard fail — note in the report that Document Policy is header-only, so a <meta http-equiv> is not a valid workaround or a valid detection site. 2) Build candidate answer spans: first sentence after each h2/h3, every <dd>, and every JSON-LD FAQPage acceptedAnswer.text that also occurs in the HTML. 3) Implement the block-boundary rule: assign each text node a nearest block ancestor using a display-block element list (p, div, li, td, th, h1-h6, section, article, blockquote, dd, dt, figcaption, pre, details, summary, main, aside, header, footer). A span is addressable only if its whitespace-normalized text lies within one block ancestor. 4) Scan the span for normalization hazards: U+00AD soft hyphen, U+200B/200C/200D zero-width, entity-encoded smart quotes that differ from the rendered glyph. 5) Ambiguity: if the normalized span occurs more than once in the document, require a prefix or suffix that also lives in the same block; if none exists, mark unambiguously-unaddressable. 6) Emit the percentage of answer spans that yield a valid fragment, plus the generated `#:~:text=` URLs so the user can click-test them. 7) Roadmap headless variant: re-run against the post-JS DOM to catch answers injected after load and ::before/::after-injected text, which the on-load matcher cannot see.
-
 ## Example failure
 
 A CDN-managed site sends `Document-Policy: force-load-at-top` from a hardening template. Every AI and Search deep link into its documentation lands at the top of a 6,000-word page instead of the cited sentence. Second class. A spec page renders 'Maximum payload size is' in a <p>, and '10 MB' in an adjacent <span class="value"> inside its own <div>. No single-block start string covers the sentence. No fragment can address the one fact the page exists to state.
@@ -56,96 +48,21 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 
 ## Implementation deviations
 
-- **Block containment is decided over leaf blocks.** Every element in the spec's
-  block-level list that contains no other block-level element is treated as one
-  block; a span is addressable only when some leaf block's normalized text
-  contains it whole. This is the spec's rule expressed over the parsed DOM,
-  without a layout engine, so `display` overrides in CSS are not consulted.
-- **Ambiguity is counted over the same leaf-block texts**, including repeats
-  inside one block. A repeated span is addressable only through same-block
-  context: a prefix when the block has text before the span, otherwise a suffix.
-  Emitted URLs use at most five words of context.
-- **Term encoding** percent-encodes `-` and `,` inside terms so they cannot be
-  read as the fragment's own delimiters.
-- Spans over 300 characters are emitted in the `start,end` form (first and last
-  five words) rather than whole.
-- **`Document-Policy` is read from the response header only.** A
-  `<meta http-equiv="Document-Policy">` is explicitly not treated as a signal,
-  and the finding says so, because Document Policy is header-only: the meta form
-  neither sets the policy nor proves it is set.
-
-### Heading spans must be sentences (2026-10-06)
-
-The sketch's span is "the first sentence after each h2/h3". The audit took the text of whatever followed the heading and, finding no sentence terminator, used all of it. On a large retail site that turned a grid of 28 product tiles into one "answer" crossing every tile's block. It also turned a one-word button repeated under every tile into an ambiguous answer. Neither is a sentence, and both were reported as unaddressable.
-
-A heading-derived span now follows four rules. A heading that follows a heading introduces no span. A following element with no block-level descendant contributes its first sentence. A wrapper with block-level descendants contributes the sentence its leaf blocks finish within three blocks. A sentence split across sibling paragraphs stays a candidate and still fails, which is the failure the block rule describes. A wrapper that finishes no sentence there is a grid, carousel or menu and is skipped. Spans under three words are labels and are skipped. `dd` and FAQPage answers are unchanged.
-
-Verdicts that moved in the real-page corpus: `aljazeera-com-article` fail → na; `barclays-co-uk-current-accounts`, `gov-uk-vehicle-tax` and `react-dev-usestate` fail → warn; `cdc-gov-flu-about`, `discourse-meta-topic`, `kubernetes-docs-pods`, `stripe-com-pricing` and `walmart-com-wall-200` fail → pass. Every dropped candidate was a menu list, a tile or topic grid, a heading or a short label.
-
-### Text is grouped by its nearest block ancestor (2026-10-06)
-
-Block containment was decided over leaf blocks only. A block holding both a
-block child and bare text yielded no block for the bare text. On a small
-marketing site, each feature card was `<li><h3>…</h3><span>answer</span></li>`.
-The answer sat in the `li`, the `li` was not a leaf, and every answer was
-reported as crossing a block boundary.
-
-The audit now does the walk step 3 of the sketch describes. Each text node
-belongs to its nearest block ancestor, and the run of text nodes that share
-one is a block, broken at every block-level child. A leaf block is one run.
-The `li` above yields two runs, the heading's and the answer's. This replaces
-the leaf-block deviation above and closes the first Deferred item below.
-
-Two further rules came with it:
-
-- **The matcher searches rendered text only.** The spec skips text that is
-  not rendered. A subtree the markup hides (`hidden`, inline `display:none` or
-  `visibility:hidden`, a closed `<dialog>`, `<template>`) yields no heading
-  candidate and does not count toward ambiguity. `hidden="until-found"` and
-  `aria-hidden` content stay searchable: find-in-page reveals the first, and
-  the second is still rendered. A declared FAQPage answer that sits only in
-  hidden text now fails with that reason, not with "crosses a block boundary".
-- **A card title is not the start of its description.** When a block that
-  ends no sentence is followed by one that opens with a capital letter, the
-  first was a label, and the sentence starts at the second. A sentence split
-  across sibling blocks continues in lower case and still fails.
-
-Verdicts that moved in the real-page corpus: `allbirds-com-collection` fail →
-warn (a hazard warning remains); `bbc-co-uk-article`, `canada-ca-income-tax`
-and `hiutdenim-co-uk` fail → pass; `irs-gov-form-1040`, `otto-de-category` and
-`tattly-com-shell` fail → na, whose only candidates sat in hidden menus,
-flyouts or a search panel; `stripe-com-pricing` pass → fail, whose three
-FAQPage answers are only in `display:none` accordion panels. That last move
-corrects a false pass.
-
-### Inline declaration order (2026-10-06)
-
-The shared visibility helper resolves duplicate inline `display` and
-`visibility` declarations before deciding whether text is hidden. The last
-declaration at the winning `!important` priority wins. Thus
-`display:none;display:block` keeps an answer searchable, while an earlier
-`display:none!important` still hides it from a later plain declaration.
-This does not add stylesheet specificity or block-layout computation.
-
-A declaration with an invalid value is dropped, as a browser drops it, so
-`display:none;display:nonee` stays hidden. `visibility` inherits and a
-descendant can set it back: an answer with `visibility:visible` inside a
-`visibility:hidden` block is rendered, and find-in-page reaches it. The
-nearest element that declares `visibility` decides. `visibility:collapse`
-hides like `hidden`. `display:none` still hides everything under it.
-Each element is judged on its own chain, so a visible answer under a hidden
-wrapper stays addressable. A value with `var()` is valid when parsed and
-overrides an earlier declaration; its result is unknown here, so it never
-counts as hiding.
+- Each text node belongs to its nearest block ancestor. The run of text nodes sharing one is a block, broken at every block-level child. A span is addressable only when one run contains it whole.
+- Block-level means the spec's element list. CSS `display` overrides are not consulted, so no layout engine is needed.
+- The matcher searches rendered text only (`notRendered`). `hidden`, inline `display:none` or `visibility:hidden`, a closed `<dialog>` and `<template>` hide text. `hidden="until-found"` and `aria-hidden` content stay searchable. A FAQPage answer found only in hidden text fails with that reason.
+- Duplicate inline `display` and `visibility` declarations resolve as a browser would: the last valid one at the winning `!important` priority wins. `visibility` can be set back by a descendant. A value with `var()` never counts as hiding.
+- Ambiguity is counted over the same block runs. A repeated span uses same-block context: a prefix when the block has text before the span, otherwise a suffix. Emitted URLs use at most five words of context.
+- Terms percent-encode `-` and `,` so they cannot read as the fragment's own delimiters.
+- Spans over 300 characters use the `start,end` form, first and last five words.
+- A heading that follows a heading introduces no span. A following element with no block descendant gives its first sentence. A wrapper with block descendants gives the sentence its leaf blocks finish within three blocks. A wrapper that finishes none is a grid, carousel or menu and is skipped.
+- A block that ends no sentence, followed by one that opens with a capital letter, is a label. The sentence starts at the second block. A sentence split across sibling blocks continues in lower case and still fails.
+- Spans under three words are labels and are skipped.
+- `Document-Policy` is read from the response header only. A `<meta http-equiv>` neither sets the policy nor proves it is set.
 
 ## Deferred
 
-- The headless variant — re-running the matcher against the post-JS DOM to catch
-  answers injected after load and `::before`/`::after` text — stays a roadmap
-  item.
-- Entity-encoded smart quotes are flagged as a hazard by codepoint; comparing
-  the encoded source against the rendered glyph needs the raw byte offsets the
-  parser does not retain.
-- Heading spans are still collected from the element after an `h2`/`h3` and its leaf blocks. Bare text beside block children inside that element, such as an alert `div` holding an `h4` and bare text, is matched correctly now but is not taken as the span.
-- CSS `display` overrides are still not consulted. A `span` styled `display:block` is treated as inline. The headless variant would resolve it.
-- A list after a heading is not split into one candidate per item. A list that finishes no sentence within three items is skipped.
+- A headless variant against the post-JS DOM, to catch injected answers and `::before`/`::after` text.
+- Entity-encoded smart quotes are flagged by codepoint. Comparing the encoded source with the rendered glyph needs raw byte offsets the parser does not keep.
+- Bare text beside block children inside the element after a heading is matched but not taken as the span.
+- A list after a heading is not split into one candidate per item.

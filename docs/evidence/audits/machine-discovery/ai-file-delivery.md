@@ -64,37 +64,21 @@ At `tier: informative` / `weight 0` none of these outcomes moves a score.
 
 **Counter-evidence:** The llmstxt.org specification states no requirement for the file's own HTTP Content-Type — it only mentions text/markdown in the context of link relations. No AI vendor documentation (OpenAI, Anthropic, Perplexity, Google, Apple) specifies a Content-Type requirement for any AI-facing file. LLM ingestion pipelines are in practice tolerant text extractors; there is no published case of a named crawler rejecting a correctly-named llms.txt on Content-Type grounds. The widely repeated claim that 'some crawlers will refuse application/octet-stream' traces only to SEO blogs, not to any primary source. Grade C: plausible mechanism, partial adoption, unproven effect.
 
-## Absorbed evidence — cache-headers (8.11)
+## Implementation deviations
 
-8.11 asked whether `/llms.txt` and `/openapi.json` carry a `cache-control` header. That is the same subject as this audit — how the AI files are served — so the two collapse into one per-file delivery report.
+- **Absorbs `cache-headers` (8.11).** Its dossier is kept at
+  [merged/machine-discovery/cache-headers.md](../../merged/machine-discovery/cache-headers.md).
+- **Grade B comes from the caching half.** Google documents conditional
+  requests first-party. The Content-Type half alone grades C.
+- **The tier stays informative.** The caching benefit is to the site's
+  bandwidth, not to a documented AI-agent outcome.
+- **A mis-typed file served with `nosniff` is named as such** in the message.
+  Homepage-level nosniff hygiene stays in
+  `operability-safety/security-header-hygiene`.
 
-Its dossier is kept verbatim at [merged/machine-discovery/cache-headers.md](../../merged/machine-discovery/cache-headers.md) (grade **B**).
+## Deferred
 
-### Signal: Cache headers and conditional requests for crawlers (ETag, Last-Modified, 304) — grade B (technical-infra)
-
-**Mechanism:** Correct `ETag`/`If-None-Match` and `Last-Modified`/`If-Modified-Since` handling, returning `304 Not Modified` for unchanged resources, cuts the cost of each crawl and lets a crawler spend its capacity on more distinct URLs.
-
-**Evidence:** Documented first-party by Google, whose crawling infrastructure feeds both Search and Gemini/AI-Overviews grounding: it supports both mechanisms "exactly as defined in the HTTP Caching standard", prefers ETag, and states that a 304 "tells Google to reuse the cached version, saving your server bandwidth and resources". MCP's authorization spec independently instructs clients to "cache metadata respecting HTTP cache headers".
-
-**Counter-evidence:** Google hedges — "individual Google crawlers and fetchers may or may not make use of caching" — and _no_ AI-specific crawler vendor documents conditional-request support: OpenAI's, Anthropic's and Perplexity's crawler docs are silent on caching. Vercel observed ChatGPT and Claude often not fetching at all when asked for fresh docs, implying reliance on cached or training data rather than well-behaved revalidation. The benefit is therefore best stated as efficiency/hygiene evidenced through Google, not as an AI-agent outcome.
-
-### Grade decision: raised **C → B**, tier stays informative (weight 0)
-
-The meta law grades a merged audit on the strongest **proven** path for the merged signal. That signal is now _delivery headers on AI files_, and the caching half is the better-evidenced of the two: the Content-Type claim grades **C** (plausible mechanism, no vendor requirement, "none-known among server-side crawlers"), while the conditional-request claim grades **B** on Google's own first-party documentation of the mechanism it implements — the same transitive Google-index path that earns `discovery-index-coverage` its B.
-
-The tier does **not** follow the grade: the grade prices the evidence and the tier prices the claim. 8.11's review is explicit that the benefit is "to the site owner's bandwidth, not to any AI agent outcome", and that standalone the audit "should at minimum … drop to informational weight". `weightForGrade('B', 'informative') === 0`, so absorbing a `scored`/0.6 audit into an informative one removes 0.6 of machine-discovery's evidence mass — deliberately. A later task that finds an AI consumer documenting conditional requests can promote the tier without re-grading.
-
-### Required fixes — landed 2026-08-22
-
-From 8.11's review:
-
-- **The directive value is parsed.** `if (file.headers['cache-control'])` passed `no-store`, `no-cache` and `max-age=0` — exactly the configurations that force the re-fetching the audit warns about, a directly inverted result. A file now counts as cacheable only with a non-zero `max-age` and no blocking directive.
-- **Validators count.** `ETag` / `Last-Modified` — the mechanism that actually saves the download via conditional requests — are accepted as an equivalent path, so a site doing correct validator-based caching without `Cache-Control` is no longer reported as uncached.
-- **Absence is `na`.** `checked === 0` scored a `warn`; combined with 8.8 and 8.10 doing the same, a site with no llms.txt was docked three times for one absence.
-
-From 8.10's own review:
-
-- **Soft-404 guard.** A 200 whose body is the site's HTML shell is treated as an unpublished file and skipped, instead of being reported as mis-typed with a fix the user cannot act on — the review calls this "the single most likely false failure on modern hosting".
-- **nosniff sub-signal (v2 map row 8.4 → 8.10).** When a mis-typed file is also served with `X-Content-Type-Options: nosniff`, the message says so: nosniff removes a client's ability to recover from the wrong type, which is the one place that header changes a parsing outcome. Homepage-level nosniff hygiene stays in `operability-safety/security-header-hygiene`.
-
-Not addressed by this fold (8.10's remaining backlog): extending the path list to `/llms-full.txt`, `/agents.md`, `/sitemap-index.xml` and the feeds; splitting the openapi entry so `.json` expects JSON and `.yaml` expects YAML; and gzipped-sitemap content types.
+- Extend the path list to `/llms-full.txt`, `/agents.md`,
+  `/sitemap-index.xml` and the feeds.
+- Split the openapi entry so `.json` expects JSON and `.yaml` expects YAML.
+- Accept gzipped-sitemap content types.

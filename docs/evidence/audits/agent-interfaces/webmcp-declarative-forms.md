@@ -23,52 +23,14 @@ sources:
 
 WebMCP's Declarative API lets you expose HTML forms as agent-callable tools by adding toolname and tooldescription attributes. AI agents can then discover and invoke these forms without JavaScript, using standard HTML semantics.
 
-## The rewrite (Plan 4, Task 10, 2026-08-22)
-
-**First, a correction to the code review above.** Its central claim — that `toolname`/`tooldescription` "do not exist in any specification" — is factually wrong and the [redemption research](../../deletions/agent-tools/webmcp-declarative-forms.md) refuted it. The attributes are defined verbatim in the W3C Web Machine Learning CG's `declarative-api-explainer.md`, documented verbatim on `developer.chrome.com/docs/ai/webmcp/declarative-api`, carried by the named Baseline web feature `declarative-webmcp` ("Form-associated WebMCP attributes"), and asserted by a 17-test WPT conformance suite whose `getTools-declarative-schema.https.html` checks that `<form toolname="search_tool" tooldescription="Search the web">` yields `tool.name === "search_tool"`. The audit was checking real attribute names all along. What it got wrong was the pass logic and its metadata.
-
-The dossier's three recommended fixes all land:
-
-**1. The dead docsUrl is replaced.** `https://webmcp.link/` returns HTTP 451 Unavailable For Legal Reasons; `docsUrl` now points at `https://developer.chrome.com/docs/ai/webmcp/declarative-api`.
-
-**2. `toolname` is required to count a form.**
-
-- _Old pass condition:_ a form counted as WebMCP if it had `toolname` **or** `tooldescription`. A single description-only form therefore satisfied `webmcpForms === totalForms` and produced "All 1 form(s) have WebMCP attributes" with an empty tool list — and the old test suite codified that hole as expected behaviour.
-- _New pass condition:_ only a non-empty `toolname` registers a tool, which is what the spec algorithm and the WPT assertion say. Forms carrying `tooldescription` or `toolparamdescription` without a `toolname` are counted separately and called out in the message as markup that registers nothing.
-
-A named form with no `tooldescription` is now a `warn`: it is registered but an agent has nothing to select it on. `toolparamdescription` coverage across named forms is reported in the `found` line as the schema-quality signal it is, without gating the status.
-
-**3. `defaultPriority` is softened from `high` to `medium`**, given Baseline "limited" status, Chrome 149 / Edge 150 origin trials rather than stable shipping, and Apple's "oppose" WebKit standards position.
-
-**Also fixed: a form-less page is `na`, not `warn`.** A documentation site or a blog has nothing to annotate, and scoring it for the forms it does not have measures the site's genre rather than its agent-readiness.
-
-**Guidance and code sample** now name all four attributes the explainer defines — `toolname`, `tooldescription`, `toolparamdescription` (on form-associated controls) and `toolautosubmit` — with a note to keep `toolautosubmit` off anything that changes state. The `chrome-146` tag, which named a version that has nothing to do with this feature, is dropped.
-
-### Grade decision: stays **A**, tier `scored`, weight 1.0
-
-Source: the [redemption dossier's verdict](../../deletions/agent-tools/webmcp-declarative-forms.md) — "redeemed — keep with rewrite (grade A)" — carried into the [REWORK-TODO entry](../../../../packages/core/src/audits/rework-todo.md). The grade rests on a W3C CG explainer, a named Baseline feature with live Chrome WPT scores and a usage counter, first-party Chrome documentation with the identical attribute names, and named agent consumers (Brave Leo experimental support, Chrome 149 and Edge 150 origin trials). No tier change was recommended by the research and none is made here. Per the §4 weight law `weightForGrade('A', 'scored') = 1.0`; `scoreDisplayMode` stays `ternary`.
-
-### Deviations
-
-- **`defaultPriority` lands at `medium`, not `low`.** The dossier says "soften from 'high'" without naming a target. `medium` is the one adjacent step the evidence supports: a shipped-behind-origin-trial feature with a named consumer is worth doing, just not a top-line recommendation.
-- **"Every form should be a tool" is kept as the pass bar.** The partial-coverage `warn` is inherited unchanged from the pre-rewrite audit. It is arguably too strong — a login or newsletter form is not obviously something a site wants agents driving — but narrowing which forms are in scope is a design question beyond this pass-condition rewrite, and the `warn` (not `fail`) keeps it advisory.
-- **Adoption is ~0.0000027 of Chrome page loads**, so this audit still reports a finding on essentially every site scanned. That is a property of the signal's age, not of the check; the grade-A evidence is what the rubric prices, and the softened priority is what keeps it from dominating the recommendation list.
-
 ## Implementation deviations
 
-### No WebMCP attribute is not applicable (2026-10-06)
-
-A site whose forms carry none of `toolname`, `tooldescription`,
-`toolparamdescription` or `toolautosubmit` is not judged. The counter-evidence
-below says a site using the imperative API carries none of them and is still
-agent-callable, and the API is an origin trial. Failing every form-bearing
-site measured adoption of a draft, not a defect.
-
-Markup that is present is still judged. A description or parameter
-description without a `toolname` fails, an empty `toolname` fails, and a site
-that names some forms and not others warns. This supersedes the rewrite's
-note that the audit "still reports a finding on essentially every site
-scanned".
+- No forms, or forms with none of `toolname`, `tooldescription`, `toolparamdescription` or `toolautosubmit`, is `notApplicable`. A site using the imperative API carries none of them and is still agent-callable.
+- Only a non-empty `toolname` registers a tool. Markup without one fails when no form is named, and is called out as registering nothing.
+- Partial coverage warns. "Every form should be a tool" is still the pass bar, though a login or newsletter form may not be one a site wants agents to drive.
+- A named form without `tooldescription` warns.
+- `toolparamdescription` coverage is reported in `found` and never gates the status.
+- The grade is B because the API is an origin trial. It becomes an A candidate if the trial ships or the W3C work is ratified.
 
 ## Evidence
 
@@ -85,33 +47,3 @@ scanned".
 - The attribute set is the W3C Web Machine Learning Community Group's, so the browser is implementing a group specification rather than a private vendor extension — https://webmachinelearning.github.io/webmcp/ (verified 2026-08-21)
 
 **Counter-evidence:** The page carries an origin-trial badge and states that "WebMCP is under active discussion and subject to change in the future", so both the attribute names and the registration behaviour can move. The declarative path is also the younger of the two: the imperative `navigator.modelContext` registration is what Lighthouse reports on, and this project's own `agent-interfaces/webmcp-registered-tools` covers it at `experimental` precisely because a scanner with no JavaScript runtime cannot observe it. No adoption measurement exists for the declarative attributes on the public web. A site that implements WebMCP imperatively will carry none of them, and still be fully agent-callable. That is why a page with no form at all is not applicable here, rather than a failure.
-
-## Adversarial redemption research (2026-08-21)
-
-This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/deletions/agent-tools/webmcp-declarative-forms.md](../../deletions/agent-tools/webmcp-declarative-forms.md). Outcome: **redeemable**, grade A.
-
-## Re-grade (2026-08-24): **A → B**, tier `scored`, weight 1.0 → 0.6
-
-This audit reached the retirement shortlist under the bar "own dossier records
-no known consumer **and** conflicts with a written position in `policy.md`". It
-does not meet that bar, and it is not retired. Chrome's declarative-API page was
-re-fetched on 2026-08-24: **live**, published 2026-05-18, documenting `toolname`,
-`tooldescription`, `toolparamdescription` and `toolautosubmit`, and stating that
-the browser interprets an annotated form as a tool and, when an agent calls it,
-brings the form into focus and populates its fields. The consumer is real.
-
-What the re-fetch also confirmed is that the page carries an **origin trial**
-badge and says, verbatim:
-
-> WebMCP is under active discussion and subject to change in the future.
-
-`policy.md` reserves grade **A** for documented consumer behaviour or a ratified
-standard with known consumers, and gives grade **B** to a draft standard with
-meaningful adoption. An origin trial is the definition of the second: shipping
-behind a registration, explicitly provisional, explicitly subject to change.
-`weightForGrade('B', 'scored')` is **0.6**.
-
-Nothing else moves. `scoreDisplayMode` stays `ternary`, the attribute set and
-the `toolname`-required rule are unchanged, and a page with no form still
-returns `notApplicable`. If the origin trial graduates to a shipped API, or the
-W3C work reaches a ratified stage, this returns to a grade-A candidate.

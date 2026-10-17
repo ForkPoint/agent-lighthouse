@@ -56,17 +56,4 @@ RAG systems chunk content by <article> boundaries for vector embedding, treating
 
 ## Implementation deviations
 
-- 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. It read the `<article>` landmark on the scanned pages,
-  and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked
-  domain a broker's page from another host, on a walled or throttled origin
-  nothing at all. It now consults `scanReadTheSite()` and returns
-  `notApplicable` carrying the gate's own reason.
-  Verdicts that moved on the five nothing-obtained contract states: walled
-  pass → na, throttled pass → na, redirected away fail → na, non-HTML homepage
-  fail → na, HTTP 200 bot challenge unchanged. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
-
-## Implementation deviations (v7 P3, 2026-10-07)
-
-The page-purpose gate now excludes general pages. Body-level aggregation and narrower specialist populations remain under review in the v7 applicability ledger. This change preserves the evidence grade, tier, weight, and audit ID.
+- The audit runs on article pages only (`applicablePageTypes: [PageType.Article]`).

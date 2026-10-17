@@ -39,14 +39,6 @@ Falsifiable claim. The OpenAI feed spec enumerates a closed set of required fiel
 - **[OpenAI Commerce: Get Started (feed onboarding)](https://developers.openai.com/commerce/guides/get-started)** — OpenAI (vendor-doc, URL verified 2026-08-20)
   - Product feed onboarding in ChatGPT is currently limited to approved partners via an application form. Confirms feed ingestion is push/upload-based (file upload or API), not a merchant-hosted public URL that OpenAI discovers — reinforcing that site-side audit checks must test the DATA a feed would be built from rather than the feed transport.
 
-## Competitor coverage
-
-Generic schema validators check that a Product node is well-formed; Merchant Center checks Google's own feed. The overlap is real and I am not hiding it. The differentiator is the OpenAI-specific constraint set that no other tool encodes: the 150/5000/70/100 character caps, the availability enum mapping from schema.org URLs to OpenAI's 5 tokens, the pre_order-implies-availability_date rule, the sale_price<price rule, and the checkout-eligibility policy trigger. Lighthouse ships nothing here.
-
-## Implementation sketch
-
-For each sampled PDP, extract the Product/Offer graph and map to feed columns, then assert: item_id source exists (sku, mpn, or a stable URL-derived id) and <=100 chars; name present and <=150; description present and <=5000 (flag both empty and truncation risk); brand.name present and <=70; url is absolute HTTPS and self-canonical; image is an absolute HTTPS JPEG/PNG that returns 200 with an image/* Content-Type; offers.price is a single resolvable number (fail on AggregateOffer, fail on price-as-string-with-symbol) and offers.priceCurrency is a valid 3-letter ISO 4217 code; offers.availability maps cleanly onto {in_stock,out_of_stock,pre_order,backorder} — flag unmapped schema values such as LimitedAvailability or SoldOut as ambiguous; at least one of gtin/gtin8/gtin12/gtin13/gtin14/mpn present, and when present validate GTIN check-digit and length (8/12/13/14). Conditional assertions: if availability maps to pre_order or backorder, require an availabilityStarts/availability_date-equivalent date; if a sale price is present (offers with both listPrice/highPrice semantics or two prices in markup), assert sale < regular. Emit a per-PDP row-rejection verdict plus the synthesised feed row.
-
 ## Example failure
 
 A 900-SKU store has clean Product markup but no gtin, mpn or sku anywhere, and prices rendered as the string '$1,299.00' inside offers.price. Every row fails the identifier requirement and the numeric-price requirement, so the entire catalogue is ingested as search-eligible-only and never becomes checkout-eligible — a failure mode the merchant currently discovers only after applying for the partner programme.
@@ -55,55 +47,31 @@ A 900-SKU store has clean Product markup but no gtin, mpn or sku anywhere, and p
 
 Tier per evidence policy: **scored** — grade A meets the A/B bar required for scored audits.
 
-## Relationship to `machine-discovery/agent-commerce-feed-parity`
-
-The overlap is deliberate. This audit judges the offer graph of the scanned
-product page in depth, including the conditional feed triggers
-(`availability_date`, `identifier_exists`, checkout-eligibility policy links).
-`machine-discovery/agent-commerce-feed-parity` samples product pages
-from the sitemap and reports a per-field pass rate plus a separate
-agent-commerce gap for the fields Google's rich-result validator never asks
-for. A site can pass one and fail the other: a single bad template shows up
-across the sample there while the scanned PDP passes here.
-
 ## Implementation deviations
 
-- **ProductGroup variants are read as products.** Products come from the
-  shared `resolveProducts` in `packages/core/src/product-schema.ts`. Each
-  `hasVariant` entry (or a Product joined through `isVariantOf` or
-  `inProductGroupWithID`) is read with the group's shared properties beneath
-  its own, as Google's product variant documentation lays them out
-  (https://developers.google.com/search/docs/appearance/structured-data/product-variants,
-  verified 2026-10-09). A `ProductGroup` with no variants is read as the
-  product. Before this, a brand or category declared once on the group was
-  invisible, and a page whose only top-level product was a `ProductGroup`
-  read as having no product.
-
-- **The plan sheet's GTIN example was wrong.** It names `gtin13: '1234567890128'`
-  as a _wrong_ check digit; 8 is in fact the correct check digit for that body.
-  The test pins both directions instead: `1234567890128` is accepted and
-  `1234567890123` is rejected with the digit it should have ended in. The check
-  digit is computed the same way for GTIN-8/12/13/14 — alternating 3/1 weights
-  from the right — so one function covers all four lengths.
-- **An image list is read by its first entry.** schema.org and Google's
-  merchant listing accept `image` as a list of URLs; the first URL is the one
-  mapped to `image_url`. Before 2026-10-09 a list read as "no image".
-- **`image_url` is not fetched.** Extension and scheme are checked; a HEAD
-  request per PDP to confirm `200` and an `image/*` content type is deferred, so
-  a URL that looks right but 404s is reported as valid here.
-- **Self-canonical is compared only when the `Product` declares its own `url`.**
-  When it does not, the page URL is used and there is nothing to disagree with.
-- **`target_countries` is not evaluated.** It has no schema.org source on the
-  PDP, so requiring it would fail every page for a reason the page cannot fix.
-- **Sale-versus-list** is read from `priceSpecification` with a `ListPrice`
-  `priceType`, falling back to `highPrice` on the offer.
-- Presence per field comes from the shared
-  `extractProductFieldVerification(pages)`; this audit adds only the length,
-  format and mappability assertions on top of it.
+- The overlap with `machine-discovery/agent-commerce-feed-parity` is
+  deliberate. This audit judges one product page's offer graph in depth. That
+  audit reports per-field pass rates across sitemap-sampled product pages.
+- Products come from the shared `resolveProducts` in
+  `packages/core/src/product-schema.ts`. Each `ProductGroup` variant is read
+  with the group's shared properties beneath its own, as Google's product
+  variant documentation describes. A `ProductGroup` with no variants is read
+  as the product.
+- One GTIN check-digit function covers GTIN-8, 12, 13 and 14.
+- An `image` list is read by its first entry.
+- Self-canonical is compared only when the `Product` declares its own `url`.
+- `target_countries` is not evaluated. It has no schema.org source on the
+  page.
+- Sale-versus-list reads `priceSpecification` with a `ListPrice` `priceType`,
+  then falls back to `highPrice` on the offer.
+- Field presence comes from the shared `extractProductFieldVerification`.
+  This audit adds the length, format and mappability assertions.
 
 ## Deferred
 
-- Per-PDP row verdicts across a sampled set: the audit reports the first product
-  page with `Product` markup rather than every PDP in the scan.
-- `identifier_exists=no` is named in the finding as the escape hatch but is not
-  detectable from the PDP, so it cannot be verified.
+- `image_url` is not fetched. Only scheme and extension are checked, so a
+  URL that 404s reads as valid.
+- Only the first product page with `Product` markup is judged, not every
+  product page in the scan.
+- `identifier_exists=no` is named as the escape hatch but cannot be detected
+  from the page.

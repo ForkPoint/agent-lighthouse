@@ -36,20 +36,6 @@ The spec states its own causal rationale verbatim: deterministic ordering 'enabl
 - **[MCP Specification 2026-07-28 — Caching](https://modelcontextprotocol.io/specification/2026-07-28/server/utilities/caching)** — Model Context Protocol (spec, URL verified 2026-08-20)
   - 'Servers MUST include caching hints on results with resultType: "complete"' for server/discover, tools/list, prompts/list, resources/list, resources/templates/list, resources/read. ttlMs is an integer ms; servers MUST provide ttlMs >= 0. If ttlMs is absent clients SHOULD assume 0 = immediately stale. cacheScope is exactly "public" or "private". Servers MUST apply the same cacheScope to all pages of a paginated list. Public scope on an authenticated endpoint may be shared across access tokens — servers MUST NOT rely on cacheScope for access control.
 
-## Competitor coverage
-
-Unique. This measures a cost/latency property of an API surface rather than a content property, so it falls outside every SEO/AEO tool's model. Lighthouse's layout-stability-for-agents metric is the closest conceptual analogue but applies to rendered DOM, not to JSON-RPC result stability. MCP Inspector issues tools/list once and has no repeat-call differential.
-
-## Implementation sketch
-
-Issue tools/list three times: calls 1 and 2 on the same keep-alive connection ~2s apart, call 3 on a freshly established TCP/TLS connection ~5s later. For each response with `resultType: "complete"` assert:
-
-- `ttlMs` is present (MUST), is an integer, and is >= 0 (MUST). Grade the value: 0 or absent = no caching possible (fail); >0 = pass, and report the value so operators can see their refetch cadence.
-- `cacheScope` is present and is exactly "public" or "private". Flag `cacheScope: "public"` on an endpoint that also issues a 401/WWW-Authenticate challenge as a review item — the spec warns such results may be shared across access tokens.
-- Ordering: compare the array of tool `name` values across all three calls positionally. Any positional difference with identical set membership = non-deterministic ordering (SHOULD violation). Additionally hash the canonically-serialized tool array (JCS or stable-key JSON) and compare hashes — this catches key-order churn inside inputSchema objects, which breaks byte-level prompt caching even when tool order is stable.
-- Set stability: assert set equality of tool names between call 2 (same connection) and call 3 (fresh connection). A difference is a direct MUST violation ('MUST NOT vary per-connection'), unless the two calls presented different authorization, which the scanner controls for by sending identical (or no) credentials.
-- Pagination: if nextCursor is returned, fetch all pages and assert every page carries its own ttlMs and that `cacheScope` is identical across all pages of the request (MUST).
-
 ## Example failure
 
 A Go-based server builds its tools slice by ranging over a map[string]Tool. Go randomizes map iteration order, so tools/list returns the same 24 tools in a different order on every call. Every agent turn that includes the tool block produces a different prefix. The provider's prompt cache misses 100% of the time. The customer pays full input-token rates on about 18k tokens of tool schema per turn, instead of the cached rate. The same server omits ttlMs entirely, so clients treat the list as immediately stale and refetch it before every turn as well.
@@ -60,16 +46,14 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 
 ## Implementation deviations
 
-Recorded at graduation (2026-08-22, Plan 5 Task 29).
-
-- **The three calls are issued back to back, not 2s and 5s apart on separate connections.** The sketch's timing would add roughly 7 seconds to every scan of an MCP-bearing site, inside a 60-second scan budget shared by the whole registry. Because connection reuse is therefore not controlled, a differing tool **set** between calls is reported as a `warn` review item that names the per-connection MUST and states this deviation, rather than the `fail` a timed probe would justify. Every other determinism finding is unaffected: ordering and serialization drift show up regardless of which connection carried the request.
-- **These calls deliberately bypass the per-scan probe cache.** `agent-interfaces/mcp-tool-contract-validity` reads `tools/list` through `sharedProbe`; this audit calls `postRpcRaw` directly, because a cache would answer all three calls from one response and make every determinism assertion vacuously true.
-- **Two hashes, not one.** The canonical hash (every object key sorted) catches content drift; the raw hash catches key-order churn that the canonical form hides. Both break byte-level prompt caching, and the message says which one happened.
-- **Caching hints are read from the result root and from `result._meta`.** Servers place them in either, and rejecting a `_meta` placement would report a compliant server as broken.
-- **At most 4 `nextCursor` pages per call**, matching `agent-interfaces/mcp-tool-contract-validity`.
-- **Hint checks run against the first call's pages.** Repeating them for all three would triple the finding count without adding information; drift between calls is caught by the determinism comparison instead.
+- The three calls run back to back, with no delay and no controlled fresh connection. Timed calls would add about 7 seconds to a scan.
+- Because connection reuse is not controlled, a differing tool set is a `warn`, not a `fail`. Ordering and serialization drift are unaffected.
+- The calls bypass the per-scan probe cache and use `postRpcRaw`. A cache would answer all three from one response.
+- Two hashes are compared. The canonical hash catches content drift; the raw hash catches key-order churn.
+- Caching hints are read from the result root and from `result._meta`.
+- At most four `nextCursor` pages per call.
+- Hint checks run on the first call's pages only.
 
 ## Deferred
 
-- Timed calls on a controlled connection, which is what would upgrade a per-connection set difference from `warn` to `fail`. That needs a scanner-wide request scheduler and a socket-level API the fetcher does not expose.
-- Comparing results across differing authorization. The scanner sends no credentials on any of the three calls, so authorization is held constant by construction rather than varied deliberately.
+- Timed calls on a controlled connection, which would justify a `fail` for a per-connection set difference. The fetcher exposes no socket-level control.

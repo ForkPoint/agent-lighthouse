@@ -44,21 +44,11 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Counter-evidence:** The A grade covers the _capability_ — separate tokens genuinely receive separate policies. It does not support the audit's pass criterion. No vendor documentation rewards the mere **presence** of granular groups. A bare `User-agent: *` with `Allow: /` grants every named agent identical full access under the RFC 9309 fallback rule. The current FAIL on that configuration therefore contradicts the cited standard. Two further limits apply. OpenAI states that for `ChatGPT-User`, "Because these actions are initiated by a user, robots.txt rules may not apply". Perplexity states that `Perplexity-User` "Generally ignores robots.txt rules". An `Allow: /` group welcoming user-initiated agents is therefore largely a no-op, and the realtime half of the recommended fix carries less weight than the description implies. Vendor propagation delay is also documented (OpenAI: "it can take ~24 hours from a site's robots.txt update for our systems to adjust"), so robots.txt state and observed agent behavior can legitimately diverge at scan time.
 
-## Pass-rule correction (contradiction sweep, 2026-08-24)
+## Implementation deviations
 
-The evidence section below already recorded that the grade A "covers the _capability_ — separate tokens genuinely receive separate policies. It does not support the audit's pass criterion." The audit nevertheless failed any site whose robots.txt named no AI agents. This corrects that.
-
-**Old rule.** No explicit AI-agent groups, of any kind, produced a `fail` at medium priority — including on a robots.txt reading `User-agent: *` / `Allow: /`.
-
-**New rule.** What an absence of groups means depends on what the catch-all says, because RFC 9309 §2.2.1 makes a crawler fall back to `*` only when no group matches its own token:
-
-- **Open catch-all, no named agents — `na`.** Every named agent already has the same full access that writing the groups out would grant. There is nothing to separate, and no vendor documentation rewards the groups being present.
-- **Blanket block, no named agents — `fail`.** This is the one case the sources support. The fallback carries the block onto the live retrieval agents as well, so the site is closed to the agents that cite and link back, not only to the dataset crawlers.
-- **Both categories named, differentiated or two of each — `pass`.** Unchanged.
-- **One category only — `warn`.** Unchanged.
-
-A blanket block with a named carve-out (`User-agent: *` / `Disallow: /` plus `User-agent: ChatGPT-User` / `Allow: /`) is the differentiation this audit exists to reward and is explicitly not caught by the blanket-block arm; a test pins that.
-
-`failureTitle` changes from "No separation between training crawlers and live agents" to "Blanket robots.txt block also shuts out live AI agents", because that is now the only thing it can fail for.
-
-The differential baseline in `_robots-consumers.differential.test.ts` was regenerated for this audit only. Fixtures with an open catch-all move from `fail` to `na`; `wildcard-blanket-block` and `wildcard-star-disallow` carry the remaining failures. No other audit's rows moved.
+- The verdict with no named AI agents depends on the catch-all, because RFC 9309 §2.2.1 falls back to `*` only when no group names the token.
+- An open catch-all, or no restriction at all, is not applicable. Every agent already has the access the named groups would grant.
+- A catch-all blanket block with no named agents fails. The fallback carries the block onto the live retrieval agents too.
+- A blanket block with a named carve-out for a live agent is differentiation, not a blanket block. A test pins it.
+- Both categories named, two of each or with different policies, pass. One category only warns.
+- `failureTitle` is "Blanket robots.txt block also shuts out live AI agents", the only case left that fails.

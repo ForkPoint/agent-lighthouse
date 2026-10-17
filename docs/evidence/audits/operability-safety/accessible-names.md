@@ -53,12 +53,5 @@ AI browser agents identify clickable elements by their accessible name in the ac
 
 ## Deferred
 
-- Controls inside a container hidden by an external stylesheet are still
-  checked. A large retail site ships an unfilled popup template, hidden by an
-  id rule in its stylesheet, whose empty links fail `link-name`. The engine
-  honours computed `display:none`, but the runner strips stylesheets before
-  building the document, for event-loop cost. The stylesheet scanner in
-  `gatherers/css-rules.ts` resolves no specificity and no media queries, so
-  skipping on its answer would also skip a desktop menu that is hidden at the
-  base and shown at desktop width, which an agent does see. Exact resolution
-  waits for the headless tier.
+- Controls inside a container hidden by an external stylesheet are still checked. The runner strips stylesheets before building the document, for event-loop cost, so the engine sees no stylesheet `display:none`.
+- The stylesheet scanner in `gatherers/css-rules.ts` resolves no specificity and no media queries. Skipping on its answer would also skip a desktop menu hidden at the base and shown at desktop width, which an agent does see. Exact resolution waits for the headless tier.

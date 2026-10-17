@@ -54,29 +54,10 @@ AI agents use <header> and <footer> landmarks to identify and exclude boilerplat
 
 ## Implementation deviations
 
-- 2026-10-07 — the 7.0.0 scope review removes the first-page exception.
-  The audit uses `judgePages` for the complete selected sample: all pages with
-  both elements pass; partial coverage warns; no page with both fails. An empty
-  sample returns `notApplicable`. Header and footer counts still refer to the
-  same sample. The result names each affected URL and its missing elements in
-  sorted order, with the first affected URL as `pageUrl`. Existing result text
-  limits bound long samples and retain the truncation marker.
-
-- 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. It read the `<header>` and `<footer>` landmarks on the
-  scanned pages, and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 —
-  on a parked domain a broker's page from another host, on a walled or
-  throttled origin nothing at all. It now consults `scanReadTheSite()` and
-  returns `notApplicable` carrying the gate's own reason.
-  Verdicts that moved on the five nothing-obtained contract states: walled
-  pass → na, throttled pass → na, redirected away fail → na, non-HTML homepage
-  fail → na, HTTP 200 bot challenge fail → na. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
+- Every sampled page is judged through `judgePages`. There is no first-page exception. Partial coverage warns; no page with both landmarks fails.
 
 ## Deferred
 
-- This scope correction retains the literal `<header>`/`<footer>` selectors.
-  It does not fix section-scoped elements counted as document landmarks, missing
-  ARIA equivalents, or hidden markup. The 7.0.0 semantic follow-up must test
-  these against the evidence above and define applicability when a page has
-  no relevant chrome. Fetched HTML does not prove the hydrated browser DOM.
+- The selectors are literal `<header>` and `<footer>`. Section-scoped elements still count as document landmarks, ARIA equivalents are not read, and hidden markup is not skipped.
+- Applicability when a page has no relevant chrome is undefined.
+- Fetched HTML does not prove the hydrated browser DOM.

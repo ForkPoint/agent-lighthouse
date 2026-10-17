@@ -36,7 +36,21 @@ The update signal wins wherever it is found: every article page is checked for o
 
 ## Implementation deviations
 
-- 2026-08-26 — the shared text helper this audit reads, `getMainContentText`, changed its selection. Among several `<main>` elements it now returns the one holding the most text rather than the first, it ignores a `<main>` inside a `<template>`, and it falls back to the whole `<body>` only when no `<main>` holds any text. Measured cause (scan evidence gate design, section 2.4): storefronts ship empty or fragmented `<main>` wrappers, and the first one is often a stub. Two consequences for this audit. A page whose real content sits in a later `<main>` is now measured on that content. A page whose every `<main>` is empty is now measured on its body text, page chrome included, where it previously measured as empty.
+- The audit merges the former `last-updated-indicator` audit, whose record is in `docs/evidence/merged/answer-readiness/`. Its B-grade update signal is the upper state of one ternary scale, so the merged audit keeps grade A and weight 1.0.
+- Update wording counts only with a parseable date beside it. There is no keyword-only branch.
+- A publication date alone warns at priority `low`. An unrevised article is correct as it stands.
+- The visible-text fallback reads `getMainContentText`: the largest `<main>`, or the body when no `<main>` holds text.
+- The first page with an update signal decides the pass. Otherwise the first publication date decides the warn. There is no per-page coverage.
+- `DATE_PATTERN` is duplicated in `publication-date.ts`.
+
+## Deferred
+
+- Read only the immediate sibling of a `<time>` for update wording, not `.parent().text()`.
+- Prefer a `<time>` inside `<article>` over the first in source order, and the `Article`/`BlogPosting` JSON-LD node over the first dated node.
+- Plausibility-check the numeric date branch.
+- Support month names and update wording beyond English, gated on the page `lang`.
+- Report per-page coverage instead of the first hit.
+- Tighten `isArticleContentPage`, which is shared with three other audits.
 
 ## Evidence
 
@@ -56,36 +70,3 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - A second vendor ties freshness to AI answers explicitly: Bing states that freshness signals "directly influence how quickly updates are reflected in search results and AI generated answers" — https://blogs.bing.com/webmaster/July-2025/Keeping-Content-Discoverable-with-Sitemaps-in-AI-Powered-Search (verified 2026-08-21)
 
 **Counter-evidence:** The audit's _stated impact_ — "Undated content is deprioritized in AI answers" — is not documented anywhere. Google's AI-features and AI-optimization pages never mention dates or freshness at all, and both state that no special structured data is required ("There's also no special schema.org structured data that you need to add", https://developers.google.com/search/docs/appearance/ai-features). Bing's freshness statement is about sitemap `<lastmod>`, not on-page dates, so it does not transfer directly. No OpenAI, Anthropic or Perplexity crawler documentation mentions dates; OpenAI's bots page describes OAI-SearchBot, GPTBot and ChatGPT-User purely by purpose (https://developers.openai.com/api/docs/bots). The grade therefore covers the extraction claim above, not a ranking claim. Note also that the audit's visible-text fallback regex matches any date-shaped string in main content — a copyright year, an event date, a comment timestamp — none of which is a byline date. Only the structured branch is what the vendor documentation supports. All URLs verified 2026-08-21.
-
-## The merge (Plan 4, Task 6, 2026-08-22)
-
-9.8 and 9.10 read the same pages through the same shared helper (`isArticleContentPage`), duplicated `DATE_PATTERN` character-for-character, and measured the same underlying thing — "is there a machine-readable date on this article page". A site fixed both with one `<time>` element and was scored twice for one omission.
-
-9.10's required fix is executed as written: _"Merge into 9.8 as a single graded freshness audit scored once: pass when a `dateModified` / 'last updated' + date is present; partial-pass (0.5) when only a publication date exists; fail when neither."_ That is exactly the three-state table above, and it also collapses the duplicated `DATE_PATTERN` to one definition in this file (`publication-date.ts` still carries its own copy — that third copy is out of scope here and remains a live hazard the reviews already record).
-
-**What changes for a real site.** A publication-only article scored 1.0 on 9.8 and 0.0 on 9.10 — an average of 0.5 across two weighted checks. It now scores 0.5 on one. The aggregate verdict is preserved while the double weight is not, which is the point of the fold. Two consequences follow:
-
-- **The false fail is gone.** A freshly published, correctly dated article that has never been revised has no reason to carry "Last updated", yet 9.10 failed it at `medium` priority — bad guidance that rewards fake update stamps. It is now a `low`-priority partial, and the fix text says to add the modification date _when, and only when, you actually revise the page_.
-- **The incidental-prose warn is gone by construction.** 9.10 warned on any "updated/modified/revised" wording with no date near it ("we updated our packaging"). There is no keyword-only branch left: update wording is only ever accepted with a parseable date beside it, and a page with no date anywhere is a `fail`, not a warn.
-
-### Absorbed evidence — last-updated-indicator (9.10)
-
-9.10's dossier is kept verbatim at [merged/answer-readiness/last-updated-indicator.md](../../merged/answer-readiness/last-updated-indicator.md) (grade **B**). Its evidence base is the same as this audit's — Google's byline-date guidance, htmldate/trafilatura, Bing's freshness statement — read for the modification half: Google asks for a prominently displayed date with clear labeling such as "Posted", "Published" or "Last updated" _and_ for `datePublished` and/or `dateModified` on a `CreativeWork` subtype, with the visible and structured values matching; htmldate resolves "original **and updated** publication dates" as first-class outputs.
-
-Its counter-evidence is what fixes the merged shape. 9.10 is graded **B** precisely because the claim that distinguished it — that an explicit update _label_ outranks a bare publication date in AI answers — has no documented consumer and no measured effect: "the label is a display convention Google recommends for its own date estimation, not a demonstrated ranking input." Its own dossier also states the signal "is not independent: this audit shares its detector, its date regex and its entire evidence base with `answer-engine/dates-on-content`… scoring both would double-count one signal." So the absorbed half becomes the _upper_ state of one scale rather than a second score.
-
-### Grade decision: stays **A**, tier `scored`, weight 1.0
-
-The strongest **proven** path is 9.8's extraction claim, graded **A** — a vendor doc states that Google reads exactly these signals off the page and prescribes exactly this markup, and the same fields are what the open extraction stack reads. 9.10 grades **B** and is capped by the missing consumer for its distinctive claim. Absorbing a B into an A raises nothing and lowers nothing: **A**, `tier: scored`, `weight 1.0` (`weightForGrade('A', 'scored')`).
-
-`scoreDisplayMode` moves from `binary` to `ternary` — the audit now has a real middle state. `defaultPriority` stays `medium`; the partial branch sets `low` per result.
-
-### Deviations
-
-- **9.10's "if the merge is rejected" list is deliberately not implemented.** Those fixes — constraining the `<time>` keyword scope from `.parent().text()` to the immediate sibling, dropping the incidental-prose warn path, gating both patterns on the page `lang` — are prefixed in the review with "If the merge is rejected, at minimum". The merge was approved. The warn path is gone (above); the parent-scope looseness and the English-only patterns are carried over unchanged and remain open, shared with 9.8's own required fixes.
-- **9.8's own required fixes stay open**, as they did before the fold: preferring a `<time>` inside `<article>` over the first in source order, preferring the `Article`/`BlogPosting` JSON-LD node, plausibility-checking the numeric branch, locale month names, per-page coverage instead of a first-hit short-circuit, and tightening `isArticleContentPage` (shared by four audits). 9.8 is a `move` row with an open `fix` verdict; the fold does not claim them.
-- **The first-hit short-circuit is retained**, now on the update signal first and the publication date second. Per-page coverage reporting is part of 9.8's open fix list, not of this fold.
-
-## Implementation deviations (v7 P3, 2026-10-07)
-
-The page-purpose gate now excludes general pages. Body-level aggregation and narrower specialist populations remain under review in the v7 applicability ledger. This change preserves the evidence grade, tier, weight, and audit ID.

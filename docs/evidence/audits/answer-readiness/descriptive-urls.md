@@ -42,22 +42,5 @@ AI engines use URL text as a content signal. Descriptive slugs help agents under
 
 ## Implementation deviations
 
-- 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. It read the URL slugs of the scanned pages, and
-  `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain
-  a broker's page from another host, on a walled or throttled origin nothing
-  at all. It now consults `scanReadTheSite()` and returns `notApplicable`
-  carrying the gate's own reason.
-  Verdicts that moved on the five nothing-obtained contract states: walled
-  fail → na, throttled fail → na, redirected away pass → na, non-HTML homepage
-  pass → na, HTTP 200 bot challenge pass → na. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
-- 2026-08-28 — `requires` drops `rendered-body` and `sample-adequate` and is now
-  `['origin-reachable', 'unblocked-fetches']`. The audit judges the URL strings
-  of the pages the scan fetched, and a URL is readable whether or not the page
-  behind it rendered text. Recorded as a gate exemption in
-  `scripts/lib/requires-analysis.mjs`. The verdict itself does not move, and
-  the audit carries weight 0 in the `informative` tier, so a shell scan gains a
-  reported line and no score. The reservation worth recording is the sample: a
-  shell yields fewer URLs to judge, because link discovery finds less. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
+- `requires` is only `origin-reachable` and `unblocked-fetches`. The audit judges URL strings, which are readable whether or not the page rendered text. The exemption is recorded in `scripts/lib/requires-analysis.ts`.
+- A shell scan yields fewer URLs to judge, because link discovery finds less.

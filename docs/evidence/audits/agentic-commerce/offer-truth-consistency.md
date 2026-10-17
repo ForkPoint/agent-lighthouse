@@ -42,14 +42,6 @@ Falsifiable claim. The agent quotes from indexed structured data or the feed, wh
 - **[Merchant listing (Product) structured data](https://developers.google.com/search/docs/appearance/structured-data/merchant-listing)** — Google (vendor-doc, URL verified 2026-08-20)
   - Required: name, image, offers; within offers price (or priceSpecification.price) and priceCurrency (3-letter ISO 4217). Recommended: gtin|gtin8|gtin12|gtin13|gtin14, mpn, sku, availability, priceValidUntil (ISO 8601), itemCondition, url, validFrom/validThrough, hasMerchantReturnPolicy, shippingDetails (OfferShippingDetails), aggregateRating, review, description, brand. Policies are recommended at Organization level.
 
-## Competitor coverage
-
-SEO suites flag MISSING schema fields; none of them flag schema that is present and lying. Google Search Console surfaces mismatched-price errors only for Merchant Center feeds already submitted, after the fact, and only to the merchant. Lighthouse has no commerce data model at all. This is genuinely unshipped.
-
-## Implementation sketch
-
-All sub-rules are deterministic and static; run them per PDP and report each independently rather than as one blob. (a) STOCK CONTRADICTION: offers.availability maps to in_stock while raw HTML contains /sold\s*out|out of stock|notify me when|back in stock|currently unavailable/i inside the main product region, or the primary add-to-cart <button> carries the disabled attribute. (b) STALE PRICE WINDOW: priceValidUntil parses to a date earlier than today. (c) PRICE DIVERGENCE: extract currency-formatted numbers from the product region, take the most prominent (largest font-size via inline style/class heuristics, else first occurrence after the <h1>), and fail when it differs from offers.price by more than 1 percent — normalise thousands separators and decimal commas before comparing. (d) CURRENCY MISMATCH: the rendered currency symbol/code disagrees with offers.priceCurrency. (e) SALE INVERSION: a sale price greater than or equal to the regular price, which the feed spec forbids outright. (f) DUPLICATE CONFLICT: two JSON-LD Product nodes sharing a url or @id but carrying different prices or availability. (g) MISSING PRICE: no offers.price at all while the page clearly renders a price. Because (c) and (d) depend on rendered text, run them static-first and mark them INDETERMINATE rather than FAIL when the price node is absent from initial HTML; escalate those pages to the headless tier, which is roadmap.
-
 ## Example failure
 
 A seasonal item sells out. The storefront template flips the button to a disabled 'Sold out' state but the JSON-LD block is cached and still emits availability: https://schema.org/InStock with priceValidUntil 2025-12-31. ChatGPT recommends it as available at last year's price; the checkout session returns a message with code out_of_stock and the buyer abandons.
@@ -58,24 +50,33 @@ A seasonal item sells out. The storefront template flips the button to a disable
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-## Absorbed proposal
-
-`competitor-gap-verify/offer-dom-price-parity` was folded into this audit rather than shipped beside it. Both proposals reconcile the same two artifacts — the Offer in the markup and the price and stock the raw HTML renders — and shipping both would have reported one cached-catalogue bug twice, under two names, with two remediations. The absorbed dossier is kept verbatim at [`../../merged/agentic-commerce/offer-dom-price-parity.md`](../../merged/agentic-commerce/offer-dom-price-parity.md); it carries the Google structured-data policy quotation ("Your structured data must be a true representation of the page content") and the Vercel/Merj crawler study showing that no major AI crawler executes JavaScript, which is why the JS-only arm is reported at all.
-
-What the fold added to the rules below: the UNMACHINE-READABLE class (a price rendered with no `offers.price`), the JS-ONLY-PRICE class as a warning rather than a failure, the struck-through candidate as an acceptable non-match, and the rule that a match against _any_ candidate is enough rather than against the first.
-
 ## Implementation deviations
 
-- **Sub-rules are independent, and the failure reported is the first one found.** Every contradiction is counted in `details.contradictions` and the first eight are listed in `details.failures`, so a page with three defects reports three.
-- **The reverse stock contradiction is narrower than the forward one.** Markup that says InStock while the page says sold out fails on the phrase list alone. Markup that says OutOfStock fails only when the page says "in stock" or "available now" — not merely because an add-to-cart button is present, since sold-out templates routinely keep a disabled one.
-- **The prominence heuristic in the sketch is not implemented.** Rather than pick the largest-font price and compare against that one, the audit accepts a match against any non-struck candidate in the product region. Font size is not reliably knowable from raw HTML, and accepting any candidate is the conservative direction: it can miss a divergence, never invent one.
-- **`INDETERMINATE` is not a status.** The sketch escalates pages whose price is absent from the initial HTML to a headless tier. There is no headless tier, so those pages take the JS-only warning and are excluded from the price and currency comparisons entirely.
-- **Currency comparison is symbol-based and permissive.** A rendered `$` clears USD, CAD, AUD and MXN alike; the mismatch fires only when nothing rendered in the product region can stand for the declared code.
-- **Sale inversion is read from the DOM,** as the lowest live candidate against the highest struck-through one, not from a `listPrice` field. The feed spec's rule is about the feed; the page is what this audit reads.
-- **At most 3 product pages**, and the audit sends no request: everything comes from pages the scan already fetched.
+- This audit absorbed the `offer-dom-price-parity` proposal. Its record is in
+  [`../../merged/agentic-commerce/offer-dom-price-parity.md`](../../merged/agentic-commerce/offer-dom-price-parity.md).
+  It added the unmachine-readable class, the JS-only warning, struck-through
+  prices as an acceptable non-match, and the any-candidate match rule.
+- Sub-rules are independent. The first failure is reported.
+  `details.contradictions` counts them all, and `details.failures` lists up
+  to eight.
+- Markup saying InStock fails when the product region says sold out, or when
+  its add-to-cart control is disabled. Markup saying OutOfStock fails only
+  when the region says "in stock" or "available now". A disabled buy button
+  stays on many sold-out templates.
+- No prominence heuristic. A match against any non-struck price in the
+  product region is enough. Font size is not knowable from raw HTML.
+- No headless tier. A page with neither a rendered nor a declared price takes
+  the JS-only warning. A page with no rendered price skips the price
+  comparison.
+- Currency comparison is symbol-based. A rendered `$` clears USD, CAD, AUD and
+  MXN alike.
+- Sale inversion compares the lowest live price to the highest struck-through
+  price in the page, not to a `listPrice` field.
+- At most 3 product pages. The audit sends no request.
 
 ## Deferred
 
-- **AMBIGUOUS-OFFER across sku rather than url.** Duplicate conflicts are keyed on `url` or `@id`. Two Offer nodes carrying different prices for the same `sku` under different URLs are not reported.
-- **Microdata and RDFa prices in the rendered text.** Structured data is read through the union parse, so a microdata Offer is compared like a JSON-LD one; the rendered-price extraction is still text-based and currency-anchored.
-- **Rendered-price extraction on JavaScript-built pages**, which is the headless tier the sketch names and this scanner does not have.
+- Duplicate conflicts are keyed on `url` or `@id`. Two Offers with different
+  prices for the same `sku` under different URLs are not reported.
+- Rendered-price extraction on JavaScript-built pages needs a headless tier
+  the scanner does not have.

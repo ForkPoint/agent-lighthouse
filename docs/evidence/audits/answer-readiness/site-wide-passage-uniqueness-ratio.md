@@ -44,14 +44,6 @@ not as a cited finding, and no source in this repo measures it. The audit still
 reports `uniqueFraction`, and the reasoning is the argument for the number, but
 it is unproven and the grade rests on the canonical-election half.
 
-## Competitor coverage
-
-Screaming Frog and Sitebulb ship exact-duplicate and near-duplicate page detection with a similarity threshold — genuine overlap on the page-level clustering half. Neither computes the per-page unique-passage fraction (the metric that predicts chunk-embedding collapse), neither cross-references cluster membership against canonical/hreflang status to identify self-competing clusters, and neither checks HTML-versus-markdown-alternate divergence. Lighthouse ships none of this.
-
-## Implementation sketch
-
-Multi-page crawl (cap N, seed from sitemap.xml plus llms.txt links). Per page: extract main content, sentence-split, normalize (lowercase, collapse whitespace, strip punctuation). 1) Build a site-wide sentence-frequency map; boilerplate = sentences appearing on >= max(3, 5% of crawled pages). 2) uniqueFraction(page) = unique sentence characters / total sentence characters; flag pages below 0.30. 3) Page-level 5-gram shingles -> 128-permutation MinHash -> LSH banding -> clusters at estimated Jaccard >= 0.90. 4) For each cluster, join in rel=canonical target, hreflang cluster membership, and sitemap presence; the hard fail is a cluster whose members all self-canonicalize, since exactly one will survive Google's election (S9) and the others are wasted. 5) Divergence sub-check: for each page with a .md alternate or an llms-full.txt section, compute Jaccard between the two; 0.50-0.90 means the alternate has drifted stale and the site is serving models a different answer than it serves users — report the diverged sentences. 6) Report medianUniqueFraction as the site-level number and the three worst clusters as the actionable list.
-
 ## Example failure
 
 A location-directory site publishes 400 'Service in {City}' pages that are byte-identical except the city name in the h1 and one sentence. uniqueFraction is 0.04; MinHash puts all 400 in one cluster; every page self-canonicalizes. Google elects one, the other 399 are consolidated away, and every chunk embedding from the set is dominated by the shared template, so none is a distinctive vector match for any city-specific query.
@@ -62,42 +54,13 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 
 ## Implementation deviations
 
-Sentence-level boilerplate, `uniqueFraction`, the five-gram near-duplicate
-clustering, the canonical join and `medianUniqueFraction` with the three worst
-clusters all ship as the proposal specifies. The boilerplate threshold is
-`max(3, ceil(5% of pages))` verbatim, and the tests pin both sides of it.
-
-Two deviations.
-
-**No MinHash.** The sketch specifies 128-permutation MinHash with LSH banding.
-That machinery exists to make near-duplicate detection affordable across
-millions of documents. A crawl sample is tens of pages, where exact pairwise
-Jaccard over five-gram shingles is both cheaper than building the signatures and
-not an estimate. Clusters are formed by single-link agglomeration over pairs at
-Jaccard 0.90 or above.
-
-**No divergence sub-check.** The sketch's step 5 compares each page against its
-`.md` alternate or its `llms-full.txt` section. `content-extraction/markdown-alternate`
-already fetches the alternate and measures its fidelity against the HTML, and a
-second audit fetching the same files to compute a second overlap number would
-report the same defect twice under two names.
-
-A cluster resolved by `rel="canonical"` — one member pointing at another — is
-reported but is not a failure: the election has an answer, which is the whole
-remedy. A page with no canonical link counts as naming itself, because that is
-what a missing canonical means to the crawler.
-
-Status bands are this implementation's: an unresolved cluster fails, a median
-page below 30% unique sentences fails, and individual pages below 30% warn while
-the median holds. The proposal specifies the measurements and the 0.30 flag, not
-the bands.
+- A sentence is boilerplate when it appears on at least `max(3, ceil(5% of pages))` pages.
+- No MinHash. A crawl sample is tens of pages, so exact pairwise Jaccard over five-gram shingles is cheaper and not an estimate. Clusters form by single-link agglomeration over pairs at Jaccard 0.90 or above.
+- No divergence check against `.md` alternates or `llms-full.txt`. `content-extraction/markdown-alternate` already measures that fidelity.
+- A cluster resolved by `rel="canonical"` is reported but does not fail. A page with no canonical link names itself.
+- An unresolved cluster fails. A median page below 30% unique sentences fails. Individual pages below 30% warn while the median holds. These bands are this implementation's own.
 
 ## Deferred
 
-- **hreflang and sitemap membership.** The sketch joins both into each cluster.
-  A translated page pair is a legitimate near-duplicate only under
-  normalization this audit does not do, and sitemap presence changes the
-  remedy, not whether the cluster is self-competing.
-- **Naming the shared sentences.** The report counts boilerplate sentences and
-  names the pages, not the sentences themselves. The sentence list is long and
-  the actionable unit is the page.
+- hreflang and sitemap membership are not joined into clusters.
+- The report names pages, not the shared sentences.

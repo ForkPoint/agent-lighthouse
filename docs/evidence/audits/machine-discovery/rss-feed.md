@@ -47,50 +47,17 @@ Whether the site publishes a reachable RSS/Atom feed — discovered from the `<h
 
 **Counter-evidence:** No LLM vendor — OpenAI, Anthropic, or Perplexity — documents consuming RSS or Atom feeds anywhere. Apple's current June 2026 Applebot page dropped the RSS mention entirely. OpenAI's Agentic Commerce product feed spec goes further and explicitly excludes syndication formats: 'JSON, spreadsheet, XML, RSS, and Atom sources are not part of this compatibility path.' NLWeb adoption remains negligible in absolute terms. RFC 4287 does not itself define HTML <link rel=alternate> autodiscovery, so the autodiscovery half of this audit rests on convention rather than the ratified spec. Net: the feed is a documented discovery input for Google and (historically) Apple, but there is no evidence any LLM ingests feeds directly.
 
-## Absorbed evidence — rss-feed-link (4.16)
-
-4.16 checked for `<link rel="alternate" type="application/rss+xml">` in the head. That is this audit's first discovery step, so the C3 collapse makes them one audit: the reachable feed is the signal, the autodiscovery link is how it is advertised.
-
-Its dossier is kept verbatim at [merged/machine-discovery/rss-feed-link.md](../../merged/machine-discovery/rss-feed-link.md) (grade **C**).
-
-### Grade decision: stays **B**
-
-4.16 graded **C**: autodiscovery is a stable convention with browser and aggregator consumers, but the only documented _Google_ consumption path for a feed is submitting it as a sitemap, and no AI vendor documents crawling the head-level link — "none-known for any AI answer engine". The target's own signal (a published, reachable feed as an ingestion surface) grades **B**. Weaker evidence, and not proven for the merged signal, so the audit keeps **B**, `tier: scored`, `weight 0.6`.
-
-Consequently the link never decides the result on its own: a site with a reachable feed and no `<link>` passes, and a site with a `<link>` but no reachable feed fails.
-
-### Required fixes from 4.16 — landed 2026-08-22
-
-- **Atom and JSON Feed are feeds.** `type === 'application/rss+xml'` was the only accepted value, so Blogger/Hugo/Jekyll defaults (`application/atom+xml`) and JSON Feed sites were reported as having no feed link — the review calls it "probably the highest-frequency false failure in the whole category". The type set now covers rss, atom, feed+json and rdf+xml.
-- **MIME parameters stripped.** `application/rss+xml; charset=UTF-8` no longer misses.
-- **Normalized `rel`.** `rel="Alternate"` and WordPress' multi-token `rel="alternate home"` are accepted (this also fixes the same defect in 1.11's own discovery).
-- **Every page inspected.** v1 4.16 read `ctx.pages[0]` only, so a feed declared on the blog index and not the homepage was invisible.
-- **Relative hrefs resolved.** 1.11 resolved `/`-prefixed hrefs only; `feed.xml` and `./rss` are now resolved with `new URL(href, page.url)`.
-
-Not addressed by this fold (they belong to 1.11's own "fix required" backlog, not to the merge): validating that the feed body parses as XML before passing, the extra candidate paths (`/feed/`, `/index.xml`, `/rss`), the shared `_feed.ts` with rss-feed-content, and returning `na` for sites with no periodic content.
-
 ## Implementation deviations
 
-- 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. It read the feed served at the root and the
-  autodiscovery link, and `ctx.pages`/`ctx.rootFiles` carry whatever answered
-  200 — on a parked domain a broker's page from another host, on a walled or
-  throttled origin nothing at all. It now consults `scanReadTheSite()` and
-  returns `notApplicable` carrying the gate's own reason.
-  Verdicts that moved on the five nothing-obtained contract states: walled
-  fail → na, throttled fail → na, redirected away pass → na, non-HTML homepage
-  fail → na, HTTP 200 bot challenge pass → na. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
-
-### No feed and no link is not applicable (2026-10-06)
-
-The audit failed every site without a feed. The grade decision says the
-audit "informs rather than penalises", and the test gaps list a site with no
-blog as "should be N/A, currently FAIL". It now returns `notApplicable` when
-no feed answers and no page carries an autodiscovery `<link>`. A site whose
-`<link>` advertises a feed that does not answer still fails, as the merge
-decision above requires. The message names the advertised URL.
-
-The narrower page-type gate the required fix suggests ("no article/blog-type
-pages") is not used. Advertising is the site's own statement that a feed
-exists, and the scan observes it directly.
+- **Absorbs `rss-feed-link` (4.16).** Its dossier is kept at
+  [merged/machine-discovery/rss-feed-link.md](../../merged/machine-discovery/rss-feed-link.md).
+  Its C evidence is weaker, so the grade stays B.
+- **The link never decides the result on its own.** A reachable feed with no
+  `<link>` passes. A `<link>` with no reachable feed fails, and the message
+  names the advertised URL.
+- **No feed and no link is not applicable.** The grade says the audit informs
+  rather than penalises. Advertising is the site's own statement that a feed
+  exists, so no page-type gate is used.
+- **Discovery comes from the shared `gatherers/feeds.ts`.** It reads every
+  scanned page's head links, accepts rss, atom, feed+json and rdf+xml types,
+  and counts only feeds that parse.

@@ -40,6 +40,6 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Counter-evidence:** No AI vendor documentation states that any agent reads code-block language classes, and no published study measures a change in AI answer quality attributable to them. The causal step from "fence is labeled" to "agent explains the code correctly" is untested. Modern LLMs also identify programming languages from source text without an annotation. The convention is also not the only one in use. The HTML Standard itself concedes "there is no formal way". Shiki's `data-language` on `<pre>`, GitHub-style `lang-*` and Prism's class-on-`<pre>` are all in live use. Turndown's `language-` regex on `node.firstChild` matches none of them. That weakens the practical reach of the one traceable consumer path as much as it weakens the audit's detector.
 
-## Implementation deviations (v7 P3, 2026-10-07)
+## Implementation deviations
 
-The added labels preserve the old general-content population while classification changes. This is not the final feature-gate migration. The evidence grade, tier, weight, and audit ID stay unchanged.
+- The audit runs on article and general pages. That list keeps the old general-content population. It is not the final feature-based gate.

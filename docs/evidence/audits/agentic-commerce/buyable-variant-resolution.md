@@ -42,14 +42,6 @@ Falsifiable claim: the ACP Feed API models catalogue variant-first — a Product
   - `status`, 11 values: incomplete, not_ready_for_payment, requires_escalation, authentication_required, ready_for_payment, pending_approval, complete_in_progress, completed, canceled, in_progress, expired.
   - `totals[].type`, 12 values: items_base_amount, items_discount, subtotal, discount, fulfillment, tax, fee, gift_wrap, tip, store_credit, total, amount_refunded. Message error codes extended with low_stock, quantity_exceeded, coupon_invalid, coupon_expired, minimum_not_met, maximum_exceeded, region_restricted, age_verification_required, approval_required, unsupported, not_found, conflict, rate_limited, expired, intervention_required. API-Version is YYYY-MM-DD, required on all requests. Response headers Idempotency-Key and Request-Id are required echoes.
 
-## Competitor coverage
-
-Google's Rich Results Test validates ProductGroup syntax when present but never flags the mismatch between visible variant UI and absent variant markup — it has no notion of 'this page has a selector'. Lighthouse's agentic category does not read commerce structured data. No AI-visibility tool models variant addressability.
-
-## Implementation sketch
-
-Step 1 — establish that variants EXIST from the raw HTML: any <select> whose name/id/class matches /(size|colour|color|variant|option|style|width|length)/i with >=2 non-placeholder <option>s; or >=2 elements bearing data-variant-id / data-option-value / data-product-variant; or platform fingerprints (Shopify: window.ShopifyAnalytics.meta.product.variants, or a fetchable /products/{handle}.js returning variants[]; WooCommerce: form.variations_form[data-product_variations]; BigCommerce: productOptions). Step 2 — require the JSON-LD to resolve those variants, passing if EITHER (a) a ProductGroup node with productGroupID, variesBy, and hasVariant[] where every entry has sku-or-gtin* AND its own offers.price + offers.priceCurrency + offers.availability, OR (b) >=2 distinct Product nodes each with a unique sku-or-gtin and its own complete Offer. Step 3 — hard fail if the page has N>=2 detected variants but exposes exactly one Offer, or an AggregateOffer with lowPrice/highPrice and no per-variant offers, since no single price can be quoted. Step 4 — cross-check cardinality: warn when the count of variants in markup differs from the count detected in the DOM/platform JSON, which signals a partially-generated ProductGroup. Report the exact missing per-variant field so the fix is mechanical.
-
 ## Example failure
 
 A clothing PDP offers 5 sizes x 3 colours via <select> menus. Its JSON-LD contains one Product with offers as an AggregateOffer lowPrice 49 highPrice 79. The agent can describe the product but cannot name a purchasable item_id or quote a price, so ChatGPT either omits it from a comparison or the checkout session comes back with code `invalid` on $.line_items[0].
@@ -60,15 +52,26 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 
 ## Implementation deviations
 
-- **No network calls.** The sketch mentions fetching `/products/{handle}.js` for Shopify variant JSON. The audit reads only pages the scan already fetched: the Shopify variant array is counted out of the inline `window.ShopifyAnalytics` script, and WooCommerce out of `data-product_variations` on the variations form. BigCommerce `productOptions` and Magento are covered only through the `<select>` and data-attribute arms.
-- **Variant counts come from the strongest signal, not from all of them summed.** A page carrying both a size `<select>` and per-swatch `data-variant-id` attributes would double-count if the arms were added; the audit takes the largest single count instead. That undercounts a true size × colour matrix — a 5 × 3 page reports 5 — so the cardinality warning fires only when the markup resolves fewer variants than the single largest selector shows. Undercounting is the safe direction: it never invents a mismatch that is not there.
-- **At most 3 product pages** are examined, and the failure reported is the first one found. The details block carries up to 5 of each finding kind.
-- **Reachability of variant URLs is not probed.** The audit checks that each variant is addressable in the markup, not that its URL answers.
-- **A ProductGroup that exists but does not resolve outranks the offer-shape arms.** When a page carries a `ProductGroup` with problems, the finding names the missing per-variant fields rather than saying "exactly one Offer": the field list is what a developer acts on.
-- **`mpn` is accepted as a variant identifier** alongside `sku` and the `gtin` family. Google's guidance names sku-or-gtin; a unique `mpn` addresses the variant just as well, and rejecting it would fail pages that are in fact resolvable.
+- No network calls. The audit does not fetch `/products/{handle}.js`. Shopify
+  variants are counted from the inline `"variants"` array. WooCommerce
+  variants are counted from `data-product_variations`. Other platforms are
+  covered only by the `<select>` and data-attribute arms.
+- The variant count is the single strongest signal, not a sum. A 5 × 3 size
+  and colour matrix reports 5. The cardinality warning therefore fires only
+  when the markup resolves fewer variants than the largest selector shows.
+- At most 3 product pages are examined. The first failure is reported, and
+  details carry up to 5 of each finding kind.
+- A `ProductGroup` with problems outranks the offer-shape arms. The finding
+  names the missing per-variant fields.
+- `mpn` is accepted as a variant identifier beside `sku` and the `gtin`
+  family.
 
 ## Deferred
 
-- **The DOM-versus-markup cardinality check is partial.** Step 4 of the sketch compares the variant count in markup against the count "in the DOM/platform JSON". Without a rendered DOM the audit compares against the largest static selector it can see, so a page that builds its selectors in JavaScript reports no variants at all and is treated as single-variant.
-- **`variesBy` values are not cross-checked against the variants.** The audit requires `variesBy` to be present; it does not verify that every variant carries the colour/size properties `variesBy` names.
-- **Feed-side validation.** Whether the merchant's ACP or OpenAI feed actually carries the variants is out of scope: the audit reads the page, not the feed.
+- Variant URLs are not probed for reachability.
+- A page that builds its selectors in JavaScript shows no variants in the raw
+  HTML and is treated as single-variant.
+- `variesBy` must be present, but its values are not cross-checked against
+  the properties each variant carries.
+- Feed-side validation is out of scope. The audit reads the page, not the
+  feed.

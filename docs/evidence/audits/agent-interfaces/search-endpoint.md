@@ -27,37 +27,6 @@ One site-search audit over both halves of the declaration: the Schema.org `Searc
 | a `SearchAction` whose target has no `urlTemplate` or no `{placeholder}`, or a `WebSite` node that declares no `SearchAction` at all                   | `warn`, priority `low` |
 | neither half present                                                                                                                                   | `fail`, priority `low` |
 
-## The merge (Plan 4, Task 7, 2026-08-22)
-
-3.4 and 5.16 were the same audit written twice. 3.4 read `WebSite` → `potentialAction` → `SearchAction` and graded the markup; 5.16 read the same markup and probed the URL — and both got the JSON-LD wrong in the same way, rejecting the array-valued `potentialAction` that Yoast, Rank Math, Squarespace and Shopify all emit. A site with correct, extremely common markup was told twice that it has no search endpoint.
-
-**What the merged audit does.** The Schema.org half is now normalized before matching: blocks go through the shared deep flattener (`flattenJsonLd`) reading `page.structuredData` in preference to `page.jsonLd`, `@type` and `target` are both array-coerced, and a `SearchAction` nested under `mainEntity` or inside a top-level array is found the same way one under `@graph` is. Every `WebSite` node is scanned rather than `[0]`. Both target shapes are accepted — the bare string and the schema.org-canonical `EntryPoint` with `urlTemplate` — which removes 3.4's inverted quality gradient, where the _more_ correct markup failed.
-
-**Probing is now verification, not assumption.** `status === 200` proved nothing: every SPA search route answers 200 with an empty shell. A 200 now has to carry a payload — a non-empty array or positive result count for JSON, some visible text once scripts, styles and tags are stripped for markup — and a gated response (401/403/407/451) is reported as _gated_, not as broken. Every `{placeholder}` in the template is substituted (the old single-replace left a literal `{lang}` in `/search?q={q}&lang={lang}` and manufactured a 404).
-
-**The OpenAPI half is tightened to a path segment.** `path.includes('search')` accepted `GET /research/papers` and `GET /searchindex/status` as search APIs; the match is now `\bsearch\b`, which still accepts `/api/product-search`.
-
-**3.4's warn state survives as the declared-but-incomplete branch**, which is the one thing 5.16 could not express: a `WebSite` node with no `SearchAction`, or a `SearchAction` with an unusable target, is a different verdict from declaring nothing at all.
-
-### Absorbed evidence — website-search-action (3.4)
-
-3.4's dossier is kept verbatim at [merged/agent-interfaces/website-search-action.md](../../merged/agent-interfaces/website-search-action.md) (grade **D**, recommended tier _delete_). It is the sharper of the two evidence records and it argues _against_ the signal: `SearchAction` is on 6.6M domains — the fourth most common JSON-LD class in the October 2024 Common Crawl — and its only mainstream consumer, Google's sitelinks search box, was withdrawn globally on 21 November 2024. The two consumers that do exist are honestly narrow: Applebot's archived pre-Apple-Intelligence documentation lists `SearchAction` among supported schemas, and Gmail genuinely executes `potentialAction`, but only `ConfirmAction`/`SaveAction`, in email, not on web pages. Google's own agent-friendly guidance describes agents working from screenshots, DOM and the accessibility tree and never mentions schema.org.
-
-That is textbook zombie adoption, and it is why this audit is `informative` and why its guidance now says so in the `impact` string instead of asserting ChatGPT behaviour that has never been demonstrated.
-
-### Grade decision: stays **C**, tier `informative`, weight 0
-
-5.16 grades **C** and 3.4 grades **D**; the absorbed evidence is weaker, not stronger, so the grade does not move. The merged audit keeps 5.16's **C**, which rests on `SearchAction` being a ratified schema.org term with very large adoption plus an OpenAPI fallback whose discovery leg is itself unproven (graded in 5.1) — no vendor documents a named agent that reads either. Tier stays `informative`, so `weightForGrade('C', 'informative')` is **0** and the check never moves a score.
-
-`scoreDisplayMode` stays `informative` — the ledger law in `sunset.test.ts` requires a non-`scored` tier to render as informative, so the new middle state cannot be spelled `ternary` here. `defaultPriority` drops from `medium` to `low` per 3.4's required fix: a signal with no documented consumer should not be raised above a site's real problems.
-
-### Deviations
-
-- **`applicablePageTypes` is not set.** 3.4 declared `['homepage']` while scanning every page, which its review flags as incoherent. The merged audit is a site-level check — it also reads `ctx.rootFiles['/openapi.json']` — so the gate is dropped rather than fixed, and a `SearchAction` on any crawled page counts.
-- **`query-input` is not cross-checked against the placeholder name.** 3.4's required fix asks for it. The probe supersedes it: a template that resolves and returns results is verified regardless of whether `query-input` names the same parameter, and a template with no placeholder at all is already caught.
-- **A soft-404 "no results" page that still renders prose passes.** The payload check catches the empty SPA shell and the empty JSON array, which is what the required fix names; distinguishing a rendered "nothing found" page from a rendered result list would need per-site heuristics and is left open.
-- **The JSON-only `getOpenApiSpec()` copy stays.** The OpenAPI half still reads `/openapi.json` and not `/openapi.yaml`. Deduplicating the several private copies across the openapi-* audits is a refactor of audits this fold does not touch.
-
 ## Evidence
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
@@ -78,15 +47,16 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Implementation deviations
 
-**2026-08-29 — the OpenAPI read and the `paths` walk moved to
-`packages/core/src/gatherers/openapi.ts`.** This file carried a private copy of
-both, which is the drift the shared module exists to end. No verdict moved: the
-shared walk visits path items in the same order and applies the same "is the
-`get` value an object" test, so the first `\bsearch\b` path with a GET is still
-the one reported.
+- The audit absorbs website-search-action (3.4). Its record is `docs/evidence/merged/agent-interfaces/website-search-action.md`.
+- JSON-LD goes through `flattenJsonLd`, preferring `page.structuredData`. `@type` and `target` are array-coerced, and every `WebSite` node on every crawled page is scanned.
+- Both target shapes count: a bare string and an `EntryPoint` with `urlTemplate`.
+- Every `{placeholder}` is substituted before the probe. A 200 must carry results; an empty shell warns. 401, 403, 407 and 451 are reported as gated.
+- The OpenAPI half matches a `GET` on a path with a `\bsearch\b` segment, read through `gatherers/openapi.ts`.
+- `applicablePageTypes` is not set. This is a site-level check.
+- `query-input` is not cross-checked against the placeholder. The probe verifies the template instead.
+- The audit is not enrolled in the absent-artifact contract. A `SearchAction` alone can reach a verdict without any OpenAPI document.
 
-This audit is deliberately **not** enrolled in the absent-artifact contract. It
-judges whether a site offers a search interface at all, and a `SearchAction` in
-JSON-LD or an on-page search form is evidence enough to reach a verdict without
-any OpenAPI document. The absence of the document is not the absence of the
-thing it audits.
+## Deferred
+
+- A rendered "no results" page that still carries prose passes. Telling it apart from a result list needs per-site heuristics.
+- The OpenAPI half is JSON-only.

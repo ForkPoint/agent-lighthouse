@@ -43,22 +43,6 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Implementation deviations
 
-**2026-08-29 — enrolled in the absent-artifact contract.** This audit already
-declined a site that publishes no OpenAPI document, and every dossier in the
-family cites it as proof that a `scored` audit is free to decline. It said so
-in its own private sentence, though, so
-`packages/core/src/tests/absent-artifact-contract.test.ts` — which keys on the
-shared `NO_OPENAPI_SPEC` constant — did not hold it. Someone could have flipped
-this branch to `fail` with that suite still green. It now reads the shared
-constant, so the exemplar is held to the rule it is cited for. The decline
-message changed wording; the verdict did not.
-
-**The `paths` traversal moved to `packages/core/src/gatherers/openapi.ts`.**
-This file carried a private copy of the walk and of the HTTP-method list, which
-is the drift the shared module exists to end. No verdict moved: a document with
-no readable operation still yields zero checkable items and still returns
-`notApplicable`. This audit deliberately does not fail a malformed `paths` the
-way `openapi-endpoints`, `openapi-schemas` and `openapi-operation-ids` now do —
-its graded mechanism is the quality of text that is present, and no source
-documents a description-quality consumer that is worse off for a broken `paths`
-than for an absent one.
+- No OpenAPI document is `notApplicable`, through the shared `NO_OPENAPI_SPEC` constant. That enrols the audit in `absent-artifact-contract.test.ts`.
+- The `paths` walk comes from `gatherers/openapi.ts`.
+- A malformed `paths` is not failed here, unlike `openapi-endpoints`, `openapi-schemas` and `openapi-operation-ids`. No readable operation means nothing to check, so the result is `notApplicable`. No source documents a description consumer worse off for a broken `paths` than for an absent one.

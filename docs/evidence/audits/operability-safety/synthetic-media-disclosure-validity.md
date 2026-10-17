@@ -38,14 +38,6 @@ IPTC types DigitalSourceType as [URI <External>], meaning the value must be a fu
 - **[Text fragments](https://web.dev/articles/text-fragments)** — Google / web.dev (vendor-doc, URL verified 2026-08-20)
   - Confirms a shipped answer-surface consumer: "Clicking a featured snippet takes the user directly to the featured snippet text on the source web page. This works thanks to automatically created Text Fragments URLs." Support: Chrome 89+, Edge 89+, Firefox 131+, Safari 18.2+. Restates the boundary rule: "Each of prefix-, start, end, and -suffix can only match text within a single block-level element, but full start,end ranges can span multiple blocks." Opt-out header: Document-Policy: force-load-at-top.
 
-## Competitor coverage
-
-No SEO or AI-readiness tool parses XMP packets. Lighthouse's agentic category does not inspect image metadata. The C2PA-vs-XMP contradiction check in particular requires holding both provenance channels for one asset simultaneously, which nothing in the market does.
-
-## Implementation sketch
-
-1. For each raster image, extract the XMP packet: JPEG APP1 with the http://ns.adobe.com/xap/1.0/ identifier; PNG iTXt keyed XML:com.adobe.xmp; or scan for <?xpacket begin ... ?> ... <?xpacket end?>. 2) Read Iptc4xmpExt:DigitalSourceType in namespace http://iptc.org/std/Iptc4xmpExt/2008-02-29/. 3) Fetch and cache the concept list from https://cv.iptc.org/newscodes/digitalsourcetype/ ; assert the value is an exact member. Emit a targeted FAIL for the near-miss classes: bare conceptId with no URI prefix, https:// where the vocabulary uses http://, trailing slash, or a free-text string. 4) Cross-check with C2PA: if the asset carries a manifest whose actions assert digitalSourceType trainedAlgorithmicMedia while XMP declares digitalCapture (or vice versa), emit a HIGH contradiction finding — the two provenance channels on one asset disagree about whether a human took the photo. 5) Report declaredCoverage across images as INFO. 6) SCOPE HONESTLY: detecting _undisclosed_ synthetic imagery requires a classifier and belongs on the roadmap as llm-assisted; this check only grades declarations that exist and their internal consistency.
-
 ## Example failure
 
 A publisher configures its CMS to stamp every AI-illustrated article header with DigitalSourceType = 'trainedAlgorithmicMedia'. Because the value is a bare token rather than the http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia URI, every conforming reader treats the field as unrecognized. The organization reports full AI-disclosure compliance internally while shipping zero machine-readable disclosure.
@@ -56,37 +48,13 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 
 ## Implementation deviations
 
-**Renamed** from `synthetic-media-disclosure-is-valid-and-self-consistent`,
-which would make a 73-character id.
-
-Steps 1 to 6 of the sketch ship: XMP extraction from JPEG APP1 and PNG iTXt
-with a raw `<?xpacket?>` fallback, the `Iptc4xmpExt:DigitalSourceType` read in
-its attribute, element and `rdf:resource` forms, membership tested against the
-vocabulary, a separate finding for each near-miss class, the C2PA
-cross-check, `declaredCoverage` as an unscored detail, and the honest scope —
-a test asserts the audit never claims to detect undisclosed synthetic imagery.
-
-**The vocabulary is vendored, not fetched** (sketch step 3). Fetching
-`cv.iptc.org` at audit time would put a third-party outage between a site and
-its own score, for a list that changes a few times a decade. The refresh path
-is written above the constant.
-
-**The C2PA cross-check is a byte search, not a manifest parse.** The manifest
-store is searched for the synthetic and capture concept names; a store
-asserting a trained-algorithmic source while the XMP declares a camera capture
-(or the reverse) is the contradiction the sketch asks for. A full JUMBF parse
-would name the exact assertion, and needs the dependency
-`operability-safety/c2pa-signer-trust-status` also declines to add.
-
-**Evidence hygiene.** The IPTC source carries the mechanism. The dossier's
-other sources belong to the C2PA proposals and nothing here rests on them.
+- The id is shortened. The proposal's name would make a 73-character id.
+- The IPTC vocabulary is vendored, not fetched. Fetching `cv.iptc.org` at audit time would put a third-party outage between a site and its score. The refresh path is written above the constant.
+- The C2PA cross-check is a byte search of the manifest store for the synthetic and capture concept names, not a manifest parse. A full JUMBF parse needs the dependency `c2pa-signer-trust-status` also declines to add.
+- `declaredCoverage` is reported as an unscored detail.
 
 ## Deferred
 
-- **Detecting undisclosed synthetic imagery.** It needs a classifier, which is
-  an `llm-assisted` roadmap item, and the dossier says so.
-- **Video and audio containers.** The gatherer reads raster images; BMFF is
-  recognised for manifest detection but XMP in video is a different packet
-  location.
-- **`Iptc4xmpExt:DigitalSourceFileType` and the other IPTC AI properties.**
-  Only `DigitalSourceType` is the ratified interoperable disclosure.
+- **Undisclosed synthetic imagery** needs a classifier, an `llm-assisted` roadmap item.
+- **Video and audio containers.** XMP in video sits in a different packet location. BMFF is recognised only for manifest detection.
+- **Other IPTC AI properties** such as `Iptc4xmpExt:DigitalSourceFileType`. Only `DigitalSourceType` is the ratified interoperable disclosure.

@@ -43,6 +43,6 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Counter-evidence:** Google states for its AI features: "You don't need to create new machine readable files, AI text files, or markup to appear in these features. There's also no special schema.org structured data that you need to add" (https://developers.google.com/search/docs/appearance/ai-features, verified 2026-08-21) — which directly contradicts the audit's claim that author markup boosts "RAG trust scoring". No vendor documentation was found in which any named AI agent (OpenAI, Anthropic, Perplexity, Microsoft) reads author markup, and no source requires `jobTitle` or `affiliation`; the four-property pass gate is unsupported by any consumer.
 
-## Implementation deviations (v7 P3, 2026-10-07)
+## Implementation deviations
 
-The page-purpose gate now excludes general pages. Body-level aggregation and narrower specialist populations remain under review in the v7 applicability ledger. This change preserves the evidence grade, tier, weight, and audit ID.
+- The audit runs on article pages only.

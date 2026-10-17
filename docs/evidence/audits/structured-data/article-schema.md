@@ -43,6 +43,6 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Counter-evidence:** Google's contract is far weaker than the audit's required-property set: "There are no required properties; instead, add the properties that apply to your content", and `headline`, `datePublished`, `dateModified`, `author` and `image` are **all** listed as _recommended_. Blocking a pass on a missing `dateModified` therefore has no basis in the documented consumer behavior. Google's news features do not need the markup either — Top stories eligibility does not require Article structured data. The audit's AI-attribution framing is separately disclaimed by Google: "There's also no special schema.org structured data that you need to add" to appear in AI Overviews or AI Mode — https://developers.google.com/search/docs/appearance/ai-features (verified 2026-08-21). A matched difference-in-differences study over 1,885 pages adding JSON-LD found no AI-citation uplift — https://ahrefs.com/blog/schema-ai-citations/ (verified 2026-08-21)
 
-## Implementation deviations (v7 P3, 2026-10-07)
+## Implementation deviations
 
-The page-purpose gate now excludes general pages. Body-level aggregation and narrower specialist populations remain under review in the v7 applicability ledger. This change preserves the evidence grade, tier, weight, and audit ID.
+- The audit runs on article pages only.

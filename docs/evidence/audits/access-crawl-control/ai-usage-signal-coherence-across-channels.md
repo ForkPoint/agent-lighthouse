@@ -51,14 +51,6 @@ Falsifiable. Normalise each channel to (path-scope, usage-category, allow|deny) 
 - **[TDM Reservation Protocol (TDMRep) — W3C CG Final Report](https://www.w3.org/community/reports/tdmrep/CG-FINAL-tdmrep-20240202/)** — W3C Community Group (spec, URL verified 2026-08-20)
   - Four techniques, not three: (1) `/.well-known/tdmrep.json` — an ARRAY of objects each with `location`, `tdm-reservation`, `tdm-policy`; (2) HTTP response headers `tdm-reservation: 1` and `tdm-policy: <url>`; (3) HTML `<meta name="tdm-reservation" content="1">` / `<meta name="tdm-policy" ...>`; (4) EPUB `tdm:reservation`/`tdm:policy`. Note the well-known file is an array of rules — a bare object is non-conformant.
 
-## Competitor coverage
-
-No tool cross-references these standards. Agent Lighthouse already ships a TDMRep audit, but it checks only the meta tag and the well-known file in isolation — it misses the HTTP `tdm-reservation` transport and never compares TDMRep against robots.txt, Content-Signal, or RSL. This check is the aggregation layer over the existing single-signal audits and is where the differentiated insight lives.
-
-## Implementation sketch
-
-Static-fetch, reusing artefacts already fetched by the other checks. 1) Gather: /robots.txt (per-agent Allow/Disallow, Content-Usage, Content-Signal, License); homepage + sampled pages' response headers (Content-Usage, tdm-reservation, tdm-policy, X-Robots-Tag incl. the noai/noimageai convention); HTML meta tdm-reservation / tdm-policy and `<meta name="robots" content="noai">`; /.well-known/tdmrep.json (validate it is an ARRAY of {location, tdm-reservation, tdm-policy} — a bare object is non-conformant per s17); the discovered RSL document's permits/prohibits. 2) Map each into the AIPREF category space: TDMRep `tdm-reservation: 1` → train-ai=n site-wide (or for `location`); RSL `<prohibits type="usage">ai-input</prohibits>` → ai-input=n; Content-Signal `ai-train=no` → train-ai=n; a blanket `Disallow: /` for GPTBot → train-ai=n for that agent; noai → train-ai=n. 3) For each (category, overlapping path scope) emit a contradiction finding when two channels disagree, naming both channels and the exact conflicting lines. 4) Emit a separate 'edge override' finding when robots.txt contains a Content-Signal/Content-Usage block above the operator's own directives that disagrees with a signal they publish elsewhere — the managed-robots.txt trap. 5) Emit a distinct 'no signal in any channel' warning, which is a different remediation from a contradiction. 6) Verdict: fail on contradiction, warn on total silence, pass on coherent (or coherently silent-plus-one-declaration).
-
 ## Example failure
 
 A publisher adds `<meta name="tdm-reservation" content="1">` site-wide to claim an EU DSM Art. 4 opt-out, while robots.txt (unchanged for years) still carries `User-agent: GPTBot` / `Allow: /` with no Content-Usage directive, and Cloudflare has prepended `Content-signal: search=yes, ai-train=no, use=reference`. Three channels, three different answers for train-ai. A TDMRep-aware crawler skips the site, an AIPREF-aware crawler reads Cloudflare's block rather than the publisher's intent, and a robots-only crawler trains on everything.
@@ -69,82 +61,15 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 
 A site that publishes no AI-usage signal in any channel is not applicable: with nothing declared there is nothing to contradict. The AIPREF vocabulary reads an absent preference as unknown and Content Signals reads omission as no preference, so neither documents a cost for silence.
 
-## Absorbed proposal
-
-`competitor-gap-verify/content-signal-coherence` folded into this audit on
-2026-08-23 rather than shipping beside it. It read one channel — the
-`Content-Signal` lines of robots.txt, with RFC 9309 group precedence applied to
-them the way `access-crawl-control/robots-ai-group-shadowing` applies it to
-rules — and this audit reads five, that one included. Two audits would have
-reported the same Cloudflare edge-override twice, under two names, and a
-contradiction spanning `Content-Signal` and any other channel would have
-belonged to neither. Its dossier is kept at
-[merged/access-crawl-control/content-signal-coherence.md](../../merged/access-crawl-control/content-signal-coherence.md).
-
-Its mechanism ships whole: `Content-Signal` values map into the same category
-space as everything else (`ai-train` → `train-ai`, `search` → `search`,
-`ai-input` → `ai-input`), a line written inside a named group binds only that
-group, and a `Content-Signal` block sitting above every directive the operator
-wrote is reported as an edge override rather than as an inconsistent policy.
-
 ## Implementation deviations
 
-The audit sends no request. Every channel it reads was already fetched by the
-scan: `/robots.txt` and `/.well-known/tdmrep.json` from `ctx.rootFiles`, the
-response headers and meta tags from the sampled pages, and RSL from the inline
-`<script type="application/rsl+xml">` blocks those pages carry.
-
-**RSL by inline script only.** The sketch also resolves the `License:` directive
-and the `Link: rel=license` header to a document and reads its
-permits/prohibits. That is a fetch, and
-`access-crawl-control/rsl-licensing-terms-conformance` already makes it. Reading
-the same document twice in one scan to answer two questions is a request this
-audit does not need to spend.
-
-**A contradiction needs two channels.** Two lines of one channel disagreeing is
-that channel's own precedence question, and the audit that owns the channel
-answers it — `robots-ai-group-shadowing` for robots.txt rules,
-`aipref-content-usage-declaration-validity` for `Content-Usage`. Only
-cross-channel disagreement is reported here.
-
-**Path scopes overlap by prefix.** attach-05 defines longest-prefix matching for
-`Content-Usage`; TDM-Rep's `location` and RSL's `<content url>` are also
-prefixes. Two declarations are compared when either prefix contains the other,
-which is the same test in all three vocabularies.
-
-**Silence warns, it does not fail.** _Superseded 2026-10-06; see "Silence is not applicable" below._ A site that declares nothing is not
-misconfigured — it has left every crawler to its own default, which is a real
-cost but not a contradiction. A scan that read neither a page nor a robots.txt
-is `notApplicable`: nothing could have carried a signal.
-
-- 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. Every channel it compares — robots.txt, the TDM-Rep
-  file, the response headers, the page markup — is read off whatever answered
-  the request, and a bot wall served at HTTP 200 answers all of them
-  identically. "Two signals across two channels, with no contradiction between
-  them" was a statement about the wall. It now consults `scanReadTheSite()` and
-  returns `notApplicable` carrying the gate's own reason. Measured merge-base
-  to here on a text-rich HTTP 200 wall: pass → na, at weight 0.6. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
-
-### Silence is not applicable (2026-10-06)
-
-The audit reports whether channels agree. With no signal in any channel there
-is nothing to compare, so the audit returns `notApplicable` instead of a warn.
-
-The earlier paragraph called silence "a real cost". No source here documents
-one. The AIPREF vocabulary draft (s10) reads an absent preference as unknown.
-Cloudflare's Content Signals policy (s8) reads omission as no preference. A
-crawler that finds no signal applies its own default either way, and nothing
-says the site loses anything by it.
-
-Step 5 of the implementation sketch, a distinct "no signal in any channel"
-warning, is withdrawn for the same reason. Notes gathered on the way still
-ride in `details.notes`, such as a `/.well-known/tdmrep.json` that is not an
-array. `access-crawl-control/tdm-rep` owns that file's validity.
-
-A site with one signal, or several that agree, still passes. A contradiction
-still fails. Grade, tier and weight are unchanged.
+- The audit sends no request. It reads `/robots.txt` and `/.well-known/tdmrep.json` from `ctx.rootFiles`, and headers and meta tags from the sampled pages.
+- RSL is read from inline `<script type="application/rsl+xml">` blocks only. Resolving `License:` and `Link: rel=license` is a fetch that `access-crawl-control/rsl-licensing-terms-conformance` already makes.
+- A contradiction needs two channels. A disagreement inside one channel belongs to the audit that owns it: `robots-ai-group-shadowing` for robots.txt rules, `aipref-content-usage-declaration-validity` for `Content-Usage`.
+- Path scopes overlap by prefix: two declarations are compared when either prefix contains the other.
+- `Content-Signal` maps into the same category space (`ai-train` to `train-ai`, `search`, `ai-input`). A line inside a named group binds only that group.
+- A `Content-Signal` block above every directive the operator wrote is reported as an edge override, with its own remedy.
+- Silence is not applicable. No source documents a cost for declaring nothing. Notes such as a non-array `tdmrep.json` still ride in `details.notes`.
 
 ## Deferred
 
@@ -152,9 +77,8 @@ still fails. Grade, tier and weight are unchanged.
   EPUB metadata. A web scan never sees it.
 - **Per-agent AIPREF scoping.** `Content-Usage` inside a `User-agent` group is
   read as that group's, but AIPREF itself does not define per-agent
-  preferences — attach-05 attaches them to resources. If the draft grows agent
-  scoping, the comparison here needs revisiting.
+  preferences. If the draft grows agent scoping, the comparison needs
+  revisiting.
 - **Diffing declared against served robots.txt.** Cloudflare's prepend is
-  detected by position, which is what a scanner can see from outside. Proving it
-  came from the edge would need the origin's own copy, which only the operator
-  has.
+  detected by position. Proving it came from the edge would need the origin's
+  own copy, which only the operator has.

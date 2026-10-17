@@ -58,53 +58,31 @@ A `Service` or `ProfessionalService` node must carry `name` and `provider`. Prod
 
 **Counter-evidence:** OpenAI's product feed spec is feed-only. Required fields are item_id, title, description, brand, url, image_url, availability, price, is_eligible_search, is_eligible_checkout, seller_name and target_countries. GTIN is optional. There is no mention of schema.org, JSON-LD or on-page markup anywhere in the spec or the wider commerce docs index (openai-product-feed-spec, openai-commerce-docs-index). The Agentic Commerce Protocol feed spec likewise defines its own taxonomy and does not reference schema.org, GTIN, or Merchant Center compatibility (acp-feed-spec). Perplexity's merchant program reportedly requires CSV/XML feeds (perplexity-merchant-program-terms — UNVERIFIED, hub returns 403). Amazon Rufus draws on the Amazon catalogue, customer reviews, community Q&A and "public information on the web", with no mention of schema.org or merchant markup crawling (amazon-science-rufus). And Google's AI guidance still says "there's no special schema.org markup you need to add", routing merchants to Merchant Center feeds and Business Profiles instead (google-ai-optimization-guide). Honest framing for the dossier. Product markup earns its A because it is a documented ingestion path into a Google system that demonstrably powers an AI shopping surface. It does not earn it because an LLM reads it off the page at answer time.
 
-## The split (Plan 4, Task 9, 2026-08-22)
+## Implementation deviations
 
-3.8 measured two unrelated shapes through one node list: `matchesAnyType(s, ['Service', 'Product'])`, then branched on `isProduct` for the rest of the check. Its required fix splits them:
+- This audit holds the Service half of the former `service-product-schema`
+  check. The Product half is
+  [`structured-data/advanced-product-details`](./advanced-product-details.md).
+- Only `Service` and `ProfessionalService` nodes count. A `Product` node is
+  neither a subject nor evidence that a service exists.
+- The best-covered node decides the verdict, not the first one found.
+- `name` and `provider` are required. `description` is not.
+- The audit runs on homepage, general and article pages. A page is in scope
+  when it carries Service markup, sits in a services section, or links to
+  one. With no such page, the result is `notApplicable`.
+- Path and link matching anchor on segments and offering phrases (`/services`,
+  `/what-we-do`, `/solutions`, `/consulting`, "our services"). A
+  terms-of-service path or a "Customer service" link does not count.
+- The schema search is site-wide. A site may declare its Service nodes on the
+  homepage while the services link lives elsewhere.
 
-> _"Merge the Product half into 3.22 (Advanced product details), which already checks brand/category/availability on Product nodes and shares the same type list as 3.21/3.24. If the Service half is kept as a standalone audit, scope it to Service/ProfessionalService only, evaluate the best-covered node rather than `[0]`, and drop `description` from the required set."_
+## Deferred
 
-Both halves of that instruction landed. The file was `git mv`d to `service-schema.ts`, the id is `structured-data/service-schema`, and all three Service-side clauses are implemented and locked by tests:
-
-| Clause         | Before                                     | Now                                                                                                                            |
-| :------------- | :----------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------- |
-| type list      | `['Service', 'Product']`                   | `['Service', 'ProfessionalService']` — a `Product` node no longer counts as a subject, nor as evidence that "a service exists" |
-| node selection | `serviceProducts[0]` across the whole scan | the best-covered node: a listing stub hoisted ahead of the real Service node can no longer decide the verdict                  |
-| required set   | `name`, `description`, `provider`          | `name`, `provider` — `description` dropped                                                                                     |
-
-`description` was 3.8's own recorded invented requirement: _"schema.org does not require it and Google's Product guidance does not either. Well-formed Product blocks that omit description are permanently warned for a non-issue."_ It is gone from the required set on both sides of the split; the guidance sample still shows it, because writing one is good practice, it is simply not pass-blocking.
-
-### Where the Product half went
-
-Into [`structured-data/advanced-product-details`](./advanced-product-details.md) (v1 3.22), which already owns Product nodes and already uses the wider `['Product', 'IndividualProduct', 'ProductModel']` type list that 3.8's review flagged as the correct one. What actually ported is the **`name` requirement**: 3.22 checked brand, category and availability but never that the Product had a name, and Google's merchant-listing table marks `name` required (unlike the other three, which are recommended). Two of 3.8's Product-side behaviours were deliberately **not** ported, and 3.22's dossier records both: its `description` requirement (invented, as above) and its `brand || manufacturer || provider || offers` fallback, which would have let an Offer stand in for a brand.
-
-The migration-map row for 3.8 keeps `status: "renamed"` and points at `structured-data/service-schema`, with a `note` recording the Product half's destination. A consumer of 3.8 who cared about Products is not silently dropped — they land here and the note routes them on.
-
-### Grade decision: stays **A**, tier `scored`, weight 1.0
-
-The A-grade record this audit rests on is the Product/Offer commerce-markup signal, and its consumer path (Google Merchant Center website crawl → Shopping Graph → AI Mode shopping) is a _Product_ path, not a Service path — that is an honest weakness of the original grading, and the split does not change it, because the same record is what 3.22 is graded on and 3.22 is where the Product shape now lives. Nothing in this task raises or lowers the evidence, so per the weight law the grade stays **A** at `tier: scored`, `weightForGrade('A', 'scored')` = **1.0**, on both audits. The Service half's own evidence remains the weakest link in this dossier and is called out as a standing item below.
-
-### Scoping: which sites this runs on (fixed 2026-08-22, review round 1)
-
-The split originally left `applicablePageTypes: ['product']` in place, inherited from the pre-split audit where it was correct for the Product half. For a Service-only check it is exactly backwards, and the effect is not cosmetic: `planAudits()` never _executes_ an audit whose declared page types are absent from the scan, stubbing it as `na`. So the audit
-
-- **never ran on the sites it is for.** An agency, consultancy or trades site publishes no `product` page, so the check was skipped outright — invisible, and excluded from the commerce vital.
-- **ran only on the sites it does not fit,** ecommerce stores, where it was a guaranteed `fail`: stores emit Product markup, not `Service`. v1 3.8 passed those stores on their Product markup; after the narrowing, the same store failed a check about services it does not sell.
-
-Fixed by mirroring how the siblings gate — a coarse page-type declaration plus a runtime precondition that returns `notApplicable`, exactly the shape of [`local-business-schema`](./local-business-schema.md) (`['homepage']` + a physical-location guard) and [`article-schema`](./article-schema.md) (`['content']` + a real-article-page guard):
-
-- `applicablePageTypes: ['homepage', 'content']` — where a service business publishes its offerings. Both types are present in essentially every scan, so the coarse gate no longer decides anything; it declares intent and stops claiming this is a product-page audit.
-- A page is in scope when it **carries Service/ProfessionalService markup** (the strongest evidence of intent), when **its own URL sits in a services section**, or when it **links to one**. No page matching → `na` with "No service offering detected".
-
-Path and link matching are deliberately anchored on segments and on offering-phrases (`/services`, `/our-services`, `/what-we-do`, `/solutions`, `/consulting`; "our services", "what we do") so that `/legal/terms-of-service` and a "Customer service" help link — chrome on almost every store — do not drag ecommerce back into scope. Tests pin both directions: a service site with Service markup runs and passes; a product store with neither markup nor a services section is `na`, not `fail`; and a site that clearly sells services but publishes no Service markup still **fails**, which is the case the audit exists for.
-
-The schema search itself stays site-wide (`allSchemas(ctx)`): a site may declare its Service nodes on the homepage while the services link lives elsewhere.
-
-### Deviations — standing required-fix items not addressed here
-
-- **A Service nested under an Organization's `makesOffer`** — where the provider is implicit — is still warned for a missing `provider`. Recorded in the false-positive list above; resolving implicit providers is a parser-level change, not part of this split.
-- **The Service half has no Service-specific graded evidence.** The graded record below is a Product/Offer record. A dedicated Service-schema consumer path has never been researched, so the A rests on a mechanism that now lives mostly in 3.22. This is the item to revisit if the Service half is ever re-graded.
-
-## Implementation deviations (v7 P3, 2026-10-07)
-
-The added labels preserve the old general-content population while classification changes. This is not the final feature-gate migration. The evidence grade, tier, weight, and audit ID stay unchanged.
+- A Service nested under an Organization's `makesOffer` is warned for a
+  missing `provider`. Resolving the implicit provider is a parser-level
+  change.
+- No Service-specific consumer path has been researched. The grade rests on
+  the Product/Offer record.
+- The homepage, general and article list is a broad list kept while
+  classification changes. Its review is open in
+  `docs/architecture/audits.md#511-default-scope-and-page-type-restrictions`.

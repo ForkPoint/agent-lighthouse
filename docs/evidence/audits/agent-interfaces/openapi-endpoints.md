@@ -60,52 +60,16 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Implementation deviations
 
-**2026-08-29 — absence is `notApplicable`, not `fail`.** This dossier's own
-required fix asked for it in 2026-08-20: _"return `notApplicable()` (not
-`fail`) when no spec exists so the absence is charged exactly once, by 5.1"_.
-It is now done. A site that publishes no OpenAPI document gets no verdict from
-this audit and the audit carries no weight there.
-
-A menu with no items is still a finding: a document that exists and declares
-no operations still `fail`s, and that is the check the grade B is for.
-
-**Present and broken is not absent.** `paths` is classified in one place,
-`readOpenApiPaths` in `gatherers/openapi.ts`. It separates what it could read
-from what was defective, and the verdict follows what survives:
-
-- Nothing readable and something broken — `paths` is not a Paths Object, or
-  every entry under it is defective — is `malformed`. It `fail`s, and the
-  report names the defect in `found` instead of calling it "0 operations".
-- At least one readable operation is graded on the operations it read. The
-  defects are named in the message and counted in `found`; they do not change
-  the verdict. Released `main` passed such a document on its readable
-  operations and so does this audit.
-- Nothing broken and nothing declared is `empty`, and `{"/x": {}}` is legal
-  OpenAPI that lands there.
-
-A defect counts at either level: a non-object where a Path Item Object belongs
-and a non-object where an Operation Object belongs are the same error one level
-apart. Specification-extension keys (`x-`) are skipped rather than judged —
-OpenAPI 3.1 §4.8.8 lets them hold any value — and inside a path item only the
-eight method keys are judged, because `summary`, `parameters`, `servers` and
-`$ref` are legal members that are not Operation Objects.
-
-**The read moved to `packages/core/src/gatherers/openapi.ts`**, shared with the
-six other audits that had a byte-identical copy of it. The precondition lives
-beside the read; `gatherers/openapi.ts` records why it is not a runner
-precondition and not an `EvidenceKey`.
-
-**A 200 with an unparseable body is treated as an absence**, because it is a
-document this audit never read. `agent-interfaces/openapi-exists` reports a
-spec advertised but unreadable, once.
-
-**The decline says what was observed.** The shared `notApplicable` line reads
-"No readable OpenAPI document at /openapi.json". The read also comes back empty
-for a 200 whose body will not parse, and a site that publishes a broken
-document has not published none.
+- No OpenAPI document is `notApplicable`. `openapi-exists` charges the absence once.
+- A 200 whose body does not parse is also treated as absent. `openapi-exists` reports the unreadable spec.
+- A document that declares no operations fails. That is the check grade B is for.
+- `paths` is classified by `readOpenApiPaths` in `gatherers/openapi.ts`:
+  - nothing readable and something broken is `malformed` and fails, naming the defect;
+  - at least one readable operation is graded on what was read, with defects named but not changing the verdict;
+  - nothing broken and nothing declared is `empty`. `{"/x": {}}` lands there.
+- A non-object path item and a non-object operation are both defects. `x-` keys are skipped. Inside a path item only the eight method keys are judged.
 
 ## Deferred
 
-The rest of the required fix stands: the shared read is still JSON-only, so the
-YAML divergence from `openapi-exists` is unchanged, and `$ref` path items and
-OpenAPI 3.1 `webhooks` are still uncounted.
+- The shared read is JSON-only, so a YAML-only spec is invisible here.
+- `$ref` path items and OpenAPI 3.1 `webhooks` are not counted.

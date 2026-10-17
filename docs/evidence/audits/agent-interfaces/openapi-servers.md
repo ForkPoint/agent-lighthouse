@@ -51,35 +51,11 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Implementation deviations
 
-**2026-08-29 — absence is `notApplicable`, not `fail`.** The audit returned
-`fail` at `priority: 'high'` when the site published no OpenAPI document at
-all. That verdict was never documented here. This dossier's counter-evidence
-argues the opposite for the weaker case — a document that _exists_ with no
-`servers` key, which OpenAPI 3.1 makes legal and resolvable against the
-document's own location. No source says a site without an API is worse off for
-having no `servers` array, so the audit now returns `notApplicable` when no
-document is read, and carries no weight on that site.
-
-Every verdict on a document that exists is unchanged: no `servers` array,
-entries without a `url`, and an unreachable or non-2xx server URL all still
-`fail` or `warn` as before. That is the structural leg the grade B rests on.
-
-**The read moved to `packages/core/src/gatherers/openapi.ts`.** Seven audits
-carried a byte-identical private `getOpenApiSpec`. There is now one, and the
-precondition lives beside it with the reasoning for why it is not a runner
-precondition and not an `EvidenceKey`.
-
-**A 200 with an unparseable body is treated as an absence**, because it is a
-document this audit never read. `agent-interfaces/openapi-exists` is where a
-spec advertised but unreadable is reported, and it reports it once.
+- No OpenAPI document, or a 200 whose body does not parse, is `notApplicable`. `openapi-exists` reports an unreadable spec.
+- A document with no `servers` array still fails, though OpenAPI 3.1 defaults it to `/`. See Deferred.
+- Only the first server with a `url` is probed, with a GET on the base URL. 2xx and 3xx pass; any other status or no answer warns.
 
 ## Deferred
 
-The YAML blind spot stands: the shared read still looks only at
-`/openapi.json`, so a site serving `/openapi.yaml` is invisible to this audit
-while `openapi-exists` finds it. Widening the read moves verdicts for the whole
-family and is its own change.
-
-The liveness probe stands too. This dossier's required fix — probe a concrete
-path rather than the base URL, accept 401/403/405, skip templated and relative
-URLs — is untouched by this change.
+- The shared read is JSON-only, so a YAML-only spec is invisible here.
+- The dossier's required fix: treat a missing `servers` array as `/`, probe a concrete path rather than the base URL, accept 401, 403 and 405, and skip templated and relative URLs.

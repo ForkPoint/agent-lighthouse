@@ -32,16 +32,6 @@ With the handshake removed, one mechanism is left for a client to discover a mut
 - **[MCP Specification 2026-07-28 — Versioning and Compatibility](https://modelcontextprotocol.io/specification/2026-07-28/basic/versioning)** — Model Context Protocol (spec, URL verified 2026-08-20)
   - 'There is no negotiation handshake.' Terminology: Modern = 2026-07-28+ (per-request _meta); Legacy = 2025-11-25 and earlier (initialize handshake). Unsupported version MUST return error code -32022 with data.supported[] and data.requested. Verbatim compatibility matrix: Modern client + Legacy server = fails. Legacy client + Modern server = fails. Only dual-era implementations bridge. Extensions negotiated via capabilities.extensions map with mandatory reverse-DNS prefix.
 
-## Competitor coverage
-
-No commercial SEO/AEO tool sends malformed JSON-RPC to a customer's MCP endpoint. MCP Inspector connects with a valid version and has no negative-path suite. The MCP conformance/validator efforts in the ecosystem target server SDK authors, not deployed sites, and none surface this as a site-level score.
-
-## Implementation sketch
-
-Probe A (unsupported version): repeat the server/discover POST with `MCP-Protocol-Version: 1900-01-01` AND `_meta.io.modelcontextprotocol/protocolVersion: "1900-01-01"` (they must agree so the failure is unambiguous). Assert HTTP 400, `error.code === -32022`, `Array.isArray(error.data.supported)`, `error.data.supported.length >= 1`, every entry matching /^\d{4}-\d{2}-\d{2}$/, and `error.data.requested === "1900-01-01"`. Cross-check `data.supported` against the `supportedVersions` returned by server/discover — a mismatch between the two is its own finding.
-Probe B (header/body mismatch): POST with header `MCP-Protocol-Version: 2026-07-28` but `_meta` protocolVersion `2025-11-25`. Assert HTTP 400 with `error.code === -32020`. A 200 result here means the server never validates header against body.
-Probe C (missing header): POST with no MCP-Protocol-Version header. Per spec the server either treats it as 2025-03-26 (dual-era, acceptable — record it) or rejects it per server validation; a 200 modern result with no header is a validation gap. Scoring: Probe A failure = critical; Probe B failure = high; Probe C = informational.
-
 ## Example failure
 
 A SaaS vendor's server supports 2025-11-25 and 2026-07-28. Sent `1900-01-01`, its framework's generic error handler returns `500 Internal Server Error` with an HTML body. A client that prefers a hypothetical future revision receives no `supported` list, cannot downgrade, and marks the server permanently incompatible — despite 2026-07-28 being available on both ends. The same server also returns 200 for Probe B, so a gateway routing on the header while the app executes on the body can be made to disagree.
@@ -52,15 +42,9 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 
 ## Implementation deviations
 
-Recorded at graduation (2026-08-22, Plan 5 Task 30).
-
-- **Probe C's finding is a `warn`, not a separate informational tier.** The sketch grades probe C "informational". This audit is scored and ternary, so a headerless request answered with a modern result is reported as a review item; a headerless request that is rejected, or treated as 2025-03-26, is recorded in the message and changes nothing. Nothing about probe C can fail the audit on its own.
-- **The severities the sketch assigns are kept as failure priorities.** Probe A defects fail at `critical`, probe B's silent acceptance fails at `high`. A probe B rejection carrying the wrong error code is a `warn`, since the client still learns the request was refused.
-- **Probe C keeps `_meta` at 2025-03-26.** Sending the current revision in the body while omitting the header would make a rejection ambiguous between "no header" and "header/body disagreement", which is what probe B already isolates.
-- **`server/discover` comes from the shared per-scan cache** used by the other MCP audits, so the cross-check against `supportedVersions` costs no extra request.
-- **An unreachable endpoint is `notApplicable`, not a failure**, because reachability is what `agent-interfaces/mcp-modern-era-reachability` scores.
-
-## Deferred
-
-- Retrying with a revision from `data.supported` to prove the downgrade actually completes. The audit verifies the client is _told_ how to recover, which is the MUST; exercising the retry would double the probe count for a claim the error already settles.
-- Probing revisions between the impossible one and the current one to find the exact floor. `data.supported` is the server's own answer to that question, and it is already read and cross-checked.
+- A headerless request answered with a modern result is a `warn`. A headerless rejection, or a 2025-03-26 answer, is recorded and changes nothing.
+- Unsupported-version defects (probe A) fail at `critical`. Silent acceptance of a header/body mismatch (probe B) fails at `high`. A probe B rejection with the wrong error code warns.
+- The headerless probe keeps `_meta` at 2025-03-26, so its result is not confused with a header/body mismatch.
+- `server/discover` comes from the shared per-scan cache.
+- An unreachable endpoint is `notApplicable`. `mcp-modern-era-reachability` scores reachability.
+- The audit does not retry with a revision from `data.supported`. Being told how to recover is the MUST it checks.

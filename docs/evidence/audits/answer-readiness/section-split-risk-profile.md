@@ -32,14 +32,6 @@ Fixed-window splitters cut at a character/token budget, not at meaning. When a s
 - **[MCP Specification 2026-07-28 — Streamable HTTP Transport](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/streamable-http)** — Model Context Protocol (Anthropic / MCP Working Groups) (spec, URL verified 2026-08-20)
   - Revision 2026-07-28 removed the GET stream endpoint and protocol-level sessions (Mcp-Session-Id, Last-Event-ID). Server MUST expose one POST endpoint. Server MUST validate Origin; if Origin is present and invalid it MUST return 403 Forbidden. Every POST MUST carry MCP-Protocol-Version, Mcp-Method, and (for tools/call, resources/read, prompts/get) Mcp-Name headers; these are 'REQUIRED for compliance'. Header value MUST match the _meta body value or server MUST return 400 + JSON-RPC code -32020 HeaderMismatch. Unknown protocol version -> 400 + UnsupportedProtocolVersionError. Unknown method -> 404 + -32601. x-mcp-header constraints defined; clients MUST reject (exclude from tools/list) tools that violate them. Servers SHOULD send X-Accel-Buffering: no on SSE. GET/DELETE to endpoint SHOULD now return 405.
 
-## Competitor coverage
-
-SEO crawlers report word count and heading counts; none compute per-section token budgets against a retrieval chunk window. Lighthouse's agentic category has no content-segmentation audit. This is a fundamentally different metric from 'H1 present' or 'heading hierarchy valid' — a page can have perfect heading hierarchy and still be one 3,000-token h2.
-
-## Implementation sketch
-
-Static fetch. 1) Same h2/h3 segmentation as the referent-integrity check. 2) Token-count each section with a real BPE tokenizer (gpt-tokenizer npm) rather than chars/4. 3) Emit findings: (a) SPLIT — section tokens > 512; severity = ceil(tokens/512)-1 = number of headless tail chunks produced; (b) BLOB — body > 512 tokens with fewer than 2 h2 elements, meaning the entire page is cut at arbitrary offsets; (c) THIN — section < 25 tokens, too sparse to produce a discriminative embedding (common in nav-like h3 stubs); (d) ATOMIC-SPLIT — a single <table> or <ol> whose markdown serialization exceeds 512 tokens, so the header row / list preamble is lost from the tail. 4) Also report headingDistance: max characters between a heading and the end of its section, as the single actionable number. 5) Score = share of body tokens living in sections at or under the window.
-
 ## Example failure
 
 A 3,100-token 'Frequently asked questions' h2 with 22 questions as bold paragraphs rather than h3 headings. Split at 512 tokens it yields six chunks, five of which are headless bare Q&A text with no page or topic anchor. Promoting each question to h3 converts the same content into 22 self-anchored chunks.
@@ -50,68 +42,16 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 
 ## Implementation deviations
 
-The shipped audit is `answer-readiness/section-split-risk-profile`: the
-proposal's `answer-selection-forensics` domain is a research grouping, not one
-of the eight v2 categories.
-
-Token counts are real `o200k_base` counts via `gpt-tokenizer`, as the proposal
-requires, never `chars / 4`. A test pins one section's reported count against
-the tokenizer directly.
-
-All four findings ship: `SPLIT` with its headless-tail count
-(`ceil(tokens / 512) - 1`), `BLOB` for a body over the window with fewer than
-two `h2` elements, `THIN` under 25 tokens, and `ATOMIC-SPLIT` for a single
-`table`, `ol` or `ul` whose serialization exceeds the window on its own. `ul` is
-included alongside the proposal's `ol`: an unordered list of specifications
-loses its preamble the same way.
-
-The atomic serializer is a small GFM-shaped renderer written in place — rows as
-`| cell | cell |`, list items numbered. `answer-readiness/table-markdown-round-trip-loss`
-needs a fuller one for a different question; this one only needs a length.
-
-`headingDistance` is reported as the proposal's single actionable number: the
-largest number of characters between a heading and the end of its section.
-
-Score is the share of _section_ tokens living in sections at or under the
-window. A `BLOB` page scores 0 by definition — there are no sections, so none of
-its text is inside a headed chunk.
-
-Status bands: below 70% fails, below 90% or any section-level finding warns.
-Both are this implementation's; the proposal specifies the measurement, not the
-bands.
-
-A page under 512 tokens is `notApplicable`: a retriever never cuts it, so there
-is no split risk to profile.
-
-### THIN is reported, not judged (2026-10-06)
-
-Any finding turned the verdict into a warning, so one short card did. A small
-marketing site whose sections all fit the window warned on nine THIN feature
-cards and a newsletter prompt, with the message "Some of this page chunks
-badly". The claimed mechanism is a section the window cuts. A section under
-the window is never cut, and no cited source ties a short section to a lost
-answer. THIN stays in `found` and `details.findings` as information. Only
-SPLIT, ATOMIC-SPLIT and BLOB, or a score under the pass line, now warn.
-
-Verdicts that moved in the real-page corpus, each a page whose only findings
-were THIN: `barclays-co-uk-current-accounts`, `bbc-co-uk-article`,
-`cdc-gov-flu-about`, `cloudflare-com-plans`, `gov-uk-vehicle-tax`,
-`kubernetes-docs-pods`, `otto-de-category`, `stripe-com-pricing`,
-`theguardian-com-article`, `walmart-com-wall-200` and
-`wellsfargo-com-checking` warn → pass.
+- Token counts are real `o200k_base` counts from `gpt-tokenizer`, never `chars / 4`.
+- `ATOMIC-SPLIT` covers `ul` as well as `table` and `ol`. An unordered list loses its preamble the same way.
+- The atomic serializer is a small GFM-shaped renderer written in place. It only needs a length.
+- The score is the share of section tokens in sections at or under the window. A `BLOB` page scores 0, because none of its text sits in a headed chunk.
+- Below 70% fails. Below 90%, or any `SPLIT`, `ATOMIC-SPLIT` or `BLOB` finding, warns. Both bands are this implementation's own.
+- `THIN` is reported in `found` and `details.findings` but never sets the status. A section under the window is never cut.
+- A page under 512 tokens is `notApplicable`. A retriever never cuts it.
 
 ## Deferred
 
-- **The Evidence list.** It names two Model Context Protocol specification pages
-  (caching, streamable HTTP), which say nothing about chunking. The source the
-  mechanism cites, Azure's published 512-token default and its
-  heading-segmentation advice (S5), is not in the list. The list needs that
-  source restored, verified and stamped before the grade is reviewed.
-- **The real chunker.** Every pipeline splits slightly differently — some on
-  tokens, some on sentences, some with overlap. 512 tokens with heading
-  boundaries is the common denominator, and the finding survives the variation.
-- **Per-page assessment.** Only the entry page is profiled; section length is a
-  property of how a template is written.
-- **Overlap-aware scoring.** Pipelines that carry an overlap window recover part
-  of a headless tail. Modelling that needs the pipeline's parameters, which a
-  scanner does not have.
+- The Evidence list names two MCP specification pages that say nothing about chunking. The Azure source the mechanism cites (S5) needs restoring, verifying and stamping before the grade is reviewed.
+- Per-page assessment. Only `ctx.pages[0]` is profiled.
+- Overlap-aware scoring. It needs pipeline parameters a scanner does not have.

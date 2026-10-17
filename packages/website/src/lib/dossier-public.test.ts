@@ -36,21 +36,8 @@ describe("publicDossier", () => {
         "How it scores",
       ]);
       expect(result.withheld).toEqual(
-        expect.arrayContaining([
-          "Code review findings (2026-08-20, 11-agent pass)",
-          "Pass-rule correction (contradiction sweep, 2026-08-24)",
-          "Review history",
-        ]),
+        expect.arrayContaining(["Implementation deviations"]),
       );
-    });
-
-    // The prototype the design was measured against: 1600 words in the file,
-    // and the page contract is a minority of them.
-    it("publishes well under half of the prototype file", () => {
-      const source = read("access-crawl-control/agent-governance");
-      const { markdown } = publicDossier(source);
-      const words = (text: string) => text.trim().split(/\s+/).length;
-      expect(words(markdown) / words(source)).toBeLessThan(0.5);
     });
 
     it("fails closed on a heading it does not know", () => {

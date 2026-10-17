@@ -42,10 +42,8 @@ AI agents use HowTo schema to present step-by-step instructions as structured an
 
 **Counter-evidence:** Explicit and strong. Google deprecated the rich result: "As of September 13, Google Search no longer shows How-to rich results on desktop, which means this result type is now deprecated" (https://developers.google.com/search/blog/2023/08/howto-faq-changes, verified 2026-08-21). It then removed the documentation — "Removed the How-to structured data documentation, as this rich result is no longer shown in search results" — and the old documentation URL now 301-redirects to an anchor Google named `#how-to-deprecation` (https://developers.google.com/search/updates#how-to-deprecation, verified 2026-08-21). Google also states that unused markup is inert: "Structured data that's not being used does not cause problems for Search, but also has no visible effects in Google Search." The assistant path is gone as well: `developers.google.com/assistant/content/howto` returns HTTP 404, and the surviving "Actions from web content" overview lists only FAQs, Media, News and Podcasts. Beyond Google: Microsoft's NLWeb codebase contains zero mentions of HowTo, Apple's Applebot documentation names only `isAccessibleForFree`, and OpenAI's commerce specification excludes JSON-LD sources entirely. The GEO-16 finding supports emitting structured data in general; it does not isolate this type.
 
-## Adversarial redemption research (2026-08-21)
+## Deferred
 
-This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/deletions/structured-data/howto-schema.md](../../deletions/structured-data/howto-schema.md). Outcome: **dead-but-informative-candidate**, grade C.
-
-## Implementation deviations (v7 P3, 2026-10-07)
-
-The added labels preserve the old general-content population while classification changes. This is not the final feature-gate migration. The evidence grade, tier, weight, and audit ID stay unchanged.
+- The general and article list is a broad list kept while classification
+  changes. Its review against the sequential-heading intent test is open in
+  `docs/architecture/audits.md#511-default-scope-and-page-type-restrictions`.

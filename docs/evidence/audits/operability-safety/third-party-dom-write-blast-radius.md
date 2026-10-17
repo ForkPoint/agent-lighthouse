@@ -38,14 +38,6 @@ An agent reads the page after load, so every origin that can execute script on i
 - **[Piloting Claude for Chrome](https://claude.com/blog/claude-for-chrome)** — Anthropic (vendor-doc, URL verified 2026-08-20)
   - Red-team attack success rate 23.6% in autonomous browsing mode, 11.2% after mitigations; a browser-specific challenge set went 35.7% -> 0%. Names the exact vectors: 'hidden malicious form fields in a webpage's Document Object Model (DOM) invisible to humans, and other hard-to-catch injections such as through the URL text and tab title that only an agent might see.' This is the vendor-documented basis for auditing hidden inputs and a11y/metadata attributes.
 
-## Competitor coverage
-
-CSP and SRI presence are primitives already covered by Mozilla Observatory, securityheaders.com, and Lighthouse's best-practices CSP-XSS audit — the underlying checks are commodity, and this proposal should be graded honestly as partial-overlap rather than novel. What is not shipped anywhere: framing the metric as a count of independent parties who can write into the agent-visible DOM, folding in unsandboxed text-bearing iframes, and reporting the named origin list as agent-safety exposure rather than as an XSS grade.
-
-## Implementation sketch
-
-Parse Content-Security-Policy from both the response header and <meta http-equiv>. Evaluate script-src (falling back to default-src): does it exist; does it use nonce-, sha256/384/512-, or 'strict-dynamic'; does it contain 'unsafe-inline', 'unsafe-eval', a bare *, data:, or https: as a scheme-wide source (all of which reduce it to decorative). Enumerate <script src> and <link rel=stylesheet> whose host differs in eTLD+1 from the document, group by registrable domain, and record which carry integrity=. Enumerate cross-origin <iframe> and record whether each has a sandbox attribute and whether its dimensions suggest rendered text rather than a tracking pixel. Score: FAIL when >=1 third-party script origin exists AND script-src is absent or non-constraining AND no third-party script carries integrity. WARN by tier on the count of uncontrolled origins (1–3 / 4–9 / 10+). Always emit the actual origin list — the deliverable is 'these eleven companies can each write text into what agents read on your site', which is the finding a site owner can act on. Headless-browser tier extends this to tags injected at runtime by tag managers, which is where the real count usually lives.
-
 ## Example failure
 
 A media site loads 14 third-party tags, no CSP, no SRI. One ad-tech vendor is compromised and its script appends an off-screen div to every article. The publisher's own monitoring shows nothing; every AI summary of every article on the domain carries the attacker's sentence until the vendor notices.
@@ -56,84 +48,17 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 
 ## Implementation deviations
 
-The shipped audit is `operability-safety/third-party-dom-write-blast-radius`, in
-the `operability-safety` category: the proposal's `injection-safety` domain is a
-research grouping, not one of the eight v2 categories.
-
-The CSP is read from the response header first and from `<meta http-equiv>`
-second. `security-header-hygiene` used to accept the same two delivery paths;
-since the contradiction sweep of 2026-08-24 narrowed it to security.txt, this
-audit is the only CSP reader in the registry. Nothing was ever imported from
-that audit: it asked whether the headers were well-formed, this one asks how
-many companies can write to the page.
-
-"Constraining" is decided as CSP3 decides it: a nonce, a hash or
-`strict-dynamic` constrains, and so does a plain host allowlist. A source list
-containing `https:`, `http:`, `data:`, `blob:` or `*` does not, and neither does
-`'unsafe-inline'` with no nonce or hash beside it — that policy is present in
-the response and decorative in effect.
-
-Origins are grouped by eTLD+1 using a short suffix list rather than a bundled
-Public Suffix List snapshot. `cdn.vendor.com` and `static.vendor.com` are one company
-with write access, so they are one origin.
-
-Cross-origin frames are reported only when they are large enough to render text.
-A frame under 50 pixels in either declared direction is a beacon, not a surface
-an agent reads.
-
-The `found` line always ends with "runtime-injected tags not counted", so the
-number is not read as the whole list.
-
-- 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. It read the script origins on the scanned pages, and
-  `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain
-  a broker's page from another host, on a walled or throttled origin nothing
-  at all. It now consults `scanReadTheSite()` and returns `notApplicable`
-  carrying the gate's own reason.
-  Verdicts that moved on the five nothing-obtained contract states: redirected
-  away pass → na, non-HTML homepage pass → na, HTTP 200 bot challenge pass →
-  na. Found by `packages/core/src/tests/hostile-state-contract.test.ts`.
-- 2026-08-28 — `requires` drops `rendered-body` and `sample-adequate` and is now
-  `['origin-reachable', 'unblocked-fetches']`, and the zero-origin branch gains
-  a guard. Every origin the served HTML names is counted whether or not the
-  body renders, so a page that ships a vendor script statically is still
-  reported and gating that on rendered text withheld a real finding. The empty
-  census is the half a shell cannot support: same-origin resources are
-  discarded from the survey, a JS shell's script tags are its own bundle, and
-  the vendors an agent then meets are injected by that bundle at runtime —
-  which the `found` string already says this census does not count. Passing
-  such a page would assert "nothing but the site itself writes what an agent
-  reads" on exactly the page class where a static census is emptiest, so that
-  branch now consults `scanReadPageText()` and returns `notApplicable`. Verdict
-  on the shell contract state: pass → na, and under the evidence gate the audit
-  runs there instead of being skipped. The exemption is recorded in
-  `scripts/lib/requires-analysis.mjs`. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
-
-### Origins are hosts, not owners (2026-10-06)
-
-A large retail site loads its own scripts from a brand asset CDN on a
-separate registrable domain. The census counts it, and the fail message
-called every counted origin "a separate company". The warn message said the
-same. The census measures registrable domains, and a domain is a host, not
-proof of an owner. The SRI threat model this audit rests on is about the
-host. Both messages now say "a separate host". The count, tiers and verdicts
-are unchanged.
+- The CSP is read from the response header first and from `<meta http-equiv>` second.
+- "Constraining" follows CSP3. A nonce, a hash, `strict-dynamic` or a plain host allowlist constrains. A source list with `https:`, `http:`, `data:`, `blob:` or `*` does not. Neither does `'unsafe-inline'` with no nonce or hash beside it.
+- Origins are grouped by eTLD+1 with a short suffix list, not a bundled Public Suffix List. `cdn.vendor.com` and `static.vendor.com` count as one origin.
+- A cross-origin frame under 50 pixels in either declared direction is a beacon and is not reported.
+- The `found` line always ends with "runtime-injected tags not counted".
+- `requires` is `origin-reachable` and `unblocked-fetches` only. Every origin the served HTML names is counted even when the body does not render. An empty census on a page with no readable text returns `notApplicable`: a JS shell's vendors arrive at runtime. The exemption is recorded in `scripts/lib/requires-analysis.mjs`.
+- Messages call each counted origin "a separate host", not "a separate company". A registrable domain is a host, not proof of an owner.
 
 ## Deferred
 
-- **Runtime tag-manager tier.** Tags a manager injects after load are not in the
-  served HTML, and that is usually where most of the origin list lives.
-  Enumerating them needs a live browser.
-- **Whether a script actually writes to the DOM.** Every third-party script
-  _can_; proving which ones _do_ means executing them. The count is a capability
-  measure, which is what the finding claims.
-- **Report-only policies.** A `Content-Security-Policy-Report-Only` header
-  enforces nothing, so it is not read as a constraint and not reported as one.
-- **First-party CDNs on another registrable domain.** No cheap, documented
-  signal ties two registrable domains to one owner. Related Website Sets was
-  the only declaration, and Chrome announced its retirement in October 2025.
-  Shared hosting of the site's documents, `crossorigin`, a CSP allowlist and a
-  matching name across suffixes all fail on ordinary vendor setups. A brand
-  CDN stays counted. It is a separate host and supply chain, which is what
-  the finding measures.
+- Runtime tag-manager tier. Tags injected after load are not in the served HTML. Counting them needs a live browser.
+- Whether a script actually writes to the DOM. The count is a capability measure, which is what the finding claims.
+- `Content-Security-Policy-Report-Only` is not read. It enforces nothing.
+- First-party CDNs on another registrable domain stay counted. No cheap, documented signal ties two registrable domains to one owner.

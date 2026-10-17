@@ -53,28 +53,24 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Counter-evidence:** The single strongest piece of counter-evidence cuts directly at how this audit is applied. Google: "If the entity that's being reviewed controls the reviews about itself, their pages that use `LocalBusiness` or any other type of `Organization` structured data are ineligible for star review feature." A first-party testimonial block marked up as Review or AggregateRating on a company's own Organization or LocalBusiness page therefore has **no** documented consumer path. The proven mechanism holds for third-party-reviewed host entities such as Product, Recipe and Book, not for self-serving reviews — and self-serving reviews are exactly what the audit's body-text trigger fires on. Google separately disclaims any special schema requirement for AI Overviews and AI Mode — https://developers.google.com/search/docs/appearance/ai-features (verified 2026-08-21) — and a matched difference-in-differences study of 1,885 pages adding JSON-LD found no AI-citation uplift on any platform — https://ahrefs.com/blog/schema-ai-citations/ (verified 2026-08-21)
 
-## The merge (Plan 4, Task 8, 2026-08-22)
+## Implementation deviations
 
-3.13 and 3.23 measured the same property with two different gates, so the same markup could pass one and fail the other — 3.23's dossier calls that out as "a visibly contradictory report". 3.23's required fix names the destination precisely: _"Merge into 3.13 … Keep a single audit that: gates on a structural review-content signal, scopes the product case to `pageType === 'product'` and to Product-attached ratings, requires `ratingValue` plus `reviewCount > 0` (or a non-empty `review` array), and returns `notApplicable` for sites with no reviewable entities."_ All four clauses land here.
-
-**The applicability gate is structural.** The old trigger tested `page.$('body').text()` for `/\breview/i`, `/\brating/i` or `/\bstars?\b/i` — true on essentially every English commerce page (a "Write a review" link, a cookie banner's "review your preferences", a "Reviews" footer item) and false on every German, French, Spanish or Japanese one. It is replaced by ≥3 repeated review/testimonial components, a rendered star-rating widget, microdata review items, or the presence of review markup of any quality. Where nothing at all is found the audit now returns `na` instead of the vacuous `warn` (0.5) that punished sites with no review programme.
-
-**Detection requires substance.** `obj['aggregateRating'] || obj['review']` accepted `"review": []` — the exact shape Shopify, Judge.me and Yotpo emit on a product with zero reviews — and `"aggregateRating": {}`, which 3.23 accepted too via `typeof … === 'object'`. Both now fail. A rating counts only with `ratingValue` plus a non-zero `reviewCount` or `ratingCount`, which is Google's stated requirement, and a review counts only when it carries `reviewRating`, `reviewBody` or `author`.
-
-**The DOM is no longer serialised.** The old class-name check ran three regexes over `page.$('body').html()` — a full re-serialisation of the document per page, per scan, purely to read class attributes. The merged audit reads `class` off `[class]` elements directly.
-
-### Absorbed evidence — product-reviews (3.23)
-
-3.23's dossier is kept verbatim at [merged/structured-data/product-reviews.md](../../merged/structured-data/product-reviews.md) (grade **A**). Its evidence is the product half of the same Google review-snippet mechanism 3.13 grades on — `ratingValue` required, "at least one of `ratingCount` or `reviewCount` is required", `Product` among the supported host types — reinforced by [Product snippet](https://developers.google.com/search/docs/appearance/structured-data/product-snippet) and [merchant listing](https://developers.google.com/search/docs/appearance/structured-data/merchant-listing) markup and by OpenAI's product feed carrying `star_rating` and `review_count` per item.
-
-Its grading closes with the sentence that shapes the merged implementation: _"The grade applies to a Product-attached rating with a non-empty count, not to the presence of any `aggregateRating` object anywhere on the site."_ So the product case is scoped: when the scan contains `pageType === 'product'` pages and none of them carries a rating on its own Product node, the result is a `warn` that says so, instead of the false `pass` a single homepage "4.8 on Trustpilot" badge used to buy for a 500-SKU catalogue. That also answers the shared counter-evidence — Google excludes self-controlled `Organization`/`LocalBusiness` reviews from the star treatment, and a site-wide badge is exactly that.
-
-### Grade decision: stays **A**, tier `scored`, weight 1.0
-
-Both audits grade **A** on the same proven consumer path (Google parses `ratingValue` + `ratingCount`/`reviewCount` and renders a review snippet; Applebot extracts `AggregateRating` for Siri and Spotlight). The absorbed evidence is not _stronger_, it is the same mechanism seen from the Product side, so the grade does not move: **A**, `tier: scored`, `weightForGrade('A', 'scored')` = **1.0**. What the merge changes is accuracy, not price — the A-grade mechanism is now actually the thing being measured (rating value plus non-zero count, on the host entity Google supports), where before a truthy empty array satisfied it.
-
-### Deviations
-
-- **A rating on `Organization`/`LocalBusiness` still passes on non-product pages.** Google's self-serving-review exclusion is real, but demoting every first-party testimonial block to a failure would punish sites that publish their reviews correctly for other consumers; the product-page scoping is where the exclusion actually bites, and that is where it is enforced.
-- **`applicablePageTypes` stays `['homepage', 'product']`** rather than gaining `general` (then called `content`). The audit itself reads every crawled page (the product scoping needs them), so the field only steers page-type reporting.
-- **Repeated-component detection is class-name based** (`testimonial`, `review-item`/`review-card`/`review-body`, `customer-review`, plus microdata `[itemtype*="Review"]`/`[itemprop="review"]`). A review list rendered with entirely semantic class names and no microdata or JSON-LD is invisible to it — which yields `na`, never a false failure.
+- This audit absorbed the former `product-reviews` audit. Its record is in
+  [merged/structured-data/product-reviews.md](../../merged/structured-data/product-reviews.md).
+- The applicability gate is structural: at least 3 repeated review or
+  testimonial components, a star-rating widget, microdata review items, or
+  review markup of any quality. With none, the result is `notApplicable`.
+- A rating counts only with `ratingValue` plus a non-zero `reviewCount` or
+  `ratingCount`. A review counts only with `reviewRating`, `reviewBody` or
+  `author`. An empty `review` array or an empty `aggregateRating` does not
+  count.
+- On product pages, ratings that never sit on a Product node warn. A product
+  page is one whose Product carries a rating or whose URL matches a product
+  path pattern.
+- A rating on `Organization` or `LocalBusiness` still passes on non-product
+  pages. Google's self-serving-review exclusion is enforced only on product
+  pages.
+- The audit runs on homepage and product pages.
+- Repeated-component detection is class-name based, plus microdata review
+  items. A review list with no matching class, microdata or JSON-LD reads as
+  `notApplicable`, never as a failure.

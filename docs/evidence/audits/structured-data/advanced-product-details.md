@@ -44,51 +44,28 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Counter-evidence:** The three measured properties are not equally proven. `availability` has an explicit documented extraction-and-use path. `brand` and `category` are only listed as recommended, and no vendor documents a feature that `category` powers — Google's own Product Category codes are a Merchant Center feed attribute. Making `category` pass-blocking therefore exceeds the evidence. (This corrects the code-review note above, which said `category` is absent from Google's Product documentation. It is present, as a recommended property.) schema.org places `availability` on `Offer` rather than on `Product`, so crediting `Product.availability` rewards invalid markup (https://developers.google.com/search/docs/appearance/structured-data/merchant-listing). And Google states of its AI features: "There's also no special schema.org structured data that you need to add" (https://developers.google.com/search/docs/appearance/ai-features, verified 2026-08-21), so the "filtered AI recommendations" framing has no documented consumer; the proven consumer is Google's shopping pipeline.
 
-## Ported from 3.8 (Plan 4, Task 9, 2026-08-22)
-
-v1 3.8 (`service-product-schema`) measured Service and Product shapes through one node list and branched on `isProduct` for the rest of the check. Its required fix sends the Product half here: _"Merge the Product half into 3.22 (Advanced product details), which already checks brand/category/availability on Product nodes and shares the same type list as 3.21/3.24."_ The Service half survives as [`structured-data/service-schema`](./service-schema.md), narrowed to `Service`/`ProfessionalService`; its dossier records the other side of this split.
-
-### What ported: the `name` requirement
-
-3.8 required `name` on the Product node. This audit never checked it — it went straight to brand, category and availability. That gap matters because the three properties this audit already measures are all **recommended** in Google's merchant-listing table, while `name` is one of the four it marks **required** (_"required are only Product `name`, `image`, `offers` and the Offer's price/priceCurrency pair"_, quoted in the Graded evidence section above). A Product with no name cannot be matched to a catalog entry at all, so brand, category and availability have nothing to attach to.
-
-That asymmetry drives the verdict shape, which is otherwise unchanged:
-
-| Product node                                                     | Verdict                               |
-| :--------------------------------------------------------------- | :------------------------------------ |
-| no Product node at all                                           | `fail` (unchanged)                    |
-| no `name`, whatever else is present                              | `fail`, naming `name` first — **new** |
-| `name` present, all three of brand/category/availability missing | `fail` (unchanged)                    |
-| `name` present, one or two missing                               | `warn` (unchanged)                    |
-| all four present                                                 | `pass` (unchanged)                    |
-
-The wider type list (`Product`, `IndividualProduct`, `ProductModel`) is this audit's, and the ported requirement applies across all of it — 3.8's narrower `['Service','Product']` list was itself one of its recorded defects.
-
-### What did not port, and why
-
-- **3.8's `description` requirement.** Its own review recorded this as invented: _"schema.org does not require it and Google's Product guidance does not either. Well-formed Product blocks that omit description are permanently warned for a non-issue."_ Porting it would import a known false positive. A test asserts a complete Product without `description` still passes.
-- **3.8's `brand || manufacturer || provider || offers` fallback.** 3.8 accepted an Offer or a provider in place of a brand. `brand` is the property Google's table names, and an Offer is not a brand; accepting one would weaken a check this audit already has right. A test asserts `offers` alone still warns for a missing brand. (`manufacturer` remains accepted — that was already this audit's behaviour, and it is a brand-equivalent.)
-- **3.8's `serviceProducts[0]` node selection.** This audit has the identical `products[0]` defect, listed in its own required fix; the split neither fixes nor worsens it (see Deviations).
-
-### Grade decision: stays **A**, tier `scored`, weight 1.0
-
-Both audits were graded **A** on the same commerce-markup record — Google Merchant Center's website crawl and automatic item updates reading Product/Offer markup into the Shopping Graph that AI Mode shopping queries. Absorbing the Product half adds no new consumer and removes none, and the ported property (`name`) sits inside the strongest part of that record, the required-property table. So: **A**, `tier: scored`, `weightForGrade('A', 'scored')` = **1.0**, unchanged. What changes for a scanned site is that a nameless Product is now caught here instead of being warned about, in different words, by a second audit.
-
-### Deviations — standing required-fix items not addressed by this split
-
-- **`products[0]` across all pages is still the selection rule.** Adopting per-product-page selection with an N/M ratio is this audit's own standing required fix (shared with 3.21), not part of the fold; 3.8 had the same defect, so the split neither adds nor removes it. Note the contrast with `service-schema`, where the equivalent clause _was_ in that half's required fix and did land.
-- **`category` is still pass-blocking**, though the graded evidence above records it as the weakest of the three and only _recommended_. Demoting it is a separate documented decision, not a port.
-- **`Product.availability` is still accepted** even though schema.org puts `ItemAvailability` on `Offer`, and `"offers": "https://site/#offer"` (an `@id` reference) still reads as no availability. Both are pre-existing items on this audit's fix list.
-
 ## Implementation deviations
 
-- **ProductGroup variants are read as products.** Products come from the
-  shared `resolveProducts` in `packages/core/src/product-schema.ts`. Each
-  `hasVariant` entry (or a Product joined through `isVariantOf` or
-  `inProductGroupWithID`) is read with the group's shared properties beneath
-  its own, as Google's product variant documentation lays them out
-  (https://developers.google.com/search/docs/appearance/structured-data/product-variants,
-  verified 2026-10-09). A `ProductGroup` with no variants is read as the
-  product. Before this, a brand or category declared once on the group was
-  invisible, and a page whose only top-level product was a `ProductGroup`
-  read as having no product.
+- This audit holds the Product half of the former `service-product-schema`
+  check. The Service half is [`structured-data/service-schema`](./service-schema.md).
+- `name` is required. Google's merchant-listing table marks it required, so a
+  Product without it fails whatever else is present, and `name` is named
+  first. Brand, category and availability are recommended: one or two missing
+  warns, all three missing fails.
+- `description` is not required. Neither schema.org nor Google requires it.
+- `brand` or `manufacturer` satisfies the brand check. An `offers` or
+  `provider` node does not.
+- Products come from the shared `resolveProducts` in
+  `packages/core/src/product-schema.ts`. Each `ProductGroup` variant is read
+  with the group's shared properties beneath its own. A `ProductGroup` with no
+  variants is read as the product.
+
+## Deferred
+
+- The audit judges `products[0]` across all pages. Per-product-page selection
+  with an N/M ratio is not implemented.
+- `category` is still pass-blocking, though the evidence rates it the weakest
+  of the three.
+- `Product.availability` is still credited, though schema.org puts
+  availability on `Offer`. An `offers` given as an `@id` reference reads as no
+  availability.

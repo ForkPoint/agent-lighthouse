@@ -53,43 +53,14 @@ AI agents chunk and outline page content by reading real <h1>–<h6> tags. A pag
 
 ## Implementation deviations
 
-- 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. It read the heading-like text on the scanned pages,
-  and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked
-  domain a broker's page from another host, on a walled or throttled origin
-  nothing at all. It now consults `scanReadTheSite()` and returns
-  `notApplicable` carrying the gate's own reason.
-  Verdicts that moved on the five nothing-obtained contract states: walled
-  pass → na, throttled pass → na, redirected away pass → na, non-HTML homepage
-  pass → na, HTTP 200 bot challenge pass → na. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
-- 2026-08-28 — heading-like text is body text, and a JS shell serves none, so
-  such a page holds neither fake headings nor real ones to have got right. The
-  empty-findings branch now returns `notApplicable` when `scanReadPageText()` is
-  false; every reported fake heading still fails as before. Verdict moved on the
-  shell contract state: pass → na. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
+- With no findings, the audit consults `scanReadPageText()`. A page that served no readable text returns `notApplicable`, not a pass.
+- Text made only of figures and punctuation (a statistic, a rating, a price) is a value, not a title, and is skipped.
+- Excluded ancestors: `nav`, `footer`, `header`, `aside`, `button`, `a`, `label`, `figcaption`, `summary`, `dialog`, `[role=dialog]`, `[role=navigation]`, `[role=banner]`.
+- Subtrees hidden from readers are skipped through the shared `hiddenFromReaders()` helper.
+- Bold text inside a `section` or `article` that already has a real heading is emphasis, and is skipped.
 
-- 2026-10-06 — three parts of the required fix above now ship. A small
-  marketing site failed on seven hits, and none was a missing heading: bold
-  statistics (`25,000+`, `4.9 / 5`, `87%`), brand labels in interface chrome,
-  and a label inside a hidden dialog.
-  - Text made only of figures and punctuation is a value, not a title, and is
-    skipped.
-  - The excluded ancestors grow to the list the fix names: `header`, `aside`,
-    `label`, `figcaption`, `summary`, `dialog`, `[role=dialog]`,
-    `[role=navigation]` and `[role=banner]`, beside `nav`, `footer`, `button`
-    and `a`.
-  - Subtrees the markup hides (`hidden`, `aria-hidden="true"`, inline
-    `display:none`, a closed `<dialog>`, `<template>`) are skipped, through the
-    shared `hiddenFromReaders()` helper.
-  - Bold text inside a `section` or `article` that already has a real heading
-    is emphasis within that section. The fix flags only "where a heading is
-    structurally missing", so it is skipped.
-    Five real-page corpus verdicts moved, every one away from a false hit:
-    prices on a plans page (fail → warn; one "Custom" price label remains),
-    syntax-highlighted code tokens (fail → pass), menu headlines in a retail
-    header (fail → pass), template placeholders (warn → pass), and inline
-    `<strong>` emphasis in documentation prose (fail → pass).
-    Still open from the required fix: whole-token class matching, the extra
-    class vocabulary, and a per-page threshold.
+## Deferred
+
+- Whole-token class matching. `FAKE_HEADING_CLASS` still matches substrings.
+- A wider class vocabulary for heading impersonators.
+- A per-page threshold. Five findings across the whole sample fail.

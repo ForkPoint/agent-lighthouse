@@ -43,6 +43,9 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Counter-evidence:** The audit's stated mechanism — that AI agents use BreadcrumbList to "navigate between parent/child pages" — has no documented consumer; no LLM or assistant vendor names BreadcrumbList, and Apple's Applebot type list does not include it. Google's own guidance contradicts the audit's URL-depth applicability gate: "We recommend providing breadcrumbs that represent a typical user path to a page, instead of mirroring the URL structure." Google also disclaims any special schema requirement for AI Overviews and AI Mode — https://developers.google.com/search/docs/appearance/ai-features (verified 2026-08-21). A controlled fetch test found that data present only in JSON-LD was read by 0 of 5 AI systems on direct retrieval — https://www.searchviu.com/en/schema-markup-and-ai-in-2025-what-chatgpt-claude-perplexity-gemini-really-see/ (verified 2026-08-21)
 
-## Implementation deviations (v7 P3, 2026-10-07)
+## Deferred
 
-The added labels preserve the old general-content population while classification changes. This is not the final feature-gate migration. The evidence grade, tier, weight, and audit ID stay unchanged.
+- The category, product, general and article list is a broad list kept while
+  classification changes. Its review against the documented hierarchy
+  obligation is open in
+  `docs/architecture/audits.md#511-default-scope-and-page-type-restrictions`.
