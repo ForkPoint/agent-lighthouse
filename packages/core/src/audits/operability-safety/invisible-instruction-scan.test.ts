@@ -188,7 +188,10 @@ describe("InvisibleInstructionScanAudit", () => {
   });
 
   // Each text element used to re-test every ancestor against every rule:
-  // 8-11 s on a large storefront page, with the event loop blocked.
+  // 8-11 s on a large storefront page, with the event loop blocked. On this
+  // page the old matching takes about 4.3 s and the fix about 0.2 s. The
+  // limit sits between them with room for a loaded CI machine; at 1.5 s it
+  // failed once under parallel load.
   it("judges a deep page with many rules in bounded time", async () => {
     const rules = Array.from(
       { length: 400 },
@@ -208,7 +211,7 @@ describe("InvisibleInstructionScanAudit", () => {
       '<link rel="stylesheet" href="/s.css">',
       { "https://example.test/s.css": `${rules}\n${hiding}` },
     );
-    expect(performance.now() - started).toBeLessThan(1_500);
+    expect(performance.now() - started).toBeLessThan(3_000);
     expect(result.status).toBe(CheckStatus.Pass);
   });
 
