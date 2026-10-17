@@ -294,6 +294,56 @@ describe("detectWafProtection", () => {
       expect(waf).toBeNull();
     });
 
+    // A homepage that answered 200 but yielded no readable page was not read.
+    // Its root files are then the only evidence of why.
+    it("reads root files when the homepage answered but no page was read", () => {
+      const waf = detectWafProtection(
+        URL,
+        result({ status: 200, body: "" }),
+        {
+          "/robots.txt": result({
+            status: 403,
+            headers: { "x-datadome": "protected" },
+          }),
+        },
+        0,
+      );
+      expect(waf?.provider).toBe(WafProvider.Datadome);
+    });
+
+    // Every provider serves 429, so a throttled sitemap beside a homepage
+    // that was read says nothing about the scan.
+    it("ignores a 429 on a root file when the homepage was read", () => {
+      expect(
+        detectWafProtection(
+          URL,
+          result({ body: "<html>Shop</html>" }),
+          { "/sitemap.xml": result({ status: 429 }) },
+          3,
+        ),
+      ).toBeNull();
+    });
+
+    // The same S3 document that is ignored beside a read homepage still does
+    // not name Akamai when the homepage failed: the phrase needs an Akamai
+    // header.
+    it("does not name Akamai for an S3 AccessDenied root file when the homepage failed", () => {
+      const waf = detectWafProtection(
+        URL,
+        result({ status: 404 }),
+        {
+          "/.well-known/security.txt": result({
+            status: 403,
+            headers: { server: "AmazonS3" },
+            contentType: "application/xml",
+            body: "<Error><Code>AccessDenied</Code><Message>Access Denied</Message></Error>",
+          }),
+        },
+        0,
+      );
+      expect(waf).toBeNull();
+    });
+
     it("returns null when neither the homepage nor a root file is walled", () => {
       expect(
         detectWafProtection(
@@ -444,9 +494,6 @@ describe("detectWafProtection", () => {
     });
   });
 
-  // Storefront platforms redirect a refused client to a challenge route. Its
-  // page can answer 404 with the shop's own error page, or 200 with a
-  // script-only challenge, so neither its status nor its text names the wall.
   describe("AWS WAF", () => {
     it.each([
       ["challenge", 202],
@@ -478,8 +525,55 @@ describe("detectWafProtection", () => {
       );
       expect(waf).toBeNull();
     });
+
+    // The corpus case: an empty 202 and the header, nothing else. Before the
+    // header was read this fell through to a page with too little text.
+    it("names an empty 202 challenge on a homepage the scan could not read", () => {
+      const waf = onHomepage(
+        {
+          status: 202,
+          body: "",
+          headers: { "x-amzn-waf-action": "challenge" },
+        },
+        0,
+      );
+      expect(waf).toEqual({
+        isBlocked: true,
+        provider: WafProvider.AwsWaf,
+        name: "AWS WAF",
+        reason: "challenge rule action, HTTP 202",
+        statusCode: 202,
+      });
+    });
+
+    it("reads the action whatever its case", () => {
+      expect(
+        onHomepage(
+          { status: 405, headers: { "x-amzn-waf-action": "CAPTCHA" } },
+          0,
+        )?.reason,
+      ).toBe("captcha rule action, HTTP 405");
+    });
+
+    it("reads the header on a root file when the homepage failed", () => {
+      const waf = detectWafProtection(
+        URL,
+        result({ status: 0, error: "read ECONNRESET" }),
+        {
+          "/robots.txt": result({
+            status: 202,
+            headers: { "x-amzn-waf-action": "challenge" },
+          }),
+        },
+        0,
+      );
+      expect(waf?.provider).toBe(WafProvider.AwsWaf);
+    });
   });
 
+  // Storefront platforms redirect a refused client to a challenge route. Its
+  // page can answer 404 with the shop's own error page, or 200 with a
+  // script-only challenge, so neither its status nor its text names the wall.
   describe("challenge routes", () => {
     it("names PerimeterX for a chain that ends on the PX-Show route", () => {
       const wall = onHomepage(
@@ -519,6 +613,43 @@ describe("detectWafProtection", () => {
         }),
       ).toBeNull();
     });
+
+    // A result with no final URL is one the fetcher did not follow; the
+    // requested URL is then where the chain ended.
+    it("reads the requested URL when no final URL was recorded", () => {
+      const wall = onHomepage(
+        {
+          url: `${URL}/DDUser-Challenge`,
+          finalUrl: "",
+          body: "<p>Please enable JS</p>",
+        },
+        0,
+      );
+      expect(wall?.provider).toBe(WafProvider.Datadome);
+      expect(wall?.reason).toBe("redirected to the DataDome challenge route");
+    });
+
+    // An unparsable URL proves no route, and must not stop the vendor checks
+    // that read the same response.
+    it("goes on to the vendor checks when the URL cannot be parsed", () => {
+      expect(
+        onHomepage({ finalUrl: "not a url", url: "not a url" }, 0),
+      ).toBeNull();
+      expect(
+        onHomepage(
+          {
+            finalUrl: "not a url",
+            url: "not a url",
+            status: 403,
+            headers: { "x-datadome": "protected" },
+          },
+          0,
+        ),
+      ).toMatchObject({
+        provider: WafProvider.Datadome,
+        reason: "DataDome anti-bot challenge detected",
+      });
+    });
   });
 
   describe("Akamai block page served with HTTP 200", () => {
@@ -556,6 +687,46 @@ describe("detectWafProtection", () => {
       ).toBeNull();
     });
 
+    it("detects it from the akamai-request-bc header alone", () => {
+      const waf = onHomepage({
+        ...geoBlock,
+        headers: { "akamai-request-bc": "[a=1]" },
+      });
+      expect(waf?.provider).toBe(WafProvider.Akamai);
+    });
+
+    it("names a soft block, not a location refusal, when the page gives no location", () => {
+      const waf = onHomepage({
+        ...geoBlock,
+        body: "<html><head><title>Access Denied</title></head><body><h1>Access Denied</h1><p>Reference #18.1a2b3c</p></body></html>",
+      });
+      expect(waf?.reason).toBe("Akamai HTTP 200 soft block page");
+    });
+
+    // The title alone does not make a block page. A long article that
+    // happens to be titled "Access Denied" is a page the scan read.
+    it("does not flag a long page titled Access Denied", () => {
+      expect(
+        onHomepage({
+          status: 200,
+          headers: { server: "AkamaiGHost" },
+          body: `<html><head><title>Access Denied</title></head><body><article>${"A film review about a locked door and the people outside it. ".repeat(20)}</article></body></html>`,
+        }),
+      ).toBeNull();
+    });
+
+    it("reads access denied as a soft block beside an akamai-grn header", () => {
+      const waf = onHomepage({
+        status: 200,
+        headers: { "akamai-grn": "0.1a2b3c" },
+        body: "<html><body><h1>Access Denied</h1></body></html>",
+      });
+      expect(waf).toMatchObject({
+        provider: WafProvider.Akamai,
+        reason: "Akamai HTTP 200 soft block page",
+      });
+    });
+
     it("does not name Akamai for a 403 access-denied page without an Akamai header", () => {
       const waf = onHomepage(
         {
@@ -579,6 +750,36 @@ describe("detectWafProtection", () => {
       "Connect Timeout Error (attempted address: shop.test:443, timeout: 10000ms)",
     ])("returns null for %p", (error) => {
       expect(onHomepage({ status: 0, error }, 0)).toBeNull();
+    });
+
+    // The fetcher reports undici's cause code after the message, so these
+    // are the strings a real scan carries.
+    it.each([
+      "fetch failed (ERR_SSL_WRONG_VERSION_NUMBER)",
+      "fetch failed (CERT_HAS_EXPIRED)",
+      "fetch failed (ERR_TLS_CERT_ALTNAME_INVALID)",
+      "fetch failed (ECONNREFUSED)",
+      "fetch failed (EAI_AGAIN)",
+      "fetch failed (UND_ERR_CONNECT_TIMEOUT)",
+    ])("returns null for the fetcher's %p", (error) => {
+      expect(onHomepage({ status: 0, error }, 0)).toBeNull();
+    });
+
+    it.each([
+      [
+        "fetch failed (UND_ERR_HEADERS_TIMEOUT)",
+        "The connection opened, but the homepage sent no response before the timeout",
+      ],
+      [
+        "fetch failed (ECONNRESET)",
+        "The server closed the connection without a response",
+      ],
+    ])("reports the fetcher's %p as a dropped connection", (error, reason) => {
+      expect(onHomepage({ status: 0, error }, 0)).toMatchObject({
+        provider: WafProvider.ConnectionDrop,
+        reason,
+        statusCode: 0,
+      });
     });
 
     it("still reports a reset after connect as a dropped connection", () => {

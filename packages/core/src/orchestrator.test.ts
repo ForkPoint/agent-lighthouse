@@ -1865,6 +1865,40 @@ describe("runScan — burst-limit 428 on the homepage", () => {
   });
 });
 
+// The WAF verdict is about the pages the scan read. Walled or throttled root
+// files beside a homepage that was read leave the scan unblocked.
+describe("runScan — walled root files beside a read homepage", () => {
+  const url = "https://example.com/";
+  const FULL_HTML = `<html><body><main><h1>Kettles</h1><p>${"copper kettle ".repeat(60)}</p></main></body></html>`;
+  const refused = (path: string, over: Partial<FetchResult>): void => {
+    h.map.set(`https://example.com${path}`, {
+      ...notFound(`https://example.com${path}`),
+      ...over,
+    });
+  };
+
+  it("reports no wall and scores the site", async () => {
+    set(url, FULL_HTML);
+    refused("/sitemap.xml", {
+      status: 403,
+      headers: { server: "cloudflare", "cf-ray": "abc" },
+    });
+    refused("/llms.txt", {
+      status: 403,
+      headers: { "x-datadome": "protected" },
+    });
+    refused("/robots.txt", { status: 429 });
+
+    const report = await runScan(url);
+
+    expect(report.wafProtection ?? null).toBeNull();
+    expect(report.scanValidity?.evidence[EvidenceKey.UnblockedFetches]).toBe(
+      true,
+    );
+    expect(report.overallScore).not.toBeNull();
+  });
+});
+
 describe("runScan — logging", () => {
   it("names the scan and site on every line, and shares the id with the report", async () => {
     set("https://example.com/", CONTENT_HTML);

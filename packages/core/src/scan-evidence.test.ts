@@ -559,6 +559,21 @@ describe("scan-evidence: unreachable homepage reasons", () => {
     expect(FETCHER_REDIRECT_LIMIT).toBe(MAX_REDIRECTS);
   });
 
+  it("keeps the first line of a multi-line error and drops its full stop", () => {
+    expect(
+      reason({
+        status: 0,
+        error: "getaddrinfo ENOTFOUND example.com.\n    at GetAddrInfoReqWrap",
+      }),
+    ).toBe(
+      "The homepage could not be fetched: getaddrinfo ENOTFOUND example.com.",
+    );
+  });
+
+  it("keeps the plain status for a redirect that carries no chain", () => {
+    expect(reason({ status: 302 })).toBe("The homepage answered HTTP 302.");
+  });
+
   it("names the redirect limit for a chain that never repeats", () => {
     const hops = Array.from({ length: MAX_REDIRECTS }, (_, i) => ({
       status: 301,
@@ -567,6 +582,98 @@ describe("scan-evidence: unreachable homepage reasons", () => {
     }));
     expect(reason({ status: 301, redirectChain: hops })).toBe(
       `The homepage answered HTTP 301 after ${String(MAX_REDIRECTS)} redirects, the most the scan follows.`,
+    );
+  });
+});
+
+// The evidence gate and the WAF detector describe one failed homepage
+// together. These run the real detector, so the reason a report prints is the
+// one asserted.
+describe("scan-evidence: how a failed homepage is described", () => {
+  const describeFailure = (
+    homepageResult: FetchResult,
+    rootFiles: Record<string, FetchResult> = {},
+  ) => {
+    const wafProtection = detectWafProtection(
+      homepageResult.url,
+      homepageResult,
+      rootFiles,
+      0,
+    );
+    const evidence = build({ homepageResult, rootFiles, wafProtection });
+    return { wafProtection, reason: unjudgeableReason(evidence) };
+  };
+
+  it.each([
+    ["fetch failed (ECONNREFUSED)", "fetch failed (ECONNREFUSED)"],
+    ["fetch failed (CERT_HAS_EXPIRED)", "fetch failed (CERT_HAS_EXPIRED)"],
+    [
+      "802167ED01000000:error:0A00010B:SSL routines:tls_validate_record_header:wrong version number:../deps/openssl/openssl/ssl/record/methods/tlsany_meth.c:78:\n",
+      "TLS error, wrong version number",
+    ],
+  ])("names %p by its cause, not as a bot wall", (error, cause) => {
+    const { wafProtection, reason } = describeFailure(
+      homepage({ status: 0, body: "", contentType: "", error }),
+    );
+    expect(wafProtection).toBeNull();
+    expect(reason).toContain(`The homepage could not be fetched: ${cause}.`);
+    expect(reason).not.toMatch(/bot wall/i);
+  });
+
+  it("says what one dropped attempt saw, without claiming a repeat", () => {
+    const { reason } = describeFailure(
+      homepage({
+        status: 0,
+        body: "",
+        contentType: "",
+        error: "fetch failed (UND_ERR_HEADERS_TIMEOUT)",
+      }),
+    );
+    expect(reason).toContain(
+      "Bot Wall / Aggressive Connection Drop refused the scan: The connection opened, but the homepage sent no response before the timeout.",
+    );
+    expect(reason).not.toMatch(/repeated/);
+  });
+
+  // The corpus case: an empty 202 with the AWS header used to read as a page
+  // with too little text. It now names the wall.
+  it("names AWS WAF for an empty 202 challenge", () => {
+    const { wafProtection, reason } = describeFailure(
+      homepage({
+        status: 202,
+        body: "",
+        headers: { "x-amzn-waf-action": "challenge" },
+      }),
+    );
+    expect(wafProtection?.provider).toBe(WafProvider.AwsWaf);
+    expect(reason).toContain(
+      "AWS WAF refused the scan: challenge rule action, HTTP 202.",
+    );
+  });
+
+  it("names the PerimeterX route a homepage chain ended on", () => {
+    const { reason } = describeFailure(
+      homepage({
+        status: 404,
+        finalUrl:
+          "https://example.com/on/demandware.store/Sites-x-Site/PX-Show",
+        body: "<html><body>Page not found</body></html>",
+      }),
+    );
+    expect(reason).toContain(
+      "HUMAN / PerimeterX Bot Defense refused the scan: redirected to the PerimeterX challenge route.",
+    );
+  });
+
+  // A 428 the detector does not call a throttle (it carries a body) still
+  // reads as one at the gate: the orchestrator retried it once already.
+  it("says a 428 homepage was throttled even without a WAF verdict", () => {
+    const evidence = build({
+      homepageResult: homepage({ status: 428, body: "Precondition required" }),
+    });
+    expect(evidence.met[EvidenceKey.UnblockedFetches]).toBe(false);
+    expect(evidence.reasons[EvidenceKey.UnblockedFetches]).toBe(
+      "The homepage answered HTTP 428: the scan was throttled.",
     );
   });
 });
