@@ -248,6 +248,11 @@ async function fetchPageWithRetry(
 
 // ── Main Scan ──────────────────────────────────────────────────
 
+/** A URL without its fragment and trailing slash, to tell two URLs of one page. */
+function samePageKey(pageUrl: string): string {
+  return pageUrl.replace(/#.*$/, "").replace(/\/$/, "");
+}
+
 export async function runScan(
   url: string,
   options?: ScanOptions,
@@ -572,8 +577,23 @@ async function scanWithinBudget(
     firstParse && "page" in firstParse
       ? gatewayTarget(firstParse.page, pageResult.finalUrl || url)
       : undefined;
+  // gatewayTarget skips a target that names the page it landed on. A target
+  // that names the requested URL, or any hop of the redirect that led here,
+  // only leads back to this page: a www shell whose canonical names the apex
+  // was read twice.
+  const seenUrls = new Set(
+    [
+      url,
+      displayUrl,
+      pageResult.finalUrl,
+      ...(pageResult.redirectChain ?? []).flatMap((hop) => [hop.from, hop.to]),
+    ]
+      .filter(Boolean)
+      .map(samePageKey),
+  );
   if (
     gatewayCandidate !== undefined &&
+    !seenUrls.has(samePageKey(gatewayCandidate)) &&
     !overrideTypeByKey.has(gatewayCandidate.replace(/\/$/, "")) &&
     (await isSafeUrl(gatewayCandidate))
   ) {

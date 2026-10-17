@@ -190,27 +190,18 @@ describe("runScan — gateway follow", () => {
     ]);
   });
 
-  // BUG: the gateway check compares the target with the page's final URL
-  // only. When the requested root redirects (here to its www twin) and the
-  // landed page's canonical names the requested URL, the scan "follows" it
-  // back to the URL it already read: one more request, and the same URL
-  // listed twice in pagesScanned. A target equal to the requested URL is the
-  // page itself and should not be followed.
-  it.fails(
-    "does not follow a canonical back to the requested URL",
-    async () => {
-      const landed = "https://www.example.com/";
-      set(
-        URL_ROOT,
-        gateway(`<link rel="canonical" href="${URL_ROOT}">`),
-        landed,
-      );
+  // When the requested root redirects (here to its www twin) and the landed
+  // page's canonical names the requested URL, following it leads back to the
+  // URL already read: one more request, and the same URL listed twice in
+  // pagesScanned. A target equal to the requested URL is the page itself.
+  it("does not follow a canonical back to the requested URL", async () => {
+    const landed = "https://www.example.com/";
+    set(URL_ROOT, gateway(`<link rel="canonical" href="${URL_ROOT}">`), landed);
 
-      const report = await runScan(URL_ROOT);
+    const report = await runScan(URL_ROOT);
 
-      expect(report.pageAttempts?.map((page) => page.url)).toEqual([URL_ROOT]);
-    },
-  );
+    expect(report.pageAttempts?.map((page) => page.url)).toEqual([URL_ROOT]);
+  });
 });
 
 // ── Page set (no page budget) ────────────────────────────────────
