@@ -969,6 +969,60 @@ describe("createFetcher redirect handling", () => {
     expect(headers["Cookie"]).toBeUndefined();
   });
 
+  // A caller's own Cookie header is kept on every hop. The cookies the chain
+  // set are added after it, not put in its place.
+  it("adds the chain's cookies after a Cookie header the caller sent", async () => {
+    mockLookup.mockResolvedValue({ address: "93.184.216.34", family: 4 });
+    mockRequest
+      .mockResolvedValueOnce(
+        mockResponse(302, "", {
+          location: "/b",
+          "set-cookie": "session=abc; Path=/",
+        }) as never,
+      )
+      .mockResolvedValueOnce(mockResponse(302, "", { location: "/c" }) as never)
+      .mockResolvedValueOnce(mockResponse(200, "") as never);
+
+    await createFetcher().fetch({
+      url: "https://example.com/a",
+      headers: { cookie: "consent=yes" },
+    });
+
+    const cookieOf = (call: number) => {
+      const headers = mockRequest.mock.calls[call]![1]!.headers as Record<
+        string,
+        string
+      >;
+      return Object.entries(headers)
+        .filter(([name]) => name.toLowerCase() === "cookie")
+        .map(([, value]) => value);
+    };
+    expect(cookieOf(0)).toEqual(["consent=yes"]);
+    expect(cookieOf(1)).toEqual(["consent=yes; session=abc"]);
+    expect(cookieOf(2)).toEqual(["consent=yes; session=abc"]);
+  });
+
+  // Browsers follow 20 redirects. Some storefronts take 6 or more hops to set
+  // a locale cookie and land on the homepage; a limit of 5 read no page there.
+  it("follows a chain longer than five hops to its answer", async () => {
+    mockLookup.mockResolvedValue({ address: "93.184.216.34", family: 4 });
+    for (let i = 0; i < 7; i += 1) {
+      mockRequest.mockResolvedValueOnce(
+        mockResponse(302, "", { location: `/hop-${String(i + 1)}` }) as never,
+      );
+    }
+    mockRequest.mockResolvedValueOnce(mockResponse(200, "home") as never);
+
+    const result = await createFetcher().fetch({
+      url: "https://example.com/hop-0",
+    });
+
+    expect(result.status).toBe(200);
+    expect(result.body).toBe("home");
+    expect(result.finalUrl).toBe("https://example.com/hop-7");
+    expect(result.redirectChain).toHaveLength(7);
+  });
+
   it("continues a redirected POST as a GET without the body", async () => {
     mockRequest
       .mockResolvedValueOnce(
@@ -1100,5 +1154,45 @@ describe("createFetcher — maxConcurrent", () => {
 
     const after = await fetcher.fetch({ url: "https://example.com/b" });
     expect(after.status).toBe(200);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// summary — what the scan logs about its requests at the end
+// ---------------------------------------------------------------------------
+
+describe("createFetcher — summary", () => {
+  beforeEach(() => {
+    mockRequest.mockReset();
+  });
+
+  // A request that never ends writes no "finished" line. The summary is the
+  // only place a scan that ends with it still open can name it.
+  it("names a request still waiting, without its credentials", async () => {
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    mockRequest.mockImplementation(async () => {
+      await held;
+      return mockResponse(200, "ok") as never;
+    });
+
+    const fetcher = createFetcher();
+    const pending = fetcher.fetch({ url: "https://user:pw@example.com/slow" });
+    await new Promise((resolve) => setTimeout(resolve, 5));
+
+    const open = fetcher.summary().open;
+    expect(open.map((entry) => entry.url)).toEqual([
+      "https://example.com/slow",
+    ]);
+    expect(open[0]!.ms).toBeGreaterThanOrEqual(0);
+
+    release();
+    await pending;
+    const done = fetcher.summary();
+    expect(done.open).toEqual([]);
+    expect(done.requests).toBe(1);
+    expect(done.statuses).toEqual({ "2xx": 1 });
   });
 });
