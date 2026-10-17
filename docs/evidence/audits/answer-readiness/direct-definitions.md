@@ -26,7 +26,7 @@ The v7 runner includes `article` and `general` pages in this check's existing pa
 
 HTML-AAM maps `<dfn>` and `<dt>`/`<dd>` to the `term` and `definition` roles, and WHATWG requires the definition to sit alongside the term it defines, so the pairing survives extraction intact. No consumer is documented as acting on that mapping and prose definitions read fine, so this is reported as upside on pages that already answer a definitional question — never as a defect.
 
-_(The pre-rewrite audit also counted a `<strong>Term:</strong>` bold-colon pattern. That branch is graded D on its own and is deleted; see the rewrite section.)_
+A `<strong>Term:</strong>` bold-colon label is not counted. It has no spec, no role mapping and no documented consumer, so on its own it would be grade D. An earlier version counted it, and any page with a bolded label such as `<strong>Note:</strong>` passed.
 
 ## Evidence
 
@@ -36,7 +36,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Mechanism claim:** Marking a term and its definition with `<dfn>`, or with `<dl>`, `<dt>` and `<dd>`, exposes explicit term and definition roles in the accessibility tree. It also keeps the pairing intact through extraction. An answer engine can then return the definition for a "what is X?" query without inferring it from surrounding prose.
 
-**Grade: C** — the markup is ratified, and carries a spec-defined term-to-definition role mapping. But no vendor doc, agent harness or study shows any consumer acting on that mapping. The audit's third detector branch, bold-colon, is a typographic convention with no spec basis at all.
+**Grade: C** — the markup is ratified, and carries a spec-defined term-to-definition role mapping. But no vendor doc, agent harness or study shows any consumer acting on that mapping. An earlier third detector branch, bold-colon, was a typographic convention with no spec basis at all, and was removed.
 
 **Evidence:**
 

@@ -26,7 +26,7 @@ The v7 runner selects article-purpose pages for this check. A `general` declarat
 
 Google Assistant uses the speakable property to pick which sentences of a news article it reads aloud on Assistant-enabled devices. Without it, the assistant has to guess, and often vocalizes navigation or boilerplate instead of your headline and summary. Mark the headline and summary with cssSelector on your Article or WebPage node.
 
-_(The pre-rewrite description named Alexa and Siri as consumers. That claim was fabricated and is quoted, with its refutation, in the rewrite section below.)_
+Google Assistant is the only documented consumer. An earlier description also named Alexa and Siri. No primary source supports that claim: Apple's Applebot documentation does not name `speakable`, and Amazon publishes no `speakable` documentation.
 
 ## Evidence
 
@@ -38,7 +38,7 @@ _(The pre-rewrite description named Alexa and Siri as consumers. That claim was 
 
 **Evidence:**
 
-- Google Search Central's speakable page, last updated 2025-12-10, names the consumer and the behaviour. "When users ask for news about a specific topic, the Google Assistant returns up to three articles from around the web and supports audio playback using TTS for sections in the article with speakable structured data" — https://developers.google.com/search/docs/appearance/structured-data/speakable (verified 2026-08-24)
+- Google Search Central's speakable page, last updated 2026-09-08, names the consumer and the behaviour. "When users ask for news about a specific topic, the Google Assistant returns up to three articles from around the web and supports audio playback using TTS for sections in the article with speakable structured data" — https://developers.google.com/search/docs/appearance/structured-data/speakable (verified 2026-10-17)
 - The property is defined by schema.org on `Article` and `WebPage`, with `cssSelector` and `xpath` as the two addressing forms, both valid as a single string or an array — https://schema.org/speakable (verified 2026-08-21)
 
 **Counter-evidence:** The same Google page states "This feature is in beta and subject to change", and scopes it to "users in the U.S. that have Google Home devices set to English, and publishers that publish content in English", news content only. No other consumer exists: Apple's Applebot documentation names exactly one schema.org property, `isAccessibleForFree`, and no `speakable` (https://support.apple.com/en-us/119829, verified 2026-08-21); Amazon publishes no `speakable` documentation at all. The widely repeated claim that Alexa and Siri read `speakable` has no primary source, and a regression test now asserts that neither name appears in this audit's copy. The consumer is also on a stated migration path: Google announced on 2025-08-20 that "Over time, Gemini for Home will replace Google Assistant on existing speakers and displays", with no successor statement about `speakable`. If that transition completes without one, this audit loses its consumer entirely rather than one grade.

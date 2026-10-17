@@ -25,7 +25,7 @@ const FEED_TYPES = new Set([
 ]);
 
 /** Paths a feed conventionally lives at when nothing advertises it. */
-const CONVENTIONAL_PATHS = [
+export const CONVENTIONAL_FEED_PATHS = [
   "/feed",
   "/feed.xml",
   "/rss.xml",
@@ -228,7 +228,7 @@ export function discoverFeedHeadUrls(ctx: FeedContext): string[] {
 
 export function discoverFeedUrls(ctx: FeedContext): string[] {
   const head = discoverFeedHeadUrls(ctx);
-  const conv = CONVENTIONAL_PATHS.map((path) =>
+  const conv = CONVENTIONAL_FEED_PATHS.map((path) =>
     resolve(path, ctx.baseUrl),
   ).filter(Boolean);
   const seen = new Set<string>();
@@ -493,7 +493,7 @@ export async function sharedFeeds(
       docs.push(doc);
   }
   if (docs.length === 0) {
-    for (const path of CONVENTIONAL_PATHS) {
+    for (const path of CONVENTIONAL_FEED_PATHS) {
       const url = resolve(path, ctx.baseUrl);
       if (!url) continue;
       const doc = await sharedFeed(ctx, url, opts);

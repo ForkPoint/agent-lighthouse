@@ -9,8 +9,8 @@ disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
 graduated: 2026-08-23
 sources:
-  - S5
-  - S1
+  - azure-search-chunk-documents
+  - langchain-html-splitters
 ---
 
 # Section Split-Risk Profile
@@ -23,14 +23,18 @@ Measures every h2 and h3 section against the published default chunk window of 5
 
 ## Claimed mechanism (falsifiable)
 
-Fixed-window splitters cut at a character/token budget, not at meaning. When a section exceeds the window, chunk 1 keeps the heading (the strongest query-matching signal on the page) and every subsequent chunk from that section is headless — its embedding loses the topical anchor. Azure publishes 512 tokens / 2000 chars with 25% overlap as the recommended default and explicitly recommends heading-based segmentation as the alternative that avoids this (S5). Falsifiable prediction: for a page with one 2,000-token section versus the same content split into four 500-token h2 sections, the queries that match content in the final quarter of the text retrieve the split version and miss the monolithic one.
+Fixed-window splitters cut at a character/token budget, not at meaning. When a section exceeds the window, chunk 1 keeps the heading (the strongest query-matching signal on the page) and every subsequent chunk from that section is headless — its embedding loses the topical anchor. Azure publishes 512 tokens / 2000 chars with 25% overlap as the recommended default and lists heading-based segmentation as an alternative that avoids this. Falsifiable prediction: for a page with one 2,000-token section versus the same content split into four 500-token h2 sections, the queries that match content in the final quarter of the text retrieve the split version and miss the monolithic one.
 
 ## Evidence
 
-- **[MCP Specification 2026-07-28 — Caching](https://modelcontextprotocol.io/specification/2026-07-28/server/utilities/caching)** — Model Context Protocol (spec, URL verified 2026-08-20)
-  - 'Servers MUST include caching hints on results with resultType: "complete"' for server/discover, tools/list, prompts/list, resources/list, resources/templates/list, resources/read. ttlMs is an integer ms; servers MUST provide ttlMs >= 0. If ttlMs is absent clients SHOULD assume 0 = immediately stale. cacheScope is exactly "public" or "private". Servers MUST apply the same cacheScope to all pages of a paginated list. Public scope on an authenticated endpoint may be shared across access tokens — servers MUST NOT rely on cacheScope for access control.
-- **[MCP Specification 2026-07-28 — Streamable HTTP Transport](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/streamable-http)** — Model Context Protocol (Anthropic / MCP Working Groups) (spec, URL verified 2026-08-20)
-  - Revision 2026-07-28 removed the GET stream endpoint and protocol-level sessions (Mcp-Session-Id, Last-Event-ID). Server MUST expose one POST endpoint. Server MUST validate Origin; if Origin is present and invalid it MUST return 403 Forbidden. Every POST MUST carry MCP-Protocol-Version, Mcp-Method, and (for tools/call, resources/read, prompts/get) Mcp-Name headers; these are 'REQUIRED for compliance'. Header value MUST match the _meta body value or server MUST return 400 + JSON-RPC code -32020 HeaderMismatch. Unknown protocol version -> 400 + UnsupportedProtocolVersionError. Unknown method -> 404 + -32601. x-mcp-header constraints defined; clients MUST reject (exclude from tools/list) tools that violate them. Servers SHOULD send X-Accel-Buffering: no on SSE. GET/DELETE to endpoint SHOULD now return 405.
+- **[Chunk Documents - Azure AI Search](https://learn.microsoft.com/en-us/azure/search/vector-search-how-to-chunk-documents)** — Microsoft (vendor-doc, verified 2026-10-17)
+  - Recommends "starting with a chunk size of 512 tokens (approximately 2,000 characters) and an initial overlap of 25%". This is the window the audit measures against.
+  - Its default Text Split parameters cut pages of 2,000 characters with a 500-character overlap.
+  - It names heading syntax in HTML or Markdown as a way to chunk by section. It also suggests appending the document title to mid-document chunks "to prevent context loss", which is the loss a headless tail chunk suffers.
+- **[Split HTML — LangChain text splitter integrations](https://docs.langchain.com/oss/python/integrations/splitters/split_html)** — LangChain (vendor-doc, URL verified 2026-08-20)
+  - `HTMLHeaderTextSplitter` splits on `<h1>`, `<h2>`, `<h3>` and attaches the headers relevant to each chunk as metadata. A section with headings carries them into its chunks. A page without them gives the splitter nothing to cut on.
+
+**Grade: B** — Microsoft documents the 512-token default for its own retrieval pipeline, and LangChain documents heading-based splitting. Neither measures the retrieval loss from a headless tail chunk, and other pipelines use other windows. A documented default with no measured effect is a grade-B mechanism.
 
 ## Example failure
 
@@ -52,6 +56,5 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 
 ## Deferred
 
-- The Evidence list names two MCP specification pages that say nothing about chunking. The Azure source the mechanism cites (S5) needs restoring, verifying and stamping before the grade is reviewed.
 - Per-page assessment. Only `ctx.pages[0]` is profiled.
 - Overlap-aware scoring. It needs pipeline parameters a scanner does not have.

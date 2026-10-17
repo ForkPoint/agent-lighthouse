@@ -64,15 +64,18 @@ sources:
 
 ## What it checks
 
-`GET /llms.txt` returns 200 with a markdown body, plus — reported, not scored — whether a `<link>` in the page head points at that file.
+`GET /llms.txt` returns 200 with a body that starts with `#`. The audit also reports whether a `<link rel="alternate">` or `<link rel="describedby">` in the first page's head points at that file. It is informative, so no outcome moves the score.
 
-| State                             | Result                      |
-| :-------------------------------- | :-------------------------- |
-| 200 with a body starting with `#` | `pass`                      |
-| 200 but no markdown heading       | `warn`, priority `high`     |
-| non-200 or no response            | `fail`, priority `critical` |
+| State                                               | Result                 |
+| :-------------------------------------------------- | :--------------------- |
+| 200, not an HTML page, body starts with `#`         | `pass`                 |
+| 200, not an HTML page, body does not start with `#` | `warn`, priority `low` |
+| no file, and no head link points at it              | `notApplicable`        |
+| no file, but a head link points at it               | `warn`, priority `low` |
 
-The discovery `<link>` is appended to `found` in every branch, as either `discovery <link> → <href>` or `no discovery <link> in <head>`. When the file is missing _and_ a link points at it, the message says so. A link to a file that is not served is the one case where the absorbed signal changes what the user reads.
+"No file" means a non-200 status, no response, or an HTML page served at the path. An HTML page there is a site shell answering every URL, not the file.
+
+The head link is reported in every branch, as `discovery <link> → <href>` or `no discovery <link> in <head>`. It changes the result in one case only: a link to a file that is not served.
 
 ## Evidence
 

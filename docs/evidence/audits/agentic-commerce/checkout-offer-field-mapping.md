@@ -22,7 +22,9 @@ sources:
 
 ## What it checks
 
-Audits each PDP against the exact required-and-conditional field set of the OpenAI product feed spec, including its character caps and its conditional triggers, so the merchant learns which rows will be rejected before uploading a feed.
+Audits one product page against the required-and-conditional field set of the OpenAI product feed spec, including its character caps and its conditional triggers. The merchant learns why a row would be rejected before uploading a feed.
+
+The page judged is the first scanned product page that carries `Product` markup. Other product pages are not judged here. `machine-discovery/agent-commerce-feed-parity` reports field coverage across the sampled product pages instead.
 
 ## Claimed mechanism (falsifiable)
 
@@ -71,7 +73,5 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 
 - `image_url` is not fetched. Only scheme and extension are checked, so a
   URL that 404s reads as valid.
-- Only the first product page with `Product` markup is judged, not every
-  product page in the scan.
 - `identifier_exists=no` is named as the escape hatch but cannot be detected
   from the page.

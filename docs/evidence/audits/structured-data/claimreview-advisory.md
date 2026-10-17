@@ -9,7 +9,7 @@ disposition: "new in v2 — graduated from proposal 2026-08-22"
 reviewed: 2026-08-20
 graduated: 2026-08-22
 sources:
-  - S5
+  - google-factcheck-doc
 ---
 
 # ClaimReview investment advisory
@@ -26,8 +26,11 @@ Google's fact check documentation states plainly: 'We're phasing out support for
 
 ## Evidence
 
-- **[MCP Specification 2026-07-28 — Caching](https://modelcontextprotocol.io/specification/2026-07-28/server/utilities/caching)** — Model Context Protocol (spec, URL verified 2026-08-20)
-  - 'Servers MUST include caching hints on results with resultType: "complete"' for server/discover, tools/list, prompts/list, resources/list, resources/templates/list, resources/read. ttlMs is an integer ms; servers MUST provide ttlMs >= 0. If ttlMs is absent clients SHOULD assume 0 = immediately stale. cacheScope is exactly "public" or "private". Servers MUST apply the same cacheScope to all pages of a paginated list. Public scope on an authenticated endpoint may be shared across access tokens — servers MUST NOT rely on cacheScope for access control.
+- **[Fact Check (ClaimReview) structured data](https://developers.google.com/search/docs/appearance/structured-data/factcheck)** — Google Search Central (vendor-doc, verified 2026-10-17)
+  - States: "We're phasing out support for `ClaimReview` markup in Google Search." No phase-out date is given.
+  - States that the markup "remains supported by the Factcheck Explorer Tool". That is the advisory's second half.
+  - "A page must only have one `ClaimReview` element" to be eligible for the fact check rich result. That is the one-per-page check.
+  - Lists `claimReviewed`, `reviewRating` and `url` as required, and `Rating.alternateName` as the human-readable verdict, such as "Mostly true". That is the shape check.
 
 ## Example failure
 
@@ -35,7 +38,7 @@ A fact-checking desk plans a quarter of engineering work to extend ClaimReview m
 
 ## Scoring
 
-Tier per evidence policy: **informative (weight 0)** — grade A does not meet the A/B bar required for scored audits.
+Tier: **informative (weight 0)**. The evidence is grade A, but it describes the state of an external product, not the quality of the site. The audit therefore advises and never scores.
 
 ## Implementation deviations
 
