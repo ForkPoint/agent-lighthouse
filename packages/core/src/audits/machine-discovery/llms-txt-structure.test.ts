@@ -62,7 +62,7 @@ describe("LlmsTxtStructureAudit", () => {
       ),
     );
     expect(result.status).toBe(CheckStatus.NotApplicable);
-    expect(result.message).toContain("no markdown heading");
+    expect(result.message).toContain("llms.txt not found");
   });
 
   // Review finding (1.2): a literal '> ' with a trailing space rejected the

@@ -59,6 +59,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+- 2026-10-17 — no feed is now not applicable instead of a fail. An absent feed is not a truncated one; whether to publish a feed at all is a separate question.
 
 ## Evidence (2026-08-21)
 

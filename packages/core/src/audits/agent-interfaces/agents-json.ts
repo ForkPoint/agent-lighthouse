@@ -10,6 +10,7 @@ import {
   FixEffort,
   ScoreDisplayMode,
 } from "#core/types";
+import { isHtmlDocument } from "#core/gatherers/root-files";
 
 /** The path the agents.json spec names for discovery. */
 const AGENTS_JSON_PATH = "/.well-known/agents.json";
@@ -24,17 +25,6 @@ function tryParseJson(body: string): unknown {
 
 function isObject(val: unknown): val is Record<string, unknown> {
   return typeof val === "object" && val !== null && !Array.isArray(val);
-}
-
-/**
- * True when the body is the site's HTML shell rather than a document.
- *
- * Deliberately a body sniff and nothing else: a document that parses as JSON is
- * never reported as HTML just because the response carried the wrong
- * `Content-Type`. That case is a separate, milder finding below.
- */
-function looksLikeHtml(body: string): boolean {
-  return /^\s*(<!doctype html|<html)/i.test(body);
 }
 
 /**
@@ -137,7 +127,10 @@ export class AgentsJsonAudit extends Audit {
     // An HTML body behind a 200 at a well-known path claims adoption the site
     // does not have. It used to be reported as "agents.json is not valid
     // JSON", which names the wrong defect.
-    if (looksLikeHtml(file.body)) {
+    // A body sniff and nothing else: a document that parses as JSON is never
+    // reported as HTML because the response carried the wrong `Content-Type`.
+    // That case is a separate, milder finding below.
+    if (isHtmlDocument(file.body)) {
       return {
         ...this.warn(
           `${AGENTS_JSON_PATH} answers HTTP 200 with an HTML page rather than a document. A well-known path that returns the site shell reports adoption the site does not have; a clean 404 is the honest answer and is not a finding here.`,

@@ -70,3 +70,4 @@ Right idea, wrong probe. It sends `method: 'OPTIONS'` to /llms.txt and /.well-kn
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+- 2026-10-17 — no AI file is now not applicable instead of a warn, as the required fix above says. An HTML answer at either path counts as absent (`gatherers/root-files.ts` `isRootArtifact`), so a homepage redirect no longer fails the CORS check for files that do not exist. The OPTIONS-only probe is unchanged.

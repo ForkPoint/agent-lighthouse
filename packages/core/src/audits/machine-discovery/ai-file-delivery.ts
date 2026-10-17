@@ -11,6 +11,7 @@ import {
   FixEffort,
   ScoreDisplayMode,
 } from "#core/types";
+import { isHtmlDocument } from "#core/gatherers/root-files";
 
 interface Expectation {
   path: string;
@@ -53,10 +54,6 @@ const EXPECTATIONS: Expectation[] = [
  * reported a file the site never published as having the wrong Content-Type,
  * with a fix the user could not act on (review finding 8.10).
  */
-function isHtmlShell(file: FetchResult): boolean {
-  return /^\s*(<!doctype html|<html)/i.test(file.body);
-}
-
 const CachingState = {
   Cacheable: "cacheable",
   Validator: "validator",
@@ -154,7 +151,10 @@ export class AiFileDeliveryAudit extends Audit {
       const file = ctx.rootFiles[path];
       if (!file || file.status !== 200) continue;
       // An HTML shell is an unpublished file, not a mis-typed one.
-      if (isHtmlShell(file) && !expectedTypes.some((t) => t.includes("html")))
+      if (
+        isHtmlDocument(file.body) &&
+        !expectedTypes.some((t) => t.includes("html"))
+      )
         continue;
 
       const contentType = file.contentType.toLowerCase().split(";")[0]!.trim();

@@ -32,6 +32,16 @@ describe("readOpenApiSpec", () => {
     expect(readOpenApiSpec(ctxWith(""))).toBeUndefined();
   });
 
+  it("returns undefined on an HTML page served at /openapi.json", () => {
+    expect(
+      readOpenApiSpec(
+        ctxWith(
+          '<!DOCTYPE html>\n<html lang="fr"><head><title>Home</title></head><body>Shop</body></html>',
+        ),
+      ),
+    ).toBeUndefined();
+  });
+
   it("returns undefined on a body that is not JSON", () => {
     expect(readOpenApiSpec(ctxWith("invalid json {{{"))).toBeUndefined();
   });

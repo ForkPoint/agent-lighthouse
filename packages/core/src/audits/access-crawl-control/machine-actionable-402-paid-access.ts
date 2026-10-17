@@ -16,6 +16,7 @@ import {
   FixEffort,
   ScoreDisplayMode,
 } from "#core/types";
+import { isRootArtifact } from "#core/gatherers/root-files";
 
 /** Sitemap URLs added to the probe set. Matches the edge-parity audit, so the cache is shared. */
 const MAX_SITEMAP_PROBES = 3;
@@ -152,7 +153,7 @@ export class MachineActionable402PaidAccessAudit extends Audit {
       if (!urls.includes(entry.loc)) urls.push(entry.loc);
     }
     const llms = ctx.rootFiles["/llms.txt"];
-    if (llms && llms.status === 200) urls.push(`${ctx.baseUrl}/llms.txt`);
+    if (isRootArtifact(llms)) urls.push(`${ctx.baseUrl}/llms.txt`);
 
     // The same arguments the edge-parity audit passes, so this costs no request:
     // the per-scan cache already holds every one of these probes.

@@ -48,6 +48,17 @@ describe("McpDiscoveryAudit", () => {
     expect(result.found).toContain("HTTP 404");
   });
 
+  it("reports na when servers.json answers with an HTML page", () => {
+    const ctx = mockCheckContext([], {
+      "/.well-known/mcp/servers.json": mockFetchResult(
+        '<!DOCTYPE html>\n<html lang="fr"><head><title>Home</title></head><body>Shop</body></html>',
+        200,
+        "text/html",
+      ),
+    });
+    expect(audit.audit(ctx).status).toBe(CheckStatus.NotApplicable);
+  });
+
   it("fails when servers.json is invalid JSON", () => {
     const ctx = mockCheckContext([], {
       "/.well-known/mcp/servers.json": mockFetchResult("nope {{{", 200),

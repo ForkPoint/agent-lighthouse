@@ -12,8 +12,31 @@ const BROKEN_URL = "http://8.8.8.8/broken";
 describe("NoBrokenAiEndpointsAudit", () => {
   const audit = new NoBrokenAiEndpointsAudit();
 
-  it("warns when no AI endpoint URLs are found", async () => {
+  it("is not applicable when no AI file is published", async () => {
     const ctx = mockCheckContext([], {});
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.message).toContain("No ai-catalog.json, llms.txt");
+  });
+
+  // A homepage redirect answers /llms.txt with HTML. Its links are the
+  // homepage's, not AI endpoints, and checking them passed the site.
+  it("does not read links out of an HTML page at /llms.txt", async () => {
+    const ctx = mockCheckContext([], {
+      "/llms.txt": mockFetchResult(
+        `<!DOCTYPE html><html><body><a href="${OK_URL}">x</a></body></html>`,
+        200,
+        "text/html",
+      ),
+    });
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+  });
+
+  it("warns when an AI file is published but lists no URLs", async () => {
+    const ctx = mockCheckContext([], {
+      "/llms.txt": mockFetchResult("# Site\n\nNo links here.", 200),
+    });
     const result = await audit.audit(ctx);
     expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("No AI endpoint URLs found");

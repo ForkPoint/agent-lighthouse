@@ -42,17 +42,13 @@ export class RssFeedContentAudit extends Audit {
     const feeds = await sharedFeeds(ctx);
     const feed = feeds[0];
 
+    // No feed, no feed content to grade. Whether a site should publish a feed
+    // is a separate question; an absent feed is not a truncated one.
     if (!feed) {
-      return this.fail(
-        "No RSS feed found; cannot check content.",
+      return this.notApplicable(
+        "No RSS or Atom feed found, so there is no feed content to check.",
         "<content:encoded> or <description> > 500 chars per item",
         "No feed found",
-        {
-          priority: CheckPriority.Medium,
-          description:
-            "First, create an RSS/Atom feed (see check 1.11). Full-content feeds allow AI agents to index your articles without visiting each page, reducing crawl load and improving content quality in AI responses.",
-          code: `<item>\n  <title>Article Title</title>\n  <link>https://yoursite.com/article</link>\n  <content:encoded><![CDATA[\n    <p>Full article content goes here...</p>\n  ]]></content:encoded>\n</item>`,
-        },
       );
     }
 

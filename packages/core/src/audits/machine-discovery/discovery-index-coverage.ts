@@ -2,7 +2,6 @@ import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
 import type { CheckContext, PageContext } from "#core/check-context";
 import { weightForGrade } from "#core/scorer";
-import type { FetchResult } from "#core/fetcher";
 import { siteSitemapTree } from "#core/gatherers/sitemap";
 import {
   AuditTier,
@@ -12,10 +11,7 @@ import {
   FixEffort,
   ScoreDisplayMode,
 } from "#core/types";
-
-function isOk(result: FetchResult): boolean {
-  return result.status === 200;
-}
+import { isRootArtifact } from "#core/gatherers/root-files";
 
 /**
  * One comparison key for both sides of the coverage check.
@@ -115,7 +111,7 @@ export class DiscoveryIndexCoverageAudit extends Audit {
     const incomplete = sitemapTree.truncated || !!sitemapTree.scopeIncomplete;
 
     const llmsResult = ctx.rootFiles["/llms.txt"];
-    if (llmsResult && isOk(llmsResult)) {
+    if (llmsResult && isRootArtifact(llmsResult)) {
       for (const link of llmsTxtLinks(llmsResult.body)) add(link, ctx.baseUrl);
     }
 

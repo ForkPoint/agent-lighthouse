@@ -30,6 +30,31 @@ describe("CorsAiFilesAudit", () => {
     expect(result.message).toContain("ai-catalog.json");
   });
 
+  it("is not applicable when neither AI file is published", async () => {
+    const ctx = mockCheckContext([], {
+      "/llms.txt": mockFetchResult("", 404),
+      "/.well-known/ai-catalog.json": mockFetchResult("", 404),
+    });
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+  });
+
+  // A homepage redirect answers both paths with HTML and HTTP 200.
+  it("is not applicable when both AI files answer with an HTML page", async () => {
+    const home = mockFetchResult(
+      '<!DOCTYPE html>\n<html lang="fr"><head><title>Home</title></head><body>Shop</body></html>',
+      200,
+      "text/html",
+    );
+    const ctx = mockCheckContext([], {
+      "/llms.txt": home,
+      "/.well-known/ai-catalog.json": home,
+    });
+    ctx.fetch = async () => corsResult(undefined);
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+  });
+
   it("fails when no AI files have CORS", async () => {
     const ctx = mockCheckContext([]);
     ctx.fetch = async () => corsResult(undefined);

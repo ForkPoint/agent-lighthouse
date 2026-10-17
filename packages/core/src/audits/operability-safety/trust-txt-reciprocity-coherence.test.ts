@@ -98,6 +98,16 @@ describe("TrustTxtReciprocityCoherenceAudit", () => {
     expect((await result).status).toBe(CheckStatus.NotApplicable);
   });
 
+  // A site that redirects unknown paths to its homepage answers /trust.txt
+  // with HTML. Read as trust.txt, `<html lang` became an attribute.
+  it("is notApplicable when /trust.txt answers with an HTML page", async () => {
+    const { result } = run({
+      trustTxt:
+        '<!DOCTYPE html>\n<html lang="fr"><head><title>Home</title></head><body>Shop</body></html>',
+    });
+    expect((await result).status).toBe(CheckStatus.NotApplicable);
+  });
+
   describe("parseTrustTxt", () => {
     it("reads name=value lines and drops comments", () => {
       const entries = parseTrustTxt(

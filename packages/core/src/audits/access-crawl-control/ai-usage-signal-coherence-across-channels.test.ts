@@ -185,6 +185,20 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
     );
   });
 
+  // A homepage redirect answers /.well-known/tdmrep.json with HTML. That is
+  // no tdmrep.json, not a malformed one, so no note names it.
+  it("ignores an HTML page at /.well-known/tdmrep.json", async () => {
+    const result = audit.audit(
+      site({
+        tdmrep:
+          '<!DOCTYPE html>\n<html lang="fr"><head><title>Home</title></head><body>Shop</body></html>',
+        robots: "User-agent: *\nContent-Usage: train-ai=y\n",
+      }),
+    );
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(JSON.stringify(result.details ?? {})).not.toContain("tdmrep");
+  });
+
   it("does not use a tdmrep.json that is a bare object, and says so", async () => {
     const result = audit.audit(
       site({
