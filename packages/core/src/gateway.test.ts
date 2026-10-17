@@ -53,6 +53,34 @@ describe("gatewayTarget", () => {
     ).toBeUndefined();
   });
 
+  it("follows a refresh to the www twin of the host", () => {
+    expect(
+      target(
+        `<title>Shop</title><meta http-equiv="refresh" content="0;URL=https://www.example.com">`,
+        "",
+      ),
+    ).toBe("https://www.example.com/");
+  });
+
+  it("follows a refresh from the www host to the apex", () => {
+    const html = `<html><head><meta http-equiv="refresh" content="0;url=https://example.com/en/"></head><body></body></html>`;
+    const from = "https://www.example.com/";
+    expect(gatewayTarget(parsePageContext(from, html), from)).toBe(
+      "https://example.com/en/",
+    );
+  });
+
+  it.each([
+    "https://shop.example.com/",
+    "http://www.example.com/",
+    "https://www.example.com:8443/",
+    "https://www.notexample.com/",
+  ])("does not follow %s, which is not the www twin", (url) => {
+    expect(
+      target(`<meta http-equiv="refresh" content="0;url=${url}">`),
+    ).toBeUndefined();
+  });
+
   it("does not follow a canonical that names the page itself", () => {
     expect(target(`<link rel="canonical" href="https://example.com">`)).toBe(
       undefined,
