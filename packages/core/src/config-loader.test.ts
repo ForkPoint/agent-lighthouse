@@ -149,4 +149,23 @@ describe("loadConfigFile", () => {
       outputDir: "./out",
     });
   });
+
+  // 8.0.0 removed presets and the multi-page budget. A config file written
+  // for 7.x still carries their keys; it must keep loading, and every key
+  // that still exists must keep its effect.
+  it("loads a 7.x config that still sets preset and maxPages", () => {
+    write(
+      "agent-lighthouse.config.json",
+      JSON.stringify({
+        preset: "ecommerce",
+        maxPages: 6,
+        minScore: 75,
+        outputDir: "./out",
+      }),
+    );
+    expect(loadConfigFile()).toMatchObject({
+      minScore: 75,
+      outputDir: "./out",
+    });
+  });
 });

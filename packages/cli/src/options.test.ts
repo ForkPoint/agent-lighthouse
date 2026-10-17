@@ -248,6 +248,35 @@ describe("parseCliOptions", () => {
   });
 });
 
+// 8.0.0 removed -p/--preset. The CLI ignores an unknown flag, so a script
+// written for 7.x keeps scanning its URL; the old preset name must not be
+// taken as the URL or as the value of another option.
+describe("a 7.x command line with --preset", () => {
+  it.each([
+    [["https://a.test", "--preset", "ecommerce"]],
+    [["https://a.test", "-p", "ecommerce"]],
+    [["audit", "https://a.test", "--preset=ecommerce"]],
+  ])("still scans the URL: %j", (args) => {
+    const { url } = resolveCommand(args);
+    expect(url).toBe("https://a.test");
+    const options = parseCliOptions(args, url);
+    expect(options.url).toBe("https://a.test");
+    expect(options.outputDir).toBe("./reports");
+    expect(options.outputFormats).toEqual(["terminal", "html", "json"]);
+    expect(JSON.stringify(options)).not.toContain("ecommerce");
+  });
+
+  it("reads a 7.x config file's other keys and drops preset and maxPages", () => {
+    const options = parseCliOptions([], "https://a.test", {
+      preset: "ecommerce",
+      maxPages: 6,
+      minScore: 70,
+    } as never);
+    expect(options.minScore).toBe(70);
+    expect(JSON.stringify(options)).not.toMatch(/ecommerce|maxPages/);
+  });
+});
+
 describe("resolveCommand", () => {
   it("asks for help with no arguments", () => {
     expect(resolveCommand([])).toEqual({ action: "help" });
