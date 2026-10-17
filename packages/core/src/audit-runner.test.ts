@@ -775,6 +775,72 @@ describe("audit tracing", () => {
     });
   });
 
+  it("keeps each audit's name on its own lines while a batch runs side by side", async () => {
+    const talker = (id: string, waitMs: number): AuditRegistration =>
+      makeReg(meta({ id, category: "cat1" }), async () => {
+        logger.debug({ said: id }, "before");
+        await new Promise((resolve) => setTimeout(resolve, waitMs));
+        logger.debug({ said: id }, "after");
+        return result(CheckStatus.Pass, 1);
+      });
+    const config: ScanConfig = {
+      categories: [{ id: "cat1", name: "Cat 1", weight: 1 }],
+      audits: { cat1: [talker("slow", 15), talker("fast", 1)] },
+    };
+    const logs = captureLogs();
+    try {
+      await runAudits(ctxWith([PageType.Homepage]), config);
+    } finally {
+      logs.restore();
+    }
+    const said = logs.lines.filter((l) => l["said"] !== undefined);
+    // The two runs interleave, so the context, not the order, names them.
+    expect(said.map((l) => l["msg"])).toEqual([
+      "before",
+      "before",
+      "after",
+      "after",
+    ]);
+    expect(said.every((l) => l["audit"] === l["said"])).toBe(true);
+  });
+
+  it("logs an audit that throws once at error, with the audit, the error and where it was logged", async () => {
+    const config: ScanConfig = {
+      categories: [{ id: "cat1", name: "Cat 1", weight: 1 }],
+      audits: {
+        cat1: [
+          makeReg(meta({ id: "thrower", category: "cat1" }), async () => {
+            throw Object.assign(
+              new TypeError("bad read of https://u:pw@example.com/x"),
+              { code: "E_BAD_READ" },
+            );
+          }),
+        ],
+      },
+    };
+    const logs = captureLogs();
+    try {
+      await runAudits(ctxWith([PageType.Homepage]), config);
+    } finally {
+      logs.restore();
+    }
+    const errors = logs.lines.filter((l) => l["level"] === LogLevel.Error);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toMatchObject({
+      msg: "Audit error",
+      component: "audit",
+      audit: "thrower",
+      caller: expect.stringMatching(/^audit-runner\.ts:\d+$/),
+      err: {
+        type: "TypeError",
+        message: "bad read of https://[redacted]@example.com/x",
+        code: "E_BAD_READ",
+        stack: expect.stringContaining("TypeError"),
+      },
+    });
+    expect(JSON.stringify(logs.lines)).not.toContain("pw@");
+  });
+
   it("logs one trace line per audit when the level asks for it", async () => {
     const lines = await auditLines(LogLevel.Trace);
     expect(lines).toHaveLength(3);
@@ -1220,5 +1286,76 @@ describe("planAudits — evidence gate", () => {
     // even though a product page was fetched.
     expect(plan.runnable.map((r) => r.reg.meta.id)).toEqual(["homepage-audit"]);
     expect(plan.skipped[0]!.id).toBe("product-audit");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// A plan built by hand
+// ---------------------------------------------------------------------------
+
+describe("runAudits — a plan without planned assessments", () => {
+  // `runAudits` takes the plan as an argument. A caller that builds one by
+  // hand may leave out the assessments and the score mode; the audit then
+  // runs once, over the plan's scoped pages or else every page.
+  it("runs the audit once over the scoped pages, or every page without them", async () => {
+    const seen: Record<string, number> = {};
+    const reg = (id: string): AuditRegistration =>
+      makeReg(meta({ id, category: "cat1" }), (ctx) => {
+        seen[id] = ctx.pages.length;
+        return result(CheckStatus.Pass, 1);
+      });
+    const ctx = ctxWith([PageType.Homepage, PageType.Product]);
+    const config: ScanConfig = {
+      categories: [{ id: "cat1", name: "Cat 1", weight: 1 }],
+      audits: { cat1: [] },
+    };
+    const out = await runAudits(ctx, config, undefined, {
+      runnable: [
+        {
+          reg: reg("scoped"),
+          categoryId: "cat1",
+          scopedPages: [ctx.pages[0]!],
+        },
+        { reg: reg("whole"), categoryId: "cat1" },
+      ],
+      skipped: [],
+    });
+    expect(seen).toEqual({ scoped: 1, whole: 2 });
+    expect(out.checks.map((c) => [c.id, c.status])).toEqual([
+      ["scoped", CheckStatus.Pass],
+      ["whole", CheckStatus.Pass],
+    ]);
+    // No planned assessment, so no coverage and the audit's own score mode.
+    expect(out.checks.every((c) => c.coverage === undefined)).toBe(true);
+    expect(out.checks.map((c) => c.scoreDisplayMode)).toEqual([
+      ScoreDisplayMode.Ternary,
+      ScoreDisplayMode.Ternary,
+    ]);
+  });
+
+  it("stubs an audit the budget overtook while it ran", async () => {
+    const controller = new AbortController();
+    const reg = makeReg(meta({ id: "late", category: "cat1" }), () => {
+      controller.abort(new Error("The scan budget of 1 s ran out."));
+      return result(CheckStatus.Pass, 1);
+    });
+    const config: ScanConfig = {
+      categories: [{ id: "cat1", name: "Cat 1", weight: 1 }],
+      audits: { cat1: [] },
+    };
+    const out = await runAudits(
+      ctxWith([PageType.Homepage]),
+      config,
+      undefined,
+      { runnable: [{ reg, categoryId: "cat1" }], skipped: [] },
+      undefined,
+      controller.signal,
+    );
+    expect(out.checks[0]).toMatchObject({
+      id: "late",
+      status: CheckStatus.NotApplicable,
+      tags: [TAG_SKIPPED_SCAN_BUDGET],
+      explanation: expect.stringContaining("This audit was still running."),
+    });
   });
 });

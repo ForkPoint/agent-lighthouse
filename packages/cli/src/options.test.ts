@@ -5,6 +5,7 @@ import {
   DocumentState,
   CheckStatus,
   LEGACY_PAGE_TYPES,
+  LogLevel,
   PageType,
 } from "@forkpoint/agent-lighthouse-core";
 import {
@@ -585,6 +586,43 @@ describe("--page-type", () => {
       unknown: "general",
       content: "general",
     });
+  });
+});
+
+describe("--log-level and --log-file", () => {
+  it("sets neither when no flag is given", () => {
+    expect(parseCliOptions([], "https://example.com")).toMatchObject({
+      logLevel: undefined,
+      invalidLogLevel: undefined,
+      logFile: undefined,
+    });
+  });
+
+  it.each([
+    [["--log-level", "debug"], LogLevel.Debug],
+    [["--log-level=TRACE"], LogLevel.Trace],
+    [["--log-level", "silent"], LogLevel.Silent],
+  ])("reads %j as a level", (args, level) => {
+    const o = parseCliOptions(args, "https://example.com");
+    expect(o.logLevel).toBe(level);
+    expect(o.invalidLogLevel).toBeUndefined();
+  });
+
+  it("keeps a value that names no level, for main to refuse", () => {
+    const o = parseCliOptions(["--log-level=verbose"], "https://example.com");
+    expect(o.logLevel).toBeUndefined();
+    expect(o.invalidLogLevel).toBe("verbose");
+  });
+
+  it("reads the log file path", () => {
+    expect(
+      parseCliOptions(["--log-file", "scan.jsonl"], "https://example.com")
+        .logFile,
+    ).toBe("scan.jsonl");
+    expect(
+      parseCliOptions(["--log-file=logs/a.jsonl"], "https://example.com")
+        .logFile,
+    ).toBe("logs/a.jsonl");
   });
 });
 
