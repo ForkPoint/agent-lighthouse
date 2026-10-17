@@ -1,53 +1,40 @@
-# 100-Store Agentic Readiness Benchmark
+# Store benchmark
 
-This benchmark is the promotion-friendly story for Agent Lighthouse: most stores are readable by browsers and search crawlers, but not yet ready for autonomous AI agents.
+`scripts/benchmark-stores.ts` scans a list of online stores and saves every result. Use it to test the scanner across many real sites or to study repeated findings. It is not a ranking of the stores.
 
-## Headline Findings
-
-| Finding                                             |                                          Result |
-| :-------------------------------------------------- | ----------------------------------------------: |
-| Stores with OpenAPI, WebMCP, or MCP action surfaces |                                              0% |
-| Stores with `llms.txt` or `llms-full.txt`           |                                              4% |
-| Average agent-readiness score                       |                                      53.6 / 100 |
-| Fastest practical score lift                        | `llms.txt`, AI catalog, accessible icon buttons |
-
-These figures come from the pre-v2 run. v2 changed the registry, the pass conditions, and the scoring formula, so the average score is not comparable to a v2 scan; re-run the script to refresh it.
-
-## What The Benchmark Checks
-
-Agent Lighthouse evaluates 215 audits across 8 agent-journey categories:
-
-- Access & Crawl Control: robots.txt rules for GPTBot, ClaudeBot, PerplexityBot, OAI-SearchBot, Applebot-Extended, and related crawlers.
-- Content Extraction: clean main content, semantic structure, render cost, response time.
-- Machine Discovery: `llms.txt`, `llms-full.txt`, sitemaps, RSS, `.well-known` surfaces, AI-file delivery.
-- Structured Data: Schema.org Product, Offer, Review, Organization, Article, FAQPage, JSON-LD validity.
-- Answer Readiness: direct answerability, step lists, comparison tables, unique data, citations, authorship.
-- Agent Interfaces: OpenAPI, WebMCP, MCP discovery, agents.json, AI catalogs, search endpoints.
-- Agentic Commerce: product offers, availability, and transaction certainty.
-- Agent Operability & Safety: HTTPS, security headers, accessible controls, forms, broken agent endpoints.
-
-## Narrative For Promotion
-
-Traditional ecommerce sites are optimized for human browsing and Google search. Agent Lighthouse shows the missing layer for AI-driven discovery and task completion. A site can have strong Product schema and still fail because agents cannot find `llms.txt`, cannot access crawler-safe content, or cannot discover any machine-readable action surface.
-
-## Reproduce
+## Run it
 
 ```bash
-pnpm tsx scripts/benchmark-stores.ts
+pnpm tsx scripts/benchmark-stores.ts                        # every store in the list
+pnpm tsx scripts/benchmark-stores.ts https://example.com    # only the given URLs
 ```
 
-The script writes incremental output to:
+| Option              | Default | Effect                              |
+| :------------------ | :------ | :---------------------------------- |
+| `--gate`            | off     | Run with the scan evidence gate on. |
+| `--concurrency=<n>` | `2`     | Stores scanned at once.             |
+| `--delay=<ms>`      | `3000`  | Pause between stores.               |
 
-```text
-reports/investigation/benchmark-stores-data.json
-```
+- The store list is `packages/core/test-data/sites/benchmark-stores.json`, exported from the [brand corpus](./evidence/corpus.md). A full run takes hours.
+- Results go to `reports/investigation/benchmark-stores-data.json`, written as the run goes. A run with URLs writes `benchmark-subset-data.json` instead. `--gate` adds a `-gated` suffix.
+- Low concurrency and a delay keep shared rate limits from turning the run into a measure of its own throttling.
 
-## Post Copy
+## Compare fairly
 
-```text
-We benchmarked 100 ecommerce storefronts for AI-agent readiness.
+- Use the same scanner version and options for every site.
+- Record the scan date and the pages assessed.
+- Report blocked and unscored scans apart from numeric scores.
+- Compare findings, not only the overall score.
+- Keep the reports so others can check them.
 
-The pattern: most sites have classic SEO basics, but almost none expose the files and action surfaces AI agents need: llms.txt, OpenAPI, WebMCP, MCP discovery, and clean machine-readable interaction paths.
+## The pre-v2 study
 
-Tool: https://github.com/ForkPoint/agent-lighthouse
-```
+An earlier run over 100 stores, before version 2, found:
+
+| Finding                                            | Result     |
+| :------------------------------------------------- | :--------- |
+| Stores with OpenAPI, WebMCP or MCP action surfaces | 0%         |
+| Stores with `llms.txt` or `llms-full.txt`          | 4%         |
+| Average score                                      | 53.6 / 100 |
+
+Later releases changed the audits, pass conditions and scoring. These figures are historical. Do not compare a current score with them.

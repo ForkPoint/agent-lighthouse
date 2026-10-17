@@ -43,10 +43,6 @@ import {
  * Walls and shells are snapshotted alongside pages. A degenerate response is
  * where a vacuous `pass` comes from, so leaving those fixtures out would hide
  * exactly the class of claim this baseline exists to expose.
- *
- * Two fixtures read oddly on purpose, and `docs/evidence/corpus.md` says why:
- * `tirerack-com-soft-block-200` is an Akamai soft block classified as a page,
- * and `vercel-com-wall-200` is `text/markdown` parsed as HTML.
  */
 
 const registrations = Object.values(defaultConfig.audits).flat();

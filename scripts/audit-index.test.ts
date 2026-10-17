@@ -22,13 +22,12 @@ describe("central audit index", () => {
     );
   });
 
-  it("explains current rules and distinguishes review proposals", () => {
-    expect(index.version).toBe(5);
+  it("explains current rules and carries no historical review notes", () => {
+    expect(index.version).toBe(6);
     expect(index.readingGuide.purpose).toContain("declared intent");
-    expect(index.readingGuide.review).toContain("not execution proof");
-    expect(index.reviewContext.source).toBe(
-      "docs/architecture/v7-audit-applicability-ledger.md",
-    );
+    expect(index.readingGuide.review).toBeUndefined();
+    expect(index.reviewContext).toBeUndefined();
+    expect(index.audits.some((a: object) => "review" in a)).toBe(false);
   });
 
   it("records article scope, purpose, features, and proof pointers", () => {
@@ -47,9 +46,6 @@ describe("central audit index", () => {
     expect(entry.test).toBe(
       "packages/core/src/audits/structured-data/article-schema.test.ts",
     );
-    expect(entry.review.baselinePopulationAndRead).toContain("content");
-    expect(entry.review.proposedWork).toBeTruthy();
-    expect(entry.review.reference).toContain("#structured-dataarticle-schema");
   });
 
   it("keeps common metadata scope distinct from artifact guards", () => {
@@ -61,7 +57,6 @@ describe("central audit index", () => {
       pageTypes: [],
     });
     expect(index.readingGuide.applicability).toContain("body guards");
-    expect(entry.review).not.toBeNull();
   });
 
   it("marks experimental audits as excluded by default", () => {
@@ -74,57 +69,15 @@ describe("central audit index", () => {
   });
 });
 
-import { auditIndexFields, parseAuditReviews } from "./audit-index";
+import { auditIndexFields } from "./audit-index";
 import { ArticleSchemaAudit } from "#core/audits/structured-data/article-schema";
 import { AuditTier, PageType } from "#core/types";
 import { omit } from "#core/tests/omit";
 
-const reviewText = `# Review\n\n### example/check\n\n- **Scope / read:** Reads a\n  visible feature.\n- **Current aggregation / absence:** Absent is NA.\n- **Disposition:** Keep the feature guard.\n- **Tests:** Check missing input.\n`;
-
 describe("audit index generation boundaries", () => {
-  it("preserves wrapped review text and stops at a new section", () => {
-    const reviews = parseAuditReviews(
-      `${reviewText}\n## Other section\nNot part of the review.`,
-    );
-    expect(reviews.get("example/check")).toEqual({
-      reference:
-        "docs/architecture/v7-audit-applicability-ledger.md#examplecheck",
-      baselinePopulationAndRead: "Reads a visible feature.",
-      baselineAggregationAndAbsence: "Absent is NA.",
-      proposedWork: "Keep the feature guard.",
-      acceptanceCriteria: "Check missing input.",
-    });
-  });
-
-  it("rejects duplicate audit headings instead of silently overwriting a review", () => {
-    expect(() => parseAuditReviews(reviewText + reviewText)).toThrow(
-      "Duplicate audit review: example/check",
-    );
-  });
-
-  it("rejects incomplete and empty review ledgers", () => {
-    expect(() => parseAuditReviews("# Review")).toThrow("no audit entries");
-    expect(() =>
-      parseAuditReviews("### example/check\n- **Tests:** Only a test."),
-    ).toThrow("Incomplete audit review");
-  });
-
-  it("preserves combined disposition/tests without inventing absent fields", () => {
-    const review = parseAuditReviews(
-      "### example/check\n- **Population / read:** An optional artifact.\n- **Disposition / tests:** Keep NA; test absent input.",
-    ).get("example/check");
-    expect(review?.proposedWork).toBe("Keep NA; test absent input.");
-    expect(review?.acceptanceCriteria).toBeNull();
-    expect(review?.baselineAggregationAndAbsence).toBeNull();
-  });
-
-  it("keeps unreviewed audits explicit and does not infer feature tags", () => {
-    const entry = auditIndexFields(
-      omit(ArticleSchemaAudit.meta, "guidance"),
-      undefined,
-    );
+  it("does not infer feature tags", () => {
+    const entry = auditIndexFields(omit(ArticleSchemaAudit.meta, "guidance"));
     expect(entry.features).toEqual([]);
-    expect(entry.review).toBeNull();
   });
 
   it("uses the runner's alias rules and rejects conflicting metadata", () => {
@@ -132,31 +85,22 @@ describe("audit index generation boundaries", () => {
       ...ArticleSchemaAudit.meta,
       pageTypes: [PageType.Article] as const,
     };
-    const entry = auditIndexFields(
-      {
-        ...omit(meta, "applicablePageTypes"),
-        pageTypes: [...meta.pageTypes],
-      },
-      undefined,
-    );
+    const entry = auditIndexFields({
+      ...omit(meta, "applicablePageTypes"),
+      pageTypes: [...meta.pageTypes],
+    });
     expect(entry.applicability).toEqual({
       pageTypeGate: "restricted",
       pageTypes: ["article"],
     });
     expect(() =>
-      auditIndexFields(
-        { ...ArticleSchemaAudit.meta, pageTypes: [] },
-        undefined,
-      ),
+      auditIndexFields({ ...ArticleSchemaAudit.meta, pageTypes: [] }),
     ).toThrow("Conflicting page types");
   });
 
   it("never substitutes scored grade A for absent evidence metadata", () => {
     expect(() =>
-      auditIndexFields(
-        omit(ArticleSchemaAudit.meta, "evidenceGrade"),
-        undefined,
-      ),
+      auditIndexFields(omit(ArticleSchemaAudit.meta, "evidenceGrade")),
     ).toThrow("Incomplete audit metadata");
   });
 
@@ -175,13 +119,5 @@ describe("audit index generation boundaries", () => {
       expect(entry.evidenceGrade, meta.id).toBe(meta.evidenceGrade);
       expect(entry.weight, meta.id).toBe(meta.weight);
     }
-    expect(index.summary.auditsWithReview).toBe(
-      index.audits.filter((a: { review: unknown }) => a.review !== null).length,
-    );
-    expect(index.summary.auditsWithoutReview).toEqual(
-      index.audits
-        .filter((a: { review: unknown }) => a.review === null)
-        .map((a: { id: string }) => a.id),
-    );
   });
 });

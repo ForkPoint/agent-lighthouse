@@ -30,15 +30,11 @@ capped at 64 characters by `packages/core/src/schemas.ts`.
 Start with `docs/evidence/audit-map.json` for audit discovery. Its `readingGuide`
 explains each field. Select `audits[]` by exact ID or feature tag instead of loading
 all dossiers. The index includes purpose, feature tags, current page-type scope,
-evidence requirements, scoring metadata, source/test/dossier paths, and historical
-review notes. `docs/evidence/audit-map.md` has field definitions and `jq` examples.
-
-Runtime fields come from audit metadata. Review notes come from the dated v7 P2
-ledger; proposals and acceptance criteria do not prove implementation or test
-coverage. Read the source and dossier before changing behavior. Use the execution
-plan for completed work. Regenerate with `pnpm build:audit-map`; CI runs
-`pnpm check:audit-map` to reject stale output. Do not hand-edit generated active
-records.
+evidence requirements, scoring metadata and source/test/dossier paths, all read
+from audit metadata. `docs/evidence/audit-map.md` has field definitions and `jq`
+examples. Read the source and dossier before changing behavior. Regenerate with
+`pnpm build:audit-map`; CI runs `pnpm check:audit-map` to reject stale output.
+Do not hand-edit generated active records.
 
 ## Commands
 
@@ -48,6 +44,7 @@ pnpm test               # vitest, from the repo root only
 pnpm typecheck          # tsc --noEmit per package
 pnpm lint               # oxlint, type-aware
 pnpm check:dossiers     # registry <-> dossier agreement, both directions
+pnpm check:audit-boundaries # no audit makes its own network call
 pnpm check:requires     # each audit's `requires` matches what its source reads
 pnpm check:audit-map    # audit map <-> codebase & dossier agreement
 pnpm check:enums        # no string literal where an enum constant exists
@@ -233,10 +230,10 @@ Write for a reader, not for a researcher:
 
 ## Before you commit
 
-All eleven, in order:
+All twelve, in order:
 
 ```bash
-pnpm build && pnpm test && pnpm typecheck && pnpm lint && pnpm check:dossiers && pnpm check:requires && pnpm check:audit-map && pnpm check:enums && pnpm knip && pnpm check:retired-names && pnpm check:package-types
+pnpm build && pnpm test && pnpm typecheck && pnpm lint && pnpm check:dossiers && pnpm check:audit-boundaries && pnpm check:requires && pnpm check:audit-map && pnpm check:enums && pnpm knip && pnpm check:retired-names && pnpm check:package-types
 ```
 
 `check:dossiers`, `check:requires`, `check:package-types` and the type-aware

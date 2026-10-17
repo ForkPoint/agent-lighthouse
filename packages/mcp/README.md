@@ -1,10 +1,8 @@
 # @forkpoint/agent-lighthouse-mcp
 
-Model Context Protocol server for Agent Lighthouse.
+Model Context Protocol server for Agent Lighthouse. It lets Claude Desktop, Cursor and other MCP clients scan a website for AI-agent readiness.
 
-Use this package to let Claude Desktop, Cursor, and other MCP-compatible agentic IDEs audit live websites for AI-agent readiness.
-
-## Claude Desktop / Cursor
+## Setup
 
 ```json
 {
@@ -17,9 +15,20 @@ Use this package to let Claude Desktop, Cursor, and other MCP-compatible agentic
 }
 ```
 
-## What It Exposes
+The package's command is `agent-lighthouse-mcp` (`dist/bin.js`). It speaks MCP over stdio. Logs go to stderr; set `LOG_LEVEL` and `LOG_FORMAT` to change them.
 
-The MCP server wraps Agent Lighthouse scans so an assistant can check a site across the v2 taxonomy's eight categories — access & crawl control, machine discovery, agent interfaces, agentic commerce, content extraction, structured data, answer readiness, and agent operability & safety — from inside the IDE.
+## The `audit_website` tool
+
+| Argument    | Required | Meaning                                                                    |
+| :---------- | :------- | :------------------------------------------------------------------------- |
+| `url`       | yes      | The URL to scan.                                                           |
+| `pageType`  | no       | `homepage`, `category`, `product`, `article` or `general`. Omit to detect. |
+| `pages`     | no       | More `{ url, pageType }` declarations.                                     |
+| `snapshots` | no       | Browser-rendered DOM input.                                                |
+
+It returns JSON: overall score and tier (`null` with `unscoredReason` when the scan was not scored), per-category scores, readiness vitals, page scope, and the top 10 fixes. Progress is sent as `notifications/progress` when the client passes a progress token.
+
+`auditWebsite(url, { pageType, pages, snapshots })`, exported from this package, runs the same scan from code.
 
 ## Links
 

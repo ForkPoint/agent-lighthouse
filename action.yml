@@ -50,7 +50,7 @@ runs:
         eval $CMD
 
     - name: Comment on Pull Request
-      if: inputs.comment-on-pr == 'true' && inputs.github-token != '' && github.event_name == 'pull_request'
+      if: ${{ !cancelled() && inputs.comment-on-pr == 'true' && inputs.github-token != '' && github.event_name == 'pull_request' }}
       uses: actions/github-script@v9
       with:
         github-token: ${{ inputs.github-token }}

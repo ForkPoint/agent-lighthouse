@@ -24,7 +24,7 @@
  * The built-in output goes to sinks. The default sink writes to stderr, never
  * stdout: stdout carries the CLI's report and the MCP server's protocol. Each
  * sink has its own level and format. `LOG_LEVEL` (silent, error, warn, info,
- * debug, trace; default info) and `LOG_FORMAT` (text or json; default text)
+ * debug, trace; default info, and warn in the CLI) and `LOG_FORMAT` (text or json; default text)
  * set the default sink.
  *
  * Levels: `error` is a fault in the scanner; `warn` is something that changes

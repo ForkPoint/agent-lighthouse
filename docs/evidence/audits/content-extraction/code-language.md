@@ -74,7 +74,3 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 ## Implementation deviations (v7 P3, 2026-10-07)
 
 The added labels preserve the old general-content population while classification changes. This is not the final feature-gate migration. The evidence grade, tier, weight, and audit ID stay unchanged.
-
-## Deferred (v7 P3)
-
-See `docs/architecture/v7-audit-applicability-ledger.md` for the remaining audit-specific guards, population limits, and aggregation work. P4 will address selected-page evidence and mixed provenance.
