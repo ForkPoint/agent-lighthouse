@@ -128,6 +128,44 @@ describe("CheckoutOfferFieldMappingAudit", () => {
     );
   });
 
+  // The spec asks for the product page "with the variant selected when
+  // possible" and states no canonical rule.
+  it("passes a variant URL whose canonical names the parent product", () => {
+    const variantUrl = `${PRODUCT_URL}?variant=123`;
+    const page = mockPageContext(
+      variantUrl,
+      `<html><head><link rel="canonical" href="${PRODUCT_URL}">${ld({ ...FULL, url: variantUrl })}</head><body><main><p>Widget</p></main></body></html>`,
+      1,
+    );
+    const result = new CheckoutOfferFieldMappingAudit().audit(
+      mockCheckContext([page]),
+    );
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.found).toContain(`url=${variantUrl}`);
+  });
+
+  it("fails a relative Product url", () => {
+    const result = run({ url: "/products/widget?variant=123" });
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain(
+      "url is not an absolute HTTP or HTTPS URL",
+    );
+  });
+
+  it("falls back to the page address when the Product carries no url", () => {
+    const { url: _url, ...product } = FULL;
+    const page = mockPageContext(
+      PRODUCT_URL,
+      `<html><head>${ld(product)}</head><body><main><p>Widget</p></main></body></html>`,
+      1,
+    );
+    const bare = new CheckoutOfferFieldMappingAudit().audit(
+      mockCheckContext([page]),
+    );
+    expect(bare.status).toBe(CheckStatus.Pass);
+    expect(bare.found).toContain(`url=${PRODUCT_URL}`);
+  });
+
   it("fails a relative image URL", () => {
     const result = run({ image: "/img/ark-001.jpg" });
     expect(result.status).toBe(CheckStatus.Fail);

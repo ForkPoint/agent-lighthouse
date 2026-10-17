@@ -159,20 +159,13 @@ function assess(
   else row.brand = brand;
 
   // ── url and image ───────────────────────────────────────────
+  // The spec asks for the product page "with the variant selected when
+  // possible" and states no canonical rule, so a variant URL whose canonical
+  // names the parent product is a valid row. Only the absolute-URL rule applies.
   const url = text(product["url"]) ?? page.url;
   if (!ABSOLUTE_HTTP_URL.test(url))
     problems.push("url is not an absolute HTTP or HTTPS URL");
   else row.url = url;
-  const canonical = page.$('link[rel="canonical"]').attr("href");
-  if (
-    canonical &&
-    text(product["url"]) &&
-    new URL(canonical, page.url).toString() !== url
-  ) {
-    problems.push(
-      "the Product url does not match the page canonical, so the feed row and the page disagree",
-    );
-  }
 
   const image = text(product["image"]);
   if (!image) problems.push("no image");
