@@ -143,11 +143,15 @@ export class WikidataRoundTripVerificationAudit extends Audit {
     const failures: string[] = [];
     const warnings: string[] = [];
     const verified: string[] = [];
+    // A Wikidata outage is not a fact about this site. An entity that could
+    // not be read is reported, but it never decides the verdict on its own:
+    // with nothing measured the result is notApplicable, not a warning.
+    const unreached: string[] = [];
 
     for (const id of entities.slice(0, MAX_ENTITIES)) {
       const url = `https://www.wikidata.org/w/api.php?action=wbgetclaims&entity=${id}&property=${OFFICIAL_WEBSITE}&format=json`;
       if (!(await isSafeUrl(url))) {
-        warnings.push(
+        unreached.push(
           `${id}: Wikidata could not be reached, so the claim is unverified`,
         );
         continue;
@@ -156,7 +160,7 @@ export class WikidataRoundTripVerificationAudit extends Audit {
         headers: { Accept: "application/json" },
       });
       if (!response || response.status !== 200) {
-        warnings.push(
+        unreached.push(
           `${id}: Wikidata answered HTTP ${response?.status ?? 0}, so the claim is unverified`,
         );
         continue;
@@ -194,12 +198,23 @@ export class WikidataRoundTripVerificationAudit extends Audit {
       siteDomain: registrableDomain(site),
       verified: verified.slice(0, 10),
       failures: failures.slice(0, 10),
-      warnings: warnings.slice(0, 10),
+      warnings: [...warnings, ...unreached].slice(0, 10),
     };
     const expected =
       "Each claimed Wikidata entity gives this site’s domain as its official website (P856)";
-    const found = `${entities.length} entity claim(s); ${verified.length} verified, ${failures.length} pointing elsewhere, ${warnings.length} unverifiable.`;
+    const found = `${entities.length} entity claim(s); ${verified.length} verified, ${failures.length} pointing elsewhere, ${warnings.length + unreached.length} unverifiable.`;
     const displayValue = `${verified.length}/${details.entitiesChecked} verified`;
+
+    if (verified.length + failures.length + warnings.length === 0) {
+      return {
+        ...this.notApplicable(
+          `${unreached[0]!}. Nothing was measured, so there is no verdict on the site.`,
+          expected,
+          found,
+        ),
+        details,
+      };
+    }
 
     if (failures.length > 0) {
       return {
