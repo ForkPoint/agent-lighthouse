@@ -163,12 +163,18 @@ export function detectWafProtection(
       errorMsg.includes("abort") ||
       errorMsg.includes("econnreset")
     ) {
+      // The homepage is fetched once, so the reason says what that one
+      // attempt saw. A connection that opens and then never answers is how
+      // bot protection often holds a crawler; DNS, refused-port and TLS
+      // failures were sorted out above.
+      const timedOut = /timeout|abort/.test(errorMsg);
       return {
         isBlocked: true,
         provider: WafProvider.ConnectionDrop,
         name: "Bot Wall / Aggressive Connection Drop",
-        reason:
-          "Connection dropped or timed out repeatedly on crawler requests",
+        reason: timedOut
+          ? "The connection opened, but the homepage sent no response before the timeout"
+          : "The server closed the connection without a response",
         statusCode: 0,
       };
     }
