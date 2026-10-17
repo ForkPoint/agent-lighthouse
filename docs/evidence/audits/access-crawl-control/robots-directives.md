@@ -13,6 +13,7 @@ sources:
   - s18
   - perplexity-bots-docs
   - bing-chat-controls-2023
+  - bing-robots-meta-tags
 ---
 
 # robots-directives (`2.25`, `1.13`, `4.20`)
@@ -28,13 +29,14 @@ Every robots directive that applies to a scanned page, from both transports and 
 
 Values are tokenized on commas and compared token-wise, so `none` is recognised as noindex+nofollow and `noindexifembedded` is not mistaken for a full block.
 
-| State                                                                             | Result                                                                |
-| :-------------------------------------------------------------------------------- | :-------------------------------------------------------------------- |
-| a **non-utility** page carries `noindex`/`none`                                   | `fail` — `critical` when the homepage is among them, otherwise `high` |
-| a non-utility page carries `nosnippet`, `max-snippet:0`, `noarchive` or `nocache` | `warn`, priority `medium` — indexed but unquotable                    |
-| only utility routes (cart, login, search, account, …) carry `noindex`             | `pass`, naming them                                                   |
-| no directive blocks or suppresses                                                 | `pass`                                                                |
-| no pages scanned                                                                  | `na`                                                                  |
+| State                                                                                     | Result                                                                |
+| :---------------------------------------------------------------------------------------- | :-------------------------------------------------------------------- |
+| a **non-utility** page carries `noindex`/`none`                                           | `fail` — `critical` when the homepage is among them, otherwise `high` |
+| a non-utility page carries `nosnippet`, `max-snippet:0`, or `noarchive` without `nocache` | `warn`, priority `medium` — indexed but unquotable                    |
+| a non-utility page carries `nocache` (alone or with `noarchive`)                          | `pass`, naming it — Bing still shows URL, title and snippet           |
+| only utility routes (cart, login, search, account, …) carry `noindex`                     | `pass`, naming them                                                   |
+| no directive blocks or suppresses                                                         | `pass`                                                                |
+| no pages scanned                                                                          | `na`                                                                  |
 
 ## Evidence
 
@@ -52,12 +54,13 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - Google Search Central, AI features and your website: site owners may use the `nosnippet`, `data-nosnippet`, `max-snippet` or `noindex` controls to limit how their content appears in AI features on Search. Eligibility for AI Overviews and AI Mode carries "no additional technical requirements" beyond ordinary Search eligibility — that is, the AI surfaces are fed by the same Search index that `noindex` removes the page from — https://developers.google.com/search/docs/appearance/ai-features (verified 2026-08-21)
 - The directive is a long-standing, cross-vendor indexing control rather than a Google-only convention; RFC 9309 governs the robots.txt half of the same exclusion family and is a ratified standard with named crawler consumers — https://www.rfc-editor.org/rfc/rfc9309.html (verified 2026-08-21)
 
-**Counter-evidence:** `noindex` gates _index-derived_ surfaces only. User-initiated fetchers are unaffected: OpenAI documents that for `ChatGPT-User` "Because these actions are initiated by a user, robots.txt rules may not apply" (https://developers.openai.com/api/docs/bots), and Perplexity documents that `Perplexity-User` "Generally ignores robots.txt rules" (https://docs.perplexity.ai/guides/bots) — both verified 2026-08-21. A noindexed page can therefore still be fetched and quoted live in a chat answer, so the audit's failure language ("blocking AI crawlers") overstates the effect for the conversational-agent path. The snippet controls are only partly instrumented. The audit reads `nosnippet` and `max-snippet:0` and warns on them, because Google documents that they keep content out of AI Overviews and AI Mode (https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag, verified 2026-10-17). It also warns on `noarchive` and `nocache`. Google ignores both. Bing documents that "Content tagged NOARCHIVE will not be included in Bing Chat answers", and that NOCACHE content may appear with only its URL, title and snippet (https://blogs.bing.com/webmaster/september-2023/Announcing-new-options-for-webmasters-to-control-usage-of-their-content-in-Bing-Chat, verified 2026-10-17). It does not read element-level `data-nosnippet`, and it does not judge a positive `max-snippet` limit, which narrows rather than removes what an AI answer may quote.
+**Counter-evidence:** `noindex` gates _index-derived_ surfaces only. User-initiated fetchers are unaffected: OpenAI documents that for `ChatGPT-User` "Because these actions are initiated by a user, robots.txt rules may not apply" (https://developers.openai.com/api/docs/bots), and Perplexity documents that `Perplexity-User` "Generally ignores robots.txt rules" (https://docs.perplexity.ai/guides/bots) — both verified 2026-08-21. A noindexed page can therefore still be fetched and quoted live in a chat answer, so the audit's failure language ("blocking AI crawlers") overstates the effect for the conversational-agent path. The snippet controls are only partly instrumented. The audit reads `nosnippet` and `max-snippet:0` and warns on them, because Google documents that they keep content out of AI Overviews and AI Mode (https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag, verified 2026-10-17). Google ignores `noarchive` and `nocache`; Bing reads both, and its two sources treat them differently. Bing's robots meta tag reference says `noarchive` means "Do not link in Chat and Copilot", and `nocache` means "Display only URL/Snippet/Title in Chat or Copilot". It adds: "If content has both NOCACHE and NOARCHIVE tags, we will treat it as NOCACHE." (https://www.bing.com/webmasters/help/robots-meta-tags-and-attributes-that-bing-supports-5198d240, verified 2026-10-17). The 2023 announcement says the same in other words: "Content tagged NOARCHIVE will not be included in Bing Chat answers, not be linked to in the answers", while "Content with the NOCACHE tag may be included in Bing Chat answers. We will only display URL/Snippet/Title in the answer" (https://blogs.bing.com/webmaster/september-2023/Announcing-new-options-for-webmasters-to-control-usage-of-their-content-in-Bing-Chat, verified 2026-10-17). So `noarchive` alone keeps a page out of Copilot answers, and the audit warns on it. `nocache` limits what Copilot shows but still links and quotes the page's snippet, so it does not forbid quoting. The audit names a `nocache` page in its pass message and does not warn. A page carrying both is treated as `nocache`, as Bing does. Until 2026-10-17 the audit warned on `nocache` as if it forbade quoting; no source supported that. It does not read element-level `data-nosnippet`, and it does not judge a positive `max-snippet` limit, which narrows rather than removes what an AI answer may quote.
 
 ## Implementation deviations
 
 - Every scanned page is read, from both transports. Per-bot meta names and the per-bot `X-Robots-Tag` form pass the same crawler allowlist, so a bot-scoped directive binds only that bot.
 - All robots meta tags are collected off the DOM, not the last-wins `page.meta`.
+- Bing's "both tags means NOCACHE" rule is applied per page, over every directive the page carries. A `nocache` in any transport or allowed meta name cancels a `noarchive` from any other. Bing scopes neither tag to a crawler beyond `bingbot`, and Google ignores both, so the union is the closest reading.
 - The content/utility split is made on the URL path (`UTILITY_PATH`: `/cart`, `/checkout`, `/login`, `/account`, `/search`, …). `PageType` cannot carry it: all its values are primary content. A noindexed utility route is named in the pass message.
 - The failure copy does not say "blocking AI crawlers". `noindex` gates index-derived surfaces. User-initiated fetchers may still fetch and quote the page live.
 - `defaultPriority` is `high`. `critical` is emitted per result, only when the homepage is among the blocked pages.

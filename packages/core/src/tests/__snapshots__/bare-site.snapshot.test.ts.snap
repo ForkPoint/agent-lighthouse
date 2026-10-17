@@ -123,6 +123,7 @@ na   1   access-crawl-control/amazonbot
 na   1   access-crawl-control/anthropic-ai
 na   1   access-crawl-control/applebot-extended
 na   1   access-crawl-control/bot-content-delta-declared
+na   1   access-crawl-control/canonical
 na   1   access-crawl-control/ccbot
 na   1   access-crawl-control/claude-searchbot
 na   1   access-crawl-control/claude-user
@@ -213,7 +214,6 @@ warn 0.6 access-crawl-control/no-blanket-block
 warn 0.6 agentic-commerce/offer-truth-consistency
 warn 0.6 content-extraction/sequential-headings
 warn 0.6 machine-discovery/discovery-index-coverage
-warn 1   access-crawl-control/canonical
 warn 1   machine-discovery/no-broken-links
 warn 1   structured-data/breadcrumb-schema"
 `;

@@ -6771,6 +6771,24 @@
       "publisher": "LinkedIn",
       "verified": "2026-10-17",
       "keyFindings": "'Image and video content that is cryptographically signed using C2PA Content Credentials will be noted with the C2PA icon'. Selecting the icon shows the content credential and available metadata, including the issuer and the issue date. 'The icon will be visible to all viewers of your content.'"
+    },
+    {
+      "id": "google-canonicalization-overview",
+      "title": "What is URL canonicalization",
+      "url": "https://developers.google.com/search/docs/crawling-indexing/canonicalization",
+      "type": "vendor-doc",
+      "publisher": "Google Search Central",
+      "verified": "2026-10-17",
+      "keyFindings": "Describes how Google picks a canonical from a set of duplicates: it \"chooses the page that, based on the factors (or signals) the indexing process collected, is objectively the most complete and useful for search users, and marks it as the canonical.\" Signals listed include HTTP vs HTTPS, redirects, sitemap presence and rel=\"canonical\" annotations. States no cost to a site that leaves the choice to Google."
+    },
+    {
+      "id": "bing-robots-meta-tags",
+      "title": "Robots meta tags and attributes that Bing supports",
+      "url": "https://www.bing.com/webmasters/help/robots-meta-tags-and-attributes-that-bing-supports-5198d240",
+      "type": "vendor-doc",
+      "publisher": "Microsoft Bing Webmaster Tools",
+      "verified": "2026-10-17",
+      "keyFindings": "Client-rendered help page; read in a rendered browser. noarchive: \"Do not link in Chat and Copilot. Do not use the content for training Microsoft's generative AI foundation models.\" nocache: \"Display only URL/Snippet/Title in Chat or Copilot. Use only URLs, Titles and Snippets for training Microsoft's generative AI foundation models. If content has both NOCACHE and NOARCHIVE tags, we will treat it as NOCACHE.\" max-snippet: \"If value = 0, we will not show a text snippet.\" Each tag may also be sent as X-Robots-Tag, and name=\"bingbot\" scopes it to Bing."
     }
   ]
 }

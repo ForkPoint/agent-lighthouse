@@ -198,7 +198,8 @@ describe("CanonicalLinksAudit", () => {
     expect(result.message).toContain("conflicting");
   });
 
-  // Crawlers honour a canonical in <head> only.
+  // Google accepts a canonical in <head> only, so a body-only one has the
+  // effect of none: not scored, but the message says why.
   it("treats a body-only canonical as missing and says why", () => {
     const ctx = mockCheckContext([
       mockPageContext(
@@ -207,27 +208,51 @@ describe("CanonicalLinksAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Warn);
-    expect(result.found).toContain("outside <head>");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.message).toContain("outside <head>");
   });
 
   // Google: "your site will likely do just fine without specifying a canonical
-  // preference" — absence is not a documented defect, so it no longer fails.
-  it("warns rather than fails when no page has a canonical", () => {
-    const ctx = mockCheckContext([page("https://example.com/", "")]);
+  // preference", because it picks a canonical itself. Absence costs nothing,
+  // and the audit grades a declared value, so there is nothing to judge.
+  it("is not-applicable when no page declares a canonical", () => {
+    const ctx = mockCheckContext([
+      page("https://example.com/", ""),
+      page("https://example.com/a", "", 1),
+    ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Warn);
-    expect(result.priority).toBe(CheckPriority.Medium);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
-  it("warns at low priority when only some pages are missing a canonical", () => {
+  // The declared canonicals are judged; the pages without one are named only.
+  it("passes and names the pages without a canonical when the declared ones are sound", () => {
     const ctx = mockCheckContext([
       self("https://example.com/"),
       page("https://example.com/a", "", 1),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Warn);
-    expect(result.priority).toBe(CheckPriority.Low);
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.message).toContain("1 page(s) declare none");
+    expect(result.found).toContain("https://example.com/a");
+  });
+
+  // Absence must not mask a defect in the canonicals that are declared.
+  it("still fails a homepage collapse when other pages declare no canonical", () => {
+    const ctx = mockCheckContext([
+      page("https://example.com/", ""),
+      page(
+        "https://example.com/a",
+        '<link rel="canonical" href="https://example.com/">',
+        1,
+      ),
+      page(
+        "https://example.com/b",
+        '<link rel="canonical" href="https://example.com/">',
+        2,
+      ),
+      page("https://example.com/c", "", 3),
+    ]);
+    expect(audit.audit(ctx).status).toBe(CheckStatus.Fail);
   });
 
   it("is not-applicable when no pages were scanned", () => {
