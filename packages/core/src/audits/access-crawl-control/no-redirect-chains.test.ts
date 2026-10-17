@@ -15,10 +15,29 @@ import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
 describe("NoRedirectChainsAudit", () => {
   const audit = new NoRedirectChainsAudit();
 
-  function page(url: string, finalUrl: string, index = 0) {
+  /**
+   * A page reached from `url` at `finalUrl`. A redirected page gets a chain of
+   * `hops` hops (two by default, the shortest chain) through `/step-N` URLs.
+   */
+  function page(url: string, finalUrl: string, index = 0, hops = 2) {
     const p = mockPageContext(url, "<html><body>Hi</body></html>", index);
     p.fetchResult.url = url;
     p.fetchResult.finalUrl = finalUrl;
+    if (url !== finalUrl) {
+      const stops = [
+        url,
+        ...Array.from(
+          { length: hops - 1 },
+          (_, i) => new URL(`/step-${i}`, url).href,
+        ),
+        finalUrl,
+      ];
+      p.fetchResult.redirectChain = stops.slice(1).map((to, i) => ({
+        status: 301,
+        from: stops[i]!,
+        to,
+      }));
+    }
     return p;
   }
 
@@ -28,7 +47,56 @@ describe("NoRedirectChainsAudit", () => {
     ]);
     const result = audit.audit(ctx);
     expect(result.status).toBe(CheckStatus.Pass);
-    expect(result.message).toContain("resolve without redirects");
+    expect(result.message).toContain("without a redirect chain");
+  });
+
+  // Google documents harm from long chains only; a single same-site hop is
+  // the routine http-to-https or apex-to-www normalisation, not a chain.
+  it("passes when every page resolves in one same-site hop", () => {
+    const ctx = mockCheckContext([
+      page("http://example.com/", "https://example.com/", 0, 1),
+      page("https://example.com/a", "https://www.example.com/a", 1, 1),
+    ]);
+    const result = audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Pass);
+  });
+
+  it("passes a same-site hop whose result carries no chain", () => {
+    const p = mockPageContext("http://example.com/", "<html></html>");
+    p.fetchResult.url = "http://example.com/";
+    p.fetchResult.finalUrl = "https://example.com/";
+    delete p.fetchResult.redirectChain;
+    expect(audit.audit(mockCheckContext([p])).status).toBe(CheckStatus.Pass);
+  });
+
+  it("fails when every page needs two same-site hops", () => {
+    const ctx = mockCheckContext([
+      page("http://example.com/", "https://www.example.com/", 0, 2),
+    ]);
+    const result = audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("1/1");
+  });
+
+  it("does not count one-hop pages toward the chain share", () => {
+    const ctx = mockCheckContext([
+      page("http://example.com/", "https://example.com/", 0, 1),
+      page("http://example.com/a", "https://example.com/a", 1, 1),
+      page("http://example.com/b", "https://www.example.com/b", 2, 3),
+    ]);
+    const result = audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.message).toContain("1/3");
+    expect(result.found).toContain("http://example.com/b");
+  });
+
+  it("still fails a single hop that lands on another site", () => {
+    const ctx = mockCheckContext([
+      page("https://example.com/", "https://parked.example.test/", 0, 1),
+    ]);
+    const result = audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.found).toContain("parked.example.test");
   });
 
   it("fails when a majority of pages are redirected", () => {
@@ -37,7 +105,7 @@ describe("NoRedirectChainsAudit", () => {
     ]);
     const result = audit.audit(ctx);
     expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.message).toContain("involve redirects");
+    expect(result.message).toContain("involve redirect chains");
   });
 
   it("warns when a minority of pages are redirected", () => {
@@ -48,7 +116,7 @@ describe("NoRedirectChainsAudit", () => {
     ]);
     const result = audit.audit(ctx);
     expect(result.status).toBe(CheckStatus.Warn);
-    expect(result.message).toContain("involve redirects");
+    expect(result.message).toContain("involve redirect chains");
   });
 
   // Absent artifact, absent verdict: with no page there is no hop to judge.

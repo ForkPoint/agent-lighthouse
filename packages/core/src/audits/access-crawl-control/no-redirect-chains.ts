@@ -2,6 +2,7 @@ import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
 import type { CheckContext } from "#core/check-context";
 import { weightForGrade } from "#core/scorer";
+import { registrableOf } from "#core/gatherers/domains";
 import {
   AuditTier,
   CheckPriority,
@@ -17,7 +18,7 @@ export class NoRedirectChainsAudit extends Audit {
     title: "No redirect chains",
     failureTitle: "No redirect chains",
     description:
-      "Redirect chains waste AI crawler budget and slow down content discovery. Each page should resolve in a single redirect at most.",
+      "Redirect chains waste AI crawler budget and slow down content discovery. Each page should resolve in a single same-site redirect at most.",
     scoreDisplayMode: ScoreDisplayMode.Ternary,
     weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
     evidenceGrade: EvidenceGrade.A,
@@ -44,12 +45,22 @@ export class NoRedirectChainsAudit extends Audit {
     // scan is exactly the redirect a reader needs named. So the redirect is
     // counted before the site is attributed, and the guard below only stops
     // the audit *clearing* a site whose pages it never saw.
+    //
+    // Two kinds of redirect count. Google documents harm from long chains,
+    // so a page reached through two or more hops counts. A single hop that
+    // lands on another registrable domain counts too: Google keeps the
+    // target's content, not the requested site's. One ordinary hop on the
+    // same site, such as http to https or apex to www, is not a defect.
     const redirected: Array<{ from: string; to: string }> = [];
 
     for (const page of ctx.pages) {
       const requestUrl = page.fetchResult.url;
       const finalUrl = page.fetchResult.finalUrl;
-      if (requestUrl !== finalUrl) {
+      if (requestUrl === finalUrl) continue;
+      // A result built without the fetcher's chain still moved at least once.
+      const hops = Math.max(page.fetchResult.redirectChain?.length ?? 0, 1);
+      const leftSite = registrableOf(requestUrl) !== registrableOf(finalUrl);
+      if (hops >= 2 || leftSite) {
         redirected.push({ from: requestUrl, to: finalUrl });
       }
     }
@@ -66,15 +77,15 @@ export class NoRedirectChainsAudit extends Audit {
       }
 
       return this.pass(
-        `All ${ctx.pages.length} page(s) resolve without redirects.`,
+        `All ${ctx.pages.length} page(s) resolve without a redirect chain or off-site redirect.`,
         "No redirect chains",
-        `${ctx.pages.length} page(s) with no redirects`,
+        `${ctx.pages.length} page(s) with no redirect chain`,
       );
     }
 
     if (redirected.length > ctx.pages.length / 2) {
       return this.fail(
-        `${redirected.length}/${ctx.pages.length} page(s) involve redirects.`,
+        `${redirected.length}/${ctx.pages.length} page(s) involve redirect chains or off-site redirects.`,
         "No redirect chains",
         `Redirected: ${redirected
           .slice(0, 5)
@@ -85,7 +96,7 @@ export class NoRedirectChainsAudit extends Audit {
         {
           priority: CheckPriority.Medium,
           description:
-            "Many pages involve redirects, which slow down AI crawler discovery and waste crawl budget. Update internal links and sitemap entries to point directly to the final URLs.",
+            "Many pages involve redirect chains or off-site redirects, which slow down AI crawler discovery and waste crawl budget. Update internal links and sitemap entries to point directly to the final URLs.",
           code: `<!-- Update links to use final URLs directly -->\n<a href="https://yoursite.com/final-page">Page</a>\n\n<!-- Update sitemap -->\n<url>\n  <loc>https://yoursite.com/final-page</loc>\n</url>`,
         },
         redirected[0]?.from,
@@ -93,7 +104,7 @@ export class NoRedirectChainsAudit extends Audit {
     }
 
     return this.warn(
-      `${redirected.length}/${ctx.pages.length} page(s) involve redirects.`,
+      `${redirected.length}/${ctx.pages.length} page(s) involve redirect chains or off-site redirects.`,
       "No redirect chains",
       `Redirected: ${redirected
         .slice(0, 5)
@@ -104,7 +115,7 @@ export class NoRedirectChainsAudit extends Audit {
       {
         priority: CheckPriority.Low,
         description:
-          "Some pages involve redirects. Update internal links and sitemap entries to point to the final URLs to avoid unnecessary redirects for AI crawlers.",
+          "Some pages involve redirect chains or off-site redirects. Update internal links and sitemap entries to point to the final URLs to avoid unnecessary redirects for AI crawlers.",
         code: `<!-- Point directly to the final URL -->\n<a href="https://yoursite.com/final-page">Page</a>`,
       },
       redirected[0]?.from,
