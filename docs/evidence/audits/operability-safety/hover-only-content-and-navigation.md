@@ -77,8 +77,14 @@ click/keydown/focus handler, or an `aria-controls` reference to the submenu's
 id. Any one of them is enough to stop the finding, because the audit does not
 run scripts and must not report a menu it cannot prove is unreachable.
 
-A `title` attribute that repeats the element's own text is not counted: it
-carries no information that would be lost. Form controls, `<iframe>` and
+A `title` attribute that repeats what the element already says is not
+counted: it carries no information that would be lost. "Already says" covers
+the element's text, its `aria-label`, the text its `aria-labelledby` names and
+the `alt` of an image inside it, in any letter case. A title whose content
+words (three letters or more) all appear there also repeats it: "Veste Ski" on
+a link reading "Veste de Ski". Until 2026-10-17 only an exact, case-sensitive
+match against the element's text counted, which reported 38 of 51 titles on
+one homepage that added nothing (issue #125). Form controls, `<iframe>` and
 `<abbr>` are exempt, because their `title` is a label the platform already
 exposes rather than content.
 

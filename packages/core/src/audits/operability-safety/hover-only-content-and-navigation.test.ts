@@ -76,6 +76,36 @@ describe("HoverOnlyContentAndNavigationAudit", () => {
     expect(result.found).toContain("title");
   });
 
+  // Issue #125: both titles repeat what the link already says, one through
+  // its accessible name and one in another letter case.
+  it.each([
+    ['<a href="/app" title="App" aria-label="App">ACME APP</a>', "aria-label"],
+    ['<a href="/stores" title="Stores">STORES</a>', "letter case"],
+    ['<a href="/a" title="Veste  Ski">Veste de Ski</a>', "content words"],
+    [
+      '<a href="/b" title="Sale">\n  <img src="/s.png" alt="Sale"></a>',
+      "image alt",
+    ],
+    [
+      '<span id="l">Free returns</span><a href="/r" title="free returns" aria-labelledby="l">?</a>',
+      "aria-labelledby",
+    ],
+  ])("does not count a title that repeats the %s name (%s)", async (html) => {
+    const result = await audit.audit(page(html));
+    expect(result.details?.["titleOnly"]).toBe(0);
+    expect(result.status).not.toBe(CheckStatus.Warn);
+  });
+
+  it.each([
+    ['<a href="/h" title="Sale Men">Men</a>', "a word the text lacks"],
+    ['<a href="/i" title="Info">i</a>', "a different short label"],
+    ['<a href="/x" title="OK"></a>', "the only name, with no content word"],
+    ['<span title="Ships in 3 days">Delivery</span>', "information"],
+  ])("counts a title that adds %s (%s)", async (html) => {
+    const result = await audit.audit(page(html));
+    expect(result.details?.["titleOnly"]).toBe(1);
+  });
+
   it("reports a tooltip container no aria-describedby points at", async () => {
     const result = await audit.audit(
       page(
