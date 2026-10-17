@@ -130,19 +130,6 @@ export function detectWafProtection(
   if (scannedPagesCount === 0 && homepageResult) {
     const errorMsg = (homepageResult.error || "").toLowerCase();
 
-    // Check if domain or headers match Akamai
-    const headers = homepageResult.headers || {};
-    const server = (headers["server"] || "").toLowerCase();
-    if (server.includes("akamaighost") && homepageResult.status !== 0) {
-      return {
-        isBlocked: true,
-        provider: WafProvider.Akamai,
-        name: "Akamai Bot Manager",
-        reason: "Akamai refused the crawler's requests",
-        statusCode: homepageResult.status,
-      };
-    }
-
     if (homepageResult.status === 403) {
       return {
         isBlocked: true,
@@ -239,11 +226,18 @@ function vendorWall(
 ): WafProtection | null {
   const headers = res.headers || {};
   const server = (headers["server"] || "").toLowerCase();
-  const rawBody = res.body || "";
-  const body = rawBody.toLowerCase();
   const status = res.status;
+  // A challenge page is HTML. A plain-text or XML file that answered 2xx is
+  // the site's own content, and a vendor path inside it (`Disallow:
+  // /_Incapsula_Resource` in robots.txt) is not a wall, so its body is not
+  // read for markers. Headers still are.
+  const type = (res.contentType || headers["content-type"] || "").toLowerCase();
+  const servedFile =
+    status >= 200 && status < 300 && type !== "" && !type.includes("html");
+  const rawBody = servedFile ? "" : res.body || "";
+  const body = rawBody.toLowerCase();
   const refused = BLOCK_STATUSES.has(status);
-  const interstitial = !readable(rawBody);
+  const interstitial = !readable(res.body || "");
 
   // AWS WAF: a Challenge or CAPTCHA rule action answers with this header
   // (HTTP 202 and 405, often with an empty body). AWS documents the header as
