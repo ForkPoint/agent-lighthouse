@@ -1,6 +1,7 @@
 # Scan access fix plan
 
-Status: 2026-10-16. F1-F12 are merged and confirmed on the full corpus.
+Status: 2026-10-17. F1-F12 are merged and confirmed on the full corpus.
+F13-F17 are merged and checked on the sites that found them.
 Open items are at the end.
 
 This plan records why corpus sites were skipped or left unscored, what was
@@ -57,6 +58,11 @@ robots-skipped sites were not scanned at all.
 | F10 | RC18        | #146 (`b355ab45`) | `hydration-payload-share` reads payload strings in one forward pass                                      | patch     |
 | F11 | RC18        | #146 (`b355ab45`) | `invisible-instruction-scan` judges each element's hiding once per page, with hiding rules only          | patch     |
 | F12 | RC19        | #146 (`b355ab45`) | A homepage chain that ends on `PX-Show` or `DDUser-Challenge` names PerimeterX or DataDome               | patch     |
+| F13 | RC20        | #147 (`721d7b39`) | A host that failed to connect is tried once per scan; UA probes skip a URL whose baseline got no answer  | patch     |
+| F14 | RC21        | #148 (`105099d6`) | `llms-txt-links-valid` checks at most 20 links, 4 at a time                                              | patch     |
+| F15 | RC22        | #149 (`95891cb4`) | The connection-drop reason says what the one homepage attempt saw                                        | patch     |
+| F16 | RC23        | #150 (`31339980`) | `x-amzn-waf-action: challenge` or `captcha` names AWS WAF                                                | patch     |
+| F17 | RC24        | #151 (`3f6d916d`) | The F7 gateway also follows a target on the `www` or apex twin of the host                               | patch     |
 
 Related clean-ups: #142 removed the multi-page scan leftovers
 (`MAX_PAGES_PER_SCAN`, `maxPages`) and the six-page wording in the docs. #145
@@ -124,6 +130,39 @@ result moved; only the time did.
 **F12.** The route is the evidence. The route pages answer 404 with the shop's
 error page, or 200 with a script-only challenge.
 
+**F13.** `packages/core/src/unreachable-hosts.ts`, one instance per scan,
+used by the per-scan `ctx.fetch` in `orchestrator.ts`. Only connect-level
+errors count: connect timeout, refused, unreachable, DNS. The scanned site's
+own hosts (target, landing host, `www` twin, subdomains) are never marked.
+The fetcher reports an error against the requested URL, not the hop that
+failed, so this also keeps a redirect from the site to a dead host from
+marking the site. In `gatherers/ua-parity.ts`, a URL whose browser baseline
+has status 0 gets no crawler probe; `classifyResponse` already reported such
+probes as "baseline blocked". The site that found it: score 75 in 67 s,
+against no score after 182 s.
+
+**F14.** The audit sent every link in llms.txt at once. One site lists about
+300 pages in four languages: 304 page requests in 16 s, after which its WAF
+answered 403 to the rest of the scan and later refused connections from the
+scan address. Now 20 links spread over the file, 4 in flight, redirects
+followed. 401, 403, 429 and no answer are unverifiable, not broken. The
+broken list also named the wrong URLs (index taken after a filter). The audit
+is informative, weight 0. All of this was the required fix of its 2026-08-20
+review.
+
+**F15.** The homepage is fetched once, so "dropped or timed out repeatedly"
+was not true. On the 5 corpus sites with this verdict the TLS connection
+opened and then the request hung, was reset, or got a 403 that differed by
+user agent. The verdict stays; only the wording changed.
+
+**F16.** AWS documents both rule actions: `challenge` with HTTP 202 and
+`captcha` with HTTP 405 (source `aws-waf-captcha-challenge-actions`).
+`WafProvider.AwsWaf` existed, but no branch produced it.
+
+**F17.** The site that found it answers its apex with only a title and a meta
+refresh to `https://www.<site>`. Now scored 66. A subdomain, another scheme,
+another port or a look-alike host is still not followed.
+
 ## Root causes
 
 | ID   | Kind           | Sites | Summary                                                                      | Fixed by |
@@ -138,7 +177,7 @@ error page, or 200 with a script-only challenge.
 | RC8  | false positive |    11 | One root-file response marks the whole site blocked                          | F2       |
 | RC9  | label bug      |     4 | WAF provider named wrong                                                     | F3       |
 | RC10 | site issue     |     6 | Geo redirect from the scan location to a 404, a loop or another site         | open     |
-| RC11 | site issue     |     1 | Country-selector gateway homepage                                            | open     |
+| RC11 | site issue     |     6 | Country-selector homepage with no readable text                              | kept     |
 | RC12 | false positive |     1 | A DataDome script reference on a normal page read as a block                 | F2       |
 | RC13 | throttle       |     2 | Shared apex redirector answers an empty 428 under a burst                    | F5       |
 | RC14 | scanner bug    |     1 | Gateway root page not followed                                               | F7       |
@@ -147,6 +186,11 @@ error page, or 200 with a script-only challenge.
 | RC17 | scanner bug    |     9 | Cookies dropped between redirect hops, so cookie-gated chains loop           | F9       |
 | RC18 | scanner bug    |    15 | Synchronous audit work blocks the event loop for every parallel scan         | F10, F11 |
 | RC19 | label bug      |     2 | A challenge redirect that ends on an error page is reported as a bare status | F12      |
+| RC20 | scanner bug    |     1 | Sitemap URLs on a host that never connects, tried once per URL and per UA    | F13      |
+| RC21 | scanner bug    |     1 | Every llms.txt link fetched at once; the burst trips the site's WAF          | F14      |
+| RC22 | label bug      |     5 | A single homepage timeout described as repeated                              | F15      |
+| RC23 | label bug      |     1 | AWS WAF challenge (empty HTTP 202) reported as too little evidence           | F16      |
+| RC24 | scanner bug    |     1 | Gateway meta refresh to the `www` twin not followed                          | F17      |
 
 Site counts come from the run that found or confirmed each cause. RC5 is the
 14 sites that RC18 later explained. RC18 counts the 11 budget overruns and 4
@@ -174,36 +218,31 @@ page).
   checked, the homepage answered 200. The 403s fell on root files,
   `/.well-known/` paths and sampled pages, which read as absent or unread.
 
+## Decisions
+
+- **Country-selector homepages (RC11) stay unscored.** 5 of the 12 sites
+  below the evidence-mass floor answer the homepage with a country or
+  language picker and no readable text. That is what an agent sees there.
+  Following one locale link would need a rule for which locale to pick, and
+  would score a page the visitor did not ask for. Decided 2026-10-17.
+- **Client-rendered shells stay unscored.** 5 other sites below the floor
+  serve a script shell whose text appears only after JavaScript runs. The
+  scan does not run a browser, so it has nothing to read.
+- **Locale redirect loops are the site's.** One site answers every probe with
+  a 302 that adds one more locale folder (`/us/us/us/`). The fetcher follows
+  the chain to its hop limit, as a browser would.
+
 ## Open items
 
-1. **UA probes on a host that never answers.** `sharedUaProbes` in
-   `packages/core/src/gatherers/ua-parity.ts` probes every crawler user
-   agent even when the browser baseline got no response at all (status 0).
-   `classifyResponse` then reports "baseline blocked" and ignores the probe.
-   One corpus site lists sitemap URLs on a load-balancer host that refuses
-   connections. Each URL cost one 10 s connect timeout per user agent, one
-   after the other, and the scan ran out of its 180 s budget with the CPU
-   idle for 197 s. Proposed fix: skip the agent probes for a URL whose
-   baseline has status 0. Check `ai-crawler-edge-parity` (all baselines
-   blocked) and `machine-actionable-402-paid-access` (probe-only 402) before
-   the change: both read probe entries whose baseline failed.
-2. **12 sites below the evidence-mass floor.** The homepage answers 2xx
-   without rendered text. Not yet triaged. One answers HTTP 202, which can be
-   an AWS WAF challenge.
-3. **Timeout label.** A homepage timeout is still named "Bot Wall /
-   Aggressive Connection Drop" after one attempt. 3 of the 4 timeout sites
-   timed out in both full runs, and the second run had no stall, so these
-   are not stall victims. The F3 proposal to require a repeat after a
-   successful connect is not built.
-4. **Request volume.** One site answered 403 to 408 of 667 requests in one
-   scan: 486 page GETs in 16 s across four locale folders. Another site got
-   requests for paths with a locale folder repeated four times
-   (`/us/us/us/us/`). The code path that builds these URLs is not traced yet.
-5. **Smaller synchronous cost.** The `cursor:pointer` check in
+1. **Confirm F13-F17 on the corpus.** Each fix was checked on the sites that
+   found it. The next full run should show the budget overrun of RC20 and the
+   two RC23/RC24 sites scored or named, and no request burst over 100 page
+   GETs in 20 s on one site.
+2. **Smaller synchronous cost.** The `cursor:pointer` check in
    `packages/core/src/audits/operability-safety/_agent-affordances.ts` took
    about 0.7 s of one busy streak. Below the threshold that blocks scans.
-6. **Geo redirects (RC10, RC11).** These depend on the scan location. A run
-   from another country would show which sites redirect only from BG. 6
-   sites still redirect to another site without a permanent redirect.
-7. **Intermittent walls (RC16).** No fix. The corpus result for these sites
+3. **Geo redirects (RC10).** These depend on the scan location. A run from
+   another country would show which sites redirect only from BG. 6 sites
+   still redirect to another site without a permanent redirect.
+4. **Intermittent walls (RC16).** No fix. The corpus result for these sites
    depends on the run.
