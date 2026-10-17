@@ -6726,6 +6726,15 @@
       "publisher": "Google Search Central",
       "verified": "2026-10-17",
       "keyFindings": "'We're phasing out support for ClaimReview markup in Google Search.' 'However, this markup remains supported by the Factcheck Explorer Tool.' No phase-out date. 'A page must only have one ClaimReview element' to be eligible for the single fact check rich result. Required ClaimReview properties: claimReviewed, reviewRating, url; Rating.alternateName carries the truthfulness rating as a short phrase such as 'Mostly true'."
+    },
+    {
+      "id": "google-canonicalization-overview",
+      "title": "What is URL canonicalization",
+      "url": "https://developers.google.com/search/docs/crawling-indexing/canonicalization",
+      "type": "vendor-doc",
+      "publisher": "Google Search Central",
+      "verified": "2026-10-17",
+      "keyFindings": "Describes how Google picks a canonical from a set of duplicates: it \"chooses the page that, based on the factors (or signals) the indexing process collected, is objectively the most complete and useful for search users, and marks it as the canonical.\" Signals listed include HTTP vs HTTPS, redirects, sitemap presence and rel=\"canonical\" annotations. States no cost to a site that leaves the choice to Google."
     }
   ]
 }

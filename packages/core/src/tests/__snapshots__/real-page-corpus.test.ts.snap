@@ -13,7 +13,7 @@ exports[`real-page corpus > brand-acmetools-com-wall: verdicts hold 1`] = `
   "access-crawl-control/applebot-extended": "na",
   "access-crawl-control/bot-content-delta-declared": "na",
   "access-crawl-control/bravebot": "na",
-  "access-crawl-control/canonical": "warn",
+  "access-crawl-control/canonical": "na",
   "access-crawl-control/ccbot": "na",
   "access-crawl-control/chatgpt-user": "na",
   "access-crawl-control/claude-searchbot": "na",

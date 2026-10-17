@@ -143,7 +143,7 @@ export class CanonicalLinksAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    const expected = "Each page declares a canonical URL that points at itself";
+    const expected = "Every declared canonical URL points at its own page";
 
     if (ctx.pages.length === 0) {
       return this.notApplicable(
@@ -164,6 +164,25 @@ export class CanonicalLinksAudit extends Audit {
     const offSite = read.filter(
       (p) => p.targets.length > 0 && !sameSite(p.targets[0]!, domain),
     );
+    const bodyOnly = missing.filter((p) => p.hasBodyOnly);
+    // Google ignores a canonical outside <head>, which leaves the page as if it
+    // declared none. Say so, but it costs nothing more than absence does.
+    const bodyOnlyNote =
+      bodyOnly.length > 0
+        ? ` ${bodyOnly.length} page(s) place a canonical outside <head>, where Google ignores it.`
+        : "";
+
+    // Absent artifact, absent verdict. Google says a site "will likely do just
+    // fine without specifying a canonical preference" and picks a canonical
+    // itself, so a missing tag is not a defect. This audit grades the declared
+    // value; with no value declared there is nothing to grade.
+    if (missing.length === read.length) {
+      return this.notApplicable(
+        `No scanned page declares a canonical URL in <head>, so there is no canonical value to judge. Google chooses a canonical itself when none is given.${bodyOnlyNote}`,
+        expected,
+        `${read.length} page(s) checked — none declares a canonical in <head>`,
+      );
+    }
 
     // Homepage collapse: pages that are not the site root declaring the site
     // root as their canonical. Two is already a pattern, not a coincidence.
@@ -277,31 +296,20 @@ export class CanonicalLinksAudit extends Audit {
       );
     }
 
+    const declaringCount = read.length - missing.length;
     if (missing.length > 0) {
-      const bodyOnly = missing.filter((p) => p.hasBodyOnly);
-      const detail =
-        missing
-          .map((p) => p.url)
-          .slice(0, 5)
-          .join(", ") +
-        (missing.length > 5 ? ` (+${missing.length - 5} more)` : "") +
-        (bodyOnly.length > 0
-          ? ` — ${bodyOnly.length} page(s) declare a canonical outside <head>, where crawlers ignore it`
-          : "");
-      const all = missing.length === ctx.pages.length;
-      return this.warn(
-        all
-          ? "No scanned page declares a canonical URL."
-          : `${missing.length}/${ctx.pages.length} page(s) do not declare a canonical URL.`,
+      // Pages without a canonical are named but not scored: Google documents
+      // absence as fine and chooses the canonical for those pages itself.
+      return this.pass(
+        `All ${declaringCount} page(s) that declare a canonical URL resolve to themselves. ${missing.length} page(s) declare none, which Google documents as fine.${bodyOnlyNote}`,
         expected,
-        detail,
-        {
-          priority: all ? CheckPriority.Medium : CheckPriority.Low,
-          description:
-            'Google states a site "will likely do just fine without specifying a canonical preference" and will choose a canonical itself, so this is a missed opportunity rather than a defect: a self-referential canonical is how you make that choice yourself and keep parameterized and trailing-slash variants consolidated onto one citable URL.',
-          code: '<link rel="canonical" href="https://yoursite.com/this-page" />',
-        },
-        missing[0]!.url,
+        `Without a canonical: ${
+          missing
+            .map((p) => p.url)
+            .slice(0, 5)
+            .join(", ") +
+          (missing.length > 5 ? ` (+${missing.length - 5} more)` : "")
+        }`,
       );
     }
 
