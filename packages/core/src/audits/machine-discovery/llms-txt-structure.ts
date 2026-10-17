@@ -2,7 +2,6 @@ import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
 import type { CheckContext } from "#core/check-context";
 import { weightForGrade } from "#core/scorer";
-import type { FetchResult } from "#core/fetcher";
 import {
   AuditTier,
   CheckPriority,
@@ -11,10 +10,7 @@ import {
   FixEffort,
   ScoreDisplayMode,
 } from "#core/types";
-
-function isOk(result: FetchResult): boolean {
-  return result.status === 200;
-}
+import { isRootArtifact, rootArtifactMiss } from "#core/gatherers/root-files";
 
 /**
  * Drop fenced code blocks from the line list.
@@ -72,11 +68,11 @@ export class LlmsTxtStructureAudit extends Audit {
 
     // Absence of the file is llms-txt-exists' signal. Reporting it here as a
     // malformed-file failure asserted the file exists and is broken.
-    if (!result || !isOk(result)) {
+    if (!isRootArtifact(result)) {
       return this.notApplicable(
         "llms.txt not found; there is no structure to check.",
         expected,
-        result ? `HTTP ${result.status}` : "No response",
+        rootArtifactMiss(result),
       );
     }
 

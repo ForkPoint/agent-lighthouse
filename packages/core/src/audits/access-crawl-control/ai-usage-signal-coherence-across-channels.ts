@@ -18,6 +18,7 @@ import {
   FixEffort,
   ScoreDisplayMode,
 } from "#core/types";
+import { isRootArtifact } from "#core/gatherers/root-files";
 
 /**
  * The three AIPREF categories every other channel is normalized into.
@@ -330,7 +331,7 @@ export class AiUsageSignalCoherenceAcrossChannelsAudit extends Audit {
     }
 
     const tdmrep = ctx.rootFiles["/.well-known/tdmrep.json"];
-    if (tdmrep?.status === 200 && tdmrep.body.trim() !== "") {
+    if (isRootArtifact(tdmrep) && tdmrep.body.trim() !== "") {
       const read = tdmrepSignals(tdmrep.body);
       if (read.malformed) {
         notes.push(

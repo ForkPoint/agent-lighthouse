@@ -13,6 +13,7 @@ import {
   ScoreDisplayMode,
   HttpMethod,
 } from "#core/types";
+import { isRootArtifact } from "#core/gatherers/root-files";
 
 export class CorsAiFilesAudit extends Audit {
   static override meta: AuditMeta = {
@@ -50,15 +51,16 @@ export class CorsAiFilesAudit extends Audit {
     const aiPaths = ["/llms.txt", "/.well-known/ai-catalog.json"];
     const hasRootFiles = ctx.rootFiles && Object.keys(ctx.rootFiles).length > 0;
     const existingAiPaths = hasRootFiles
-      ? aiPaths.filter((p) => ctx.rootFiles[p]?.status === 200)
+      ? aiPaths.filter((p) => isRootArtifact(ctx.rootFiles[p]))
       : aiPaths;
 
+    // No AI file, no CORS headers to read. A site that publishes neither file
+    // has nothing for a cross-origin agent to fetch, so this is not a defect.
     if (hasRootFiles && existingAiPaths.length === 0) {
-      return this.warn(
+      return this.notApplicable(
         "No AI files (/llms.txt, /.well-known/ai-catalog.json) found to check CORS headers.",
         "OPTIONS requests to /llms.txt and /.well-known/ai-catalog.json return Access-Control-Allow-Origin",
         "No applicable AI files found",
-        undefined,
         page?.url,
       );
     }

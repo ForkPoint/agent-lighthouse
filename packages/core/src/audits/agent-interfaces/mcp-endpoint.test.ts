@@ -197,6 +197,20 @@ describe("McpEndpointAudit", () => {
     expect(result.message).toContain("no servers array");
   });
 
+  // servers.json that redirects to the homepage declares nothing; it is not
+  // a servers.json without a servers array.
+  it("reads an HTML page at servers.json as no declaration", async () => {
+    const ctx = mockCheckContext([], {
+      "/.well-known/mcp/servers.json": mockFetchResult(
+        '<!DOCTYPE html>\n<html lang="fr"><head><title>Home</title></head><body>Shop</body></html>',
+        200,
+        "text/html",
+      ),
+    });
+    const result = await audit.audit(ctx);
+    expect(result.message).toContain("No MCP endpoint is declared");
+  });
+
   it("discovers an MCP endpoint declared in the ai-catalog", async () => {
     const ctx = mockCheckContext([], {
       "/.well-known/ai-catalog.json": mockFetchResult(

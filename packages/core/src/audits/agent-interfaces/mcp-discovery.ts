@@ -10,6 +10,7 @@ import {
   FixEffort,
   ScoreDisplayMode,
 } from "#core/types";
+import { isRootArtifact } from "#core/gatherers/root-files";
 
 function tryParseJson(body: string): unknown {
   try {
@@ -80,7 +81,7 @@ export class McpDiscoveryAudit extends Audit {
 
     // 1. /.well-known/mcp/servers.json
     const result = ctx.rootFiles["/.well-known/mcp/servers.json"];
-    if (result && result.status === 200 && result.body.trim()) {
+    if (isRootArtifact(result) && result.body.trim()) {
       const parsed = tryParseJson(result.body);
       if (!isObject(parsed)) {
         return this.fail(
@@ -129,7 +130,7 @@ export class McpDiscoveryAudit extends Audit {
 
     // 2. Universal Commerce Protocol (/.well-known/ucp)
     const ucpResult = ctx.rootFiles["/.well-known/ucp"];
-    if (ucpResult && ucpResult.status === 200 && ucpResult.body.trim()) {
+    if (isRootArtifact(ucpResult) && ucpResult.body.trim()) {
       const ucpParsed = tryParseJson(ucpResult.body);
       if (isObject(ucpParsed)) {
         const ucpObj = (ucpParsed["ucp"] ?? ucpParsed) as Record<

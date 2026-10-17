@@ -55,10 +55,25 @@ describe("LlmsTxtLinkDescriptionsAudit", () => {
     expect(result.message).toContain("no markdown links");
   });
 
-  it("fails when llms.txt is missing", () => {
+  it("is not applicable when llms.txt is missing", () => {
     const ctx = mockCheckContext([], {});
     const result = audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.message).toContain("llms.txt not found");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.message).toContain("No llms.txt");
+  });
+
+  it("is not applicable when /llms.txt redirects to the homepage", () => {
+    const home = mockFetchResult(
+      '<!DOCTYPE html>\n<html lang="fr"><body><a href="/a">A</a></body></html>',
+      200,
+      "text/html",
+    );
+    home.url = "https://example.com/llms.txt";
+    home.finalUrl = "https://example.com/";
+    const result = audit.audit(mockCheckContext([], { "/llms.txt": home }));
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.found).toBe(
+      "HTTP 200 with an HTML page, redirected to https://example.com/, not the file",
+    );
   });
 });

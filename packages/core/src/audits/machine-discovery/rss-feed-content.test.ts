@@ -73,11 +73,11 @@ describe("RssFeedContentAudit", () => {
     expect(result.message).toContain("no items");
   });
 
-  it("fails when no feed is found", async () => {
+  it("is not applicable when no feed is found", async () => {
     const ctx = mockCheckContext([]);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.message).toContain("No RSS feed found");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.message).toContain("No RSS or Atom feed found");
   });
 
   it("passes when a page <head> alternate link points to a relative RSS feed with full content", async () => {

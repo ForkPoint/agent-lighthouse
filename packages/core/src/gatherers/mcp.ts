@@ -4,6 +4,7 @@ import type { FetchResult } from "#core/fetcher";
 import { isSafeUrl } from "#core/fetcher";
 import { HttpMethod } from "#core/types";
 import { LogField, withLogContext } from "#core/logger";
+import { isRootArtifact } from "./root-files";
 
 /**
  * MCP's current specification revision. Pinning an older one makes servers that
@@ -49,7 +50,7 @@ export function discoverMcpEndpoint(
   ctx: CheckContext,
 ): McpEndpoint | undefined {
   const servers = ctx.rootFiles["/.well-known/mcp/servers.json"];
-  if (servers && servers.status === 200 && servers.body) {
+  if (isRootArtifact(servers) && servers.body) {
     const parsed = tryParseJson(servers.body);
     if (!isObject(parsed) || !Array.isArray(parsed["servers"]))
       return { url: "", source: "no-array" };
@@ -64,7 +65,7 @@ export function discoverMcpEndpoint(
   }
 
   const ucp = ctx.rootFiles["/.well-known/ucp"];
-  if (ucp && ucp.status === 200 && ucp.body) {
+  if (isRootArtifact(ucp) && ucp.body) {
     const parsed = tryParseJson(ucp.body);
     if (isObject(parsed)) {
       const root = (parsed["ucp"] ?? parsed) as Record<string, unknown>;
@@ -88,7 +89,7 @@ export function discoverMcpEndpoint(
   }
 
   const catalog = ctx.rootFiles["/.well-known/ai-catalog.json"];
-  if (catalog && catalog.status === 200 && catalog.body) {
+  if (isRootArtifact(catalog) && catalog.body) {
     const parsed = tryParseJson(catalog.body);
     if (isObject(parsed) && Array.isArray(parsed["entries"])) {
       for (const entry of parsed["entries"] as unknown[]) {

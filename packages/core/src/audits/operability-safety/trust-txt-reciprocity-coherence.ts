@@ -13,6 +13,7 @@ import {
   FixEffort,
   ScoreDisplayMode,
 } from "#core/types";
+import { isRootArtifact } from "#core/gatherers/root-files";
 
 /** Where a trust.txt may live, in the order the spec added them. */
 const TRUST_TXT_PATHS = ["/trust.txt", "/.well-known/trust.txt"];
@@ -122,7 +123,7 @@ export class TrustTxtReciprocityCoherenceAudit extends Audit {
         ((await isSafeUrl(`${origin}${path}`))
           ? await probeRsl(ctx, `${origin}${path}`, { followRedirects: true })
           : undefined);
-      if (result && result.status === 200 && result.body.trim() !== "") {
+      if (isRootArtifact(result) && result.body.trim() !== "") {
         body = result.body;
         source = path;
         break;

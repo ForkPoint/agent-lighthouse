@@ -2,7 +2,6 @@ import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
 import type { CheckContext } from "#core/check-context";
 import { weightForGrade } from "#core/scorer";
-import type { FetchResult } from "#core/fetcher";
 import { extractMarkdownLinks } from "#core/parser";
 import {
   AuditTier,
@@ -12,10 +11,7 @@ import {
   FixEffort,
   ScoreDisplayMode,
 } from "#core/types";
-
-function isOk(result: FetchResult): boolean {
-  return result.status === 200;
-}
+import { isRootArtifact, rootArtifactMiss } from "#core/gatherers/root-files";
 
 export class LlmsTxtLinkDescriptionsAudit extends Audit {
   static override meta: AuditMeta = {
@@ -47,17 +43,13 @@ export class LlmsTxtLinkDescriptionsAudit extends Audit {
   audit(ctx: CheckContext): AuditResult {
     const result = ctx.rootFiles["/llms.txt"];
 
-    if (!result || !isOk(result)) {
-      return this.fail(
-        "llms.txt not found; cannot check link descriptions.",
+    if (!isRootArtifact(result)) {
+      // No file, no link descriptions to read. Whether the file should exist
+      // is llms-txt-exists' question, and that one answers not applicable.
+      return this.notApplicable(
+        "No llms.txt at the site root, so there are no link descriptions to check.",
         "Links follow - [Name](url): description",
-        "File not found",
-        {
-          priority: CheckPriority.Critical,
-          description:
-            "First, create your llms.txt file (see check 1.1). Link descriptions help AI agents understand what each page covers without visiting it, reducing unnecessary crawling.",
-          code: `# Your Site Name\n\n> Brief description of your site for AI agents.\n\n## Pages\n- [Home](/): Main landing page\n- [About](/about/): Company information`,
-        },
+        rootArtifactMiss(result),
       );
     }
 

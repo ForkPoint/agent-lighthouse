@@ -106,6 +106,14 @@ Genuinely valuable signal — a llms.txt full of 404s does degrade agent trust �
   `packages/core/src/tests/hostile-state-contract.test.ts`: on a bot wall
   answering 200 at `/llms.txt`, the wall's own markup supplied the only
   candidate URL and the audit passed the site behind it.
+- 2026-10-17 — with none of ai-catalog.json, llms.txt or navigation.json
+  published, the audit is not applicable. It used to warn: an optional file
+  the site never published is not a defect, and the audit is about the URLs
+  inside those files. A file that is there and lists no URLs still warns. A
+  200 whose body opens as an HTML document counts as absent
+  (`gatherers/root-files.ts` `isRootArtifact`). A homepage redirect at
+  `/llms.txt` had supplied the homepage's links as "AI endpoints", and the
+  site passed on them.
 
 ## Review history
 

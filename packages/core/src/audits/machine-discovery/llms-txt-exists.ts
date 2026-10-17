@@ -2,7 +2,6 @@ import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
 import type { CheckContext, PageContext } from "#core/check-context";
 import { weightForGrade } from "#core/scorer";
-import type { FetchResult } from "#core/fetcher";
 import {
   AuditTier,
   CheckPriority,
@@ -11,10 +10,7 @@ import {
   FixEffort,
   ScoreDisplayMode,
 } from "#core/types";
-
-function isOk(result: FetchResult): boolean {
-  return result.status === 200;
-}
+import { isRootArtifact, rootArtifactMiss } from "#core/gatherers/root-files";
 
 /** Link relations the llms.txt v2 spec defines for pointing at the file. */
 const DISCOVERY_RELS = new Set(["alternate", "describedby"]);
@@ -85,8 +81,8 @@ export class LlmsTxtExistsAudit extends Audit {
       ? `discovery <link> → ${link.href}`
       : "no discovery <link> in <head>";
 
-    if (!result || !isOk(result)) {
-      const status = result ? `HTTP ${result.status}` : "No response";
+    if (!isRootArtifact(result)) {
+      const status = rootArtifactMiss(result);
       // A site that links to llms.txt and does not serve it has a broken
       // promise of its own making, which is worth a warning. A site that never
       // claimed to have one has done nothing wrong: the file is optional, and

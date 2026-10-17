@@ -248,3 +248,4 @@ file existing. The existence of the file cannot be scored.
 - 2026-08-21 — dispositions approved: 1.1 keep-with-fixes, 4.11 folds in (C3 collapse).
 - 2026-08-22 — 4.11 folded in with its required fixes (Plan 4, Task 4); registry 172 → 171.
 - 2026-08-24 — evidence sweep: grade A → C, tier scored → informative, weight 1.0 → 0. Absence is now not applicable. No AI vendor documents a consumer; Chrome Lighthouse checks the file as an auditor and scores a missing one not-applicable.
+- 2026-10-17 — a 200 whose body opens as an HTML document (a homepage redirect or an SPA catch-all) now reads as no llms.txt, through `gatherers/root-files.ts` `isRootArtifact`. It used to warn "llms.txt missing markdown heading" about the homepage. Closes the status-only finding above.

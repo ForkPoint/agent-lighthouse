@@ -55,6 +55,7 @@ export const GATHERER_EVIDENCE: Record<string, readonly string[]> = {
   mcp: ORIGIN_ONLY_REQUIRES,
   openapi: ORIGIN_ONLY_REQUIRES,
   robots: ORIGIN_ONLY_REQUIRES,
+  "root-files": ORIGIN_ONLY_REQUIRES,
   rsl: ORIGIN_ONLY_REQUIRES,
   security: ORIGIN_ONLY_REQUIRES,
   sitemap: ORIGIN_ONLY_REQUIRES,

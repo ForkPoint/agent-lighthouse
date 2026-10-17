@@ -102,6 +102,10 @@ could not be re-verified. CI's link checker will flag it.
   fail → na, throttled fail → na, redirected away pass → na, non-HTML homepage
   fail → na, HTTP 200 bot challenge pass → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
+- 2026-10-17 — an absent llms-full.txt is not applicable, as the required fix
+  above says. It used to fail at high priority. A 200 whose body opens as an
+  HTML document counts as absent (`gatherers/root-files.ts`
+  `isRootArtifact`); a homepage redirect at `/llms-full.txt` used to pass.
 
 ## Review history
 

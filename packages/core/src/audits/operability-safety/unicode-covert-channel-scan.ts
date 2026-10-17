@@ -19,6 +19,7 @@ import {
   FixEffort,
   ScoreDisplayMode,
 } from "#core/types";
+import { isRootArtifact } from "#core/gatherers/root-files";
 
 /** Attributes whose value reaches a model as ordinary text. */
 const SCANNED_ATTRIBUTES = [
@@ -311,7 +312,7 @@ export class UnicodeCovertChannelScanAudit extends Audit {
     for (const page of ctx.pages) hits.push(...scanPage(page));
     for (const path of ROOT_FILES) {
       const file = ctx.rootFiles[path];
-      if (file?.status !== 200 || !file.body) continue;
+      if (!isRootArtifact(file) || !file.body) continue;
       hits.push(...scan(file.body, path));
     }
 

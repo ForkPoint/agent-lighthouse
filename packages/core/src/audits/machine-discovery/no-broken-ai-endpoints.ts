@@ -13,6 +13,7 @@ import {
   FixEffort,
   ScoreDisplayMode,
 } from "#core/types";
+import { isRootArtifact } from "#core/gatherers/root-files";
 
 export class NoBrokenAiEndpointsAudit extends Audit {
   static override meta: AuditMeta = {
@@ -52,7 +53,7 @@ export class NoBrokenAiEndpointsAudit extends Audit {
 
     // From ai-catalog.json
     const aiCatalog = ctx.rootFiles["/.well-known/ai-catalog.json"];
-    if (aiCatalog && aiCatalog.status === 200 && aiCatalog.body) {
+    if (isRootArtifact(aiCatalog) && aiCatalog.body) {
       try {
         const catalog = JSON.parse(aiCatalog.body);
         if (catalog.services && Array.isArray(catalog.services)) {
@@ -78,7 +79,7 @@ export class NoBrokenAiEndpointsAudit extends Audit {
     // fabricated phantom "broken" endpoints. Strip trailing punctuation so each
     // URL is validated as written; the Set de-dupes by normalized URL.
     const llmsTxt = ctx.rootFiles["/llms.txt"];
-    if (llmsTxt && llmsTxt.status === 200 && llmsTxt.body) {
+    if (isRootArtifact(llmsTxt) && llmsTxt.body) {
       for (const link of extractMarkdownLinks(llmsTxt.body)) {
         urlsToCheck.add(link.url);
       }
@@ -96,7 +97,7 @@ export class NoBrokenAiEndpointsAudit extends Audit {
 
     // From navigation.json
     const navJson = ctx.rootFiles["/navigation.json"];
-    if (navJson && navJson.status === 200 && navJson.body) {
+    if (isRootArtifact(navJson) && navJson.body) {
       try {
         const nav = JSON.parse(navJson.body);
         const extractUrls = (obj: unknown): void => {
@@ -123,6 +124,23 @@ export class NoBrokenAiEndpointsAudit extends Audit {
       } catch {
         // Invalid JSON — skip
       }
+    }
+
+    // No AI file at all: there is no endpoint list to check, and an optional
+    // file the site never published is not a defect. A file that is there
+    // and lists no URLs still warns below.
+    const sources = [
+      "/.well-known/ai-catalog.json",
+      "/llms.txt",
+      "/navigation.json",
+    ];
+    if (!sources.some((path) => isRootArtifact(ctx.rootFiles[path]))) {
+      return this.notApplicable(
+        "No ai-catalog.json, llms.txt or navigation.json is published, so there are no AI endpoint URLs to validate.",
+        "All URLs from AI-related files return 200",
+        "No AI files found",
+        page?.url,
+      );
     }
 
     if (urlsToCheck.size === 0) {

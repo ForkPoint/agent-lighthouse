@@ -37,6 +37,23 @@ describe("LlmsTxtExistsAudit", () => {
     expect(result.message).toContain("No llms.txt at the site root");
   });
 
+  // A site that redirects unknown paths to its homepage answers /llms.txt
+  // with HTML and HTTP 200. That is no llms.txt, not a malformed one.
+  it("is not applicable when /llms.txt answers with an HTML page", () => {
+    const home = mockFetchResult(
+      '<!DOCTYPE html>\n<html lang="fr"><head><title>Home</title></head><body>Shop</body></html>',
+      200,
+      "text/html",
+    );
+    home.url = "https://example.com/llms.txt";
+    home.finalUrl = "https://example.com/";
+    const result = audit.audit(mockCheckContext([], { "/llms.txt": home }));
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.found).toContain(
+      "HTTP 200 with an HTML page, redirected to https://example.com/",
+    );
+  });
+
   it("warns when llms.txt exists but lacks H1 heading", () => {
     const ctx = mockCheckContext([], {
       "/llms.txt": mockFetchResult(

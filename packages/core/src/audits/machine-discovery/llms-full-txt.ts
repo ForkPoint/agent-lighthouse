@@ -2,7 +2,6 @@ import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
 import type { CheckContext } from "#core/check-context";
 import { weightForGrade } from "#core/scorer";
-import type { FetchResult } from "#core/fetcher";
 import {
   AuditTier,
   CheckPriority,
@@ -11,10 +10,7 @@ import {
   FixEffort,
   ScoreDisplayMode,
 } from "#core/types";
-
-function isOk(result: FetchResult): boolean {
-  return result.status === 200;
-}
+import { isRootArtifact, rootArtifactMiss } from "#core/gatherers/root-files";
 
 export class LlmsFullTxtAudit extends Audit {
   static override meta: AuditMeta = {
@@ -45,18 +41,12 @@ export class LlmsFullTxtAudit extends Audit {
   audit(ctx: CheckContext): AuditResult {
     const result = ctx.rootFiles["/llms-full.txt"];
 
-    if (!result || !isOk(result)) {
-      return this.fail(
-        "No llms-full.txt file found at the site root.",
+    // An optional file the site never published is not a defect.
+    if (!isRootArtifact(result)) {
+      return this.notApplicable(
+        "No llms-full.txt at the site root. The file is optional, so its absence is not a defect.",
         "GET /llms-full.txt returns 200",
-        result ? `HTTP ${result.status}` : "No response",
-        {
-          priority: CheckPriority.High,
-          description:
-            "llms-full.txt provides the complete content of your site in a single file, allowing AI agents to ingest everything in one request instead of crawling page by page. This dramatically improves response quality when users ask about your site.",
-          code: `# Your Site Name\n\n> Full content version for AI agents.\n\n## Home\nYour homepage content here...\n\n## About\nYour about page content here...\n\n## Documentation\nYour documentation content here...`,
-          docsUrl: "https://llmstxt.org/",
-        },
+        rootArtifactMiss(result),
       );
     }
 

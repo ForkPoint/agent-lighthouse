@@ -13,9 +13,7 @@ import {
   FixEffort,
   ScoreDisplayMode,
 } from "#core/types";
-function isOk(res: { status: number }): boolean {
-  return res.status >= 200 && res.status < 300;
-}
+import { isRootArtifact, rootArtifactMiss } from "#core/gatherers/root-files";
 
 /**
  * How many links one scan checks. A large llms.txt lists hundreds of pages;
@@ -90,13 +88,13 @@ export class LlmsTxtLinksValidAudit extends Audit {
   async audit(ctx: CheckContext): Promise<AuditResult> {
     const result = ctx.rootFiles["/llms.txt"];
 
-    if (!result || !isOk(result)) {
+    if (!isRootArtifact(result)) {
       // No file, nothing to validate. This audit measures the links inside a
       // published llms.txt; it is not a second vote on whether the file exists.
       return this.notApplicable(
         "No llms.txt at the site root, so there are no links to validate.",
         "All links return HTTP 200",
-        "File not found",
+        rootArtifactMiss(result),
       );
     }
 

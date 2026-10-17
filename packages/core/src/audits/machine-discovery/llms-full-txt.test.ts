@@ -22,20 +22,31 @@ describe("LlmsFullTxtAudit", () => {
     expect(result.message).toContain("llms-full.txt exists");
   });
 
-  it("fails when llms-full.txt returns 404", () => {
+  it("is not applicable when llms-full.txt returns 404", () => {
     const ctx = mockCheckContext([], {
       "/llms-full.txt": mockFetchResult("", 404),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.found).toContain("HTTP 404");
   });
 
-  it("fails when llms-full.txt was not fetched at all", () => {
+  it("is not applicable when llms-full.txt was not fetched at all", () => {
     const ctx = mockCheckContext([], {});
     const result = audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.message).toContain("No llms-full.txt file found");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.message).toContain("No llms-full.txt at the site root");
+  });
+
+  it("is not applicable when /llms-full.txt answers with an HTML page", () => {
+    const ctx = mockCheckContext([], {
+      "/llms-full.txt": mockFetchResult(
+        "<!DOCTYPE html><html><body>Home</body></html>",
+        200,
+        "text/html",
+      ),
+    });
+    expect(audit.audit(ctx).status).toBe(CheckStatus.NotApplicable);
   });
 
   // The scan may hold a readable page that is not this site's — a broker's

@@ -26,6 +26,7 @@ import {
   FixEffort,
   ScoreDisplayMode,
 } from "#core/types";
+import { isRootArtifact } from "#core/gatherers/root-files";
 
 /** How many sitemap URLs join the probe set, beyond `/` and `/llms.txt`. */
 const MAX_SITEMAP_PROBES = 2;
@@ -161,7 +162,7 @@ export class AiCrawlerEdgeParityAudit extends Audit {
       if (!urls.includes(entry.loc)) urls.push(entry.loc);
     }
     const llms = ctx.rootFiles["/llms.txt"];
-    if (llms && llms.status === 200) urls.push(`${ctx.baseUrl}/llms.txt`);
+    if (isRootArtifact(llms)) urls.push(`${ctx.baseUrl}/llms.txt`);
 
     const tokens = AI_CRAWLER_UAS.map((agent) => agent.token);
     const probes = await sharedUaProbes(ctx, urls, tokens);

@@ -4,6 +4,7 @@ import type { FetchResult } from "#core/fetcher";
 import { isSafeUrl } from "#core/fetcher";
 import { HttpMethod } from "#core/types";
 import { LogField, withLogContext } from "#core/logger";
+import { isRootArtifact } from "./root-files";
 
 /** An OpenAPI document as served: an untyped object, walked key by key. */
 export type OpenApiSpec = Record<string, unknown>;
@@ -81,7 +82,7 @@ interface OpenApiContext {
  */
 export function readOpenApiSpec(ctx: OpenApiContext): OpenApiSpec | undefined {
   const jsonResult = ctx.rootFiles["/openapi.json"];
-  if (jsonResult && jsonResult.status === 200 && jsonResult.body) {
+  if (isRootArtifact(jsonResult) && jsonResult.body) {
     try {
       const parsed: unknown = JSON.parse(jsonResult.body);
       if (isObject(parsed)) return parsed;
