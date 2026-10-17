@@ -9,10 +9,9 @@ disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
 graduated: 2026-08-23
 sources:
-  - lh-a11ytree
-  - S11
-  - S2
-  - S12
+  - iptc-photo-metadata-2025-1
+  - iptc-synthetic-media-guidance
+  - google-image-metadata
 ---
 
 # Synthetic-media disclosure is valid and self-consistent
@@ -29,14 +28,13 @@ IPTC types DigitalSourceType as [URI <External>], meaning the value must be a fu
 
 ## Evidence
 
-- **[Lighthouse audit source: agent-accessibility-tree.js](https://raw.githubusercontent.com/GoogleChrome/lighthouse/main/core/audits/agentic/agent-accessibility-tree.js)** — Google Chrome / Lighthouse (repo, URL verified 2026-08-20)
-  - It filters the accessibility violations Lighthouse already collects down to about 37 axe rules: button-name, link-name, input-button-name, label, autocomplete-valid, aria-allowed-attr, aria-required-attr, aria-valid-attr-value, tabindex, and the table and definition-list rules. Binary score: any violation scores 0. Crucially it inherits axe's blind spots — axe cannot fail an element that has no interactive semantics at all, and autocomplete-valid only validates tokens that are already present, never their absence.
-- **[WebSuite: Systematically Evaluating Why Web Agents Fail](https://arxiv.org/html/2406.01623v1)** — arXiv (study, URL verified 2026-08-20)
-  - Per-UI-primitive success rates for natbot and SeeAct. Worst patterns: slider interaction 0% for both agents; tooltip-based information retrieval 0% for both; complex form filling 12.5% (natbot) / 0% (SeeAct). Aggregate: operational actions 85.2%/76.2%, menu navigation 93.8%/81.3%, informational actions 43.8%/40.6%. Taxonomy covers click (button, link, icon button, slider, switch, accordion, dropdown menu, dialog button, snackbar), type (text/date/phone), select (checkbox, multicheck, select, datagrid row).
-- **[Playwright: Auto-waiting / Actionability checks](https://playwright.dev/docs/actionability)** — Microsoft (vendor-doc, URL verified 2026-08-20)
-  - Before click/check/fill/selectOption, Playwright enforces five checks: Visible (non-empty bounding box, not visibility:hidden), Stable (same bounding box over 2 animation frames), Receives Events (element is the hit target at the action point — overlays cause failure), Enabled (not [disabled]/aria-disabled), Editable (not readonly/aria-readonly). Fill requires visible+enabled+editable. This is the exact gate every Playwright-based agent (Playwright-MCP, browser-use, most CUA harnesses) passes through, so each check is a directly testable site-side failure cause.
-- **[Text fragments](https://web.dev/articles/text-fragments)** — Google / web.dev (vendor-doc, URL verified 2026-08-20)
-  - Confirms a shipped answer-surface consumer: "Clicking a featured snippet takes the user directly to the featured snippet text on the source web page. This works thanks to automatically created Text Fragments URLs." Support: Chrome 89+, Edge 89+, Firefox 131+, Safari 18.2+. Restates the boundary rule: "Each of prefix-, start, end, and -suffix can only match text within a single block-level element, but full start,end ranges can span multiple blocks." Opt-out header: Document-Policy: force-load-at-top.
+- **[IPTC Photo Metadata Standard 2025.1 — Digital Source Type](https://www.iptc.org/std/photometadata/specification/IPTC-PhotoMetadata-2025.1.html)** — IPTC (spec, verified 2026-10-17)
+  - Property 11.13. Data type "CV-code", with the CV note "Required: Digital Source Type NewsCodes" at `http://cv.iptc.org/newscodes/digitalsourcetype/`. The XMP form is "Iptc4xmpExt:DigitalSourceType [URI <External>]". The value is a vocabulary URI, not free text.
+- **[IPTC publishes metadata guidance for AI-generated "synthetic media"](https://iptc.org/news/iptc-publishes-metadata-guidance-for-ai-generated-synthetic-media/)** — IPTC (spec, verified 2026-10-17)
+  - Software that generates images with trained AI models should write the Digital Source Type `trainedAlgorithmicMedia` into the file's XMP packet, or into a C2PA manifest. "The complete URI for the recommended Trained Algorithmic Media term is" `http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia`.
+- **[Google Images SEO: Image Metadata](https://developers.google.com/search/docs/appearance/structured-data/image-license-metadata)** — Google Search Central (vendor-doc, verified 2026-10-17)
+  - A named consumer. Google reads the IPTC Digital Source Type field and "supports the following IPTC NewsCodes": `trainedAlgorithmicMedia`, `compositeSynthetic`, `algorithmicMedia` and `compositeWithTrainedAlgorithmicMedia`.
+  - Counter-evidence for the scheme rule. The page shows the codes as bare tokens linked to `https://cv.iptc.org/…` URIs. It does not say which spellings Google's parser accepts. A bare token or an `https` URI may still be read by Google, though neither is the form the IPTC standard defines.
 
 ## Example failure
 
@@ -45,6 +43,8 @@ A publisher configures its CMS to stamp every AI-illustrated article header with
 ## Scoring
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
+
+**Grade: B** — IPTC defines the property and its vocabulary, and Google documents reading it. The grade stays at B because no consumer documents rejecting the malformed spellings this audit fails, and no AI agent is documented to read the field.
 
 ## Implementation deviations
 

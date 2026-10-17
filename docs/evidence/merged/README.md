@@ -55,8 +55,9 @@ in [`../sunset/`](../sunset/).
 The grade column is the _absorbed_ audit's own grade, not the merged audit's. A merged audit is graded
 on the strongest **proven** consumer path among its sources, which is why `ai-bot-directives` ships at
 B rather than inheriting youbot's A — see that dossier's Grade section. Grade and tier are separate
-prices: `security-header-hygiene` also ships at B, but at tier `informative` (weight 0), because none
-of the four absorbed signals has a documented AI consumer.
+prices: `security-header-hygiene` ships at tier `informative` (weight 0), because none of the four
+absorbed signals has a documented AI consumer. It was narrowed on 2026-08-24 to the security.txt signal
+alone and now ships at that signal's grade, C. The three header rows above are no longer measured.
 
 The v2 consolidation is complete as of Task 8 (2026-08-22): `migration-map.json` has no `merging` entries left, and every row above resolves to a live dossier in [`../audits/`](../audits/).
 

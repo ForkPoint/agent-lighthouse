@@ -73,8 +73,9 @@ At `tier: informative` / `weight 0` none of these outcomes moves a score.
 - **The tier stays informative.** The caching benefit is to the site's
   bandwidth, not to a documented AI-agent outcome.
 - **A mis-typed file served with `nosniff` is named as such** in the message.
-  Homepage-level nosniff hygiene stays in
-  `operability-safety/security-header-hygiene`.
+  No audit checks `nosniff` on the homepage.
+  `operability-safety/security-header-hygiene` dropped its header rows on
+  2026-08-24 and now measures security.txt alone.
 
 ## Deferred
 

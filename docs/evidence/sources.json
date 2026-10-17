@@ -6618,6 +6618,87 @@
       "publisher": "Cyrus Shepard, Zyppy",
       "verified": "2026-08-20",
       "keyFindings": "Meta-analysis of ~54 published experiments, studies and patents across ChatGPT, Gemini and Perplexity, scored 2.0–9.5 on repeatability, strength of evidence and official documentation support. Relevant scores: 'AI-ready Structure' (headings, sections, tables) 8.6; 'Factually Specific' (concrete numbers over vague statements) 8.3; freshness/dates 7.0; word count 6.7 (inconsistent — longer content performed better but risked incomplete retrieval); schema/structured data 5.6 with effect described as 'typically small'; llms.txt 2.0 (deemed unreliable). FAQ format and meta description were not measured at all — an evidence gap, not a null result."
+    },
+    {
+      "id": "whatwg-autofill",
+      "title": "HTML Standard — 4.10.19.7 Autofill",
+      "url": "https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#autofill",
+      "type": "spec",
+      "publisher": "WHATWG",
+      "verified": "2026-10-17",
+      "keyFindings": "Opens: \"User agents sometimes have features for helping users fill forms in\". The autocomplete attribute is how an author tells the user agent which value a field wants. Defines the autofill field names, among them postal-code, address-level2, cc-number, one-time-code, new-password and current-password."
+    },
+    {
+      "id": "webdev-learn-forms-autofill",
+      "title": "Learn Forms — Autofill",
+      "url": "https://web.dev/learn/forms/autofill",
+      "type": "vendor-doc",
+      "publisher": "Google / web.dev",
+      "verified": "2026-10-17",
+      "keyFindings": "\"Using the correct values for autocomplete ensures that the browser fills in the correct values for a form.\" autocomplete=\"new-password\" lets browsers offer to generate a password; autocomplete=\"current-password\" lets them fill a saved one."
+    },
+    {
+      "id": "playwright-locator-select-option",
+      "title": "Playwright — locator.selectOption() and locator.setInputFiles()",
+      "url": "https://playwright.dev/docs/api/class-locator#locator-select-option",
+      "type": "vendor-doc",
+      "publisher": "Microsoft",
+      "verified": "2026-10-17",
+      "keyFindings": "selectOption \"Selects option or options in <select>\". \"If the target element is not a <select> element, this method throws an error.\" setInputFiles: \"This method expects Locator to point to an input element.\""
+    },
+    {
+      "id": "anthropic-cu-ui-tips",
+      "title": "Computer use tool — optimize model performance with prompting",
+      "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/computer-use-tool",
+      "type": "vendor-doc",
+      "publisher": "Anthropic",
+      "verified": "2026-10-17",
+      "keyFindings": "\"Some UI elements (such as dropdowns and scrollbars) might be tricky for Claude to manipulate using mouse movements. If you experience this, try prompting the model to use keyboard shortcuts.\""
+    },
+    {
+      "id": "wcag-22-dragging-movements",
+      "title": "Understanding SC 2.5.7: Dragging Movements (Level AA)",
+      "url": "https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements.html",
+      "type": "spec",
+      "publisher": "W3C WAI",
+      "verified": "2026-10-17",
+      "keyFindings": "WCAG 2.2 SC 2.5.7: \"All functionality that uses a dragging movement for operation can be achieved by a single pointer without dragging\", unless dragging is essential. Slider example: \"an input beside a slider could allow any user to enter a precise value for the slider\". Carousel example offers forward and backward buttons."
+    },
+    {
+      "id": "iptc-photo-metadata-2025-1",
+      "title": "IPTC Photo Metadata Standard 2025.1 — Digital Source Type",
+      "url": "https://www.iptc.org/std/photometadata/specification/IPTC-PhotoMetadata-2025.1.html",
+      "type": "spec",
+      "publisher": "IPTC",
+      "verified": "2026-10-17",
+      "keyFindings": "Property 11.13 Digital Source Type. Basic specs: \"Data type: CV-code\". CV note: \"Required: Digital Source Type NewsCodes\" (http://cv.iptc.org/newscodes/digitalsourcetype/). XMP specs: \"Iptc4xmpExt:DigitalSourceType [URI <External>]\"."
+    },
+    {
+      "id": "google-image-metadata",
+      "title": "Google Images SEO: Image Metadata",
+      "url": "https://developers.google.com/search/docs/appearance/structured-data/image-license-metadata",
+      "type": "vendor-doc",
+      "publisher": "Google Search Central",
+      "verified": "2026-10-17",
+      "keyFindings": "Google reads the IPTC Digital Source Type field: \"Google supports the following IPTC NewsCodes\": trainedAlgorithmicMedia, compositeSynthetic, algorithmicMedia, compositeWithTrainedAlgorithmicMedia. The page shows the codes as bare tokens linked to https://cv.iptc.org/newscodes/digitalsourcetype/… URIs and does not say which spellings its parser accepts."
+    },
+    {
+      "id": "wikidata-p856",
+      "title": "Wikidata property P856 — official website",
+      "url": "https://www.wikidata.org/wiki/Property:P856",
+      "type": "dataset",
+      "publisher": "Wikidata / Wikimedia Foundation",
+      "verified": "2026-10-17",
+      "keyFindings": "Label \"official website\"; description \"URL of the official page of an item (current or former)\"; datatype URL."
+    },
+    {
+      "id": "wikidata-wbgetclaims",
+      "title": "Wikidata API — wbgetclaims",
+      "url": "https://www.wikidata.org/w/api.php?action=help&modules=wbgetclaims",
+      "type": "vendor-doc",
+      "publisher": "Wikidata / Wikimedia Foundation",
+      "verified": "2026-10-17",
+      "keyFindings": "\"Gets Wikibase claims.\" entity: \"ID of the entity from which to obtain claims\"; property: \"Optional filter to only return claims with a main snak that has the specified property\"; rank is one of deprecated, normal, preferred."
     }
   ]
 }

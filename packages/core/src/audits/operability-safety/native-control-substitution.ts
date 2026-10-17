@@ -92,7 +92,7 @@ export class NativeControlSubstitutionAudit extends Audit {
     title: "Native Control Substitution Index",
     failureTitle: "Native Control Substitution Index",
     description:
-      "Counts choice, date, and file-input controls implemented as custom div widgets instead of the native HTML elements, weighted by whether they sit on a conversion-critical path (search, filter, checkout, signup). Reports each substituted control with the number of agent actions it costs versus its native equivalent.",
+      "Counts choice, date and file-input controls built as custom widgets instead of the native HTML elements, weighted by whether they sit on a conversion path (checkout, cart, signup, booking, order, search). Reports the weighted substitution index, and fails a custom widget that lacks a usable ARIA combobox contract or a drop zone with no file input.",
     scoreDisplayMode: ScoreDisplayMode.Ternary,
     weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
     evidenceGrade: EvidenceGrade.A,

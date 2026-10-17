@@ -9,11 +9,11 @@ disposition: "new in v2 — graduated from proposal 2026-08-22"
 reviewed: 2026-08-20
 graduated: 2026-08-22
 sources:
-  - S3
-  - S5
+  - playwright-locator-select-option
+  - playwright-mcp-repo
+  - anthropic-cu-ui-tips
   - S2
   - S11
-  - S1
 ---
 
 # Native Control Substitution Index
@@ -22,7 +22,24 @@ sources:
 
 ## What it checks
 
-Counts choice, date, and file-input controls implemented as custom div widgets instead of the native HTML elements, weighted by whether they sit on a conversion-critical path (search, filter, checkout, signup). Reports each substituted control with the number of agent actions it costs versus its native equivalent.
+Finds choice, date and file controls built as custom widgets instead of the native HTML elements. A native element is `<select>` or an `<input>` of type date, month, week, time, datetime-local, file, color or range.
+
+A custom widget is counted in three cases:
+
+- an element with `role="combobox"`, `"listbox"` or `"menu"` that is not a `<select>` or `<input>`;
+- a `div`, `span`, `button` or `a` whose class reads as a picker (`select`, `dropdown`, `picker`, `calendar`, `datepicker`, `chooser`, `combobox`), with a hidden or readonly input in the same region holding its value;
+- a drop zone with no `<input type="file">` inside it or beside it.
+
+The region is the enclosing `<form>`, or the parent element when there is none. A native control in the region means the widget decorates a real element, so it is not counted.
+
+Each custom choice widget is then checked for the ARIA combobox contract: a widget role, `aria-expanded`, an `aria-controls` that resolves to a popup role holding options, and an `aria-activedescendant` that resolves when present.
+
+The result reports a weighted index, not an action count. A substitution counts 2 when the page URL or form action reads as checkout, cart, signup, register, book, order or search, and 1 elsewhere.
+
+- No choice, date or file control at all is not applicable.
+- Only native controls passes.
+- A custom widget with a complete contract warns. It works, but costs more steps than the native element.
+- A custom widget with a broken or missing contract, or a drop zone with no file input, fails.
 
 ## Claimed mechanism (falsifiable)
 
@@ -30,16 +47,16 @@ Falsifiable claim: native <select>, <input type="date">, and <input type="file">
 
 ## Evidence
 
-- **[MCP Specification 2026-07-28 — Versioning and Compatibility](https://modelcontextprotocol.io/specification/2026-07-28/basic/versioning)** — Model Context Protocol (spec, URL verified 2026-08-20)
-  - 'There is no negotiation handshake.' Terminology: Modern = 2026-07-28+ (per-request _meta); Legacy = 2025-11-25 and earlier (initialize handshake). Unsupported version MUST return error code -32022 with data.supported[] and data.requested. Verbatim compatibility matrix: Modern client + Legacy server = fails. Legacy client + Modern server = fails. Only dual-era implementations bridge. Extensions negotiated via capabilities.extensions map with mandatory reverse-DNS prefix.
-- **[MCP Specification 2026-07-28 — Caching](https://modelcontextprotocol.io/specification/2026-07-28/server/utilities/caching)** — Model Context Protocol (spec, URL verified 2026-08-20)
-  - 'Servers MUST include caching hints on results with resultType: "complete"' for server/discover, tools/list, prompts/list, resources/list, resources/templates/list, resources/read. ttlMs is an integer ms; servers MUST provide ttlMs >= 0. If ttlMs is absent clients SHOULD assume 0 = immediately stale. cacheScope is exactly "public" or "private". Servers MUST apply the same cacheScope to all pages of a paginated list. Public scope on an authenticated endpoint may be shared across access tokens — servers MUST NOT rely on cacheScope for access control.
+- **[Playwright — locator.selectOption() and locator.setInputFiles()](https://playwright.dev/docs/api/class-locator#locator-select-option)** — Microsoft (vendor-doc, verified 2026-10-17)
+  - `selectOption` "Selects option or options in `<select>`", and "If the target element is not a `<select>` element, this method throws an error." `setInputFiles` "expects Locator to point to an input element." The one-call primitives exist only for the native elements.
+- **[microsoft/playwright-mcp README](https://github.com/microsoft/playwright-mcp)** — Microsoft (vendor-doc, verified 2026-10-17)
+  - The agent-facing tools mirror those primitives. `browser_select_option` will "Select an option in a dropdown" by snapshot ref, and `browser_file_upload` will "Upload one or multiple files". A custom widget has to be driven with clicks instead.
+- **[Computer use tool](https://platform.claude.com/docs/en/agents-and-tools/tool-use/computer-use-tool)** — Anthropic (vendor-doc, verified 2026-10-17)
+  - "Some UI elements (such as dropdowns and scrollbars) might be tricky for Claude to manipulate using mouse movements. If you experience this, try prompting the model to use keyboard shortcuts."
 - **[Playwright: Auto-waiting / Actionability checks](https://playwright.dev/docs/actionability)** — Microsoft (vendor-doc, URL verified 2026-08-20)
-  - Before click/check/fill/selectOption, Playwright enforces five checks: Visible (non-empty bounding box, not visibility:hidden), Stable (same bounding box over 2 animation frames), Receives Events (element is the hit target at the action point — overlays cause failure), Enabled (not [disabled]/aria-disabled), Editable (not readonly/aria-readonly). Fill requires visible+enabled+editable. This is the exact gate every Playwright-based agent (Playwright-MCP, browser-use, most CUA harnesses) passes through, so each check is a directly testable site-side failure cause.
-- **[WebSuite: Systematically Evaluating Why Web Agents Fail](https://arxiv.org/html/2406.01623v1)** — arXiv (study, URL verified 2026-08-20)
-  - Per-UI-primitive success rates for natbot and SeeAct. Worst patterns: slider interaction 0% for both agents; tooltip-based information retrieval 0% for both; complex form filling 12.5% (natbot) / 0% (SeeAct). Aggregate: operational actions 85.2%/76.2%, menu navigation 93.8%/81.3%, informational actions 43.8%/40.6%. Taxonomy covers click (button, link, icon button, slider, switch, accordion, dropdown menu, dialog button, snackbar), type (text/date/phone), select (checkbox, multicheck, select, datagrid row).
-- **[MCP Specification 2026-07-28 — Streamable HTTP Transport](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/streamable-http)** — Model Context Protocol (Anthropic / MCP Working Groups) (spec, URL verified 2026-08-20)
-  - Revision 2026-07-28 removed the GET stream endpoint and protocol-level sessions (Mcp-Session-Id, Last-Event-ID). Server MUST expose one POST endpoint. Server MUST validate Origin; if Origin is present and invalid it MUST return 403 Forbidden. Every POST MUST carry MCP-Protocol-Version, Mcp-Method, and (for tools/call, resources/read, prompts/get) Mcp-Name headers; these are 'REQUIRED for compliance'. Header value MUST match the _meta body value or server MUST return 400 + JSON-RPC code -32020 HeaderMismatch. Unknown protocol version -> 400 + UnsupportedProtocolVersionError. Unknown method -> 404 + -32601. x-mcp-header constraints defined; clients MUST reject (exclude from tools/list) tools that violate them. Servers SHOULD send X-Accel-Buffering: no on SSE. GET/DELETE to endpoint SHOULD now return 405.
+  - Each click on a custom widget passes the visible, stable and receives-events checks. Opening a popup, scrolling it and clicking an option is several such actions where the native element needs one.
+- **[WebSuite: Systematically Evaluating Why Web Agents Fail](https://arxiv.org/html/2406.01623v1)** — arXiv (study, URL verified 2026-10-17)
+  - Counter-evidence. In WebSuite's per-interaction table a custom dropdown menu succeeded 100% for both agents tested, and a native select 100% for one and 0% for the other, over 8 trials each. The study does not show custom widgets failing more often than native ones. The grade rests on the documented tool behaviour above, not on this study.
 
 ## Example failure
 
@@ -48,6 +65,8 @@ A checkout ships a styled country picker: <div class="dropdown" tabindex="0"> pl
 ## Scoring
 
 Tier per evidence policy: **scored** — grade A meets the A/B bar required for scored audits.
+
+**Grade: A** — the consumer behaviour is first-party documented. Playwright documents that its one-call primitives work only on the native elements and throw on anything else. Playwright MCP exposes those primitives to agents as tools. Anthropic documents dropdowns as hard for Claude to operate with the mouse.
 
 ## Implementation deviations
 

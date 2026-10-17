@@ -194,13 +194,28 @@ describe("WikidataRoundTripVerificationAudit", () => {
     expect(strings(r, "warnings").join(" ")).toContain("no official website");
   });
 
-  it("warns when Wikidata itself does not answer", async () => {
+  it("is notApplicable when Wikidata itself does not answer", async () => {
     const { result } = run({
       sameAs: ["https://www.wikidata.org/wiki/Q95"],
       wikidata: { Q95: 503 },
     });
     const r = await result;
-    expect(r.status).toBe(CheckStatus.Warn);
+    expect(r.status).toBe(CheckStatus.NotApplicable);
+    expect(r.message).toContain("503");
+    expect(strings(r, "warnings").join(" ")).toContain("503");
+  });
+
+  it("judges the entities it read when another one is unreachable", async () => {
+    const { result } = run({
+      sameAs: [
+        "https://www.wikidata.org/wiki/Q1",
+        "https://www.wikidata.org/wiki/Q2",
+      ],
+      wikidata: { Q1: claims("https://example.com/"), Q2: 503 },
+    });
+    const r = await result;
+    expect(r.status).toBe(CheckStatus.Pass);
+    expect(strings(r, "verified")).toHaveLength(1);
     expect(strings(r, "warnings").join(" ")).toContain("503");
   });
 
