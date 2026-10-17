@@ -56,7 +56,9 @@ vi.mock("./fetcher", async (importOriginal) => {
           answer = failed(url, CONNECT_TIMEOUT);
         } else if (target.pathname === "/robots.txt") {
           if (h.robotsDelayMs > 0)
-            await new Promise((resolve) => setTimeout(resolve, h.robotsDelayMs));
+            await new Promise((resolve) =>
+              setTimeout(resolve, h.robotsDelayMs),
+            );
           answer = h.robotsError
             ? failed(url, h.robotsError)
             : (h.map.get(url) ?? result(url, 404));
