@@ -1,5 +1,36 @@
 # @forkpoint/agent-lighthouse-website
 
+## 0.0.20
+
+### Patch Changes
+
+- Updated dependencies [16fb09f]
+- Updated dependencies [16fb09f]
+- Updated dependencies [16fb09f]
+- Updated dependencies [3133998]
+- Updated dependencies [95891cb]
+- Updated dependencies [7b3261e]
+- Updated dependencies [60926ee]
+- Updated dependencies [c97cf1d]
+- Updated dependencies [7b3261e]
+- Updated dependencies [3f6d916]
+- Updated dependencies [02498cf]
+- Updated dependencies [16fb09f]
+- Updated dependencies [105099d]
+- Updated dependencies [2628c5b]
+- Updated dependencies [16fb09f]
+- Updated dependencies [7b3261e]
+- Updated dependencies [862c93b]
+- Updated dependencies [548691c]
+- Updated dependencies [3c31305]
+- Updated dependencies [b355ab4]
+- Updated dependencies [4e07fdd]
+- Updated dependencies [721d7b3]
+- Updated dependencies [7b3261e]
+- Updated dependencies [8eb98ae]
+- Updated dependencies [16fb09f]
+  - @forkpoint/agent-lighthouse-core@8.0.0
+
 ## 0.0.19
 
 ### Patch Changes
