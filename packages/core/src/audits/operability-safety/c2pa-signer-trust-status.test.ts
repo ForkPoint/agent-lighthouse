@@ -26,7 +26,8 @@ const strings = (result: AuditResult, key: string): string[] =>
   (result.details?.[key] ?? []) as string[];
 
 // Fixtures generated with OpenSSL: a self-signed certificate, a CA-issued one
-// valid until 2046, and the same CA-issued subject with a notAfter in the past.
+// valid until 2046, and the same CA-issued subject with a notAfter before its
+// notBefore, so it was never valid at any time.
 const SELF_SIGNED =
   "MIIDPzCCAiegAwIBAgIUWMpkp4QEifXRXln6j2FJUYw+LrcwDQYJKoZIhvcNAQELBQAwLzEXMBUGA1UEAwwORXhhbXBsZSBT" +
   "aWduZXIxFDASBgNVBAoMC0V4YW1wbGUgSW5jMB4XDTI2MDgyMzE4MzcxNloXDTQ2MDgxODE4MzcxNlowLzEXMBUGA1UEAwwO" +
@@ -66,6 +67,21 @@ const EXPIRED =
   "Vg0OB4RKXWkMsiozpw+Rt399zxUP7YELorexFJFXkTVWT6ZkXtvMcTrMCHwnWSCmC3Piyg8mSX1aiyWt0a8zrU7Q4vuVIUFQ" +
   "OAxfO4lDkSQbWgznmB7fbWFjWN0GkZR6uE/b1y06nTvrpXdro+LS+CFIJJpi12HpfwU6w3FVxFoW1li+GyTWS9X/u5Pxxc/t" +
   "01DIUU6wT+WrFQdPSvV9l9w9WcXNiegdC3iBFzMF2g==";
+
+// A CA-issued certificate that was valid from 2020-01-01 to 2021-01-01: a
+// real window, now closed.
+const EXPIRED_AFTER_USE =
+  "MIIDNDCCAhygAwIBAgIUYjPJOc1lGTBlxPMi43lhOaxZ/AIwDQYJKoZIhvcNAQELBQAwMzEYMBYGA1UEAwwPRXhhbXBsZSBUZXN0IENB" +
+  "MRcwFQYDVQQKDA5FeGFtcGxlIENBIEluYzAeFw0yMDAxMDEwMDAwMDBaFw0yMTAxMDEwMDAwMDBaMDExGTAXBgNVBAMMEGxlYWYuZXhh" +
+  "bXBsZS5jb20xFDASBgNVBAoMC0V4YW1wbGUgSW5jMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA9w07g4lYKpQZ3oqEjTKz" +
+  "cNNYXa6kiSEKqRkcCkJ4Ql1cG7RZj2ZGmX4mjNLLGK7Gl5e53hcB4xDkB1DwnmoPjeyww8Qr9OoSx676CoCRElDXRtr44AYjhC17uJuK" +
+  "ypHnjR4PO6yBUg9HiqoUSW9KF3wWeJSBGdTBZXqNqo7HEYdXQw67T67uMy5a4nYHQvwpPFgyDsh7irFr7ctu0EGBQc5Fu57q0K+ySfD0" +
+  "xjNS1Btd+h3dLUfE1pOHUqd5KNys0bmSZztK51V5FuCoYe6QkMzNLxj2RAIu7dYkJD35mpcALZ+0oI2ARG1oMogXC7aTAabWZLBUrVRF" +
+  "eC8gctPHcQIDAQABo0IwQDAdBgNVHQ4EFgQUdA2foTEhTx7d6XVWCSKJWvfGWfowHwYDVR0jBBgwFoAUVQnHU6D0/05AIrZPZdzJWJrs" +
+  "8skwDQYJKoZIhvcNAQELBQADggEBAM3hkySIGxJthkZOFOGuM2F/ATmdtjOCJpIPxttkuIYY99gLFjQiVKTvnb++6vrkZNEYx1xCOGta" +
+  "7eceAS8KpZwjPZW7NFODQAmvBfMVfySqNoN+5k2D7M3wgmjhX8u0SVnotrxTMWPBXpq3z7NmZYgsztASe3XDzP6KRAm/sKSOieWHdiqt" +
+  "IASJlLOHNpZcwat+DvCEuQF28+K+A2KbepTbTJUwnFLm+cXAwQ+TXIK68rTHebHUfnVTehkGdLRm0CPNhRJ7YXhh/OWH5KnzCVjz0NZd" +
+  "YNtRV/kMeQBn5Uq+AsrKHLkhQ9G1a4B6Se0cKrBsXqgbDngQZ3P7QWiKm2o=";
 
 /** A JPEG whose APP11 segment carries a JUMBF store holding `payload`. */
 function signedJpeg(payload: string): Uint8Array {
@@ -155,6 +171,10 @@ describe("C2paSignerTrustStatusAudit", () => {
     const r = await result;
     expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures").join(" ")).toContain("self-signed");
+    // C2PA 14.4.3: a user may trust one signer by hand, so "never" overclaims.
+    expect(strings(r, "failures").join(" ")).toContain(
+      "no validator trusts one by default",
+    );
   });
 
   it("fails a signing certificate outside its validity window", async () => {
@@ -164,6 +184,29 @@ describe("C2paSignerTrustStatusAudit", () => {
     const r = await result;
     expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures").join(" ")).toContain("expired on");
+  });
+
+  // C2PA 15.8.2: a trusted time-stamp moves the validity check to the attested
+  // time. The audit does not read the token, so it cannot fail the signer.
+  it("warns, not fails, on an expired certificate whose manifest carries a time-stamp", async () => {
+    const { result } = run({
+      "https://example.com/hero.jpg": signedJpeg(store(EXPIRED_AFTER_USE)),
+    });
+    const r = await result;
+    expect(r.status).toBe(CheckStatus.Warn);
+    expect(strings(r, "failures")).toEqual([]);
+    expect(strings(r, "warnings").join(" ")).toContain("time-stamp");
+  });
+
+  it("fails an expired certificate whose manifest carries no time-stamp", async () => {
+    const { result } = run({
+      "https://example.com/hero.jpg": signedJpeg(
+        store(EXPIRED_AFTER_USE, false),
+      ),
+    });
+    const r = await result;
+    expect(r.status).toBe(CheckStatus.Fail);
+    expect(strings(r, "failures").join(" ")).toContain("no time-stamp");
   });
 
   it("passes a CA-issued certificate inside its window with a timestamp", async () => {
