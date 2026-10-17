@@ -72,10 +72,22 @@ describe("CheckoutOfferFieldMappingAudit", () => {
     expect(result.found).toContain("availability=in_stock");
   });
 
-  it("fails an item_id over 100 characters", () => {
-    const result = run({ sku: "A".repeat(101) });
+  it("fails when no sku, mpn or productID supplies an item_id", () => {
+    const { sku: _sku, ...noId } = FULL;
+    const audit = new CheckoutOfferFieldMappingAudit();
+    const page = mockPageContext(
+      PRODUCT_URL,
+      `<html><head>${ld(noId)}</head><body><main><p>Widget</p></main></body></html>`,
+      1,
+    );
+    const result = audit.audit(mockCheckContext([page]));
     expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("item_id");
+  });
+
+  // The current spec sets no item_id or brand length limit.
+  it("passes an item_id over 100 characters", () => {
+    expect(run({ sku: "A".repeat(101) }).status).toBe(CheckStatus.Pass);
   });
 
   it("fails a name over 150 characters", () => {
@@ -84,10 +96,49 @@ describe("CheckoutOfferFieldMappingAudit", () => {
     expect(result.message).toContain("150");
   });
 
-  it("fails a brand name over 70 characters", () => {
+  it("passes a brand name over 70 characters", () => {
     const result = run({ brand: { "@type": "Brand", name: "B".repeat(71) } });
+    expect(result.status).toBe(CheckStatus.Pass);
+  });
+
+  it("fails a description over 5,000 characters", () => {
+    const result = run({ description: "D".repeat(5_001) });
     expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.message).toContain("70");
+    expect(result.message).toContain("5000");
+  });
+
+  // gtin and mpn are optional in the OpenAI format.
+  it("passes a product with neither gtin nor mpn", () => {
+    const { gtin13: _gtin, ...noIdentifiers } = FULL;
+    const page = mockPageContext(
+      PRODUCT_URL,
+      `<html><head>${ld(noIdentifiers)}</head><body><main><p>Widget</p></main></body></html>`,
+      1,
+    );
+    const result = new CheckoutOfferFieldMappingAudit().audit(
+      mockCheckContext([page]),
+    );
+    expect(result.status).toBe(CheckStatus.Pass);
+  });
+
+  // The spec accepts absolute HTTP or HTTPS URLs and only prefers HTTPS.
+  it("passes an absolute HTTP image URL", () => {
+    expect(run({ image: "http://example.com/img/ark-001.jpg" }).status).toBe(
+      CheckStatus.Pass,
+    );
+  });
+
+  it("fails a relative image URL", () => {
+    const result = run({ image: "/img/ark-001.jpg" });
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("image_url");
+  });
+
+  it("fails an Offer with no availability", () => {
+    const { availability: _availability, ...offer } = FULL.offers;
+    const result = run({ offers: offer });
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("availability");
   });
 
   it("fails an AggregateOffer, which carries no single resolvable price", () => {
@@ -134,10 +185,11 @@ describe("CheckoutOfferFieldMappingAudit", () => {
     expect(result.message).toContain("check digit");
   });
 
-  it("fails a pre-order offer with no availabilityStarts date", () => {
+  // availability_date is required only by the Google-compatible profile.
+  it("passes a pre-order offer with no availabilityStarts date", () => {
     const result = run({}, { availability: "https://schema.org/PreOrder" });
-    expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.message).toContain("availabilityStarts");
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.found).toContain("availability=pre_order");
   });
 
   it("passes a pre-order offer that carries availabilityStarts", () => {

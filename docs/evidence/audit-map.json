@@ -2186,7 +2186,7 @@
       "category": "agentic-commerce",
       "slug": "checkout-offer-field-mapping",
       "title": "Checkout-eligible offer field mapping",
-      "purpose": "Audits the first scanned product page with Product markup against the required-and-conditional field set of the OpenAI product feed spec, including its character caps and its conditional triggers, so the merchant learns why its feed row would be rejected before uploading a feed.",
+      "purpose": "Audits the first scanned product page with Product markup against the required fields of the OpenAI product feed spec and the format rules it states for them, so the merchant learns why its feed row would be rejected or misread before uploading a feed.",
       "features": [
         "acp",
         "commerce",
