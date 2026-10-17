@@ -2,6 +2,7 @@ import { cacheOwner } from "./cache-owner";
 import { createHash } from "node:crypto";
 import type { FetchOptions, FetchResult } from "#core/fetcher";
 import { isSafeUrl } from "#core/fetcher";
+import { LogField, withLogContext } from "#core/logger";
 
 /**
  * The conditional-request probe, once per URL per scan.
@@ -129,7 +130,9 @@ export function sharedRevalidation(
   const map = cacheFor(ctx);
   let pending = map.get(url);
   if (!pending) {
-    pending = probe(ctx, url, opts.signal);
+    pending = withLogContext({ [LogField.Gatherer]: "conditional" }, () =>
+      probe(ctx, url, opts.signal),
+    );
     map.set(url, pending);
   }
   return pending;

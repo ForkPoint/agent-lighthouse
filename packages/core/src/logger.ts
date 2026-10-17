@@ -62,6 +62,14 @@ export const LogField = {
   Component: "component",
   Site: "site",
   Scan: "scan",
+  /** The scan phase a line was written in; see `PhaseId`. */
+  Phase: "phase",
+  /** The audit whose run wrote the line, directly or through a gatherer. */
+  Audit: "audit",
+  /** The shared gatherer whose work wrote the line. */
+  Gatherer: "gatherer",
+  /** Where a warn or error line was logged, as `file.ts:line`. */
+  Caller: "caller",
   Error: "err",
   DurationMs: "durationMs",
   HttpMethod: "http.request.method",
@@ -167,6 +175,33 @@ export function withLogContext<T>(
     },
     fn,
   );
+}
+
+/**
+ * Set fields on the current context from here on, for the rest of the work
+ * that context runs. A scan moves through its phases this way: each phase
+ * sets `phase`, and lines written after that carry it. Work that already
+ * opened its own nested context keeps the fields it started with. Outside a
+ * context this does nothing.
+ */
+export function setLogContextFields(fields: LogFields): void {
+  const store = context.getStore();
+  if (store) Object.assign(store.fields, fields);
+}
+
+/**
+ * `file.ts:line` of the code that called a log method, read from a stack
+ * taken inside `Logger.log`. Its depth is fixed: the message line, `log`, the
+ * public method (`warn` or `error`), then the caller.
+ * With source maps on (the CLI turns them on), a bundled build still names
+ * the source file.
+ */
+function callerOf(stack: string | undefined): string | undefined {
+  const frame = stack?.split("\n")[3];
+  const match = frame && /\(?([^\s()]+?):(\d+):\d+\)?\s*$/.exec(frame);
+  if (!match) return undefined;
+  const file = match[1]!.replace(/^file:\/\//, "");
+  return `${file.slice(file.lastIndexOf("/") + 1)}:${match[2]}`;
 }
 
 // ── Redaction ─────────────────────────────────────────────────────────────
@@ -462,10 +497,17 @@ class Logger implements LoggerLike {
     const store = context.getStore();
     const { msg: rawMsg, fields: callFields } = normalize(first, rest);
     const msg = redactString(rawMsg);
+    // Only warn and error lines pay for a stack: they are rare, and they are
+    // the ones a reader needs to trace back to the code.
+    const caller =
+      RANK[level] >= RANK[LogLevel.Warn]
+        ? callerOf(new Error().stack)
+        : undefined;
     const fields = prepareFields({
       ...store?.fields,
       ...this.bindings,
       ...callFields,
+      ...(caller !== undefined && { [LogField.Caller]: caller }),
     });
     if (store?.target) {
       try {

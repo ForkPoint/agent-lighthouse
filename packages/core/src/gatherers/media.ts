@@ -4,6 +4,7 @@ import { isSafeUrl } from "#core/fetcher";
 import { allJsonLdNodes } from "#core/parser";
 import type { PageContext } from "#core/check-context";
 import { HttpMethod } from "#core/types";
+import { LogField, withLogContext } from "#core/logger";
 
 /**
  * Image bytes and the provenance metadata inside them, once per scan.
@@ -352,7 +353,7 @@ export function fetchImage(
   const cached = cache.get(url);
   if (cached) return cached;
 
-  const pending = (async () => {
+  const pending = withLogContext({ [LogField.Gatherer]: "media" }, async () => {
     if (!(await isSafeUrl(url))) return undefined;
     const result = await ctx.fetch({
       url,
@@ -361,7 +362,7 @@ export function fetchImage(
     });
     if (result.status !== 200) return undefined;
     return result.bytes;
-  })();
+  });
   cache.set(url, pending);
   return pending;
 }
@@ -382,14 +383,14 @@ export function fetchImageHead(
   }
   let hit = cache.get(url);
   if (!hit) {
-    hit = (async () => {
+    hit = withLogContext({ [LogField.Gatherer]: "media" }, async () => {
       if (!(await isSafeUrl(url))) return undefined;
       try {
         return await ctx.fetch({ url, method: HttpMethod.Head });
       } catch {
         return undefined;
       }
-    })();
+    });
     cache.set(url, hit);
   }
   return hit;

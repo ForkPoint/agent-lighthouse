@@ -1,7 +1,7 @@
 import { cacheOwner } from "./cache-owner";
 import type { FetchOptions, FetchResult } from "#core/fetcher";
 import { isSafeUrl } from "#core/fetcher";
-import { LogField, logger } from "#core/logger";
+import { LogField, logger, withLogContext } from "#core/logger";
 
 const log = logger.child({ [LogField.Component]: "ua-parity" });
 import { getMainContentText } from "#core/parser";
@@ -338,15 +338,18 @@ export async function sharedUaProbes(
   for (const url of urls) {
     let baseline = cache.baselines.get(url);
     if (!baseline) {
-      baseline = (async () => {
-        if (!(await isSafeUrl(url))) return undefined;
-        return ctx.fetch({
-          url,
-          userAgent: BASELINE_UA,
-          followRedirects: true,
-          signal: opts.signal,
-        });
-      })();
+      baseline = withLogContext(
+        { [LogField.Gatherer]: "ua-parity" },
+        async () => {
+          if (!(await isSafeUrl(url))) return undefined;
+          return ctx.fetch({
+            url,
+            userAgent: BASELINE_UA,
+            followRedirects: true,
+            signal: opts.signal,
+          });
+        },
+      );
       cache.baselines.set(url, baseline);
     }
     const baselineResult = await baseline;
@@ -356,23 +359,26 @@ export async function sharedUaProbes(
       const key = `${agent.token}|${url}`;
       let pending = cache.probes.get(key);
       if (!pending) {
-        pending = (async () => {
-          const probe = await ctx.fetch({
-            url,
-            userAgent: agent.ua,
-            followRedirects: true,
-            signal: opts.signal,
-          });
-          const verdict = classifyWithinLimits(baselineResult, probe);
-          if (!verdict) return undefined;
-          return {
-            url,
-            token: agent.token,
-            baselineStatus: baselineResult.status,
-            probeStatus: probe.status,
-            ...verdict,
-          };
-        })();
+        pending = withLogContext(
+          { [LogField.Gatherer]: "ua-parity" },
+          async () => {
+            const probe = await ctx.fetch({
+              url,
+              userAgent: agent.ua,
+              followRedirects: true,
+              signal: opts.signal,
+            });
+            const verdict = classifyWithinLimits(baselineResult, probe);
+            if (!verdict) return undefined;
+            return {
+              url,
+              token: agent.token,
+              baselineStatus: baselineResult.status,
+              probeStatus: probe.status,
+              ...verdict,
+            };
+          },
+        );
         cache.probes.set(key, pending);
       }
       const probe = await pending;
@@ -407,7 +413,7 @@ export function sharedControlProbe(
   const cache = cacheFor(ctx);
   let pending = cache.controls.get(url);
   if (!pending) {
-    pending = (async () => {
+    pending = withLogContext({ [LogField.Gatherer]: "ua-parity" }, async () => {
       if (!(await isSafeUrl(url))) return undefined;
       return ctx.fetch({
         url,
@@ -415,7 +421,7 @@ export function sharedControlProbe(
         followRedirects: true,
         signal: opts.signal,
       });
-    })();
+    });
     cache.controls.set(url, pending);
   }
   return pending;
@@ -442,7 +448,7 @@ export function sharedUaFetch(
 
   let pending = map.get(key);
   if (!pending) {
-    pending = (async () => {
+    pending = withLogContext({ [LogField.Gatherer]: "ua-parity" }, async () => {
       if (!(await isSafeUrl(url))) return undefined;
       return ctx.fetch({
         url,
@@ -450,7 +456,7 @@ export function sharedUaFetch(
         followRedirects: true,
         signal: opts.signal,
       });
-    })();
+    });
     map.set(key, pending);
   }
   return pending;

@@ -7,6 +7,7 @@ import {
   LogLevel,
   parseLogFormat,
   parseLogLevel,
+  setLogContextFields,
   withLogContext,
   type LogFields,
   type LoggerLike,
@@ -176,6 +177,39 @@ describe("logger", () => {
     expect(by["from b"]).toMatchObject({ site: "b.test", scan: "2" });
     expect(by["nested"]).toMatchObject({ site: "b.test", phase: "audits" });
     expect(by["outside"]?.["site"]).toBeUndefined();
+  });
+
+  it("moves a context to its next phase, but not nested work begun before", async () => {
+    const lines = capture();
+    await withLogContext({ scan: "s" }, async () => {
+      setLogContextFields({ phase: "fetch-root" });
+      const nested = withLogContext({ gatherer: "sitemap" }, async () => {
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        logger.debug("late gatherer line");
+      });
+      setLogContextFields({ phase: "audits" });
+      logger.debug("audit line");
+      await nested;
+    });
+    setLogContextFields({ phase: "ignored" });
+    logger.debug("outside");
+    const by = Object.fromEntries(lines.map((l) => [l["msg"], l]));
+    expect(by["audit line"]?.["phase"]).toBe("audits");
+    expect(by["late gatherer line"]).toMatchObject({
+      phase: "fetch-root",
+      gatherer: "sitemap",
+    });
+    expect(by["outside"]?.["phase"]).toBeUndefined();
+  });
+
+  it("names the caller's file and line on warn and error lines only", () => {
+    const lines = capture();
+    logger.warn("w");
+    logger.child({ component: "x" }).error({ a: 1 }, "e");
+    logger.info("i");
+    expect(lines[0]?.["caller"]).toMatch(/^logger\.test\.ts:\d+$/);
+    expect(lines[1]?.["caller"]).toMatch(/^logger\.test\.ts:\d+$/);
+    expect(lines[2]?.["caller"]).toBeUndefined();
   });
 
   it("groups a module's lines by a component field, not a message prefix", () => {

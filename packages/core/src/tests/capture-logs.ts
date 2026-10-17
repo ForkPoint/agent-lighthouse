@@ -5,7 +5,7 @@ import { logger, LogFormat, LogLevel, type LogFields } from "#core/logger";
  * `restore()`. Modules log through child loggers, so spying on the root
  * logger's methods sees nothing; a sink sees every line.
  */
-export function captureLogs(level: LogLevel = LogLevel.Debug): {
+export function captureLogs(level: LogLevel = LogLevel.Trace): {
   lines: LogFields[];
   restore: () => void;
 } {

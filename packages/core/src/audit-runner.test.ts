@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import type { AuditMeta, AuditResult } from "./types";
-import { LogLevel, type LogFields } from "./logger";
+import { logger, LogLevel, type LogFields } from "./logger";
 import { captureLogs } from "./tests/capture-logs";
 import { Audit } from "./audit";
 import type { CheckContext } from "./check-context";
@@ -748,6 +748,31 @@ describe("audit tracing", () => {
 
   it("builds nothing when no handler is given and the logger is quiet", async () => {
     expect(await auditLines(LogLevel.Debug)).toEqual([]);
+  });
+
+  it("names the audit on every line its run writes", async () => {
+    const config: ScanConfig = {
+      categories: [{ id: "cat1", name: "Cat 1", weight: 1 }],
+      audits: {
+        cat1: [
+          makeReg(meta({ id: "talker", category: "cat1" }), async () => {
+            await new Promise((resolve) => setTimeout(resolve, 1));
+            logger.child({ component: "fetcher" }).debug("from inside");
+            return result(CheckStatus.Pass, 1);
+          }),
+        ],
+      },
+    };
+    const logs = captureLogs();
+    try {
+      await runAudits(ctxWith([PageType.Homepage]), config);
+    } finally {
+      logs.restore();
+    }
+    expect(logs.lines.find((l) => l["msg"] === "from inside")).toMatchObject({
+      component: "fetcher",
+      audit: "talker",
+    });
   });
 
   it("logs one trace line per audit when the level asks for it", async () => {

@@ -3,6 +3,7 @@ import type { CheckContext } from "#core/check-context";
 import type { FetchResult } from "#core/fetcher";
 import { isSafeUrl } from "#core/fetcher";
 import { HttpMethod } from "#core/types";
+import { LogField, withLogContext } from "#core/logger";
 
 const securityProbeCache = new WeakMap<
   object,
@@ -28,7 +29,7 @@ export function probeSecurityUrl(
   const key = `${options.method ?? "GET"}|${options.userAgent ?? ""}|${JSON.stringify(options.headers ?? {})}|${url}`;
   let hit = cache.get(key);
   if (!hit) {
-    hit = (async () => {
+    hit = withLogContext({ [LogField.Gatherer]: "security" }, async () => {
       if (!(await isSafeUrl(url))) return undefined;
       try {
         return await ctx.fetch({
@@ -42,7 +43,7 @@ export function probeSecurityUrl(
       } catch {
         return undefined;
       }
-    })();
+    });
     cache.set(key, hit);
   }
   return hit;

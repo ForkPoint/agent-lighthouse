@@ -5,6 +5,7 @@ import type { FetchOptions, FetchResult } from "#core/fetcher";
 import { isSafeUrl } from "#core/fetcher";
 import { linksWithRel } from "./structured-fields";
 import { HttpMethod } from "#core/types";
+import { LogField, withLogContext } from "#core/logger";
 
 /**
  * Feed discovery and parsing, once per scan.
@@ -117,7 +118,7 @@ export function sharedFeed(
   const cache = cacheFor(ctx);
   let pending = cache.get(url);
   if (!pending) {
-    pending = (async () => {
+    pending = withLogContext({ [LogField.Gatherer]: "feeds" }, async () => {
       if (!(await isSafeUrl(url))) return undefined;
       const pathname = (() => {
         try {
@@ -142,7 +143,7 @@ export function sharedFeed(
       }
       if (rootRes) return parseFeed(url, rootRes);
       return parseFeed(url, result);
-    })();
+    });
     cache.set(url, pending);
   }
   return pending;
@@ -521,14 +522,14 @@ export function sharedCanonicalCheck(
   }
   let hit = cache.get(url);
   if (!hit) {
-    hit = (async () => {
+    hit = withLogContext({ [LogField.Gatherer]: "feeds" }, async () => {
       if (!(await isSafeUrl(url))) return undefined;
       try {
         return await ctx.fetch({ url, followRedirects: true });
       } catch {
         return undefined;
       }
-    })();
+    });
     cache.set(url, hit);
   }
   return hit;
@@ -550,7 +551,7 @@ export function probeHubHead(
   }
   let hit = cache.get(url);
   if (!hit) {
-    hit = (async () => {
+    hit = withLogContext({ [LogField.Gatherer]: "feeds" }, async () => {
       if (!(await isSafeUrl(url))) return undefined;
       try {
         return await ctx.fetch({
@@ -561,7 +562,7 @@ export function probeHubHead(
       } catch {
         return undefined;
       }
-    })();
+    });
     cache.set(url, hit);
   }
   return hit;

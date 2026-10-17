@@ -15,7 +15,13 @@ import {
   TAG_SKIPPED_PAGE_TYPE,
   TAG_SKIPPED_SCAN_BUDGET,
 } from "./constants";
-import { LogField, logger, withLogContext, type LoggerLike } from "./logger";
+import {
+  LogField,
+  logger,
+  setLogContextFields,
+  withLogContext,
+  type LoggerLike,
+} from "./logger";
 
 const log = logger.child({ [LogField.Component]: "orchestrator" });
 import { createFetcher, isSafeUrl, splitCredentials } from "./fetcher";
@@ -342,6 +348,9 @@ async function scanWithinBudget(
     : budget.signal;
 
   const tracker = new ProgressTracker((event) => {
+    // Lines written from here on carry the phase they belong to.
+    if (event.type === "phase:start")
+      setLogContextFields({ [LogField.Phase]: event.phase });
     if (event.type === "phase:done")
       log.debug(
         {

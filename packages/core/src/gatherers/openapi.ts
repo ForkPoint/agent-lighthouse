@@ -3,6 +3,7 @@ import type { CheckContext } from "#core/check-context";
 import type { FetchResult } from "#core/fetcher";
 import { isSafeUrl } from "#core/fetcher";
 import { HttpMethod } from "#core/types";
+import { LogField, withLogContext } from "#core/logger";
 
 /** An OpenAPI document as served: an untyped object, walked key by key. */
 export type OpenApiSpec = Record<string, unknown>;
@@ -276,7 +277,7 @@ export function probeOpenApiServer(
   const key = `${options.method ?? "OPTIONS"}|${url}`;
   let hit = cache.get(key);
   if (!hit) {
-    hit = (async () => {
+    hit = withLogContext({ [LogField.Gatherer]: "openapi" }, async () => {
       if (!(await isSafeUrl(url))) return undefined;
       try {
         return await ctx.fetch({
@@ -287,7 +288,7 @@ export function probeOpenApiServer(
       } catch {
         return undefined;
       }
-    })();
+    });
     cache.set(key, hit);
   }
   return hit;

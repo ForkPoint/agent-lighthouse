@@ -3,6 +3,7 @@ import type { CheckContext } from "#core/check-context";
 import type { FetchResult } from "#core/fetcher";
 import { isSafeUrl } from "#core/fetcher";
 import { HttpMethod } from "#core/types";
+import { LogField, withLogContext } from "#core/logger";
 
 /**
  * MCP's current specification revision. Pinning an older one makes servers that
@@ -281,7 +282,7 @@ export function sharedProbe(
   }
   const hit = byKey.get(key);
   if (hit) return hit;
-  const pending = run();
+  const pending = withLogContext({ [LogField.Gatherer]: "mcp" }, run);
   byKey.set(key, pending);
   return pending;
 }

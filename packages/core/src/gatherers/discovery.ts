@@ -3,6 +3,7 @@ import type { CheckContext } from "#core/check-context";
 import type { FetchResult } from "#core/fetcher";
 import { isSafeUrl } from "#core/fetcher";
 import { HttpMethod } from "#core/types";
+import { LogField, withLogContext } from "#core/logger";
 
 export interface DiscoveryContext {
   fetch: CheckContext["fetch"];
@@ -33,7 +34,7 @@ export function sharedProbeUrl(
   const cacheKey = `${options.method ?? "GET"}|${options.followRedirects ?? false}|${url}`;
   let hit = cache.get(cacheKey);
   if (!hit) {
-    hit = (async () => {
+    hit = withLogContext({ [LogField.Gatherer]: "discovery" }, async () => {
       if (!(await isSafeUrl(url))) return undefined;
       try {
         return await ctx.fetch({
@@ -45,7 +46,7 @@ export function sharedProbeUrl(
       } catch {
         return undefined;
       }
-    })();
+    });
     cache.set(cacheKey, hit);
   }
   return hit;

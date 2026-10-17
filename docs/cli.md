@@ -293,6 +293,35 @@ object per line instead. Field names follow OpenTelemetry where it has one:
 `type`, `message`, `stack` and `code`. The scan id is the report's `scanId`,
 so a log line and its report join on it.
 
+Each line also says where it came from:
+
+| Field       | Meaning                                                                 |
+| :---------- | :---------------------------------------------------------------------- |
+| `component` | The module that wrote it: `fetcher`, `orchestrator`, `audit`, ...       |
+| `phase`     | The scan phase: `fetch-root`, `fetch-pages`, `analyze`, `audits`, ...   |
+| `audit`     | The audit whose run wrote it, also for its requests and gatherer work   |
+| `gatherer`  | The shared gatherer whose work wrote it, such as `sitemap`              |
+| `caller`    | On `warn` and `error` lines only: the source file and line, `file:line` |
+
+A request made for an audit reads like this:
+
+```json
+{
+  "level": "trace",
+  "msg": "Request finished",
+  "site": "yourstore.com",
+  "scan": "0b6f…",
+  "phase": "audits",
+  "audit": "machine-discovery/llms-txt-links-valid",
+  "gatherer": "discovery",
+  "component": "fetcher",
+  "http.request.method": "GET",
+  "url.full": "https://yourstore.com/about",
+  "http.response.status_code": 200,
+  "durationMs": 212
+}
+```
+
 The logger removes credentials before it writes: a URL's `user:password@`, and
 the value of any key named like a secret (`authorization`, `cookie`, `token`
 and similar).
@@ -309,6 +338,9 @@ agent-lighthouse https://yourstore.com --silent --log-file ./scan-log.jsonl
 
 # the ten slowest requests
 jq -r 'select(.msg == "Request finished") | [.durationMs, ."http.response.status_code", ."url.full"] | @tsv' scan-log.jsonl | sort -rn | head
+
+# which audits sent the most requests
+jq -r 'select(.msg == "Request finished") | .audit // "(scan)"' scan-log.jsonl | sort | uniq -c | sort -rn | head
 
 # time per phase
 jq -r 'select(.msg == "Phase done") | "\(.phase)\t\(.durationMs)ms"' scan-log.jsonl
