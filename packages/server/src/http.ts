@@ -88,11 +88,17 @@ export function createTaskServer(options: TaskServerOptions = {}): TaskServer {
     });
   }
 
-  function route(
+  // Async so a synchronous throw becomes a rejection that `handle` catches.
+  async function route(
     req: IncomingMessage,
     res: ServerResponse,
-  ): void | Promise<void> {
-    const url = new URL(req.url ?? "/", "http://localhost");
+  ): Promise<void> {
+    let url: URL;
+    try {
+      url = new URL(req.url ?? "/", "http://localhost");
+    } catch {
+      return json(res, 400, { error: "invalid_request" });
+    }
     if (req.method === "GET" && url.pathname === "/") {
       res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
       res.end(page);
@@ -151,7 +157,7 @@ export function createTaskServer(options: TaskServerOptions = {}): TaskServer {
 
   return {
     handle(req, res) {
-      Promise.resolve(route(req, res)).catch(() => {
+      route(req, res).catch(() => {
         if (!res.headersSent) json(res, 500, { error: "internal" });
         else res.destroy();
       });

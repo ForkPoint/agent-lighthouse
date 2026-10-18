@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createServer, type Server } from "node:http";
-import type { AddressInfo } from "node:net";
+import { connect, type AddressInfo } from "node:net";
 import {
   PhaseId,
   type ScanOptions,
@@ -167,5 +167,19 @@ describe("task routes", () => {
     release();
     await new Promise((r) => setTimeout(r, 10));
     expect((await post({ url: "https://five.test/" })).status).toBe(202);
+  });
+
+  it("answers 400 to an unparseable request target and stays up", async () => {
+    const port = (http.address() as AddressInfo).port;
+    const raw = await new Promise<string>((resolve, reject) => {
+      const socket = connect(port, "127.0.0.1");
+      let data = "";
+      socket.on("data", (chunk) => (data += chunk.toString()));
+      socket.on("end", () => resolve(data));
+      socket.on("error", reject);
+      socket.write("GET http://[ HTTP/1.1\r\nHost: x\r\n\r\n");
+    });
+    expect(raw.startsWith("HTTP/1.1 400")).toBe(true);
+    expect((await fetch(`${base}/`)).status).toBe(200);
   });
 });
