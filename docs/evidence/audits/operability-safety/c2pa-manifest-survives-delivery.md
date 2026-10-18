@@ -9,9 +9,10 @@ disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
 graduated: 2026-08-23
 sources:
-  - S7
-  - S2
-  - S12
+  - c2pa-spec-2-4
+  - cloudflare-images-preserve-content-credentials
+  - google-c2pa-transparency
+  - linkedin-content-credentials
 ---
 
 # C2PA manifest survives the delivery pipeline
@@ -20,28 +21,39 @@ sources:
 
 ## What it checks
 
-Detects the single most common provenance failure: a publisher signs images at creation, then the CDN/image optimizer silently discards the Content Credentials, so every byte an agent or crawler actually downloads is unsigned. Compares provenance on origin assets against the transformed variants that are really served (srcset candidates, /_next/image, /cdn-cgi/image/, imgix/Cloudinary renditions).
+A publisher can sign an image at creation and still serve unsigned bytes. The CDN or image optimizer drops the Content Credentials on the way out. The audit fetches the images each page serves and looks for a C2PA manifest store in the bytes. It reads up to six same-host images, three per page, from `img` sources, `srcset` candidates, `og:image`, `twitter:image` and JSON-LD images.
+
+Where a served image is a transformed variant, the audit also fetches the origin asset and compares the two. Three variant shapes are recognised: Next.js `/_next/image?url=…`, Cloudflare `/cdn-cgi/image/<options>/<path>`, and WordPress `-<width>x<height>` renditions.
 
 ## Claimed mechanism (falsifiable)
 
-Image transformation pipelines strip C2PA manifests by default. Cloudflare states it outright: 'When this setting is disabled, any existing Content Credentials will always be discarded' — preservation is an opt-in toggle. Therefore, for any site whose images pass through a transformation layer without explicit preservation enabled, the served variant carries no manifest even when the origin asset does. FALSIFIABLE: fetch the origin asset and the served variant; if the origin contains a C2PA manifest store and the variant does not, the pipeline is stripping provenance. The check fails if variants are found to retain manifests without any preservation setting, or if origin and variant provenance always agree.
+Image transformation layers discard C2PA manifests unless preservation is turned on. Cloudflare states it outright: with its preservation setting disabled, existing Content Credentials "will always be discarded". The C2PA specification marks the PNG manifest chunk "not safe to copy", so a PNG editor that rewrites the image is expected to drop it. Consumers read provenance from the bytes they receive. Google's "About this image" works only "if an image contains C2PA metadata", and LinkedIn marks content that is "cryptographically signed using C2PA Content Credentials". A stripped variant therefore shows no provenance, even when the origin asset carries it.
+
+FALSIFIABLE: fetch the origin asset and the served variant. If the origin holds a C2PA manifest store and the variant does not, the pipeline strips provenance. The claim is wrong if variants keep manifests with no preservation setting, or if origin and variant provenance always agree.
 
 ## Evidence
 
-- **[MCP Specification 2026-07-28 — Authorization Server Discovery](https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/authorization-server-discovery)** — Model Context Protocol (spec, URL verified 2026-08-20)
-  - PRM document returned by the MCP server MUST include authorization_servers with at least one entry (stronger than RFC 9728, where it is OPTIONAL). Two discovery mechanisms, both of which clients MUST support: WWW-Authenticate resource_metadata, then well-known probing in order — path-inserted (https://example.com/public/mcp -> https://example.com/.well-known/oauth-protected-resource/public/mcp) then root. AS metadata probing order for issuers with a path: /.well-known/oauth-authorization-server/{path}, /.well-known/openid-configuration/{path}, {path}/.well-known/openid-configuration; without a path: /.well-known/oauth-authorization-server then /.well-known/openid-configuration. Clients MUST reject a metadata doc whose issuer differs from the issuer used to build the URL.
-- **[Playwright: Auto-waiting / Actionability checks](https://playwright.dev/docs/actionability)** — Microsoft (vendor-doc, URL verified 2026-08-20)
-  - Before click/check/fill/selectOption, Playwright enforces five checks: Visible (non-empty bounding box, not visibility:hidden), Stable (same bounding box over 2 animation frames), Receives Events (element is the hit target at the action point — overlays cause failure), Enabled (not [disabled]/aria-disabled), Editable (not readonly/aria-readonly). Fill requires visible+enabled+editable. This is the exact gate every Playwright-based agent (Playwright-MCP, browser-use, most CUA harnesses) passes through, so each check is a directly testable site-side failure cause.
-- **[Text fragments](https://web.dev/articles/text-fragments)** — Google / web.dev (vendor-doc, URL verified 2026-08-20)
-  - Confirms a shipped answer-surface consumer: "Clicking a featured snippet takes the user directly to the featured snippet text on the source web page. This works thanks to automatically created Text Fragments URLs." Support: Chrome 89+, Edge 89+, Firefox 131+, Safari 18.2+. Restates the boundary rule: "Each of prefix-, start, end, and -suffix can only match text within a single block-level element, but full start,end ranges can span multiple blocks." Opt-out header: Document-Policy: force-load-at-top.
+- **[C2PA Technical Specification 2.4](https://spec.c2pa.org/specifications/specifications/2.4/specs/C2PA_Specification.html)** — C2PA (spec, verified 2026-10-17)
+  - Appendix A defines where the manifest store sits in each container. JPEG: "embedded as the data contained in an APP11 marker segment". PNG: "an ancillary, private, not safe to copy, chunk type of 'caBX'". WebP: "a chunk with an identifier of C2PA". BMFF (HEIF, AVIF): a `uuid` box with the C2PA extended type. These are the four markers the audit looks for.
+  - A re-encoder that does not copy the store forward leaves the variant with no manifest to validate.
+- **[Preserve Content Credentials](https://developers.cloudflare.com/images/transform-images/preserve-content-credentials/)** — Cloudflare (vendor-doc, verified 2026-10-17)
+  - "When this setting is disabled, any existing Content Credentials will always be discarded." Preservation is opt-in. This is the documented stripping behaviour of one major image pipeline.
+- **[How we're increasing transparency for gen AI content with the C2PA](https://blog.google/innovation-and-ai/products/google-gen-ai-content-transparency-c2pa/)** — Google (announcement, verified 2026-10-17)
+  - "If an image contains C2PA metadata, people will be able to use our 'About this image' feature to see if it was created or edited with AI tools." The feature is in Google Images, Lens and Circle to Search. Google's ad systems "are starting to integrate C2PA metadata".
+- **[Content credentials](https://www.linkedin.com/help/linkedin/answer/a6282984)** — LinkedIn Help (vendor-doc, verified 2026-10-17)
+  - "Image and video content that is cryptographically signed using C2PA Content Credentials will be noted with the C2PA icon", visible to all viewers.
 
-## Example failure
-
-A newsroom signs photos in Photoshop, uploads them to a Next.js site behind Cloudflare. The origin /uploads/protest.jpg validates with a full manifest, but every rendered <img> points at /_next/image?url=%2Fuploads%2Fprotest.jpg&w=1920 which returns a re-encoded JPEG with no APP11 segment. Content Credentials verification on the live page shows nothing; 100% of the provenance investment is destroyed at the edge.
+**Counter-evidence:** The Google source is a 2024 announcement in the future tense. It names the consumer and the condition, not a current rate of use. The documented consumers read images uploaded to them or indexed by them; no source documents an AI agent that fetches a page and reads C2PA from its images. Only three variant shapes are mapped back to an origin, and third-party image hosts such as imgix or Cloudinary sit on another host and are not sampled at all. A served image with no recognised origin counts toward coverage but cannot be judged stripped. Detection finds the store marker; it does not validate the manifest, its hashes or its signature.
 
 ## Scoring
 
-Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
+**Grade: B** — the C2PA specification is a published, versioned industry specification, not a ratified standards-body document. Its adoption is documented by named consumers that read the manifest from delivered bytes, Google Search and LinkedIn, and one major pipeline documents the stripping behaviour. That meets the policy's B bar: a draft-status standard with meaningful adoption. It falls short of A because no vendor documents an AI agent consuming the signal.
+
+The audit fails only when an origin asset carries a manifest and its served variant does not. It passes when at least one sampled image is signed and no variant loses its manifest. A site with no signed image is `notApplicable`: there is nothing for the pipeline to strip.
+
+## Example failure
+
+A newsroom signs photos in its editing tool and uploads them to a Next.js site behind a CDN. The origin `/uploads/photo.jpg` carries a full manifest. Every rendered `<img>` points at `/_next/image?url=%2Fuploads%2Fphoto.jpg&w=1920`, which returns a re-encoded JPEG with no APP11 segment. A consumer that reads the served image finds no Content Credentials.
 
 ## Implementation deviations
 

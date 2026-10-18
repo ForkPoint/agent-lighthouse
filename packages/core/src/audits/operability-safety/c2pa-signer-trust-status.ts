@@ -163,14 +163,37 @@ export class C2paSignerTrustStatusAudit extends Audit {
         `${url}: ${subject} (issued by ${leaf.issuer.replace(/\n/g, ", ")})`,
       );
 
+      // A window that closes before it opens was never valid: no time-stamp
+      // can fall inside it.
+      const neverValid =
+        Number.isFinite(notBefore) &&
+        Number.isFinite(notAfter) &&
+        notAfter < notBefore;
+
       if (selfSigned) {
+        // C2PA 14.4.3: a user may trust one signer by hand in a private
+        // credential store, but no validator ships with one pre-configured.
         failures.push(
-          `${url}: signed by a self-signed certificate (${subject}); no validator trusts one`,
+          `${url}: signed by a self-signed certificate (${subject}); no validator trusts one by default`,
+        );
+      } else if (neverValid) {
+        failures.push(
+          `${url}: the signing certificate was never valid: it expired on ${leaf.validTo}, before its ${leaf.validFrom} start`,
         );
       } else if (Number.isFinite(notAfter) && notAfter < now) {
-        failures.push(
-          `${url}: the signing certificate expired on ${leaf.validTo}`,
-        );
+        if (hasTimestamp) {
+          // C2PA 15.8.2: with a trusted time-stamp, validators judge the
+          // certificate at the attested time, not now. The token is not
+          // decoded here, so whether that time falls inside the window is
+          // unknown.
+          warnings.push(
+            `${url}: the signing certificate expired on ${leaf.validTo}; the manifest carries a time-stamp this audit does not read, so it stays valid only if it was signed before then`,
+          );
+        } else {
+          failures.push(
+            `${url}: the signing certificate expired on ${leaf.validTo} and the manifest carries no time-stamp`,
+          );
+        }
       } else if (Number.isFinite(notBefore) && notBefore > now) {
         failures.push(
           `${url}: the signing certificate is not valid until ${leaf.validFrom}`,

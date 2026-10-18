@@ -26,6 +26,8 @@ Audits one product page against the required fields of the OpenAI product feed s
 
 The page judged is the first scanned product page that carries `Product` markup. Other product pages are not judged here. `machine-discovery/agent-commerce-feed-parity` reports field coverage across the sampled product pages instead.
 
+The `url` field must be an absolute HTTP or HTTPS URL. It is taken from the `Product` `url`, or from the page address when the markup has none. It is not compared with the page's canonical link. The spec asks for the product page with the variant selected, so a variant URL such as `?variant=123` whose canonical names the parent product is a valid row.
+
 ## Claimed mechanism (falsifiable)
 
 The OpenAI format requires nine fields on every row: item_id, title, description, url, brand, seller_name, image_url, availability and price. Price is a decimal amount with an uppercase ISO 4217 code. Availability is one of five enum values. An omitted, empty or unrecognised availability rejects the row. A sale price that is not strictly below the regular price is not used. A GTIN, when supplied, must be 8, 12, 13 or 14 digits with a valid check digit. Validation is row-by-row, so one product can be rejected while the rest of the feed processes. A product page that cannot supply these values forces the merchant to hand-author or scrape them, which is where price mismatch enters. Disproof condition: rows with no availability, or with a price that has no ISO 4217 currency, being accepted into discovery.
@@ -43,7 +45,8 @@ The OpenAI format requires nine fields on every row: item_id, title, description
   - "gtin or mpn unless identifier_exists=no" and "availability_date required for preorder and backorder" apply only to the Google-compatible profile. The OpenAI format says availability dates do not schedule stock changes.
   - target_countries is optional and needs market setup. Standard uploads target the US.
   - seller_privacy_policy and seller_tos are conditionally required for checkout.
-  - URLs are absolute HTTP or HTTPS; HTTPS is preferred.
+  - URLs are absolute HTTP or HTTPS; HTTPS is preferred: "Use UTF-8 text and absolute HTTP or HTTPS URLs; prefer HTTPS."
+  - The `url` field reads: "Product detail page for the item, with the variant selected when possible. Keep it stable." Its example carries variant parameters: `https://example.com/products/trail?color=black&size=10`. Each variant row "carries its own price, availability, URL, and images." No rule ties `url` to the page's canonical link (verified 2026-10-17).
   - "A malformed row can be rejected while valid rows continue processing."
 - **[Merchant listing (Product) structured data](https://developers.google.com/search/docs/appearance/structured-data/merchant-listing)** — Google (vendor-doc, URL verified 2026-08-20)
   - Required: name, image, offers; within offers price (or priceSpecification.price) and priceCurrency (3-letter ISO 4217). Recommended: gtin|gtin8|gtin12|gtin13|gtin14, mpn, sku, availability, priceValidUntil (ISO 8601), itemCondition, url, validFrom/validThrough, hasMerchantReturnPolicy, shippingDetails (OfferShippingDetails), aggregateRating, review, description, brand. Policies are recommended at Organization level.
@@ -74,7 +77,10 @@ Grade A holds against the spec as re-read on 2026-10-17. OpenAI documents the re
   as the product.
 - One GTIN check-digit function covers GTIN-8, 12, 13 and 14.
 - An `image` list is read by its first entry.
-- Self-canonical is compared only when the `Product` declares its own `url`.
+- Re-read 2026-10-17. The `url`-equals-canonical failure was removed. The
+  spec states no canonical rule and asks for the variant-selected page. The
+  spec's "publicly accessible" rule is not checked: it would need a fetch of
+  a URL the scan may not have read.
 - `target_countries` is not evaluated. It is optional in the current spec
   and has no schema.org source on the page.
 - `seller_name` is required but not evaluated. A product page has no
@@ -97,6 +103,3 @@ Grade A holds against the spec as re-read on 2026-10-17. OpenAI documents the re
 
 - `image_url` is not fetched. Only scheme and extension are checked, so a
   URL that 404s reads as valid.
-- The canonical comparison is not a spec rule. The spec asks for a stable
-  product page URL with the variant selected. Review whether a variant URL
-  that differs from its canonical should still fail.

@@ -190,6 +190,66 @@ describe("MetaRobotsNotBlockingAudit", () => {
     expect(audit.audit(ctx).status).toBe(CheckStatus.Warn);
   });
 
+  // Bing: noarchive means "Do not link in Chat and Copilot".
+  it("warns on noarchive alone", () => {
+    const ctx = mockCheckContext([
+      mockPageContext(
+        "https://example.com/",
+        doc('<meta name="robots" content="noarchive">'),
+      ),
+    ]);
+    const result = audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.found).toContain("noarchive");
+  });
+
+  // Bing: nocache means "Display only URL/Snippet/Title in Chat or Copilot".
+  // The page is still linked and quoted by its snippet, so nothing forbids
+  // quoting; the pass message names it.
+  it("passes on nocache and names it", () => {
+    const ctx = mockCheckContext([
+      mockPageContext(
+        "https://example.com/",
+        doc('<meta name="robots" content="nocache">'),
+      ),
+    ]);
+    const result = audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.message).toContain("nocache");
+  });
+
+  // Bing: "If content has both NOCACHE and NOARCHIVE tags, we will treat it as
+  // NOCACHE." Holds across transports too.
+  it("treats noarchive together with nocache as nocache", () => {
+    const both = mockPageContext(
+      "https://example.com/",
+      doc('<meta name="robots" content="noarchive, nocache">'),
+    );
+    const split = mockPageContext(
+      "https://example.com/news",
+      doc('<meta name="bingbot" content="noarchive">'),
+      1,
+    );
+    split.fetchResult.headers["x-robots-tag"] = "nocache";
+    const result = audit.audit(mockCheckContext([both, split]));
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.message).toContain("2 non-utility page(s) carry nocache");
+  });
+
+  // nocache does not cancel the directives Google documents.
+  it("still warns on nosnippet beside nocache", () => {
+    const ctx = mockCheckContext([
+      mockPageContext(
+        "https://example.com/",
+        doc('<meta name="robots" content="nocache, nosnippet">'),
+      ),
+    ]);
+    const result = audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.found).toContain("nosnippet");
+    expect(result.found).not.toContain("nocache");
+  });
+
   it("does not warn on a permissive max-snippet", () => {
     const ctx = mockCheckContext([
       mockPageContext(

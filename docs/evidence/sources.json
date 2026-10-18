@@ -6726,6 +6726,69 @@
       "publisher": "Google Search Central",
       "verified": "2026-10-17",
       "keyFindings": "'We're phasing out support for ClaimReview markup in Google Search.' 'However, this markup remains supported by the Factcheck Explorer Tool.' No phase-out date. 'A page must only have one ClaimReview element' to be eligible for the single fact check rich result. Required ClaimReview properties: claimReviewed, reviewRating, url; Rating.alternateName carries the truthfulness rating as a short phrase such as 'Mostly true'."
+    },
+    {
+      "id": "c2pa-spec-2-4",
+      "title": "C2PA Technical Specification, version 2.4",
+      "url": "https://spec.c2pa.org/specifications/specifications/2.4/specs/C2PA_Specification.html",
+      "type": "spec",
+      "publisher": "Coalition for Content Provenance and Authenticity (C2PA)",
+      "verified": "2026-10-17",
+      "keyFindings": "Embedding (Appendix A): JPEG — 'The C2PA Manifest Store shall be embedded as the data contained in an APP11 marker segment as defined in JPEG XT, ISO/IEC 18477-3.' PNG — 'The C2PA Manifest Store shall be embedded using an ancillary, private, not safe to copy, chunk type of 'caBX''. RIFF/WebP — 'The C2PA Manifest Store shall be embedded into a RIFF-compatible file (i.e., WAV, AVI or WebP) as the data of a chunk with an identifier of C2PA.' BMFF (HEIF, AVIF, MP4) — 'C2PA’s 'uuid' box embeds provenance into BMFF. One such box contains a C2PA Manifest Store'. Trust (15.x): 'If a chain of trust cannot be verified, the claim shall be rejected with a failure code of signingCredential.untrusted'; signingCredential.untrusted means 'The signing credential is not listed on any of the validator’s applicable trust lists.' 14.4.3: a private credential store is an opt-in 'address book'; 'A validator shall not be pre-configured with any entries in a private credential store.' claimSignature.outsideValidity: 'The claim signature referenced in the claim was created outside the validity period of the signing credential.' 10.3.2.5.1: 'manifests without time-stamps cease to be valid when the signing credential expires or becomes revoked.' Time-stamps sit in the COSE unprotected header labelled sigTst (v1, deprecated) or sigTst2 (v2). 15.3: 'Manifest Consumers should not display data from manifests which are not Valid'. 14.5: x5chain carries the signer certificate first, then its issuers."
+    },
+    {
+      "id": "c2pa-trust-lists",
+      "title": "Trust lists — C2PA conformance",
+      "url": "https://opensource.contentauthenticity.org/docs/conformance/trust-lists",
+      "type": "vendor-doc",
+      "publisher": "Content Authenticity Initiative (open-source docs)",
+      "verified": "2026-10-17",
+      "keyFindings": "The C2PA trust list is 'a list of X.509 certificate trust anchors' — certification authorities that issue certificates to conforming generator products. Conforming validators must 'refer to the C2PA trust list to determine whether' Content Credentials were signed with a valid certificate. The Interim Trust List (ITL) is superseded and frozen as of January 1, 2026: no certificates are added or updated; content signed during an ITL certificate's validity period stays valid under the legacy trust model; validators must distinguish ITL-signed credentials from those of conforming products. Official list: github.com/c2pa-org/conformance-public trust-list/C2PA-TRUST-LIST.pem."
+    },
+    {
+      "id": "cloudflare-images-preserve-content-credentials",
+      "title": "Preserve Content Credentials — Cloudflare Images",
+      "url": "https://developers.cloudflare.com/images/transform-images/preserve-content-credentials/",
+      "type": "vendor-doc",
+      "publisher": "Cloudflare",
+      "verified": "2026-10-17",
+      "keyFindings": "'When this setting is disabled, any existing Content Credentials will always be discarded.' With the setting enabled, Cloudflare keeps the Content Credentials embedded in the source image and adds a signed record of its own transformations. Preservation is an opt-in zone setting for image transformations."
+    },
+    {
+      "id": "google-c2pa-transparency",
+      "title": "How we’re increasing transparency for gen AI content with the C2PA",
+      "url": "https://blog.google/innovation-and-ai/products/google-gen-ai-content-transparency-c2pa/",
+      "type": "announcement",
+      "publisher": "Google",
+      "verified": "2026-10-17",
+      "keyFindings": "Search: 'If an image contains C2PA metadata, people will be able to use our \"About this image\" feature to see if it was created or edited with AI tools.' 'About this image' is accessible in Google Images, Lens and Circle to Search. 'Our ad systems are starting to integrate C2PA metadata.' 'We will ensure that our implementations validate content against the forthcoming C2PA Trust list, which allows platforms to confirm the content’s origin.' Published 2024-09-17 as a forward-looking announcement."
+    },
+    {
+      "id": "linkedin-content-credentials",
+      "title": "Content credentials — LinkedIn Help",
+      "url": "https://www.linkedin.com/help/linkedin/answer/a6282984",
+      "type": "vendor-doc",
+      "publisher": "LinkedIn",
+      "verified": "2026-10-17",
+      "keyFindings": "'Image and video content that is cryptographically signed using C2PA Content Credentials will be noted with the C2PA icon'. Selecting the icon shows the content credential and available metadata, including the issuer and the issue date. 'The icon will be visible to all viewers of your content.'"
+    },
+    {
+      "id": "google-canonicalization-overview",
+      "title": "What is URL canonicalization",
+      "url": "https://developers.google.com/search/docs/crawling-indexing/canonicalization",
+      "type": "vendor-doc",
+      "publisher": "Google Search Central",
+      "verified": "2026-10-17",
+      "keyFindings": "Describes how Google picks a canonical from a set of duplicates: it \"chooses the page that, based on the factors (or signals) the indexing process collected, is objectively the most complete and useful for search users, and marks it as the canonical.\" Signals listed include HTTP vs HTTPS, redirects, sitemap presence and rel=\"canonical\" annotations. States no cost to a site that leaves the choice to Google."
+    },
+    {
+      "id": "bing-robots-meta-tags",
+      "title": "Robots meta tags and attributes that Bing supports",
+      "url": "https://www.bing.com/webmasters/help/robots-meta-tags-and-attributes-that-bing-supports-5198d240",
+      "type": "vendor-doc",
+      "publisher": "Microsoft Bing Webmaster Tools",
+      "verified": "2026-10-17",
+      "keyFindings": "Client-rendered help page; read in a rendered browser. noarchive: \"Do not link in Chat and Copilot. Do not use the content for training Microsoft's generative AI foundation models.\" nocache: \"Display only URL/Snippet/Title in Chat or Copilot. Use only URLs, Titles and Snippets for training Microsoft's generative AI foundation models. If content has both NOCACHE and NOARCHIVE tags, we will treat it as NOCACHE.\" max-snippet: \"If value = 0, we will not show a text snippet.\" Each tag may also be sent as X-Robots-Tag, and name=\"bingbot\" scopes it to Bing."
     }
   ]
 }
