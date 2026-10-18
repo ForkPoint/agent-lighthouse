@@ -645,14 +645,14 @@ git commit -m "feat(server): add task types and the snapshot reducer"
 ```ts
 export type TaskListener = (event: TaskEvent, snapshot: TaskSnapshot) => void;
 export interface TaskStore {
-  create(url: string): TaskSnapshot;
+  /** Undefined when all MAX_TASKS slots hold live tasks. */
+  create(url: string): TaskSnapshot | undefined;
   append(taskId: string, body: TaskEventBody): TaskEvent | undefined;
   complete(taskId: string, report: ScanReport): TaskEvent | undefined;
   get(taskId: string): TaskSnapshot | undefined;
   eventsAfter(taskId: string, cursor: number): { events: TaskEvent[]; reset: boolean } | undefined;
   result(taskId: string): ScanReport | undefined;
   subscribe(taskId: string, listener: TaskListener): () => void;
-  runningCount(): number;
 }
 export class InMemoryTaskStore implements TaskStore {
   constructor(options?: { now?: () => number; newId?: () => string });
@@ -744,30 +744,39 @@ describe("InMemoryTaskStore", () => {
     expect(store.eventsAfter("t1", 999_999)?.reset).toBe(true);
   });
 
-  it("counts running tasks", () => {
-    const { store } = makeStore();
-    store.create("https://a.test/");
-    store.create("https://b.test/");
-    store.append("t1", { type: "task.started" });
-    expect(store.runningCount()).toBe(1);
-  });
-
-  it("drops a terminal task after its retention window", () => {
+  it("expires a terminal task on read, with no new task created", () => {
     const { store, advance } = makeStore();
     store.create("https://shop.test/");
-    store.append("t1", { type: "task.cancelled" });
-    advance(TERMINAL_TTL_MS + 1);
-    store.create("https://other.test/");
+    store.complete("t1", report);
+    advance(TERMINAL_TTL_MS);
+    expect(store.get("t1")).toBeDefined();
+    advance(1);
     expect(store.get("t1")).toBeUndefined();
+    expect(store.result("t1")).toBeUndefined();
+    expect(store.eventsAfter("t1", 0)).toBeUndefined();
+  });
+
+  it("never expires a live task", () => {
+    const { store, advance } = makeStore();
+    store.create("https://shop.test/");
+    advance(TERMINAL_TTL_MS * 10);
+    expect(store.get("t1")).toBeDefined();
   });
 
   it("drops the oldest terminal task when full, never a live one", () => {
     const { store } = makeStore();
     for (let i = 0; i < MAX_TASKS; i++) store.create(`https://s${i}.test/`);
     store.append("t2", { type: "task.cancelled" });
-    store.create("https://new.test/");
+    expect(store.create("https://new.test/")).toBeDefined();
     expect(store.get("t1")).toBeDefined();
     expect(store.get("t2")).toBeUndefined();
+  });
+
+  it("refuses to create when every slot holds a live task", () => {
+    const { store } = makeStore();
+    for (let i = 0; i < MAX_TASKS; i++) store.create(`https://s${i}.test/`);
+    expect(store.create("https://new.test/")).toBeUndefined();
+    expect(store.get(`t${MAX_TASKS + 1}`)).toBeUndefined();
   });
 });
 ```
@@ -786,7 +795,6 @@ import { applyTaskEvent, initialSnapshot } from "./reducer";
 import { MAX_EVENTS_PER_TASK, MAX_TASKS, TERMINAL_TTL_MS } from "./limits";
 import {
   isTerminal,
-  TaskStatus,
   type TaskEvent,
   type TaskEventBody,
   type TaskSnapshot,
@@ -802,7 +810,11 @@ export type TaskListener = (event: TaskEvent, snapshot: TaskSnapshot) => void;
  * that takes a snapshot and subscribes in the same tick misses nothing.
  */
 export interface TaskStore {
-  create(url: string): TaskSnapshot;
+  /**
+   * Undefined when every slot holds a live task. A store never holds more
+   * than MAX_TASKS tasks.
+   */
+  create(url: string): TaskSnapshot | undefined;
   /** Undefined when the task is unknown or already terminal. */
   append(taskId: string, body: TaskEventBody): TaskEvent | undefined;
   /** Stores the report and appends `task.succeeded` in one step. */
@@ -815,7 +827,6 @@ export interface TaskStore {
   ): { events: TaskEvent[]; reset: boolean } | undefined;
   result(taskId: string): ScanReport | undefined;
   subscribe(taskId: string, listener: TaskListener): () => void;
-  runningCount(): number;
 }
 
 interface Entry {
@@ -836,8 +847,9 @@ export class InMemoryTaskStore implements TaskStore {
     this.newId = options.newId ?? randomUUID;
   }
 
-  create(url: string): TaskSnapshot {
+  create(url: string): TaskSnapshot | undefined {
     this.sweep();
+    if (this.tasks.size >= MAX_TASKS) return undefined;
     const taskId = this.newId();
     const at = new Date(this.now()).toISOString();
     this.tasks.set(taskId, {
@@ -850,7 +862,7 @@ export class InMemoryTaskStore implements TaskStore {
   }
 
   append(taskId: string, body: TaskEventBody): TaskEvent | undefined {
-    const entry = this.tasks.get(taskId);
+    const entry = this.entry(taskId);
     if (!entry || isTerminal(entry.snapshot.status)) return undefined;
     const event: TaskEvent = {
       ...body,
@@ -867,7 +879,7 @@ export class InMemoryTaskStore implements TaskStore {
   }
 
   complete(taskId: string, report: ScanReport): TaskEvent | undefined {
-    const entry = this.tasks.get(taskId);
+    const entry = this.entry(taskId);
     if (!entry || isTerminal(entry.snapshot.status)) return undefined;
     entry.result = report;
     return this.append(taskId, {
@@ -877,14 +889,14 @@ export class InMemoryTaskStore implements TaskStore {
   }
 
   get(taskId: string): TaskSnapshot | undefined {
-    return this.tasks.get(taskId)?.snapshot;
+    return this.entry(taskId)?.snapshot;
   }
 
   eventsAfter(
     taskId: string,
     cursor: number,
   ): { events: TaskEvent[]; reset: boolean } | undefined {
-    const entry = this.tasks.get(taskId);
+    const entry = this.entry(taskId);
     if (!entry) return undefined;
     const first = entry.events[0]?.cursor ?? entry.snapshot.cursor + 1;
     if (cursor < first - 1 || cursor > entry.snapshot.cursor)
@@ -896,29 +908,40 @@ export class InMemoryTaskStore implements TaskStore {
   }
 
   result(taskId: string): ScanReport | undefined {
-    return this.tasks.get(taskId)?.result;
+    return this.entry(taskId)?.result;
   }
 
   subscribe(taskId: string, listener: TaskListener): () => void {
-    const entry = this.tasks.get(taskId);
+    const entry = this.entry(taskId);
     if (!entry) return () => {};
     entry.listeners.add(listener);
     return () => entry.listeners.delete(listener);
   }
 
-  runningCount(): number {
-    let n = 0;
-    for (const { snapshot } of this.tasks.values())
-      if (snapshot.status === TaskStatus.Running) n++;
-    return n;
+  private expired(entry: Entry): boolean {
+    return (
+      entry.terminalAt !== undefined &&
+      this.now() - entry.terminalAt > TERMINAL_TTL_MS
+    );
+  }
+
+  /**
+   * Every read goes through here, so an expired task is gone the moment its
+   * window closes, not when the next task happens to be created.
+   */
+  private entry(taskId: string): Entry | undefined {
+    const entry = this.tasks.get(taskId);
+    if (entry && this.expired(entry)) {
+      this.tasks.delete(taskId);
+      return undefined;
+    }
+    return entry;
   }
 
   /** Drops expired terminal tasks, then the oldest terminal ones past the cap. */
   private sweep(): void {
-    const now = this.now();
     for (const [id, entry] of this.tasks)
-      if (entry.terminalAt !== undefined && now - entry.terminalAt > TERMINAL_TTL_MS)
-        this.tasks.delete(id);
+      if (this.expired(entry)) this.tasks.delete(id);
     if (this.tasks.size < MAX_TASKS) return;
     // Map iteration is insertion order, so the first terminal entry is the oldest.
     for (const [id, entry] of this.tasks) {
@@ -941,7 +964,7 @@ export type { TaskStore, TaskListener } from "./task-store";
 - [ ] **Step 4: Run the tests**
 
 Run: `AL_SKIP_NETWORK=1 pnpm test -- packages/server/src/task-store.test.ts`
-Expected: 10 tests PASS.
+Expected: 11 tests PASS.
 
 - [ ] **Step 5: Commit**
 
@@ -1038,7 +1061,7 @@ describe("traceToBody", () => {
 describe("startScanTask", () => {
   it("streams progress and completes with the report", async () => {
     const store = new InMemoryTaskStore();
-    const { taskId } = store.create("https://shop.test/");
+    const { taskId } = store.create("https://shop.test/")!;
     const scan = vi.fn(async (_url: string, o?: ScanOptions) => {
       o?.onEvent?.({ type: "phase:start", phase: PhaseId.Audits, totalUnits: 1, ...stamp });
       o?.onAuditTrace?.(trace("a/x", AuditOutcome.Ran));
@@ -1053,7 +1076,7 @@ describe("startScanTask", () => {
 
   it("fails with a safe reason code and no raw error text", async () => {
     const store = new InMemoryTaskStore();
-    const { taskId } = store.create("https://shop.test/");
+    const { taskId } = store.create("https://shop.test/")!;
     const scan = vi.fn(async () => { throw new Error("secret stack detail"); });
     await startScanTask(store, taskId, "https://shop.test/", scan).done;
     expect(store.get(taskId)).toMatchObject({ status: TaskStatus.Failed, reasonCode: FailureReason.ScanError });
@@ -1062,7 +1085,7 @@ describe("startScanTask", () => {
 
   it("cancels through the abort signal", async () => {
     const store = new InMemoryTaskStore();
-    const { taskId } = store.create("https://shop.test/");
+    const { taskId } = store.create("https://shop.test/")!;
     const scan = vi.fn((_url: string, o?: ScanOptions) =>
       new Promise<ScanReport>((_, reject) =>
         o?.signal?.addEventListener("abort", () => reject(new Error("aborted"))),
@@ -1233,7 +1256,7 @@ Routes:
 | Method and path | Answer |
 | :--- | :--- |
 | `GET /` | The HTML page (Task 6). |
-| `POST /tasks` | Body `{"url": "..."}`. `202 {"taskId", "snapshot"}`. `400` bad body or URL, `422` unsafe target, `429` over `MAX_RUNNING_TASKS`, `401` bad token. |
+| `POST /tasks` | Body `{"url": "..."}`. `202 {"taskId", "snapshot"}`. `400` bad body or URL, `422` unsafe target, `429` when `MAX_RUNNING_TASKS` scan promises are unsettled (a cancelled scan counts until it settles) or the store has no free slot, `401` bad token. |
 | `GET /tasks/:id` | `200` snapshot, `404` unknown. |
 | `GET /tasks/:id/stream` | SSE. First frame `snapshot`. Then one `progress` frame per event: `{"event", "snapshot"}`, `id` = cursor. Ends after a terminal frame. `429` over `MAX_STREAMS`. |
 | `GET /tasks/:id/updates?after=N` | `200 {"events", "snapshot", "reset"}`. The polling fallback. |
@@ -1283,11 +1306,14 @@ vi.mock("@forkpoint/agent-lighthouse-core", async (importOriginal) => ({
 }));
 
 const stamp = { fraction: 0, elapsedMs: 0 };
-let release: () => void = () => {};
+// Each mock scan waits until release() settles every pending scan. The scans
+// ignore their abort signal on purpose, like a scan stuck in a slow request.
+const pending: (() => void)[] = [];
+const release = () => pending.splice(0).forEach((resolve) => resolve());
 const scan = vi.fn((_url: string, o?: ScanOptions) => {
   o?.onEvent?.({ type: "phase:start", phase: PhaseId.FetchRoot, totalUnits: 1, ...stamp });
   return new Promise<ScanReport>((resolve) => {
-    release = () => resolve({ overallScore: 70 } as unknown as ScanReport);
+    pending.push(() => resolve({ overallScore: 70 } as unknown as ScanReport));
   });
 });
 
@@ -1392,6 +1418,17 @@ describe("task routes", () => {
     // The mock scan ignores the signal, so cancel is recorded by the server itself.
     const snap = await (await fetch(`${base}/tasks/${taskId}`)).json();
     expect(snap.status).toBe(TaskStatus.Cancelled);
+  });
+
+  it("keeps a cancelled scan's slot until its promise settles", async () => {
+    const ids: string[] = [];
+    for (let i = 0; i < 4; i++)
+      ids.push((await (await post({ url: `https://s${i}.test/` })).json()).taskId);
+    await fetch(`${base}/tasks/${ids[0]}`, { method: "DELETE", headers: { authorization: "Bearer s3cret" } });
+    expect((await post({ url: "https://five.test/" })).status).toBe(429);
+    release();
+    await new Promise((r) => setTimeout(r, 10));
+    expect((await post({ url: "https://five.test/" })).status).toBe(202);
   });
 });
 ```
@@ -1547,9 +1584,12 @@ export function createTaskServer(options: TaskServerOptions = {}): TaskServer {
     }
     if (!(await isSafeUrl(target.href)))
       return json(res, 422, { error: FailureReason.UnsafeTarget });
-    if (store.runningCount() >= MAX_RUNNING_TASKS)
+    // Counts scan promises, not task status: a cancelled task is terminal at
+    // once, but its scan holds a slot until the promise settles.
+    if (running.size >= MAX_RUNNING_TASKS)
       return json(res, 429, { error: "too_many_tasks" });
     const snapshot = store.create(publicUrl(target));
+    if (!snapshot) return json(res, 429, { error: "too_many_tasks" });
     const task = startScanTask(store, snapshot.taskId, target.href, scan);
     running.set(snapshot.taskId, task);
     void task.done.then(() => running.delete(snapshot.taskId));
@@ -1589,8 +1629,8 @@ export function createTaskServer(options: TaskServerOptions = {}): TaskServer {
         return openTaskStream(store, taskId, res, () => streams--);
       case "/updates": {
         const after = Number(url.searchParams.get("after") ?? "0");
-        const page = store.eventsAfter(taskId, Number.isInteger(after) ? after : -1)!;
-        return json(res, 200, { ...page, snapshot: store.get(taskId) });
+        const batch = store.eventsAfter(taskId, Number.isInteger(after) ? after : -1)!;
+        return json(res, 200, { ...batch, snapshot: store.get(taskId) });
       }
       case "/result": {
         const result = store.result(taskId);
@@ -1678,6 +1718,9 @@ describe("startServer", () => {
       expect(html).toContain("new EventSource");
       expect(html).toContain("/updates?after=");
       expect(html).not.toMatch(/ETA|remaining/i);
+      // One watcher at a time: a new submission stops the old one.
+      expect(html).toContain("stopWatch();");
+      expect(html).toContain("if (s.taskId !== current) return;");
     } finally {
       await server.close();
     }
@@ -1771,9 +1814,15 @@ export const PAGE_HTML = `<!doctype html>
 <script>
 const $ = (id) => document.getElementById(id);
 const LABEL = { queued: "Waiting to start.", running: "Running.", succeeded: "Finished.", failed: "Failed.", cancelled: "Cancelled." };
+// One watched task at a time. A new submission stops the old stream or poll
+// loop, and render drops any frame for another task that is still in flight.
+let current = null;
 let last = null;
+let stopWatch = () => {};
+let submission = 0;
 
 function render(s) {
+  if (s.taskId !== current) return;
   if (last && s.cursor < last.cursor) return;
   last = s;
   $("status").textContent = LABEL[s.status] + (s.lastWorkId ? " Last checked: " + s.lastWorkId : "");
@@ -1790,8 +1839,13 @@ function render(s) {
 function terminal(s) { return s.status === "succeeded" || s.status === "failed" || s.status === "cancelled"; }
 
 function watch(taskId) {
-  if (!("EventSource" in window)) return poll(taskId);
+  if (!("EventSource" in window)) {
+    let active = true;
+    stopWatch = () => { active = false; };
+    return poll(taskId, () => active);
+  }
   const es = new EventSource("tasks/" + taskId + "/stream");
+  stopWatch = () => es.close();
   es.addEventListener("snapshot", (e) => { $("conn").textContent = ""; render(JSON.parse(e.data)); });
   es.addEventListener("progress", (e) => {
     const { snapshot } = JSON.parse(e.data);
@@ -1804,11 +1858,12 @@ function watch(taskId) {
   };
 }
 
-async function poll(taskId) {
-  for (;;) {
+async function poll(taskId, active) {
+  while (active()) {
     try {
       const r = await fetch("tasks/" + taskId + "/updates?after=" + (last ? last.cursor : 0));
       const body = await r.json();
+      if (!active()) return;
       render(body.snapshot);
       $("conn").textContent = "";
       if (terminal(body.snapshot)) return;
@@ -1819,13 +1874,22 @@ async function poll(taskId) {
 
 $("f").addEventListener("submit", async (e) => {
   e.preventDefault();
+  stopWatch();
+  stopWatch = () => {};
+  current = null;
   last = null;
+  const mine = ++submission;
   $("result").textContent = "";
+  $("conn").textContent = "";
+  $("phases").hidden = true;
   const headers = { "content-type": "application/json" };
   if ($("token").value) headers.authorization = "Bearer " + $("token").value;
   const r = await fetch("tasks", { method: "POST", headers, body: JSON.stringify({ url: $("url").value }) });
   const body = await r.json();
+  // A later submission won while this request was in flight.
+  if (mine !== submission) return;
   if (!r.ok) { $("status").textContent = "Could not start: " + body.error; return; }
+  current = body.taskId;
   render(body.snapshot);
   watch(body.taskId);
 });
@@ -1848,7 +1912,7 @@ Expected: all server tests PASS.
 - [ ] **Step 6: Check the page by hand**
 
 Run: `pnpm --filter @forkpoint/agent-lighthouse-core build && node --import tsx -e "import('./packages/server/src/start.ts').then(m => m.startServer()).then(s => console.log(s.url))"`
-Open `http://127.0.0.1:8787/`, scan `https://example.com`, and confirm: phase rows fill in, counts only go up, the page ends with a score and a working JSON link. Stop the process with Ctrl+C.
+Open `http://127.0.0.1:8787/`, scan `https://example.com`, and confirm: phase rows fill in, counts only go up, the page ends with a score and a working JSON link. Then start a scan of `https://example.com`, and before it ends start a second scan of `https://example.org`: the rows reset, only the second task's frames render, and the DevTools Network tab shows the first `/stream` request closed. Stop the process with Ctrl+C.
 
 - [ ] **Step 7: Commit**
 
