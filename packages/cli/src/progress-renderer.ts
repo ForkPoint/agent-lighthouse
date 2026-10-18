@@ -129,6 +129,9 @@ export function createProgressRenderer(
         total = event.totalUnits;
         failures = 0;
         break;
+      case "phase:total":
+        // Draws nothing: the corrected total is shown from the next unit:done.
+        break;
       case "unit:done":
         completed = event.completed;
         total = event.total;

@@ -47,8 +47,10 @@ export function createProgressNotifier(
         break;
       // scan:start carries fraction 0, and a failed unit's progress is
       // reported by the next unit:done or phase:done, so neither notifies.
+      // A total change moves no progress forward, so phase:total does not notify.
       case "scan:start":
       case "unit:fail":
+      case "phase:total":
         break;
     }
   };

@@ -18,6 +18,13 @@ export type ScanEvent =
       elapsedMs: number;
     }
   | {
+      type: "phase:total";
+      phase: PhaseId;
+      totalUnits: number;
+      fraction: number;
+      elapsedMs: number;
+    }
+  | {
       type: "unit:done";
       phase: PhaseId;
       completed: number;
@@ -128,7 +135,15 @@ export class ProgressTracker {
 
   /** Correct the current phase's unit total (e.g. a gateway page adds its target mid-phase). */
   setPhaseTotal(totalUnits: number): void {
+    const phase = this.phase;
+    if (phase === null) return;
     this.totalUnits = Math.max(this.completedUnits, totalUnits);
+    this.onEvent({
+      type: "phase:total",
+      phase,
+      totalUnits: this.totalUnits,
+      ...this.stamp(),
+    });
   }
 
   unitDone(label?: string): void {
