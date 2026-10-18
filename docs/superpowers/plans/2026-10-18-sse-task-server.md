@@ -15,7 +15,7 @@
 - oxlint is the only linter. Run lint as `rtk err pnpm lint`. Never run ESLint. Suppressions use `// oxlint-disable-*`.
 - Enum values go through their constant (`TaskStatus.Running`, `PhaseId.Audits`), never a string literal. New string unions are const objects plus a type of the same name. Tagged-union `type` discriminants are exempt.
 - Inside `packages/core/src`, import other core modules as `#core/<path>`. The server package imports core as `@forkpoint/agent-lighthouse-core`.
-- Run vitest from the repo root only: `pnpm test -- <path>`. Use `AL_SKIP_NETWORK=1` for every test run in this plan.
+- Run vitest from the repo root only: `pnpm test <path>`. Use `AL_SKIP_NETWORK=1` for every test run in this plan.
 - Never run `npx tsc -b`.
 - Every target URL from a request passes `isSafeUrl()` from core before a scan starts.
 - The server binds `127.0.0.1` by default. Port default `8787`.
@@ -91,7 +91,7 @@ Add `ScanEvent` to the file's type import if it is not there.
 
 - [ ] **Step 2: Run it and see it fail**
 
-Run: `AL_SKIP_NETWORK=1 pnpm test -- packages/core/src/progress.test.ts`
+Run: `AL_SKIP_NETWORK=1 pnpm test packages/core/src/progress.test.ts`
 Expected: FAIL — the last event is `phase:start`, not `phase:total`.
 
 - [ ] **Step 3: Implement** — in `packages/core/src/progress.ts`, add the union member after `phase:start`:
@@ -127,7 +127,7 @@ In `packages/mcp/src/progress.ts`, add `case "phase:total":` to the group that f
 
 - [ ] **Step 4: Run the tests**
 
-Run: `AL_SKIP_NETWORK=1 pnpm test -- packages/core/src/progress.test.ts packages/mcp/src/progress.test.ts packages/cli/src/progress-renderer.test.ts`
+Run: `AL_SKIP_NETWORK=1 pnpm test packages/core/src/progress.test.ts packages/mcp/src/progress.test.ts packages/cli/src/progress-renderer.test.ts`
 Expected: PASS. If `progress-renderer.ts` has an exhaustive `switch` over `event.type`, add a `case "phase:total":` that does nothing, and run again.
 
 - [ ] **Step 5: Commit**
@@ -490,7 +490,7 @@ describe("applyTaskEvent", () => {
 
 - [ ] **Step 4: Run it and see it fail**
 
-Run: `AL_SKIP_NETWORK=1 pnpm test -- packages/server/src/reducer.test.ts`
+Run: `AL_SKIP_NETWORK=1 pnpm test packages/server/src/reducer.test.ts`
 Expected: FAIL with `Failed to resolve import "./reducer"`.
 
 - [ ] **Step 5: Implement** — `packages/server/src/reducer.ts`:
@@ -619,7 +619,7 @@ export { applyTaskEvent, initialSnapshot } from "./reducer";
 
 - [ ] **Step 6: Run the tests and typecheck**
 
-Run: `AL_SKIP_NETWORK=1 pnpm test -- packages/server/src/reducer.test.ts && pnpm --filter @forkpoint/agent-lighthouse-server typecheck`
+Run: `AL_SKIP_NETWORK=1 pnpm test packages/server/src/reducer.test.ts && pnpm --filter @forkpoint/agent-lighthouse-server typecheck`
 Expected: 8 tests PASS. Typecheck exits 0.
 
 - [ ] **Step 7: Commit**
@@ -783,7 +783,7 @@ describe("InMemoryTaskStore", () => {
 
 - [ ] **Step 2: Run it and see it fail**
 
-Run: `AL_SKIP_NETWORK=1 pnpm test -- packages/server/src/task-store.test.ts`
+Run: `AL_SKIP_NETWORK=1 pnpm test packages/server/src/task-store.test.ts`
 Expected: FAIL with `Failed to resolve import "./task-store"`.
 
 - [ ] **Step 3: Implement** — `packages/server/src/task-store.ts`:
@@ -963,7 +963,7 @@ export type { TaskStore, TaskListener } from "./task-store";
 
 - [ ] **Step 4: Run the tests**
 
-Run: `AL_SKIP_NETWORK=1 pnpm test -- packages/server/src/task-store.test.ts`
+Run: `AL_SKIP_NETWORK=1 pnpm test packages/server/src/task-store.test.ts`
 Expected: 11 tests PASS.
 
 - [ ] **Step 5: Commit**
@@ -1101,7 +1101,7 @@ describe("startScanTask", () => {
 
 - [ ] **Step 2: Run it and see it fail**
 
-Run: `AL_SKIP_NETWORK=1 pnpm test -- packages/server/src/scan-task.test.ts`
+Run: `AL_SKIP_NETWORK=1 pnpm test packages/server/src/scan-task.test.ts`
 Expected: FAIL with `Failed to resolve import "./scan-task"`.
 
 - [ ] **Step 3: Implement** — `packages/server/src/scan-task.ts`:
@@ -1218,7 +1218,7 @@ export type { RunningTask } from "./scan-task";
 
 - [ ] **Step 4: Run the tests**
 
-Run: `AL_SKIP_NETWORK=1 pnpm test -- packages/server/src/scan-task.test.ts`
+Run: `AL_SKIP_NETWORK=1 pnpm test packages/server/src/scan-task.test.ts`
 Expected: all PASS.
 
 - [ ] **Step 5: Commit**
@@ -1435,7 +1435,7 @@ describe("task routes", () => {
 
 - [ ] **Step 3: Run them and see them fail**
 
-Run: `AL_SKIP_NETWORK=1 pnpm test -- packages/server/src/sse.test.ts packages/server/src/http.test.ts`
+Run: `AL_SKIP_NETWORK=1 pnpm test packages/server/src/sse.test.ts packages/server/src/http.test.ts`
 Expected: FAIL with `Failed to resolve import "./sse"` and `"./http"`.
 
 - [ ] **Step 4: Implement `sse.ts`**
@@ -1673,7 +1673,7 @@ export type { TaskServer, TaskServerOptions } from "./http";
 
 - [ ] **Step 6: Run the tests**
 
-Run: `AL_SKIP_NETWORK=1 pnpm test -- packages/server/src/sse.test.ts packages/server/src/http.test.ts`
+Run: `AL_SKIP_NETWORK=1 pnpm test packages/server/src/sse.test.ts packages/server/src/http.test.ts`
 Expected: all PASS. If the stream test hangs, the frame parser in the test never saw `\n\n`; check `sseFrame` output first.
 
 - [ ] **Step 7: Commit**
@@ -1691,7 +1691,8 @@ git commit -m "feat(server): add SSE stream and task routes"
 - Modify: `packages/server/src/page.ts`
 - Create: `packages/server/src/start.ts`
 - Modify: `packages/server/src/index.ts`
-- Test: `packages/server/src/start.test.ts`
+- Modify: `packages/server/package.json` (jsdom dev dependencies)
+- Test: `packages/server/src/start.test.ts`, `packages/server/src/page.test.ts`
 
 **Interfaces:**
 - Produces:
@@ -1718,9 +1719,6 @@ describe("startServer", () => {
       expect(html).toContain("new EventSource");
       expect(html).toContain("/updates?after=");
       expect(html).not.toMatch(/ETA|remaining/i);
-      // One watcher at a time: a new submission stops the old one.
-      expect(html).toContain("stopWatch();");
-      expect(html).toContain("if (s.taskId !== current) return;");
     } finally {
       await server.close();
     }
@@ -1728,10 +1726,184 @@ describe("startServer", () => {
 });
 ```
 
-- [ ] **Step 2: Run it and see it fail**
+- [ ] **Step 1b: Write the failing page behaviour test**
 
-Run: `AL_SKIP_NETWORK=1 pnpm test -- packages/server/src/start.test.ts`
-Expected: FAIL with `Failed to resolve import "./start"`.
+The page's watcher rules are browser behaviour, so the test runs the real page script in jsdom. A fake `EventSource` and a fake `fetch` stand in for the network. jsdom has no `EventSource` of its own, so leaving the fake out drives the polling path.
+
+Add to `devDependencies` in `packages/server/package.json`, matching the versions core already uses:
+
+```json
+    "@types/jsdom": "^30.0.0",
+    "jsdom": "^30.1.1",
+```
+
+Run: `pnpm install`
+Expected: no new package downloaded; the lockfile only links the existing versions.
+
+`packages/server/src/page.test.ts`:
+
+```ts
+import { describe, expect, it } from "vitest";
+import { JSDOM } from "jsdom";
+import { PAGE_HTML } from "./page";
+import { TaskStatus } from "./task-types";
+
+type Listener = (e: { data: string }) => void;
+type FakeFetch = (url: string, init?: { method?: string }) => Promise<unknown>;
+
+class FakeEventSource {
+  static instances: FakeEventSource[] = [];
+  closed = false;
+  onerror: (() => void) | null = null;
+  private readonly listeners = new Map<string, Listener[]>();
+  constructor(readonly url: string) {
+    FakeEventSource.instances.push(this);
+  }
+  addEventListener(type: string, fn: Listener): void {
+    this.listeners.set(type, [...(this.listeners.get(type) ?? []), fn]);
+  }
+  close(): void {
+    this.closed = true;
+  }
+  /** Delivers a frame, even after close(): it models a frame already queued. */
+  emit(type: string, data: unknown): void {
+    for (const fn of this.listeners.get(type) ?? []) fn({ data: JSON.stringify(data) });
+  }
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((r) => (resolve = r));
+  return { promise, resolve };
+}
+
+const ok = (body: unknown) => ({ ok: true, json: async () => body });
+
+const snap = (taskId: string, cursor: number, status: string = TaskStatus.Queued, extra = {}) => ({
+  taskId,
+  url: "https://shop.test/",
+  status,
+  cursor,
+  phase: null,
+  phases: {},
+  lastWorkId: null,
+  score: null,
+  reasonCode: null,
+  createdAt: "2026-10-18T00:00:00.000Z",
+  updatedAt: "2026-10-18T00:00:00.000Z",
+  ...extra,
+});
+
+/** Settles pending promise callbacks inside the page. */
+const tick = () => new Promise((r) => setTimeout(r, 0));
+
+function openPage(fetchImpl: FakeFetch, withEventSource = true) {
+  FakeEventSource.instances = [];
+  const dom = new JSDOM(PAGE_HTML, {
+    url: "http://127.0.0.1:8787/",
+    runScripts: "dangerously",
+    beforeParse(window) {
+      Object.assign(window, { fetch: fetchImpl });
+      if (withEventSource) Object.assign(window, { EventSource: FakeEventSource });
+    },
+  });
+  const { document } = dom.window;
+  return {
+    submit(url: string) {
+      (document.getElementById("url") as HTMLInputElement).value = url;
+      document.getElementById("f")!.dispatchEvent(new dom.window.Event("submit", { cancelable: true }));
+    },
+    text: (id: string) => document.getElementById(id)!.textContent,
+  };
+}
+
+describe("page watcher", () => {
+  it("watches only the last of two fast submissions, whichever reply lands first", async () => {
+    const posts = [deferred<unknown>(), deferred<unknown>()];
+    let n = 0;
+    const page = openPage(() => posts[n++]!.promise);
+    page.submit("https://a.test/");
+    page.submit("https://b.test/");
+    posts[1]!.resolve(ok({ taskId: "B", snapshot: snap("B", 1) }));
+    await tick();
+    // The first submission's reply arrives last and must change nothing.
+    posts[0]!.resolve(ok({ taskId: "A", snapshot: snap("A", 1) }));
+    await tick();
+    expect(FakeEventSource.instances.map((e) => e.url)).toEqual(["tasks/B/stream"]);
+    FakeEventSource.instances[0]!.emit("progress", {
+      event: {},
+      snapshot: snap("B", 2, TaskStatus.Succeeded, { score: 42 }),
+    });
+    expect(page.text("result")).toContain("Score: 42");
+  });
+
+  it("closes the first stream and ignores its late frames", async () => {
+    const replies = [
+      ok({ taskId: "A", snapshot: snap("A", 1) }),
+      ok({ taskId: "B", snapshot: snap("B", 1) }),
+    ];
+    let n = 0;
+    const page = openPage(async () => replies[n++]);
+    page.submit("https://a.test/");
+    await tick();
+    const a = FakeEventSource.instances[0]!;
+    a.emit("progress", { event: {}, snapshot: snap("A", 2, TaskStatus.Running, { lastWorkId: "/robots.txt" }) });
+    expect(page.text("status")).toBe("Running. Last checked: /robots.txt");
+
+    page.submit("https://b.test/");
+    await tick();
+    expect(a.closed).toBe(true);
+    const b = FakeEventSource.instances[1]!;
+    expect(b.url).toBe("tasks/B/stream");
+
+    // Late frames from the first scan, with a higher cursor than B's.
+    a.emit("progress", { event: {}, snapshot: snap("A", 9, TaskStatus.Succeeded, { score: 99 }) });
+    a.emit("snapshot", snap("A", 9, TaskStatus.Succeeded, { score: 99 }));
+    expect(page.text("result")).toBe("");
+    expect(page.text("status")).toBe("Waiting to start.");
+
+    b.emit("progress", { event: {}, snapshot: snap("B", 2, TaskStatus.Running, { lastWorkId: "/llms.txt" }) });
+    expect(page.text("status")).toBe("Running. Last checked: /llms.txt");
+  });
+
+  it("stops the first poll loop and drops its in-flight reply", async () => {
+    const firstPoll = deferred<unknown>();
+    const calls: string[] = [];
+    let posts = 0;
+    const page = openPage(async (url, init) => {
+      calls.push(url);
+      if (init?.method === "POST")
+        return ++posts === 1
+          ? ok({ taskId: "A", snapshot: snap("A", 1) })
+          : ok({ taskId: "B", snapshot: snap("B", 1) });
+      if (url.startsWith("tasks/A/")) return firstPoll.promise;
+      // The second task's poll stays pending for the rest of the test.
+      return new Promise(() => {});
+    }, false);
+
+    page.submit("https://a.test/");
+    await tick();
+    expect(calls).toContain("tasks/A/updates?after=1");
+
+    page.submit("https://b.test/");
+    await tick();
+    firstPoll.resolve(ok({ events: [], reset: false, snapshot: snap("A", 9, TaskStatus.Succeeded, { score: 99 }) }));
+    await tick();
+
+    expect(page.text("result")).toBe("");
+    expect(page.text("status")).toBe("Waiting to start.");
+    expect(calls.filter((c) => c.startsWith("tasks/A/"))).toHaveLength(1);
+    expect(calls).toContain("tasks/B/updates?after=1");
+  });
+});
+```
+
+- [ ] **Step 2: Run them and see them fail**
+
+Run: `AL_SKIP_NETWORK=1 pnpm test packages/server/src/start.test.ts packages/server/src/page.test.ts`
+Expected: FAIL. `start.test.ts` fails with `Failed to resolve import "./start"`. `page.test.ts` fails with `TypeError` on `getElementById("url")`, because the Task 5 stub page has no form.
+
+To prove the page test catches the bug it exists for, do this once after Step 4: delete the line `if (s.taskId !== current) return;` from `PAGE_HTML`, run `page.test.ts`, and confirm the second and third tests fail. Then restore the line.
 
 - [ ] **Step 3: Implement `start.ts`**
 
@@ -1906,7 +2078,7 @@ export type { StartServerOptions } from "./start";
 
 - [ ] **Step 5: Run the tests**
 
-Run: `AL_SKIP_NETWORK=1 pnpm test -- packages/server`
+Run: `AL_SKIP_NETWORK=1 pnpm test packages/server`
 Expected: all server tests PASS.
 
 - [ ] **Step 6: Check the page by hand**
@@ -1966,7 +2138,7 @@ describe("serve", () => {
 
 - [ ] **Step 2: Run them and see them fail**
 
-Run: `AL_SKIP_NETWORK=1 pnpm test -- packages/cli/src/options.test.ts`
+Run: `AL_SKIP_NETWORK=1 pnpm test packages/cli/src/options.test.ts`
 Expected: FAIL — `CliCommand.Serve` is undefined and `parseServeOptions` is not exported.
 
 - [ ] **Step 3: Implement in `options.ts`**
@@ -2049,7 +2221,7 @@ and under `Options:` add:
 
 - [ ] **Step 5: Run the tests and try it**
 
-Run: `AL_SKIP_NETWORK=1 pnpm test -- packages/cli && pnpm build && node packages/cli/dist/bin.js serve --port 8799`
+Run: `AL_SKIP_NETWORK=1 pnpm test packages/cli && pnpm build && node packages/cli/dist/bin.js serve --port 8799`
 Expected: tests PASS. The command prints `Serving on http://127.0.0.1:8799/`. In a second shell, `curl -s -X POST localhost:8799/tasks -H 'content-type: application/json' -d '{"url":"https://example.com"}'` returns `202` JSON with a `taskId`, and `curl -sN localhost:8799/tasks/<taskId>/stream` prints `event: snapshot` and then `event: progress` frames until `task.succeeded`. Stop the server with Ctrl+C.
 
 - [ ] **Step 6: Commit**
@@ -2180,7 +2352,7 @@ Expected: every command exits 0. Likely failures and their fixes:
 - `knip` flags an unused export: remove it from `index.ts` unless a test or the CLI uses it.
 - `check:package-types` cannot find `packages/server/dist/index.d.ts`: run `pnpm build` again and confirm `tsconfig.build.json` lists `src/index.ts`.
 
-Then run the CI form of the network suite once without the skip flag: `pnpm test -- packages/core/src/__tests__/verify-scan-results.test.ts`. Expected: PASS. Task 1 changed progress events only, not verdicts.
+Then run the CI form of the network suite once without the skip flag: `pnpm test packages/core/src/__tests__/verify-scan-results.test.ts`. Expected: PASS. Task 1 changed progress events only, not verdicts.
 
 Run `pnpm format` and `pnpm smoke:packages`. Expected: both exit 0.
 
