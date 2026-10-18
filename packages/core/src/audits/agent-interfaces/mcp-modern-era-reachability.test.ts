@@ -253,4 +253,174 @@ describe("McpModernEraReachabilityAudit", () => {
     expect(result.status).toBe(CheckStatus.Fail);
     expect(seen).toEqual([]);
   });
+
+  // The site said it has a server and got the shape wrong. There is still no
+  // URL to probe, so this audit declines and names the malformation.
+  it("is notApplicable on a malformed declaration and names the defect", async () => {
+    const files = {
+      "/.well-known/mcp/servers.json": json({ servers: [{ name: "x" }] }),
+    };
+    const result = (await run(modernWire, files)) as Result;
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.found).toBe("Malformed declaration (no-url)");
+  });
+
+  it("does not read a plain 200 GET as the deprecated SSE transport", async () => {
+    const result = (await run((o) => {
+      if (o.method === HttpMethod.Post) return json(DISCOVER_OK);
+      if (o.method === HttpMethod.Get)
+        return mockFetchResult("<html>docs</html>", 200, "text/html");
+      return mockFetchResult("", 405);
+    })) as Result;
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.found).toContain("era=modern");
+    expect(result.message).toContain("GET returns HTTP 200 rather than 405");
+  });
+
+  it("warns on a -32022 rejection that names no supported revision", async () => {
+    const result = (await run((o) =>
+      o.method === HttpMethod.Post
+        ? json(
+            {
+              jsonrpc: "2.0",
+              id: "al-1",
+              error: { code: -32022, message: "unsupported protocol version" },
+            },
+            400,
+          )
+        : mockFetchResult("", 405),
+    )) as Result;
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.message).toContain("no revision it would name");
+    expect(result.message).not.toContain("newest");
+    expect(result.found).toContain("era=dual-era; newest supported unknown");
+  });
+
+  it("ignores a -32022 data.supported that is not a list", async () => {
+    const result = (await run((o) =>
+      o.method === HttpMethod.Post
+        ? json(
+            {
+              jsonrpc: "2.0",
+              id: "al-1",
+              error: {
+                code: -32022,
+                message: "unsupported protocol version",
+                data: { supported: "2025-11-25" },
+              },
+            },
+            400,
+          )
+        : mockFetchResult("", 405),
+    )) as Result;
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.found).toContain("newest supported unknown");
+  });
+
+  it("classifies LEGACY-ONLY without claiming an initialize demand the body never made", async () => {
+    const result = (await run((o) => {
+      if (o.method !== HttpMethod.Post) return mockFetchResult("", 405);
+      if ((o.body ?? "").includes('"initialize"')) {
+        const res = json({ jsonrpc: "2.0", id: 1, result: {} });
+        res.headers["mcp-session-id"] = "abc";
+        return res;
+      }
+      return mockFetchResult("", 400, "text/plain");
+    })) as Result;
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("LEGACY-ONLY");
+    expect(result.message).toContain("(HTTP 400)");
+    expect(result.message).not.toContain("demanding");
+  });
+
+  it("fails as unusable when neither server/discover nor a legacy initialize answers", async () => {
+    const result = (await run((o) =>
+      o.method === HttpMethod.Post
+        ? mockFetchResult("<html>Not Found</html>", 404, "text/html")
+        : mockFetchResult("", 405),
+    )) as Result;
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain(
+      "HTTP 404: response is not valid JSON-RPC",
+    );
+    expect(result.found).toContain("era=unusable");
+  });
+
+  // A well-formed DiscoverResult on a non-200 status is not a modern answer.
+  it("fails as unusable when a DiscoverResult arrives on a non-200 status", async () => {
+    const result = (await run((o) => {
+      if (o.method !== HttpMethod.Post) return mockFetchResult("", 405);
+      if ((o.body ?? "").includes('"initialize"'))
+        return mockFetchResult("", 400);
+      return json(DISCOVER_OK, 202);
+    })) as Result;
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("HTTP 202: unexpected status");
+    expect(result.found).toContain("era=unusable");
+  });
+
+  it("warns when the DiscoverResult carries no supportedVersions, and reports the gaps", async () => {
+    const result = (await run((o) =>
+      o.method === HttpMethod.Post
+        ? json({ jsonrpc: "2.0", id: "al-1", result: { capabilities: [] } })
+        : mockFetchResult("", 405),
+    )) as Result;
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.message).toContain("no `supportedVersions`");
+    expect(result.found).toContain("supportedVersions absent");
+    expect(result.found).toContain("capabilities none");
+    expect(result.found).toContain("extensions none");
+    expect(result.found).toContain("instructions absent");
+    expect(result.found).toContain("serverInfo no serverInfo");
+  });
+
+  it("warns when supportedVersions omits the current revision", async () => {
+    const result = (await run((o) =>
+      o.method === HttpMethod.Post
+        ? json({
+            jsonrpc: "2.0",
+            id: "al-1",
+            result: {
+              supportedVersions: ["2025-11-25", 7],
+              capabilities: { tools: {} },
+              serverInfo: { version: "1.0" },
+            },
+          })
+        : mockFetchResult("", 405),
+    )) as Result;
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.message).toContain("lists 2025-11-25 without 2026-07-28");
+    expect(result.found).toContain("serverInfo unnamed 1.0");
+  });
+
+  it("reports a session id minted by server/discover as residue", async () => {
+    const result = (await run((o) => {
+      if (o.method !== HttpMethod.Post) return mockFetchResult("", 405);
+      const res = json(DISCOVER_OK);
+      res.headers["mcp-session-id"] = "abc";
+      return res;
+    })) as Result;
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.message).toContain("mints an `Mcp-Session-Id`");
+    expect(result.found).toContain("residue: 1");
+  });
+
+  it("passes without an extension count when the server declares none", async () => {
+    const result = (await run((o) =>
+      o.method === HttpMethod.Post
+        ? json({
+            jsonrpc: "2.0",
+            id: "al-1",
+            result: {
+              supportedVersions: ["2026-07-28"],
+              capabilities: { tools: {} },
+              serverInfo: { name: "example-shop" },
+            },
+          })
+        : mockFetchResult("", 405),
+    )) as Result;
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.message).toContain("1 capability group(s), and no legacy");
+    expect(result.found).toMatch(/serverInfo example-shop$/);
+  });
 });

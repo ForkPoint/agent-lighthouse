@@ -8,6 +8,7 @@ import {
 import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
 import type { FetchOptions, FetchResult } from "#core/fetcher";
 import type { AuditResult } from "#core/types";
+import { AuditResultSchema } from "#core/schemas";
 import {
   AuditTier,
   CheckPriority,
@@ -208,6 +209,78 @@ describe("McpOriginValidationCorsAudit", () => {
       requests.filter((o) => o.method === HttpMethod.Options),
     ).toHaveLength(1);
     expect(requests.length).toBeLessThanOrEqual(3);
+  });
+
+  it("is notApplicable on a malformed declaration and names the defect", async () => {
+    const ctx = mockCheckContext([], {
+      "/.well-known/mcp/servers.json": mockFetchResult(
+        JSON.stringify({ servers: [{ url: 7 }] }),
+        200,
+        "application/json",
+      ),
+    });
+    const r = await audit.audit(ctx);
+    expect(r.status).toBe(CheckStatus.NotApplicable);
+    expect(r.found).toBe("Malformed declaration (no-url)");
+  });
+
+  // Reachability belongs to mcp-modern-era-reachability; this audit declines.
+  it("is notApplicable when the endpoint does not answer the baseline discover", async () => {
+    const ctx = mockCheckContext([], {
+      "/.well-known/mcp/servers.json": mockFetchResult(
+        JSON.stringify({ servers: [{ url: ENDPOINT }] }),
+        200,
+        "application/json",
+      ),
+    });
+    ctx.fetch = async () => {
+      throw new Error("socket hang up");
+    };
+    const r = await audit.audit(ctx);
+    expect(r.status).toBe(CheckStatus.NotApplicable);
+    expect(r.found).toBe(`${ENDPOINT} did not answer`);
+  });
+
+  /** Baseline answers; the Origin-bearing POST and the preflight are scripted. */
+  function partial(withOrigin: FetchResult | undefined) {
+    const ctx = mockCheckContext([], {
+      "/.well-known/mcp/servers.json": mockFetchResult(
+        JSON.stringify({ servers: [{ url: ENDPOINT }] }),
+        200,
+        "application/json",
+      ),
+    });
+    ctx.fetch = async (o: FetchOptions): Promise<FetchResult> => {
+      if (o.method === HttpMethod.Options) throw new Error("socket hang up");
+      const origin = o.headers?.["Origin"];
+      if (!origin) return mockFetchResult('{"jsonrpc":"2.0"}', 200);
+      if (!withOrigin) throw new Error("socket hang up");
+      const res = { ...withOrigin, headers: { ...withOrigin.headers } };
+      res.headers["access-control-allow-origin"] = origin;
+      return res;
+    };
+    return ctx;
+  }
+
+  // With no preflight answer, the CORS headers on the Origin-bearing POST are
+  // the ones a browser would act on.
+  it("reads CORS headers off the Origin-bearing POST when the preflight gets no answer", async () => {
+    const answer = mockFetchResult('{"jsonrpc":"2.0"}', 200);
+    answer.headers["access-control-allow-credentials"] = "true";
+    const r = AuditResultSchema.parse(await audit.audit(partial(answer)));
+    expect(r.status).toBe(CheckStatus.Fail);
+    expect(r.displayValue).toBe("Reflected origin + credentials");
+    expect(r.details?.["preflightStatus"]).toBe(0);
+    expect(r.found).toContain("preflight no answer");
+  });
+
+  it("passes with no CORS headers at all when neither probe beyond the baseline answers", async () => {
+    const r = AuditResultSchema.parse(await audit.audit(partial(undefined)));
+    expect(r.status).toBe(CheckStatus.Pass);
+    expect(r.displayValue).toBe("no CORS headers");
+    expect(r.found).toContain("with-Origin no answer, preflight no answer");
+    expect(r.found).toContain('Access-Control-Allow-Origin "absent"');
+    expect(r.details?.["originDifferentiates"]).toBe(false);
   });
 
   it("registers as a scored grade-B audit", () => {

@@ -308,4 +308,152 @@ describe("McpRegistryListingOwnershipAudit", () => {
     expect(parsed[0]?.status).toBe("active");
     expect(parsed[0]?.isLatest).toBe(true);
   });
+
+  // A remote with no URL cannot be joined to a host, so it is dropped; a remote
+  // with no type keeps its URL and an empty type.
+  it("keeps remotes by URL and defaults a missing type to empty", () => {
+    const parsed = parseListings(
+      JSON.stringify({
+        servers: [
+          {
+            name: "com.example/flat",
+            remotes: [
+              { url: ENDPOINT },
+              { type: "sse", url: 42 },
+              "not-a-remote",
+            ],
+          },
+        ],
+      }),
+    );
+    expect(parsed).toEqual([
+      {
+        name: "com.example/flat",
+        version: "",
+        remotes: [{ type: "", url: ENDPOINT }],
+        status: "",
+        isLatest: false,
+      },
+    ]);
+  });
+
+  it("is notApplicable on a malformed declaration and names the defect", async () => {
+    const audit = new McpRegistryListingOwnershipAudit();
+    const ctx = mockCheckContext([], {
+      "/.well-known/mcp/servers.json": mockFetchResult(
+        JSON.stringify({ servers: {} }),
+        200,
+        "application/json",
+      ),
+    });
+    const r = await audit.audit(ctx);
+    expect(r.status).toBe(CheckStatus.NotApplicable);
+    expect(r.found).toBe("Malformed declaration (no-array)");
+  });
+
+  it("reports a listing with no version, no status and an untyped remote", async () => {
+    const { result } = run({
+      servers: [
+        {
+          server: {
+            name: "com.example/analytics",
+            remotes: [{ url: ENDPOINT }],
+          },
+        },
+      ],
+      proof: VALID_PROOF,
+    });
+    const raw = await result;
+    const r = AuditResultSchema.parse(raw);
+    expect(r.status).toBe(CheckStatus.Warn);
+    expect(strings(raw, "listings")).toEqual([
+      "com.example/analytics (first-party, no version, no status)",
+    ]);
+    expect(strings(raw, "warnings")).toEqual([
+      "com.example/analytics offers only untyped transport",
+    ]);
+  });
+
+  it("fails an aggregator listing that serves straight from the domain, without naming a proxy", async () => {
+    const { result } = run({
+      servers: [
+        entry("ai.smithery/example-analytics", [
+          { type: "streamable-http", url: ENDPOINT },
+        ]),
+      ],
+      proof: VALID_PROOF,
+    });
+    const raw = await result;
+    expect(raw.status).toBe(CheckStatus.Fail);
+    expect(strings(raw, "warnings")).toEqual([
+      "ai.smithery/example-analytics is a third-party listing this domain cannot update or revoke",
+    ]);
+  });
+
+  // One failed search is not the end of the lookup: the second term still runs
+  // and its listings count.
+  it("uses the listings from the search that answered when the other does not", async () => {
+    const audit = new McpRegistryListingOwnershipAudit();
+    const ctx = mockCheckContext([], {
+      "/.well-known/mcp/servers.json": mockFetchResult(
+        JSON.stringify({ servers: [{ url: ENDPOINT }] }),
+        200,
+        "application/json",
+      ),
+    });
+    ctx.fetch = async (o: FetchOptions): Promise<FetchResult> => {
+      if (o.url.endsWith("search=example.com"))
+        return mockFetchResult("upstream error", 502);
+      if (o.url.startsWith("https://registry.modelcontextprotocol.io")) {
+        return mockFetchResult(
+          JSON.stringify({ servers: [FIRST_PARTY()] }),
+          200,
+          "application/json",
+        );
+      }
+      return mockFetchResult(VALID_PROOF, 200);
+    };
+    const r = AuditResultSchema.parse(await audit.audit(ctx));
+    expect(r.status).toBe(CheckStatus.Pass);
+    expect(r.details?.["searchesSent"]).toBe(2);
+    expect(r.details?.["firstPartyListings"]).toBe(1);
+  });
+
+  it("does not fetch a proof file on an apex the safety gate refuses, and reports it absent", async () => {
+    const audit = new McpRegistryListingOwnershipAudit();
+    const ctx = mockCheckContext([], {
+      "/.well-known/mcp/servers.json": mockFetchResult(
+        JSON.stringify({ servers: [{ url: "https://mcp.example.org/mcp" }] }),
+        200,
+        "application/json",
+      ),
+    });
+    ctx.baseUrl = "https://example.org";
+    const requests: string[] = [];
+    ctx.fetch = async (o: FetchOptions): Promise<FetchResult> => {
+      requests.push(o.url);
+      return mockFetchResult(
+        JSON.stringify({
+          servers: [
+            entry("org.example/analytics", [
+              { type: "streamable-http", url: "https://mcp.example.org/mcp" },
+            ]),
+          ],
+        }),
+        200,
+        "application/json",
+      );
+    };
+    const r = AuditResultSchema.parse(await audit.audit(ctx));
+    expect(r.status).toBe(CheckStatus.Pass);
+    expect(r.details?.["ownershipProof"]).toBe("absent");
+    expect(requests.some((u) => u.includes("mcp-registry-auth"))).toBe(false);
+  });
+
+  it("reads an empty proof file as malformed", async () => {
+    const { result } = run({ servers: [FIRST_PARTY()], proof: "\n  \n" });
+    const r = AuditResultSchema.parse(await result);
+    expect(r.status).toBe(CheckStatus.Warn);
+    expect(r.details?.["ownershipProof"]).toBe("malformed");
+  });
 });
