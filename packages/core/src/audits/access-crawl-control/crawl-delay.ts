@@ -20,15 +20,18 @@ const EXPECTED = "If Crawl-delay is present, it is <= 10 seconds";
  * not support the crawl-delay directive") and Applebot ("Applebot does not
  * follow crawl-delay"). A delay addressed only to them throttles nothing, so
  * it is not judged. Matched on the product token. Google's crawler tokens
- * start with "Google" (Googlebot-Image, GoogleOther, Google-Extended) or end
- * with "-Google" (AdsBot-Google, Storebot-Google, APIs-Google); a token that
- * only contains the word belongs to some other crawler and is judged.
+ * start with "Google" (Googlebot-Image, GoogleOther, Google-Extended), end
+ * with "-Google" (AdsBot-Google, Storebot-Google, APIs-Google), or carry
+ * "-Google-" between hyphenated parts (AdsBot-Google-Mobile). A token that only
+ * contains the word inside another name belongs to some other crawler and is
+ * judged.
  */
 function ignoresCrawlDelay(userAgent: string): boolean {
   const product = userAgent.trim().toLowerCase().split("/")[0] ?? "";
   return (
     product.startsWith("google") ||
     product.endsWith("-google") ||
+    product.includes("-google-") ||
     product === "amazonbot" ||
     product === "applebot" ||
     product === "applebot-extended"

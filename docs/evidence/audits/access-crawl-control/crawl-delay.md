@@ -59,5 +59,5 @@ The audit is informative and carries weight 0, so no verdict changes a score. Th
 ## Implementation deviations
 
 - A missing robots.txt and a robots.txt with no `Crawl-delay` are not applicable. Both used to warn or pass, which judged a directive that was not there.
-- Groups addressed only to Google crawlers (a product token that starts with `google` or ends with `-google`, such as `Googlebot-Image` or `AdsBot-Google`), Amazonbot, Applebot or Applebot-Extended are not judged. They used to fail above 10 s, although those crawlers document that they ignore the directive.
+- Groups addressed only to Google crawlers (a product token that starts with `google`, ends with `-google` or contains `-google-`, such as `Googlebot-Image`, `AdsBot-Google` or `AdsBot-Google-Mobile`), Amazonbot, Applebot or Applebot-Extended are not judged. They used to fail above 10 s, although those crawlers document that they ignore the directive.
 - The copy used to say a large delay holds content back from AI search for "days or weeks". No source supports that, and it was removed.

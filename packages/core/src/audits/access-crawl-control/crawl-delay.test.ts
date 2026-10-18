@@ -94,6 +94,8 @@ describe("CrawlDelayAudit", () => {
   // A token that merely contains the word is another crawler.
   it.each([
     "AdsBot-Google",
+    "AdsBot-Google-Mobile",
+    "AdsBot-Google-Mobile-Apps",
     "Storebot-Google",
     "GoogleOther",
     "Google-Extended",
