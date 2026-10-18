@@ -7,5 +7,6 @@ import { AuditTier } from "@forkpoint/agent-lighthouse-core";
 export function tierMarker(tier?: AuditTier): string {
   if (tier === AuditTier.Informative) return " \x1b[36m(advisory)\x1b[0m";
   if (tier === AuditTier.Experimental) return " \x1b[36m(experimental)\x1b[0m";
+  if (tier === AuditTier.Obsolete) return " \x1b[90m(obsolete)\x1b[0m";
   return "";
 }

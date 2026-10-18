@@ -255,12 +255,12 @@ describe("WebsubHubAdvertisementAudit", () => {
     expect(r.message).toContain("no WebSub hub");
   });
 
-  it("never returns fail and carries no scoring weight", async () => {
+  it("is scored at grade B and never returns fail", async () => {
     const { meta } = WebsubHubAdvertisementAudit;
-    expect(meta.tier).toBe(AuditTier.Informative);
-    expect(meta.weight).toBe(0);
-    expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Informative);
-    expect(meta.evidenceGrade).toBe(EvidenceGrade.C);
+    expect(meta.tier).toBe(AuditTier.Scored);
+    expect(meta.weight).toBe(0.6);
+    expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Ternary);
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
 
     const cases: Site[] = [
       {},

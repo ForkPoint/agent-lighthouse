@@ -1,7 +1,12 @@
 import type { AuditMeta, AuditResult, CheckResult } from "./types";
 import { AuditResultSchema } from "./schemas";
 import type { CheckContext } from "./check-context";
-import { CheckPriority, CheckStatus, ScoreDisplayMode } from "./types";
+import {
+  AuditTier,
+  CheckPriority,
+  CheckStatus,
+  ScoreDisplayMode,
+} from "./types";
 
 /**
  * Where an audit's evidence dossier is published. A pure function of the id.
@@ -184,8 +189,17 @@ export abstract class Audit {
     rawResult: AuditResult,
     overrideDisplayMode?: import("./types").ScoreDisplayMode,
   ): CheckResult {
-    const result = this.validate(rawResult);
+    const validated = this.validate(rawResult);
     const meta = (this.constructor as typeof Audit).meta;
+    // An obsolete audit tells an owner that something is dead; it never
+    // reports a failure. This is the one place every result passes through,
+    // so the rule holds even for an audit that returns `fail` by mistake:
+    // the verdict is lowered to `warn` rather than dropped as an audit error,
+    // because the notice is still worth showing.
+    const result =
+      meta.tier === AuditTier.Obsolete && validated.status === CheckStatus.Fail
+        ? { ...validated, status: CheckStatus.Warn }
+        : validated;
     const scoreDisplayMode = overrideDisplayMode ?? meta.scoreDisplayMode;
     const isInformative = scoreDisplayMode === ScoreDisplayMode.Informative;
 

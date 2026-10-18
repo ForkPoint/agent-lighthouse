@@ -3,22 +3,16 @@ audit: access-crawl-control/https-enabled
 category: access-crawl-control
 source_file: packages/core/src/audits/access-crawl-control/https-enabled.ts
 slug: https-enabled
-evidence_grade: A
-disposition: "keep — fix required"
-reviewed: 2026-08-21
+evidence_grade: B
+disposition: "keep — fix required; re-graded A to B 2026-10-18 (the A belonged to the WAF signal, which moved to ai-crawler-edge-parity)"
+reviewed: 2026-10-18
 recommended_tier: scored
 consumers:
-  - Cloudflare AI Crawl Control / Bot Management
-  - site-operator WAF rules
-  - GPTBot
-  - ClaudeBot
-  - PerplexityBot (as blocked parties)
+  - MCP authorization clients
+  - Chromium-based browser agents (HTTPS-First, HTTPS by default)
 signals:
   - name: "HTTPS requirement (TLS, valid certificate, HTTP→HTTPS redirect)"
     grade: B
-    domain: technical-infra
-  - name: "WAF / bot-management blocking AI agents (Cloudflare AI Crawl Control, default blocks, pay-per-crawl 402)"
-    grade: A
     domain: technical-infra
 sources:
   - mcp-spec-authorization
@@ -28,19 +22,13 @@ sources:
   - anthropic-crawlers
   - perplexity-crawlers-docs
   - s21
-  - cloudflare-pay-per-crawl
-  - cloudflare-content-independence-day
-  - cloudflare-ai-options-2026
-  - cloudflare-googlebot-to-gptbot-2025
-  - cloudflare-perplexity-stealth-crawlers
-  - cloudflare-web-bot-auth
-  - cloudflare-crawl-refer-ratio
   - s2
+  - chrome-https-by-default
 ---
 
 # https-enabled (`8.1`)
 
-> technical-readiness · source `https-enabled.ts` · review verdict **fix** · evidence grade **A** · disposition: **keep — fix required**
+> technical-readiness · source `https-enabled.ts` · review verdict **fix** · evidence grade **B** · scored (weight 0.6) · disposition: **keep — fix required**
 
 ## What it checks
 
@@ -66,18 +54,19 @@ The claim behind it is narrower than "AI crawlers refuse HTTP". No AI crawler ve
 
 **Counter-evidence:** No AI crawler vendor documents HTTPS as a requirement. OpenAI's crawler documentation (https://developers.openai.com/api/docs/bots), Anthropic's crawler support article (https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler) and Perplexity's (https://docs.perplexity.ai/guides/bots) all say nothing about TLS (all verified 2026-10-17); GPTBot, ClaudeBot and PerplexityBot are ordinary HTTP clients and will fetch http:// URLs. So the strict claim 'AI crawlers refuse HTTP' is unproven and should not be asserted. The honest claim is narrower: HTTPS is mandatory for agent protocols and browser-based agents, and is a universal baseline (>95% of page loads) such that its absence is a strong negative quality signal. HSTS specifically has no documented AI consumer at all — see the security-headers signal.
 
-### Signal: WAF / bot-management blocking AI agents (Cloudflare AI Crawl Control, default blocks, pay-per-crawl 402) — grade A (technical-infra)
+## Scoring
 
-**Mechanism:** Edge bot-management sitting in front of the origin can deny AI crawlers and agents outright, or gate them behind payment, so a site with perfect content structure can still be entirely invisible to AI systems. Falsifiable form: fetch the same URL with an AI-crawler User-Agent versus a browser User-Agent; divergent status codes (403 / 401 / 402 / challenge page for the former) prove an access gate independent of content quality.
+Scored (weight 0.6), ternary.
 
-**Grade: A** — Cloudflare documents the behaviour at scale and by date. It began blocking AI crawlers by default for new domains on 1 July 2025. It has announced that from 15 September 2026, new domains on ad-displaying plans will block Training and Agent class bots by default. That is a named intermediary documenting exactly what it does to the traffic this audit is about, which is grade A. Two caveats shape how it can be measured, rather than whether it is true. User-agent probing is unreliable in both directions: Perplexity was documented using a Chrome-impersonating stealth crawler, and scrapers routinely spoof GPTBot. An opaque block therefore cannot be told apart from correct impersonation defence.
-
-**Evidence:** Fully documented vendor behaviour at large scale. Cloudflare began blocking AI crawlers by default for new domains on 1 July 2025, making permission the default posture across a very large share of the web. It has since announced that from 15 September 2026 new domains will block 'Training' and 'Agent' class bots by default on ad-displaying pages while leaving 'Search' allowed, and has extended managed robots.txt with a `use` signal (immediate / reference / full). Pay-per-crawl operationalises the gate in HTTP. Crawlers 'either present payment intent via request headers for successful HTTP 200 access, or receive an HTTP 402 Payment Required response with pricing', at a minimum of $0.001 per crawl. Critically, an existing WAF or Bot Management block rule overrides pay-per-crawl's charge behaviour, and silently converts a monetizable crawl into a hard block. Adoption context: of 3,816 top-10k domains with robots.txt, ~14% carried AI-bot directives; GPTBot was the most-disallowed at 312 domains. Verification is moving to cryptography — Cloudflare's Web Bot Auth implements RFC 9421 HTTP Message Signatures with Signature-Input / Signature / Signature-Agent headers and a JWKS key directory at /.well-known/http-message-signatures-directory.
-
-**Counter-evidence:** Two caveats that shape how this must be audited. (1) User-Agent-based probing is unreliable in both directions: Cloudflare documented Perplexity using a Chrome-impersonating stealth crawler on unlisted IPs across rotating ASNs at 3–6M requests/day to evade no-crawl directives, and conversely malicious scrapers routinely spoof GPTBot. An audit that merely sets a UA header measures the WAF's UA rules, not real agent access — genuine verification requires the vendors' published IP ranges (openai.com/gptbot.json, claude.com/crawling/bots.json, perplexity.com/perplexitybot.json) or Web Bot Auth signatures. (2) Blocking is often a deliberate, rational business decision, not a defect. Cloudflare's crawl-to-refer data puts Anthropic at about 71,000 crawls per HTML referral in the June 2025 window, with the caveat that Claude's native app sends no Referer. That makes uncompensated crawl a real cost. The audit should REPORT the gate neutrally as 'AI agents are blocked here' rather than scoring it as a failure, since the site owner may have chosen it.
+**Grade: B** — MCP authorization and Chromium's HTTPS-by-default document refusing or gating plain HTTP for agent surfaces. Google states that "with the release of Chrome 154 in October 2026, we will change the default settings of Chrome to enable" Always Use Secure Connections, so "Chrome will ask for the user's permission before the first access to any public site without HTTPS" — https://security.googleblog.com/2025/10/https-by-default.html (verified 2026-10-18). Gemini in Chrome, Claude in Chrome, ChatGPT Atlas and Comet are Chromium-based. No AI crawler documents refusing HTTP, so the grade stops at B.
 
 ## Implementation deviations
 
 - The plain-HTTP fail needs no response. The scheme is a property of the request, so the audit declares no `requires` keys and a walled HTTP site still fails.
 - With no homepage document, the audit warns that the response carried no document. It does not name a status: `origin-reachable` accepts any 2xx, and the audit holds no homepage `FetchResult` on that branch.
 - Plumbing the homepage status onto `CheckContext` was considered and not done. Every caller that builds a context would carry a field one branch of one audit reads.
+- **Re-graded A to B on 2026-10-18.** The A came from the WAF / bot-management
+  signal, and this audit never measures a WAF: it reads the URL scheme and
+  whether the homepage returned a document. That signal and its Cloudflare
+  sources moved to `access-crawl-control/ai-crawler-edge-parity`, which
+  measures the edge answer per crawler user agent.

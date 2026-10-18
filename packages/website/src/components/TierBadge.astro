@@ -28,9 +28,20 @@ const TIERS: Record<string, { label: string; title: string; style: string }> = {
     title: 'Experimental — reported while it is validated, never scored.',
     style: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
   },
+  obsolete: {
+    label: 'Obsolete',
+    title: 'Obsolete — tells the owner that a consumer retired or ignores this; never scored.',
+    style: 'bg-surface-raised text-muted border-control line-through decoration-1',
+  },
 };
 
-const entry = TIERS[tier] ?? TIERS.scored;
+// An unknown tier must not borrow another tier's claim: falling back to
+// "Scored" once labelled a non-scoring check as one that moves the score.
+const entry = TIERS[tier] ?? {
+  label: tier,
+  title: `Tier "${tier}" — not recognised by this page.`,
+  style: 'bg-surface-raised text-muted border-control',
+};
 ---
 <span
   class:list={['inline-flex items-center rounded border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider', entry.style]}

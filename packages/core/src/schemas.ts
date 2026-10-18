@@ -3,6 +3,7 @@ import {
   DocumentState,
   EvidenceSource,
   FieldStatus,
+  NoticeKind,
   ScoreTier,
   WafProvider,
   SNAPSHOT_LIMITS,
@@ -84,8 +85,10 @@ export const AuditGuidanceSchema = z.object({
 export const ScoreDisplayModeSchema = z.enum(ScoreDisplayMode);
 
 export const DeprecationNoticeSchema = z.object({
+  kind: z.enum(NoticeKind).optional(),
   notice: z.string().min(1).max(500),
   link: z.string().url(),
+  replacement: z.string().min(1).max(500).optional(),
 });
 
 /** Evidence strength from the audit's dossier (docs/evidence/policy.md). */
@@ -120,32 +123,48 @@ export const StoredPageTypeSchema = z.preprocess(
   PageTypeSchema,
 );
 
-export const AuditMetaSchema = z.object({
-  id: z
-    .string()
-    .regex(AUDIT_ID_PATTERN, "audit id must be a `category/slug` path"),
-  category: z.string(),
-  title: z.string(),
-  failureTitle: z.string(),
-  description: z.string(),
-  scoreDisplayMode: ScoreDisplayModeSchema,
-  // 0 is legal: informative-tier and deprecated audits report evidence without
-  // moving the score, so they carry weight 0 and stay out of the denominator.
-  weight: z.number().nonnegative(),
-  pageTypes: z.array(PageTypeSchema).optional(),
-  applicablePageTypes: z.array(PageTypeSchema).optional(),
-  defaultPriority: CheckPrioritySchema,
-  guidance: AuditGuidanceSchema.optional(),
-  deprecated: DeprecationNoticeSchema.optional(),
-  // v2 taxonomy fields, now required: every registered audit must state where
-  // its weight comes from (grade + tier) and which dossier proves it.
-  evidenceGrade: EvidenceGradeSchema,
-  tier: AuditTierSchema,
-  dossier: z.string().min(1).max(500),
-  // What the audit needs the scan to have obtained. Checked against the
-  // source by `scripts/check-requires.mjs`, not enforced here beyond shape.
-  requires: z.array(EvidenceKeySchema).optional(),
-});
+export const AuditMetaSchema = z
+  .object({
+    id: z
+      .string()
+      .regex(AUDIT_ID_PATTERN, "audit id must be a `category/slug` path"),
+    category: z.string(),
+    title: z.string(),
+    failureTitle: z.string(),
+    description: z.string(),
+    scoreDisplayMode: ScoreDisplayModeSchema,
+    // 0 is legal: informative-tier and deprecated audits report evidence without
+    // moving the score, so they carry weight 0 and stay out of the denominator.
+    weight: z.number().nonnegative(),
+    pageTypes: z.array(PageTypeSchema).optional(),
+    applicablePageTypes: z.array(PageTypeSchema).optional(),
+    defaultPriority: CheckPrioritySchema,
+    guidance: AuditGuidanceSchema.optional(),
+    deprecated: DeprecationNoticeSchema.optional(),
+    // v2 taxonomy fields, now required: every registered audit must state where
+    // its weight comes from (grade + tier) and which dossier proves it.
+    evidenceGrade: EvidenceGradeSchema,
+    tier: AuditTierSchema,
+    dossier: z.string().min(1).max(500),
+    // What the audit needs the scan to have obtained. Checked against the
+    // source by `scripts/check-requires.mjs`, not enforced here beyond shape.
+    requires: z.array(EvidenceKeySchema).optional(),
+  })
+  .superRefine((meta, ctx) => {
+    // An obsolete audit exists to tell the owner why, so the notice is its
+    // payload, not an option. The grade, weight and display rules for the tier
+    // are asserted over the registry in sunset.test.ts.
+    if (
+      meta.tier === AuditTier.Obsolete &&
+      meta.deprecated?.kind !== NoticeKind.Obsolete
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["deprecated"],
+        message: "an obsolete-tier audit needs a notice of kind `obsolete`",
+      });
+    }
+  });
 
 export const AuditCoverageSchema = z.object({
   provenance: z.enum(CoverageProvenance),

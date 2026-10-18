@@ -665,9 +665,10 @@
   },
   "5.11": {
     "slug": "agent-tools/ai-plugin-json",
-    "status": "removed",
-    "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#agent-toolsai-plugin-json"
+    "status": "renamed",
+    "to": "agent-interfaces/ai-plugin-json",
+    "link": "docs/evidence/audits/agent-interfaces/ai-plugin-json.md",
+    "note": "revived 2026-10-18 as an obsolete-tier notice; sunset 2026-08-21"
   },
   "5.12": {
     "slug": "agent-tools/mcp-discovery",

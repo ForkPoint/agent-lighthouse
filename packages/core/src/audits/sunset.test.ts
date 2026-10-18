@@ -5,15 +5,22 @@ import { defaultConfig } from "#core/audit-config";
 import { AuditMetaSchema } from "#core/schemas";
 import { weightForGrade } from "#core/scorer";
 import { NEW_IN_V2, MIGRATED_COUNT } from "#core/tests/new-in-v2";
-import { AuditTier, ScoreDisplayMode } from "#core/types";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import {
+  AuditTier,
+  EvidenceGrade,
+  NoticeKind,
+  ScoreDisplayMode,
+} from "#core/types";
 
-// The 26 v1 audits removed in this major release: the first 18 in the v1.0.0
-// sunset wave, plus the 8 added by the 2026-08-21 grading pass. Rationale and
-// per-audit evidence: docs/evidence/sunset/not-a-factor.md. Consumers migrate
-// via packages/core/migration-map.json.
+// The 25 v1 audits that stay removed: the first 18 in the v1.0.0 sunset wave,
+// plus the 8 added by the 2026-08-21 grading pass, less 5.11
+// (agent-tools/ai-plugin-json), revived on 2026-10-18 as the obsolete-tier
+// agent-interfaces/ai-plugin-json. Rationale and per-audit evidence:
+// docs/evidence/sunset/not-a-factor.md. Consumers migrate via
+// packages/core/migration-map.json.
 const REMOVED_IDS = [
   "7.1",
-  "5.11",
   "5.17",
   "5.4",
   "5.25",
@@ -47,7 +54,7 @@ describe("sunset audits (NOT-A-FACTOR) are gone", () => {
 
   // Tombstone: these ids must never come back. Re-registering one would
   // silently resurrect a check the evidence review proved has no consumer.
-  it("registers none of the 26 removed audit ids", () => {
+  it("registers none of the 25 removed audit ids", () => {
     const resurrected = allMetas
       .map((m) => m.id)
       .filter((id) => REMOVED_IDS.includes(id));
@@ -124,6 +131,48 @@ describe("registry-wide meta invariants", () => {
           `${m.id} (tier=${m.tier}, scoreDisplayMode=${m.scoreDisplayMode})`,
       );
     expect(divergent).toEqual([]);
+  });
+
+  // Obsolete tier law (docs/evidence/policy.md): the grade keeps meaning
+  // "strongest proven consumer path", and an obsolete thing has none, so it
+  // is D. The retirement evidence lives in the notice, not in the grade.
+  it("obsolete audits carry grade D and an obsolete notice", () => {
+    const divergent = allMetas
+      .filter((m) => m.tier === AuditTier.Obsolete)
+      .filter(
+        (m) =>
+          m.evidenceGrade !== EvidenceGrade.D ||
+          m.deprecated?.kind !== NoticeKind.Obsolete,
+      )
+      .map(
+        (m) =>
+          `${m.id} (grade=${m.evidenceGrade}, notice=${m.deprecated?.kind ?? "none"})`,
+      );
+    expect(divergent).toEqual([]);
+  });
+
+  // An obsolete notice outside the obsolete tier would put a "retired" claim
+  // on a scored or merely unconsumed check, where the report does not group it.
+  it("only obsolete-tier audits carry an obsolete notice", () => {
+    const misplaced = allMetas
+      .filter(
+        (m) =>
+          m.deprecated?.kind === NoticeKind.Obsolete &&
+          m.tier !== AuditTier.Obsolete,
+      )
+      .map((m) => `${m.id} (tier=${m.tier})`);
+    expect(misplaced).toEqual([]);
+  });
+
+  // Absent artifact, absent verdict: an obsolete audit speaks only when the
+  // owner still publishes the thing. On a scan that read nothing it declines.
+  it("obsolete audits decline on a scan that read nothing", async () => {
+    const registrations = Object.values(defaultConfig.audits)
+      .flat()
+      .filter((reg) => reg.meta.tier === AuditTier.Obsolete);
+    for (const reg of registrations) {
+      await expectNotApplicableOnEmpty(reg.create());
+    }
   });
 
   /**

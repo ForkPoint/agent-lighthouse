@@ -162,13 +162,15 @@ function pageScopeText(record: Record<string, unknown>): string | undefined {
         if (!a) continue;
         const coverage = asRecord(a["coverage"]);
         if (!coverage && index === 0) continue;
+        const obsolete = a["tier"] === AuditTier.Obsolete;
         const advisory =
           index > 0 ||
           a["scoreDisplayMode"] === ScoreDisplayMode.Informative ||
           a["tier"] === AuditTier.Informative ||
-          a["tier"] === AuditTier.Experimental;
+          a["tier"] === AuditTier.Experimental ||
+          obsolete;
         lines.push(
-          `\n[${text(check["id"])}] ${text(a["status"])} — ${advisory ? "Advisory — not scored" : a["status"] === CheckStatus.NotApplicable ? "Not assessed" : "Primary result"}`,
+          `\n[${text(check["id"])}] ${text(a["status"])} — ${obsolete ? "Obsolete — not scored" : advisory ? "Advisory — not scored" : a["status"] === CheckStatus.NotApplicable ? "Not assessed" : "Primary result"}`,
         );
         if (a["explanation"]) lines.push(text(a["explanation"]));
         if (a["displayValue"]) lines.push(text(a["displayValue"]));

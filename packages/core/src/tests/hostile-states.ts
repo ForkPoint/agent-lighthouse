@@ -69,6 +69,8 @@ export const ROOT_PATHS = [
   "/.well-known/mcp/servers.json",
   "/.well-known/ucp",
   "/.well-known/agents.json",
+  "/.well-known/agent-card.json",
+  "/.well-known/agent.json",
   "/.well-known/ai-plugin.json",
   "/.well-known/security.txt",
   "/.well-known/tdmrep.json",

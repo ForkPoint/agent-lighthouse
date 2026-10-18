@@ -26,6 +26,7 @@ A finding and a score are different things. A check needs enough information to 
 
 - **Scored checks** can change the result when they apply and the scan can assess them.
 - **Advisory and experimental checks** give context without changing the score.
+- **Obsolete checks** list what your site still publishes that its consumer retired or ignores. They never change the score.
 - **Not assessed or not applicable** means the check lacks needed information or does not fit this scan. It is not a pass.
 
 If the scan lacks too much evidence, it can leave the overall result unscored. See [how scoring works](../../../../docs/scoring.md) for the full rules.

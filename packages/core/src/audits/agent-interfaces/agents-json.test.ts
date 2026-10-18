@@ -1,12 +1,15 @@
 import { describe, it, expect } from "vitest";
 import { AgentsJsonAudit } from "./agents-json";
 import { weightForGrade } from "#core/scorer";
+import { AuditMetaSchema } from "#core/schemas";
 import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
 import {
   AuditTier,
   CheckPriority,
   CheckStatus,
   EvidenceGrade,
+  NoticeKind,
   ScoreDisplayMode,
 } from "#core/types";
 
@@ -33,163 +36,81 @@ describe("AgentsJsonAudit", () => {
   const audit = new AgentsJsonAudit();
 
   describe("a published document", () => {
-    it("passes only for a real agents.json document", () => {
+    it("warns that the format is obsolete when a real agents.json document is served", () => {
       const result = runWith(VALID_DOCUMENT);
-      expect(result.status).toBe(CheckStatus.Pass);
-      expect(result.message).toContain("agents.json document");
+      expect(result.status).toBe(CheckStatus.Warn);
+      expect(result.priority).toBe(CheckPriority.Low);
+      expect(result.message).toContain("no known reader");
+      expect(result.message).toContain("agent-card.json");
       expect(result.found).toContain("1 source(s)");
     });
 
-    it("passes a flows-only document", () => {
+    it("recognises a flows-only document", () => {
       const body = JSON.stringify({
         info: { title: "Site", version: "0.1.0" },
         flows: [{ id: "search", name: "Search content" }],
       });
       const result = runWith(body);
-      expect(result.status).toBe(CheckStatus.Pass);
+      expect(result.status).toBe(CheckStatus.Warn);
       expect(result.found).toContain("1 flow(s)");
     });
+  });
 
+  describe("nothing recognisable is published", () => {
     it.each([
-      ["an empty array", "[]"],
-      ["an empty object", "{}"],
-      ["an array of objects", '[{"name":"a"}]'],
-      [
-        "the invented shape the old guidance prescribed",
-        '{"name":"Site","protocols":["rest"]}',
-      ],
-      ["info without sources or flows", '{"info":{"title":"Site"}}'],
-    ])("warns instead of passing on %s", (_label, body) => {
-      const result = runWith(body);
-      expect(result.status).toBe(CheckStatus.Warn);
-      expect(result.status).not.toBe(CheckStatus.Pass);
-      expect(result.message).toContain("info");
-      expect(result.message).toContain("sources");
+      ["a 404", "Not found", 404],
+      ["an empty 200 body", "", 200],
+      ["an HTML page standing in for the file", HTML_SHELL, 200],
+      ["a body that is not JSON", "not json", 200],
+      ["an empty array", "[]", 200],
+      ["an empty object", "{}", 200],
+      ["an unrelated JSON shape", '{"name":"Site","protocols":["rest"]}', 200],
+    ])("is not applicable for %s", (_label, body, status) => {
+      expect(runWith(body, status).status).toBe(CheckStatus.NotApplicable);
     });
 
-    it("warns when the served body does not parse", () => {
-      const result = runWith("not json {{{", 200, "application/json");
-      expect(result.status).toBe(CheckStatus.Warn);
-      expect(result.message).toContain("does not parse");
-    });
-  });
-
-  describe("absence", () => {
-    it("reports not-applicable when agents.json is absent (404)", () => {
-      const result = runWith("", 404, "text/html");
-      expect(result.status).toBe(CheckStatus.NotApplicable);
-      expect(result.score).toBe(0);
-      expect(result.found).toContain("404");
-      expect(result.message).toContain("not a finding");
+    it("is not applicable when the path was not fetched", () => {
+      expect(audit.audit(mockCheckContext([], {})).status).toBe(
+        CheckStatus.NotApplicable,
+      );
     });
 
-    it("reports not-applicable when the path was not fetched", () => {
-      const result = audit.audit(mockCheckContext([], {}));
-      expect(result.status).toBe(CheckStatus.NotApplicable);
-      expect(result.found).toContain("No agents.json published");
-    });
-
-    it("reports not-applicable on an empty 200 body", () => {
-      const result = runWith("   ", 200, "application/json");
-      expect(result.status).toBe(CheckStatus.NotApplicable);
-      expect(result.found).toContain("empty body");
-    });
-  });
-
-  describe("the soft-404 signal", () => {
-    it("names an HTML 200 at the well-known path as a soft-404, not invalid JSON", () => {
-      const result = runWith(HTML_SHELL, 200, "text/html");
-      expect(result.status).toBe(CheckStatus.Warn);
-      expect(result.message).toContain("HTML page");
-      expect(result.message).toContain("404 is the honest answer");
-      expect(result.message).not.toContain("not valid JSON");
-    });
-
-    it("sniffs the body, not the content type — HTML served as JSON is still HTML", () => {
-      const result = runWith(HTML_SHELL, 200, "application/json");
-      expect(result.status).toBe(CheckStatus.Warn);
-      expect(result.message).toContain("HTML page");
-    });
-
-    it("does not claim an HTML body when a real document is served as text/html", () => {
-      const result = runWith(VALID_DOCUMENT, 200, "text/html");
-      expect(result.status).toBe(CheckStatus.Warn);
-      expect(result.message).toContain("text/html");
-      expect(result.message).toContain("media type");
-      expect(result.message).not.toContain("HTML page");
-      expect(result.found).toContain("Valid agents.json document");
+    it("is not applicable on a scan that read nothing", async () => {
+      await expectNotApplicableOnEmpty(audit);
     });
   });
 
   it("never returns fail for any input", () => {
-    const fixtures: Array<[string, number, string]> = [
-      ["", 404, "text/html"],
-      ["", 500, "text/html"],
-      [HTML_SHELL, 200, "text/html"],
-      [HTML_SHELL, 200, "application/json"],
-      ["not json {{{", 200, "application/json"],
-      ["[]", 200, "application/json"],
-      ["{}", 200, "application/json"],
-      [VALID_DOCUMENT, 200, "application/json"],
-      [VALID_DOCUMENT, 200, "text/html"],
-    ];
-    for (const [body, status, contentType] of fixtures) {
-      expect(runWith(body, status, contentType).status).not.toBe(
-        CheckStatus.Fail,
-      );
+    for (const body of [VALID_DOCUMENT, HTML_SHELL, "", "[]", "{}", "x"]) {
+      expect(runWith(body).status).not.toBe(CheckStatus.Fail);
     }
-    expect(audit.audit(mockCheckContext([], {})).status).not.toBe(
-      CheckStatus.Fail,
-    );
   });
 
   describe("meta", () => {
-    const meta = AgentsJsonAudit.meta;
+    const { meta } = AgentsJsonAudit;
 
-    it("stays grade C, informative, weight 0", () => {
-      expect(meta.evidenceGrade).toBe(EvidenceGrade.C);
-      expect(meta.tier).toBe(AuditTier.Informative);
-      expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Informative);
-      expect(meta.weight).toBe(0);
+    it("is an obsolete-tier audit: grade D, weight 0, informative display", () => {
+      expect(meta.tier).toBe(AuditTier.Obsolete);
+      expect(meta.evidenceGrade).toBe(EvidenceGrade.D);
       expect(meta.weight).toBe(
-        weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+        weightForGrade(EvidenceGrade.D, AuditTier.Obsolete),
       );
-      expect(meta.defaultPriority).toBe(CheckPriority.Low);
+      expect(meta.weight).toBe(0);
+      expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Informative);
+      expect(AuditMetaSchema.safeParse(meta).success).toBe(true);
     });
 
-    it("carries no deprecation notice — the audit is not retired", () => {
-      expect(meta.deprecated).toBeUndefined();
-    });
-
-    it("reads true on every status the audit can return", () => {
-      // `title` renders on `pass` and `na`, so it may not assert the file exists.
-      expect(meta.title).not.toMatch(/exists/i);
-      // `failureTitle` renders only on `warn` here, all of which are
-      // "published, but unusable" cases.
-      expect(meta.failureTitle).toContain("published");
-    });
-
-    it("points at a live primary source, not the dead agentsjson.org domain", () => {
-      expect(meta.guidance?.docsUrl).toBe(
+    it("carries an obsolete notice that names what to use instead", () => {
+      expect(meta.deprecated?.kind).toBe(NoticeKind.Obsolete);
+      expect(meta.deprecated?.replacement).toContain("agent-card.json");
+      expect(meta.deprecated?.link).toBe(
         "https://github.com/wild-card-ai/agents-json",
       );
-      expect(JSON.stringify(meta)).not.toContain("agentsjson.org");
-    });
-
-    it("describes the real spec shape and not the invented one", () => {
-      const code = meta.guidance?.code ?? "";
-      expect(code).toContain("info");
-      expect(code).toContain("sources");
-      expect(code).not.toContain("rate_limits");
-      expect(code).not.toContain("protocols");
-      expect(code).not.toContain("authentication");
     });
 
     it("never instructs a non-publisher to create the file", () => {
-      const fix = meta.guidance?.fix ?? "";
-      expect(fix).not.toMatch(/create a \/\.well-known\/agents\.json/i);
-      expect(fix).toContain(
-        "Nothing to do if the site does not publish this file",
+      expect(meta.guidance?.fix).not.toMatch(
+        /\b(add|create|publish) (an? )?agents\.json/i,
       );
     });
   });

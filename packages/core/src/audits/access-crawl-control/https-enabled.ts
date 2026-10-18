@@ -17,10 +17,10 @@ export class HttpsEnabledAudit extends Audit {
     title: "HTTPS enabled",
     failureTitle: "HTTPS enabled",
     description:
-      "Agent protocols require HTTPS: MCP requires every authorization server endpoint to be served over HTTPS, and browser-based agents inherit Chromium's mixed-content blocking and HTTPS-First warnings. No AI crawler vendor documents refusing plain HTTP, so the risk is to agents that act on the site, not to crawling. Enable HTTPS with a valid TLS certificate.",
+      "Agent protocols require HTTPS: MCP requires every authorization server endpoint to be served over HTTPS, and browser-based agents inherit Chromium's mixed-content blocking and HTTPS-First warnings; from Chrome 154 (October 2026) Chrome asks before opening any public site without HTTPS. No AI crawler vendor documents refusing plain HTTP, so the risk is to agents that act on the site, not to crawling. Enable HTTPS with a valid TLS certificate.",
     scoreDisplayMode: ScoreDisplayMode.Ternary,
-    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
-    evidenceGrade: EvidenceGrade.A,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
     tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/access-crawl-control/https-enabled.md",
     // Gate exemption: a base URL on plain HTTP is proven by the request, with no response

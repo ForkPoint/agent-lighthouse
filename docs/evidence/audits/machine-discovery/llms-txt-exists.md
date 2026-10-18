@@ -5,7 +5,7 @@ source_file: packages/core/src/audits/machine-discovery/llms-txt-exists.ts
 slug: llms-txt-exists
 evidence_grade: C
 disposition: "merged 2026-08-22 (Plan 4, Task 4) — absorbs llms-txt-link (4.11)"
-reviewed: 2026-08-24
+reviewed: 2026-10-18
 recommended_tier: scored
 tier_rationale: "Recommended scored; ships informative. The A was never argued: the frontmatter carried grade A while the file's own research signal read grade C, verdict REFUTED. Re-graded C / informative / weight 0 (evidence sweep, 2026-08-24)."
 consumers:
@@ -56,6 +56,7 @@ sources:
   - google-http-status-codes
   - google-crawl-budget-docs
   - vercel-rise-of-ai-crawler
+  - ahrefs-llmstxt-study
 ---
 
 # llms-txt-exists (`1.1`)
@@ -66,16 +67,24 @@ sources:
 
 `GET /llms.txt` returns 200 with a body that starts with `#`. The audit also reports whether a `<link rel="alternate">` or `<link rel="describedby">` in the first page's head points at that file. It is informative, so no outcome moves the score.
 
-| State                                               | Result                 |
-| :-------------------------------------------------- | :--------------------- |
-| 200, not an HTML page, body starts with `#`         | `pass`                 |
-| 200, not an HTML page, body does not start with `#` | `warn`, priority `low` |
-| no file, and no head link points at it              | `notApplicable`        |
-| no file, but a head link points at it               | `warn`, priority `low` |
+| State                                               | Result                      |
+| :-------------------------------------------------- | :-------------------------- |
+| 200, not an HTML page, body starts with `#`         | `pass`                      |
+| 200, not an HTML page, body does not start with `#` | `pass`, gap named           |
+| no file, and no head link points at it              | `notApplicable`             |
+| no file, but a head link points at it               | `notApplicable`, link named |
 
 "No file" means a non-200 status, no response, or an HTML page served at the path. An HTML page there is a site shell answering every URL, not the file.
 
-The head link is reported in every branch, as `discovery <link> → <href>` or `no discovery <link> in <head>`. It changes the result in one case only: a link to a file that is not served.
+The head link is reported in every branch, as `discovery <link> → <href>` or `no discovery <link> in <head>`. It changes the message in one case only: a link to a file that is not served.
+
+## Why it matters
+
+No AI vendor documents reading llms.txt or llms-full.txt from a website at runtime. An [Ahrefs study of 137,210 domains](https://ahrefs.com/blog/llmstxt-study/) (verified 2026-10-18) found that 97% of llms.txt files received no requests in a month. AI tools never asked for a missing file. Tools a user points at the file, such as documentation helpers in coding agents, can still read it. [Chrome Lighthouse](https://developer.chrome.com/docs/lighthouse/agentic-browsing/llms-txt) (verified 2026-10-18) is the one shipping checker of the file. It flags a file with no H1 heading or no links. Lighthouse is a checker, not a consumer, so it does not change the grade.
+
+## How it scores
+
+Informative, weight 0. Every result carries an `unconsumed` notice: no AI vendor documents reading this file. The audit never warns or fails. An absent file is not applicable. A file that is present passes, and a file that does not start with a # heading is named in the pass message, with the note that it does not affect AI agents.
 
 ## Evidence
 
@@ -124,3 +133,4 @@ The head link is reported in every branch, as `discovery <link> → <href>` or `
 - **Existence cannot be scored.** If a scored llms.txt signal is ever wanted,
   only the conformance rules (H1, one markdown link, over 50 characters) have a
   shipping checker. That signal would be conditional on the file existing.
+- **Report only, from 2026-10-18.** The 2026-10-18 consumer review (policy.md, "Informative or obsolete") keeps this audit informative with an `unconsumed` notice and removes every warn and fail. A file with no # heading now passes with the gap named. A page that links to a missing llms.txt is now not applicable, because the file is absent; the message still names the dead link.

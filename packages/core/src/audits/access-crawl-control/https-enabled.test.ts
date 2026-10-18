@@ -9,7 +9,7 @@ import {
   unreachedSiteContext,
   walledSiteContext,
 } from "#core/__tests__/test-utils";
-import { CheckStatus } from "#core/types";
+import { AuditTier, CheckStatus, EvidenceGrade } from "#core/types";
 
 describe("HttpsEnabledAudit", () => {
   const audit = new HttpsEnabledAudit();
@@ -133,5 +133,12 @@ describe("HttpsEnabledAudit", () => {
     );
     expect(result?.status).toBe(CheckStatus.NotApplicable);
     expect(result?.explanation).not.toContain("TLS or server error");
+  });
+
+  it("is graded B: what it measures is the HTTPS requirement, not a WAF", () => {
+    const { meta } = HttpsEnabledAudit;
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
+    expect(meta.tier).toBe(AuditTier.Scored);
+    expect(meta.weight).toBe(0.6);
   });
 });

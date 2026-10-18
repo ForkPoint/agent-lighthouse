@@ -8,9 +8,16 @@ import {
   EvidenceGrade,
   EvidenceKey,
   FixEffort,
+  NoticeKind,
   ScoreDisplayMode,
 } from "#core/types";
 import { isRootArtifact } from "#core/gatherers/root-files";
+
+/** The unregistered path this audit reports. No MCP document names it. */
+const SERVERS_JSON_PATH = "/.well-known/mcp/servers.json";
+
+const REPLACEMENT =
+  "An MCP Server Card listed in /.well-known/ai-catalog.json or /.well-known/ard.json, the route the MCP Server Card extension specifies for domain-level discovery.";
 
 function tryParseJson(body: string): unknown {
   try {
@@ -24,167 +31,76 @@ function isObject(val: unknown): val is Record<string, unknown> {
   return typeof val === "object" && val !== null && !Array.isArray(val);
 }
 
-/**
- * The UCP profile's declared version, for evidence. A malformed object or
- * array version reads as unversioned rather than "[object Object]".
- */
-function ucpVersion(version: unknown): string {
-  if (typeof version === "string") return version;
-  if (typeof version === "number") return String(version);
-  return "stable";
+/** What the published file holds, for the `found` text. */
+function describeServersFile(body: string): string {
+  const parsed = tryParseJson(body);
+  if (!isObject(parsed))
+    return "Published, but the body does not parse as a JSON object";
+  const servers = parsed["servers"];
+  if (!Array.isArray(servers)) return "JSON object with no servers array";
+  return `servers.json listing ${servers.length} server(s)`;
 }
 
 export class McpDiscoveryAudit extends Audit {
   static override meta: AuditMeta = {
     id: "agent-interfaces/mcp-discovery",
     category: "agent-interfaces",
-    title: "MCP server discovery file",
-    failureTitle: "MCP discovery file is published but unreadable",
+    // An obsolete audit speaks only when the owner still publishes the file,
+    // so both titles describe the file rather than a site that lacks it.
+    title: "MCP servers.json discovery file (obsolete)",
+    failureTitle: "An unread MCP servers.json file is published",
     description:
-      "Reports whether the site publishes an MCP discovery document at `/.well-known/mcp/servers.json` or `/.well-known/ucp`, and whether what it publishes can be parsed. Neither path is registered or specified, and no shipping MCP client is documented as fetching either, so this is reported rather than scored: a site with a working MCP server discovered by any other route is not less agent-ready for having no such file.",
+      "Reports a file still served at `/.well-known/mcp/servers.json`. No MCP specification defines the path and no MCP client documents fetching it. Domain-level MCP discovery goes through a Server Card listed in `/.well-known/ai-catalog.json`. The `/.well-known/ucp` commerce profile this audit used to read is judged by `agentic-commerce/ucp-profile`.",
     scoreDisplayMode: ScoreDisplayMode.Informative,
-    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
-    evidenceGrade: EvidenceGrade.C,
-    tier: AuditTier.Informative,
+    weight: weightForGrade(EvidenceGrade.D, AuditTier.Obsolete),
+    evidenceGrade: EvidenceGrade.D,
+    tier: AuditTier.Obsolete,
+    deprecated: {
+      kind: NoticeKind.Obsolete,
+      notice:
+        "No MCP specification or client reads /.well-known/mcp/servers.json. MCP domain discovery uses a Server Card listed in /.well-known/ai-catalog.json.",
+      link: "https://raw.githubusercontent.com/modelcontextprotocol/experimental-ext-server-card/main/docs/discovery.md",
+      replacement: REPLACEMENT,
+    },
     dossier: "docs/evidence/audits/agent-interfaces/mcp-discovery.md",
     requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
-    defaultPriority: CheckPriority.Medium,
+    defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
-        "No shipping MCP client is documented as fetching `/.well-known/mcp/servers.json` or `/.well-known/ucp`, so publishing one is not known to make a site reachable to any agent. What does matter is that a document published at a well-known path can be read: a 200 carrying HTML or unparseable JSON tells a conforming client the resource exists and then gives it nothing to parse.",
-      fix: "If you publish an MCP discovery document, serve it as parseable JSON with a populated `servers` array. To make an MCP server actually reachable, publish and operate the endpoint itself — that is what `agent-interfaces/mcp-modern-era-reachability` and `mcp-oauth-discovery-chain` check.",
-      code: `// /.well-known/mcp/servers.json
-{
-  "servers": [
-    {
-      "name": "Your Site MCP",
-      "description": "Search content and submit inquiries",
-      "url": "https://yoursite.com/mcp",
-      "transport": "streamable-http",
-      "capabilities": {
-        "tools": true,
-        "resources": true
-      }
-    }
-  ]
-}`,
+        "The file does no harm, but no MCP client reads it, so an MCP server announced only here is not discovered through it.",
+      fix: `Publish the MCP server's Server Card and list it in /.well-known/ai-catalog.json (or /.well-known/ard.json). The servers.json file can then be removed. ${REPLACEMENT}`,
       effort: FixEffort.Easy,
       docsUrl:
-        "https://modelcontextprotocol.io/specification/2025-03-26/basic/transports",
-      tags: ["mcp", "discovery", "agent-protocol"],
+        "https://github.com/modelcontextprotocol/experimental-ext-server-card/blob/main/docs/discovery.md",
+      tags: ["mcp", "discovery", "agent-protocol", "obsolete"],
     },
   };
 
   audit(ctx: CheckContext): AuditResult {
     const expected =
-      "If an MCP discovery document is published, it parses and lists at least one server";
+      "No /.well-known/mcp/servers.json: MCP discovery uses a Server Card in /.well-known/ai-catalog.json";
+    const file = ctx.rootFiles[SERVERS_JSON_PATH];
 
-    // 1. /.well-known/mcp/servers.json
-    const result = ctx.rootFiles["/.well-known/mcp/servers.json"];
-    if (isRootArtifact(result) && result.body.trim()) {
-      const parsed = tryParseJson(result.body);
-      if (!isObject(parsed)) {
-        return this.fail(
-          "A document is published at /.well-known/mcp/servers.json, but it is not valid JSON.",
-          expected,
-          "Published, but the body does not parse as a JSON object",
-          {
-            priority: CheckPriority.Medium,
-            code: McpDiscoveryAudit.meta.guidance?.code,
-          },
-        );
-      }
-
-      const servers = parsed["servers"];
-      if (!Array.isArray(servers)) {
-        return this.fail(
-          "mcp/servers.json parses but carries no servers array.",
-          expected,
-          "No servers array",
-          {
-            priority: CheckPriority.Medium,
-            code: McpDiscoveryAudit.meta.guidance?.code,
-          },
-        );
-      }
-
-      // An empty array is the shape of a discovery file without the discovery.
-      if (servers.length === 0) {
-        return this.fail(
-          "mcp/servers.json lists no servers, so it advertises nothing.",
-          expected,
-          "servers array is empty",
-          {
-            priority: CheckPriority.Medium,
-            code: McpDiscoveryAudit.meta.guidance?.code,
-          },
-        );
-      }
-
-      return this.pass(
-        `MCP servers.json found with ${servers.length} server(s).`,
+    // Absent artifact, absent verdict. The obsolete tier tells an owner about
+    // a file they still publish; a 404 or an HTML stand-in is not that file.
+    // A present file is reported whatever it holds: the path is MCP-specific,
+    // so nothing else is likely to live there, and a broken copy of an unread
+    // file is not a failure.
+    if (!isRootArtifact(file) || !file.body.trim()) {
+      return this.notApplicable(
+        "This site publishes no /.well-known/mcp/servers.json, so there is nothing to retire.",
         expected,
-        `Valid JSON with ${servers.length} server(s)`,
+        file
+          ? `${SERVERS_JSON_PATH} answered HTTP ${file.status} without a file`
+          : "No servers.json published",
       );
     }
 
-    // 2. Universal Commerce Protocol (/.well-known/ucp)
-    const ucpResult = ctx.rootFiles["/.well-known/ucp"];
-    if (isRootArtifact(ucpResult) && ucpResult.body.trim()) {
-      const ucpParsed = tryParseJson(ucpResult.body);
-      if (isObject(ucpParsed)) {
-        const ucpObj = (ucpParsed["ucp"] ?? ucpParsed) as Record<
-          string,
-          unknown
-        >;
-        const services = (ucpParsed["services"] ?? ucpObj["services"]) as
-          Record<string, unknown> | undefined;
-        const capabilities = (ucpParsed["capabilities"] ??
-          ucpObj["capabilities"]) as Record<string, unknown> | undefined;
-        const svcCount = services ? Object.keys(services).length : 0;
-        const capCount = capabilities ? Object.keys(capabilities).length : 0;
-
-        // `{}` parses. It is not a discovery profile, and it used to report a
-        // confident pass reading "0 services and 0 capabilities".
-        if (svcCount === 0 && capCount === 0) {
-          return this.fail(
-            "A document is published at /.well-known/ucp, but it declares no services and no capabilities.",
-            expected,
-            "UCP document carries neither services nor capabilities",
-            {
-              priority: CheckPriority.Medium,
-              code: McpDiscoveryAudit.meta.guidance?.code,
-            },
-          );
-        }
-
-        return this.pass(
-          `Universal Commerce Protocol discovery profile found with ${svcCount} service(s) and ${capCount} capabilit(ies).`,
-          expected,
-          `UCP profile (v${ucpVersion(ucpObj["version"])}, ${capCount} capabilit(ies))`,
-        );
-      }
-
-      return this.fail(
-        "A document is published at /.well-known/ucp, but it is not valid JSON.",
-        expected,
-        "Published, but the body does not parse as a JSON object",
-        {
-          priority: CheckPriority.Medium,
-          code: McpDiscoveryAudit.meta.guidance?.code,
-        },
-      );
-    }
-
-    // Absence is not a defect. Neither path is registered or specified, and no
-    // shipping MCP client is documented as fetching either, so a site that
-    // publishes nothing here has withheld nothing an agent is known to want.
-    return this.notApplicable(
-      "This site publishes no MCP discovery document, which no documented MCP client fetches.",
+    return this.warn(
+      `A file is published at ${SERVERS_JSON_PATH}. No MCP specification or client reads this path, so it announces nothing. It does no harm. To make the server discoverable, list its Server Card in /.well-known/ai-catalog.json.`,
       expected,
-      result
-        ? `/.well-known/mcp/servers.json returned HTTP ${result.status}`
-        : "No MCP discovery document published",
+      describeServersFile(file.body),
+      CheckPriority.Low,
     );
   }
 }

@@ -34,7 +34,7 @@ describe("RssFeedContentAudit", () => {
     expect(result.message).toContain("have full content");
   });
 
-  it("warns when only some items have full content", async () => {
+  it("reports a partly excerpted feed without warning", async () => {
     const ctx = mockCheckContext([], {
       "/rss.xml": mockFetchResult(
         feed([longText, shortText]),
@@ -43,11 +43,11 @@ describe("RssFeedContentAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Warn);
-    expect(result.message).toContain("1/2 items have full content");
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.message).toContain("1/2 items carry full content");
   });
 
-  it("fails when fewer than half the items have full content", async () => {
+  it("reports an excerpt feed without failing it", async () => {
     const ctx = mockCheckContext([], {
       "/rss.xml": mockFetchResult(
         feed([longText, shortText, shortText]),
@@ -56,11 +56,12 @@ describe("RssFeedContentAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.message).toContain("1/3 items have content");
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.message).toContain("1/3 items carry full content");
+    expect(result.message).toContain("fetch the article page");
   });
 
-  it("warns when the feed has no items", async () => {
+  it("is not applicable when the feed has no items", async () => {
     const ctx = mockCheckContext([], {
       "/rss.xml": mockFetchResult(
         '<rss version="2.0"><channel></channel></rss>',
@@ -69,7 +70,7 @@ describe("RssFeedContentAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("no items");
   });
 

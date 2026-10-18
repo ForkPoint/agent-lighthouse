@@ -5,7 +5,7 @@ source_file: packages/core/src/audits/machine-discovery/llms-full-txt.ts
 slug: llms-full-txt
 evidence_grade: C
 disposition: "informative, weight 0 (approved 2026-08-21)"
-reviewed: 2026-08-21
+reviewed: 2026-10-18
 recommended_tier: delete
 tier_rationale: "Recommended delete; ships informative. The retirement was re-verified on 2026-08-24 and withdrawn — the file is a documented community convention with no consumer, which is what informative reports (evidence sweep, 2026-08-24)."
 consumers: []
@@ -20,6 +20,7 @@ sources:
   - mintlify-value-of-llmstxt
   - rankability-adoption-tracker
   - lighthouse-llms-txt-gatherer-source
+  - ahrefs-llmstxt-study
 ---
 
 # llms-full-txt (`1.6`)
@@ -28,7 +29,15 @@ sources:
 
 ## What it checks
 
-llms-full.txt provides the complete content of your site in a single file, allowing AI agents to ingest everything in one request instead of crawling page by page.
+Whether `GET /llms-full.txt` returns 200 with a body that is not an HTML page. llms-full.txt is a companion convention to llms.txt: the site's content in one markdown file. Nothing else about the file is checked.
+
+## Why it matters
+
+No AI vendor documents reading llms.txt or llms-full.txt from a website at runtime. An [Ahrefs study of 137,210 domains](https://ahrefs.com/blog/llmstxt-study/) (verified 2026-10-18) found that 97% of llms.txt files received no requests in a month. AI tools never asked for a missing file. Tools a user points at the file, such as documentation helpers in coding agents, can still read it.
+
+## How it scores
+
+Informative, weight 0. Every result carries an `unconsumed` notice: no AI vendor documents reading this file. The audit never warns or fails. An absent file is not applicable. A file that is present passes, and nothing further is checked; presence is named in the pass message, with the note that it does not affect AI agents.
 
 ## Evidence
 
@@ -48,3 +57,4 @@ llms-full.txt provides the complete content of your site in a single file, allow
   file for customers. That is partial adoption by a generator, not a consumer.
 - **An absent file is not applicable.** A 200 whose body opens as an HTML
   document counts as absent (`isRootArtifact` in `gatherers/root-files.ts`).
+- **Report only, from 2026-10-18.** The 2026-10-18 consumer review (policy.md, "Informative or obsolete") keeps this audit informative with an `unconsumed` notice and removes every warn and fail. Verdicts did not change: the audit never warned or failed. The description, impact and fix text no longer claim that AI agents read the file, and the default priority moved from high to low.

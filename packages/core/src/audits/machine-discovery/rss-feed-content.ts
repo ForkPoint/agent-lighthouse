@@ -10,6 +10,7 @@ import {
   EvidenceGrade,
   EvidenceKey,
   FixEffort,
+  NoticeKind,
   ScoreDisplayMode,
 } from "#core/types";
 
@@ -20,18 +21,26 @@ export class RssFeedContentAudit extends Audit {
     title: "RSS feed content complete",
     failureTitle: "RSS feed content complete",
     description:
-      "Full-content feeds allow AI agents to index your articles without visiting each page, reducing crawl load and improving content quality in AI responses.",
+      "Reports how many feed items carry full article text (more than 500 characters). Search and AI crawlers take URLs from feeds and fetch the page itself, and excerpt feeds are valid, so this check is reported and never scored.",
     scoreDisplayMode: ScoreDisplayMode.Informative,
     weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
     evidenceGrade: EvidenceGrade.C,
     tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/machine-discovery/rss-feed-content.md",
+    deprecated: {
+      kind: NoticeKind.Unconsumed,
+      notice:
+        "No search engine or AI vendor documents reading full article text from a feed. Documented consumers take URLs from feeds and fetch the article page itself.",
+      link: "https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap",
+      replacement:
+        "Keep the feed for URL discovery (machine-discovery/rss-feed). Excerpt feeds are valid.",
+    },
     requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
-    defaultPriority: CheckPriority.Medium,
+    defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
-        "Truncated RSS feed items force AI agents to visit each page individually, increasing crawl time and often resulting in incomplete indexing. Full-content feeds let agents ingest all your articles in a single request, producing richer AI-generated answers.",
-      fix: "Include full article content in each feed item using <content:encoded> (RSS) or <content> (Atom). Aim for more than 500 characters per item. Most CMS platforms have a setting to switch from excerpt to full-content feeds.",
+        "Google reads feeds as a list of recent URLs, and the Common Crawl news crawler takes links from feeds and fetches the pages. No consumer documents reading the article body from the feed, so an excerpt feed loses nothing with an AI agent.",
+      fix: "Optional. Full content in <content:encoded> (RSS) or <content> (Atom) serves human feed readers. For AI agents, keep the feed current and its links pointing at the article pages.",
       code: "<item>\n  <title>Article Title</title>\n  <link>https://yoursite.com/article</link>\n  <content:encoded><![CDATA[\n    <p>Full article content goes here. Include all paragraphs,\n    headings, and relevant details.</p>\n  ]]></content:encoded>\n</item>",
       effort: FixEffort.Easy,
       tags: ["rss", "content-feed", "discoverability"],
@@ -57,16 +66,10 @@ export class RssFeedContentAudit extends Audit {
     const total = items.length;
 
     if (total === 0) {
-      return this.warn(
-        "Feed has no items to check.",
+      return this.notApplicable(
+        "The feed has no items, so there is no item content to check.",
         "Items with full content",
         "No items in feed",
-        {
-          priority: CheckPriority.Medium,
-          description:
-            "Your feed exists but contains no items. Add your latest content entries so AI agents can discover and index them.",
-          code: `<item>\n  <title>Article Title</title>\n  <link>https://yoursite.com/article</link>\n  <description>Article summary</description>\n</item>`,
-        },
       );
     }
 
@@ -86,31 +89,14 @@ export class RssFeedContentAudit extends Audit {
     /* v8 ignore next -- total === 0 is handled by early return above; branch is unreachable */
     const ratio = total > 0 ? withFullContent / total : 0;
 
-    if (ratio < 0.5) {
-      return this.fail(
-        `Only ${withFullContent}/${total} items have content > 500 characters.`,
-        "<content:encoded> or <description> > 500 chars per item",
-        `${withFullContent}/${total} items have substantial content`,
-        {
-          priority: CheckPriority.Medium,
-          description:
-            "Truncated feed items force AI agents to visit each page individually. Including full content via <content:encoded> lets agents index your articles from the feed alone, improving speed and coverage.",
-          code: `<item>\n  <title>Article Title</title>\n  <link>https://yoursite.com/article</link>\n  <content:encoded><![CDATA[\n    <p>Full article content goes here. Include all paragraphs,\n    headings, and relevant details.</p>\n  ]]></content:encoded>\n</item>`,
-        },
-      );
-    }
-
+    // Reported, never warned or failed: an excerpt feed is valid RSS and Atom,
+    // and the documented consumers fetch the page (policy.md, "Informative or
+    // obsolete").
     if (ratio < 1.0) {
-      return this.warn(
-        `${withFullContent}/${total} items have full content (> 500 chars).`,
-        "All items with > 500 chars",
-        `${withFullContent}/${total}`,
-        {
-          priority: CheckPriority.Low,
-          description:
-            "Some feed items have truncated content. Expanding all items to full content helps AI agents provide complete answers without additional page fetches.",
-          code: `<content:encoded><![CDATA[\n  <p>Full article content here...</p>\n]]></content:encoded>`,
-        },
+      return this.pass(
+        `${withFullContent}/${total} items carry full content (> 500 chars). Search and AI crawlers take the URL from the feed and fetch the article page, so excerpts cost nothing with an AI agent.`,
+        "All items > 500 chars",
+        `${withFullContent}/${total} items have substantial content`,
       );
     }
 

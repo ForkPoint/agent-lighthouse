@@ -7,6 +7,7 @@ import os from "node:os";
 import {
   sweepAudits,
   formatMarkdownReport,
+  reviewWindowDays,
   // The directive must sit on the line before the module specifier, which is
   // where TypeScript reports the missing declaration for the .mjs script.
   // @ts-expect-error - testing the .mjs script exports
@@ -31,8 +32,8 @@ describe("Phase 6: Audit Review Sweep (Law 10: Warrant Expires)", () => {
     }
   });
 
-  it("identifies all dossiers as overdue when simulated 1 year in the future", () => {
-    const futureDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+  it("identifies all dossiers as overdue when simulated 400 days in the future", () => {
+    const futureDate = new Date(Date.now() + 400 * 24 * 60 * 60 * 1000);
     const result = sweepAudits(futureDate);
 
     expect(result.overdueCount).toBe(result.totalAudits);
@@ -41,7 +42,7 @@ describe("Phase 6: Audit Review Sweep (Law 10: Warrant Expires)", () => {
     // Every dossier must be marked overdue
     for (const dossier of result.overdue) {
       expect(dossier.isOverdue).toBe(true);
-      expect(dossier.daysOld).toBeGreaterThan(180);
+      expect(dossier.daysOld).toBeGreaterThan(dossier.windowDays);
     }
 
     // Must sort oldest first
@@ -52,118 +53,68 @@ describe("Phase 6: Audit Review Sweep (Law 10: Warrant Expires)", () => {
     }
   });
 
-  it("handles edge cases in a hermetic mock directory: invalid dates, missing fields, quoted dates, and 180-day boundary", () => {
+  it("sets the review window by grade: A 365 days, B 182, C and D 91", () => {
+    expect(reviewWindowDays(EvidenceGrade.A)).toBe(365);
+    expect(reviewWindowDays(EvidenceGrade.B)).toBe(182);
+    expect(reviewWindowDays(EvidenceGrade.C)).toBe(91);
+    expect(reviewWindowDays(EvidenceGrade.D)).toBe(91);
+    // An unknown grade gets the shortest window.
+    expect(reviewWindowDays("Z")).toBe(91);
+  });
+
+  it("handles edge cases in a hermetic mock directory: invalid dates, missing fields, quoted dates, and per-grade boundaries", () => {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "al-sweep-test-"));
     const now = new Date("2026-09-02T12:00:00Z");
+    const daysAgo = (n: number) =>
+      new Date(now.getTime() - n * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0];
+    const write = (name: string, grade: string, reviewed?: string) =>
+      fs.writeFileSync(
+        path.join(tempDir, `${name}.md`),
+        [
+          "---",
+          `audit: test/${name}`,
+          "category: test",
+          `evidence_grade: ${grade}`,
+          ...(reviewed === undefined ? [] : [`reviewed: ${reviewed}`]),
+          "---",
+          "Content",
+          "",
+        ].join("\n"),
+      );
 
     try {
-      // 1. Fresh dossier (10 days old -> not overdue)
-      fs.writeFileSync(
-        path.join(tempDir, "fresh.md"),
-        `---
-audit: test/fresh
-category: test
-evidence_grade: A
-reviewed: 2026-08-23
----
-Content
-`,
-      );
-
-      // 2. Exact 179-day boundary (not overdue)
-      const day179Ago = new Date(now.getTime() - 179 * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .split("T")[0];
-      fs.writeFileSync(
-        path.join(tempDir, "boundary-fresh.md"),
-        `---
-audit: test/boundary-fresh
-category: test
-evidence_grade: B
-reviewed: "${day179Ago}"
----
-Content
-`,
-      );
-
-      // 3. Exact 181-day boundary (overdue)
-      const day181Ago = new Date(now.getTime() - 181 * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .split("T")[0];
-      fs.writeFileSync(
-        path.join(tempDir, "boundary-overdue.md"),
-        `---
-audit: test/boundary-overdue
-category: test
-evidence_grade: A
-reviewed: '${day181Ago}'
----
-Content
-`,
-      );
-
-      // 4. Missing reviewed field (overdue / never)
-      fs.writeFileSync(
-        path.join(tempDir, "no-date.md"),
-        `---
-audit: test/no-date
-category: test
-evidence_grade: C
----
-Content
-`,
-      );
-
-      // 5. Invalid date string (overdue)
-      fs.writeFileSync(
-        path.join(tempDir, "bad-date.md"),
-        `---
-audit: test/bad-date
-category: test
-evidence_grade: D
-reviewed: not-a-valid-date
----
-Content
-`,
-      );
+      write("fresh", "A", "2026-08-23");
+      // Each grade just inside and just past its window; mixed quoting.
+      write("a-inside", "A", `"${daysAgo(364)}"`);
+      write("a-past", "A", `'${daysAgo(366)}'`);
+      write("b-inside", "B", daysAgo(181));
+      write("b-past", "B", daysAgo(183));
+      write("c-inside", "C", daysAgo(90));
+      write("c-past", "C", daysAgo(92));
+      write("d-past", "D", daysAgo(92));
+      write("no-date", "C");
+      write("bad-date", "D", "not-a-valid-date");
 
       const result = sweepAudits(now, tempDir);
+      const byId = (id: string) =>
+        result.dossiers.find((d: any) => d.auditId === `test/${id}`);
 
-      expect(result.totalAudits).toBe(5);
-      expect(result.overdueCount).toBe(3); // boundary-overdue, no-date, bad-date
-
-      const fresh = result.dossiers.find(
-        (d: any) => d.auditId === "test/fresh",
+      expect(result.totalAudits).toBe(10);
+      expect(result.overdue.map((d: any) => d.auditId.slice(5)).sort()).toEqual(
+        ["a-past", "b-past", "bad-date", "c-past", "d-past", "no-date"],
       );
-      expect(fresh.isOverdue).toBe(false);
-      expect(fresh.daysOld).toBe(10);
 
-      const boundaryFresh = result.dossiers.find(
-        (d: any) => d.auditId === "test/boundary-fresh",
-      );
-      expect(boundaryFresh.isOverdue).toBe(false);
+      expect(byId("fresh").daysOld).toBe(10);
+      expect(byId("fresh").windowDays).toBe(365);
+      expect(byId("a-past").daysOld).toBe(366);
+      expect(byId("no-date").reviewed).toBe("never");
 
-      const boundaryOverdue = result.dossiers.find(
-        (d: any) => d.auditId === "test/boundary-overdue",
-      );
-      expect(boundaryOverdue.isOverdue).toBe(true);
-      expect(boundaryOverdue.daysOld).toBe(181);
-
-      const noDate = result.dossiers.find(
-        (d: any) => d.auditId === "test/no-date",
-      );
-      expect(noDate.isOverdue).toBe(true);
-      expect(noDate.reviewed).toBe("never");
-
-      const badDate = result.dossiers.find(
-        (d: any) => d.auditId === "test/bad-date",
-      );
-      expect(badDate.isOverdue).toBe(true);
-
-      // Verify sorting: never/invalid first, then largest daysOld
+      // Never/invalid first, then largest daysOld.
       expect(result.dossiers[0].daysOld).toBeNull();
       expect(result.dossiers[1].daysOld).toBeNull();
-      expect(result.dossiers[2].auditId).toBe("test/boundary-overdue");
+      expect(result.dossiers[2].auditId).toBe("test/a-past");
     } finally {
       fs.rmSync(tempDir, { recursive: true, force: true });
     }
@@ -199,7 +150,7 @@ Content
     const md = formatMarkdownReport(mockSweepResult);
     expect(md).toContain("# 📜 Scheduled Audit Evidence Review Sweep");
     expect(md).toContain("Total Registered Audits:** 2");
-    expect(md).toContain("Audits Overdue for Re-review (>180 days):** 2");
+    expect(md).toContain("Audits Overdue for Re-review:** 2");
     expect(md).toContain(
       "| `access-crawl-control/robots-txt-exists` | **A** |",
     );
@@ -215,7 +166,7 @@ Content
     };
 
     const md = formatMarkdownReport(mockSweepResult);
-    expect(md).toContain("Audits Overdue for Re-review (>180 days):** 0");
+    expect(md).toContain("Audits Overdue for Re-review:** 0");
     expect(md).toContain("✅ All audit evidence dossiers are up to date");
     expect(md).not.toContain("| Audit ID | Grade |");
   });

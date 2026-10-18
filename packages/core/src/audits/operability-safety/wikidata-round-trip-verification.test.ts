@@ -14,7 +14,12 @@ import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
 import { extractJsonLd, parseHtml } from "#core/parser";
 import type { FetchOptions, FetchResult } from "#core/fetcher";
 import type { AuditResult } from "#core/types";
-import { AuditTier, CheckStatus, EvidenceGrade } from "#core/types";
+import {
+  AuditTier,
+  CheckStatus,
+  EvidenceGrade,
+  ScoreDisplayMode,
+} from "#core/types";
 
 vi.mock("#core/fetcher", async (importOriginal) => {
   const actual = await importOriginal<typeof import("#core/fetcher")>();
@@ -229,11 +234,12 @@ describe("WikidataRoundTripVerificationAudit", () => {
     expect(requests).toHaveLength(2);
   });
 
-  it("registers as a scored grade-B audit", () => {
+  it("registers as an informative grade-C audit", () => {
     const { meta } = WikidataRoundTripVerificationAudit;
-    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
-    expect(meta.tier).toBe(AuditTier.Scored);
-    expect(meta.weight).toBeCloseTo(0.6);
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.C);
+    expect(meta.tier).toBe(AuditTier.Informative);
+    expect(meta.weight).toBe(0);
+    expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Informative);
     expect(meta.id.length).toBeLessThanOrEqual(64);
   });
 });

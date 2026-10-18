@@ -1,0 +1,96 @@
+name: Source Watch
+
+on:
+  schedule:
+    # Every Monday at 05:00 UTC
+    - cron: "0 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  # Read the previous run's state artifact.
+  actions: read
+
+concurrency:
+  group: source-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # State is kept as an artifact of the last successful run, not in the
+      # repo, so a weekly run never adds a commit. If it has expired (90 days
+      # without a successful run), this run records a fresh baseline.
+      - name: Download previous state
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p .source-watch
+          RUN_ID=$(gh run list --workflow source-watch.yml --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+          if [ -n "$RUN_ID" ]; then
+            gh run download "$RUN_ID" --name source-watch-state --dir .source-watch-prev || echo "No previous state artifact; recording a baseline."
+          else
+            echo "No previous successful run; recording a baseline."
+          fi
+
+      - name: Watch sources
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -o pipefail
+          node --import tsx scripts/watch-sources.ts \
+            --state .source-watch-prev/state.json \
+            --out .source-watch/state.json \
+            --markdown .source-watch/report.md | tee .source-watch/summary.json
+          cat .source-watch/report.md
+
+      - name: Keep state for the next run
+        uses: actions/upload-artifact@v7
+        with:
+          name: source-watch-state
+          path: |
+            .source-watch/state.json
+            .source-watch/report.md
+          retention-days: 90
+
+      - name: Open or update rolling source-watch issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ ! -f .source-watch/report.md ]; then
+            echo "No report was written; skipping the issue update."
+            exit 0
+          fi
+          NEEDS_REVIEW=$(node -e 'const s=JSON.parse(require("fs").readFileSync(".source-watch/summary.json","utf8"));console.log(s.needsReview ?? 0)' 2>/dev/null || echo 0)
+          echo "Changes needing review: $NEEDS_REVIEW"
+
+          gh label create source-watch --color 0E8A16 --description "Weekly source watch" 2>/dev/null || true
+
+          EXISTING_ISSUE=$(gh issue list --label source-watch --state open --json number --jq '.[0].number')
+
+          if [ -n "$EXISTING_ISSUE" ]; then
+            echo "Updating existing issue #$EXISTING_ISSUE"
+            gh issue edit "$EXISTING_ISSUE" --body-file .source-watch/report.md
+          elif [ "$NEEDS_REVIEW" -gt 0 ]; then
+            echo "Creating source-watch issue for $NEEDS_REVIEW change(s)"
+            gh issue create --title "Source Watch" --label source-watch --body-file .source-watch/report.md
+          else
+            echo "Nothing needs review and no open issue; nothing to create."
+          fi

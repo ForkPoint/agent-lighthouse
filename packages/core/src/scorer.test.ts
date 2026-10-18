@@ -6,9 +6,15 @@ import {
   buildCategoryResult,
   calculateOverallScore,
   gatedMassShare,
+  isObsolete,
   GATED_MASS_UNSCORED_THRESHOLD,
 } from "./scorer";
-import { CheckPriority, CheckStatus, ScoreDisplayMode } from "./types";
+import {
+  AuditTier,
+  CheckPriority,
+  CheckStatus,
+  ScoreDisplayMode,
+} from "./types";
 import { omit } from "#core/tests/omit";
 
 // ---------------------------------------------------------------------------
@@ -206,6 +212,30 @@ describe("buildCategoryResult", () => {
     expect(result.passCount).toBe(2);
     expect(result.warnCount).toBe(1);
     expect(result.failCount).toBe(1);
+  });
+
+  it("leaves obsolete checks out of passCount, warnCount and failCount", () => {
+    const obsolete = {
+      tier: AuditTier.Obsolete,
+      scoreDisplayMode: ScoreDisplayMode.Informative,
+      weight: 0,
+    };
+    const checks = [
+      makeCheck({ status: CheckStatus.Pass, score: 1.0 }),
+      makeCheck({ ...obsolete, status: CheckStatus.Warn, score: 0.5 }),
+      makeCheck({ ...obsolete, status: CheckStatus.Pass, score: 1.0 }),
+    ];
+    const result = buildCategoryResult("machine-discovery", checks);
+    expect(result.passCount).toBe(1);
+    expect(result.warnCount).toBe(0);
+    expect(result.failCount).toBe(0);
+    expect(result.checks).toHaveLength(3);
+  });
+
+  it("isObsolete reads the tier", () => {
+    expect(isObsolete(makeCheck({ tier: AuditTier.Obsolete }))).toBe(true);
+    expect(isObsolete(makeCheck({ tier: AuditTier.Informative }))).toBe(false);
+    expect(isObsolete(makeCheck())).toBe(false);
   });
 
   it("score matches calculateCategoryScore output", () => {

@@ -9,7 +9,7 @@ exports[`Snapshot Regression Tests > matches baseline results for Labs Homepage 
     "status": "pass",
   },
   {
-    "explanation": "llms.txt exists and is valid.",
+    "explanation": "llms.txt exists and starts with a # heading. No AI vendor documents reading it.",
     "id": "machine-discovery/llms-txt-exists",
     "score": 1,
     "status": "pass",

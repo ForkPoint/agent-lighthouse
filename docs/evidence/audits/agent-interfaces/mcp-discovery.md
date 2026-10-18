@@ -3,13 +3,12 @@ audit: agent-interfaces/mcp-discovery
 category: agent-interfaces
 source_file: packages/core/src/audits/agent-interfaces/mcp-discovery.ts
 slug: mcp-discovery
-evidence_grade: C
-disposition: "keep — fix required"
-reviewed: 2026-08-24
-recommended_tier: scored
-tier_rationale: "Recommended scored for one signal; ships informative because four of the five researched signals record `Consumers: none-known` and recommend informative or delete (contradiction sweep, 2026-08-24)."
+evidence_grade: D
+disposition: "obsolete tier (2026-10-18)"
+reviewed: 2026-10-18
+recommended_tier: obsolete
 consumers:
-  - all clients following RFC 8615 well-known conventions
+  - none-known (no MCP specification or client names /.well-known/mcp/servers.json)
 signals:
   - name: mcp-discovery-ai-catalog-well-known
     grade: C
@@ -27,10 +26,10 @@ signals:
     grade: A
     domain: agent-action-surfaces
 sources:
-  - mcp-sep-2127
   - mcp-ext-server-card-discovery
-  - ai-catalog-repo
+  - mcp-sep-2127
   - iana-well-known-uris
+  - ai-catalog-repo
   - mcp-spec-versioning
   - anthropic-claude-custom-connectors
   - openai-apps-sdk-deploy
@@ -49,9 +48,50 @@ sources:
 
 # mcp-discovery (`5.12`)
 
-> agent-tools · source `mcp-discovery.ts` · review verdict **fix** · evidence grade **A** · disposition: **keep — fix required**
+> agent-interfaces · source `mcp-discovery.ts` · evidence grade **D** · tier **obsolete** (weight 0, never fails)
 
 ## What it checks
+
+Whether the site still publishes a file at `/.well-known/mcp/servers.json`. Any non-HTML 200 with a body counts: the path is MCP-specific, so nothing else is expected there.
+
+The `/.well-known/ucp` commerce profile this audit used to read is not obsolete. Google Merchant reads it, and `agentic-commerce/ucp-profile` judges it.
+
+| State                                                              | Result                 |
+| :----------------------------------------------------------------- | :--------------------- |
+| a file served at `/.well-known/mcp/servers.json`, parseable or not | `warn`, priority `low` |
+| no response, a non-200, an HTML page, or an empty body             | `notApplicable`        |
+
+## Claimed mechanism (falsifiable)
+
+**Mechanism:** a servers list at a well-known path would let an MCP client find a site's servers. The claim this audit tests is that no client looks there, because MCP domain discovery uses a different path.
+
+## Evidence
+
+- The MCP Server Card extension says clients performing domain-level discovery "SHOULD attempt to retrieve" `/.well-known/ai-catalog.json`. It lists a `/.well-known/mcp` path only as an alternative it considered — [discovery.md](https://raw.githubusercontent.com/modelcontextprotocol/experimental-ext-server-card/main/docs/discovery.md) (verified 2026-10-18)
+- No MCP specification revision defines `/.well-known/mcp/servers.json`, and no MCP client documents fetching it.
+- The path is not in the IANA Well-Known URIs registry.
+
+**Counter-evidence:** The Server Card extension is still experimental, so the discovery route may change. If a later revision names this path, the audit is re-graded.
+
+## Scoring
+
+**Grade: D** — no specification defines the path and no client reads it. An obsolete audit carries weight 0 and never returns `fail` (`sunset.test.ts`; `Audit.toCheckResult` lowers a stray `fail` to `warn`). It does not move any score.
+
+## Example finding
+
+`/.well-known/mcp/servers.json` lists one server. The report says no client reads the path and asks for the server's Server Card in `/.well-known/ai-catalog.json`.
+
+## Implementation deviations
+
+- 2026-10-18: moved from informative (grade C) to the obsolete tier (grade D).
+- The `/.well-known/ucp` half moved to `agentic-commerce/ucp-profile`. The orchestrator still fetches `/.well-known/ucp` for that audit.
+- A present file is reported whatever it holds. The old `fail` rows (invalid JSON, no `servers` array, empty array) are now the same `warn`: a broken copy of an unread file is not a failure.
+
+## Record before the obsolete tier
+
+The dossier as it stood before the move on 2026-10-18. Kept as the research record; withheld from the public page.
+
+### What it checks
 
 Whether the site publishes an MCP discovery document at `/.well-known/mcp/servers.json` or `/.well-known/ucp`, and whether what it publishes can be read.
 
@@ -63,9 +103,9 @@ Whether the site publishes an MCP discovery document at `/.well-known/mcp/server
 
 Reported, not scored. Neither path is registered or specified, and no shipping MCP client is documented as fetching either, so a site with a working MCP server discovered by another route is not less agent-ready for publishing no such file. What an MCP server's actual reachability is checked by is `agent-interfaces/mcp-modern-era-reachability` and `mcp-oauth-discovery-chain`.
 
-## Evidence
+### Evidence
 
-### Signal: mcp-discovery-ai-catalog-well-known — grade C (agent-action-surfaces)
+#### Signal: mcp-discovery-ai-catalog-well-known — grade C (agent-action-surfaces)
 
 **Mechanism:** Publishing a JSON document at https://{site}/.well-known/ai-catalog.json that lists MCP Server Card entries (type application/mcp-server-card+json) causes MCP clients performing domain-level discovery to find and connect to the site's MCP server without manual URL entry.
 
@@ -73,7 +113,7 @@ Reported, not scored. Neither path is registered or specified, and no shipping M
 
 **Counter-evidence:** The SEP is not merged — nothing about this is in the ratified spec (current revision 2026-07-28). `ai-catalog.json` is not in the IANA Well-Known URIs registry (152 entries checked; mcp, mcp.json, ai-catalog.json, webmcp, openapi are all absent). The MCP extension repo carrying the discovery text has 5 stars. No MCP client vendor documents consuming it. Anthropic's own docs say 'You can manually add any third-party connector to Claude as long as you have the URL of that remote MCP server'. OpenAI's Apps SDK routes through a developer-mode URL paste, plus 'public plugin submission' with 'domain verification'. A probe of 19 major domains found only 2 publishers: Vercel and Zapier. SEP-2127 itself lists 'No Domain-Level Discovery' as an _unsolved_ pain point, which is an admission that the mechanism does not yet work.
 
-### Signal: mcp-server-card-document — grade C (agent-action-surfaces)
+#### Signal: mcp-server-card-document — grade C (agent-action-surfaces)
 
 **Mechanism:** An MCP Server Card is a JSON document carrying identity, remotes[], capabilities and auth. Serving it at the SEP-2127 recommended location, `<streamable-http-url>/server-card`, lets a client learn transport URLs, supported protocol versions and auth requirements before initialization. That removes a round trip, and enables registry crawling.
 
@@ -81,7 +121,7 @@ Reported, not scored. Neither path is registered or specified, and no shipping M
 
 **Counter-evidence:** Two incompatible paths already exist in the wild because SEP-1649 (which used /.well-known/mcp/server-card.json) was CLOSED 2026-01-26 and replaced by SEP-2127 (which does not reserve that path) — every real deployment found uses the superseded path. SEP-2127 remains unmerged after ~7 months in review with 41 comments and 27 review comments. No MCP client is documented as fetching a server card. The card cannot advertise tools, so it does not tell an agent what the site can actually do.
 
-### Signal: mcp-well-known-mcp-json — grade C (agent-action-surfaces)
+#### Signal: mcp-well-known-mcp-json — grade C (agent-action-surfaces)
 
 **Mechanism:** Publishing /.well-known/mcp.json on a website causes MCP clients to auto-discover the site's MCP endpoint.
 
@@ -89,7 +129,7 @@ Reported, not scored. Neither path is registered or specified, and no shipping M
 
 **Counter-evidence:** There is no specification for this path at all. It is not in the ratified MCP spec (2026-07-28), it is not in SEP-2127 (which chose /.well-known/ai-catalog.json instead), it is not in the closed SEP-1649 (which chose /.well-known/mcp/server-card.json), and `mcp.json` is not in the IANA Well-Known URIs registry. Worse, the deployed documents are mutually INCOMPATIBLE: Cloudflare serves {"mcpServers":{"cloudflare_site":{...transport:{type,url}}}} (a Claude-desktop-config shape) while Notion serves a flat {"name","description","icon","endpoint"} object. A parser written for one fails on the other, so no client could consume the path generically even if it wanted to. Recommendation: audit for it as a positive-only informative hint, never as a scored requirement, and never prescribe a schema — point authors at /.well-known/ai-catalog.json instead. Also guard against soft-404s: sites like linear.app and github.com return HTTP 200 text/html for /mcp and /openapi.json, so content-type checking is mandatory.
 
-### Signal: mcp-uri-scheme-and-dns-discovery — grade D (agent-action-surfaces)
+#### Signal: mcp-uri-scheme-and-dns-discovery — grade D (agent-action-surfaces)
 
 **Mechanism:** Publishing an `_mcp.{host} IN TXT` DNS record and/or a document at /.well-known/mcp-server lets clients resolve mcp://{host} to a live MCP endpoint.
 
@@ -97,7 +137,7 @@ Reported, not scored. Neither path is registered or specified, and no shipping M
 
 **Counter-evidence:** It is an individual submission with no IETF stream assignment and no working-group adoption; `mcp-server` is not in the IANA Well-Known URIs registry; the draft expires next month. Most decisively, it is CONTRADICTED by the upstream project: MCP's own SEP-2127 chose /.well-known/ai-catalog.json for domain-level discovery, so an audit that told authors to publish /.well-known/mcp-server would be steering them away from the path MCP is actually standardising. A probe found zero deployments. The rubric's mechanical rule would put a live Internet-Draft in 'experimental'; this dossier recommends delete instead, because the upstream conflict makes the advice actively misleading rather than merely unproven.
 
-### Signal: agent-surface-soft-404-validation — grade A (agent-action-surfaces)
+#### Signal: agent-surface-soft-404-validation — grade A (agent-action-surfaces)
 
 **Mechanism:** A well-known or conventional agent-discovery path that returns HTTP 200 with an HTML body is worse than a 404 — that body is an SPA catch-all rather than a real document. A conforming client follows the standard, fails to parse, and has no recourse. Any audit must therefore validate content-type and parseability, not status code.
 
@@ -105,7 +145,7 @@ Reported, not scored. Neither path is registered or specified, and no shipping M
 
 **Counter-evidence:** None found — this is a validation-correctness requirement, not a contested adoption claim. The only nuance is that content negotiation is legitimate. RFC 9727 permits additional formats beyond the mandatory Linkset, so an audit should send an explicit Accept header before concluding a publisher is non-conformant. It should also not penalise a clean 404, which is honest, the way it penalises an HTML 200, which is a lie.
 
-## Implementation deviations
+### Implementation deviations
 
 - The audit ships grade C, `informative`, weight 0. Four of its five signals record no known consumer.
 - The grade-A soft-404 signal is not split into its own audit. `agent-interfaces/openapi-exists` already applies it at `/.well-known/api-catalog`. At these paths no client exists to be misled.

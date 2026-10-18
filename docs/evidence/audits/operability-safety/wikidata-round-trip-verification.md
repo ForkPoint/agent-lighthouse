@@ -3,10 +3,10 @@ audit: operability-safety/wikidata-round-trip-verification
 category: operability-safety
 source_file: packages/core/src/audits/operability-safety/wikidata-round-trip-verification.ts
 slug: wikidata-round-trip-verification
-evidence_grade: B
-tier: scored
-disposition: "new in v2 — graduated from proposal 2026-08-23"
-reviewed: 2026-08-20
+evidence_grade: C
+tier: informative
+disposition: "new in v2 — graduated from proposal 2026-08-23; re-graded B/scored to C/informative 2026-10-18"
+reviewed: 2026-10-18
 graduated: 2026-08-23
 sources:
   - schemaorg-sameas
@@ -17,7 +17,7 @@ sources:
 
 # Wikidata round-trip entity verification
 
-> Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **C** · informative tier (weight 0) · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -53,7 +53,9 @@ A SaaS company's Organization JSON-LD lists sameAs: https://www.wikidata.org/wik
 
 ## Scoring
 
-Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
+Tier per evidence policy: **informative (weight 0)**.
+
+**Grade: C** — the round trip is well defined: schema.org `sameAs` and Google's Organization guidance define the claim, and Wikidata P856 with `wbgetclaims` defines the check. No search engine or AI vendor documents performing it. A search on 2026-10-18 for official documentation that Google's Knowledge Graph reads Wikidata found only SEO blogs, which are not citable. Wikidata and `sameAs` are live, so this is informative, not obsolete.
 
 ## Implementation deviations
 
@@ -67,3 +69,9 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 - Wikipedia `sameAs` round trips through the sitelinks API.
 - A cross-scan cache per Q-id. The cache is per scan.
 - A configurable alias set. A same-name, different-TLD result warns instead.
+
+## Review history
+
+- **2026-10-18:** re-graded B/scored to C/informative. None of the four sources
+  is a consumer; they define the two halves of the round trip. Verdict rules
+  are unchanged; `defaultPriority` moved from medium to low.

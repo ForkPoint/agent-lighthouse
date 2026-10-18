@@ -14,6 +14,7 @@ import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
 import type { FetchOptions, FetchResult } from "#core/fetcher";
 import type { AuditResult } from "#core/types";
 import { AuditTier, CheckStatus, EvidenceGrade } from "#core/types";
+import { AuditResultSchema } from "#core/schemas";
 
 vi.mock("#core/fetcher", async (importOriginal) => {
   const actual = await importOriginal<typeof import("#core/fetcher")>();
@@ -126,32 +127,51 @@ describe("SyntheticMediaDisclosureValidityAudit", () => {
     expect(result.details?.["declaredCoverage"]).toBe(100);
   });
 
-  it("fails a bare concept id", async () => {
+  // Google's image-metadata page lists bare codes linked to https URIs and does
+  // not say which spelling it reads, so the near-miss spellings warn.
+  it("warns on a bare concept id", async () => {
     const result = await run({
       "https://example.com/a.jpg": jpegWith(packet("trainedAlgorithmicMedia")),
     });
-    expect(result.status).toBe(CheckStatus.Fail);
-    expect(strings(result, "failures").join(" ")).toContain("bare concept");
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(strings(result, "warnings").join(" ")).toContain("bare concept");
+    expect(strings(result, "failures")).toEqual([]);
   });
 
-  it("fails an https spelling of the http vocabulary URI", async () => {
+  it("warns on an https spelling of the http vocabulary URI", async () => {
     const result = await run({
       "https://example.com/a.jpg": jpegWith(
         packet(VALID_URI.replace("http://", "https://")),
       ),
     });
-    expect(result.status).toBe(CheckStatus.Fail);
-    expect(strings(result, "failures").join(" ")).toContain(
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(strings(result, "warnings").join(" ")).toContain(
       "https where the vocabulary uses http",
     );
   });
 
-  it("fails a trailing slash", async () => {
+  it("warns on a trailing slash", async () => {
     const result = await run({
       "https://example.com/a.jpg": jpegWith(packet(`${VALID_URI}/`)),
     });
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(strings(result, "warnings").join(" ")).toContain("trailing slash");
+    expect(AuditResultSchema.safeParse(result).success).toBe(true);
+  });
+
+  it("fails when one image is free text, even beside a near-miss spelling", async () => {
+    const result = await run(
+      {
+        "https://example.com/a.jpg": jpegWith(
+          packet("trainedAlgorithmicMedia"),
+        ),
+        "https://example.com/b.jpg": jpegWith(packet("AI-generated")),
+      },
+      '<html><body><img src="/a.jpg"><img src="/b.jpg"></body></html>',
+    );
     expect(result.status).toBe(CheckStatus.Fail);
-    expect(strings(result, "failures").join(" ")).toContain("trailing slash");
+    expect(strings(result, "failures").join(" ")).toContain("free text");
+    expect(strings(result, "warnings").join(" ")).toContain("bare concept");
   });
 
   it("fails free text", async () => {

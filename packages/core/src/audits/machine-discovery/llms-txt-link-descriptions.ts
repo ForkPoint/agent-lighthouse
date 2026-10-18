@@ -12,6 +12,7 @@ import {
   ScoreDisplayMode,
 } from "#core/types";
 import { isRootArtifact, rootArtifactMiss } from "#core/gatherers/root-files";
+import { LLMS_TXT_NO_EFFECT, LLMS_TXT_NOTICE } from "./_llms-txt-notice";
 
 export class LlmsTxtLinkDescriptionsAudit extends Audit {
   static override meta: AuditMeta = {
@@ -20,19 +21,20 @@ export class LlmsTxtLinkDescriptionsAudit extends Audit {
     title: "llms.txt links include descriptions",
     failureTitle: "llms.txt links include descriptions",
     description:
-      "Link descriptions help AI agents understand what each page covers without visiting it, reducing unnecessary crawling.",
+      "The llms.txt format allows a short description after each link. Reports how many links carry one. No AI vendor documents reading llms.txt, so this check is reported and never scored.",
     scoreDisplayMode: ScoreDisplayMode.Informative,
     weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
     evidenceGrade: EvidenceGrade.C,
     tier: AuditTier.Informative,
     dossier:
       "docs/evidence/audits/machine-discovery/llms-txt-link-descriptions.md",
+    deprecated: LLMS_TXT_NOTICE,
     requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
-    defaultPriority: CheckPriority.Medium,
+    defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
-        "Links without descriptions force AI agents to visit every page to understand its content, wasting crawl budget and slowing down response generation. Described links let agents filter relevant pages instantly.",
-      fix: "Add a colon and brief description after each link URL in your llms.txt file. Describe what the page covers in a few words so agents can decide which pages to visit.",
+        "A description tells a reader of the file what each linked page covers. The format makes it optional, and no AI vendor documents reading llms.txt, so a missing description costs nothing with an AI agent.",
+      fix: "Optional. If you publish an llms.txt, add a colon and a few words after each link URL saying what the page covers.",
       code: "- [Getting Started](/docs/start): Step-by-step guide for new users\n- [API Reference](/docs/api): Complete endpoint documentation\n- [Pricing](/pricing): Plans and pricing information",
       effort: FixEffort.Trivial,
       docsUrl: "https://llmstxt.org/",
@@ -55,48 +57,24 @@ export class LlmsTxtLinkDescriptionsAudit extends Audit {
 
     const links = extractMarkdownLinks(result.body);
 
+    // Reported, never warned or failed: descriptions are optional in the
+    // format and no AI vendor reads the file (policy.md, "Informative or
+    // obsolete"). The counts stay in the message for anyone who wants them.
     if (links.length === 0) {
-      return this.warn(
-        "llms.txt contains no markdown links.",
+      return this.pass(
+        `llms.txt contains no markdown links, so there are no descriptions to count; Chrome Lighthouse flags a file with no links. ${LLMS_TXT_NO_EFFECT}`,
         "Links follow - [Name](url): description pattern",
         "No links found",
-        {
-          priority: CheckPriority.Medium,
-          description:
-            "Without links, AI agents cannot discover your pages from llms.txt. Add links to your most important pages using the markdown list format with descriptions so agents know what each page covers.",
-          code: `- [Getting Started](/docs/start): Step-by-step guide for new users\n- [API Reference](/docs/api): Complete endpoint documentation\n- [Pricing](/pricing): Plans and pricing information`,
-        },
       );
     }
 
     const withDescription = links.filter((l) => l.description.length > 0);
-    const ratio = withDescription.length / links.length;
 
-    if (ratio < 0.5) {
-      return this.fail(
-        `Only ${withDescription.length}/${links.length} links have descriptions.`,
+    if (withDescription.length < links.length) {
+      return this.pass(
+        `${withDescription.length}/${links.length} links have descriptions. ${LLMS_TXT_NO_EFFECT}`,
         "All links follow - [Name](url): description",
         `${withDescription.length}/${links.length} have descriptions`,
-        {
-          priority: CheckPriority.Medium,
-          description:
-            "Link descriptions help AI agents decide which pages to visit without crawling them all. Add a colon and brief description after each link URL explaining what the page covers.",
-          code: `- [Page Name](/path): Brief description of the page content and purpose`,
-        },
-      );
-    }
-
-    if (ratio < 1.0) {
-      return this.warn(
-        `${withDescription.length}/${links.length} links have descriptions.`,
-        "All links follow - [Name](url): description",
-        `${withDescription.length}/${links.length} have descriptions`,
-        {
-          priority: CheckPriority.Low,
-          description:
-            "Some links are missing descriptions. Adding descriptions to all links helps AI agents efficiently filter relevant pages without visiting each one.",
-          code: `- [Page Name](/path): Brief description of the page content and purpose`,
-        },
       );
     }
 

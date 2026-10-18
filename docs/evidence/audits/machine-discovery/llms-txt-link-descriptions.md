@@ -5,7 +5,7 @@ source_file: packages/core/src/audits/machine-discovery/llms-txt-link-descriptio
 slug: llms-txt-link-descriptions
 evidence_grade: C
 disposition: "keep — fix required"
-reviewed: 2026-08-21
+reviewed: 2026-10-18
 sources:
   - llmstxt-spec-link
   - llms-txt-core-source
@@ -15,6 +15,7 @@ sources:
   - evil-martians-llm-traffic
   - s18
   - perplexity-crawlers-docs
+  - ahrefs-llmstxt-study
 ---
 
 # llms-txt-link-descriptions (`1.4`)
@@ -23,7 +24,15 @@ sources:
 
 ## What it checks
 
-Link descriptions help AI agents understand what each page covers without visiting it, reducing unnecessary crawling.
+How many markdown links in `/llms.txt` carry a description after the URL, in the form `- [Name](url): description`. The format makes descriptions optional.
+
+## Why it matters
+
+No AI vendor documents reading llms.txt or llms-full.txt from a website at runtime. An [Ahrefs study of 137,210 domains](https://ahrefs.com/blog/llmstxt-study/) (verified 2026-10-18) found that 97% of llms.txt files received no requests in a month. AI tools never asked for a missing file. Tools a user points at the file, such as documentation helpers in coding agents, can still read it. Link descriptions are optional in the format.
+
+## How it scores
+
+Informative, weight 0. Every result carries an `unconsumed` notice: no AI vendor documents reading this file. The audit never warns or fails. An absent file is not applicable. A file that is present passes, and links without descriptions, or a file with no links, are named in the pass message, with the note that it does not affect AI agents.
 
 ## Evidence
 
@@ -43,3 +52,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - Chrome's agentic-browsing Lighthouse audit fails an llms.txt that contains no markdown links at all. The test is `/\[.+\]\(.+\)/`, and the message is "File does not appear to contain any links". That corroborates that the described link list, not the prose, is the payload — https://github.com/GoogleChrome/lighthouse/blob/main/core/audits/agentic/llms-txt.js (verified 2026-08-21)
 
 **Counter-evidence:** The same Lighthouse audit stops at "contains at least one link" and checks nothing about descriptions, so even the one vendor-shipped llms.txt checker does not treat the note as required (https://github.com/GoogleChrome/lighthouse/blob/main/core/audits/agentic/llms-txt.js, verified 2026-08-21). The spec marks the note "optional" (https://llmstxt.org/, verified 2026-08-21), so the audit's 50%-described FAIL threshold has no basis in any published source. Google states Search ignores llms.txt and that no AI text file is needed for its generative features (https://developers.google.com/search/docs/fundamentals/ai-optimization-guide, verified 2026-08-21). Measured traffic shows named AI assistants accounted for only 37 of ~770 llms.txt fetches over two months, while ~15% of agent page reads came through `Accept:`-negotiated Markdown instead — i.e. the observed agent path bypasses llms.txt (https://evilmartians.com/chronicles/which-ai-actually-reads-your-site-two-months-of-llm-traffic-measured, verified 2026-08-21). OpenAI (https://developers.openai.com/api/docs/bots) and Perplexity (https://docs.perplexity.ai/docs/resources/perplexity-crawlers) mention llms.txt on their crawler pages only as the index of their own documentation. Neither says its crawlers read another site's llms.txt (both verified 2026-10-18).
+
+## Implementation deviations
+
+- **Report only, from 2026-10-18.** The 2026-10-18 consumer review (policy.md, "Informative or obsolete") keeps this audit informative with an `unconsumed` notice and removes every warn and fail. Fewer than half described used to fail, and partial coverage or no links used to warn. All three now pass with the counts in the message.

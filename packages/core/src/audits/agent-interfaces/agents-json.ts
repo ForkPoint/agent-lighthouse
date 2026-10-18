@@ -8,9 +8,10 @@ import {
   EvidenceGrade,
   EvidenceKey,
   FixEffort,
+  NoticeKind,
   ScoreDisplayMode,
 } from "#core/types";
-import { isHtmlDocument } from "#core/gatherers/root-files";
+import { isRootArtifact } from "#core/gatherers/root-files";
 
 /** The path the agents.json spec names for discovery. */
 const AGENTS_JSON_PATH = "/.well-known/agents.json";
@@ -38,165 +39,84 @@ function isAgentsJsonDocument(parsed: unknown): boolean {
   return Array.isArray(parsed["sources"]) || Array.isArray(parsed["flows"]);
 }
 
-/** A short, scalar description of what was served, for the `found` field. */
-function describeJsonShape(parsed: unknown): string {
-  if (Array.isArray(parsed)) return `JSON array (${parsed.length} entr(ies))`;
-  if (parsed === null) return "JSON null";
-  if (!isObject(parsed)) return `JSON ${typeof parsed}`;
-  const keys = Object.keys(parsed);
-  return keys.length === 0
-    ? "Empty JSON object"
-    : `JSON object with keys: ${keys.slice(0, 10).join(", ")}`;
-}
+const REPLACEMENT =
+  "A2A /.well-known/agent-card.json for agents, an MCP Server Card in /.well-known/ard.json or /.well-known/ai-catalog.json for tools, or RFC 9727 /.well-known/api-catalog for APIs.";
 
 export class AgentsJsonAudit extends Audit {
   static override meta: AuditMeta = {
     id: "agent-interfaces/agents-json",
     category: "agent-interfaces",
-    // `title` renders on `pass` and on `na`, `failureTitle` on everything else.
-    // Absence of the file is `na` here, so the title has to read true over a
-    // site that has never heard of the convention — hence a neutral label
-    // rather than a claim about what the site did or failed to do.
-    title: "agents.json at /.well-known/agents.json",
-    failureTitle:
-      "agents.json is published but not served as a usable document",
+    // An obsolete audit speaks only when the owner still publishes the file,
+    // so both titles describe the file rather than a site that lacks it.
+    title: "agents.json at /.well-known/agents.json (obsolete)",
+    failureTitle: "An obsolete agents.json document is still published",
     description:
-      "agents.json (Wild Card AI, spec v0.1.0) layers agent-facing flows over OpenAPI at `/.well-known/agents.json`. No AI vendor documents consuming it, the spec never moved past v0.1.0, both of its project domains are offline and the path is absent from the IANA Well-Known URIs registry — so this check never asks a site to publish the file. It reports, with no score effect, whether what is served at that path is a real agents.json document or an HTML shell.",
+      "Reports an agents.json document (Wild Card AI, spec v0.1.0) still served at `/.well-known/agents.json`. The spec never moved past v0.1.0, its repository has been inactive since 2025-08-21, its homepage is offline, the path is not in the IANA Well-Known URIs registry, several incompatible formats share it, and no client documents reading it. This check never asks a site to publish the file.",
     scoreDisplayMode: ScoreDisplayMode.Informative,
-    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
-    evidenceGrade: EvidenceGrade.C,
-    tier: AuditTier.Informative,
+    weight: weightForGrade(EvidenceGrade.D, AuditTier.Obsolete),
+    evidenceGrade: EvidenceGrade.D,
+    tier: AuditTier.Obsolete,
+    deprecated: {
+      kind: NoticeKind.Obsolete,
+      notice:
+        "agents.json has no live specification and no known reader. Several incompatible formats use the same path.",
+      link: "https://github.com/wild-card-ai/agents-json",
+      replacement: REPLACEMENT,
+    },
     dossier: "docs/evidence/audits/agent-interfaces/agents-json.md",
     requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
     defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
-        "Publishing agents.json is not known to make a site reachable to any agent: no vendor documents reading the file, and the specification has been dormant since 2025-08-21. What does matter is that a document already published at a well-known path can be read — a 200 carrying the site's HTML shell tells a conforming client the resource exists and then gives it nothing to parse, which is worse than a clean 404.",
-      fix: "Nothing to do if the site does not publish this file; its absence is not a finding. If the site already publishes one, the agents.json v0.1.0 shape is an `info` object alongside a `sources` array (each entry pointing at an OpenAPI document) or a `flows` array, served as JSON. A path that answers 200 with the site shell is better served as a 404.",
-      code: `// Reference only — the agents.json v0.1.0 document shape,
-// for a site that already publishes /.well-known/agents.json.
-{
-  "$schema": "https://raw.githubusercontent.com/wild-card-ai/agents-json/main/schema/agents.schema.json",
-  "info": {
-    "title": "Your Site",
-    "version": "0.1.0",
-    "description": "Agent-facing flows over your existing API"
-  },
-  "sources": [
-    { "id": "api", "path": "/openapi.json" }
-  ],
-  "flows": []
-}`,
+        "The file costs nothing to keep, but no agent is known to read it: the specification has been dormant since 2025-08-21 and no vendor documents fetching the path.",
+      fix: `Nothing is required. Remove the file when convenient, and declare what agents can use through a maintained route instead: ${REPLACEMENT}`,
       // `effort` is a required field on AuditGuidance and ships on every
-      // status, including `na`. It describes correcting a file the site has
-      // already chosen to publish, not creating one.
-      effort: FixEffort.Easy,
+      // status. It describes removing a file the site already publishes.
+      effort: FixEffort.Trivial,
       // The audit shipped `https://agentsjson.org/`, which the 2026-08-21
       // research confirmed is NXDOMAIN. The upstream repository is the only
       // reachable primary source for the spec.
       docsUrl: "https://github.com/wild-card-ai/agents-json",
-      tags: ["agents-json", "discovery", "agent-protocol"],
+      tags: ["agents-json", "discovery", "agent-protocol", "obsolete"],
     },
   };
 
   audit(ctx: CheckContext): AuditResult {
     const expected =
-      "If /.well-known/agents.json is published, it parses as an agents.json document (an `info` object plus a `sources` or `flows` array)";
+      "No agents.json document: the format has no live specification and no known reader";
 
     const file = ctx.rootFiles[AGENTS_JSON_PATH];
 
-    // Absence is not a defect. The convention has no documented consumer, no
-    // IANA registration and a dormant spec, so a site that publishes nothing
-    // here has withheld nothing any agent is known to want. `notApplicable`
-    // keeps it out of scoring entirely rather than rewarding absence.
-    if (!file || file.status !== 200 || !file.body.trim()) {
-      const found = !file
-        ? "No agents.json published"
-        : file.status === 200
-          ? "HTTP 200 with an empty body"
-          : `${AGENTS_JSON_PATH} returned HTTP ${file.status}`;
-      return this.notApplicable(
-        "This site publishes no agents.json. The convention has no documented consumer, so not publishing it is not a finding.",
-        expected,
-        found,
-      );
-    }
-
-    const contentType = file.contentType || "no content-type";
-
-    // An HTML body behind a 200 at a well-known path claims adoption the site
-    // does not have. It used to be reported as "agents.json is not valid
-    // JSON", which names the wrong defect.
-    // A body sniff and nothing else: a document that parses as JSON is never
-    // reported as HTML because the response carried the wrong `Content-Type`.
-    // That case is a separate, milder finding below.
-    if (isHtmlDocument(file.body)) {
-      return {
-        ...this.warn(
-          `${AGENTS_JSON_PATH} answers HTTP 200 with an HTML page rather than a document. A well-known path that returns the site shell reports adoption the site does not have; a clean 404 is the honest answer and is not a finding here.`,
-          expected,
-          `HTTP 200 ${contentType}, body begins with HTML`,
-          CheckPriority.Low,
-        ),
-        details: { contentType, bodyLooksLikeHtml: true },
-      };
-    }
-
-    const parsed = tryParseJson(file.body);
-
-    if (parsed === undefined) {
-      return {
-        ...this.warn(
-          `Something is served at ${AGENTS_JSON_PATH}, but the body does not parse as JSON.`,
-          expected,
-          `HTTP 200 ${contentType}, body does not parse as JSON`,
-          CheckPriority.Low,
-        ),
-        details: { contentType },
-      };
-    }
-
-    // The old rule accepted `isObject(parsed) || Array.isArray(parsed)`, so
-    // `[]`, `{}` and any unrelated config file at this path were reported as
-    // adoption. Validate the shape the spec actually defines.
+    // Absent artifact, absent verdict. The obsolete tier tells an owner about
+    // a document they still publish. A 404, an HTML stand-in, a body that does
+    // not parse, or JSON of another shape is not an agents.json document, and
+    // other formats share this path, so none of them is called obsolete.
+    const parsed =
+      isRootArtifact(file) && file.body.trim()
+        ? tryParseJson(file.body)
+        : undefined;
     if (!isAgentsJsonDocument(parsed)) {
-      return {
-        ...this.warn(
-          `JSON is served at ${AGENTS_JSON_PATH}, but it is not an agents.json document — the spec requires an \`info\` object and a \`sources\` or \`flows\` array.`,
-          expected,
-          describeJsonShape(parsed),
-          CheckPriority.Low,
-        ),
-        details: { contentType },
-      };
+      return this.notApplicable(
+        "This site publishes no agents.json document, so there is nothing to retire.",
+        expected,
+        file
+          ? `${AGENTS_JSON_PATH} answered HTTP ${file.status} without an agents.json document`
+          : "No agents.json published",
+      );
     }
 
     const doc = parsed as Record<string, unknown>;
     const sources = Array.isArray(doc["sources"]) ? doc["sources"].length : 0;
     const flows = Array.isArray(doc["flows"]) ? doc["flows"].length : 0;
 
-    // The body is a real document, but a client dispatching on media type will
-    // not read it as one. Reported separately so the message never claims the
-    // body is HTML when it is not.
-    if (file.contentType.toLowerCase().includes("text/html")) {
-      return {
-        ...this.warn(
-          `An agents.json document is published at ${AGENTS_JSON_PATH}, but it is served as \`${file.contentType}\`. A client that dispatches on media type will not read it as a document.`,
-          expected,
-          `Valid agents.json document served with Content-Type: ${file.contentType}`,
-          CheckPriority.Low,
-        ),
-        details: { contentType, sources, flows },
-      };
-    }
-
     return {
-      ...this.pass(
-        "A valid agents.json document is published (an `info` object with a `sources` or `flows` array).",
+      ...this.warn(
+        `An agents.json document is published at ${AGENTS_JSON_PATH}. The format has no live specification and no known reader, and several incompatible formats use the same path. It does no harm. To reach agents, use ${REPLACEMENT}`,
         expected,
-        `Valid agents.json document: ${sources} source(s), ${flows} flow(s)`,
+        `agents.json document: ${sources} source(s), ${flows} flow(s)`,
+        CheckPriority.Low,
       ),
-      details: { contentType, sources, flows },
+      details: { sources, flows },
     };
   }
 }

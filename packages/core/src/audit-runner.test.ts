@@ -29,6 +29,10 @@ import {
 } from "./types";
 import { WafProvider } from "./waf-detector";
 
+// Every registration in the default config; derived so a new audit does not
+// need a count edit here.
+const REGISTERED_COUNT = Object.values(defaultConfig.audits).flat().length;
+
 // ---------------------------------------------------------------------------
 // Helpers: build tiny fake Audit subclasses + registrations
 // ---------------------------------------------------------------------------
@@ -636,7 +640,7 @@ describe("planAudits on a scan that read nothing", () => {
   it("runs nothing at all", () => {
     const plan = planAudits(unreachableContext(), defaultConfig);
     expect(plan.runnable).toHaveLength(0);
-    expect(plan.skipped).toHaveLength(215);
+    expect(plan.skipped).toHaveLength(REGISTERED_COUNT);
   });
 
   it("tags every skip with the reason the scan gave", () => {
@@ -659,7 +663,7 @@ describe("planAudits on a scan that read nothing", () => {
 it("lets tests address every registered audit without weakening production", () => {
   const plan = planAllAuditsForTest(defaultConfig);
 
-  expect(plan.runnable).toHaveLength(215);
+  expect(plan.runnable).toHaveLength(REGISTERED_COUNT);
   expect(plan.skipped).toEqual([]);
 });
 

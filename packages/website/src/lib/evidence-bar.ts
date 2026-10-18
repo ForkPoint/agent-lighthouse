@@ -12,10 +12,10 @@ import { AuditTier } from "@forkpoint/agent-lighthouse-core";
  * see carries its own evidence, not whether something upstairs in the working
  * record did.
  *
- * Informative and experimental audits are held to the first three rules only.
- * They carry weight 0, so no site's score depends on them, and the honest thing
- * for a signal with no documented consumer is to say so rather than to be
- * suppressed.
+ * Informative, experimental and obsolete audits are held to the first three
+ * rules only. They carry weight 0, so no site's score depends on them, and the
+ * honest thing for a signal with no documented consumer is to say so rather
+ * than to be suppressed.
  */
 
 /**

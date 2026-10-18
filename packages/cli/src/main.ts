@@ -30,11 +30,15 @@ import {
   CliCommand,
 } from "./options";
 import { tierMarker } from "./tier-marker";
+import { noticeLines, obsoleteLines } from "./notice-block";
 import {
   buildReportView,
   formatBrowserAssessment,
   generateHtmlReport,
   generateMarkdownSummary,
+  NOTICE_LABELS,
+  noticeKind,
+  noticeText,
 } from "@forkpoint/agent-lighthouse-report";
 import {
   writeFileSync,
@@ -380,13 +384,20 @@ async function audit(targetUrl?: string) {
       }
     }
     console.log();
+    for (const line of [...obsoleteLines(view), ...noticeLines(view)])
+      console.log(line);
   }
 
   // Audit Debugger Output
   if (debugAudit) {
-    const allChecks = view.groups.flatMap((g) =>
-      g.categories.flatMap((c) => [...c.checks, ...c.notApplicable]),
-    );
+    // Obsolete checks live outside the categories, so they join here.
+    const allChecks = [
+      ...view.groups.flatMap((g) =>
+        g.categories.flatMap((c) => [...c.checks, ...c.notApplicable]),
+      ),
+      ...view.obsolete.found,
+      ...view.obsolete.absent,
+    ];
     const targetChecks = selectDebugChecks(allChecks, debugAudit);
 
     if (targetChecks.length === 0) {
@@ -430,6 +441,10 @@ async function audit(targetUrl?: string) {
           console.log(`  \x1b[90mImpact:\x1b[0m      ${check.impact}`);
         if (check.fix)
           console.log(`  \x1b[90mFix:\x1b[0m         ${check.fix}`);
+        if (check.deprecated)
+          console.log(
+            `  \x1b[90m${NOTICE_LABELS[noticeKind(check.deprecated)]}:\x1b[0m ${noticeText(check.deprecated)} (${check.deprecated.link})`,
+          );
         if (check.details?.code) {
           console.log(`  \x1b[90mCode Example:\x1b[0m`);
           console.log(

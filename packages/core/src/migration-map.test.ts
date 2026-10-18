@@ -27,11 +27,12 @@ const map = JSON.parse(
   readFileSync(join(__dirname, "..", "migration-map.json"), "utf8"),
 ) as Record<string, Entry>;
 
-// The 26 v1 audits removed in this major release (18 in the v1.0.0 sunset
-// wave, 8 added by the 2026-08-21 grading pass).
+// The 25 v1 audits that stay removed: 18 in the v1.0.0 sunset wave and 8
+// added by the 2026-08-21 grading pass, less 5.11 (agent-tools/ai-plugin-json),
+// revived on 2026-10-18 as the obsolete-tier agent-interfaces/ai-plugin-json so
+// that sites still publishing the retired manifest are told so.
 const REMOVED_IDS = [
   "7.1",
-  "5.11",
   "5.17",
   "5.4",
   "5.25",
@@ -58,16 +59,17 @@ const REMOVED_IDS = [
   "8.20",
 ];
 
-// The 181 v1 audits that survive into v2 — every non-sunset row of
-// docs/evidence/audit-map.json, one entry each.
-const SURVIVING_COUNT = 181;
+// The 182 v1 audits that survive into v2 — every non-sunset row of
+// docs/evidence/audit-map.json, one entry each. 5.11 joined on 2026-10-18.
+const SURVIVING_COUNT = 182;
 
-// Pinned end state of the v2 migration wave. 26 + 181 = 207, the full v1 audit
+// Pinned end state of the v2 migration wave. 25 + 182 = 207, the full v1 audit
 // set; the map is closed, so any later change to any of the three has to be a
 // deliberate edit here rather than silent drift.
 const TOTAL_COUNT = 207;
 
-// The audits reachable from the migration map: the 148 Plan 4 closed on. Every
+// The audits reachable from the migration map: the 148 Plan 4 closed on, plus
+// agent-interfaces/ai-plugin-json, revived from 5.11 on 2026-10-18. Every
 // surviving entry's `to` must be one of them, and every one of them must be
 // some entry's `to`. Plan 5 grows the registry past this number with audits
 // that have no v1 predecessor; those are named in NEW_IN_V2 and excluded from
@@ -76,7 +78,7 @@ const TOTAL_COUNT = 207;
 const REGISTRY_COUNT = MIGRATED_COUNT;
 
 // `to` targets that are deliberately allowed not to be registered, each with a
-// written rationale. Empty by design: every one of the 181 surviving entries
+// written rationale. Empty by design: every one of the 182 surviving entries
 // points at a landed, registered v2 audit. The one deferral Plan 4 carries —
 // 5.23's runtime half, reading a live MCP `tools/list` response — is a deferred
 // *part of a signal*, not a deferred target: 5.23 still resolves to the
@@ -134,8 +136,8 @@ const registeredIds = Object.values(defaultConfig.audits)
   .map((r) => r.meta.id);
 
 describe("migration-map.json", () => {
-  it("covers every v1 audit id — 26 removed plus 181 carried into v2", () => {
-    expect(REMOVED_IDS).toHaveLength(26);
+  it("covers every v1 audit id — 25 removed plus 182 carried into v2", () => {
+    expect(REMOVED_IDS).toHaveLength(25);
     expect(REMOVED_IDS.length + SURVIVING_COUNT).toBe(TOTAL_COUNT);
     expect(entries).toHaveLength(TOTAL_COUNT);
     expect(surviving).toHaveLength(SURVIVING_COUNT);
@@ -143,11 +145,11 @@ describe("migration-map.json", () => {
 
   // Exact per-status census, not just a total: a row flipped from `renamed` to
   // `removed` (or back) keeps the total at 207 and would otherwise slip through.
-  it("splits the 207 entries exactly 26 removed / 181 renamed", () => {
+  it("splits the 207 entries exactly 25 removed / 182 renamed", () => {
     const census = new Map<string, number>();
     for (const [, entry] of entries)
       census.set(entry.status, (census.get(entry.status) ?? 0) + 1);
-    expect(Object.fromEntries(census)).toEqual({ removed: 26, renamed: 181 });
+    expect(Object.fromEntries(census)).toEqual({ removed: 25, renamed: 182 });
   });
 
   it('has exactly the known removed ids under status "removed"', () => {
@@ -211,7 +213,7 @@ describe("migration-map.json", () => {
       .filter(([, e]) => !registeredIds.includes(e.to!))
       .map(label);
     // Anything unregistered has to be a named, documented deferral. That list
-    // is empty, so this reads as: all 181 targets have landed in the registry.
+    // is empty, so this reads as: all 182 targets have landed in the registry.
     const allowed = surviving
       .filter(([, e]) => DOCUMENTED_DEFERRALS.includes(e.to!))
       .map(label);
@@ -220,7 +222,7 @@ describe("migration-map.json", () => {
 
   // The registry is pinned here too, so a migration-map entry and an audit
   // registration can never drift apart without one of the two tests failing.
-  it("registers the 148 migrated audits plus the new-in-v2 additions", () => {
+  it("registers the 149 migrated audits plus the new-in-v2 additions", () => {
     expect(registeredIds).toHaveLength(REGISTRY_COUNT + NEW_IN_V2.length);
     expect(new Set(surviving.map(([, e]) => e.to!)).size).toBe(REGISTRY_COUNT);
   });

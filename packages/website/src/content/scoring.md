@@ -36,6 +36,7 @@ Check the finding's scoring status too. An advisory failure does not reduce your
 - **Scored checks** can affect the number when they apply and the scan can assess them.
 - **Advisory checks** add context without changing the score. Reports also call these `informative`.
 - **Experimental checks** run only when you opt in. They do not change the score.
+- **Obsolete checks** tell you when your site still publishes something its consumer retired or ignores. They never fail and never change the score. Each one names its source and what to use instead.
 
 Only checks with sufficient supporting proof can count. Grade A has weight 1.0. Grade B has weight 0.6. Grades C and D have weight 0.
 

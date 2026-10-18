@@ -82,6 +82,18 @@ export interface AuditSummary {
     impact: string | undefined;
     fix: string | undefined;
   }>;
+  /**
+   * Things the site still publishes that their consumer retired or ignores.
+   * Never part of the score or the category counts; listed so a model can
+   * tell the owner what to remove or replace.
+   */
+  obsoleteFound: Array<{
+    id: string;
+    title: string;
+    notice: string;
+    replacement?: string;
+    link: string;
+  }>;
 }
 
 /** How many fixes the tool hands back. A model does not need all 215. */
@@ -127,6 +139,15 @@ export function buildAuditSummary(
       priority: f.priority,
       impact: f.impact,
       fix: f.fix,
+    })),
+    obsoleteFound: view.obsolete.found.map((c) => ({
+      id: c.id,
+      title: c.title,
+      notice: c.deprecated?.notice ?? c.explanation ?? "",
+      ...(c.deprecated?.replacement !== undefined && {
+        replacement: c.deprecated.replacement,
+      }),
+      link: c.deprecated?.link ?? c.details?.evidenceUrl ?? "",
     })),
   };
 }

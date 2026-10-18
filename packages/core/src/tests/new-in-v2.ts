@@ -79,7 +79,15 @@ export const NEW_IN_V2: readonly string[] = [
   "agentic-commerce/buyable-variant-resolution",
   "agentic-commerce/cart-handoff-reachability",
   "agentic-commerce/offer-truth-consistency",
+  "operability-safety/profile-autofill-token-coverage",
+  "agent-interfaces/a2a-agent-card",
+  "agentic-commerce/ucp-profile",
+  "operability-safety/change-password-url",
 ];
 
-/** The 148 audits Plan 4 closed the v2 migration on. Never changes again. */
-export const MIGRATED_COUNT = 148;
+/**
+ * The audits reachable from the migration map: the 148 Plan 4 closed the v2
+ * migration on, plus agent-interfaces/ai-plugin-json, revived from v1 5.11 on
+ * 2026-10-18 as an obsolete-tier notice.
+ */
+export const MIGRATED_COUNT = 149;

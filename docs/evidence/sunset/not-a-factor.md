@@ -34,7 +34,9 @@ Each entry links its full research dossier (steelmanned claim, search trail, all
 
 **Verdict:** Grade D: the sole documented consumer (ChatGPT plugins) was discontinued, OpenAI archived its official quickstart with an explicit 'superseded by GPTs' notice, and OpenAI removed the manifest spec from its documentation so thoroughly that the audit's own docsUrl now 404s. No successor vendor adopted the format; OpenAI itself moved to MCP via the Apps SDK.
 
-**Key sources:** [openai/plugins-quickstart (ARCHIVED) — official ChatGPT plugin quickstart](https://github.com/openai/plugins-quickstart) · [OpenAI plugin manifest documentation — removed (301 to 404)](https://platform.openai.com/docs/plugins/getting-started/plugin-manifest) · [OpenAI Apps SDK — current third-party extensibility, built on MCP](https://developers.openai.com/apps-sdk/) — full evidence: [dossier](./agent-tools/ai-plugin-json.md)
+**Key sources:** [openai/plugins-quickstart (ARCHIVED) — official ChatGPT plugin quickstart](https://github.com/openai/plugins-quickstart) · [OpenAI plugin manifest documentation — removed (301 to 404)](https://platform.openai.com/docs/plugins/getting-started/plugin-manifest) · [OpenAI Apps SDK — current third-party extensibility, built on MCP](https://developers.openai.com/apps-sdk/) — full evidence: [dossier](../audits/agent-interfaces/ai-plugin-json.md)
+
+**Update 2026-10-18:** the check returned as `agent-interfaces/ai-plugin-json` in the obsolete tier. It never scores and never fails. It tells a site that still publishes the manifest that the format is retired, so the owner can stop maintaining it.
 
 ### `agent-tools/data-action-ctas`
 

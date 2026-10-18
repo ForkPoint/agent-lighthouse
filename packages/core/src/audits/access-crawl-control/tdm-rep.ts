@@ -177,9 +177,9 @@ export class TdmRepAudit extends Audit {
     description:
       "TDM-Rep is a W3C Community Group Final Report — explicitly not a W3C Standard — that defines a machine-readable text-and-data-mining reservation, anchored in EU DSM Directive Article 4. Its value is legal evidence of an opt-out, not agent behaviour: no major AI crawler operator documents honouring it. This audit reports what a site declares and in which direction, and never scores it either way.",
     scoreDisplayMode: ScoreDisplayMode.Informative,
-    weight: weightForGrade(EvidenceGrade.C, AuditTier.Experimental),
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
     evidenceGrade: EvidenceGrade.C,
-    tier: AuditTier.Experimental,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/access-crawl-control/tdm-rep.md",
     // Gate exemption: being refused is what this category reports.
     requires: [
@@ -199,13 +199,7 @@ export class TdmRepAudit extends Audit {
       effort: FixEffort.Trivial,
       docsUrl:
         "https://www.w3.org/community/reports/tdmrep/CG-FINAL-tdmrep-20240510/",
-      tags: [
-        "tdm-rep",
-        "licensing",
-        "crawler-permissions",
-        "compliance",
-        "experimental",
-      ],
+      tags: ["tdm-rep", "licensing", "crawler-permissions", "compliance"],
     },
   };
 

@@ -170,7 +170,7 @@ and publishes only these sections, in this order:
 
 ```
 What it checks · Why it matters · Evidence · Limits · How it scores ·
-Example failure · Sources
+Example finding · Sources
 ```
 
 Everything else is withheld: code review findings, review history,

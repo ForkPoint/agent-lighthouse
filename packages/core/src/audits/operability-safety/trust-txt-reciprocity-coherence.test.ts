@@ -140,7 +140,9 @@ describe("TrustTxtReciprocityCoherenceAudit", () => {
       others: { "assoc.test": "member=https://someone-else.test/\n" },
     });
     const r = await result;
-    expect(r.status).toBe(CheckStatus.Warn);
+    expect(r.status).toBe(CheckStatus.Pass);
+    expect(r.message).toContain("1 observation");
+    expect(r.message).toContain("No search engine, platform or AI company");
     expect(strings(r, "observations").join(" ")).toContain(
       "no member= line naming example.com",
     );
@@ -200,7 +202,7 @@ describe("TrustTxtReciprocityCoherenceAudit", () => {
     );
   });
 
-  it("never returns fail, whatever the input", async () => {
+  it("never warns or fails, whatever the input", async () => {
     const cases: Site[] = [
       {},
       {
@@ -216,6 +218,7 @@ describe("TrustTxtReciprocityCoherenceAudit", () => {
     for (const site of cases) {
       const r = await run(site).result;
       expect(r.status, JSON.stringify(site)).not.toBe(CheckStatus.Fail);
+      expect(r.status, JSON.stringify(site)).not.toBe(CheckStatus.Warn);
     }
   });
 

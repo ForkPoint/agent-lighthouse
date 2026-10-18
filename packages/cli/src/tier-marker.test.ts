@@ -11,6 +11,10 @@ describe("tierMarker", () => {
     expect(tierMarker(AuditTier.Experimental)).toContain("(experimental)");
   });
 
+  it("marks an obsolete check", () => {
+    expect(tierMarker(AuditTier.Obsolete)).toContain("(obsolete)");
+  });
+
   it("says nothing for a scored check or an unknown tier", () => {
     expect(tierMarker(AuditTier.Scored)).toBe("");
     expect(tierMarker(undefined)).toBe("");

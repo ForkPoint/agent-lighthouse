@@ -374,10 +374,10 @@ describe("publicDossier", () => {
     });
 
     it("withholds a section named by public_omit", () => {
-      const source = "## What it checks\n\nA.\n\n## Example failure\n\nB.\n";
-      const result = publicDossier(source, { publicOmit: ["Example failure"] });
+      const source = "## What it checks\n\nA.\n\n## Example finding\n\nB.\n";
+      const result = publicDossier(source, { publicOmit: ["Example finding"] });
       expect(result.published).toEqual(["What it checks"]);
-      expect(result.withheld).toContain("Example failure");
+      expect(result.withheld).toContain("Example finding");
     });
   });
 
@@ -565,19 +565,25 @@ describe("publicDossier", () => {
       expect(counts).toEqual({
         // The page contract's first three are unconditional: every audit says
         // what it looks for, why that matters, and on whose evidence.
-        "What it checks": 215,
-        "Why it matters": 215,
-        Evidence: 215,
+        "What it checks": 220,
+        "Why it matters": 220,
+        Evidence: 220,
         // 149 since 2026-10-17: `mcp-registry-listing-ownership` gained its
         // counter-evidence when its sources were replaced. 151 since the same
-        // day: both `c2pa-*` audits gained theirs the same way.
-        Limits: 151,
+        // day: both `c2pa-*` audits gained theirs the same way. 156 since
+        // 2026-10-18 (9.0.0): five new or revived dossiers publish theirs.
+        Limits: 156,
         // Every scored audit publishes its grade reasoning; the shortfall is
         // in the informative and experimental tiers, which the bar exempts.
-        "How it scores": 190,
+        // 199 since 2026-10-18 (9.0.0): the new audits, and the obsolete and
+        // unconsumed rewrites, each state how they score.
+        "How it scores": 199,
         // 70 since 2026-08-29: the four `openapi-*` content audits gained one,
-        // to publish that an absent OpenAPI document is not a failure.
-        "Example failure": 70,
+        // to publish that an absent OpenAPI document is not a failure. 83 since
+        // 2026-10-18 (9.0.0): five new audits and eight obsolete-tier rewrites
+        // publish an example finding, and the section is named "Example
+        // finding" because warn-only and obsolete audits never fail.
+        "Example finding": 83,
       });
     });
   });

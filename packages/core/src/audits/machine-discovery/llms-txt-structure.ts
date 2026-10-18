@@ -11,6 +11,7 @@ import {
   ScoreDisplayMode,
 } from "#core/types";
 import { isRootArtifact, rootArtifactMiss } from "#core/gatherers/root-files";
+import { LLMS_TXT_NO_EFFECT, LLMS_TXT_NOTICE } from "./_llms-txt-notice";
 
 /**
  * Drop fenced code blocks from the line list.
@@ -48,6 +49,7 @@ export class LlmsTxtStructureAudit extends Audit {
     evidenceGrade: EvidenceGrade.C,
     tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/machine-discovery/llms-txt-structure.md",
+    deprecated: LLMS_TXT_NOTICE,
     requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
     defaultPriority: CheckPriority.Low,
     guidance: {
@@ -116,13 +118,14 @@ export class LlmsTxtStructureAudit extends Audit {
     const missing: string[] = [];
     if (!hasBlockquote) missing.push("no blockquote summary after the H1");
     if (h2Count === 0) missing.push("no H2 sections");
-    const message = `llms.txt structure is incomplete: ${missing.join(" and ")}.`;
-
-    // Both elements are explicitly optional in the spec ("zero or more" sections,
-    // H1 "the only required section"), so a partial file warns and an entirely
-    // flat file fails — at low priority either way, and at weight 0 always.
-    return missing.length === 1
-      ? this.warn(message, expected, found, CheckPriority.Low)
-      : this.fail(message, expected, found, CheckPriority.Low);
+    // Both elements are optional in the spec ("zero or more" sections, H1 "the
+    // only required section"), and no AI vendor reads the file, so a partial
+    // or flat file is reported, never warned or failed. Chrome Lighthouse is
+    // the one shipping checker, and it tests only the H1 and the links.
+    return this.pass(
+      `llms.txt structure is incomplete: ${missing.join(" and ")}. Both are optional in the format; Chrome Lighthouse checks only for an H1 heading and links. ${LLMS_TXT_NO_EFFECT}`,
+      expected,
+      found,
+    );
   }
 }

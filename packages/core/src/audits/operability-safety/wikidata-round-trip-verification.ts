@@ -102,12 +102,12 @@ export class WikidataRoundTripVerificationAudit extends Audit {
     title: "The Wikidata entity this site claims points back at this site",
     failureTitle: "This site’s Wikidata identity claim is not reciprocated",
     description:
-      "Takes the Wikidata Q-id the site claims in its Organization or Person `sameAs`, asks Wikidata what that entity gives as its official website (P856), and compares registrable domains. A `sameAs` is self-asserted and any site can claim any entity; only the round trip is evidence.",
-    scoreDisplayMode: ScoreDisplayMode.Ternary,
-    tier: AuditTier.Scored,
-    evidenceGrade: EvidenceGrade.B,
-    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
-    defaultPriority: CheckPriority.Medium,
+      "Takes the Wikidata Q-id the site claims in its Organization or Person `sameAs`, asks Wikidata what that entity gives as its official website (P856), and compares registrable domains. A `sameAs` is self-asserted and any site can claim any entity; only the round trip is evidence. No search engine or AI vendor documents performing this check, so it is reported and not scored.",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    tier: AuditTier.Informative,
+    evidenceGrade: EvidenceGrade.C,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    defaultPriority: CheckPriority.Low,
     dossier:
       "docs/evidence/audits/operability-safety/wikidata-round-trip-verification.md",
     requires: [

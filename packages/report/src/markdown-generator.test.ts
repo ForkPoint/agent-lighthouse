@@ -10,6 +10,7 @@ import {
   CheckPriority,
   CheckStatus,
   EvidenceKey,
+  NoticeKind,
   PageType,
   PageTypeSource,
   ScoreDisplayMode,
@@ -414,5 +415,77 @@ describe("scan conditions — the budget line", () => {
   it("prints no budget line for a report written before the budget existed", () => {
     const md = generateMarkdownSummary({ ...report([]), conditions });
     expect(md).not.toContain("**Budget:**");
+  });
+});
+
+describe("notices", () => {
+  const obsolete = check({
+    id: "agent-interfaces/retired-file",
+    title: "Retired file still published",
+    status: CheckStatus.Warn,
+    score: 0.5,
+    tier: AuditTier.Obsolete,
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: 0,
+    deprecated: {
+      kind: NoticeKind.Obsolete,
+      notice: "The vendor retired this file in 2024.",
+      link: "https://example.com/retired",
+      replacement: "Publish the successor file.",
+    },
+  });
+  const absentObsolete = check({
+    ...obsolete,
+    id: "agent-interfaces/other-retired",
+    title: "Other retired file",
+    status: CheckStatus.NotApplicable,
+    score: 0,
+  });
+  const unconsumed = check({
+    id: "machine-discovery/llms-thing",
+    title: "Unread file is well formed",
+    tier: AuditTier.Informative,
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: 0,
+    deprecated: {
+      kind: NoticeKind.Unconsumed,
+      notice: "No AI vendor documents reading this file.",
+      link: "https://example.com/evidence",
+    },
+  });
+
+  it("lists found obsolete artifacts in their own section with the fix", () => {
+    const md = generateMarkdownSummary(
+      report([
+        cat({
+          id: "agent-interfaces",
+          checks: [obsolete, absentObsolete, check({ id: "a/live" })],
+        }),
+      ]),
+    );
+    expect(md).toContain("Obsolete (not scored)");
+    expect(md).toContain("Retired file still published");
+    expect(md).toContain("The vendor retired this file in 2024.");
+    expect(md).toContain("Publish the successor file.");
+    expect(md).toContain("https://example.com/retired");
+    expect(md).toContain("1 more obsolete check found nothing.");
+    expect(md).not.toContain("Other retired file");
+    // The category row counts only the live check.
+    expect(md).toContain("1✓ 0! 0✗");
+  });
+
+  it("prints no obsolete section when nothing obsolete was found", () => {
+    const md = generateMarkdownSummary(
+      report([cat({ id: "agent-interfaces", checks: [absentObsolete] })]),
+    );
+    expect(md).not.toContain("Obsolete (not scored)");
+  });
+
+  it("prints the notice of an unconsumed check that ran", () => {
+    const md = generateMarkdownSummary(
+      report([cat({ id: "machine-discovery", checks: [unconsumed] })]),
+    );
+    expect(md).toContain("No AI vendor reads this");
+    expect(md).toContain("No AI vendor documents reading this file.");
   });
 });

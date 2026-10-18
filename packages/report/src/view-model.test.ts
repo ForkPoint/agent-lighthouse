@@ -12,6 +12,7 @@ import {
   CheckPriority,
   CheckStatus,
   EvidenceKey,
+  NoticeKind,
   PageType,
   PageTypeSource,
   ScoreDisplayMode,
@@ -256,6 +257,7 @@ describe("buildReportView", () => {
       fail: 1,
       na: 3,
       advisory: 0,
+      obsolete: 0,
       total: 3,
     });
   });
@@ -560,5 +562,85 @@ describe("tier counts", () => {
   it("handles reports without conditions gracefully (backward compatibility)", () => {
     const view = buildReportView(report([]));
     expect(view.conditions).toBeUndefined();
+  });
+});
+
+describe("obsolete tier", () => {
+  const notice = {
+    kind: NoticeKind.Obsolete,
+    notice: "The vendor retired this file.",
+    link: "https://example.com/retired",
+    replacement: "Publish the successor file.",
+  };
+  const obsolete = (over: Partial<CheckResult>): CheckResult =>
+    check({
+      tier: AuditTier.Obsolete,
+      scoreDisplayMode: ScoreDisplayMode.Informative,
+      weight: 0,
+      deprecated: notice,
+      ...over,
+    });
+
+  function obsoleteReport(): ScanReport {
+    return report([
+      cat({
+        id: "agent-interfaces",
+        checks: [
+          check({ id: "agent-interfaces/live", status: CheckStatus.Pass }),
+          obsolete({
+            id: "agent-interfaces/retired-a",
+            status: CheckStatus.NotApplicable,
+            score: 0,
+          }),
+          obsolete({
+            id: "agent-interfaces/retired-b",
+            status: CheckStatus.Warn,
+            score: 0.5,
+          }),
+        ],
+      }),
+      cat({
+        id: "structured-data",
+        checks: [
+          obsolete({
+            id: "structured-data/retired-c",
+            status: CheckStatus.Warn,
+            score: 0.5,
+          }),
+        ],
+      }),
+    ]);
+  }
+
+  it("keeps obsolete checks out of the category's counts and lists", () => {
+    const v = buildReportView(obsoleteReport());
+    const ai = v.categories.find((c) => c.id === "agent-interfaces")!;
+    expect(ai.checks.map((c) => c.id)).toEqual(["agent-interfaces/live"]);
+    expect(ai.notApplicable).toEqual([]);
+    expect(ai.counts).toEqual({
+      pass: 1,
+      warn: 0,
+      fail: 0,
+      na: 0,
+      advisory: 0,
+      obsolete: 1,
+      total: 1,
+    });
+  });
+
+  it("collects every obsolete check into its own section, found first", () => {
+    const v = buildReportView(obsoleteReport());
+    expect(v.obsolete.found.map((c) => c.id)).toEqual([
+      "agent-interfaces/retired-b",
+      "structured-data/retired-c",
+    ]);
+    expect(v.obsolete.absent.map((c) => c.id)).toEqual([
+      "agent-interfaces/retired-a",
+    ]);
+  });
+
+  it("never offers an obsolete warn as a top fix", () => {
+    const v = buildReportView(obsoleteReport());
+    expect(v.topFixes).toEqual([]);
   });
 });

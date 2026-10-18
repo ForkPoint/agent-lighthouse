@@ -9,6 +9,7 @@ import {
   EvidenceGrade,
   EvidenceKey,
   FixEffort,
+  NoticeKind,
   ScoreDisplayMode,
 } from "#core/types";
 
@@ -19,31 +20,37 @@ function matchesType(schema: Record<string, unknown>, type: string): boolean {
   return false;
 }
 
-function extractHeadings(page: PageContext): string[] {
-  const headings: string[] = [];
-  page.$("h1, h2, h3, h4, h5, h6").each((_, el) => {
-    const text = page.$(el).text().trim();
-    if (text) headings.push(text);
-  });
-  return headings;
+/** True when the page's structured data carries an FAQPage node. */
+function hasFaqPage(page: PageContext): boolean {
+  return flattenJsonLd(page.structuredData ?? page.jsonLd).some((node) =>
+    matchesType(node as Record<string, unknown>, "FAQPage"),
+  );
 }
 
-function hasQuestionHeadings(page: PageContext): boolean {
-  return extractHeadings(page).some((h) => h.endsWith("?"));
-}
+const SOURCE_URL = "https://developers.google.com/search/updates";
 
 export class FaqPageSchemaAudit extends Audit {
   static override meta: AuditMeta = {
     id: "structured-data/faqpage-schema",
     category: "structured-data",
-    title: "FAQPage schema",
-    failureTitle: "FAQPage schema",
+    // An obsolete audit speaks only when the owner still publishes the
+    // markup, so both titles describe the markup.
+    title: "FAQPage schema (retired rich result)",
+    failureTitle: "FAQPage markup for a retired rich result is published",
     description:
-      "AI answer engines like Perplexity and Google SGE extract FAQ-structured content with higher confidence for direct answers. FAQPage schema makes your Q&A content machine-readable, giving it priority in AI-generated responses over unstructured text.",
+      "Reports FAQPage structured data still published on sampled pages. Google restricted FAQ rich results to government and health sites in 2023 and stopped showing them on 2026-05-07, and no AI vendor documents reading FAQPage markup. The visible questions and answers still help readers and agents; `answer-readiness/faq-sections` checks those.",
     scoreDisplayMode: ScoreDisplayMode.Informative,
-    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
-    evidenceGrade: EvidenceGrade.C,
-    tier: AuditTier.Informative,
+    weight: weightForGrade(EvidenceGrade.D, AuditTier.Obsolete),
+    evidenceGrade: EvidenceGrade.D,
+    tier: AuditTier.Obsolete,
+    deprecated: {
+      kind: NoticeKind.Obsolete,
+      notice:
+        "Google stopped showing FAQ rich results on 2026-05-07, and no AI vendor documents reading FAQPage markup. The markup does no harm.",
+      link: SOURCE_URL,
+      replacement:
+        "Keep the questions and answers visible on the page (answer-readiness/faq-sections). The markup itself is optional.",
+    },
     dossier: "docs/evidence/audits/structured-data/faqpage-schema.md",
     requires: [
       EvidenceKey.OriginReachable,
@@ -51,114 +58,39 @@ export class FaqPageSchemaAudit extends Audit {
       EvidenceKey.RenderedBody,
       EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: CheckPriority.Medium,
+    defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
-        "AI answer engines like Perplexity and Google SGE give priority to FAQ-structured content for direct answers. Without FAQPage schema, your Q&A content is treated as unstructured text and is less likely to be surfaced as a featured answer in AI-generated responses.",
-      fix: "Add FAQPage JSON-LD to every page that contains question-answer content. Each question should be a Question type with an acceptedAnswer of type Answer.",
-      code: `{
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  "mainEntity": [
-    {
-      "@type": "Question",
-      "name": "What is your return policy?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "We offer a 30-day money-back guarantee on all purchases."
-      }
-    }
-  ]
-}`,
-      effort: FixEffort.Easy,
-      docsUrl: "https://schema.org/FAQPage",
-      tags: ["json-ld", "schema", "faq", "content"],
+        "None for search or AI visibility. Google no longer shows FAQ rich results and no AI vendor documents reading FAQPage markup. The visible Q&A content is what still counts.",
+      fix: "Nothing is required. Removing the FAQPage markup is optional; Google says unused structured data causes no problems. Keep the questions and answers visible in the page text.",
+      effort: FixEffort.Trivial,
+      docsUrl: SOURCE_URL,
+      tags: ["json-ld", "schema", "faq", "obsolete"],
     },
   };
 
   audit(ctx: CheckContext): AuditResult {
-    const pagesWithQuestions = ctx.pages.filter((p) => hasQuestionHeadings(p));
+    const expected =
+      "No FAQPage markup is needed: Google retired the FAQ rich result in 2026";
+    const pages = ctx.pages.filter(hasFaqPage);
 
-    if (pagesWithQuestions.length === 0) {
-      return this.warn(
-        "No pages with question-patterned headings detected to evaluate.",
-        "FAQPage schema on pages with question-patterned headings.",
-        "No question-patterned headings found.",
-        {
-          priority: CheckPriority.Low,
-          description:
-            "AI answer engines like Perplexity and Google SGE extract FAQ-structured content with high confidence for direct answers. Consider adding FAQ sections with question-formatted headings and FAQPage schema to your pages.",
-          code: `{
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  "mainEntity": [{
-    "@type": "Question",
-    "name": "What is ...?",
-    "acceptedAnswer": { "@type": "Answer", "text": "..." }
-  }]
-}`,
-        },
+    // Absent artifact, absent verdict. The obsolete tier speaks only about
+    // markup the owner still publishes; question headings without markup are
+    // no longer a finding.
+    if (pages.length === 0) {
+      return this.notApplicable(
+        "No sampled page publishes FAQPage markup, so there is nothing to retire.",
+        expected,
+        "No FAQPage markup found",
       );
     }
 
-    const pagesWithFaq = pagesWithQuestions.filter((p) => {
-      const schemas = flattenJsonLd(p.structuredData ?? p.jsonLd);
-      return schemas.some((s) =>
-        matchesType(s as Record<string, unknown>, "FAQPage"),
-      );
-    });
-
-    const allHave = pagesWithFaq.length === pagesWithQuestions.length;
-    const someHave = pagesWithFaq.length > 0;
-
-    if (allHave) {
-      return this.pass(
-        `FAQPage schema found on all ${pagesWithQuestions.length} page(s) with question headings.`,
-        "FAQPage schema on pages with question-patterned headings.",
-        `${pagesWithFaq.length}/${pagesWithQuestions.length} pages with FAQPage schema`,
-      );
-    }
-
-    if (someHave) {
-      return this.warn(
-        `FAQPage schema found on ${pagesWithFaq.length} of ${pagesWithQuestions.length} page(s) with question headings.`,
-        "FAQPage schema on pages with question-patterned headings.",
-        `${pagesWithFaq.length}/${pagesWithQuestions.length} pages with FAQPage schema`,
-        {
-          priority: CheckPriority.Medium,
-          description:
-            "AI answer engines like Perplexity and Google SGE extract FAQ-structured content with higher confidence for direct answers. FAQPage schema makes your Q&A content machine-readable, giving it priority in AI-generated responses over unstructured text.",
-          code: `{
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  "mainEntity": [{
-    "@type": "Question",
-    "name": "What is ...?",
-    "acceptedAnswer": { "@type": "Answer", "text": "..." }
-  }]
-}`,
-        },
-      );
-    }
-
-    return this.fail(
-      `No FAQPage schema found on ${pagesWithQuestions.length} page(s) with question headings.`,
-      "FAQPage schema on pages with question-patterned headings.",
-      `${pagesWithFaq.length}/${pagesWithQuestions.length} pages with FAQPage schema`,
-      {
-        priority: CheckPriority.Medium,
-        description:
-          "AI answer engines like Perplexity and Google SGE extract FAQ-structured content with higher confidence for direct answers. FAQPage schema makes your Q&A content machine-readable, giving it priority in AI-generated responses over unstructured text.",
-        code: `{
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  "mainEntity": [{
-    "@type": "Question",
-    "name": "What is ...?",
-    "acceptedAnswer": { "@type": "Answer", "text": "..." }
-  }]
-}`,
-      },
+    return this.warn(
+      "FAQPage markup is published. Google stopped showing FAQ rich results on 2026-05-07, and no AI vendor documents reading FAQPage markup. It does no harm; removal is optional. Keep the questions and answers visible on the page, which is what still helps readers and agents.",
+      expected,
+      `FAQPage markup on ${pages.length} page(s)`,
+      CheckPriority.Low,
+      pages[0]!.url,
     );
   }
 }

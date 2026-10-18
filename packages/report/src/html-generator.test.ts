@@ -7,6 +7,7 @@ import type {
 import { generateHtmlReport } from "./html-generator";
 import {
   AuditTier,
+  NoticeKind,
   CheckPriority,
   CheckStatus,
   PageType,
@@ -393,5 +394,78 @@ describe("evidence link", () => {
 
     expect(html).not.toContain("NaN%");
     expect(html).toContain("0/0</strong> mass (0%)");
+  });
+});
+
+describe("obsolete tier", () => {
+  const retired = check({
+    id: "agent-interfaces/retired-file",
+    title: "Retired file still published",
+    status: CheckStatus.Warn,
+    score: 0.5,
+    tier: AuditTier.Obsolete,
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: 0,
+    deprecated: {
+      kind: NoticeKind.Obsolete,
+      notice: "The vendor retired this file in 2024.",
+      link: "https://example.com/retired",
+      replacement: "Publish the successor file.",
+    },
+  });
+
+  it("renders found obsolete checks in their own section, outside categories", () => {
+    const html = generateHtmlReport(
+      report([cat({ id: "agent-interfaces", checks: [retired] })]),
+    );
+    expect(html).toContain("Obsolete (not scored)");
+    expect(html).toContain("The vendor retired this file in 2024.");
+    expect(html).toContain("Publish the successor file.");
+    // Labelled as obsolete, never as advisory or scored.
+    expect(html).toContain("Obsolete — not scored");
+    expect(html).not.toContain("Advisory — not scored");
+    // The category card counts no warning for it.
+    expect(html).toContain("0 Warnings");
+  });
+
+  it("prints no obsolete section when nothing obsolete was found", () => {
+    const html = generateHtmlReport(
+      report([
+        cat({
+          id: "agent-interfaces",
+          checks: [
+            check({
+              ...retired,
+              status: CheckStatus.NotApplicable,
+              score: 0,
+            }),
+          ],
+        }),
+      ]),
+    );
+    expect(html).not.toContain("Obsolete (not scored)");
+  });
+
+  it("labels an unconsumed notice by its kind", () => {
+    const html = generateHtmlReport(
+      report([
+        cat({
+          id: "machine-discovery",
+          checks: [
+            check({
+              tier: AuditTier.Informative,
+              scoreDisplayMode: ScoreDisplayMode.Informative,
+              deprecated: {
+                kind: NoticeKind.Unconsumed,
+                notice: "No AI vendor documents reading this file.",
+                link: "https://example.com/evidence",
+              },
+            }),
+          ],
+        }),
+      ]),
+    );
+    expect(html).toContain("No AI vendor reads this");
+    expect(html).not.toContain("Deprecated — no longer a factor");
   });
 });

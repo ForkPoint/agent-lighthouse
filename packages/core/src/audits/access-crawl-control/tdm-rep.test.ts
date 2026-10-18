@@ -261,10 +261,10 @@ describe("TdmRepAudit", () => {
   describe("meta contract", () => {
     const meta = TdmRepAudit.meta;
 
-    it("is grade C, experimental, weight 0, informative", () => {
+    it("is grade C, informative tier, weight 0", () => {
       expect(meta.id).toBe("access-crawl-control/tdm-rep");
       expect(meta.evidenceGrade).toBe(EvidenceGrade.C);
-      expect(meta.tier).toBe(AuditTier.Experimental);
+      expect(meta.tier).toBe(AuditTier.Informative);
       expect(meta.weight).toBe(0);
       expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Informative);
     });

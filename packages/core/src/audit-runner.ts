@@ -25,6 +25,7 @@ import {
   assessedMassOf,
   calculateCategoryScore,
   calculateOverallScore,
+  countCategoryStatuses,
 } from "./scorer";
 import { traceFromCheck, type AuditTrace } from "./audit-trace";
 import {
@@ -704,8 +705,6 @@ function buildWeightedCategoryResult(
     // unproven evidence that must not move the score.
     score: calculateCategoryScore(checks),
     checks,
-    passCount: checks.filter((c) => c.status === CheckStatus.Pass).length,
-    warnCount: checks.filter((c) => c.status === CheckStatus.Warn).length,
-    failCount: checks.filter((c) => c.status === CheckStatus.Fail).length,
+    ...countCategoryStatuses(checks),
   };
 }

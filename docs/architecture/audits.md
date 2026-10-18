@@ -51,6 +51,8 @@ Warrant and cost are one part, because the weight is derived:
                   weight = weightForGrade(grade, tier)
 ```
 
+The not-scored tiers are `informative`, `experimental` and `obsolete`. An obsolete audit carries grade D and a notice of kind `obsolete`. It returns `warn` when the site still publishes what a consumer retired or ignores, `notApplicable` otherwise, and never `fail`; `Audit.toCheckResult` lowers a stray `fail` to `warn`. See the [evidence policy](../evidence/policy.md#informative-or-obsolete).
+
 The grade is the one knob. Never hand-set a weight. [Scoring](../scoring.md) shows how weights become a score.
 
 ---
@@ -365,7 +367,7 @@ A gatherer with one consumer is still right: the fetch is visible to the scan an
 
 ## 9. The warrant expires
 
-A grade is a claim with a date. Every dossier carries a `reviewed:` date, and every audit is due for review every **6 months**.
+A grade is a claim with a date. Every dossier carries a `reviewed:` date, and every audit is due for review on a window set by its grade: **A every 12 months, B every 6, C and D every 3**. The weaker the evidence, the sooner it can move.
 
 ```
    monthly workflow (.github/workflows/audit-review-sweep.yml)
@@ -375,10 +377,33 @@ A grade is a claim with a date. Every dossier carries a `reviewed:` date, and ev
           │
           ▼
    open or update one rolling issue
-     · audits older than 180 days, oldest first, with grade and category
+     · audits past their window, oldest first, with grade and category
      · never fails a build
      · never moves a score
 ```
+
+A second job watches the evidence itself rather than the date on it.
+
+```
+   weekly workflow (.github/workflows/source-watch.yml)
+          │
+          ▼
+   re-check every docs/evidence/sources.json URL and every
+   docs/evidence/watchlist.json item: status, redirect, TLS,
+   text hash; IETF draft revision and state; GitHub archived,
+   release and push; IANA well-known registry diff
+          │
+          ▼
+   compare with the last run's state (a workflow artifact, not a commit)
+          │
+          ▼
+   open or update one rolling issue, label `source-watch`
+     · each changed source, with the audits whose dossiers cite it
+     · broken, moved, revised or archived first; text edits after
+     · the watchlist: not-built well-known paths and their registry status
+```
+
+A change found by the watch is a reason to review the citing dossiers early, whatever their `reviewed:` date.
 
 This is the weakest enforcement here on purpose. A stale grade is not a broken build, and a score must not move because nobody did paperwork. The sweep only makes the debt impossible to forget.
 
