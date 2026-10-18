@@ -13,3 +13,5 @@ export type {
 export { applyTaskEvent, initialSnapshot } from "./reducer";
 export { InMemoryTaskStore } from "./task-store";
 export type { TaskStore, TaskListener } from "./task-store";
+export { startScanTask, scanEventToBody, traceToBody } from "./scan-task";
+export type { RunningTask } from "./scan-task";
