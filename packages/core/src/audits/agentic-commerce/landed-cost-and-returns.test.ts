@@ -206,6 +206,144 @@ describe("LandedCostAndReturnsAudit", () => {
     expect(result.message).toMatch(/shipping/i);
   });
 
+  it("reads numeric strings, a bare destination country and an array of details", () => {
+    const result = run({
+      shippingDetails: [
+        {
+          "@type": "OfferShippingDetails",
+          name: " express ",
+          shippingRate: { value: "12.5", currency: "EUR" },
+          shippingDestination: "DE",
+          deliveryTime: {
+            handlingTime: { minValue: "0", maxValue: "2", unitCode: "d" },
+            transitTime: { minValue: 1, maxValue: 4 },
+          },
+        },
+      ],
+      hasMerchantReturnPolicy: [{ ...FULL_RETURNS, merchantReturnDays: "14" }],
+    });
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.found).toContain("shipping=DE::express:12.50:2:4");
+    expect(result.found).toContain("return_deadline_in_days=14");
+  });
+
+  it("carries the destination region into the feed value", () => {
+    const result = run({
+      shippingDetails: {
+        ...FULL_SHIPPING,
+        shippingDestination: { addressCountry: "US", addressRegion: "CA" },
+      },
+      hasMerchantReturnPolicy: FULL_RETURNS,
+    });
+    expect(result.found).toContain("shipping=US:CA:standard:5.99:1:3");
+  });
+
+  it("accepts doesNotShip given as the string true", () => {
+    const result = run({
+      shippingDetails: { doesNotShip: "true" },
+      hasMerchantReturnPolicy: FULL_RETURNS,
+    });
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.found).toContain("shipping=doesNotShip");
+  });
+
+  it("fails a shipping rate with no currency and a destination with no country", () => {
+    const result = run({
+      shippingDetails: {
+        ...FULL_SHIPPING,
+        shippingRate: { "@type": "MonetaryAmount", value: 5.99 },
+        shippingDestination: { "@type": "DefinedRegion", addressRegion: "CA" },
+      },
+      hasMerchantReturnPolicy: FULL_RETURNS,
+    });
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("shippingRate is not a MonetaryAmount");
+    expect(result.message).toContain("carries no addressCountry");
+    expect(result.found).not.toContain("shipping=");
+  });
+
+  it("fails a delivery time in hours or without a maximum", () => {
+    const hours = run({
+      shippingDetails: {
+        ...FULL_SHIPPING,
+        deliveryTime: {
+          handlingTime: { minValue: 0, maxValue: 24, unitCode: "HUR" },
+          transitTime: { minValue: 1, maxValue: 3, unitCode: "DAY" },
+        },
+      },
+      hasMerchantReturnPolicy: FULL_RETURNS,
+    });
+    expect(hours.status).toBe(CheckStatus.Fail);
+    expect(hours.message).toContain(
+      "deliveryTime does not carry both handlingTime and transitTime",
+    );
+    const open = run({
+      shippingDetails: {
+        ...FULL_SHIPPING,
+        deliveryTime: {
+          handlingTime: { minValue: 0, maxValue: 1, unitCode: "DAY" },
+          transitTime: { minValue: 1, unitCode: "DAY" },
+        },
+      },
+      hasMerchantReturnPolicy: FULL_RETURNS,
+    });
+    expect(open.status).toBe(CheckStatus.Fail);
+    expect(open.message).toContain("deliveryTime does not carry both");
+  });
+
+  it("fails a return category outside the enum and a country that is not alpha-2", () => {
+    const result = run({
+      shippingDetails: FULL_SHIPPING,
+      hasMerchantReturnPolicy: {
+        "@type": "MerchantReturnPolicy",
+        applicableCountry: "USA",
+        returnPolicyCategory: "https://schema.org/MerchantReturnSometimes",
+        merchantReturnLink: "https://example.com/returns",
+      },
+    });
+    // A link beside a broken category is not "link only": the category is judged.
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("outside the three-value enum");
+    expect(result.message).toContain("not an ISO 3166-1 alpha-2 code");
+  });
+
+  it("passes a no-returns policy, which needs no return window", () => {
+    const result = run({
+      shippingDetails: FULL_SHIPPING,
+      hasMerchantReturnPolicy: {
+        "@type": "MerchantReturnPolicy",
+        applicableCountry: "US",
+        returnPolicyCategory: "MerchantReturnNotPermitted",
+      },
+    });
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.found).not.toContain("return_deadline_in_days");
+  });
+
+  it("fails a finite window whose day count is not a positive integer", () => {
+    for (const merchantReturnDays of [0, 2.5, "two weeks"]) {
+      const result = run({
+        shippingDetails: FULL_SHIPPING,
+        hasMerchantReturnPolicy: { ...FULL_RETURNS, merchantReturnDays },
+      });
+      expect(result.status).toBe(CheckStatus.Fail);
+      expect(result.message).toContain("must be a positive integer");
+    }
+  });
+
+  it("reads a standalone Offer node on a product page", () => {
+    const offer = {
+      "@context": "https://schema.org",
+      "@type": ["Offer", 3],
+      price: 10,
+      priceCurrency: "USD",
+      shippingDetails: FULL_SHIPPING,
+      hasMerchantReturnPolicy: FULL_RETURNS,
+    };
+    const result = audit.audit(mockCheckContext([productPage(ld(offer))]));
+    expect(result.status).toBe(CheckStatus.Pass);
+  });
+
   it("reads the product's offer before an unrelated Offer node", () => {
     const related = { "@type": "Offer", price: 1, priceCurrency: "USD" };
     const own = {

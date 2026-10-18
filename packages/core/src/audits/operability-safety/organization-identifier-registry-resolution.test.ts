@@ -85,6 +85,19 @@ function run(site: Site) {
   return { result: audit.audit(ctx), requests };
 }
 
+/** Arbitrary JSON-LD on one page, and GLEIF answering with `gleifBody` verbatim. */
+function runRaw(jsonLd: unknown, gleifBody = '{"data":[]}') {
+  const audit = new OrganizationIdentifierRegistryResolutionAudit();
+  const html = `<html><head><script type="application/ld+json">${JSON.stringify(jsonLd)}</script></head><body><p>Home.</p></body></html>`;
+  const ctx = mockCheckContext([mockPageContext("https://example.com/", html)]);
+  const requests: FetchOptions[] = [];
+  ctx.fetch = async (o: FetchOptions): Promise<FetchResult> => {
+    requests.push(o);
+    return mockFetchResult(gleifBody, 200, "application/vnd.api+json");
+  };
+  return { result: audit.audit(ctx), requests };
+}
+
 describe("OrganizationIdentifierRegistryResolutionAudit", () => {
   const audit = new OrganizationIdentifierRegistryResolutionAudit();
 
@@ -213,6 +226,195 @@ describe("OrganizationIdentifierRegistryResolutionAudit", () => {
     const r = await result;
     expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "warnings").join(" ")).toContain("503");
+  });
+
+  it("scores a name with no comparable tokens as no match", () => {
+    expect(nameSimilarity("Inc.", "Example Inc")).toBe(0);
+    expect(nameSimilarity("Example", "")).toBe(0);
+  });
+
+  it("reads identifiers only off organization-typed nodes", async () => {
+    const { result, requests } = runRaw({
+      "@context": "https://schema.org",
+      "@graph": [
+        { "@type": "WebSite", name: "Example", leiCode: VALID_LEI },
+        { "@type": ["Thing", 7], duns: "123456789" },
+      ],
+    });
+    expect((await result).status).toBe(CheckStatus.NotApplicable);
+    expect(requests).toHaveLength(0);
+  });
+
+  it("reads an Organization subtype, a typed array and an iso6523Code array", async () => {
+    const { result, requests } = run({
+      organization: {
+        "@type": ["Thing", "NewsMediaOrganization"],
+        name: "Example Inc",
+        iso6523Code: ["0060:123456789", `0199:${VALID_LEI}`],
+        duns: "123456789",
+      },
+    });
+    const r = await result;
+    expect(r.status).toBe(CheckStatus.Pass);
+    expect(requests).toHaveLength(1);
+    expect(r.details?.["identifiersFound"]).toBe(1);
+  });
+
+  it("reads a Corporation node", async () => {
+    const { result } = run({
+      organization: {
+        "@type": "Corporation",
+        name: "Example Inc",
+        iso6523Code: `0199:${VALID_LEI}`,
+      },
+    });
+    expect((await result).status).toBe(CheckStatus.Pass);
+  });
+
+  // DUNS has no free registry, so only its encoding is advised on.
+  it("warns on a duns published without its 0060 twin, and resolves nothing", async () => {
+    const { result, requests } = run({
+      organization: { name: "Example Inc", duns: "123456789" },
+    });
+    const r = await result;
+    expect(r.status).toBe(CheckStatus.Warn);
+    expect(strings(r, "advisories")[0]).toContain('"0060:123456789"');
+    expect(requests).toHaveLength(0);
+    expect(r.details?.["identifiersFound"]).toBe(0);
+  });
+
+  it("resolves an LEI repeated across pages once", async () => {
+    const audit = new OrganizationIdentifierRegistryResolutionAudit();
+    const org = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: "Example Inc",
+      iso6523Code: `0199:${VALID_LEI}`,
+    });
+    const html = `<html><head><script type="application/ld+json">${org}</script></head><body></body></html>`;
+    const ctx = mockCheckContext([
+      mockPageContext("https://example.com/", html),
+      mockPageContext("https://example.com/about", html),
+    ]);
+    const requests: string[] = [];
+    ctx.fetch = async (o: FetchOptions): Promise<FetchResult> => {
+      requests.push(o.url);
+      return mockFetchResult(
+        JSON.stringify({
+          data: [
+            {
+              attributes: {
+                entity: {
+                  legalName: { name: "Example Incorporated" },
+                  status: "ACTIVE",
+                },
+                registration: { status: "ISSUED" },
+              },
+            },
+          ],
+        }),
+        200,
+        "application/vnd.api+json",
+      );
+    };
+    const r = await audit.audit(ctx);
+    expect(r.status).toBe(CheckStatus.Pass);
+    expect(requests).toHaveLength(1);
+  });
+
+  it("fails a value that is not the shape of an LEI, before spending a request", async () => {
+    const { result, requests } = run({
+      organization: { name: "Example Inc", leiCode: "not-an-lei" },
+    });
+    const r = await result;
+    expect(r.status).toBe(CheckStatus.Fail);
+    expect(strings(r, "failures").join(" ")).toContain(
+      "is not the shape of an LEI",
+    );
+    expect(requests).toHaveLength(0);
+  });
+
+  it("fails when the registry answers with something that is not JSON", async () => {
+    const { result } = runRaw(
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        name: "Example Inc",
+        iso6523Code: `0199:${VALID_LEI}`,
+      },
+      "<html>maintenance</html>",
+    );
+    const r = await result;
+    expect(r.status).toBe(CheckStatus.Fail);
+    expect(strings(r, "failures")[0]).toContain("GLEIF holds no record");
+  });
+
+  // A record with no readable status cannot be vouched for.
+  it("fails a record whose attributes carry no status, and skips the name check", async () => {
+    const { result } = runRaw(
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        name: "Example Inc",
+        iso6523Code: `0199:${VALID_LEI}`,
+      },
+      JSON.stringify({ data: [{}] }),
+    );
+    const r = await result;
+    expect(r.status).toBe(CheckStatus.Fail);
+    expect(strings(r, "resolved")[0]).toContain(
+      "no registered name (UNKNOWN/UNKNOWN)",
+    );
+    expect(strings(r, "warnings")[0]).toContain("status is UNKNOWN");
+    expect(strings(r, "failures")[0]).toContain(
+      "registration status of UNKNOWN",
+    );
+    expect(strings(r, "failures").join(" ")).not.toContain("does not match");
+  });
+
+  it("warns on an entity that is not ACTIVE", async () => {
+    const { result } = run({
+      organization: {
+        name: "Example Inc",
+        iso6523Code: `0199:${VALID_LEI}`,
+      },
+      gleif: { entityStatus: "INACTIVE" },
+    });
+    const r = await result;
+    expect(r.status).toBe(CheckStatus.Warn);
+    expect(strings(r, "warnings")[0]).toContain("INACTIVE");
+  });
+
+  it("fails a registration status that is neither issued nor lapsed", async () => {
+    const { result } = run({
+      organization: {
+        name: "Example Inc",
+        iso6523Code: `0199:${VALID_LEI}`,
+      },
+      gleif: { registrationStatus: "DUPLICATE" },
+    });
+    const r = await result;
+    expect(r.status).toBe(CheckStatus.Fail);
+    expect(strings(r, "failures")[0]).toContain("DUPLICATE");
+  });
+
+  it("compares against the markup name when no legalName is given", async () => {
+    const { result } = run({
+      organization: {
+        name: "Totally Different Holdings",
+        iso6523Code: `0199:${VALID_LEI}`,
+      },
+    });
+    const r = await result;
+    expect(r.status).toBe(CheckStatus.Fail);
+    expect(strings(r, "failures")[0]).toContain("Totally Different Holdings");
+  });
+
+  it("skips the name check when the markup names no organization", async () => {
+    const { result } = run({
+      organization: { iso6523Code: `0199:${VALID_LEI}` },
+    });
+    expect((await result).status).toBe(CheckStatus.Pass);
   });
 
   it("registers as a scored grade-B audit", () => {
