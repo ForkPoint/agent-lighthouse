@@ -340,6 +340,26 @@ export async function mcpFetch(
   }
 }
 
+/**
+ * An unauthenticated probe answered 401 or 403: the server is there, but it
+ * requires sign-in, so nothing behind its authorization layer can be judged
+ * without credentials. Audits whose subject is the authorization behaviour
+ * itself (OAuth discovery, reachability, Origin validation, the endpoint's
+ * own 401 rule) read the status on their own and do not use this.
+ */
+export function requiresSignIn(result: FetchResult | undefined): boolean {
+  return result?.status === 401 || result?.status === 403;
+}
+
+/** The one sentence every audit uses when {@link requiresSignIn} holds. */
+export function signInMessage(
+  url: string,
+  status: number,
+  subject: string,
+): string {
+  return `${url} requires sign-in (HTTP ${status} to an unauthenticated request), so ${subject} cannot be judged without credentials.`;
+}
+
 /** Frame and POST one JSON-RPC call, returning the whole response. */
 export function postRpcRaw(
   ctx: CheckContext,
@@ -408,6 +428,8 @@ export interface ToolListing {
   tools: Record<string, unknown>[];
   truncated: boolean;
   pages: number;
+  /** The 401 or 403 status that refused the first page, if one did. */
+  signInStatus?: number;
 }
 
 export async function listTools(
@@ -418,6 +440,7 @@ export async function listTools(
   const tools: Record<string, unknown>[] = [];
   let cursor: string | undefined;
   let pages = 0;
+  let signInStatus: number | undefined;
 
   for (; pages < maxPages; pages += 1) {
     const key = `tools|${url}|${cursor ?? ""}`;
@@ -431,6 +454,7 @@ export async function listTools(
         { "MCP-Protocol-Version": MCP_PROTOCOL_VERSION },
       ),
     );
+    if (pages === 0 && page && requiresSignIn(page)) signInStatus = page.status;
     if (!page || page.status !== 200) break;
     const parsed = parseRpcResponse(page);
     if (!parsed.ok) break;
@@ -445,5 +469,10 @@ export async function listTools(
     cursor = next;
   }
 
-  return { tools, truncated: cursor !== undefined, pages };
+  return {
+    tools,
+    truncated: cursor !== undefined,
+    pages,
+    ...(signInStatus !== undefined ? { signInStatus } : {}),
+  };
 }

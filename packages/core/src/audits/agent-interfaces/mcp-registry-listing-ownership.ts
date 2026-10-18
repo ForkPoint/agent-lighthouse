@@ -160,6 +160,7 @@ export class McpRegistryListingOwnershipAudit extends Audit {
     const terms = [...new Set([apex, brand])].slice(0, MAX_SEARCHES);
     const listings: Listing[] = [];
     let searched = 0;
+    let answered = 0;
 
     for (const term of terms) {
       const url = `${REGISTRY}?search=${encodeURIComponent(term)}`;
@@ -170,6 +171,7 @@ export class McpRegistryListingOwnershipAudit extends Audit {
         headers: { Accept: "application/json" },
       });
       if (!response || response.status !== 200) continue;
+      answered += 1;
       for (const listing of parseListings(response.body)) {
         // The join key is the remote host, never the name: a name is whatever
         // the person who registered it chose.
@@ -180,6 +182,16 @@ export class McpRegistryListingOwnershipAudit extends Audit {
         if (!listings.some((seen) => seen.name === listing.name))
           listings.push(listing);
       }
+    }
+
+    // A search that got no answer proves nothing about a listing; only an
+    // answered search can show that none exists.
+    if (answered === 0) {
+      return this.notApplicable(
+        `Registry search unavailable: none of ${searched} search(es) for ${apex} got an answer, so whether a listing exists cannot be judged.`,
+        "A declared MCP endpoint with a registry listing under a namespace this domain owns",
+        `${searched} search(es) sent, 0 answered`,
+      );
     }
 
     const failures: string[] = [];

@@ -53,6 +53,7 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 - Caching hints are read from the result root and from `result._meta`.
 - At most four `nextCursor` pages per call.
 - Hint checks run on the first call's pages only.
+- 2026-10-18: a `tools/list` answered with HTTP 401 or 403 is not applicable, and the message names the sign-in requirement. The verdict was already not applicable; only the message changed.
 
 ## Deferred
 

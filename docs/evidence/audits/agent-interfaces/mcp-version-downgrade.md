@@ -48,3 +48,4 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 - `server/discover` comes from the shared per-scan cache.
 - An unreachable endpoint is `notApplicable`. `mcp-modern-era-reachability` scores reachability.
 - The audit does not retry with a revision from `data.supported`. Being told how to recover is the MUST it checks.
+- 2026-10-18: an unauthenticated probe answered with HTTP 401 or 403 is not applicable. The server requires sign-in, so its version negotiation cannot be judged without credentials. It used to fail at critical. Reachability and the 401 challenge are judged by `mcp-modern-era-reachability` and `mcp-oauth-discovery-chain`.

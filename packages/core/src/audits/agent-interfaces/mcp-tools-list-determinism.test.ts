@@ -85,6 +85,17 @@ function healthy(extra: Record<string, unknown> = {}): Record<string, unknown> {
 }
 
 describe("McpToolsListDeterminismAudit", () => {
+  it.each([401, 403])(
+    "is notApplicable and names the sign-in requirement when tools/list answers HTTP %i",
+    async (status) => {
+      const ctx: CheckContext = mockCheckContext([], servers());
+      ctx.fetch = async () => mockFetchResult("", status);
+      const result = await new McpToolsListDeterminismAudit().audit(ctx);
+      expect(result.status).toBe(CheckStatus.NotApplicable);
+      expect(result.message).toContain("requires sign-in");
+    },
+  );
+
   const audit = new McpToolsListDeterminismAudit();
 
   it("is notApplicable on an empty site", async () => {

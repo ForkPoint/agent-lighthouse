@@ -50,6 +50,8 @@ interface Site {
   servers?: Array<Record<string, unknown>>;
   /** Body served at /.well-known/mcp-registry-auth; undefined means 404. */
   proof?: string;
+  /** How every registry search ends: a thrown network error or an HTTP status. */
+  registryDown?: "network" | number;
 }
 
 function run(site: Site = {}) {
@@ -77,6 +79,9 @@ function run(site: Site = {}) {
   ctx.fetch = async (o: FetchOptions): Promise<FetchResult> => {
     requests.push(o);
     if (o.url.startsWith("https://registry.modelcontextprotocol.io")) {
+      if (site.registryDown === "network") throw new Error("socket hang up");
+      if (typeof site.registryDown === "number")
+        return mockFetchResult("busy", site.registryDown);
       return mockFetchResult(
         JSON.stringify({ servers: site.servers ?? [], metadata: { count: 0 } }),
         200,
@@ -156,6 +161,16 @@ describe("McpRegistryListingOwnershipAudit", () => {
       "/.well-known/mcp-registry-auth",
     );
   });
+
+  it.each(["network", 503] as const)(
+    "is notApplicable when no registry search is answered (%s)",
+    async (down) => {
+      const { result } = run({ servers: [], registryDown: down });
+      const r = await result;
+      expect(r.status).toBe(CheckStatus.NotApplicable);
+      expect(r.message).toMatch(/registry search unavailable/i);
+    },
+  );
 
   it("fails when no registry listing names a server on this domain", async () => {
     const { result } = run({ servers: [], proof: VALID_PROOF });

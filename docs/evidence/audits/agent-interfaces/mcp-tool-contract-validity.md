@@ -48,6 +48,7 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 - At most four `nextCursor` pages are followed. Stopping at the limit is reported in `found`.
 - `tools/list` pages go through the shared per-scan cache, keyed by endpoint and cursor. `mcp-tools-list-determinism` bypasses it on purpose.
 - A server that lists no tools is `notApplicable`.
+- 2026-10-18: a `tools/list` answered with HTTP 401 or 403 is not applicable, and the message names the sign-in requirement. The verdict was already not applicable; only the message changed.
 
 ## Deferred
 

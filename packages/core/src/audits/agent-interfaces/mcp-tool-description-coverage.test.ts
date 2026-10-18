@@ -108,6 +108,17 @@ const GOOD = () => ({
 });
 
 describe("McpToolDescriptionCoverageAudit", () => {
+  it.each([401, 403])(
+    "is notApplicable and names the sign-in requirement when tools/list answers HTTP %i",
+    async (status) => {
+      const ctx: CheckContext = mockCheckContext([], servers());
+      ctx.fetch = async () => mockFetchResult("", status);
+      const result = await new McpToolDescriptionCoverageAudit().audit(ctx);
+      expect(result.status).toBe(CheckStatus.NotApplicable);
+      expect(result.message).toContain("requires sign-in");
+    },
+  );
+
   it("is notApplicable on an empty site", async () => {
     await expectNotApplicableOnEmpty(new McpToolDescriptionCoverageAudit());
   });
