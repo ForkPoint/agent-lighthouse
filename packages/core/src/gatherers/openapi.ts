@@ -275,7 +275,11 @@ export function probeOpenApiServer(
     cache = new Map();
     openApiServerCache.set(cacheOwner(ctx), cache);
   }
-  const key = `${options.method ?? "OPTIONS"}|${url}`;
+  // Headers change the answer, so they are part of the key; see sharedProbeUrl.
+  const headerKey = options.headers
+    ? `|${JSON.stringify(Object.entries(options.headers).sort(([a], [b]) => a.localeCompare(b)))}`
+    : "";
+  const key = `${options.method ?? "OPTIONS"}|${url}${headerKey}`;
   let hit = cache.get(key);
   if (!hit) {
     hit = withLogContext({ [LogField.Gatherer]: "openapi" }, async () => {

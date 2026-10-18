@@ -243,7 +243,8 @@ describe("SearchEndpointAudit", () => {
 
   // ── absorbed website-search-action (3.4): declared-but-incomplete markup ──
 
-  it("warns when a WebSite node declares no SearchAction at all", async () => {
+  // A WebSite node without a SearchAction declares no search endpoint.
+  it("is not applicable when a WebSite node declares no SearchAction at all", async () => {
     const ctx = mockCheckContext([
       page(
         ld({
@@ -254,8 +255,7 @@ describe("SearchEndpointAudit", () => {
       ),
     ]);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Warn);
-    expect(result.message).toContain("no SearchAction");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("warns when a SearchAction target carries no query placeholder", async () => {
@@ -320,7 +320,7 @@ describe("SearchEndpointAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("matches a hyphenated search path segment", async () => {
@@ -344,35 +344,36 @@ describe("SearchEndpointAudit", () => {
       "/openapi.json": mockFetchResult(spec, 200),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   // ── nothing at all ──────────────────────────────────────────
 
-  it("fails when no search endpoint is found", async () => {
+  // Absent artifact, absent verdict: no declared search is not a defect.
+  it("is not applicable when no search endpoint is found", async () => {
     const ctx = mockCheckContext([page("")]);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("No search endpoint");
   });
 
-  it("fails when JSON-LD has a non-matching type and no OpenAPI search endpoint", async () => {
+  it("is not applicable when JSON-LD has a non-matching type and no OpenAPI search endpoint", async () => {
     const ctx = mockCheckContext([
       page(ld({ "@type": "Organization", name: "Test Corp" })),
     ]);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
-  it("fails when openapi.json has invalid JSON and no JSON-LD search action", async () => {
+  it("is not applicable when openapi.json has invalid JSON and no JSON-LD search action", async () => {
     const ctx = mockCheckContext([page("")], {
       "/openapi.json": mockFetchResult("invalid json {{{", 200),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
-  it("fails when the spec has no paths key", async () => {
+  it("is not applicable when the spec has no paths key", async () => {
     const ctx = mockCheckContext([page("")], {
       "/openapi.json": mockFetchResult(
         JSON.stringify({ openapi: "3.0.3", info: {} }),
@@ -380,10 +381,10 @@ describe("SearchEndpointAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
-  it("fails when a paths entry is not an object", async () => {
+  it("is not applicable when a paths entry is not an object", async () => {
     const ctx = mockCheckContext([page("")], {
       "/openapi.json": mockFetchResult(
         JSON.stringify({ paths: { "/null-path": null } }),
@@ -391,7 +392,7 @@ describe("SearchEndpointAudit", () => {
       ),
     });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
   it("handles a null JSON-LD block gracefully", async () => {
@@ -399,6 +400,6 @@ describe("SearchEndpointAudit", () => {
       page('<script type="application/ld+json">null</script>'),
     ]);
     const result = await audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 });

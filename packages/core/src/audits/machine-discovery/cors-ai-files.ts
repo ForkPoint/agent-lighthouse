@@ -3,6 +3,7 @@ import { Audit } from "#core/audit";
 import type { CheckContext } from "#core/check-context";
 import { weightForGrade } from "#core/scorer";
 
+import type { FetchResult } from "#core/fetcher";
 import { sharedProbeUrl } from "#core/gatherers/discovery";
 import {
   AuditTier,
@@ -15,6 +16,22 @@ import {
 } from "#core/types";
 import { isRootArtifact } from "#core/gatherers/root-files";
 
+/**
+ * A fixed third-party origin for the probe. A browser always sends Origin on a
+ * cross-origin request, and many servers and CDNs emit
+ * Access-Control-Allow-Origin only when it is present, so a probe without one
+ * reads a correctly configured file as "no CORS".
+ */
+const PROBE_ORIGIN = "https://example.invalid";
+
+function carriesAcao(result: FetchResult | undefined): boolean {
+  const value = result?.headers["access-control-allow-origin"];
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+const EXPECTED =
+  "Cross-origin requests (OPTIONS preflight or GET, with Origin) to /llms.txt and /.well-known/ai-catalog.json return Access-Control-Allow-Origin";
+
 export class CorsAiFilesAudit extends Audit {
   static override meta: AuditMeta = {
     id: "machine-discovery/cors-ai-files",
@@ -22,7 +39,7 @@ export class CorsAiFilesAudit extends Audit {
     title: "CORS on AI files",
     failureTitle: "CORS on AI files",
     description:
-      "Without CORS headers, AI agents running in browser contexts cannot fetch your llms.txt or API spec. Browser-based AI tools, ChatGPT plugins, and MCP clients are all blocked by same-origin policy, making your AI-facing files completely inaccessible to cross-origin agents.",
+      "Without CORS headers, agent code running inside a browser origin cannot fetch your llms.txt or AI catalog cross-origin. Server-side crawlers, agent backends and MCP clients are not browsers and are unaffected.",
     scoreDisplayMode: ScoreDisplayMode.Informative,
     weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
     evidenceGrade: EvidenceGrade.C,
@@ -37,7 +54,7 @@ export class CorsAiFilesAudit extends Audit {
     defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
-        "Browser-based AI tools, ChatGPT plugins, and MCP clients all run in browser contexts governed by the same-origin policy. Without CORS headers on your llms.txt and AI catalog, these agents receive a network error instead of your content — making your AI-facing files completely invisible to the fastest-growing category of AI consumers.",
+        "Agent code running inside a browser origin, such as a sandboxed app iframe, is governed by the same-origin policy. Without CORS headers on your llms.txt and AI catalog, such code receives a network error instead of your content. Server-side crawlers, agent backends and MCP clients are not browsers and are unaffected.",
       fix: "Add Access-Control-Allow-Origin and Access-Control-Allow-Methods headers to your /llms.txt and /.well-known/ai-catalog.json responses. Use a wildcard origin (*) unless you need to restrict access to specific domains.",
       code: "Access-Control-Allow-Origin: *\nAccess-Control-Allow-Methods: GET, OPTIONS",
       effort: FixEffort.Easy,
@@ -59,7 +76,7 @@ export class CorsAiFilesAudit extends Audit {
     if (hasRootFiles && existingAiPaths.length === 0) {
       return this.notApplicable(
         "No AI files (/llms.txt, /.well-known/ai-catalog.json) found to check CORS headers.",
-        "OPTIONS requests to /llms.txt and /.well-known/ai-catalog.json return Access-Control-Allow-Origin",
+        EXPECTED,
         "No applicable AI files found",
         page?.url,
       );
@@ -68,13 +85,24 @@ export class CorsAiFilesAudit extends Audit {
     const corsResults: Array<{ path: string; hasCors: boolean }> = [];
 
     for (const path of existingAiPaths) {
-      const result = await sharedProbeUrl(ctx, `${ctx.baseUrl}${path}`, {
+      const url = `${ctx.baseUrl}${path}`;
+      // The preflight a browser would send first, then the plain GET a simple
+      // cross-origin fetch actually makes; either answer carrying ACAO counts.
+      const preflight = await sharedProbeUrl(ctx, url, {
         method: HttpMethod.Options,
+        headers: {
+          Origin: PROBE_ORIGIN,
+          "Access-Control-Request-Method": "GET",
+        },
       });
-      const acaoValue = result?.headers["access-control-allow-origin"];
-      const hasCors =
-        acaoValue === "*" ||
-        (typeof acaoValue === "string" && acaoValue.length > 0);
+      let hasCors = carriesAcao(preflight);
+      if (!hasCors) {
+        const get = await sharedProbeUrl(ctx, url, {
+          method: HttpMethod.Get,
+          headers: { Origin: PROBE_ORIGIN },
+        });
+        hasCors = carriesAcao(get);
+      }
       corsResults.push({ path, hasCors });
     }
 
@@ -84,7 +112,7 @@ export class CorsAiFilesAudit extends Audit {
     if (withoutCors.length === 0) {
       return this.pass(
         "All AI files have CORS headers (Access-Control-Allow-Origin).",
-        "OPTIONS requests to /llms.txt and /.well-known/ai-catalog.json return Access-Control-Allow-Origin",
+        EXPECTED,
         `CORS enabled: ${withCors.map((r) => r.path).join(", ")}`,
         page?.url,
       );
@@ -93,12 +121,11 @@ export class CorsAiFilesAudit extends Audit {
     if (withCors.length > 0) {
       return this.warn(
         `Some AI files are missing CORS headers: ${withoutCors.map((r) => r.path).join(", ")}`,
-        "OPTIONS requests to /llms.txt and /.well-known/ai-catalog.json return Access-Control-Allow-Origin",
+        EXPECTED,
         `CORS present: ${withCors.map((r) => r.path).join(", ")}; Missing: ${withoutCors.map((r) => r.path).join(", ")}`,
         {
           priority: CheckPriority.Medium,
-          description:
-            "Without CORS headers, AI agents running in browser contexts cannot fetch your llms.txt or AI catalog. Browser-based AI tools and ChatGPT plugins are blocked by same-origin policy, making your AI-facing files inaccessible to the agents that need them most.",
+          description: CorsAiFilesAudit.meta.description,
           code: "Access-Control-Allow-Origin: *\nAccess-Control-Allow-Methods: GET, OPTIONS",
         },
         page?.url,
@@ -107,12 +134,12 @@ export class CorsAiFilesAudit extends Audit {
 
     return this.fail(
       "No AI files have CORS headers. Cross-origin AI agents cannot access these files.",
-      "OPTIONS requests to /llms.txt and /.well-known/ai-catalog.json return Access-Control-Allow-Origin",
+      EXPECTED,
       `No CORS headers on: ${withoutCors.map((r) => r.path).join(", ")}`,
       {
         priority: CheckPriority.Medium,
         description:
-          "Without CORS headers, AI agents running in browser contexts cannot fetch your llms.txt or API spec. Browser-based AI tools, ChatGPT plugins, and MCP clients are all blocked by same-origin policy, making your AI-facing files completely inaccessible to cross-origin agents.",
+          "Without CORS headers, agent code running inside a browser origin cannot fetch your llms.txt or AI catalog cross-origin. Server-side crawlers, agent backends and MCP clients are not browsers and are unaffected.",
         code: "Access-Control-Allow-Origin: *\nAccess-Control-Allow-Methods: GET, OPTIONS",
       },
       page?.url,

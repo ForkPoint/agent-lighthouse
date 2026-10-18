@@ -89,14 +89,15 @@ export class McpEndpointAudit extends Audit {
   }
 
   async audit(ctx: CheckContext): Promise<AuditResult> {
-    const endpoint = discoverMcpEndpoint(ctx);
+    const endpoint = await discoverMcpEndpoint(ctx);
 
+    // Absent artifact, absent verdict: a site without an MCP server has done
+    // nothing wrong. Only a declared endpoint can be judged.
     if (!endpoint) {
-      return this.fail(
+      return this.notApplicable(
         "No MCP endpoint is declared by this site (no servers.json, UCP service, or ai-catalog MCP entry).",
         EXPECTED,
         "No declared MCP endpoint",
-        this.recommendation(),
       );
     }
     if (endpoint.source === "no-array") {
@@ -112,6 +113,23 @@ export class McpEndpointAudit extends Audit {
         "No server URL found in servers.json.",
         EXPECTED,
         "No server URL",
+        this.recommendation(),
+      );
+    }
+
+    if (endpoint.source === "card-unreadable") {
+      return this.fail(
+        `The MCP Server Card declared in ai-catalog.json at ${endpoint.cardUrl} could not be read.`,
+        EXPECTED,
+        endpoint.found,
+        this.recommendation(),
+      );
+    }
+    if (endpoint.source === "card-no-remote") {
+      return this.fail(
+        `The MCP Server Card at ${endpoint.cardUrl} declares no remote endpoint (no remotes[].url).`,
+        EXPECTED,
+        endpoint.found,
         this.recommendation(),
       );
     }

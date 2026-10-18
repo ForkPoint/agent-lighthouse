@@ -152,7 +152,7 @@ export class McpToolContractValidityAudit extends Audit {
   };
 
   async audit(ctx: CheckContext): Promise<AuditResult> {
-    const endpoint = discoverMcpEndpoint(ctx);
+    const endpoint = await discoverMcpEndpoint(ctx);
     if (!endpoint || !endpoint.url) {
       return this.notApplicable(
         "This site declares no MCP endpoint, so there are no tool definitions to validate.",

@@ -6,12 +6,13 @@ slug: websub-hub-advertisement
 evidence_grade: C
 tier: informative
 disposition: "new in v2 — graduated from proposal 2026-08-23"
-reviewed: 2026-08-20
+reviewed: 2026-10-18
 graduated: 2026-08-23
 sources:
   - websub
   - rfc4287
   - schema-datafeed
+  - google-build-sitemap
 ---
 
 # WebSub hub advertisement and self-link correctness
@@ -20,16 +21,28 @@ sources:
 
 ## What it checks
 
-Checks whether feeds advertise a push hub per the WebSub Recommendation. More importantly, it checks that the mandatory rel=self link is present, absolute, and equal to the URL the feed was actually fetched from. A wrong self-link breaks hub verification even when a hub is configured.
+Checks the WebSub links on each feed that advertises a push hub. The feed should carry exactly one absolute rel=self link, and each hub should be an HTTPS URL that answers a HEAD. A missing, duplicated or relative self link breaks hub verification even when a hub is configured.
+
+The self URL may differ from the URL the feed was fetched from. The Recommendation allows it, so the audit does not compare them.
+
+| State                                                          | Result |
+| :------------------------------------------------------------- | :----- |
+| no feed                                                        | `na`   |
+| feeds, but none advertises a hub                               | `na`   |
+| every hubbed feed has one absolute self link and a live hub    | `pass` |
+| a hubbed feed has a missing, duplicated or relative self link  | `warn` |
+| a hub is not HTTPS, fails the address check or does not answer | `warn` |
 
 ## Claimed mechanism (falsifiable)
 
-WebSub is a W3C Recommendation requiring publishers to advertise at least one rel=hub and exactly one rel=self via Link headers or embedded link elements, with Link headers taking discovery precedence. Falsifiable claim: a feed that declares a hub, but carries a missing, relative or non-canonical rel=self, cannot complete hub subscription verification. The push path then silently degrades to whatever polling cadence subscribers happen to use. The failure is invisible to the publisher, because the hub appears configured. This check is scored as advisory only: the WebSub conformance assertion is exact and standards-backed, but no AI answer engine is documented as a WebSub subscriber, so the consumer-side benefit is a plausible convention rather than documented behaviour.
+WebSub is a W3C Recommendation. Publishers MUST implement at least one discovery mechanism: Link headers or embedded link elements. They SHOULD advertise at least one rel=hub and exactly one rel=self, and Link headers take discovery precedence. Falsifiable claim: a feed that declares a hub, but carries a missing, duplicated or relative rel=self, cannot complete hub subscription verification. The push path then silently degrades to whatever polling cadence subscribers happen to use. The failure is invisible to the publisher, because the hub appears configured. This check is scored as advisory only: the WebSub conformance assertion is exact and standards-backed, but no AI answer engine is documented as a WebSub subscriber, so the consumer-side benefit is a plausible convention rather than documented behaviour.
 
 ## Evidence
 
 - **[WebSub (W3C Recommendation)](https://www.w3.org/TR/websub/)** — W3C (spec, URL verified 2026-08-20)
-  - W3C Recommendation. Publishers 'MUST implement at least one' of Link Headers or embedded link elements, advertising at least one rel=hub and exactly one rel=self (the canonical topic URL). Discovery checks Link headers first, then embedded link elements; for HTML, link elements are recommended in <head> only.
+  - W3C Recommendation. Publishers 'MUST implement at least one' of Link Headers or embedded link elements. The publisher 'SHOULD include at least one Link Header … with rel=hub … as well as exactly one Link Header … with rel=self'. Discovery checks Link headers first, then embedded link elements; for HTML, link elements are recommended in <head> only. `hub.topic` 'MUST be the "self" URL found during the discovery step, which may be different from the URL that was used to make the discovery request' (verified 2026-10-18).
+- **[Build and submit a sitemap](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap)** — Google (vendor doc, URL verified 2026-10-18)
+  - 'If you use Atom or RSS, you can use WebSub to broadcast your changes to search engines, including Google.' The wording is optional, so a feed without a hub costs the site nothing. Google Search is the consumer; no LLM vendor documents subscribing to a hub.
 - **[RFC 4287 — The Atom Syndication Format](https://www.rfc-editor.org/rfc/rfc4287)** — IETF (spec, URL verified 2026-08-20)
   - Sec 4.1.2: atom:entry MUST contain exactly one atom:id and exactly one atom:updated. The id is a permanent, universally unique IRI that 'must not change across different instantiations of the entry'. The updated time is the 'most recent modification time that the publisher considers significant'. atom:entry MUST also contain atom:summary in two cases: when atom:content carries a src attribute, and is thus empty, and when content is Base64-encoded. MUST NOT contain more than one atom:summary.
 - **[schema.org DataFeed](https://schema.org/DataFeed)** — schema.org (spec, URL verified 2026-08-20)
@@ -59,7 +72,13 @@ Tier per evidence policy: **informative (weight 0)** — grade C does not meet t
   `channel` only.** An entry's own `rel="self"` does not count.
 - **`atom:link` in RSS is read.** A link counts when it is unprefixed or its
   prefix binds the Atom namespace. `rel` is a token list.
+- **A feed with no hub is `notApplicable`.** It used to warn ("every
+  subscriber falls back to polling"). Google documents WebSub as optional,
+  so absence is not a defect. Only feeds that advertise a hub are judged.
+- **The self link is not compared with the fetch URL.** It used to warn when
+  they differed. The Recommendation says the topic URL "may be different
+  from the URL that was used to make the discovery request".
 - **HTML page discovery links are not read.** WebSub's examples put them in the
   feed, and an HTML topic would need its own self-link comparison.
-- **Only the WebSub Recommendation bears on this audit.** The RFC 4287 and
-  schema.org DataFeed sources carry nothing here.
+- **Only the WebSub Recommendation and Google's sitemap page bear on this
+  audit.** The RFC 4287 and schema.org DataFeed sources carry nothing here.

@@ -2,7 +2,13 @@ import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
 import { weightForGrade } from "#core/scorer";
 import type { CheckContext, PageContext } from "#core/check-context";
-import { AI_CATALOG_PATH, describeFailure, readAiCatalog } from "./_ard";
+import {
+  AI_CATALOG_PATH,
+  ARD_PATH,
+  CATALOG_PATHS_LABEL,
+  describeFailure,
+  readAiCatalog,
+} from "./_ard";
 import {
   AuditTier,
   CheckPriority,
@@ -49,13 +55,15 @@ function findCatalogAdvertisement(
   return undefined;
 }
 
-const EXPECTED = `${AI_CATALOG_PATH} returns 200 with an ARD §4.1 manifest: specVersion, host and a non-empty entries array`;
+const EXPECTED = `${CATALOG_PATHS_LABEL} returns 200 with an ARD manifest: a non-empty entries array`;
 
-// The schema is ARD v0.9 §4.1-4.3, mirroring the spec's own conformance
-// example. Every field below appears in live manifests (neon.com, weaviate.io,
-// the Shopware core template); the framework's previous `services`/`owner`/
-// `contact`/`lastUpdated` sample appears in none of them.
-const SAMPLE = `// /.well-known/ai-catalog.json  (Content-Type: application/ai-catalog+json)
+// ARD v0.91 requires only `entries`. specVersion and host are AI Catalog spec
+// fields that ARD leaves open; the sample keeps them because they name the
+// operator. The framework's previous `services`/`owner`/`contact`/
+// `lastUpdated` sample appears in no spec revision.
+const SAMPLE = `// /.well-known/ard.json (ARD v0.91), and the same file at
+// /.well-known/ai-catalog.json, the path hf-discover and MCP Server Cards read
+// (Content-Type: application/ai-catalog+json)
 {
   "specVersion": "1.0",
   "host": {
@@ -76,8 +84,8 @@ const SAMPLE = `// /.well-known/ai-catalog.json  (Content-Type: application/ai-c
   ]
 }
 
-<!-- Optional: advertise it (ARD §6.1). The one documented consumer still
-     resolves only the well-known path, so this never replaces the file. -->
+<!-- Optional: advertise it. The one documented consumer still resolves
+     only the well-known path, so this never replaces the file. -->
 <link rel="ai-catalog" type="application/ai-catalog+json" href="/.well-known/ai-catalog.json">`;
 
 export class AiCatalogExistsAudit extends Audit {
@@ -103,7 +111,7 @@ export class AiCatalogExistsAudit extends Audit {
     guidance: {
       impact:
         "Without an AI catalog, agents must probe multiple endpoints to discover your services. This wastes time, increases error rates, and often results in agents skipping your site entirely in favor of competitors with a machine-readable capability manifest.",
-      fix: 'Serve /.well-known/ai-catalog.json as application/ai-catalog+json with the three fields ARD §4.1 requires — specVersion, a host object naming your site, and an entries array where each entry has an identifier, displayName, type and either a url or inline data. Optionally advertise it with <link rel="ai-catalog"> or the equivalent HTTP Link header, but serve it at the well-known path, which is the only location a documented consumer resolves.',
+      fix: "Serve the manifest at /.well-known/ard.json (the ARD v0.91 path) and at /.well-known/ai-catalog.json (the path hf-discover and the MCP Server Card extension read). ARD requires an entries array where each entry has an identifier, displayName, type and either a url or inline data; a host object naming your site and a specVersion are recommended. Optionally advertise it with a <link> element or HTTP Link header, but serve it at a well-known path, which is the only location a documented consumer resolves.",
       code: SAMPLE,
       effort: FixEffort.Easy,
       docsUrl: "https://github.com/ards-project/ard-spec/blob/main/spec/ard.md",
@@ -125,6 +133,7 @@ export class AiCatalogExistsAudit extends Audit {
     // (Hugging Face hf-discover) resolves only /.well-known/ai-catalog.json,
     // so a rel="ai-catalog" link never passes this audit on its own — it turns
     // "no catalog" into "a catalog is advertised but not served there".
+    // A manifest at either well-known path (ard.json or ai-catalog.json) counts.
     const ad = findCatalogAdvertisement(ctx.pages);
     const read = readAiCatalog(ctx);
 
@@ -136,7 +145,7 @@ export class AiCatalogExistsAudit extends Audit {
       // a wrong diagnosis, so the ad is reported as context instead.
       if (ad && (read.reason === "absent" || read.reason === "html")) {
         return this.warn(
-          `${message} A catalog is advertised as ${ad.href} via rel="ai-catalog" (${ad.source}), but the one documented consumer resolves only ${AI_CATALOG_PATH}.`,
+          `${message} A catalog is advertised as ${ad.href} via rel="ai-catalog" (${ad.source}), but consumers resolve only ${ARD_PATH} and ${AI_CATALOG_PATH}.`,
           EXPECTED,
           `${read.found}; advertised at ${ad.href}`,
           this.recommendation(),
@@ -154,6 +163,9 @@ export class AiCatalogExistsAudit extends Audit {
     }
 
     const { manifest } = read;
+    const version = manifest.specVersion
+      ? ` (specVersion ${manifest.specVersion})`
+      : "";
     const advertised = ad
       ? `; also advertised via rel="ai-catalog" (${ad.source})`
       : "";
@@ -162,7 +174,7 @@ export class AiCatalogExistsAudit extends Audit {
     // agent nothing. The pre-rewrite audit reported the same shape as a pass.
     if (manifest.entries.length === 0) {
       return this.warn(
-        `${AI_CATALOG_PATH} is a valid ARD manifest (specVersion ${manifest.specVersion}) but lists no entries, so it advertises no capability to an agent.`,
+        `${manifest.path} is a valid ARD manifest${version} but lists no entries, so it advertises no capability to an agent.`,
         EXPECTED,
         `Valid ARD manifest with 0 entries${advertised}`,
         this.recommendation(),
@@ -172,7 +184,7 @@ export class AiCatalogExistsAudit extends Audit {
 
     const count = manifest.entries.length;
     return this.pass(
-      `AI catalog found: a valid ARD manifest (specVersion ${manifest.specVersion}) with ${count} entr${count === 1 ? "y" : "ies"}.`,
+      `AI catalog found at ${manifest.path}: a valid ARD manifest${version} with ${count} entr${count === 1 ? "y" : "ies"}.`,
       EXPECTED,
       `Valid ARD manifest with ${count} entr${count === 1 ? "y" : "ies"}${advertised}`,
       ad?.pageUrl,

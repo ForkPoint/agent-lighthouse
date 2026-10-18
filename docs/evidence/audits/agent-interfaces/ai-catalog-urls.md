@@ -13,6 +13,7 @@ signals:
 sources:
   - hf-discover
   - ard-spec-repo
+  - ard-spec-v091
 ---
 
 # ai-catalog-urls (`5.9`)
@@ -41,6 +42,8 @@ Broken service URLs in your AI catalog cause agents to fail when trying to use y
 **Counter-evidence:** No vendor document states that a crawler penalises or downranks a site for a dead catalog url. The consequence is mechanical rather than a published ranking signal: traversal stops, and the tool call fails. The federation-following behaviour also lives in a user-driven client. Hugging Face's hosted server states that "Navigation is intentionally not exposed by the hosted server". ARD itself is a draft (v0.9). The inline-`data` case above is also a live false-positive risk that any liveness check must respect. The pre-2026-08-22 implementation was unreachable on real sites for the opposite reason. It aborted unless the manifest exposed a `services` array, which no spec or deployment uses.
 
 ## Implementation deviations
+
+- The manifest comes from the shared `_ard.ts` reader: `/.well-known/ard.json` or `/.well-known/ai-catalog.json`, with only `entries` required (ARD v0.91, verified 2026-10-18). Before 2026-10-18 a manifest without `host` or `specVersion` was rejected upstream and this audit returned `notApplicable`.
 
 - Reachable means 2xx, 3xx, or 401, 403, 405 or 429. Catalog entries often point at auth-gated or POST-only endpoints.
 - 429 counts as reachable. Counting it as broken would let the audit's own probing cause the failure it reports.

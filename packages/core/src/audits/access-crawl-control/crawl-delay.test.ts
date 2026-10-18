@@ -48,6 +48,57 @@ describe("CrawlDelayAudit", () => {
     expect(result.message).toContain("30s");
   });
 
+  // Google, Amazonbot and Applebot document that they ignore Crawl-delay, so a
+  // large value addressed only to them costs the site nothing.
+  it("is not applicable when only ignoring crawlers carry a Crawl-delay", () => {
+    const robots = [
+      "User-agent: Googlebot",
+      "Crawl-delay: 30",
+      "",
+      "User-agent: Amazonbot",
+      "Crawl-delay: 60",
+      "",
+      "User-agent: Applebot",
+      "Crawl-delay: 20",
+      "",
+      "User-agent: *",
+      "Allow: /",
+    ].join("\n");
+    const ctx = mockCheckContext([], {
+      "/robots.txt": mockFetchResult(robots, 200),
+    });
+    const result = audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.message).toContain("ignore");
+  });
+
+  it("judges only groups for crawlers that honour the directive", () => {
+    const robots = [
+      "User-agent: Googlebot",
+      "Crawl-delay: 30",
+      "",
+      "User-agent: ClaudeBot",
+      "Crawl-delay: 2",
+    ].join("\n");
+    const ctx = mockCheckContext([], {
+      "/robots.txt": mockFetchResult(robots, 200),
+    });
+    const result = audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.message).toContain("ClaudeBot: 2s");
+    expect(result.message).not.toContain("Googlebot");
+  });
+
+  it("states no unsourced indexing-delay claim", () => {
+    const robots = "User-agent: *\nCrawl-delay: 30";
+    const ctx = mockCheckContext([], {
+      "/robots.txt": mockFetchResult(robots, 200),
+    });
+    const result = audit.audit(ctx);
+    expect(JSON.stringify(result)).not.toMatch(/days or weeks/);
+    expect(JSON.stringify(CrawlDelayAudit.meta)).not.toMatch(/days or weeks/);
+  });
+
   // A missing robots.txt is not a defect for this audit: Crawl-delay is not
   // part of RFC 9309, so there is no value to judge.
   it("is not applicable when robots.txt is missing", () => {

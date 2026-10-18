@@ -134,7 +134,7 @@ export class McpRegistryListingOwnershipAudit extends Audit {
   };
 
   async audit(ctx: CheckContext): Promise<AuditResult> {
-    const endpoint = discoverMcpEndpoint(ctx);
+    const endpoint = await discoverMcpEndpoint(ctx);
     if (!endpoint || !endpoint.url) {
       return this.notApplicable(
         "This site declares no MCP endpoint, so there is no server to look for in the registry.",

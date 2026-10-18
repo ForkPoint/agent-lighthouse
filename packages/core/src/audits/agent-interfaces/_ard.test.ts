@@ -122,13 +122,42 @@ describe("readAiCatalog", () => {
     expect(read.manifest.entries[0]!.hasTrustManifest).toBe(false);
   });
 
-  it("treats a whitespace-only specVersion as missing", () => {
+  // ARD v0.91 requires only `entries`; specVersion is read when present.
+  it("treats a whitespace-only specVersion as absent without rejecting the manifest", () => {
     const read = readAiCatalog(
       ctxWith(JSON.stringify({ specVersion: "  ", host: {}, entries: [] })),
     );
+    expect(read.ok).toBe(true);
+    if (!read.ok) return;
+    expect(read.manifest.specVersion).toBeUndefined();
+  });
+
+  it("reports only entries as missing", () => {
+    const read = readAiCatalog(ctxWith(JSON.stringify({ specVersion: "1.0" })));
     expect(read.ok).toBe(false);
     if (read.ok) return;
-    expect(read.reason === "shape" && read.missing).toEqual(["specVersion"]);
+    expect(read.reason === "shape" && read.missing).toEqual(["entries"]);
+  });
+
+  it("prefers the manifest that lists entries over an empty one", () => {
+    const read = readAiCatalog(
+      mockCheckContext([], {
+        "/.well-known/ard.json": mockFetchResult(
+          JSON.stringify({ entries: [] }),
+          200,
+          "application/json",
+        ),
+        "/.well-known/ai-catalog.json": mockFetchResult(
+          JSON.stringify({ entries: [{ identifier: "x" }] }),
+          200,
+          "application/json",
+        ),
+      }),
+    );
+    expect(read.ok).toBe(true);
+    if (!read.ok) return;
+    expect(read.manifest.path).toBe("/.well-known/ai-catalog.json");
+    expect(read.manifest.hasHost).toBe(false);
   });
 });
 

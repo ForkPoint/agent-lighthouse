@@ -5,6 +5,7 @@ import { isSafeUrl } from "#core/fetcher";
 import { HttpMethod } from "#core/types";
 import { LogField, withLogContext } from "#core/logger";
 import { isRootArtifact } from "./root-files";
+import { readAiCatalog } from "#core/audits/agent-interfaces/_ard";
 
 /**
  * MCP's current specification revision. Pinning an older one makes servers that
@@ -36,19 +37,31 @@ export function isObject(val: unknown): val is Record<string, unknown> {
  * malformed — both come out of the same pass over the declared sources. A
  * malformed declaration is not the same as no declaration: the site said it has
  * a server and got the shape wrong, and an audit must be able to say so.
+ *
+ * `cardUrl` is set when the endpoint came through an ai-catalog Server Card.
  */
 export type McpEndpoint =
-  | { url: string; source: "servers.json" | "ucp" | "ai-catalog" }
-  | { url: ""; source: "no-array" | "no-url" };
+  | {
+      url: string;
+      source: "servers.json" | "ucp" | "ai-catalog";
+      cardUrl?: string;
+    }
+  | { url: ""; source: "no-array" | "no-url" }
+  | {
+      url: "";
+      source: "card-unreadable" | "card-no-remote";
+      cardUrl: string;
+      found: string;
+    };
 
 /**
  * Where the site says its MCP server is. Every path here is an *explicit*
  * declaration; see the mcp-endpoint dossier for why `/mcp` is not probed
  * speculatively.
  */
-export function discoverMcpEndpoint(
+export async function discoverMcpEndpoint(
   ctx: CheckContext,
-): McpEndpoint | undefined {
+): Promise<McpEndpoint | undefined> {
   const servers = ctx.rootFiles["/.well-known/mcp/servers.json"];
   if (isRootArtifact(servers) && servers.body) {
     const parsed = tryParseJson(servers.body);
@@ -88,24 +101,79 @@ export function discoverMcpEndpoint(
     }
   }
 
-  const catalog = ctx.rootFiles["/.well-known/ai-catalog.json"];
-  if (isRootArtifact(catalog) && catalog.body) {
-    const parsed = tryParseJson(catalog.body);
-    if (isObject(parsed) && Array.isArray(parsed["entries"])) {
-      for (const entry of parsed["entries"] as unknown[]) {
-        if (!isObject(entry)) continue;
-        const type = typeof entry["type"] === "string" ? entry["type"] : "";
-        if (
-          type.includes("mcp-server-card") &&
-          typeof entry["url"] === "string"
-        ) {
-          return { url: entry["url"], source: "ai-catalog" };
-        }
-      }
-    }
+  // The ARD reader owns both catalog paths (ard.json first, then
+  // ai-catalog.json) and the manifest shape; discovery only picks the entry.
+  const catalog = readAiCatalog(ctx);
+  if (catalog.ok) {
+    const card = catalog.manifest.entries.find(
+      (entry) => entry.type?.includes("mcp-server-card") && entry.url,
+    );
+    if (card?.url) return resolveServerCard(ctx, card.url);
   }
 
   return undefined;
+}
+
+/**
+ * Follow an ARD catalog MCP entry to the endpoint it names.
+ *
+ * In SEP-2127 discovery, an `application/mcp-server-card+json` entry's `url`
+ * addresses the Server Card, not the server. The endpoint sits inside the card
+ * at `remotes[].url`. Posting `initialize` to the card URL failed every site
+ * that published a correct catalog.
+ *
+ * Absent, broken and readable are three findings, and the line sits here,
+ * beside the read, so no caller has to guess:
+ *
+ * - no catalog entry — no declaration; the caller sees `undefined`;
+ * - `card-unreadable` — the catalog names a card that is refused, unreachable,
+ *   not HTTP 200, or not a JSON object. The site declared a server and the
+ *   declaration is broken;
+ * - `card-no-remote` — the card reads, but no `remotes[]` entry carries a
+ *   `url`. Also broken: the card names no endpoint to connect to.
+ *
+ * A `streamable-http` remote wins over an earlier remote of another type,
+ * because Streamable HTTP is the transport the current revision defines.
+ */
+async function resolveServerCard(
+  ctx: CheckContext,
+  cardUrl: string,
+): Promise<McpEndpoint> {
+  const unreadable = (found: string): McpEndpoint => ({
+    url: "",
+    source: "card-unreadable",
+    cardUrl,
+    found,
+  });
+  // The card URL comes out of a site-controlled file. mcpFetch also gates it,
+  // but checking here keeps "refused" apart from "unreachable".
+  if (!(await isSafeUrl(cardUrl))) return unreadable(`${cardUrl} -> refused`);
+  const card = await sharedProbe(ctx, `card|${cardUrl}`, () =>
+    mcpFetch(ctx, cardUrl, { method: HttpMethod.Get }),
+  );
+  if (!card) return unreadable(`${cardUrl} -> unreachable`);
+  if (card.status !== 200)
+    return unreadable(`${cardUrl} -> HTTP ${card.status}`);
+  const parsed = tryParseJson(card.body);
+  if (!isObject(parsed)) return unreadable(`${cardUrl} -> not a JSON object`);
+
+  const remotes = Array.isArray(parsed["remotes"])
+    ? (parsed["remotes"] as unknown[]).filter(
+        (r): r is Record<string, unknown> =>
+          isObject(r) && typeof r["url"] === "string" && r["url"] !== "",
+      )
+    : [];
+  const remote =
+    remotes.find((r) => r["type"] === "streamable-http") ?? remotes[0];
+  if (!remote) {
+    return {
+      url: "",
+      source: "card-no-remote",
+      cardUrl,
+      found: `${cardUrl} -> no remotes[].url`,
+    };
+  }
+  return { url: remote["url"] as string, source: "ai-catalog", cardUrl };
 }
 
 /** Frame a JSON-RPC 2.0 request. `params` is omitted entirely when absent. */

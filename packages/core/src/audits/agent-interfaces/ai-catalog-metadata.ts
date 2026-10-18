@@ -2,12 +2,7 @@ import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
 import { weightForGrade } from "#core/scorer";
 import type { CheckContext } from "#core/check-context";
-import {
-  AI_CATALOG_PATH,
-  entryLabel,
-  nonEmptyString,
-  readAiCatalog,
-} from "./_ard";
+import { entryLabel, nonEmptyString, readAiCatalog } from "./_ard";
 import type { ArdEntry, ArdManifest } from "./_ard";
 import {
   AuditTier,
@@ -145,7 +140,7 @@ export class AiCatalogMetadataAudit extends Audit {
     // zero for the same absence would triple-penalize one missing file.
     if (!read.ok) {
       return this.notApplicable(
-        `No ARD manifest to grade: ${AI_CATALOG_PATH} ${read.reason === "absent" ? "is not served" : "is not a valid ARD manifest"} — see the AI Catalog exists check.`,
+        `No ARD manifest to grade: ${read.path} ${read.reason === "absent" ? "is not served" : "is not a valid ARD manifest"} — see the AI Catalog exists check.`,
         EXPECTED,
         read.found,
       );
@@ -168,7 +163,7 @@ export class AiCatalogMetadataAudit extends Audit {
     const thin = manifest.entries.filter((e) => !isDiscoverable(e));
 
     const extras = [
-      ...(hostIdentifier ? [] : ["no host.identifier"]),
+      ...(hostIdentifier || !manifest.hasHost ? [] : ["no host.identifier"]),
       ...bonuses(manifest),
     ];
     const found =
@@ -186,9 +181,11 @@ export class AiCatalogMetadataAudit extends Audit {
       );
     }
 
-    if (!hostDisplayName) {
+    // host is optional under ARD v0.91. Only a host object that is present
+    // but unnamed is a finding.
+    if (manifest.hasHost && !hostDisplayName) {
       return this.warn(
-        "The AI catalog does not name its operator: host.displayName is required by ARD §4.3 and is missing.",
+        "The AI catalog has a host object but does not name its operator: host.displayName is missing.",
         EXPECTED,
         `${found}; no host.displayName`,
         this.recommendation(),

@@ -159,3 +159,45 @@ describe("absent artifact, absent verdict — the sitemap", () => {
     });
   }
 });
+
+/**
+ * Audits about a declared MCP server. The marker is the shared discovery read:
+ * an audit that calls `discoverMcpEndpoint` judges the server the site
+ * declares, so a site that declares none gets `notApplicable`.
+ * `agent-interfaces/mcp-endpoint` returned `fail` at high priority here until
+ * 2026-10-18.
+ */
+const mcpServerAudits = registrations.filter((r) =>
+  (sources.get(r.meta.id) ?? "").includes("discoverMcpEndpoint"),
+);
+
+describe("absent artifact, absent verdict — the MCP server", () => {
+  it("finds the audits that read the shared MCP discovery", () => {
+    expect(mcpServerAudits.map((r) => r.meta.id).sort()).toEqual([
+      "agent-interfaces/mcp-endpoint",
+      "agent-interfaces/mcp-modern-era-reachability",
+      "agent-interfaces/mcp-oauth-discovery-chain",
+      "agent-interfaces/mcp-origin-validation-cors",
+      "agent-interfaces/mcp-registry-listing-ownership",
+      "agent-interfaces/mcp-tool-contract-validity",
+      "agent-interfaces/mcp-tool-description-coverage",
+      "agent-interfaces/mcp-tools-list-determinism",
+      "agent-interfaces/mcp-version-downgrade",
+    ]);
+  });
+
+  for (const registration of mcpServerAudits) {
+    const { id } = registration.meta;
+
+    it(`${id}: declines a site that declares no MCP server`, async () => {
+      const result = await registration.create().audit(siteWithoutASpec());
+      expect(AuditResultSchema.safeParse(result).success).toBe(true);
+      expect(
+        result.status,
+        `${id}: reported "${result.status}" about an MCP server the site never declared — ` +
+          `"${result.message}". Absence is notApplicable; only a present-and-defective ` +
+          `declaration may fail.`,
+      ).toBe(CheckStatus.NotApplicable);
+    });
+  }
+});

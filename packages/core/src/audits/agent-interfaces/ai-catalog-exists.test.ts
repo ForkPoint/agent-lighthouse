@@ -67,22 +67,91 @@ describe("AiCatalogExistsAudit", () => {
   it("fails on the invented top-level services array", () => {
     const result = audit.audit(withCatalog(LEGACY));
     expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.message).toContain("specVersion");
-    expect(result.message).toContain("host");
     expect(result.message).toContain("entries");
+    expect(result.message).not.toContain("specVersion");
   });
 
-  it("names exactly the missing required field when only one is absent", () => {
+  // ARD v0.91's ArdManifest schema requires only `entries`. specVersion and
+  // host belong to the AI Catalog spec, and hf-discover reads only entries.
+  it("passes a manifest without specVersion", () => {
     const result = audit.audit(withCatalog(ard({ specVersion: undefined })));
-    expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.message).toContain("specVersion");
-    expect(result.message).not.toContain("entries");
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.message).not.toContain("undefined");
   });
 
-  it("fails when host is missing", () => {
+  it("passes a manifest without host", () => {
     expect(audit.audit(withCatalog(ard({ host: undefined }))).status).toBe(
-      CheckStatus.Fail,
+      CheckStatus.Pass,
     );
+  });
+
+  it("passes a bare entries-only manifest", () => {
+    const body = JSON.stringify({ entries: JSON.parse(ard()).entries });
+    expect(audit.audit(withCatalog(body)).status).toBe(CheckStatus.Pass);
+  });
+
+  // ── ARD v0.91 path: /.well-known/ard.json ──
+
+  it("passes a manifest served only at /.well-known/ard.json", () => {
+    const result = audit.audit(
+      mockCheckContext([], {
+        "/.well-known/ard.json": mockFetchResult(
+          ard(),
+          200,
+          "application/json",
+        ),
+        "/.well-known/ai-catalog.json": mockFetchResult("", 404),
+      }),
+    );
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.message).toContain("/.well-known/ard.json");
+  });
+
+  it("passes when ai-catalog.json is valid and ard.json is absent", () => {
+    const result = audit.audit(
+      mockCheckContext([], {
+        "/.well-known/ard.json": mockFetchResult("", 404),
+        "/.well-known/ai-catalog.json": mockFetchResult(ard()),
+      }),
+    );
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.message).toContain("/.well-known/ai-catalog.json");
+  });
+
+  it("passes when one path is valid even if the other is broken", () => {
+    const result = audit.audit(
+      mockCheckContext([], {
+        "/.well-known/ard.json": mockFetchResult(
+          "nope {{{",
+          200,
+          "application/json",
+        ),
+        "/.well-known/ai-catalog.json": mockFetchResult(ard()),
+      }),
+    );
+    expect(result.status).toBe(CheckStatus.Pass);
+  });
+
+  it("reports the broken file, not the absent one, when neither is valid", () => {
+    const result = audit.audit(
+      mockCheckContext([], {
+        "/.well-known/ard.json": mockFetchResult(
+          "nope {{{",
+          200,
+          "application/json",
+        ),
+        "/.well-known/ai-catalog.json": mockFetchResult("", 404),
+      }),
+    );
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("/.well-known/ard.json");
+    expect(result.message).toContain("not valid JSON");
+  });
+
+  it("names both paths when neither is served", () => {
+    const result = audit.audit(mockCheckContext([], {}));
+    expect(result.message).toContain("/.well-known/ard.json");
+    expect(result.message).toContain("/.well-known/ai-catalog.json");
   });
 
   it("fails when entries is not an array", () => {

@@ -150,6 +150,13 @@ describe("AiCatalogMetadataAudit", () => {
     expect(result.message).toContain("host.displayName");
   });
 
+  // host is optional in ARD v0.91; only a host object that is present but
+  // unnamed is worth a warning.
+  it("does not warn when the manifest has no host object at all", () => {
+    const result = audit.audit(ctxWith(manifest({ host: undefined })));
+    expect(result.status).toBe(CheckStatus.Pass);
+  });
+
   it("mentions a missing host.identifier without failing on it", () => {
     const result = audit.audit(
       ctxWith(manifest({ host: { displayName: "Example" } })),

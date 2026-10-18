@@ -24,8 +24,8 @@ One site-search audit over both halves of the declaration: the Schema.org `Searc
 | :----------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------- |
 | a `SearchAction` URL template whose probe returns HTTP 200 **with results**, or a `GET` operation on a path with a `search` segment in `/openapi.json` | `pass`                 |
 | a `SearchAction` template that 200s with an empty payload, is gated (401/403/407/451), returns another non-200, or is unreachable                      | `warn`, priority `low` |
-| a `SearchAction` whose target has no `urlTemplate` or no `{placeholder}`, or a `WebSite` node that declares no `SearchAction` at all                   | `warn`, priority `low` |
-| neither half present                                                                                                                                   | `fail`, priority `low` |
+| a `SearchAction` whose target has no `urlTemplate` or no `{placeholder}`                                                                               | `warn`, priority `low` |
+| neither half present, including a `WebSite` node that declares no `SearchAction` at all                                                                | `notApplicable`        |
 
 ## Evidence
 
@@ -55,6 +55,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - `applicablePageTypes` is not set. This is a site-level check.
 - `query-input` is not cross-checked against the placeholder. The probe verifies the template instead.
 - The audit is not enrolled in the absent-artifact contract. A `SearchAction` alone can reach a verdict without any OpenAPI document.
+- When neither half is present, the audit returns `notApplicable` (absent artifact, absent verdict). Until 2026-10-18 it returned `fail`, and a `WebSite` node without a `SearchAction` returned `warn`, although no consumer reads the declaration.
 
 ## Deferred
 
