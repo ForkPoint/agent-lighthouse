@@ -1,5 +1,20 @@
 # @forkpoint/agent-lighthouse-mcp
 
+## 8.0.1
+
+### Patch Changes
+
+- Updated dependencies [d95c15b]
+- Updated dependencies [d95c15b]
+- Updated dependencies [2e8021f]
+- Updated dependencies [d95c15b]
+- Updated dependencies [2e8021f]
+- Updated dependencies [2e8021f]
+- Updated dependencies [2e8021f]
+- Updated dependencies [d95c15b]
+  - @forkpoint/agent-lighthouse-core@8.0.1
+  - @forkpoint/agent-lighthouse-report@8.0.1
+
 ## 8.0.0
 
 ### Patch Changes

@@ -1,5 +1,18 @@
 # @forkpoint/agent-lighthouse-core
 
+## 8.0.1
+
+### Patch Changes
+
+- d95c15b: `operability-safety/c2pa-signer-trust-status` now warns instead of failing when a Content Credential's signing certificate has expired but the manifest carries a time-stamp, since the C2PA specification judges a time-stamped signature at the time it was made. The self-signed failure now says no validator trusts such a certificate by default, because a user can still trust one by hand.
+- d95c15b: `access-crawl-control/canonical` no longer warns when a page declares no canonical URL, because Google documents that a canonical is not required and picks one itself. A site where no scanned page declares one is now not applicable; a site where only some pages do is judged on the declared canonicals, and the pages without one are named in the pass message. Invalid canonicals and canonicals that collapse onto the homepage still fail.
+- 2e8021f: `agentic-commerce/checkout-offer-field-mapping` now follows the current OpenAI product feed spec. It no longer fails a product for an item_id over 100 or a brand over 70 characters, for having neither a GTIN nor an MPN, for a pre-order without a date, or for an HTTP image or product URL; those rules are gone from the spec or apply only to its Google-compatible profile.
+- d95c15b: `agentic-commerce/checkout-offer-field-mapping` no longer fails a product page whose Product `url` differs from its canonical link. The OpenAI product feed spec asks for the product page with the variant selected, so a variant URL whose canonical names the parent product is now a valid row.
+- 2e8021f: `agent-interfaces/mcp-registry-listing-ownership` no longer fails a first-party registry listing because `/.well-known/mcp-registry-auth` is not served. The registry checks domain ownership at login by DNS TXT record or HTTP file and requires neither to stay published; a served but malformed file is now a warning.
+- 2e8021f: `agent-interfaces/openapi-operation-ids` now credits its 64-character operationId limit to OpenAI, whose API reference sets it, instead of Anthropic, which now allows 128. Verdicts do not change.
+- 2e8021f: `access-crawl-control/no-redirect-chains` no longer counts a single same-site redirect, such as http to https or bare domain to `www`, as a chain. Pages reached through two or more hops, or through one hop to another site, still count.
+- d95c15b: `access-crawl-control/robots-directives` no longer warns on `nocache`, because Bing documents that such pages still appear in Copilot answers with their URL, title and snippet; the pass message names them instead. A page carrying both `noarchive` and `nocache` is treated as `nocache`, as Bing documents, while `noarchive` alone, `nosnippet` and `max-snippet:0` still warn.
+
 ## 8.0.0
 
 ### Major Changes
