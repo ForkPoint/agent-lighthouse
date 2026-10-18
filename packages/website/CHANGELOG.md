@@ -1,5 +1,19 @@
 # @forkpoint/agent-lighthouse-website
 
+## 0.0.21
+
+### Patch Changes
+
+- Updated dependencies [d95c15b]
+- Updated dependencies [d95c15b]
+- Updated dependencies [2e8021f]
+- Updated dependencies [d95c15b]
+- Updated dependencies [2e8021f]
+- Updated dependencies [2e8021f]
+- Updated dependencies [2e8021f]
+- Updated dependencies [d95c15b]
+  - @forkpoint/agent-lighthouse-core@8.0.1
+
 ## 0.0.20
 
 ### Patch Changes
