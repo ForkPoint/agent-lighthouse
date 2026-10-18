@@ -357,4 +357,40 @@ describe("obsolete checks", () => {
   it("returns an empty list when nothing obsolete was found", () => {
     expect(summarise(report()).obsoleteFound).toEqual([]);
   });
+
+  it("passes on the notice of a check no AI vendor reads", () => {
+    const out = summarise(
+      report({
+        categories: [
+          cat({
+            id: "machine-discovery",
+            checks: [
+              check({
+                id: "machine-discovery/unread-file",
+                title: "Unread file is well formed",
+                tier: AuditTier.Informative,
+                scoreDisplayMode: ScoreDisplayMode.Informative,
+                weight: 0,
+                deprecated: {
+                  kind: NoticeKind.Unconsumed,
+                  notice: "No AI vendor documents reading this file.",
+                  link: "https://example.com/evidence",
+                },
+              }),
+            ],
+          }),
+        ],
+      }),
+    );
+    expect(out.notices).toEqual([
+      {
+        id: "machine-discovery/unread-file",
+        title: "Unread file is well formed",
+        kind: NoticeKind.Unconsumed,
+        notice: "No AI vendor documents reading this file.",
+        link: "https://example.com/evidence",
+      },
+    ]);
+    expect(summarise(report()).notices).toEqual([]);
+  });
 });

@@ -408,8 +408,8 @@
       "url": "https://agents-json.com",
       "publisher": "Wild Card AI",
       "type": "vendor-doc",
-      "keyFindings": "(Domain does not resolve — the dead domain IS the evidence.) DNS resolves to 216.92.3.51 but both HTTPS and HTTP time out (curl exit 28, http_code=000); WebFetch returned ECONNREFUSED. The project has no live website at either of its two domains. Re-checked 2026-10-18: curl to https://agents-json.com returned no response (status 000). The repository wild-card-ai/agents-json: pushed_at 2025-08-21T22:17:46Z, archived false (GitHub API).",
-      "verified": "2026-10-18",
+      "keyFindings": "The domain resolves (216.92.3.51), but HTTPS and HTTP both time out (curl exit 28, http_code 000); WebFetch returned ECONNREFUSED. The dead homepage is the evidence: the project has no live website. Checked 2026-10-18: unreachable (the connection timed out after 15 s; DNS still resolves to 216.92.3.51). The page itself has never been opened, so the verified date is the date of the last check that reached the same conclusion, not of a read.",
+      "verified": "2026-08-21",
       "accessed": "2026-08-21"
     },
     {
@@ -1025,9 +1025,9 @@
       "id": "ard-spec-v091",
       "title": "ARD Specification v0.91 — well-known path and manifest schema",
       "url": "https://github.com/ards-project/ard-spec/blob/main/spec/ard.md",
-      "publisher": "ARD Project (Google/Microsoft/Hugging Face authors)",
+      "publisher": "ARD Project",
       "type": "draft-spec",
-      "keyFindings": "v0.91 (commit a305a528, 2026-08-26), status Proposal. §5.1: a consumer MUST fetch /.well-known/ard.json and MUST honour rel=\"ard\"; the predecessor path /.well-known/ai-catalog.json and rel=\"ai-catalog\" MAY additionally be consulted, and publishers on the predecessor path SHOULD move. The ArdManifest JSON schema (spec/schemas/ard-entry.schema.json) requires only entries; additionalProperties is open, so specVersion and host are not ARD requirements (they come from the Linux Foundation AI Catalog spec).",
+      "keyFindings": "v0.91 (commit a305a528, 2026-08-26), status Proposal. §5.1: a consumer MUST fetch /.well-known/ard.json and MUST honour rel=\"ard\"; the predecessor path /.well-known/ai-catalog.json and rel=\"ai-catalog\" MAY additionally be consulted, and publishers on the predecessor path SHOULD move. The ArdManifest JSON schema (spec/schemas/ard-entry.schema.json) requires only entries; additionalProperties is open, so specVersion and host are not ARD requirements (they come from the Linux Foundation AI Catalog spec). Authors are listed from Google and Hugging Face; Microsoft appears in the acknowledgements, not among the authors. The URL tracks the main branch; v0.91 is pinned at commit a305a528.",
       "verified": "2026-10-18"
     },
     {
@@ -2415,18 +2415,9 @@
       "url": "https://developers.google.com/search/blog/2023/08/howto-faq-changes",
       "publisher": "Google Search Central Blog",
       "type": "announcement",
-      "keyFindings": "Posted 2023-08-08; updated 2023-09-14: 'As of September 13, Google Search no longer shows How-to rich results on desktop, which means this result type is now deprecated.' Rich Results Test support dropped in 30 days, Search Console API in 180 days. Also: 'Structured data that's not being used does not cause problems for Search, but also has no visible effects in Google Search.'",
+      "keyFindings": "Posted 2023-08-08; updated 2023-09-14: 'As of September 13, Google Search no longer shows How-to rich results on desktop, which means this result type is now deprecated.' Rich Results Test support dropped in 30 days, Search Console API in 180 days. Also: 'Structured data that's not being used does not cause problems for Search, but also has no visible effects in Google Search.' The August 2023 post limited FAQ rich results to well-known authoritative government and health websites, the restriction that preceded full FAQ removal in May 2026.",
       "verified": "2026-10-18",
       "accessed": "2026-08-21"
-    },
-    {
-      "id": "google-howto-faq-changes-2023",
-      "title": "Changes to HowTo and FAQ rich results",
-      "url": "https://developers.google.com/search/blog/2023/08/howto-faq-changes",
-      "type": "vendor-doc",
-      "publisher": "Google Search Central Blog",
-      "verified": "2026-10-18",
-      "keyFindings": "August 2023 announcement that began the retirement: HowTo rich results limited then removed (fully gone by 14 Sept 2023, desktop and mobile), FAQ rich results restricted to well-known authoritative government and health websites — the restriction that preceded full FAQ removal in May 2026. (Page resolves; body is JS-rendered and was not extractable via fetch — content corroborated by the changelog entries in google-search-updates-changelog.)"
     },
     {
       "id": "google-howto-structured-data",
@@ -2892,7 +2883,7 @@
       "url": "https://developers.google.com/search/updates#how-to-deprecation",
       "publisher": "Google Search Central",
       "type": "vendor-doc",
-      "keyFindings": "2023-09-14 entry: 'Removed the How-to structured data documentation, as this rich result is no longer shown in search results, on both desktop and mobile devices.' The former doc URL /search/docs/appearance/structured-data/how-to now 301s here (verified by curl -L). Same changelog: FAQ rich results fully removed 2026-06-15; sitelinks search box removed 2024-11-29.",
+      "keyFindings": "2023-09-14 entry: 'Removed the How-to structured data documentation, as this rich result is no longer shown in search results, on both desktop and mobile devices.' The former doc URL /search/docs/appearance/structured-data/how-to now 301s here (verified by curl -L). Same changelog: the FAQ rich result stopped showing in May 2026 (Google: from 2026-05-07) and its documentation was removed on 2026-06-15; the sitelinks search box documentation was removed on 2024-11-29.",
       "verified": "2026-10-18",
       "accessed": "2026-08-21"
     },
@@ -2930,7 +2921,7 @@
       "type": "vendor-doc",
       "publisher": "Google Search Central Blog",
       "verified": "2026-10-18",
-      "keyFindings": "October 2024 announcement retiring the Sitelinks Search Box globally on 21 November 2024 due to declining usage — this was the only mainstream consumer of WebSite/SearchAction potentialAction markup. Search Console report and Rich Results Test highlighting removed. Google states the markup need not be removed since unsupported structured data causes no problems. (URL resolves; body is JS-rendered and was not extractable via fetch.)"
+      "keyFindings": "Posted Monday, October 21, 2024: usage dropped, so 'we'll be removing this visual element starting on November 21, 2024.' Search Console report and Rich Results Test highlighting stop. 'While you can remove sitelinks search box structured data from your site, there's no need to do so. Unsupported structured data like this won't cause issues in Search, and won't trigger errors in Search Console reports.' It was the only mainstream consumer of WebSite/SearchAction potentialAction markup."
     },
     {
       "id": "google-sitelinks-searchbox-removal",
@@ -3211,7 +3202,7 @@
       "type": "spec",
       "publisher": "IANA",
       "verified": "2026-10-18",
-      "keyFindings": "152 registered suffixes. REGISTERED: `agent-card.json` (reference https://a2a-protocol.org/latest/specification/, status permanent, change controller Linux Foundation, registered 2025-08-01); `api-catalog` (RFC 9727, permanent, IETF, 2024-12-23); `oauth-protected-resource` (RFC 9728 §3, permanent, IETF, 2024-10-22). NOT REGISTERED: mcp, mcp.json, mcp-server, ai-catalog.json, ai-plugin.json, openapi, webmcp, nlweb, llms.txt."
+      "keyFindings": "106 registered suffixes (CSV export, 2026-10-18). REGISTERED: `agent-card.json` (reference https://a2a-protocol.org/latest/specification/, status permanent, change controller Linux Foundation, registered 2025-08-01); `api-catalog` (RFC 9727, permanent, IETF, 2024-12-23); `oauth-protected-resource` (RFC 9728 §3, permanent, IETF, 2024-10-22). NOT REGISTERED: mcp, mcp.json, mcp-server, ai-catalog.json, ai-plugin.json, openapi, webmcp, nlweb, llms.txt."
     },
     {
       "id": "ietf-aipref-attach",
@@ -3805,7 +3796,7 @@
       "type": "draft-spec",
       "publisher": "Model Context Protocol",
       "verified": "2026-10-18",
-      "keyFindings": "'Protocol Revision: draft'. 'An AI Catalog MAY be served from any URL. For automated domain-level discovery, hosts MAY publish one at: /.well-known/ai-catalog.json. Clients performing domain-level discovery SHOULD attempt to retrieve this well-known URL. When served over HTTP, the document SHOULD use the `application/ai-catalog+json` media type.' Entry type for MCP is `application/mcp-server-card+json`; identifiers use `urn:air:{publisher}:{namespace}:{name}`. Repo has only 5 stars (created 2026-04-27, last push 2026-08-12). An entry's `url` is the \"URL where the full Server Card can be retrieved\"; exactly one of `url` or inline `data` is used. Client flow: \"retrieve the Server Card from that URL\" then \"Use the Server Card metadata to configure and establish an MCP connection\". The card's connection details are its `remotes[]` endpoints (re-checked 2026-10-18)."
+      "keyFindings": "'Protocol Revision: draft'. 'An AI Catalog MAY be served from any URL. For automated domain-level discovery, hosts MAY publish one at: /.well-known/ai-catalog.json. Clients performing domain-level discovery SHOULD attempt to retrieve this well-known URL. When served over HTTP, the document SHOULD use the `application/ai-catalog+json` media type.' Entry type for MCP is `application/mcp-server-card+json`; identifiers use `urn:air:{publisher}:{namespace}:{name}`. The repository is now modelcontextprotocol/ext-server-card (the experimental-ext-server-card URL redirects); 10 stars on 2026-10-18 (created 2026-04-27, last push 2026-08-12). An entry's `url` is the \"URL where the full Server Card can be retrieved\"; exactly one of `url` or inline `data` is used. Client flow: \"retrieve the Server Card from that URL\" then \"Use the Server Card metadata to configure and establish an MCP connection\". The card's connection details are its `remotes[]` endpoints (re-checked 2026-10-18)."
     },
     {
       "id": "mcp-http",
@@ -3992,7 +3983,7 @@
       "type": "article",
       "publisher": "MDN Web Docs (Mozilla)",
       "verified": "2026-10-18",
-      "keyFindings": "Decisive for the CORS signal: 'For security reasons, browsers restrict cross-origin HTTP requests initiated from scripts.' CORS is enforced by the user agent, not the server; the server merely opts in. Non-browser HTTP clients — which is what GPTBot, ClaudeBot, PerplexityBot and server-side agent backends are — do not implement the same-origin policy and are therefore unaffected by missing Access-Control-Allow-Origin."
+      "keyFindings": "'For security reasons, browsers restrict cross-origin HTTP requests initiated from scripts.' CORS is enforced by the user agent, not the server; the server merely opts in. Repository inference, not MDN's words: non-browser HTTP clients, such as GPTBot, ClaudeBot, PerplexityBot and server-side agent backends, do not implement the same-origin policy and are therefore unaffected by a missing Access-Control-Allow-Origin."
     },
     {
       "id": "mdn-csp",
@@ -6580,7 +6571,7 @@
       "type": "draft-spec",
       "publisher": "Wildcard AI",
       "verified": "2026-10-18",
-      "keyFindings": "1,314 stars, 66 forks, created 2025-01-30, LAST PUSH 2025-08-21 — twelve months stale as of 2026-08-20. Repo description is empty. Homepage `https://agents-json.com` FAILS TO RESOLVE (curl exit 6/000). Documentation host docs.wild-card.ai serves an EXPIRED TLS certificate (notBefore 2026-01-09, notAfter 2026-04-09). Spec version stuck at 0.1.0."
+      "keyFindings": "Checked 2026-10-18 via the GitHub API: 1,316 stars, 68 forks, created 2025-01-30, last push 2025-08-21, not archived. Repo description is empty. Declared homepage https://agents-json.com resolves in DNS but does not answer (connection times out; curl exit 28, http_code 000). Documentation host docs.wild-card.ai serves an expired TLS certificate (notAfter 2026-04-09; curl reports 'certificate has expired' on 2026-10-18). Spec version stuck at 0.1.0."
     },
     {
       "id": "wislr-48day-log-study",
@@ -6810,12 +6801,12 @@
     },
     {
       "id": "a2a-python-card-resolver",
-      "title": "a2a-python — AGENT_CARD_WELL_KNOWN_PATH and A2ACardResolver",
-      "url": "https://raw.githubusercontent.com/a2aproject/a2a-python/main/src/a2a/utils/constants.py",
+      "title": "a2a-python — A2ACardResolver (card_resolver.py)",
+      "url": "https://raw.githubusercontent.com/a2aproject/a2a-python/main/src/a2a/client/card_resolver.py",
       "type": "repo",
       "publisher": "Linux Foundation / A2A Project",
       "verified": "2026-10-18",
-      "keyFindings": "The reference A2A Python SDK sets AGENT_CARD_WELL_KNOWN_PATH = '/.well-known/agent-card.json'. Its card resolver (src/a2a/client/card_resolver.py) defaults to that path with no fallback to /.well-known/agent.json, maps legacy fields, and parses with ParseDict(..., ignore_unknown_fields=True). Invalid JSON, HTTP errors and type errors raise AgentCardResolutionError, so unknown fields are tolerated and wrongly typed known fields are not."
+      "keyFindings": "The reference A2A Python SDK sets AGENT_CARD_WELL_KNOWN_PATH = '/.well-known/agent-card.json'. Its card resolver (src/a2a/client/card_resolver.py) defaults to that path with no fallback to /.well-known/agent.json, maps legacy fields, and parses with ParseDict(..., ignore_unknown_fields=True). Invalid JSON, HTTP errors and type errors raise AgentCardResolutionError, so unknown fields are tolerated and wrongly typed known fields are not. The AGENT_CARD_WELL_KNOWN_PATH constant itself is defined in src/a2a/utils/constants.py."
     },
     {
       "id": "copilot-studio-a2a",
@@ -6869,7 +6860,7 @@
       "type": "vendor-doc",
       "publisher": "Google (Chrome)",
       "verified": "2026-10-18",
-      "keyFindings": "Marked \"Preview: This page provides information about an upcoming feature.\" Automated Password Change navigates the site and completes the password update for the user. \"The URL /.well-known/change-password must redirect to your password change form.\" The autocomplete attribute \"is required for features like Automated Password Change to work reliably\". The page does not say the feature is AI-driven."
+      "keyFindings": "Marked \"Preview: This page provides information about an upcoming feature.\" Automated Password Change navigates the site and completes the password update for the user. \"The URL /.well-known/change-password must redirect to your password change form.\" The autocomplete attribute \"is required for features like Automated Password Change to work reliably\". The page does not say the feature is AI-driven. The page adds: 'We are expanding feature coverage through testing across selected websites', and was last updated 2025-07-30, so the feature has been in preview since at least that date. The page does not state a country limit."
     },
     {
       "id": "google-merchant-ucp-profile",
@@ -6910,10 +6901,10 @@
     {
       "id": "chrome-https-by-default",
       "title": "HTTPS by default",
-      "url": "https://security.googleblog.com/2025/10/https-by-default.html",
+      "url": "https://blog.google/security/https-by-defau/",
       "publisher": "Google Chrome Security",
       "type": "announcement",
-      "keyFindings": "\"With the release of Chrome 154 in October 2026, we will change the default settings of Chrome to enable 'Always Use Secure Connections'. This means Chrome will ask for the user's permission before the first access to any public site without HTTPS.\" Chromium-based browser agents inherit this default. The URL redirects to blog.google.",
+      "keyFindings": "Announcement dated 2025-10-28 by the Chrome Security Team, originally at https://security.googleblog.com/2025/10/https-by-default.html (now a 301 to this URL): \"with the release of Chrome 154 in October 2026, we will change the default settings of Chrome to enable 'Always Use Secure Connections'. This means Chrome will ask for the user's permission before the first access to any public site without HTTPS.\" The post limits the prompt to public sites, says Chrome does not re-warn on insecure sites a user visits regularly, and the warning can be bypassed. It does not mention automation, headless or agent modes. Chrome 154 shipped on 2026-09-22 (see chrome-154-release-notes).",
       "verified": "2026-10-18"
     },
     {
@@ -6963,7 +6954,7 @@
     },
     {
       "id": "ahrefs-llmstxt-study",
-      "title": "We Studied llms.txt Across 137K Domains | Ahrefs",
+      "title": "We Analyzed 137K Sites: 97% of llms.txt Files Never Get Read | Ahrefs",
       "url": "https://ahrefs.com/blog/llmstxt-study/",
       "type": "study",
       "publisher": "Ahrefs",
@@ -6986,7 +6977,7 @@
       "type": "spec",
       "publisher": "JournalList.net",
       "verified": "2026-10-18",
-      "keyFindings": "Defines trust.txt (released 2020-06-29, revised through 2024-07-11; datatrainingallowed= added 2024-04-04). Association attributes are reciprocal: belongto= on a member pairs with member= on the association, controlledby= with control=. The document names no consumer: no search engine, ad platform or AI company."
+      "keyFindings": "Defines trust.txt (released 2020-06-29, revised through 2024-07-11; datatrainingallowed= added 2024-04-04). The field definitions are in the embedded PDF. The spec pairs belongto= on a member with member= on the association in its examples; it does not state a reciprocity rule, and says nothing comparable for controlledby= and control=. The document names no consumer: no search engine, ad platform or AI company."
     },
     {
       "id": "journallist-faq",
@@ -7005,6 +6996,51 @@
       "publisher": "Reynolds Journalism Institute",
       "verified": "2026-10-18",
       "keyFindings": "2025-02-21. A JournalList browser extension shows a verification badge to human readers; the network has 'about 3,000 participating publishers'. No search engine, platform or AI company is named as a consumer. A human-facing badge is not a machine consumer."
+    },
+    {
+      "id": "ucp-spec-overview",
+      "title": "Universal Commerce Protocol (UCP) Official Specification — overview",
+      "url": "https://ucp.dev/specification/overview/",
+      "type": "spec",
+      "publisher": "Universal Commerce Protocol",
+      "verified": "2026-10-18",
+      "keyFindings": "Examples use ucp.version 2026-08-25. Service Definition table: `endpoint` is Optional (\"Endpoint URL for this transport binding\"); the example `embedded` binding has version, spec, transport and schema but no endpoint. A present endpoint \"MUST be a valid URL with scheme (https)\". `ucp.capabilities` \"is optional and MAY be omitted\". Signing keys \"MUST appear in the top-level `keys[]` array\". An optional `supported_versions` object maps older versions to version-specific profile URIs."
+    },
+    {
+      "id": "ucp-spec-2026-01-11",
+      "title": "Universal Commerce Protocol specification, version 2026-01-11 — overview",
+      "url": "https://ucp.dev/2026-01-11/specification/overview/",
+      "type": "spec",
+      "publisher": "Universal Commerce Protocol",
+      "verified": "2026-10-18",
+      "keyFindings": "Older profile shape: `services` is an object keyed by service name; each service holds version, spec and one object per transport (`rest`, `mcp`, `a2a`, `embedded`). `rest` and `mcp` carry schema and endpoint, `a2a` only endpoint, `embedded` only schema. `ucp.capabilities` is an array of objects with name, version, spec, schema (extensions add `extends`). The signing key array is the top-level `signing_keys`. Within a present transport, `endpoint` is required and \"MUST be a valid URL with scheme (https)\"."
+    },
+    {
+      "id": "a2a-proto",
+      "title": "A2A protocol definition — a2a.proto",
+      "url": "https://raw.githubusercontent.com/a2aproject/A2A/main/specification/a2a.proto",
+      "type": "spec",
+      "publisher": "A2A Project (Linux Foundation)",
+      "verified": "2026-10-18",
+      "keyFindings": "AgentCard fields with field_behavior REQUIRED: name, description, supported_interfaces, version, capabilities, default_input_modes, default_output_modes, skills. AgentInterface: \"string url = 1 [(google.api.field_behavior) = REQUIRED];\", \"string protocol_binding = 2 [(google.api.field_behavior) = REQUIRED];\", \"string protocol_version = 4 [(google.api.field_behavior) = REQUIRED];\"; `tenant` is optional."
+    },
+    {
+      "id": "microsoft-build-2023-plugin-standard",
+      "title": "Microsoft Build brings AI tools to the forefront for developers",
+      "url": "https://blogs.microsoft.com/blog/2023/05/23/microsoft-build-brings-ai-tools-to-the-forefront-for-developers/",
+      "type": "announcement",
+      "publisher": "Microsoft",
+      "verified": "2026-10-18",
+      "keyFindings": "2023-05-23: \"Microsoft is announcing that we will adopt the same open plugin standard that OpenAI introduced for ChatGPT, enabling interoperability across ChatGPT and the breadth of Microsoft's copilot offerings.\" Evidence that a second vendor once adopted the ai-plugin.json format; no current Microsoft documentation of reading it was found."
+    },
+    {
+      "id": "chrome-154-release-notes",
+      "title": "Chrome 154 release notes",
+      "url": "https://developer.chrome.com/release-notes/154",
+      "publisher": "Google Chrome",
+      "type": "vendor-doc",
+      "keyFindings": "\"Stable release date: September 22nd, 2026\". Under Privacy and security: \"Ask before HTTP on by default. Chrome prompts users by default when they connect to a site over an insecure ( http ) connection. Administrators can control this default behavior using the HttpsOnlyMode enterprise policy.\" No mention of automation, headless or agent modes.",
+      "verified": "2026-10-18"
     }
   ]
 }

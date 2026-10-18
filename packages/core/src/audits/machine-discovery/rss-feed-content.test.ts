@@ -59,6 +59,10 @@ describe("RssFeedContentAudit", () => {
     expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("1/3 items carry full content");
     expect(result.message).toContain("fetch the article page");
+    // Only Google and the Common Crawl news crawler are sourced; no AI vendor
+    // documents taking URLs from feeds.
+    expect(result.message).not.toMatch(/AI crawlers/);
+    expect(result.message).toMatch(/no AI vendor documents reading/i);
   });
 
   it("is not applicable when the feed has no items", async () => {

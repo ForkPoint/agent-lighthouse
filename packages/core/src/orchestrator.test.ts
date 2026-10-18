@@ -1538,7 +1538,8 @@ describe("runScan — v7 article scope", () => {
     "structured-data/article-schema",
     "structured-data/author-schema",
     "structured-data/speakable-schema",
-    "answer-readiness/meta-author",
+    // meta-author left this list on 2026-10-18: the tag is site-wide, so it
+    // now runs on every page type.
     "answer-readiness/named-author",
     "answer-readiness/author-page",
     "answer-readiness/author-same-as",
@@ -1559,7 +1560,7 @@ describe("runScan — v7 article scope", () => {
       });
       const checks = report.categories.flatMap((c) => c.checks);
       const articleChecks = checks.filter((c) => articleIds.includes(c.id));
-      expect(articleChecks).toHaveLength(12);
+      expect(articleChecks).toHaveLength(articleIds.length);
       for (const check of articleChecks) {
         expect(check.status, check.id).toBe(CheckStatus.NotApplicable);
         expect(check.tags, check.id).toContain("skipped:page-type");

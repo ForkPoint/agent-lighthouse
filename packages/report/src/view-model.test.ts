@@ -7,6 +7,7 @@ import type {
 import {
   CATEGORY_MASS,
   TAG_SCAN_ERROR,
+  TAG_SKIPPED_NO_EVIDENCE,
   TAG_SKIPPED_PAGE_TYPE,
   AuditTier,
   CheckPriority,
@@ -642,5 +643,41 @@ describe("obsolete tier", () => {
   it("never offers an obsolete warn as a top fix", () => {
     const v = buildReportView(obsoleteReport());
     expect(v.topFixes).toEqual([]);
+  });
+
+  it("never counts an obsolete check that did not run as found nothing", () => {
+    const base = obsoleteReport();
+    const ran = base.categories[0]!;
+    const v = buildReportView({
+      ...base,
+      categories: [
+        {
+          ...ran,
+          checks: [
+            ...ran.checks,
+            obsolete({
+              id: "agent-interfaces/retired-errored",
+              status: CheckStatus.NotApplicable,
+              score: 0,
+              tags: [TAG_SCAN_ERROR],
+            }),
+            obsolete({
+              id: "agent-interfaces/retired-skipped",
+              status: CheckStatus.NotApplicable,
+              score: 0,
+              tags: [TAG_SKIPPED_NO_EVIDENCE],
+            }),
+          ],
+        },
+        ...base.categories.slice(1),
+      ],
+    });
+    expect(v.obsolete.absent.map((c) => c.id)).toEqual([
+      "agent-interfaces/retired-a",
+    ]);
+    expect(v.obsolete.unrun.map((c) => c.id)).toEqual([
+      "agent-interfaces/retired-errored",
+      "agent-interfaces/retired-skipped",
+    ]);
   });
 });

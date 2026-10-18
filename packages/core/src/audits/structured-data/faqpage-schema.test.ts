@@ -4,6 +4,7 @@ import { weightForGrade } from "#core/scorer";
 import { AuditMetaSchema } from "#core/schemas";
 import { mockPageContext, mockCheckContext } from "#core/__tests__/test-utils";
 import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import { extractMicrodata } from "#core/parser";
 import {
   AuditTier,
   CheckPriority,
@@ -44,6 +45,26 @@ describe("FaqPageSchemaAudit", () => {
     expect(result.message).toContain("visible");
     expect(result.found).toContain("1 page(s)");
     expect(result.pageUrl).toBe("https://example.com/faq");
+  });
+
+  it.each([
+    ["inside @graph", { "@context": "https://schema.org", "@graph": [faq] }],
+    ["in a top-level array", [faq]],
+    ["with an array @type", { ...faq, "@type": ["FAQPage", "WebPage"] }],
+  ])("finds FAQPage markup %s", (_label, data) => {
+    const result = audit.audit(mockCheckContext([page(questions, ld(data))]));
+    expect(result.status).toBe(CheckStatus.Warn);
+  });
+
+  it("finds FAQPage microdata", () => {
+    const micro =
+      '<div itemscope itemtype="https://schema.org/FAQPage"><div itemprop="mainEntity" itemscope itemtype="https://schema.org/Question"><span itemprop="name">Q?</span></div></div>';
+    // The scanner merges microdata into `structuredData`; the mock does not.
+    const p = page(micro);
+    const result = audit.audit(
+      mockCheckContext([{ ...p, structuredData: extractMicrodata(p.$) }]),
+    );
+    expect(result.status).toBe(CheckStatus.Warn);
   });
 
   it("is not applicable for question headings without FAQPage markup", () => {

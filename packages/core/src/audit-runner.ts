@@ -40,6 +40,7 @@ import { auditPageTypes, normalizeAuditMeta } from "./audit-applicability";
 import { cacheOwner } from "./gatherers/cache-owner";
 import {
   AttemptOutcome,
+  AuditTier,
   CheckStatus,
   CoverageProvenance,
   EvidenceKey,
@@ -635,6 +636,14 @@ export async function runAudits(
                     `Not assessed: ${budgetReason(budget)} This audit was still running.`,
                   ),
                 );
+              // `toCheckResult` lowers an obsolete audit's `fail` to `warn`.
+              // Say so, so the downgrade never hides a fail path left behind.
+              if (
+                reg.meta.tier === AuditTier.Obsolete &&
+                result.status === CheckStatus.Fail
+              ) {
+                log.debug("Obsolete audit returned fail; reported as warn");
+              }
               // Zod types optional keys as `T | undefined`; parsing a
               // `CheckResult` adds no explicit undefined, so the shape holds.
               return CheckResultSchema.parse(

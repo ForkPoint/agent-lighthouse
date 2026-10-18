@@ -159,7 +159,10 @@ export class ChangePasswordUrlAudit extends Audit {
         { priority: CheckPriority.Low, code: SAMPLE },
       );
     }
-    if (landed.status >= 400) {
+    // A change-password page refuses an anonymous request by design (401 or
+    // 403), so reaching one is the redirect working, not an error page.
+    const authRequired = landed.status === 401 || landed.status === 403;
+    if (landed.status >= 400 && !authRequired) {
       return this.fail(
         `${PATH} redirects to ${target}, which answers HTTP ${landed.status}. Users and password managers land on an error page.`,
         EXPECTED,
@@ -178,7 +181,7 @@ export class ChangePasswordUrlAudit extends Audit {
     }
 
     return this.pass(
-      `${PATH} redirects with HTTP ${probe.status} to ${target}, which answers HTTP ${landed.status}.`,
+      `${PATH} redirects with HTTP ${probe.status} to ${target}, which answers HTTP ${landed.status}${authRequired ? " to an anonymous request, as a sign-in-protected page does" : ""}.`,
       EXPECTED,
       `HTTP ${probe.status} to ${target}`,
     );

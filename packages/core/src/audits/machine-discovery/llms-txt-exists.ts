@@ -85,9 +85,7 @@ export class LlmsTxtExistsAudit extends Audit {
 
     if (!isRootArtifact(result)) {
       const status = rootArtifactMiss(result);
-      // The file is absent, so the verdict is absent too. A site that links to
-      // llms.txt and does not serve it still hears about its dead link in the
-      // message; the only shipping checker scores a 404 not-applicable as well.
+      // No file and no link: absent artifact, absent verdict.
       if (!link) {
         return this.notApplicable(
           "No llms.txt at the site root. The file is an optional community convention with no documented agent consumer, so its absence is not a defect.",
@@ -96,7 +94,10 @@ export class LlmsTxtExistsAudit extends Audit {
           page?.url,
         );
       }
-      return this.notApplicable(
+      // The site advertises the file and does not serve it. The dead link is
+      // present, so it is a defect to name, not an absence; like every other
+      // llms.txt defect it is reported in a pass, because nothing reads it.
+      return this.pass(
         `The page links to llms.txt but the file is not served at the site root, so the link leads nowhere. ${LLMS_TXT_NO_EFFECT}`,
         "GET /llms.txt returns 200 with markdown starting with #",
         `${status}; ${linkNote}`,

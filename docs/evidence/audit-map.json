@@ -375,7 +375,7 @@
       "category": "access-crawl-control",
       "slug": "bravebot",
       "title": "Bravebot robots.txt group (unread)",
-      "purpose": "Reports a `User-agent: Bravebot` group in robots.txt. Brave documents that its search crawler does not advertise a distinct user agent and follows the rules that apply to Googlebot, so a group named for Bravebot governs nothing Brave sends.",
+      "purpose": "Reports a `User-agent: Bravebot` group in robots.txt. Brave documents that its search crawler does not advertise a distinct user agent and follows the rules that apply to Googlebot. It does not document reading a Bravebot group.",
       "features": [
         "brave",
         "obsolete",
@@ -476,9 +476,9 @@
       "title": "ChatGPT-User robots.txt group (may not apply)",
       "purpose": "Reports a `User-agent: ChatGPT-User` group in robots.txt. OpenAI documents that ChatGPT-User fetches pages on a user's request, that robots.txt rules may not apply to those fetches, and that OAI-SearchBot is the token for managing search opt-outs.",
       "features": [
-        "obsolete",
         "openai",
-        "robots-txt"
+        "robots-txt",
+        "unconsumed"
       ],
       "priority": "low",
       "enabledByDefault": true,
@@ -488,8 +488,8 @@
       },
       "source": "packages/core/src/audits/access-crawl-control/chatgpt-user.ts",
       "test": "packages/core/src/audits/access-crawl-control/chatgpt-user.test.ts",
-      "tier": "obsolete",
-      "evidenceGrade": "D",
+      "tier": "informative",
+      "evidenceGrade": "C",
       "weight": 0,
       "scoreDisplayMode": "informative",
       "dossier": "docs/evidence/audits/access-crawl-control/chatgpt-user.md",
@@ -701,13 +701,12 @@
       "category": "access-crawl-control",
       "slug": "https-enabled",
       "title": "HTTPS enabled",
-      "purpose": "Agent protocols require HTTPS: MCP requires every authorization server endpoint to be served over HTTPS, and browser-based agents inherit Chromium's mixed-content blocking and HTTPS-First warnings; from Chrome 154 (October 2026) Chrome asks before opening any public site without HTTPS. No AI crawler vendor documents refusing plain HTTP, so the risk is to agents that act on the site, not to crawling. Enable HTTPS with a valid TLS certificate.",
+      "purpose": "Since Chrome 154 (stable 2026-09-22), Chrome prompts users by default before it opens a site over plain http, so an agent working inside Chrome meets that prompt before any content. No agent vendor documents how its agent handles the prompt, and no AI crawler vendor documents refusing plain HTTP, so the risk is to agents that act in a browser, not to crawling. Enable HTTPS with a valid TLS certificate.",
       "features": [
-        "critical",
         "https",
         "security"
       ],
-      "priority": "critical",
+      "priority": "high",
       "enabledByDefault": true,
       "applicability": {
         "pageTypeGate": "unrestricted",
@@ -1248,7 +1247,7 @@
       "category": "agent-interfaces",
       "slug": "a2a-agent-card",
       "title": "A2A Agent Card is readable",
-      "purpose": "Reads the A2A Agent Card at `/.well-known/agent-card.json`, the IANA-registered discovery path that A2A clients fetch to learn what an agent does and where to send tasks. A site that runs no A2A agent is not applicable. A card that does not parse fails; a card that parses but lacks Required fields, uses the 0.3 shape, names a non-https interface, or sits only at the pre-0.3 `agent.json` path warns. The audit reads the card only and never calls the agent.",
+      "purpose": "Reads the A2A Agent Card at `/.well-known/agent-card.json`, the IANA-registered discovery path that the reference A2A client fetches to learn what an agent does and where to send tasks. A site that runs no A2A agent, or answers the path with JSON that is not a card, is not applicable. A card that does not parse fails; a card that parses but lacks Required fields, names a non-https interface, or sits only at the pre-1.0 `agent.json` path warns. The audit reads the card only and never calls the agent.",
       "features": [
         "a2a",
         "agent-card",
@@ -1264,8 +1263,8 @@
       "source": "packages/core/src/audits/agent-interfaces/a2a-agent-card.ts",
       "test": "packages/core/src/audits/agent-interfaces/a2a-agent-card.test.ts",
       "tier": "scored",
-      "evidenceGrade": "A",
-      "weight": 1,
+      "evidenceGrade": "B",
+      "weight": 0.6,
       "scoreDisplayMode": "ternary",
       "dossier": "docs/evidence/audits/agent-interfaces/a2a-agent-card.md",
       "requires": [
@@ -1414,7 +1413,7 @@
       "category": "agent-interfaces",
       "slug": "ai-plugin-json",
       "title": "ChatGPT plugin manifest (retired)",
-      "purpose": "Reports a ChatGPT plugin manifest still served at `/.well-known/ai-plugin.json`. OpenAI closed the plugin store on 2024-03-19 and archived the quickstart repository, and no other vendor adopted the format, so the file reaches no agent. This check never asks a site to publish it.",
+      "purpose": "Reports a ChatGPT plugin manifest still served at `/.well-known/ai-plugin.json`. OpenAI closed the plugin store on 2024-03-19 and archived the quickstart repository, and no current vendor reads the format, so the file reaches no agent. This check never asks a site to publish it.",
       "features": [
         "ai-plugin",
         "chatgpt-plugins",
@@ -2468,7 +2467,7 @@
       "category": "agentic-commerce",
       "slug": "ucp-profile",
       "title": "UCP business profile is readable",
-      "purpose": "Reads the Universal Commerce Protocol business profile at `/.well-known/ucp`, which Google's Merchant UCP integration fetches to negotiate checkout capabilities with the store. A site that publishes no profile is not applicable. A profile that does not parse, has no `ucp` object or declares no services fails; a missing version, missing capabilities or a non-https service endpoint warns.",
+      "purpose": "Reads the Universal Commerce Protocol business profile at `/.well-known/ucp`. Google's Merchant UCP guide says the profile will enable Google to negotiate checkout capabilities with the store. A site that publishes no profile, or answers the path with JSON that has no `ucp` key, is not applicable. A profile that does not parse or declares no services fails; a missing version or a declared endpoint that is not absolute https warns.",
       "features": [
         "checkout",
         "commerce",
@@ -2484,8 +2483,8 @@
       "source": "packages/core/src/audits/agentic-commerce/ucp-profile.ts",
       "test": "packages/core/src/audits/agentic-commerce/ucp-profile.test.ts",
       "tier": "scored",
-      "evidenceGrade": "A",
-      "weight": 1,
+      "evidenceGrade": "B",
+      "weight": 0.6,
       "scoreDisplayMode": "ternary",
       "dossier": "docs/evidence/audits/agentic-commerce/ucp-profile.md",
       "requires": [
@@ -3065,25 +3064,23 @@
       "id": "answer-readiness/meta-author",
       "category": "answer-readiness",
       "slug": "meta-author",
-      "title": "Meta author tag (ignored)",
-      "purpose": "Reports a `<meta name=\"author\">` tag on sampled article pages. Google lists the meta tags it supports, `author` is not among them, and Google says it ignores meta tags it does not support. No AI vendor documents reading the tag. Authorship that machines read lives in schema.org `author` markup and a visible byline.",
+      "title": "Meta author tag (no AI reader)",
+      "purpose": "Reports a `<meta name=\"author\">` tag on sampled pages. `author` is a standard HTML metadata name, but Google lists the meta tags it supports, `author` is not among them, and Google says it ignores meta tags it does not support. No AI vendor documents reading the tag. Authorship that machines read lives in schema.org `author` markup and a visible byline.",
       "features": [
         "authorship",
         "meta-tags",
-        "obsolete"
+        "unconsumed"
       ],
       "priority": "low",
       "enabledByDefault": true,
       "applicability": {
-        "pageTypeGate": "restricted",
-        "pageTypes": [
-          "article"
-        ]
+        "pageTypeGate": "unrestricted",
+        "pageTypes": []
       },
       "source": "packages/core/src/audits/answer-readiness/meta-author.ts",
       "test": "packages/core/src/audits/answer-readiness/meta-author.test.ts",
-      "tier": "obsolete",
-      "evidenceGrade": "D",
+      "tier": "informative",
+      "evidenceGrade": "C",
       "weight": 0,
       "scoreDisplayMode": "informative",
       "dossier": "docs/evidence/audits/answer-readiness/meta-author.md",
@@ -5165,7 +5162,7 @@
       "category": "machine-discovery",
       "slug": "rss-feed-content",
       "title": "RSS feed content complete",
-      "purpose": "Reports how many feed items carry full article text (more than 500 characters). Search and AI crawlers take URLs from feeds and fetch the page itself, and excerpt feeds are valid, so this check is reported and never scored.",
+      "purpose": "Reports how many feed items carry full article text (more than 500 characters). Google and the Common Crawl news crawler take URLs from feeds and fetch the page itself, no AI vendor documents reading feeds, and excerpt feeds are valid, so this check is reported and never scored.",
       "features": [
         "content-feed",
         "discoverability",
@@ -5359,7 +5356,7 @@
       "category": "machine-discovery",
       "slug": "websub-hub-advertisement",
       "title": "Feeds that advertise a WebSub hub carry exactly one absolute self link",
-      "purpose": "Reads the WebSub discovery links on each feed — the `Link:` response headers first, as the specification requires, then the document — and, on each feed that advertises a hub, checks the shape the W3C Recommendation asks for: exactly one absolute `rel=self`, and every `rel=hub` over HTTPS and answering a HEAD. The self URL may differ from the URL the feed was fetched from; the Recommendation allows it. A feed with no hub is not judged. Google Search documents receiving WebSub notifications from Atom and RSS feeds; no LLM vendor documents subscribing.",
+      "purpose": "Reads the WebSub discovery links on each feed — the `Link:` response headers first, as the specification requires, then the document — and, on each feed that advertises a hub, checks the shape the W3C Recommendation asks for: exactly one absolute `rel=self`, and every `rel=hub` an absolute URL whose server answers a HEAD. HTTP hubs are allowed, and a hub that refuses the scanner (401, 403, 429) counts as present. The self URL may differ from the URL the feed was fetched from; the Recommendation allows it. A feed with no hub is not judged. Google Search documents receiving WebSub notifications from Atom and RSS feeds; no LLM vendor documents subscribing.",
       "features": [
         "feeds",
         "push",
@@ -6031,7 +6028,7 @@
       "category": "operability-safety",
       "slug": "form-autofill-token-coverage",
       "title": "Form Autofill Token Coverage",
-      "purpose": "Whether each sign-in, sign-up and one-time-code field declares the matching WHATWG autocomplete token (username, current-password, new-password, one-time-code), a stable name or id, and the matching input type. These are the tokens a password manager fills when an agent signs in for the user: Gemini in Chrome with Google Password Manager, and Claude with 1Password. Scored as covered fields over credential fields across the scanned forms. Also counts, on those forms, fields marked mandatory only by an asterisk and error elements a field does not reference.",
+      "purpose": "Whether each sign-in, sign-up and one-time-code field declares the matching WHATWG autocomplete token (username, current-password, new-password, one-time-code), a stable name or id, and the matching input type. Agents are documented to sign in through a password manager (Gemini in Chrome with Google Password Manager, Claude with 1Password), and 1Password says these attributes make the fields easier to identify. On a sign-in form with no separate username field, the email field is the account identifier and may declare username or email. Scored as covered fields over credential fields across the scanned forms. Also counts, on those forms, fields marked mandatory only by an asterisk and error elements a field does not reference.",
       "features": [
         "accessibility",
         "agent-operability",
@@ -6049,8 +6046,8 @@
       "source": "packages/core/src/audits/operability-safety/form-autofill-token-coverage.ts",
       "test": "packages/core/src/audits/operability-safety/form-autofill-token-coverage.test.ts",
       "tier": "scored",
-      "evidenceGrade": "A",
-      "weight": 1,
+      "evidenceGrade": "B",
+      "weight": 0.6,
       "scoreDisplayMode": "ternary",
       "dossier": "docs/evidence/audits/operability-safety/form-autofill-token-coverage.md",
       "requires": [
@@ -6534,7 +6531,7 @@
       "category": "operability-safety",
       "slug": "profile-autofill-token-coverage",
       "title": "Profile Autofill Token Coverage",
-      "purpose": "Whether each contact, address and payment field declares the matching WHATWG autocomplete token (email, tel, given-name, postal-code, address-level2, cc-number and the rest), a stable name or id, and the matching input type. Browsers and password managers fill by these tokens; no AI agent documents filling them yet. Scored as covered fields over profile fields across the scanned forms. Also counts, on forms with no credential field, fields marked mandatory only by an asterisk and error elements a field does not reference.",
+      "purpose": "Whether each contact, address and payment field declares the matching WHATWG autocomplete token (email, tel, given-name, postal-code, address-level2, cc-number and the rest), a stable name or id, and the matching input type. Browsers and password managers fill by these tokens; no AI agent documents filling them, so the check is informative and does not score. Reported as covered fields over profile fields across the scanned forms. Also counts, on forms with no credential field, fields marked mandatory only by an asterisk and error elements a field does not reference.",
       "features": [
         "accessibility",
         "autocomplete",
@@ -6542,7 +6539,7 @@
         "checkout",
         "forms"
       ],
-      "priority": "medium",
+      "priority": "low",
       "enabledByDefault": true,
       "applicability": {
         "pageTypeGate": "unrestricted",
@@ -6550,10 +6547,10 @@
       },
       "source": "packages/core/src/audits/operability-safety/profile-autofill-token-coverage.ts",
       "test": "packages/core/src/audits/operability-safety/profile-autofill-token-coverage.test.ts",
-      "tier": "scored",
-      "evidenceGrade": "B",
-      "weight": 0.6,
-      "scoreDisplayMode": "ternary",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
       "dossier": "docs/evidence/audits/operability-safety/profile-autofill-token-coverage.md",
       "requires": [
         "origin-reachable",
@@ -7223,11 +7220,8 @@
       "priority": "low",
       "enabledByDefault": true,
       "applicability": {
-        "pageTypeGate": "restricted",
-        "pageTypes": [
-          "article",
-          "general"
-        ]
+        "pageTypeGate": "unrestricted",
+        "pageTypes": []
       },
       "source": "packages/core/src/audits/structured-data/howto-schema.ts",
       "test": "packages/core/src/audits/structured-data/howto-schema.test.ts",

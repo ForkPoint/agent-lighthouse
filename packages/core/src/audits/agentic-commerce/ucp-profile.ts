@@ -24,22 +24,37 @@ function isAbsoluteHttps(url: string): boolean {
   }
 }
 
+/** Transport keys of the 2026-01-11 profile shape, one object per transport. */
+const TRANSPORT_KEYS = ["rest", "mcp", "a2a", "embedded"] as const;
+
 /**
- * Service bindings whose `endpoint` is not an absolute https URL. Each
- * service maps to an array of bindings in Google's example; a binding with no
- * endpoint names nowhere to send a request.
+ * The bindings a service declares, in either published shape. Current UCP
+ * (2026-04-08 onward) maps each service to an array of bindings that carry
+ * `transport` and `endpoint`; the 2026-01-11 shape maps it to one object with
+ * a nested object per transport (`rest.endpoint`, `mcp.endpoint`, ...).
+ */
+function bindingsOf(service: unknown): Record<string, unknown>[] {
+  if (Array.isArray(service)) return service.filter(isObject);
+  if (!isObject(service)) return [];
+  const nested = TRANSPORT_KEYS.map((key) => service[key]).filter(isObject);
+  return nested.length > 0 ? nested : [service];
+}
+
+/**
+ * Declared endpoints that are not absolute https URLs. `endpoint` is optional
+ * in the UCP specification, and an `embedded` binding has none, so only an
+ * endpoint that is present is judged; the spec says a present one "MUST be a
+ * valid URL with scheme (https)".
  */
 function badEndpoints(services: Record<string, unknown>): string[] {
   const bad: string[] = [];
-  for (const [name, bindings] of Object.entries(services)) {
-    const list = Array.isArray(bindings) ? bindings : [bindings];
-    for (const binding of list) {
-      const endpoint = isObject(binding) ? binding["endpoint"] : undefined;
+  for (const [name, service] of Object.entries(services)) {
+    for (const binding of bindingsOf(service)) {
+      const endpoint = binding["endpoint"];
+      if (endpoint === undefined) continue;
       if (typeof endpoint !== "string" || !isAbsoluteHttps(endpoint)) {
         bad.push(
-          typeof endpoint === "string"
-            ? `${name} (${endpoint})`
-            : `${name} (no endpoint)`,
+          `${name} (${typeof endpoint === "string" ? endpoint : JSON.stringify(endpoint)})`,
         );
       }
     }
@@ -47,12 +62,27 @@ function badEndpoints(services: Record<string, unknown>): string[] {
   return bad;
 }
 
-const EXPECTED = `${UCP_PATH} parses as a UCP business profile: a \`ucp\` object with a version, at least one service with an https endpoint, and its capabilities`;
+/** Capabilities as a keyed object (current) or an array (2026-01-11). */
+function countCapabilities(capabilities: unknown): number {
+  if (Array.isArray(capabilities)) return capabilities.length;
+  return isObject(capabilities) ? Object.keys(capabilities).length : 0;
+}
+
+/** Signing keys: `keys[]` in the current spec, `signing_keys[]` before it. */
+function countSigningKeys(profile: Record<string, unknown>): number {
+  for (const key of ["keys", "signing_keys"]) {
+    const list = profile[key];
+    if (Array.isArray(list)) return list.length;
+  }
+  return 0;
+}
+
+const EXPECTED = `${UCP_PATH} parses as a UCP business profile: a \`ucp\` object with a version and at least one service, and every declared endpoint absolute https`;
 
 const SAMPLE = `// ${UCP_PATH} — Google Merchant UCP profile
 {
   "ucp": {
-    "version": "2026-04-08",
+    "version": "2026-08-25",
     "services": {
       "dev.ucp.shopping": [{
         "version": "2026-04-08",
@@ -64,7 +94,7 @@ const SAMPLE = `// ${UCP_PATH} — Google Merchant UCP profile
       "dev.ucp.shopping.checkout": [{ "version": "2026-04-08" }]
     }
   },
-  "signing_keys": [{ "kid": "business_2026", "kty": "EC", "crv": "P-256", "x": "…", "y": "…" }]
+  "keys": [{ "kid": "business_2026", "kty": "EC", "crv": "P-256", "x": "…", "y": "…" }]
 }`;
 
 export class UcpProfileAudit extends Audit {
@@ -74,18 +104,18 @@ export class UcpProfileAudit extends Audit {
     title: "UCP business profile is readable",
     failureTitle: "UCP business profile cannot be read",
     description:
-      "Reads the Universal Commerce Protocol business profile at `/.well-known/ucp`, which Google's Merchant UCP integration fetches to negotiate checkout capabilities with the store. A site that publishes no profile is not applicable. A profile that does not parse, has no `ucp` object or declares no services fails; a missing version, missing capabilities or a non-https service endpoint warns.",
+      "Reads the Universal Commerce Protocol business profile at `/.well-known/ucp`. Google's Merchant UCP guide says the profile will enable Google to negotiate checkout capabilities with the store. A site that publishes no profile, or answers the path with JSON that has no `ucp` key, is not applicable. A profile that does not parse or declares no services fails; a missing version or a declared endpoint that is not absolute https warns.",
     scoreDisplayMode: ScoreDisplayMode.Ternary,
-    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
-    evidenceGrade: EvidenceGrade.A,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
     tier: AuditTier.Scored,
     dossier: "docs/evidence/audits/agentic-commerce/ucp-profile.md",
     requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
     defaultPriority: CheckPriority.High,
     guidance: {
       impact:
-        "Google reads the UCP profile to learn which checkout features the store supports, which versions it speaks and where to send requests. A profile Google cannot read leaves the store out of agentic checkout even when the rest of the integration is in place.",
-      fix: "Serve the profile as public JSON at `/.well-known/ucp`, with no authentication. Put `version`, `services` and `capabilities` inside a `ucp` object, give every service an absolute https `endpoint`, and publish the `signing_keys` Google uses to verify your messages.",
+        "Google's Merchant UCP guide says the profile tells Google which checkout features the store supports, which versions it speaks and where to send requests. A profile that cannot be read gives the integration none of that.",
+      fix: "Serve the profile as public JSON at `/.well-known/ucp`, with no authentication. Put `version` and `services` (and, optionally, `capabilities`) inside a `ucp` object, make every declared `endpoint` an absolute https URL, and publish the signing keys in the top-level `keys` array.",
       code: SAMPLE,
       effort: FixEffort.Moderate,
       docsUrl:
@@ -110,15 +140,7 @@ export class UcpProfileAudit extends Audit {
       );
     }
 
-    const ucp = read.profile["ucp"];
-    if (!isObject(ucp)) {
-      return this.fail(
-        `The UCP profile at ${UCP_PATH} has no \`ucp\` object. Google's profile format puts the version, services and capabilities inside it.`,
-        EXPECTED,
-        "No `ucp` object at the top level",
-        { priority: CheckPriority.High, code: SAMPLE },
-      );
-    }
+    const { ucp } = read;
 
     const services = isObject(ucp["services"]) ? ucp["services"] : {};
     const serviceCount = Object.keys(services).length;
@@ -131,17 +153,12 @@ export class UcpProfileAudit extends Audit {
       );
     }
 
-    const capabilities = isObject(ucp["capabilities"])
-      ? ucp["capabilities"]
-      : {};
-    const capabilityCount = Object.keys(capabilities).length;
+    const capabilityCount = countCapabilities(ucp["capabilities"]);
     const version =
       typeof ucp["version"] === "string" && ucp["version"].trim()
         ? ucp["version"]
         : undefined;
-    const signingKeys = Array.isArray(read.profile["signing_keys"])
-      ? read.profile["signing_keys"].length
-      : 0;
+    const signingKeys = countSigningKeys(read.profile);
     const details = {
       ...(version ? { version } : {}),
       services: serviceCount,
@@ -155,15 +172,10 @@ export class UcpProfileAudit extends Audit {
         "it names no `ucp.version`, which Google uses to pick the protocol version",
       );
     }
-    if (capabilityCount === 0) {
-      problems.push(
-        "it declares no capabilities, so Google cannot tell which checkout features the store supports",
-      );
-    }
     const bad = badEndpoints(services);
     if (bad.length > 0) {
       problems.push(
-        `these services have no absolute https endpoint: ${bad.join(", ")}`,
+        `these declared endpoints are not absolute https URLs: ${bad.join(", ")}`,
       );
     }
 

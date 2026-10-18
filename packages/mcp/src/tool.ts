@@ -3,8 +3,9 @@ import {
   browserSnapshotsJsonSchema,
   PageTypeSchema,
 } from "@forkpoint/agent-lighthouse-core";
-import type { ScanReport } from "@forkpoint/agent-lighthouse-core";
+import type { NoticeKind, ScanReport } from "@forkpoint/agent-lighthouse-core";
 import type { buildReportView } from "@forkpoint/agent-lighthouse-report";
+import { noticeKind } from "@forkpoint/agent-lighthouse-report";
 
 /**
  * The tool contract, lifted out of `server.ts`.
@@ -94,6 +95,19 @@ export interface AuditSummary {
     replacement?: string;
     link: string;
   }>;
+  /**
+   * Checks that reached a verdict and carry a notice other than obsolete,
+   * such as "no AI vendor reads this". Informative checks never reach
+   * `topOpportunities`, so this is the only way the qualifier reaches a model.
+   */
+  notices: Array<{
+    id: string;
+    title: string;
+    kind: NoticeKind;
+    notice: string;
+    replacement?: string;
+    link: string;
+  }>;
 }
 
 /** How many fixes the tool hands back. A model does not need all 215. */
@@ -149,6 +163,22 @@ export function buildAuditSummary(
       }),
       link: c.deprecated?.link ?? c.details?.evidenceUrl ?? "",
     })),
+    notices: view.notices.flatMap((c) =>
+      c.deprecated
+        ? [
+            {
+              id: c.id,
+              title: c.title,
+              kind: noticeKind(c.deprecated),
+              notice: c.deprecated.notice,
+              ...(c.deprecated.replacement !== undefined && {
+                replacement: c.deprecated.replacement,
+              }),
+              link: c.deprecated.link,
+            },
+          ]
+        : [],
+    ),
   };
 }
 

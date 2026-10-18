@@ -66,9 +66,24 @@ describe("AiPluginJsonAudit", () => {
     ],
     ["an empty body", "", 200],
     ["JSON that is not a plugin manifest", '{"name":"x"}', 200],
+    // `schema_version` and `name_for_human` alone are too generic to name
+    // the file a plugin manifest.
+    ["a lone schema_version key", '{"schema_version":"v1","name":"x"}', 200],
+    ["a lone name_for_human key", '{"name_for_human":"Site"}', 200],
     ["a body that is not JSON", "not json", 200],
   ])("is not applicable for %s", (_label, body, status) => {
     expect(runWith(body, status).status).toBe(CheckStatus.NotApplicable);
+  });
+
+  it.each([
+    ["name_for_model alone", '{"name_for_model":"site"}'],
+    ["description_for_model alone", '{"description_for_model":"Search."}'],
+    [
+      "two generic manifest keys",
+      '{"schema_version":"v1","name_for_human":"Site"}',
+    ],
+  ])("recognises a manifest by %s", (_label, body) => {
+    expect(runWith(body).status).toBe(CheckStatus.Warn);
   });
 
   it("never fails", () => {

@@ -15,7 +15,9 @@ export {
 
 // ── Scan Limits ────────────────────────────────────────────────
 
-export const ORIGIN_EVIDENCE_VERSION = "v1";
+// v2: the root-file set grew (A2A agent-card.json and agent.json, ard.json),
+// so an origin cached under v1 lacks files the 9.0 audits read.
+export const ORIGIN_EVIDENCE_VERSION = "v2";
 export const DEFAULT_ORIGIN_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 /**
  * How many origins the shared cache holds at once. Each entry carries every

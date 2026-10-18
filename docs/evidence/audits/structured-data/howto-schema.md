@@ -15,7 +15,6 @@ signals:
 sources:
   - google-howto-faq-blog
   - google-search-updates-howto
-  - google-howto-faq-changes-2023
   - schemaorg-howto
   - geo-16-study
 recommended_tier: obsolete
@@ -27,7 +26,7 @@ recommended_tier: obsolete
 
 ## What it checks
 
-Whether any sampled general or article page still publishes `HowTo` structured data.
+Whether any sampled page, of any page type, still publishes `HowTo` structured data (JSON-LD, including `@graph` and arrays, or microdata).
 
 Numbered steps without markup are no longer a finding. The old audit failed them and asked the owner to add the markup.
 
@@ -60,7 +59,7 @@ A tutorial page carries `{"@type":"HowTo","step":[…]}`. The report says Google
 ## Implementation deviations
 
 - 2026-10-18: moved from informative (grade C) to the obsolete tier (grade D).
-- `applicablePageTypes` stays `[General, Article]`; widening it is a separate decision.
+- `applicablePageTypes` is removed (2026-10-18, after independent review). HowTo markup can sit on a product or any other page, and AGENTS.md runs common checks on every page type; the audit returns `notApplicable` when no sampled page carries the markup.
 - The heading heuristic is gone. The audit looks only for markup.
 
 ## Record before the obsolete tier

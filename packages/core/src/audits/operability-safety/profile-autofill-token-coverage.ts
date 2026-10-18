@@ -1,7 +1,8 @@
 // Split from form-autofill-token-coverage 2026-10-18. Profile, address and
 // payment tokens have a documented consumer in browser autofill and password
 // managers, but no AI agent documents filling them, and ChatGPT Atlas agent
-// mode is reported to be excluded from autofill data. Hence B, not A.
+// mode is reported to be excluded from autofill data. Hence C, informative:
+// the mechanism is plausible for agents, the consumer path is unproven.
 // Evidence dossier: docs/evidence/audits/operability-safety/profile-autofill-token-coverage.md
 import type { AuditMeta } from "#core/types";
 import { weightForGrade } from "#core/scorer";
@@ -32,11 +33,11 @@ export class ProfileAutofillTokenCoverageAudit extends AutofillTokenAudit {
     title: "Profile Autofill Token Coverage",
     failureTitle: "Profile Autofill Token Coverage",
     description:
-      "Whether each contact, address and payment field declares the matching WHATWG autocomplete token (email, tel, given-name, postal-code, address-level2, cc-number and the rest), a stable name or id, and the matching input type. Browsers and password managers fill by these tokens; no AI agent documents filling them yet. Scored as covered fields over profile fields across the scanned forms. Also counts, on forms with no credential field, fields marked mandatory only by an asterisk and error elements a field does not reference.",
-    scoreDisplayMode: ScoreDisplayMode.Ternary,
-    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
-    evidenceGrade: EvidenceGrade.B,
-    tier: AuditTier.Scored,
+      "Whether each contact, address and payment field declares the matching WHATWG autocomplete token (email, tel, given-name, postal-code, address-level2, cc-number and the rest), a stable name or id, and the matching input type. Browsers and password managers fill by these tokens; no AI agent documents filling them, so the check is informative and does not score. Reported as covered fields over profile fields across the scanned forms. Also counts, on forms with no credential field, fields marked mandatory only by an asterisk and error elements a field does not reference.",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier:
       "docs/evidence/audits/operability-safety/profile-autofill-token-coverage.md",
     requires: [
@@ -45,7 +46,7 @@ export class ProfileAutofillTokenCoverageAudit extends AutofillTokenAudit {
       EvidenceKey.RenderedBody,
       EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: CheckPriority.Medium,
+    defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
         'Browser autofill and password managers map each field to a stored profile value by its autocomplete token. When a field declares autocomplete="postal-code", that mapping is a lookup against a ratified vocabulary; when it declares name="field_7" with a visual-only label, the mapping is a guess that fails on ambiguous cases (address-line2 vs address-level2, cc-exp vs bday). Agents running in the browser inherit the same fields, though no agent vendor documents filling profile data today.',
@@ -64,6 +65,6 @@ export class ProfileAutofillTokenCoverageAudit extends AutofillTokenAudit {
     expected:
       "Every contact, address and payment field declares the matching autocomplete token, a stable name or id, and a consistent input type",
     sample: SAMPLE,
-    priority: CheckPriority.Medium,
+    priority: CheckPriority.Low,
   };
 }

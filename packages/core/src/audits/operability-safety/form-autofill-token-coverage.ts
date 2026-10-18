@@ -1,6 +1,9 @@
 // Graduated from proposal 2026-08-22 (Plan 5, Task 7). Narrowed to credential
 // tokens 2026-10-18: only these have a documented agent consumer. Profile,
-// address and payment tokens moved to profile-autofill-token-coverage.
+// address and payment tokens moved to profile-autofill-token-coverage. Graded
+// B, not A: agents are documented to sign in through a password manager, but
+// no source shows the password manager reads the autocomplete token; 1Password
+// says only that the attribute makes fields easier to identify.
 // Evidence dossier: docs/evidence/audits/operability-safety/form-autofill-token-coverage.md
 //
 // Scope note (non-double-counting): `autocomplete` (the axe autocomplete-valid
@@ -26,8 +29,8 @@ import {
 import { AutofillScope, AutofillTokenAudit } from "./_autofill";
 
 const SAMPLE = `<!-- The token is the contract: a password manager acting for an agent fills by it. -->
-<label for="user">Email or username</label>
-<input id="user" name="username" type="text" autocomplete="username" required>
+<label for="user">Email</label>
+<input id="user" name="username" type="email" autocomplete="username" required>
 
 <label for="pass">Password</label>
 <input id="pass" name="password" type="password"
@@ -43,10 +46,10 @@ export class FormAutofillTokenCoverageAudit extends AutofillTokenAudit {
     title: "Form Autofill Token Coverage",
     failureTitle: "Form Autofill Token Coverage",
     description:
-      "Whether each sign-in, sign-up and one-time-code field declares the matching WHATWG autocomplete token (username, current-password, new-password, one-time-code), a stable name or id, and the matching input type. These are the tokens a password manager fills when an agent signs in for the user: Gemini in Chrome with Google Password Manager, and Claude with 1Password. Scored as covered fields over credential fields across the scanned forms. Also counts, on those forms, fields marked mandatory only by an asterisk and error elements a field does not reference.",
+      "Whether each sign-in, sign-up and one-time-code field declares the matching WHATWG autocomplete token (username, current-password, new-password, one-time-code), a stable name or id, and the matching input type. Agents are documented to sign in through a password manager (Gemini in Chrome with Google Password Manager, Claude with 1Password), and 1Password says these attributes make the fields easier to identify. On a sign-in form with no separate username field, the email field is the account identifier and may declare username or email. Scored as covered fields over credential fields across the scanned forms. Also counts, on those forms, fields marked mandatory only by an asterisk and error elements a field does not reference.",
     scoreDisplayMode: ScoreDisplayMode.Ternary,
-    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
-    evidenceGrade: EvidenceGrade.A,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
+    evidenceGrade: EvidenceGrade.B,
     tier: AuditTier.Scored,
     dossier:
       "docs/evidence/audits/operability-safety/form-autofill-token-coverage.md",
@@ -59,8 +62,8 @@ export class FormAutofillTokenCoverageAudit extends AutofillTokenAudit {
     defaultPriority: CheckPriority.High,
     guidance: {
       impact:
-        "Agents that sign in for a user do not type the password themselves: Gemini in Chrome asks permission to use Google Password Manager, and Claude fills logins through 1Password, which identifies fields by their autocomplete attribute. A sign-in field without username or current-password, a sign-up field without new-password, or a code field without one-time-code leaves the password manager guessing, and an agent that cannot sign in cannot act.",
-      fix: "Give every credential field its WHATWG token: username on the account identifier, current-password on sign-in, new-password on sign-up and password change, one-time-code on verification codes. Add a stable name or id. Express required-ness with the required attribute rather than an asterisk in the label, and point each field at its error element with aria-describedby or aria-errormessage.",
+        "Agents that sign in for a user do not type the password themselves: Gemini in Chrome asks permission to use Google Password Manager, and Claude fills logins through 1Password. 1Password's guidance says autocomplete attributes make it easier for it to identify fields. A sign-in field without username or current-password, a sign-up field without new-password, or a code field without one-time-code leaves the password manager to infer the field from other cues.",
+      fix: "Give every credential field its WHATWG token: username on the account identifier (an email used as the login keeps type=email and declares username), current-password on sign-in, new-password on sign-up and password change, one-time-code on verification codes. Add a stable name or id. Express required-ness with the required attribute rather than an asterisk in the label, and point each field at its error element with aria-describedby or aria-errormessage.",
       code: SAMPLE,
       effort: FixEffort.Easy,
       docsUrl:

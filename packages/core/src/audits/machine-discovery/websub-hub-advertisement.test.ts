@@ -200,16 +200,44 @@ describe("WebsubHubAdvertisementAudit", () => {
     expect(strings(r, "observations").join(" ")).toContain("exactly one");
   });
 
-  it("reports a hub that is not absolute HTTPS", async () => {
+  // WebSub does not require an HTTPS hub, and http hubs are common.
+  it("accepts an absolute http hub URL", async () => {
     const { result } = run({
       documentLinks:
         '<link rel="self" href="https://example.com/feed.xml"/><link rel="hub" href="http://hub.example.net/"/>',
     });
     const r = await result;
+    expect(r.status).toBe(CheckStatus.Pass);
+  });
+
+  it("reports a relative hub URL", async () => {
+    const { result } = run({
+      documentLinks:
+        '<link rel="self" href="https://example.com/feed.xml"/><link rel="hub" href="/hub"/>',
+    });
+    const r = await result;
     expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "observations").join(" ")).toContain(
-      "not an absolute HTTPS URL",
+      "not an absolute URL",
     );
+  });
+
+  // A WAF or bot challenge in front of the hub refuses the scanner's HEAD;
+  // the hub is there, so the push path is not "unreachable".
+  it("accepts a hub that refuses the probe with 401, 403 or 429", async () => {
+    for (const hubStatus of [401, 403, 429]) {
+      const { result } = run({ documentLinks: SELF_AND_HUB, hubStatus });
+      const r = await result;
+      expect(r.status, String(hubStatus)).toBe(CheckStatus.Pass);
+      expect(strings(r, "hubProbes").join(" ")).toContain(String(hubStatus));
+    }
+  });
+
+  it("reports a hub that answers 404", async () => {
+    const { result } = run({ documentLinks: SELF_AND_HUB, hubStatus: 404 });
+    const r = await result;
+    expect(r.status).toBe(CheckStatus.Warn);
+    expect(strings(r, "observations").join(" ")).toContain("not reachable");
   });
 
   it("accepts 405 from a hub that refuses a bare HEAD", async () => {

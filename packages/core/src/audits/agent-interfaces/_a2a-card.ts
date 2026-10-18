@@ -14,12 +14,15 @@
  *   {@link NO_AGENT_CARD}.
  * - **Broken.** A 200 at `agent-card.json` whose body is not a JSON object.
  *   The SDK raises `AgentCardResolutionError` on it, so a client gets no card.
- * - **Readable.** A JSON object, handed back for the caller to judge.
+ * - **Readable.** A JSON object that carries at least one key only an A2A
+ *   card uses, handed back for the caller to judge.
  *
- * The legacy path is read only when the current path has nothing, and only a
- * body that looks like an A2A card counts. `/.well-known/agents.json` (plural)
- * is a different, dead format, and a JSON file at `agent.json` from some other
- * convention is not evidence of an A2A agent.
+ * Only a body that looks like an A2A card counts, at either path. Some servers
+ * answer every `/.well-known/*` path with the same unrelated JSON document; a
+ * JSON object with none of the card's keys is somebody else's file, so it
+ * reads as absent rather than as a card missing every field. The legacy path
+ * is read only when the current path has nothing. `/.well-known/agents.json`
+ * (plural) is a different, dead format.
  */
 
 import type { CheckContext } from "#core/check-context";
@@ -42,8 +45,8 @@ export const NO_AGENT_CARD = {
 } as const;
 
 /**
- * Keys only an A2A card carries together. One of them on an object at the
- * legacy path is enough to read it as a card; a bare `name` is not.
+ * Keys only an A2A card carries. One of them on an object is enough to read it
+ * as a card; a bare `name` or `url` is not.
  */
 const A2A_KEYS = [
   "skills",
@@ -100,10 +103,17 @@ export function readAgentCard(
             : "HTTP 200, but the JSON is not an object",
       };
     }
-    return { kind: "card", path: AGENT_CARD_PATH, legacy: false, card: parsed };
+    if (looksLikeA2aCard(parsed)) {
+      return {
+        kind: "card",
+        path: AGENT_CARD_PATH,
+        legacy: false,
+        card: parsed,
+      };
+    }
   }
 
-  // The legacy path proves an A2A agent only when its body is shaped like one.
+  // Either path proves an A2A agent only when its body is shaped like one.
   // Anything else there is somebody else's file, so it reads as absent.
   const legacy = ctx.rootFiles[LEGACY_AGENT_CARD_PATH];
   if (isRootArtifact(legacy) && legacy.body.trim()) {
@@ -120,8 +130,10 @@ export function readAgentCard(
 
   return {
     kind: "absent",
-    found: current
-      ? `${AGENT_CARD_PATH}: ${rootArtifactMiss(current)}`
-      : NO_AGENT_CARD.found,
+    found: !current
+      ? NO_AGENT_CARD.found
+      : isRootArtifact(current) && current.body.trim()
+        ? `${AGENT_CARD_PATH}: JSON with none of the Agent Card's keys, so not a card`
+        : `${AGENT_CARD_PATH}: ${rootArtifactMiss(current)}`,
   };
 }

@@ -15,6 +15,7 @@ sources:
   - openai-plugin-manifest-docs-404
   - openai-help-plugins-winddown
   - iana-well-known-registry-aiplugin
+  - microsoft-build-2023-plugin-standard
 ---
 
 # ai-plugin-json (`5.11`)
@@ -43,11 +44,11 @@ The check never asks a site to publish the file. It exists to tell an owner who 
 - OpenAI's current extension surface for ChatGPT apps is built on MCP, and its Actions take an OpenAPI document the developer supplies. Neither reads the manifest.
 - The path is not in the IANA Well-Known URIs registry.
 
-**Counter-evidence:** The OpenAI help-centre article on winding down the beta returns HTTP 403 to scripts, so it is cited but not used as proof. The community post and the archived repository carry the claim.
+**Counter-evidence:** Microsoft announced in May 2023 that it would "adopt the same open plugin standard that OpenAI introduced for ChatGPT", across Bing and its copilots — [Microsoft Build 2023](https://blogs.microsoft.com/blog/2023/05/23/microsoft-build-brings-ai-tools-to-the-forefront-for-developers/) (verified 2026-10-18). So a second vendor once adopted the format. No current Microsoft documentation of reading the file was found, so the audit says no current vendor reads it. The OpenAI help-centre article on winding down the beta returns HTTP 403 to scripts, so it is cited but not used as proof. The community post and the archived repository carry the claim.
 
 ## Scoring
 
-**Grade: D** — the only documented consumer, ChatGPT plugins, was shut down by its operator. No other vendor adopted the format. An obsolete audit carries weight 0 and never returns `fail` (`sunset.test.ts`; `Audit.toCheckResult` lowers a stray `fail` to `warn`). It does not move any score.
+**Grade: D** — the only documented consumer, ChatGPT plugins, was shut down by its operator. Microsoft announced adoption in 2023, but no vendor documents reading the format today. An obsolete audit carries weight 0 and never returns `fail` (`sunset.test.ts`; `Audit.toCheckResult` lowers a stray `fail` to `warn`). It does not move any score.
 
 ## Example finding
 

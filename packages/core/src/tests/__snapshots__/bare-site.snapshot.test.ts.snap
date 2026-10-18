@@ -67,6 +67,7 @@ na   0   operability-safety/change-password-url
 na   0   operability-safety/first-contact-consent-gate-operability
 na   0   operability-safety/forms-no-js
 na   0   operability-safety/frame-title
+na   0   operability-safety/profile-autofill-token-coverage
 na   0   operability-safety/security-header-hygiene
 na   0   operability-safety/tabindex
 na   0   operability-safety/trust-txt-reciprocity-coherence
@@ -80,6 +81,7 @@ na   0.6 access-crawl-control/aipref-content-usage-declaration-validity
 na   0.6 access-crawl-control/machine-actionable-402-paid-access
 na   0.6 access-crawl-control/rsl-licensing-terms-conformance
 na   0.6 access-crawl-control/web-bot-auth-request-tolerance
+na   0.6 agent-interfaces/a2a-agent-card
 na   0.6 agent-interfaces/ai-catalog-metadata
 na   0.6 agent-interfaces/ai-catalog-urls
 na   0.6 agent-interfaces/mcp-origin-validation-cors
@@ -92,6 +94,7 @@ na   0.6 agent-interfaces/openapi-servers
 na   0.6 agent-interfaces/webmcp-declarative-forms
 na   0.6 agentic-commerce/buyable-variant-resolution
 na   0.6 agentic-commerce/cart-handoff-reachability
+na   0.6 agentic-commerce/ucp-profile
 na   0.6 answer-readiness/chunk-boundary-referent-integrity
 na   0.6 answer-readiness/section-split-risk-profile
 na   0.6 answer-readiness/site-wide-passage-uniqueness-ratio
@@ -112,10 +115,10 @@ na   0.6 operability-safety/agent-ua-content-divergence-diff
 na   0.6 operability-safety/c2pa-manifest-survives-delivery
 na   0.6 operability-safety/c2pa-signer-trust-status
 na   0.6 operability-safety/drag-and-slider-dependency
+na   0.6 operability-safety/form-autofill-token-coverage
 na   0.6 operability-safety/ghost-clickable-element-ratio
 na   0.6 operability-safety/hover-only-content-and-navigation
 na   0.6 operability-safety/organization-identifier-registry-resolution
-na   0.6 operability-safety/profile-autofill-token-coverage
 na   0.6 operability-safety/reflected-parameter-injection-canary
 na   0.6 operability-safety/stateful-control-introspectability
 na   0.6 operability-safety/synthetic-media-disclosure-validity
@@ -142,7 +145,6 @@ na   1   access-crawl-control/oai-searchbot
 na   1   access-crawl-control/perplexitybot
 na   1   access-crawl-control/robots-ai-group-shadowing
 na   1   access-crawl-control/sensitive-paths
-na   1   agent-interfaces/a2a-agent-card
 na   1   agent-interfaces/mcp-modern-era-reachability
 na   1   agent-interfaces/mcp-oauth-discovery-chain
 na   1   agent-interfaces/mcp-tool-contract-validity
@@ -154,7 +156,6 @@ na   1   agentic-commerce/agent-ua-commerce-parity
 na   1   agentic-commerce/checkout-offer-field-mapping
 na   1   agentic-commerce/landed-cost-and-returns
 na   1   agentic-commerce/product-transaction-certainty
-na   1   agentic-commerce/ucp-profile
 na   1   answer-readiness/text-fragment-addressability
 na   1   content-extraction/hydration-payload-share
 na   1   content-extraction/image-alt-text
@@ -174,7 +175,6 @@ na   1   operability-safety/dialog-name
 na   1   operability-safety/document-title
 na   1   operability-safety/duplicate-id
 na   1   operability-safety/form-actionability
-na   1   operability-safety/form-autofill-token-coverage
 na   1   operability-safety/form-error-messages
 na   1   operability-safety/label
 na   1   operability-safety/landmark-unique

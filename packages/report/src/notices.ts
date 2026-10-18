@@ -43,3 +43,21 @@ export function noticedChecks(checks: CheckResult[]): CheckResult[] {
       c.status !== CheckStatus.NotApplicable,
   );
 }
+
+/**
+ * The line under the obsolete list: how many more checks looked and found
+ * nothing, and how many never looked. An errored or skipped check observed no
+ * absence, so it is never folded into "found nothing".
+ */
+export function obsoleteTally(absent: number, unrun: number): string {
+  const parts: string[] = [];
+  if (absent > 0) {
+    parts.push(
+      `${absent} more obsolete check${absent === 1 ? "" : "s"} found nothing.`,
+    );
+  }
+  if (unrun > 0) {
+    parts.push(`${unrun} obsolete check${unrun === 1 ? "" : "s"} did not run.`);
+  }
+  return parts.join(" ");
+}

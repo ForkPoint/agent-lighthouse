@@ -17,6 +17,7 @@ import {
   AuditTier,
   CheckPriority,
   CheckStatus,
+  TAG_SKIPPED_SCAN_BUDGET,
 } from "@forkpoint/agent-lighthouse-core";
 import {
   CATEGORY_ORDER,
@@ -109,10 +110,13 @@ export interface CoverageView {
  * `found` holds the checks that saw the retired thing still published (the
  * owner has something to remove or replace); `absent` holds the ones that
  * looked and found nothing, kept so the section can say what was checked.
+ * `unrun` holds the ones that never looked — errored, skipped for evidence,
+ * page type or budget — so no surface claims an absence nobody observed.
  */
 export interface ObsoleteView {
   found: CheckResult[];
   absent: CheckResult[];
+  unrun: CheckResult[];
 }
 
 export interface ReportView {
@@ -218,6 +222,16 @@ function toCategoryView(
     checks: assessed,
     notApplicable,
   };
+}
+
+/** A not-applicable stub the runner wrote for an audit that never looked. */
+function didNotRun(check: CheckResult): boolean {
+  return (
+    hasTag(check, TAG_SCAN_ERROR) ||
+    hasTag(check, TAG_SKIPPED_NO_EVIDENCE) ||
+    hasTag(check, TAG_SKIPPED_PAGE_TYPE) ||
+    hasTag(check, TAG_SKIPPED_SCAN_BUDGET)
+  );
 }
 
 function hasTag(check: CheckResult, tag: string): boolean {
@@ -347,11 +361,13 @@ export function buildReportView(
   }
 
   const obsoleteChecks = allChecks.filter(isObsolete);
+  const obsoleteNa = obsoleteChecks.filter(
+    (c) => c.status === CheckStatus.NotApplicable,
+  );
   const obsolete: ObsoleteView = {
     found: obsoleteChecks.filter((c) => c.status !== CheckStatus.NotApplicable),
-    absent: obsoleteChecks.filter(
-      (c) => c.status === CheckStatus.NotApplicable,
-    ),
+    absent: obsoleteNa.filter((c) => !didNotRun(c)),
+    unrun: obsoleteNa.filter(didNotRun),
   };
 
   const pageScope = buildPageScope(report, allChecks);

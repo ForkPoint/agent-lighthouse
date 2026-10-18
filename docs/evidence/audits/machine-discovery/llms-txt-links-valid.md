@@ -6,7 +6,7 @@ slug: llms-txt-links-valid
 evidence_grade: C
 disposition: "keep — fix required"
 reviewed: 2026-10-18
-recommended_tier: scored
+recommended_tier: informative
 tier_rationale: "Recommended scored; ships informative. The B rested on a signal whose mechanism covers checks this audit does not perform. Re-graded C / informative / weight 0 (evidence sweep, 2026-08-24)."
 consumers:
   - "Google Lighthouse 13.3+ (llms-txt audit: H1, markdown-link, 50-char checks)"

@@ -241,9 +241,9 @@ describe("ProfileAutofillTokenCoverageAudit", () => {
     expect(result.message).toContain('autocomplete="address-level1"');
   });
 
-  // A sign-in form is the credential audit's: its password is not counted
-  // here, and neither are its side findings.
-  it("leaves the password field and side findings of a sign-in form to the credential audit", () => {
+  // A sign-in form is the credential audit's: its password and its email
+  // identifier are not counted here, and neither are its side findings.
+  it("leaves the whole sign-in form, email identifier included, to the credential audit", () => {
     const result = run(
       `<form action="/login">
         <label for="e">Email *</label>
@@ -253,15 +253,26 @@ describe("ProfileAutofillTokenCoverageAudit", () => {
       </form>`,
       "https://example.test/login",
     );
-    expect(result.status).toBe(CheckStatus.Pass);
-    expect(result.found).toContain("1 of 1 profile field(s) covered");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.found).not.toContain("asterisk");
   });
 
-  it("is graded B and scored", () => {
+  // The recommended email-as-username pattern must not read as a wrong token.
+  it("does not judge type=email autocomplete=username on a sign-in form", () => {
+    const result = run(
+      `<form action="/login">
+        <input id="e" name="email" type="email" autocomplete="username">
+        <input id="p" name="p" type="password" autocomplete="current-password">
+      </form>`,
+      "https://example.test/login",
+    );
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+  });
+
+  it("is graded C and informative", () => {
     const { meta } = ProfileAutofillTokenCoverageAudit;
-    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
-    expect(meta.tier).toBe(AuditTier.Scored);
-    expect(meta.weight).toBe(0.6);
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.C);
+    expect(meta.tier).toBe(AuditTier.Informative);
+    expect(meta.weight).toBe(0);
   });
 });

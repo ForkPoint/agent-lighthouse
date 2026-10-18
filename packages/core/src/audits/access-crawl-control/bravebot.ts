@@ -20,7 +20,7 @@ export class BravebotAudit extends ObsoleteRobotsGroupAudit {
     title: "Bravebot robots.txt group (unread)",
     failureTitle: "A Bravebot robots.txt group that Brave does not read",
     description:
-      "Reports a `User-agent: Bravebot` group in robots.txt. Brave documents that its search crawler does not advertise a distinct user agent and follows the rules that apply to Googlebot, so a group named for Bravebot governs nothing Brave sends.",
+      "Reports a `User-agent: Bravebot` group in robots.txt. Brave documents that its search crawler does not advertise a distinct user agent and follows the rules that apply to Googlebot. It does not document reading a Bravebot group.",
     scoreDisplayMode: ScoreDisplayMode.Informative,
     weight: weightForGrade(EvidenceGrade.D, AuditTier.Obsolete),
     evidenceGrade: EvidenceGrade.D,
@@ -28,7 +28,7 @@ export class BravebotAudit extends ObsoleteRobotsGroupAudit {
     deprecated: {
       kind: NoticeKind.Obsolete,
       notice:
-        "Brave says its crawler does not advertise a distinct user agent and does not crawl what Googlebot may not crawl, so a Bravebot group has no reader.",
+        "Brave documents following the Googlebot rules: its crawler does not advertise a distinct user agent and does not crawl what Googlebot may not crawl. Brave does not document reading a Bravebot group.",
       link: "https://search.brave.com/help/brave-search-crawler",
       replacement:
         "Control Brave Search through the rules that apply to Googlebot, and use a robots noindex directive to delist a page.",
@@ -39,7 +39,7 @@ export class BravebotAudit extends ObsoleteRobotsGroupAudit {
     defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
-        "None in either direction. Brave does not send a Bravebot user agent, so the group neither admits nor blocks Brave; the Googlebot rules decide.",
+        "Likely none. Brave documents following the Googlebot rules and does not document reading a Bravebot group, so the Googlebot rules are the control Brave describes.",
       fix: "Nothing is required; the group can stay. To control Brave Search, set the rules that apply to Googlebot. To delist a page from Brave, use a robots noindex directive.",
       effort: FixEffort.Trivial,
       docsUrl: "https://search.brave.com/help/brave-search-crawler",
@@ -49,5 +49,5 @@ export class BravebotAudit extends ObsoleteRobotsGroupAudit {
 
   protected readonly token = "Bravebot";
   protected readonly reason =
-    'Brave says its crawler "does not advertise a differentiated user agent" and that a page not crawlable by Googlebot is not crawled by Brave either, so this group governs nothing Brave sends. Brave follows the rules that apply to Googlebot.';
+    'Brave documents following the Googlebot rules: its crawler "does not advertise a differentiated user agent", and a page not crawlable by Googlebot is not crawled by Brave either. Brave does not document reading a Bravebot group.';
 }

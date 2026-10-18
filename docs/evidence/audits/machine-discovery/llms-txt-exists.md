@@ -6,7 +6,7 @@ slug: llms-txt-exists
 evidence_grade: C
 disposition: "merged 2026-08-22 (Plan 4, Task 4) — absorbs llms-txt-link (4.11)"
 reviewed: 2026-10-18
-recommended_tier: scored
+recommended_tier: informative
 tier_rationale: "Recommended scored; ships informative. The A was never argued: the frontmatter carried grade A while the file's own research signal read grade C, verdict REFUTED. Re-graded C / informative / weight 0 (evidence sweep, 2026-08-24)."
 consumers:
   - "Google Lighthouse 13.3+ agentic-browsing audit (an auditor, not an agent)"
@@ -67,12 +67,12 @@ sources:
 
 `GET /llms.txt` returns 200 with a body that starts with `#`. The audit also reports whether a `<link rel="alternate">` or `<link rel="describedby">` in the first page's head points at that file. It is informative, so no outcome moves the score.
 
-| State                                               | Result                      |
-| :-------------------------------------------------- | :-------------------------- |
-| 200, not an HTML page, body starts with `#`         | `pass`                      |
-| 200, not an HTML page, body does not start with `#` | `pass`, gap named           |
-| no file, and no head link points at it              | `notApplicable`             |
-| no file, but a head link points at it               | `notApplicable`, link named |
+| State                                               | Result                  |
+| :-------------------------------------------------- | :---------------------- |
+| 200, not an HTML page, body starts with `#`         | `pass`                  |
+| 200, not an HTML page, body does not start with `#` | `pass`, gap named       |
+| no file, and no head link points at it              | `notApplicable`         |
+| no file, but a head link points at it               | `pass`, dead link named |
 
 "No file" means a non-200 status, no response, or an HTML page served at the path. An HTML page there is a site shell answering every URL, not the file.
 
@@ -80,7 +80,7 @@ The head link is reported in every branch, as `discovery <link> → <href>` or `
 
 ## Why it matters
 
-No AI vendor documents reading llms.txt or llms-full.txt from a website at runtime. An [Ahrefs study of 137,210 domains](https://ahrefs.com/blog/llmstxt-study/) (verified 2026-10-18) found that 97% of llms.txt files received no requests in a month. AI tools never asked for a missing file. Tools a user points at the file, such as documentation helpers in coding agents, can still read it. [Chrome Lighthouse](https://developer.chrome.com/docs/lighthouse/agentic-browsing/llms-txt) (verified 2026-10-18) is the one shipping checker of the file. It flags a file with no H1 heading or no links. Lighthouse is a checker, not a consumer, so it does not change the grade.
+No AI vendor documents reading llms.txt or llms-full.txt from a website at runtime. An [Ahrefs study of 137,210 domains](https://ahrefs.com/blog/llmstxt-study/) (verified 2026-10-18) found that 97% of llms.txt files received no requests in a month. AI tools never asked for a missing file. Tools a user points at the file, such as documentation helpers in coding agents, can still read it. [Chrome Lighthouse](https://developer.chrome.com/docs/lighthouse/agentic-browsing/llms-txt) (verified 2026-10-18) is the one shipping checker of the file. Its [audit source](https://raw.githubusercontent.com/GoogleChrome/lighthouse/main/core/audits/agentic/llms-txt.js) (verified 2026-10-18) flags a file with no H1 heading or no links; the documentation page does not list those checks. Lighthouse is a checker, not a consumer, so it does not change the grade.
 
 ## How it scores
 
@@ -123,8 +123,10 @@ Informative, weight 0. Every result carries an `unconsumed` notice: no AI vendor
   only `/llms.txt`, reads no `<link>`, and scores a 4xx as not applicable.
   Counting a linter as a consumer would make this project evidence for itself.
 - **Outcomes.** A missing file is not applicable. A file advertised by a
-  `<link>` but not served warns at `low`. A file without an H1 warns at `low`.
-  A file with an H1 passes.
+  `<link>` but not served passes with the dead link named (2026-10-18, after
+  independent review: the link is a present defect, not an absence, and a
+  not-applicable message is often not shown). A file without an H1 passes
+  with the gap named. A file with an H1 passes.
 - **The head link never changes the status on its own.** No consumer of the
   link is documented, so its state goes into `found`.
 - **Link detection** matches the resolved pathname against `/\/llms\.txt$/i`.

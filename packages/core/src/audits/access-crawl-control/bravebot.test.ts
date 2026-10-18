@@ -26,12 +26,18 @@ describe("BravebotAudit", () => {
       "a group shared with other tokens",
       "User-agent: Googlebot\nUser-agent: Bravebot\nDisallow: /private",
     ],
+    ["a lowercase token", "user-agent: bravebot\nDisallow: /"],
+    ["a versioned token", "User-agent: Bravebot/1.0\nDisallow: /"],
   ])("warns that the group has no reliable reader for %s", (_label, body) => {
     const result = audit.audit(robots(body));
     expect(result.status).toBe(CheckStatus.Warn);
     expect(result.priority).toBe(CheckPriority.Low);
     expect(result.message).toContain("User-agent: Bravebot");
-    expect(result.message).toContain("Googlebot");
+    expect(result.message).toContain(
+      "Brave documents following the Googlebot rules",
+    );
+    // Brave's page does not say the group is ignored; the message must not.
+    expect(result.message).not.toContain("governs nothing");
   });
 
   // Access through the catch-all is the business of the other per-bot

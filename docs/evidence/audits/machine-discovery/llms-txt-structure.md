@@ -23,7 +23,7 @@ sources:
 
 > machine-discovery · source `llms-txt-structure.ts` · merges llms-txt-blockquote (1.2) + llms-txt-sections (1.3) · evidence grade **C** · tier **informative** (weight 0)
 
-## Claimed mechanism (falsifiable)
+## Claimed mechanism (record before 2026-10-18)
 
 An agent that fetches `/llms.txt` parses the blockquote under the H1 as the site summary, and the H2 headings as the addressable sections of the link list. A file carrying both can therefore be consumed selectively — read the summary, pick a section — instead of end to end.
 
@@ -52,13 +52,13 @@ Result semantics:
 
 ## Why it matters
 
-No AI vendor documents reading llms.txt or llms-full.txt from a website at runtime. An [Ahrefs study of 137,210 domains](https://ahrefs.com/blog/llmstxt-study/) (verified 2026-10-18) found that 97% of llms.txt files received no requests in a month. AI tools never asked for a missing file. Tools a user points at the file, such as documentation helpers in coding agents, can still read it. [Chrome Lighthouse](https://developer.chrome.com/docs/lighthouse/agentic-browsing/llms-txt) (verified 2026-10-18) is the one shipping checker of the file. It flags a file with no H1 heading or no links. Lighthouse is a checker, not a consumer, so it does not change the grade. It does not check the blockquote summary or H2 sections that this audit reports.
+No AI vendor documents reading llms.txt or llms-full.txt from a website at runtime. An [Ahrefs study of 137,210 domains](https://ahrefs.com/blog/llmstxt-study/) (verified 2026-10-18) found that 97% of llms.txt files received no requests in a month. AI tools never asked for a missing file. Tools a user points at the file, such as documentation helpers in coding agents, can still read it. [Chrome Lighthouse](https://developer.chrome.com/docs/lighthouse/agentic-browsing/llms-txt) (verified 2026-10-18) is the one shipping checker of the file. Its [audit source](https://raw.githubusercontent.com/GoogleChrome/lighthouse/main/core/audits/agentic/llms-txt.js) (verified 2026-10-18) flags a file with no H1 heading or no links; the documentation page does not list those checks. Lighthouse is a checker, not a consumer, so it does not change the grade. It does not check the blockquote summary or H2 sections that this audit reports.
 
 ## How it scores
 
 Informative, weight 0. Every result carries an `unconsumed` notice: no AI vendor documents reading this file. The audit never warns or fails. An absent file is not applicable. A file that is present passes, and a missing blockquote summary or missing H2 sections are named in the pass message, with the note that it does not affect AI agents.
 
-## Scoring
+## Scoring (record before 2026-10-18)
 
 **C — the strongest proven path for the merged signal, unchanged from both sources.**
 

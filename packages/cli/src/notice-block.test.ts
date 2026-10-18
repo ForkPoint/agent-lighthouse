@@ -8,6 +8,7 @@ import {
   PageType,
   ScoreDisplayMode,
   ScoreTier,
+  TAG_SCAN_ERROR,
 } from "@forkpoint/agent-lighthouse-core";
 import { buildReportView } from "@forkpoint/agent-lighthouse-report";
 import { noticeLines, obsoleteLines } from "./notice-block";
@@ -81,6 +82,23 @@ describe("obsoleteLines", () => {
     expect(text).toContain("The vendor retired this file in 2024.");
     expect(text).toContain("Publish the successor file.");
     expect(text).toContain("https://example.com/retired");
+  });
+
+  it("says a check that did not run did not run, not that it found nothing", () => {
+    const text = obsoleteLines(
+      viewOf([
+        retired,
+        {
+          ...retired,
+          id: "agent-interfaces/errored-retired",
+          status: CheckStatus.NotApplicable,
+          score: 0,
+          tags: [TAG_SCAN_ERROR],
+        },
+      ]),
+    ).join("\n");
+    expect(text).not.toContain("found nothing");
+    expect(text).toContain("1 obsolete check did not run.");
   });
 
   it("prints nothing when nothing obsolete was found", () => {

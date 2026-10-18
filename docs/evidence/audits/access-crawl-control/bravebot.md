@@ -34,26 +34,27 @@ Whether robots.txt has a group that names `Bravebot`. A catch-all group that hap
 
 ## Claimed mechanism (falsifiable)
 
-**Mechanism:** a named robots.txt group controls the crawler that sends that product token. The claim this audit tests is that Brave's crawler sends no such token, so the group controls nothing.
+**Mechanism:** a named robots.txt group controls the crawler that sends that product token. The claim this audit tests is that Brave documents following the Googlebot rules and does not document reading a Bravebot group, so the group is not the control Brave describes.
 
 ## Evidence
 
 - Brave: "The Brave Search crawler does not advertise a differentiated user agent because we must avoid discrimination from websites that allow only Google to crawl them. However, if a domain or page is not crawlable by Googlebot, then Brave Search's bot will not crawl it either." — [Brave Search Crawler](https://search.brave.com/help/brave-search-crawler) (verified 2026-10-18)
 
-**Counter-evidence:** Third-party bot directories list a `Bravebot` user agent. Brave does not document one, so the audit follows Brave.
+**Counter-evidence:** Third-party bot directories list a `Bravebot/1.0` user-agent string. Brave does not document one, and its page does not say a `Bravebot` group is ignored. The message therefore says only what Brave documents: it follows the Googlebot rules.
 
 ## Scoring
 
-**Grade: D** — the operator documents that it does not read the group. An obsolete audit carries weight 0 and never returns `fail` (`sunset.test.ts`; `Audit.toCheckResult` lowers a stray `fail` to `warn`). It does not move any score.
+**Grade: D** — the operator documents following the Googlebot rules and sending no distinct user agent; it documents no reading of a Bravebot group. An obsolete audit carries weight 0 and never returns `fail` (`sunset.test.ts`; `Audit.toCheckResult` lowers a stray `fail` to `warn`). It does not move any score.
 
 ## Example finding
 
-robots.txt has `User-agent: Bravebot` / `Disallow: /private`. The report says Brave does not send that token and follows the Googlebot rules.
+robots.txt has `User-agent: Bravebot` / `Disallow: /private`. The report says Brave documents following the Googlebot rules and does not document reading a Bravebot group.
 
 ## Implementation deviations
 
 - 2026-10-18: moved from informative (grade C) to the obsolete tier (grade D). The audit no longer extends `CrawlerBotAudit`; it uses `_obsolete-robots-group-audit.ts`.
 - The allow/block verdict is gone. Brave's access follows the rules that apply to Googlebot.
+- 2026-10-18, after independent review: the message no longer says the group "governs nothing Brave sends". Brave's page does not say that; it says Brave follows the Googlebot rules.
 
 ## Record before the obsolete tier
 

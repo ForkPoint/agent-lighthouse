@@ -4,6 +4,7 @@ import {
   NOTICE_LABELS,
   noticeKind,
   noticeText,
+  obsoleteTally,
 } from "@forkpoint/agent-lighthouse-report";
 
 /** One check and its notice, indented under a section heading. */
@@ -21,14 +22,10 @@ function noticeEntry(c: CheckResult): string[] {
  * that its consumer retired or ignores. Empty when nothing was found.
  */
 export function obsoleteLines(view: ReportView): string[] {
-  const { found, absent } = view.obsolete;
+  const { found, absent, unrun } = view.obsolete;
   if (found.length === 0) return [];
-  const rest =
-    absent.length > 0
-      ? [
-          `    \x1b[90m${absent.length} more obsolete check${absent.length === 1 ? "" : "s"} found nothing.\x1b[0m`,
-        ]
-      : [];
+  const tally = obsoleteTally(absent.length, unrun.length);
+  const rest = tally ? [`    \x1b[90m${tally}\x1b[0m`] : [];
   return [
     `\x1b[1m🗑  OBSOLETE (not scored):\x1b[0m`,
     `    \x1b[90mStill published, but retired or ignored by its consumer. Never moves the score.\x1b[0m`,

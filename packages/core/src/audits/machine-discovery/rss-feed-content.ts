@@ -21,7 +21,7 @@ export class RssFeedContentAudit extends Audit {
     title: "RSS feed content complete",
     failureTitle: "RSS feed content complete",
     description:
-      "Reports how many feed items carry full article text (more than 500 characters). Search and AI crawlers take URLs from feeds and fetch the page itself, and excerpt feeds are valid, so this check is reported and never scored.",
+      "Reports how many feed items carry full article text (more than 500 characters). Google and the Common Crawl news crawler take URLs from feeds and fetch the page itself, no AI vendor documents reading feeds, and excerpt feeds are valid, so this check is reported and never scored.",
     scoreDisplayMode: ScoreDisplayMode.Informative,
     weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
     evidenceGrade: EvidenceGrade.C,
@@ -94,7 +94,7 @@ export class RssFeedContentAudit extends Audit {
     // obsolete").
     if (ratio < 1.0) {
       return this.pass(
-        `${withFullContent}/${total} items carry full content (> 500 chars). Search and AI crawlers take the URL from the feed and fetch the article page, so excerpts cost nothing with an AI agent.`,
+        `${withFullContent}/${total} items carry full content (> 500 chars). Google and the Common Crawl news crawler take the URL from the feed and fetch the article page, and no AI vendor documents reading feeds, so excerpts cost nothing with an AI agent.`,
         "All items > 500 chars",
         `${withFullContent}/${total} items have substantial content`,
       );

@@ -28,17 +28,17 @@ sources:
 
 On a site with accounts, whether `/.well-known/change-password` sends the user to the change-password form.
 
-| State                                                                      | Verdict       |
-| :------------------------------------------------------------------------- | :------------ |
-| No sampled page has a password field                                       | notApplicable |
-| The probe gets no response, or a status other than those below             | notApplicable |
-| 200 with no redirect and no password field (a catch-all page)              | notApplicable |
-| 404 or 410                                                                 | warn          |
-| 302, 303 or 307 to a page that answers 200                                 | pass          |
-| 200 with a meta refresh                                                    | pass          |
-| 301 or 308 to a page that answers 200                                      | warn          |
-| 200 with a password field at the well-known URL itself                     | warn          |
-| A redirect with no usable `Location`, or to a page that answers 4xx or 5xx | fail          |
+| State                                                                                | Verdict       |
+| :----------------------------------------------------------------------------------- | :------------ |
+| No sampled page has a password field                                                 | notApplicable |
+| The probe gets no response, or a status other than those below                       | notApplicable |
+| 200 with no redirect and no password field (a catch-all page)                        | notApplicable |
+| 404 or 410                                                                           | warn          |
+| 302, 303 or 307 to a page that answers 200, 401 or 403                               | pass          |
+| 200 with a meta refresh                                                              | pass          |
+| 301 or 308 to a page that answers 200                                                | warn          |
+| 200 with a password field at the well-known URL itself                               | warn          |
+| A redirect with no usable `Location`, or to a page that answers another 4xx or a 5xx | fail          |
 
 ## Claimed mechanism (falsifiable)
 
@@ -66,7 +66,10 @@ A password manager that wants a user to change a password opens `/.well-known/ch
 - A site counts as having accounts only when a sampled page shows a password field. A login page outside the sample is not seen.
 - A 200 at the well-known URL with no redirect and no form is read as a catch-all page, not as support.
 - The redirect target is checked for its status only, not for a password form.
+- Chrome Automated Password Change is still a preview. Its page says Google is "expanding feature coverage through testing across selected websites" and was last updated 2025-07-30 — https://developer.chrome.com/docs/identity/automated-password-change (verified 2026-10-18). The grade does not rest on it.
 
 ## Implementation deviations
+
+- 2026-10-18, after independent review: a redirect target that answers 401 or 403 passes. A change-password page refuses an anonymous visitor by design, so the redirect reached the right page.
 
 - The probe goes through `sharedProbeUrl` (`gatherers/discovery.ts`) without following redirects, then one follow-up probe of the `Location` target. Both pass `isSafeUrl()`. It is not a root file, because `rootFiles` treats an HTML body as absent and this URL legitimately answers with a redirect or HTML.

@@ -21,17 +21,17 @@ sources:
 
 ## What it checks
 
-Checks the WebSub links on each feed that advertises a push hub. The feed should carry exactly one absolute rel=self link, and each hub should be an HTTPS URL that answers a HEAD. A missing, duplicated or relative self link breaks hub verification even when a hub is configured.
+Checks the WebSub links on each feed that advertises a push hub. The feed should carry exactly one absolute rel=self link, and each hub should be an absolute URL whose server answers a HEAD. WebSub does not require HTTPS for the hub, so an `http://` hub is accepted. A hub that refuses the scanner with 401, 403 or 429, as a WAF or bot challenge does, still counts as present. A missing, duplicated or relative self link breaks hub verification even when a hub is configured.
 
 The self URL may differ from the URL the feed was fetched from. The Recommendation allows it, so the audit does not compare them.
 
-| State                                                          | Result |
-| :------------------------------------------------------------- | :----- |
-| no feed                                                        | `na`   |
-| feeds, but none advertises a hub                               | `na`   |
-| every hubbed feed has one absolute self link and a live hub    | `pass` |
-| a hubbed feed has a missing, duplicated or relative self link  | `warn` |
-| a hub is not HTTPS, fails the address check or does not answer | `warn` |
+| State                                                                                  | Result |
+| :------------------------------------------------------------------------------------- | :----- |
+| no feed                                                                                | `na`   |
+| feeds, but none advertises a hub                                                       | `na`   |
+| every hubbed feed has one absolute self link and a live hub                            | `pass` |
+| a hubbed feed has a missing, duplicated or relative self link                          | `warn` |
+| a hub URL is relative, fails the address check, does not answer, or answers 404 or 5xx | `warn` |
 
 ## Claimed mechanism (falsifiable)
 
@@ -68,6 +68,11 @@ Tier per evidence policy: **scored (weight 0.6)**, ternary. A broken advertiseme
 - **Re-graded C/informative to B/scored on 2026-10-18.** The Google sitemap
   page names Google Search as a WebSub consumer. Absence was already
   `notApplicable`, so a site without a hub is not penalised.
+- **2026-10-18 review: http hubs and refused probes.** Now that the audit is
+  scored, two warnings cost score without a source: WebSub does not require an
+  HTTPS hub, and a 401, 403 or 429 to the scanner's HEAD is a refusal, not a
+  missing hub. Both now pass. A relative hub URL, no response, 404, 410 and
+  5xx still warn.
 - **The hub HEAD is a cross-origin request.** The audit reads the status only.
   It never subscribes, POSTs or presents a callback URL. At most two hubs per
   feed are probed.

@@ -89,6 +89,26 @@ describe("ChangePasswordUrlAudit", () => {
     expect(result.status).toBe(CheckStatus.Fail);
   });
 
+  // A change-password page refuses an anonymous visitor by design; the
+  // redirect still reaches the right page.
+  it.each([401, 403])(
+    "passes a redirect to a page that answers %i to an anonymous request",
+    async (status) => {
+      const result = await audit.audit(
+        site({
+          [WELL_KNOWN]: redirect(302, "/account/password"),
+          "https://example.com/account/password": mockFetchResult(
+            "",
+            status,
+            "text/html",
+          ),
+        }),
+      );
+      expect(result.status).toBe(CheckStatus.Pass);
+      expect(result.message).toContain(`HTTP ${status}`);
+    },
+  );
+
   it("warns on a permanent redirect, which the spec does not list", async () => {
     const result = await audit.audit(
       site({

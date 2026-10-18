@@ -10,7 +10,6 @@ import {
   EvidenceKey,
   FixEffort,
   NoticeKind,
-  PageType,
   ScoreDisplayMode,
 } from "#core/types";
 
@@ -60,9 +59,6 @@ export class HowToSchemaAudit extends Audit {
       EvidenceKey.RenderedBody,
       EvidenceKey.SampleAdequate,
     ],
-    // Unchanged from the scored-era audit: instructional content lives on
-    // general and article pages. Widening the scope is a separate decision.
-    applicablePageTypes: [PageType.General, PageType.Article],
     defaultPriority: CheckPriority.Low,
     guidance: {
       impact:

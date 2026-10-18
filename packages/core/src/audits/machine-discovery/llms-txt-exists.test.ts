@@ -163,8 +163,9 @@ describe("LlmsTxtExistsAudit", () => {
     });
 
     // A site that advertises the file and does not serve it broke a promise it
-    // made itself. The file is absent, so the verdict is absent too, but the
-    // message still names the dead link.
+    // made itself. The dead link is present, so it is a defect to name, not an
+    // absence: the check passes with the defect in the message, as every other
+    // unconsumed llms.txt defect does, because nothing reads the file.
     it("names a link that points at an llms.txt which is not there", () => {
       const ctx = mockCheckContext(
         [pageWithHead('<link rel="alternate" href="/llms.txt">')],
@@ -173,8 +174,9 @@ describe("LlmsTxtExistsAudit", () => {
         },
       );
       const result = audit.audit(ctx);
-      expect(result.status).toBe(CheckStatus.NotApplicable);
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.message).toContain("links to llms.txt");
+      expect(result.message).toMatch(/no AI vendor documents reading/i);
     });
   });
 });

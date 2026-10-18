@@ -21,6 +21,8 @@ const UNCONSUMED = [
   "machine-discovery/rss-feed-content",
   "machine-discovery/cors-ai-files",
   "operability-safety/trust-txt-reciprocity-coherence",
+  "answer-readiness/meta-author",
+  "access-crawl-control/chatgpt-user",
 ] as const;
 
 const byId = new Map(
@@ -40,7 +42,9 @@ describe("unconsumed-notice audits", () => {
     expect(meta.weight).toBe(0);
     expect(meta.deprecated?.kind).toBe(NoticeKind.Unconsumed);
     expect(meta.deprecated?.link).toMatch(/^https:\/\//);
-    expect(meta.deprecated?.notice).toMatch(/no .*documents? reading/i);
+    expect(meta.deprecated?.notice).toMatch(
+      /no .*documents? (reading|obeying)/i,
+    );
   });
 
   // The source holds no warn or fail call at all, so no input can reach one.

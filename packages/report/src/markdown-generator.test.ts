@@ -15,6 +15,7 @@ import {
   PageTypeSource,
   ScoreDisplayMode,
   ScoreTier,
+  TAG_SCAN_ERROR,
 } from "@forkpoint/agent-lighthouse-core";
 
 function check(over: Partial<CheckResult> = {}): CheckResult {
@@ -472,6 +473,26 @@ describe("notices", () => {
     expect(md).not.toContain("Other retired file");
     // The category row counts only the live check.
     expect(md).toContain("1✓ 0! 0✗");
+  });
+
+  it("says an obsolete check that did not run did not run, not that it found nothing", () => {
+    const md = generateMarkdownSummary(
+      report([
+        cat({
+          id: "agent-interfaces",
+          checks: [
+            obsolete,
+            check({
+              ...absentObsolete,
+              id: "agent-interfaces/errored-retired",
+              tags: [TAG_SCAN_ERROR],
+            }),
+          ],
+        }),
+      ]),
+    );
+    expect(md).not.toContain("found nothing");
+    expect(md).toContain("1 obsolete check did not run.");
   });
 
   it("prints no obsolete section when nothing obsolete was found", () => {

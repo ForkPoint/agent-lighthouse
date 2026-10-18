@@ -577,7 +577,8 @@ describe("publicDossier", () => {
         // in the informative and experimental tiers, which the bar exempts.
         // 199 since 2026-10-18 (9.0.0): the new audits, and the obsolete and
         // unconsumed rewrites, each state how they score.
-        "How it scores": 199,
+        // 203: dossiers that write `## How it scores` directly now publish it.
+        "How it scores": 203,
         // 70 since 2026-08-29: the four `openapi-*` content audits gained one,
         // to publish that an absent OpenAPI document is not a failure. 83 since
         // 2026-10-18 (9.0.0): five new audits and eight obsolete-tier rewrites

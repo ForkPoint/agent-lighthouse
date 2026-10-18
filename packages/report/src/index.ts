@@ -33,4 +33,5 @@ export {
   NOTICE_LINK_LABELS,
   noticeKind,
   noticeText,
+  obsoleteTally,
 } from "./notices";

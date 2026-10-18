@@ -6,7 +6,7 @@ slug: llms-full-txt
 evidence_grade: C
 disposition: "informative, weight 0 (approved 2026-08-21)"
 reviewed: 2026-10-18
-recommended_tier: delete
+recommended_tier: informative
 tier_rationale: "Recommended delete; ships informative. The retirement was re-verified on 2026-08-24 and withdrawn — the file is a documented community convention with no consumer, which is what informative reports (evidence sweep, 2026-08-24)."
 consumers: []
 signals:

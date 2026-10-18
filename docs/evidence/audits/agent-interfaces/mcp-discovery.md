@@ -77,13 +77,15 @@ The `/.well-known/ucp` commerce profile this audit used to read is not obsolete.
 
 **Grade: D** — no specification defines the path and no client reads it. An obsolete audit carries weight 0 and never returns `fail` (`sunset.test.ts`; `Audit.toCheckResult` lowers a stray `fail` to `warn`). It does not move any score.
 
+**Why obsolete, not rejected or informative:** the path never had a specification or a consumer, so nothing was withdrawn from it. It is obsolete because the MCP project settled domain discovery elsewhere: the Server Card extension names `/.well-known/ai-catalog.json` (and ARD now `/.well-known/ard.json`) and lists a `/.well-known/mcp` path only as an alternative it considered. A successor is documented, and sites still publish the old path, so the owner is told where the server belongs instead. This is the "superseded" case in `docs/evidence/policy.md`.
+
 ## Example finding
 
 `/.well-known/mcp/servers.json` lists one server. The report says no client reads the path and asks for the server's Server Card in `/.well-known/ai-catalog.json`.
 
 ## Implementation deviations
 
-- 2026-10-18: moved from informative (grade C) to the obsolete tier (grade D).
+- 2026-10-18: moved from informative (grade C) to the obsolete tier (grade D). Independent review the same day noted that the path never had a spec or consumer; the obsolete placement is kept on the "superseded" ground stated under Scoring.
 - The `/.well-known/ucp` half moved to `agentic-commerce/ucp-profile`. The orchestrator still fetches `/.well-known/ucp` for that audit.
 - A present file is reported whatever it holds. The old `fail` rows (invalid JSON, no `servers` array, empty array) are now the same `warn`: a broken copy of an unread file is not a failure.
 
@@ -111,7 +113,7 @@ Reported, not scored. Neither path is registered or specified, and no shipping M
 
 **Evidence:** This is the path the MCP project itself is converging on. SEP-2127 (opened 2026-01-21, label 'in-review', still OPEN and unmerged as of 2026-08-11) delegates domain-level discovery to an 'AI Catalog' and its extension repo's docs/discovery.md states: 'An AI Catalog MAY be served from any URL. For automated domain-level discovery, hosts MAY publish one at: /.well-known/ai-catalog.json. Clients performing domain-level discovery SHOULD attempt to retrieve this well-known URL.' Media type SHOULD be application/ai-catalog+json; MCP entries use type application/mcp-server-card+json and urn:air: identifiers. Real conformant deployments exist and verified live on 2026-08-20: vercel.com serves it with the exact application/ai-catalog+json media type and specVersion 1.0; zapier.com serves specVersion 1.0 with a trustManifest and an entry pointing at its MCP server card. The underlying AI Catalog repo (Agent-Card/ai-catalog, 210 stars) was pushed the same day it was checked, so the work is live. Audit guidance: check /.well-known/ai-catalog.json, validate specVersion + entries[].type + entries[].url, require a JSON content-type (reject HTML 200 soft-404s), and prefer application/ai-catalog+json.
 
-**Counter-evidence:** The SEP is not merged — nothing about this is in the ratified spec (current revision 2026-07-28). `ai-catalog.json` is not in the IANA Well-Known URIs registry (152 entries checked; mcp, mcp.json, ai-catalog.json, webmcp, openapi are all absent). The MCP extension repo carrying the discovery text has 5 stars. No MCP client vendor documents consuming it. Anthropic's own docs say 'You can manually add any third-party connector to Claude as long as you have the URL of that remote MCP server'. OpenAI's Apps SDK routes through a developer-mode URL paste, plus 'public plugin submission' with 'domain verification'. A probe of 19 major domains found only 2 publishers: Vercel and Zapier. SEP-2127 itself lists 'No Domain-Level Discovery' as an _unsolved_ pain point, which is an admission that the mechanism does not yet work.
+**Counter-evidence:** The SEP is not merged — nothing about this is in the ratified spec (current revision 2026-07-28). `ai-catalog.json` is not in the IANA Well-Known URIs registry (106 entries on 2026-10-18; mcp, mcp.json, ai-catalog.json, webmcp, openapi are all absent). The MCP extension repo carrying the discovery text had 10 stars on 2026-10-18. No MCP client vendor documents consuming it. Anthropic's own docs say 'You can manually add any third-party connector to Claude as long as you have the URL of that remote MCP server'. OpenAI's Apps SDK routes through a developer-mode URL paste, plus 'public plugin submission' with 'domain verification'. A probe of 19 major domains found only 2 publishers, both large SaaS vendors. SEP-2127 itself lists 'No Domain-Level Discovery' as an _unsolved_ pain point, which is an admission that the mechanism does not yet work.
 
 #### Signal: mcp-server-card-document — grade C (agent-action-surfaces)
 

@@ -16,6 +16,7 @@ import {
   NOTICE_LINK_LABELS,
   noticeKind,
   noticeText,
+  obsoleteTally,
 } from "./notices";
 
 /** One bullet: the check, its notice, and the source behind it. */
@@ -31,12 +32,10 @@ function noticeBullet(c: CheckResult): string {
  * a list of retired things the site never had is noise.
  */
 function obsoleteSection(view: ReturnType<typeof buildReportView>): string {
-  const { found, absent } = view.obsolete;
+  const { found, absent, unrun } = view.obsolete;
   if (found.length === 0) return "";
-  const rest =
-    absent.length > 0
-      ? `\n\n${absent.length} more obsolete check${absent.length === 1 ? "" : "s"} found nothing.`
-      : "";
+  const tally = obsoleteTally(absent.length, unrun.length);
+  const rest = tally ? `\n\n${tally}` : "";
   return `\n#### Obsolete (not scored)\n\nThis site still publishes things their consumers retired or ignore. None of this moves the score.\n\n${found.map(noticeBullet).join("\n")}${rest}\n`;
 }
 

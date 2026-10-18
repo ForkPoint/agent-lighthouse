@@ -74,12 +74,24 @@ describe("UcpProfileAudit", () => {
     expect(audit.audit(withUcp("{ ucp: ")).status).toBe(CheckStatus.Fail);
   });
 
-  it("fails a profile with no ucp object", () => {
+  it("treats JSON with no ucp key as absent, not as a broken profile", () => {
     const result = audit.audit(
       withUcp({ services: { "dev.ucp.shopping": [] } }),
     );
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+  });
+
+  it("is not applicable when the server answers every well-known path with the same unrelated JSON", () => {
+    const result = audit.audit(
+      withUcp({ gpc: true, lastUpdate: "2026-01-01" }),
+    );
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.found).toContain("no `ucp` key");
+  });
+
+  it("fails a profile whose ucp key is not an object", () => {
+    const result = audit.audit(withUcp({ ucp: "2026-08-25" }));
     expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.message).toContain("`ucp`");
   });
 
   it("fails a profile that declares no services", () => {
@@ -94,10 +106,92 @@ describe("UcpProfileAudit", () => {
     expect(result.message).toContain("version");
   });
 
-  it("warns when no capabilities are declared", () => {
-    const result = audit.audit(withUcp(profile({ capabilities: {} })));
+  it("passes a profile with no capabilities: the spec says they MAY be omitted", () => {
+    const result = audit.audit(withUcp(profile({ capabilities: undefined })));
+    expect(result.status).toBe(CheckStatus.Pass);
+  });
+
+  it("passes an embedded binding with no endpoint: endpoint is optional", () => {
+    const result = audit.audit(
+      withUcp(
+        profile({
+          services: {
+            "dev.ucp.shopping": [
+              {
+                version: "2026-08-25",
+                transport: "rest",
+                endpoint: "https://example.com/ucp/v1",
+              },
+              {
+                version: "2026-08-25",
+                transport: "embedded",
+                schema: "https://ucp.dev/schemas/embedded.json",
+              },
+            ],
+          },
+        }),
+      ),
+    );
+    expect(result.status).toBe(CheckStatus.Pass);
+  });
+
+  it("reads the 2026-01-11 shape: transport objects and a capabilities array", () => {
+    const result = audit.audit(
+      withUcp({
+        ucp: {
+          version: "2026-01-11",
+          services: {
+            "dev.ucp.shopping": {
+              version: "2026-01-11",
+              rest: {
+                schema: "https://ucp.dev/services/shopping/openapi.json",
+                endpoint: "https://example.com/ucp/v1",
+              },
+              embedded: {
+                schema: "https://ucp.dev/services/shopping/embedded.json",
+              },
+            },
+          },
+          capabilities: [
+            { name: "dev.ucp.shopping.checkout", version: "2026-01-11" },
+            { name: "dev.ucp.shopping.fulfillment", version: "2026-01-11" },
+          ],
+        },
+        signing_keys: [{ kid: "k1" }],
+      }),
+    );
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.details?.["capabilities"]).toBe(2);
+    expect(result.details?.["signingKeys"]).toBe(1);
+  });
+
+  it("warns on a non-https endpoint in the 2026-01-11 shape", () => {
+    const result = audit.audit(
+      withUcp({
+        ucp: {
+          version: "2026-01-11",
+          services: {
+            "dev.ucp.shopping": {
+              rest: { endpoint: "http://example.com/ucp" },
+            },
+          },
+        },
+      }),
+    );
     expect(result.status).toBe(CheckStatus.Warn);
-    expect(result.message).toContain("capabilities");
+    expect(result.message).toContain("http://example.com/ucp");
+  });
+
+  it("counts signing keys from the current top-level keys array", () => {
+    const result = audit.audit(
+      withUcp(
+        profile(
+          {},
+          { signing_keys: undefined, keys: [{ kid: "a" }, { kid: "b" }] },
+        ),
+      ),
+    );
+    expect(result.details?.["signingKeys"]).toBe(2);
   });
 
   it("warns on a service endpoint that is not absolute https", () => {

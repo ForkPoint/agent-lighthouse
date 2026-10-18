@@ -11,7 +11,11 @@ function card(over: Record<string, unknown> = {}): Record<string, unknown> {
     description: "Books tables at the restaurant.",
     version: "1.2.0",
     supportedInterfaces: [
-      { url: "https://example.com/a2a", protocolBinding: "JSONRPC" },
+      {
+        url: "https://example.com/a2a",
+        protocolBinding: "JSONRPC",
+        protocolVersion: "1.0",
+      },
     ],
     capabilities: { streaming: true },
     defaultInputModes: ["text/plain"],
@@ -69,6 +73,21 @@ describe("A2aAgentCardAudit", () => {
     expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
+  it("is not applicable when the server answers every well-known path with the same unrelated JSON", () => {
+    const body = JSON.stringify({ gpc: true, lastUpdate: "2026-01-01" });
+    const ctx = mockCheckContext([], {
+      "/.well-known/agent-card.json": mockFetchResult(
+        body,
+        200,
+        "application/json",
+      ),
+      "/.well-known/agent.json": mockFetchResult(body, 200, "application/json"),
+    });
+    const result = audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.found).toContain("none of the Agent Card's keys");
+  });
+
   // ── Broken ──
 
   it("fails a card that does not parse as JSON", () => {
@@ -113,7 +132,7 @@ describe("A2aAgentCardAudit", () => {
     expect(message.indexOf("name")).toBeLessThan(message.indexOf("version"));
   });
 
-  it("warns on a 0.3-shape card (top-level url, no supportedInterfaces)", () => {
+  it("passes a 0.3-shape card, which the reference SDK converts, and records the shape", () => {
     const body = card({
       url: "https://example.com/a2a",
       preferredTransport: "JSONRPC",
@@ -121,8 +140,20 @@ describe("A2aAgentCardAudit", () => {
     });
     delete body["supportedInterfaces"];
     const result = audit.audit(withCard(body));
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.details?.["legacyShape"]).toBe(true);
+    expect(AuditResultSchema.safeParse(result).success).toBe(true);
+  });
+
+  it("warns on an interface entry that lacks protocolBinding or protocolVersion", () => {
+    const result = audit.audit(
+      withCard(
+        card({ supportedInterfaces: [{ url: "https://example.com/a2a" }] }),
+      ),
+    );
     expect(result.status).toBe(CheckStatus.Warn);
-    expect(result.message).toContain("0.3");
+    expect(result.message).toContain("protocolBinding");
+    expect(result.message).toContain("protocolVersion");
   });
 
   it("warns on an interface URL that is not absolute https", () => {
@@ -130,7 +161,11 @@ describe("A2aAgentCardAudit", () => {
       withCard(
         card({
           supportedInterfaces: [
-            { url: "http://example.com/a2a", protocolBinding: "JSONRPC" },
+            {
+              url: "http://example.com/a2a",
+              protocolBinding: "JSONRPC",
+              protocolVersion: "1.0",
+            },
           ],
         }),
       ),
@@ -144,7 +179,11 @@ describe("A2aAgentCardAudit", () => {
       withCard(
         card({
           supportedInterfaces: [
-            { url: "wss://example.com/a2a/ws", protocolBinding: "websocket" },
+            {
+              url: "wss://example.com/a2a/ws",
+              protocolBinding: "websocket",
+              protocolVersion: "1.0",
+            },
           ],
         }),
       ),
@@ -158,6 +197,7 @@ describe("A2aAgentCardAudit", () => {
     );
     expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("agent-card.json");
+    expect(result.message).toContain("pre-1.0");
   });
 
   it("prefers agent-card.json when both paths are published", () => {

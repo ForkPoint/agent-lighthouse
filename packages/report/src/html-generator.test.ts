@@ -14,6 +14,7 @@ import {
   PageTypeSource,
   ScoreDisplayMode,
   ScoreTier,
+  TAG_SCAN_ERROR,
 } from "@forkpoint/agent-lighthouse-core";
 
 // ── Fixtures ────────────────────────────────────────────────────
@@ -426,6 +427,28 @@ describe("obsolete tier", () => {
     expect(html).not.toContain("Advisory — not scored");
     // The category card counts no warning for it.
     expect(html).toContain("0 Warnings");
+  });
+
+  it("says an obsolete check that did not run did not run", () => {
+    const html = generateHtmlReport(
+      report([
+        cat({
+          id: "agent-interfaces",
+          checks: [
+            retired,
+            check({
+              ...retired,
+              id: "agent-interfaces/errored-retired",
+              status: CheckStatus.NotApplicable,
+              score: 0,
+              tags: [TAG_SCAN_ERROR],
+            }),
+          ],
+        }),
+      ]),
+    );
+    expect(html).not.toContain("found nothing");
+    expect(html).toContain("1 obsolete check did not run.");
   });
 
   it("prints no obsolete section when nothing obsolete was found", () => {

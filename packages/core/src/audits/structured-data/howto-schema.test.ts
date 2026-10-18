@@ -4,12 +4,14 @@ import { weightForGrade } from "#core/scorer";
 import { AuditMetaSchema } from "#core/schemas";
 import { mockPageContext, mockCheckContext } from "#core/__tests__/test-utils";
 import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import { extractMicrodata } from "#core/parser";
 import {
   AuditTier,
   CheckPriority,
   CheckStatus,
   EvidenceGrade,
   NoticeKind,
+  PageType,
   ScoreDisplayMode,
 } from "#core/types";
 
@@ -44,6 +46,38 @@ describe("HowToSchemaAudit", () => {
     expect(result.message).toContain("2023");
     expect(result.found).toContain("1 page(s)");
     expect(result.pageUrl).toBe("https://example.com/guide");
+  });
+
+  it.each([
+    ["inside @graph", { "@context": "https://schema.org", "@graph": [howto] }],
+    ["in a top-level array", [howto]],
+    ["with an array @type", { ...howto, "@type": ["HowTo", "CreativeWork"] }],
+  ])("finds HowTo markup %s", (_label, data) => {
+    const result = audit.audit(mockCheckContext([page(steps, ld(data))]));
+    expect(result.status).toBe(CheckStatus.Warn);
+  });
+
+  it("finds HowTo microdata", () => {
+    const micro =
+      '<div itemscope itemtype="https://schema.org/HowTo"><span itemprop="name">How to do X</span></div>';
+    // The scanner merges microdata into `structuredData`; the mock does not.
+    const p = page(micro);
+    const result = audit.audit(
+      mockCheckContext([{ ...p, structuredData: extractMicrodata(p.$) }]),
+    );
+    expect(result.status).toBe(CheckStatus.Warn);
+  });
+
+  // HowTo markup can sit on any page type, so the audit reads them all.
+  it("runs on every page type", () => {
+    expect(HowToSchemaAudit.meta.applicablePageTypes).toBeUndefined();
+    const product = {
+      ...page(steps, ld(howto), "https://example.com/p/1"),
+      pageType: PageType.Product,
+    };
+    expect(audit.audit(mockCheckContext([product])).status).toBe(
+      CheckStatus.Warn,
+    );
   });
 
   it("finds HowTo markup on a page without numbered headings", () => {

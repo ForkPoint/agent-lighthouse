@@ -164,6 +164,32 @@ describe("registry-wide meta invariants", () => {
     expect(misplaced).toEqual([]);
   });
 
+  // `toCheckResult` lowers an obsolete `fail` to `warn`, so a fail path left
+  // behind by a scored-to-obsolete move would ship silently with a failure's
+  // title and priority. The source, and the sibling base class it extends,
+  // must hold no fail call at all.
+  it("obsolete audit sources contain no fail path", () => {
+    const withFail = Object.values(defaultConfig.audits)
+      .flat()
+      .filter((reg) => reg.meta.tier === AuditTier.Obsolete)
+      .filter((reg) => {
+        const file = resolve(__dirname, `${reg.meta.id}.ts`);
+        const source = readFileSync(file, "utf8");
+        const base = /import\s*\{[^}]*\}\s*from\s*"\.\/(_[\w-]+)"/g;
+        const sources = [source];
+        for (const match of source.matchAll(base)) {
+          sources.push(
+            readFileSync(resolve(file, `../${match[1]}.ts`), "utf8"),
+          );
+        }
+        return sources.some((text) =>
+          /this\.fail\(|CheckStatus\.Fail\b/.test(text),
+        );
+      })
+      .map((reg) => reg.meta.id);
+    expect(withFail).toEqual([]);
+  });
+
   // Absent artifact, absent verdict: an obsolete audit speaks only when the
   // owner still publishes the thing. On a scan that read nothing it declines.
   it("obsolete audits decline on a scan that read nothing", async () => {

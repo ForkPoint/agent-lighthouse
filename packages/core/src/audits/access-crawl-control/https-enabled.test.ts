@@ -9,7 +9,12 @@ import {
   unreachedSiteContext,
   walledSiteContext,
 } from "#core/__tests__/test-utils";
-import { AuditTier, CheckStatus, EvidenceGrade } from "#core/types";
+import {
+  AuditTier,
+  CheckPriority,
+  CheckStatus,
+  EvidenceGrade,
+} from "#core/types";
 
 describe("HttpsEnabledAudit", () => {
   const audit = new HttpsEnabledAudit();
@@ -64,7 +69,19 @@ describe("HttpsEnabledAudit", () => {
       meta.guidance?.impact ?? "",
     ].join(" ");
     expect(copy).not.toMatch(/GPTBot|ClaudeBot|skip HTTP-only/);
-    expect(copy).toContain("MCP");
+    // The grade rests on Chrome 154's prompt alone. MCP mandates HTTPS only
+    // for its optional authorization endpoints, which this audit never reads.
+    expect(copy).toContain("Chrome 154");
+    expect(copy).not.toContain("MCP");
+  });
+
+  // The documented cost is a bypassable prompt, not an outage.
+  it("fails at high priority, not critical", () => {
+    const ctx = mockCheckContext([]);
+    ctx.baseUrl = "http://example.com";
+    const result = audit.audit(ctx);
+    expect(result.priority).toBe(CheckPriority.High);
+    expect(HttpsEnabledAudit.meta.defaultPriority).toBe(CheckPriority.High);
   });
 
   // The only state that reaches the warn. Attribution holds — the homepage

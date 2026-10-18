@@ -64,6 +64,10 @@ const PUBLIC_SECTIONS = new Map<string, PublicName>([
   ["Claimed mechanism (falsifiable)", "Why it matters"],
   ["Evidence", "Evidence"],
   ["Scoring", "How it scores"],
+  // Dossiers written after the rename pass use the public names directly.
+  ["Why it matters", "Why it matters"],
+  ["Limits", "Limits"],
+  ["How it scores", "How it scores"],
   ["Example failure", "Example finding"],
   ["Example finding", "Example finding"],
   // `ai-bot-directives` is the one merged dossier that names its evidence and

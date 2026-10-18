@@ -3,7 +3,7 @@ audit: operability-safety/form-autofill-token-coverage
 category: operability-safety
 source_file: packages/core/src/audits/operability-safety/form-autofill-token-coverage.ts
 slug: form-autofill-token-coverage
-evidence_grade: A
+evidence_grade: B
 tier: scored
 disposition: "new in v2 — graduated from proposal 2026-08-22; narrowed to credential tokens 2026-10-18 (profile tokens split to profile-autofill-token-coverage)"
 reviewed: 2026-10-18
@@ -20,13 +20,15 @@ sources:
 
 # Form Autofill Token Coverage
 
-> Shipped in v2. Evidence grade **A** · scored tier · partial overlap · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **B** · scored tier · partial overlap · implementation: `static-fetch`
 
 ## What it checks
 
 Whether each credential field declares the matching WHATWG `autocomplete` token. Credential fields are the account identifier (`username`), the password (`current-password` on sign-in, `new-password` on sign-up) and the verification code (`one-time-code`). The concept is inferred from the field's type, name, id, placeholder, `aria-label` and label text. A password field expects `new-password` on a signup URL and `current-password` elsewhere.
 
-Contact, address and payment fields are judged by `operability-safety/profile-autofill-token-coverage`. An `email` field on a sign-in form is a profile token and is judged there.
+Contact, address and payment fields are judged by `operability-safety/profile-autofill-token-coverage`.
+
+On a form that has a password field and no separate username field, the email field is the account identifier. It is judged here as the `username` concept and is covered when it declares `username` or `email`. The common pattern for an email used as the login is `type="email" autocomplete="username"`. A signup form that also asks for a username keeps its email as profile data.
 
 A field counts as covered when all three hold:
 
@@ -50,7 +52,7 @@ Two side findings are counted on every data field of a form that carries a crede
 
 ## Claimed mechanism (falsifiable)
 
-Agents that sign in for a user do not type the password. Gemini in Chrome uses login info saved in Google Password Manager, with permission. Claude fills logins through 1Password, which identifies fields by their `autocomplete` attribute. A sign-in field without `username` or `current-password`, a sign-up field without `new-password`, or a code field without `one-time-code` leaves the password manager guessing. Test: add the correct tokens to a form a password manager fails on and repeat the fill.
+Agents that sign in for a user do not type the password. Gemini in Chrome uses login info saved in Google Password Manager, with permission. Claude fills logins through 1Password. 1Password says `autocomplete` attributes make fields easier for it to identify. A sign-in field without `username` or `current-password`, a sign-up field without `new-password`, or a code field without `one-time-code` leaves the password manager to infer the field from other cues. Test: add the correct tokens to a form a password manager fails on and repeat the fill.
 
 ## Evidence
 
@@ -67,7 +69,7 @@ Agents that sign in for a user do not type the password. Gemini in Chrome uses l
 - **[Lighthouse audit source: agent-accessibility-tree.js](https://raw.githubusercontent.com/GoogleChrome/lighthouse/main/core/audits/agentic/agent-accessibility-tree.js)** — Google Chrome / Lighthouse (repo, URL verified 2026-08-20)
   - Lighthouse runs axe's `autocomplete-valid` rule, which validates a token that is present and never flags a missing one. This audit measures the missing ones.
 
-Counter-evidence: the agent itself does not read the token. The password manager does, acting for the agent. Agent tools that drive forms directly (`form_input`, Playwright MCP, browser-use) locate fields by accessible name.
+Counter-evidence: the agent itself does not read the token. Only the password manager could, acting for the agent. 1Password says the attribute makes identification "easier", not that it is required or the only signal. No source shows that Google Password Manager reads `autocomplete` tokens. Agent tools that drive forms directly (`form_input`, Playwright MCP, browser-use) locate fields by accessible name.
 
 ## Example failure
 
@@ -75,16 +77,25 @@ A sign-in form uses <input name="f_1" placeholder="Your account"> and <input typ
 
 ## Scoring
 
-Tier per evidence policy: **scored** — grade A meets the A/B bar required for scored audits.
+Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
-**Grade: A** — the credential tokens are a ratified WHATWG standard with documented agent consumers: 1Password documents identifying fields by `autocomplete` and filling usernames, passwords and one-time passwords for Claude, and Google documents Gemini in Chrome signing in with Google Password Manager (both verified 2026-10-18). The agent reaches the token through the password manager, not directly.
+**Grade: B** — the credential tokens are a ratified WHATWG standard, and agents are documented to sign in through password managers: 1Password fills usernames, passwords and one-time passwords for Claude, and Google documents Gemini in Chrome signing in with Google Password Manager (both verified 2026-10-18). The step from the password manager to the token is weaker: 1Password says the attribute makes fields "easier" to identify, and no source shows Google Password Manager reads it. That is strong measurement of a plausible path, not documented consumer behaviour, so the grade is B rather than A.
 
 ## Implementation deviations
+
+- **2026-10-18 review: grade A to B, and the sign-in email.** The A rested on
+  "1Password identifies fields by `autocomplete`", which overstates its
+  "makes it easier", and on Google Password Manager reading the token, which
+  no source shows. The split also misread the recommended
+  `type="email" autocomplete="username"` sign-in field: the profile audit
+  called it a wrong token and this audit never counted it. On a form with a
+  password and no username field the email is now the account identifier,
+  judged here, and `username` or `email` both cover it.
 
 - **Narrowed to credential tokens on 2026-10-18.** The audit used to score
   every autofill token as one ratio at grade A. Only the credential tokens
   have a documented agent consumer, so contact, address and payment tokens
-  moved to `operability-safety/profile-autofill-token-coverage` (grade B).
+  moved to `operability-safety/profile-autofill-token-coverage` (grade C, informative).
   The survey is shared in `_autofill.ts`. A form's side findings go to this
   audit when the form carries a credential field, and to the profile audit
   otherwise, so nothing is counted twice.

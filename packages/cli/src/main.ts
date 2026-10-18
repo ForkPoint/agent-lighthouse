@@ -342,7 +342,7 @@ async function audit(targetUrl?: string) {
       for (const audit of view.pageScope.audits) {
         for (const result of audit.assessments.slice(1)) {
           console.log(
-            `Advisory — not scored: [${audit.id}] ${result.status.toUpperCase()} — ${result.explanation ?? result.displayValue ?? "See audit details."}`,
+            `${result.obsolete ? "Obsolete" : "Advisory"} — not scored: [${audit.id}] ${result.status.toUpperCase()} — ${result.explanation ?? result.displayValue ?? "See audit details."}`,
           );
         }
       }
@@ -397,6 +397,7 @@ async function audit(targetUrl?: string) {
       ),
       ...view.obsolete.found,
       ...view.obsolete.absent,
+      ...view.obsolete.unrun,
     ];
     const targetChecks = selectDebugChecks(allChecks, debugAudit);
 

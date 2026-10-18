@@ -113,8 +113,33 @@ describe("FormAutofillTokenCoverageAudit", () => {
     expect(result.found).toContain("1 required by a visual asterisk only");
   });
 
-  // The email on a sign-in form is a profile token, judged by the other audit.
-  it("does not count a type=email field on a sign-in form", () => {
+  // On a form with a password, the email field is the account identifier.
+  // type="email" autocomplete="username" is the recommended pattern.
+  it("passes an email-as-username sign-in field declaring username", () => {
+    const result = run(`
+      <form action="/login">
+        <label for="e">Email</label>
+        <input id="e" name="e" type="email" autocomplete="username">
+        <label for="p">Password</label>
+        <input id="p" name="p" type="password" autocomplete="current-password">
+      </form>`);
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.found).toContain("2 of 2");
+  });
+
+  it("also accepts autocomplete=email on the sign-in identifier", () => {
+    const result = run(`
+      <form action="/login">
+        <label for="e">Email</label>
+        <input id="e" name="e" type="email" autocomplete="email">
+        <label for="p">Password</label>
+        <input id="p" name="p" type="password" autocomplete="current-password">
+      </form>`);
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.found).toContain("2 of 2");
+  });
+
+  it("judges a tokenless type=email sign-in field as the identifier", () => {
     const result = run(`
       <form action="/login">
         <label for="e">Email</label>
@@ -122,14 +147,33 @@ describe("FormAutofillTokenCoverageAudit", () => {
         <label for="p">Password</label>
         <input id="p" name="p" type="password" autocomplete="current-password">
       </form>`);
-    expect(result.status).toBe(CheckStatus.Pass);
-    expect(result.found).toContain("1 of 1");
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.found).toContain("1 of 2");
+    expect(result.message).toContain('autocomplete="username"');
   });
 
-  it("is graded A and scored", () => {
+  // A signup form with both a username and an email: the email is profile data.
+  it("leaves the email to the profile audit when a username field exists", () => {
+    const result = run(
+      `
+      <form action="/signup">
+        <label for="u">Username</label>
+        <input id="u" name="u" type="text" autocomplete="username">
+        <label for="e">Email</label>
+        <input id="e" name="e" type="email">
+        <label for="p">Password</label>
+        <input id="p" name="p" type="password" autocomplete="new-password">
+      </form>`,
+      "https://example.test/signup",
+    );
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.found).toContain("2 of 2");
+  });
+
+  it("is graded B and scored", () => {
     const { meta } = FormAutofillTokenCoverageAudit;
-    expect(meta.evidenceGrade).toBe(EvidenceGrade.A);
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
     expect(meta.tier).toBe(AuditTier.Scored);
-    expect(meta.weight).toBe(1);
+    expect(meta.weight).toBe(0.6);
   });
 });

@@ -299,6 +299,41 @@ interface FieldReading {
   unwiredError: boolean;
 }
 
+/** What one control declares, before its gap is judged. */
+interface RawField {
+  reading: FieldReading;
+  type: string;
+  declared: string | undefined;
+  hasIdentifier: boolean;
+  labelText: string;
+  $el: Cheerio<Element>;
+}
+
+/**
+ * Tokens accepted on the account identifier of a sign-in form. The field is
+ * the `username` concept, and an email address used as the login is
+ * conventionally marked `type="email" autocomplete="username"`; a site that
+ * declares `email` there still names the value a password manager fills.
+ */
+const IDENTIFIER_TOKENS: ReadonlySet<string> = new Set(["username", "email"]);
+
+/** The gap between what a field declares and what it owes, if any. */
+function gapOf(
+  field: RawField,
+  expected: string,
+  accepted: ReadonlySet<string>,
+): TokenGap | undefined {
+  const typeNeeded = accepted.size > 1 ? undefined : REQUIRED_TYPE[expected];
+  const typeOk = !typeNeeded || field.type === typeNeeded;
+  const declaredOk =
+    field.declared !== undefined && accepted.has(field.declared);
+  if (declaredOk && field.hasIdentifier && typeOk) return undefined;
+  if (!field.declared) return TokenGap.NoToken;
+  if (!declaredOk) return TokenGap.WrongToken;
+  if (!field.hasIdentifier) return TokenGap.NoIdentifier;
+  return TokenGap.WrongType;
+}
+
 /** Every data control of one form, with what it owes and what it declares. */
 function readFields(
   $: CheerioAPI,
@@ -306,7 +341,7 @@ function readFields(
   pageUrl: string,
   ids: Set<string>,
 ): FieldReading[] {
-  const fields: FieldReading[] = [];
+  const raw: RawField[] = [];
   $form.find("input, select, textarea").each((_, el) => {
     const $el = $(el);
     const tag = (el as { tagName?: string }).tagName?.toLowerCase() ?? "";
@@ -335,32 +370,51 @@ function readFields(
       .find('[class*="error"], [class*="invalid"], [role="alert"]')
       .first();
 
-    const reading: FieldReading = {
-      expected,
-      locationQuery: false,
-      asteriskOnly: labelText.includes("*") && !reallyRequired,
-      unwiredError: errorSibling.length > 0 && !described,
-    };
+    raw.push({
+      reading: {
+        expected,
+        locationQuery: false,
+        asteriskOnly: labelText.includes("*") && !reallyRequired,
+        unwiredError: errorSibling.length > 0 && !described,
+      },
+      type,
+      declared: bareToken($el.attr("autocomplete")),
+      hasIdentifier: Boolean($el.attr("name") || $el.attr("id")),
+      labelText,
+      $el,
+    });
+  });
+
+  // On a form with a password and no separate username field, the email field
+  // is the account identifier: it owes `username` (or `email`) and belongs to
+  // the credential audit. A signup form that also asks for a username keeps
+  // its email as profile data.
+  const hasPassword = raw.some((field) => field.type === "password");
+  const hasUsernameField = raw.some(
+    (field) => field.reading.expected === "username",
+  );
+  const promoteEmail = hasPassword && !hasUsernameField;
+
+  return raw.map((field) => {
+    const { reading } = field;
+    let expected = reading.expected;
+    let accepted: ReadonlySet<string> = expected
+      ? new Set([expected])
+      : new Set();
+    if (promoteEmail && expected === "email") {
+      expected = "username";
+      accepted = IDENTIFIER_TOKENS;
+      reading.expected = expected;
+    }
     if (expected) {
       reading.locationQuery =
-        LOCATION_TOKENS.has(expected) && offersAlternatives($el, labelText);
-      const declared = bareToken($el.attr("autocomplete"));
-      const hasIdentifier = Boolean($el.attr("name") || $el.attr("id"));
-      const typeNeeded = REQUIRED_TYPE[expected];
-      const typeOk = !typeNeeded || type === typeNeeded;
-      if (!(declared === expected && hasIdentifier && typeOk)) {
-        reading.gap = !declared
-          ? TokenGap.NoToken
-          : declared !== expected
-            ? TokenGap.WrongToken
-            : !hasIdentifier
-              ? TokenGap.NoIdentifier
-              : TokenGap.WrongType;
-      }
+        LOCATION_TOKENS.has(expected) &&
+        offersAlternatives(field.$el, field.labelText);
+      const gap = gapOf(field, expected, accepted);
+      if (gap !== undefined) reading.gap = gap;
     }
-    fields.push(reading);
+    return reading;
   });
-  return fields;
 }
 
 function survey(ctx: CheckContext, scope: AutofillScope): Survey {

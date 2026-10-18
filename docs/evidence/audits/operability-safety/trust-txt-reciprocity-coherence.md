@@ -12,6 +12,7 @@ sources:
   - journallist-trust-txt-spec
   - journallist-faq
   - rji-trust-txt-extension
+  - iana-well-known-uris
 ---
 
 # trust.txt reciprocity and AI-policy coherence
@@ -24,15 +25,15 @@ ROADMAP / UNSCORED. Parses trust.txt for publishers who maintain one, validating
 
 ## Why it matters
 
-No search engine, platform or AI company documents reading trust.txt. The [JournalList reference document](https://journallist.net/reference-document-for-trust-txt-specifications) (verified 2026-10-18) defines the reciprocal attributes and names no consumer. The [JournalList FAQ](https://journallist.net/frequently-asked-questions) (verified 2026-10-18) names only generic audiences: "the search engines, social networks and advertisers". The one documented reader is a [JournalList browser extension](https://rjionline.org/news/trust-txt-launches-browser-extension-making-verification-of-trusted-news-sources-easier-for-publishers-and-audiences-alike/) (verified 2026-10-18) that shows a badge to human readers. So the reciprocity check has no machine reader. The file still serves the JournalList network. For AI training preferences, robots.txt groups for the AI crawlers are the channel crawlers read.
+No search engine, platform or AI company documents reading trust.txt. The [JournalList reference document](https://journallist.net/reference-document-for-trust-txt-specifications) (verified 2026-10-18) pairs belongto= on a member with member= on the association in its examples, without stating a reciprocity rule, and names no consumer. The [JournalList FAQ](https://journallist.net/frequently-asked-questions) (verified 2026-10-18) names only generic audiences: "the search engines, social networks and advertisers". The one documented reader is a [JournalList browser extension](https://rjionline.org/news/trust-txt-launches-browser-extension-making-verification-of-trusted-news-sources-easier-for-publishers-and-audiences-alike/) (verified 2026-10-18) that shows a badge to human readers. So the reciprocity check has no machine reader. The file still serves the JournalList network. For AI training preferences, robots.txt groups for the AI crawlers are the channel crawlers read.
 
 ## How it scores
 
 Informative, weight 0. Every result carries an `unconsumed` notice. The audit never warns or fails. No trust.txt is not applicable. A trust.txt passes; each unreciprocated association, unknown attribute or datatrainingallowed= conflict with robots.txt is counted in the message and listed in `details.observations`, with the note that it does not affect AI agents.
 
-## Claimed mechanism (falsifiable)
+## Claimed mechanism (record before 2026-10-18)
 
-trust.txt's association attributes are defined as reciprocal: belongto=<association> is only meaningful if that association's own trust.txt lists member=<this domain>. That reciprocity is mechanically checkable across two HTTP fetches, which makes the association claim falsifiable rather than self-asserted. Independently, datatrainingallowed= and robots.txt AI-bot directives express the same policy through two channels. A site declaring datatrainingallowed=no, while leaving GPTBot, ClaudeBot and PerplexityBot unrestricted in robots.txt, is therefore stating contradictory policy. The machine-readable channel that actually gates crawlers says the opposite of the human-facing declaration. One limitation, stated plainly: no evidence was found that any AI engine, answer engine or crawler consumes trust.txt, and the JournalList reference document itself publishes no adoption statistics and names no consumer. The mechanism is internally sound; the consumer does not demonstrably exist.
+This audit reads trust.txt's association attributes as reciprocal: belongto=<association> is only meaningful if that association's own trust.txt lists member=<this domain>. The JournalList document pairs the two attributes in its examples but does not state that rule, and says nothing comparable for controlledby= and control=; the reciprocity reading is this project's. That reciprocity is mechanically checkable across two HTTP fetches, which makes the association claim falsifiable rather than self-asserted. Independently, datatrainingallowed= and robots.txt AI-bot directives express the same policy through two channels. A site declaring datatrainingallowed=no, while leaving GPTBot, ClaudeBot and PerplexityBot unrestricted in robots.txt, is therefore stating contradictory policy. The machine-readable channel that actually gates crawlers says the opposite of the human-facing declaration. One limitation, stated plainly: no evidence was found that any AI engine, answer engine or crawler consumes trust.txt, and the JournalList reference document itself publishes no adoption statistics and names no consumer. The mechanism is internally sound; the consumer does not demonstrably exist.
 
 ## Evidence
 
@@ -40,13 +41,13 @@ trust.txt's association attributes are defined as reciprocal: belongto=<associat
 - **[Frequently Asked Questions](https://journallist.net/frequently-asked-questions)** — JournalList.net (verified 2026-10-18). Says "crawlers may look at the trust.txt file at any time" and names no reader.
 - **[trust.txt launches browser extension](https://rjionline.org/news/trust-txt-launches-browser-extension-making-verification-of-trusted-news-sources-easier-for-publishers-and-audiences-alike/)** — Reynolds Journalism Institute, 2025-02-21 (verified 2026-10-18). A browser badge for human readers; "about 3,000 participating publishers". No machine consumer is named.
 
-**Grade:** C, the policy's community-convention row. The file is registered (IANA provisional) and published, and nothing documents a machine consuming it.
+**Grade:** C, the policy's community-convention row. The file is registered in the [IANA Well-Known URIs registry](https://www.iana.org/assignments/well-known-uris/well-known-uris.xhtml) (provisional; verified 2026-10-18) and published, and nothing documents a machine consuming it.
 
 ## Example finding
 
 A regional news site publishes trust.txt with datatrainingallowed=no and belongto=https://example-press-association.org/. That association's trust.txt has no member= line for the site, so the membership claim is uncorroborated; meanwhile robots.txt has no GPTBot or ClaudeBot rules at all, so the site's only enforceable channel grants exactly the training access its declaration refuses.
 
-## Scoring
+## Scoring (record before 2026-10-18)
 
 Tier per evidence policy: **informative (weight 0)** — grade C does not meet the A/B bar required for scored audits.
 

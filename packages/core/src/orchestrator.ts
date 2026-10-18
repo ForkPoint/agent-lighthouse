@@ -74,6 +74,7 @@ import {
   EvidenceKey,
   PageType,
   PageTypeSource,
+  ScoreDisplayMode,
 } from "./types";
 
 /**
@@ -974,7 +975,9 @@ async function scanWithinBudget(
       informativeCount++;
       // Obsolete checks are informative too; their own key lets a reader of
       // the JSON tell "not scored yet" from "retired, never will be".
-      const reason = isObsolete(check) ? "obsolete" : "informative";
+      const reason = isObsolete(check)
+        ? AuditTier.Obsolete
+        : ScoreDisplayMode.Informative;
       unscoredReasons[reason] = (unscoredReasons[reason] ?? 0) + 1;
     } else if (check.status === CheckStatus.NotApplicable) {
       if (check.tags?.includes(TAG_SKIPPED_NO_EVIDENCE)) {

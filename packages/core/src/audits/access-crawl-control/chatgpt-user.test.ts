@@ -6,7 +6,6 @@ import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
 import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
 import {
   AuditTier,
-  CheckPriority,
   CheckStatus,
   EvidenceGrade,
   NoticeKind,
@@ -19,6 +18,8 @@ const robots = (body: string, status = 200) =>
 describe("ChatgptUserAudit", () => {
   const audit = new ChatgptUserAudit();
 
+  // OpenAI says the rules "may not apply": a hedge, not a documented refusal.
+  // The group is reported with that qualifier and never costs anything.
   it.each([
     ["an allowing group", "User-agent: ChatGPT-User\nAllow: /"],
     ["a blocking group", "User-agent: ChatGPT-User\nDisallow: /"],
@@ -26,11 +27,13 @@ describe("ChatgptUserAudit", () => {
       "a group shared with other tokens",
       "User-agent: Googlebot\nUser-agent: ChatGPT-User\nDisallow: /private",
     ],
-  ])("warns that the group has no reliable reader for %s", (_label, body) => {
+    ["a lowercase token", "user-agent: chatgpt-user\nDisallow: /"],
+    ["a versioned token", "User-agent: ChatGPT-User/1.0\nDisallow: /"],
+  ])("passes with the OpenAI qualifier for %s", (_label, body) => {
     const result = audit.audit(robots(body));
-    expect(result.status).toBe(CheckStatus.Warn);
-    expect(result.priority).toBe(CheckPriority.Low);
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("User-agent: ChatGPT-User");
+    expect(result.message).toContain("may not apply");
     expect(result.message).toContain("OAI-SearchBot");
   });
 
@@ -57,15 +60,15 @@ describe("ChatgptUserAudit", () => {
     await expectNotApplicableOnEmpty(audit);
   });
 
-  it("is an obsolete-tier audit with an obsolete notice", () => {
+  it("is an informative grade-C audit with an unconsumed notice", () => {
     const { meta } = ChatgptUserAudit;
-    expect(meta.tier).toBe(AuditTier.Obsolete);
-    expect(meta.evidenceGrade).toBe(EvidenceGrade.D);
+    expect(meta.tier).toBe(AuditTier.Informative);
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.C);
     expect(meta.weight).toBe(
-      weightForGrade(EvidenceGrade.D, AuditTier.Obsolete),
+      weightForGrade(EvidenceGrade.C, AuditTier.Informative),
     );
     expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Informative);
-    expect(meta.deprecated?.kind).toBe(NoticeKind.Obsolete);
+    expect(meta.deprecated?.kind).toBe(NoticeKind.Unconsumed);
     expect(meta.deprecated?.link).toBe(
       "https://developers.openai.com/api/docs/bots",
     );

@@ -3,10 +3,10 @@ audit: access-crawl-control/chatgpt-user
 category: access-crawl-control
 source_file: packages/core/src/audits/access-crawl-control/chatgpt-user.ts
 slug: chatgpt-user
-evidence_grade: D
-disposition: "obsolete tier (2026-10-18)"
+evidence_grade: C
+disposition: "informative with an unconsumed notice (2026-10-18)"
 reviewed: 2026-10-18
-recommended_tier: obsolete
+recommended_tier: informative
 consumers:
   - ChatGPT-User fetches pages, but OpenAI says robots.txt rules may not apply to it
 signals:
@@ -24,16 +24,18 @@ sources:
 
 # chatgpt-user (`2.14`)
 
-> access-crawl-control · source `chatgpt-user.ts` · evidence grade **D** · tier **obsolete** (weight 0, never fails)
+> access-crawl-control · source `chatgpt-user.ts` · evidence grade **C** · tier **informative** (weight 0, never warns or fails)
 
 ## What it checks
 
 Whether robots.txt has a group that names `ChatGPT-User`. A catch-all group that happens to cover the token is not reported: this audit speaks only about a group the owner wrote for ChatGPT-User.
 
-| State                                                      | Result                 |
-| :--------------------------------------------------------- | :--------------------- |
-| a `User-agent: ChatGPT-User` group, allowing or blocking   | `warn`, priority `low` |
-| no robots.txt, a soft 404, or no group naming ChatGPT-User | `notApplicable`        |
+| State                                                      | Result          |
+| :--------------------------------------------------------- | :-------------- |
+| a `User-agent: ChatGPT-User` group, allowing or blocking   | `pass`          |
+| no robots.txt, a soft 404, or no group naming ChatGPT-User | `notApplicable` |
+
+The pass message quotes OpenAI: the group may not be honoured, and `OAI-SearchBot` is the token for search opt-outs. Matching is case-insensitive and ignores a version suffix such as `ChatGPT-User/1.0`.
 
 ## Claimed mechanism (falsifiable)
 
@@ -47,7 +49,7 @@ Whether robots.txt has a group that names `ChatGPT-User`. A catch-all group that
 
 ## Scoring
 
-**Grade: D** — the operator documents that robots.txt rules may not apply to this agent. An obsolete audit carries weight 0 and never returns `fail` (`sunset.test.ts`; `Audit.toCheckResult` lowers a stray `fail` to `warn`). It does not move any score.
+**Grade: C** — OpenAI says robots.txt rules "may not apply" to ChatGPT-User. That is a hedge, not a documented refusal, so the group is informative with an `unconsumed` notice rather than obsolete (`docs/evidence/policy.md`, "Informative or obsolete"). The audit carries weight 0, never warns or fails, and does not move any score.
 
 ## Example finding
 
@@ -55,10 +57,10 @@ robots.txt has `User-agent: ChatGPT-User` / `Disallow: /`. The report says the r
 
 ## Implementation deviations
 
-- 2026-10-18: moved from informative (grade C) to the obsolete tier (grade D). The audit no longer extends `CrawlerBotAudit`; it uses `_obsolete-robots-group-audit.ts`.
+- 2026-10-18: moved from informative (grade C) to the obsolete tier (grade D), then, after independent review the same day, back to informative (grade C) with an `unconsumed` notice. "May not apply" is weaker than "documents ignoring", which the obsolete tier requires. The audit no longer extends `CrawlerBotAudit`; it reads the named group itself and returns `pass` or `notApplicable` only.
 - The allow/block verdict is gone. OpenAI's page makes it unreliable either way.
 
-## Record before the obsolete tier
+## Record before the 2026-10-18 changes
 
 The dossier as it stood before the move on 2026-10-18. Kept as the research record; withheld from the public page.
 

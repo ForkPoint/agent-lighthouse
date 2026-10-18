@@ -40,7 +40,10 @@ carries a declaration:
 3. a `<meta name="tdm-reservation">` tag, collected across every scanned page.
 
 The file is read only when it is served as JSON or plain text and does not
-start with `<`, so an HTML catch-all page is not mistaken for a policy.
+start with `<`, so an HTML catch-all page is not mistaken for a policy. A JSON
+document that names no TDM-Rep key at all is somebody else's file, such as one
+document a server returns for every `/.well-known/*` path, and also counts as
+no file.
 
 The two directions are reported as distinct outcomes, never as the same one:
 `tdm-reservation="1"` reserves your mining rights, `"0"` permits mining. Any
@@ -80,6 +83,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - No declaration is not applicable. Malformed, non-conforming and self-contradictory declarations warn. The audit cannot fail.
 - The file is parsed only when its media type is JSON-ish and its body does not start with `<`. An SPA catch-all or an HTML error page reads as no file.
 - The file must be an array of objects, each with `location` and `tdm-reservation`. Anything else is non-conforming.
+- A JSON object, or an array of objects, that names none of `location`, `tdm-reservation` or `tdm-policy` reads as no file (2026-10-18). A real-site scan found a server that answers every `/.well-known/*` path with one unrelated JSON document, and the audit warned that its policy was malformed.
 - `1` and `0` are distinct outcomes: rights reserved, or mining permitted. Any other value is reported as undefined by the protocol, at `warn`.
 - Meta declarations are collected across every scanned page. Disagreement warns and names both values. A file with different reservations per `location` is legal and warns with that explained.
 - The audit issues no request. `/.well-known/tdmrep.json` comes from the orchestrator's root files, so `audit()` is synchronous and needs no `isSafeUrl` gate.

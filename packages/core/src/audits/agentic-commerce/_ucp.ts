@@ -13,8 +13,14 @@
  *   file must be public without authentication, but a 401 or 403 is just as
  *   often a WAF in front of every unknown path, so it reads as absent rather
  *   than as a locked profile. Callers decline with {@link NO_UCP_PROFILE}.
- * - **Broken.** A 200 whose body is not a JSON object.
- * - **Readable.** A JSON object, handed back for the caller to judge.
+ * - **Absent, too:** a JSON object with no `ucp` key. Some servers answer
+ *   every `/.well-known/*` path with the same unrelated JSON document; a body
+ *   that does not carry the profile's identifying key is not a profile, the
+ *   same rule `agents-json` applies to its path.
+ * - **Broken.** A 200 whose body is not a JSON object, or whose `ucp` key is
+ *   not an object.
+ * - **Readable.** A JSON object with a `ucp` object, handed back for the
+ *   caller to judge.
  */
 
 import type { CheckContext } from "#core/check-context";
@@ -36,7 +42,11 @@ export const NO_UCP_PROFILE = {
 export type UcpRead =
   | { kind: "absent"; found: string }
   | { kind: "broken"; found: string }
-  | { kind: "profile"; profile: Record<string, unknown> };
+  | {
+      kind: "profile";
+      profile: Record<string, unknown>;
+      ucp: Record<string, unknown>;
+    };
 
 function isObject(val: unknown): val is Record<string, unknown> {
   return typeof val === "object" && val !== null && !Array.isArray(val);
@@ -71,5 +81,18 @@ export function readUcpProfile(ctx: Pick<CheckContext, "rootFiles">): UcpRead {
           : "HTTP 200, but the JSON is not an object",
     };
   }
-  return { kind: "profile", profile: parsed };
+  if (!("ucp" in parsed)) {
+    return {
+      kind: "absent",
+      found: `${UCP_PATH}: JSON with no \`ucp\` key (keys: ${Object.keys(parsed).slice(0, 5).join(", ") || "none"}), so not a UCP profile`,
+    };
+  }
+  const ucp = parsed["ucp"];
+  if (!isObject(ucp)) {
+    return {
+      kind: "broken",
+      found: "HTTP 200, but the `ucp` key is not an object",
+    };
+  }
+  return { kind: "profile", profile: parsed, ucp };
 }

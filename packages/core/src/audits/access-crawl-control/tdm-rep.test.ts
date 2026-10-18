@@ -243,6 +243,26 @@ describe("TdmRepAudit", () => {
       }
     });
 
+    it("treats JSON with no TDM-Rep keys as no file, not as a malformed one", () => {
+      // Some servers answer every /.well-known/* path with one unrelated JSON
+      // document; that is somebody else's file, not a broken policy.
+      for (const body of [
+        '{"gpc":true,"lastUpdate":"2026-01-01"}',
+        '[{"gpc":true}]',
+      ]) {
+        const result = audit.audit(
+          mockCheckContext([page()], {
+            "/.well-known/tdmrep.json": mockFetchResult(
+              body,
+              200,
+              "application/json",
+            ),
+          }),
+        );
+        expect(result.status, body).toBe(CheckStatus.NotApplicable);
+      }
+    });
+
     it("prefers the site-wide file over the page meta tag", () => {
       const result = audit.audit(
         mockCheckContext([page('<meta name="tdm-reservation" content="0">')], {

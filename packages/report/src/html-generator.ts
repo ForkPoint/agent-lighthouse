@@ -7,7 +7,12 @@ import {
 } from "@forkpoint/agent-lighthouse-core";
 import { formatPageScope, formatAuditScope } from "./page-scope";
 import type { CheckResult, ScanReport } from "@forkpoint/agent-lighthouse-core";
-import { NOTICE_LABELS, NOTICE_LINK_LABELS, noticeKind } from "./notices";
+import {
+  NOTICE_LABELS,
+  NOTICE_LINK_LABELS,
+  noticeKind,
+  obsoleteTally,
+} from "./notices";
 import { buildReportView } from "./view-model";
 import { PROJECT_URL, REPORT_ICON, REPORT_ICON_URL } from "./brand";
 
@@ -153,14 +158,14 @@ function renderCheck(c: CheckResult): string {
  * The "Obsolete (not scored)" section: what the site still publishes that its
  * consumer retired or ignores. Empty when nothing obsolete was found.
  */
-function renderObsoleteSection(found: CheckResult[], absent: number): string {
+function renderObsoleteSection(found: CheckResult[], tally: string): string {
   if (found.length === 0) return "";
   return `
       <div class="group-section mb-12" data-group="obsolete">
         <div class="flex items-center justify-between pb-3 mb-6 border-b border-slate-200 dark:border-slate-800">
           <h3 class="text-xl font-bold text-slate-900 dark:text-slate-100">Obsolete (not scored)</h3>
         </div>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">This site still publishes things their consumers retired or ignore. None of this moves the score.${absent > 0 ? ` ${absent} more obsolete check${absent === 1 ? "" : "s"} found nothing.` : ""}</p>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">This site still publishes things their consumers retired or ignore. None of this moves the score.${tally ? ` ${tally}` : ""}</p>
         <div class="cat-card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
           <div class="checks-container divide-y divide-slate-100 dark:divide-slate-800/60">
             ${found.map(renderCheck).join("")}
@@ -464,7 +469,7 @@ export function generateHtmlReport(report: ScanReport): string {
     <!-- Category Groups -->
     <main id="audits-main">
       ${categoryCards}
-      ${renderObsoleteSection(view.obsolete.found, view.obsolete.absent.length)}
+      ${renderObsoleteSection(view.obsolete.found, obsoleteTally(view.obsolete.absent.length, view.obsolete.unrun.length))}
     </main>
 
     <!-- Footer -->
