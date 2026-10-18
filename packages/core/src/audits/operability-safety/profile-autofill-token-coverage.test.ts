@@ -136,6 +136,55 @@ describe("ProfileAutofillTokenCoverageAudit", () => {
     expect(result.status).toBe(CheckStatus.Pass);
   });
 
+  it("names both side findings in one sentence when both occur", () => {
+    const result = run(`
+      <form>
+        <div>
+          <label for="e">Email *</label>
+          <input id="e" name="email" type="email" autocomplete="email">
+          <span class="error-text">Invalid</span>
+        </div>
+      </form>`);
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.message).toContain(
+      "invisible to the accessibility tree; 1 field(s) sit next to an error element they do not reference.",
+    );
+  });
+
+  it("fails a field that declares a token for a different concept", () => {
+    const result = run(`
+      <form>
+        <label for="e">Email</label>
+        <input id="e" name="email" type="email" autocomplete="name">
+      </form>`);
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain(
+      'a field that should declare autocomplete="email" declares a different token',
+    );
+  });
+
+  it("reads an input with no type attribute as a text field", () => {
+    const result = run(`
+      <form>
+        <label for="z">ZIP</label>
+        <input id="z" name="zip">
+      </form>`);
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain(
+      'a field that should declare autocomplete="postal-code" declares no autocomplete at all',
+    );
+  });
+
+  it("treats a whitespace-only autocomplete value as no token", () => {
+    const result = run(`
+      <form>
+        <label for="z">ZIP</label>
+        <input id="z" name="zip" type="text" autocomplete="   ">
+      </form>`);
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("declares no autocomplete at all");
+  });
+
   it("warns when some fields are covered and some are not", () => {
     const result = run(`
       <form>
@@ -197,6 +246,41 @@ describe("ProfileAutofillTokenCoverageAudit", () => {
       </form>`,
       "https://example.test/",
     );
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+  });
+
+  it.each([
+    ["a <search> element", "search"],
+    ['a role="search" landmark', 'div role="search"'],
+  ])("skips a form inside %s", (_label, wrapper) => {
+    const tag = wrapper.split(" ")[0];
+    const result = run(
+      `<${wrapper}><form action="/go">
+        <input type="text" name="where" placeholder="City">
+      </form></${tag}>`,
+      "https://example.test/",
+    );
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.found).toContain("1 search or store-locator form(s) skipped");
+  });
+
+  it("still judges a form whose action does not parse as a URL", () => {
+    const result = run(`
+      <form action="http://[bad" method="post">
+        <label for="z">Postcode</label>
+        <input id="z" name="postcode" type="text">
+      </form>`);
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain('autocomplete="postal-code"');
+  });
+
+  // A side with no known keyword counts as its own concept.
+  it("skips a location field offering a place or an unknown alternative", () => {
+    const result = run(`
+      <form action="/contact" method="post">
+        <label for="l">City or landmark</label>
+        <input id="l" name="l" type="text">
+      </form>`);
     expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 

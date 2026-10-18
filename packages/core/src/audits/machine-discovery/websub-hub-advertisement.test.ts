@@ -42,6 +42,10 @@ interface Site {
   linkHeader?: string;
   /** Status the hub HEAD answers. */
   hubStatus?: number;
+  /** The fetcher's error text on the hub answer, as on a status-0 result. */
+  hubError?: string;
+  /** The hub HEAD throws instead of answering. */
+  hubThrows?: boolean;
   /** A whole feed document, replacing the default Atom feed. */
   feedXml?: string;
   /** Extra markup inside the default feed's first entry. */
@@ -77,7 +81,10 @@ function run(site: Site) {
     }
     if (new URL(o.url).pathname === "/feed")
       return mockFetchResult("", 404, "text/plain");
-    return mockFetchResult("", site.hubStatus ?? 200, "text/plain");
+    if (site.hubThrows) throw new Error("ECONNREFUSED");
+    const hub = mockFetchResult("", site.hubStatus ?? 200, "text/plain");
+    if (site.hubError !== undefined) hub.error = site.hubError;
+    return hub;
   };
 
   return { result: audit.audit(ctx), requests };
@@ -252,6 +259,42 @@ describe("WebsubHubAdvertisementAudit", () => {
     const r = await result;
     expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "observations").join(" ")).toContain("not reachable");
+  });
+
+  it("names the fetcher's error beside a hub that did not answer", async () => {
+    const { result } = run({
+      documentLinks: SELF_AND_HUB,
+      hubStatus: 0,
+      hubError: "ETIMEDOUT",
+    });
+    const r = await result;
+    expect(r.status).toBe(CheckStatus.Warn);
+    expect(r.message).toBe(
+      "https://example.com/feed.xml: hub https://hub.example.net/ answered HTTP 0 (ETIMEDOUT), so the push path is advertised but not reachable",
+    );
+  });
+
+  it("reports a hub whose HEAD gets no response at all", async () => {
+    const { result } = run({ documentLinks: SELF_AND_HUB, hubThrows: true });
+    const r = await result;
+    expect(r.status).toBe(CheckStatus.Warn);
+    expect(strings(r, "observations")).toContain(
+      "https://example.com/feed.xml: hub https://hub.example.net/ answered with no response",
+    );
+    expect(strings(r, "hubProbes")).toEqual([]);
+  });
+
+  it("does not probe a hub on a private address", async () => {
+    const { result, requests } = run({
+      documentLinks:
+        '<link rel="self" href="https://example.com/feed.xml"/><link rel="hub" href="http://10.0.0.5/hub"/>',
+    });
+    const r = await result;
+    expect(r.status).toBe(CheckStatus.Warn);
+    expect(requests.some((o) => o.url.includes("10.0.0.5"))).toBe(false);
+    expect(strings(r, "observations").join(" ")).toContain(
+      "hub http://10.0.0.5/hub did not pass the address check, so it was not probed",
+    );
   });
 
   it("probes the hub with a HEAD and never subscribes", async () => {

@@ -148,7 +148,56 @@ describe("A2aAgentCardAudit", () => {
     expect(result.message).toContain("supportedInterfaces");
   });
 
+  it("fails a string field sent as another type", () => {
+    const result = audit.audit(withCard(card({ name: 42 })));
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.found).toBe("`name` is not a string");
+    expect(AuditResultSchema.safeParse(result).success).toBe(true);
+  });
+
+  it("fails a skills list holding an entry that is not an object", () => {
+    const result = audit.audit(withCard(card({ skills: ["book"] })));
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.found).toBe("`skills` has an entry that is not an object");
+  });
+
   // ── Readable but incomplete ──
+
+  it("warns on an interface entry with no url, without calling it insecure", () => {
+    const result = audit.audit(
+      withCard(
+        card({
+          supportedInterfaces: [
+            { protocolBinding: "JSONRPC", protocolVersion: "1.0" },
+          ],
+        }),
+      ),
+    );
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.found).toBe(
+      "interface entries miss Required fields: supportedInterfaces[0] lacks url",
+    );
+  });
+
+  it("warns on a relative interface URL", () => {
+    const result = audit.audit(
+      withCard(
+        card({
+          supportedInterfaces: [
+            {
+              url: "/a2a",
+              protocolBinding: "JSONRPC",
+              protocolVersion: "1.0",
+            },
+          ],
+        }),
+      ),
+    );
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.found).toBe(
+      "interface URLs that are not absolute https or wss: /a2a",
+    );
+  });
 
   it("warns on missing Required fields, naming name and description first", () => {
     const body = card();

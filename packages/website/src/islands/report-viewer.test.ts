@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { ReportShapeError, summarize, scoreClass } from "./report-viewer";
 import {
   AttemptOutcome,
+  AuditTier,
   CheckStatus,
   ClassificationConfidence,
   CoverageProvenance,
@@ -246,6 +247,75 @@ describe("v7 scope preview", () => {
     ])
       expect(view.pageScopeText).toContain(text);
   });
+  it("labels obsolete and not-assessed results and says what was not recorded", () => {
+    const report = {
+      overallScore: 100,
+      pageAttempts: [
+        { url: "https://x.test/a", outcome: AttemptOutcome.Unread },
+      ],
+      categories: [
+        {
+          name: "Mixed",
+          checks: [
+            null,
+            {
+              id: "old",
+              tier: AuditTier.Obsolete,
+              status: CheckStatus.Warn,
+              coverage: {
+                provenance: CoverageProvenance.Detected,
+                selectedUrls: [],
+                inputUrls: "https://x.test/a",
+              },
+            },
+            {
+              id: "na",
+              status: CheckStatus.NotApplicable,
+              displayValue: "0/3",
+              coverage: { provenance: CoverageProvenance.Detected },
+              advisoryResults: [
+                { status: CheckStatus.Warn, explanation: "   " },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const lines = summarize(report).pageScopeText?.split("\n") ?? [];
+    expect(lines).toContain(
+      `Fetch: https://x.test/a — ${AttemptOutcome.Unread}, HTTP not recorded; not recorded (not recorded)`,
+    );
+    expect(lines).toContain(
+      `[old] ${CheckStatus.Warn} — Obsolete — not scored`,
+    );
+    expect(lines).toContain("Selected URLs: none");
+    expect(lines).toContain("Input URLs: not recorded");
+    expect(lines).toContain(`[na] ${CheckStatus.NotApplicable} — Not assessed`);
+    expect(lines).toContain("0/3");
+    // The advisory result carries no coverage of its own; a blank explanation
+    // is reported as missing rather than printed empty.
+    expect(lines).toContain(`[na] ${CheckStatus.Warn} — Advisory — not scored`);
+    expect(lines).toContain("Coverage not recorded.");
+  });
+
+  it("previews at most 300 audits across all categories", () => {
+    const checks = (from: number) =>
+      Array.from({ length: 200 }, (_, i) => ({
+        id: `c${from + i}`,
+        status: CheckStatus.Pass,
+        coverage: { provenance: CoverageProvenance.Detected },
+      }));
+    const text = summarize({
+      overallScore: 100,
+      categories: [
+        { name: "First", checks: checks(1) },
+        { name: "Second", checks: checks(201) },
+      ],
+    }).pageScopeText;
+    expect(text).toContain("[c300]");
+    expect(text).not.toContain("[c301]");
+  });
+
   it("does not invent scope for old files and tolerates malformed optional fields", () => {
     expect(summarize({ overallScore: 100 }).pageScopeText).toBeUndefined();
     expect(() =>

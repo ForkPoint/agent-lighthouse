@@ -135,6 +135,23 @@ describe("AiCatalogMetadataAudit", () => {
     expect(result.message).toContain("Bare 2");
   });
 
+  it("names the first five thin entries and counts the rest", () => {
+    const bare = [1, 2, 3, 4, 5, 6, 7].map(bareEntry);
+    const result = audit.audit(
+      ctxWith(manifest({ entries: [richEntry(1), ...bare] })),
+    );
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.message).toBe(
+      "7 of 8 catalog entries are too thin for a consumer to match on: Bare 1, Bare 2, Bare 3, Bare 4, Bare 5, and 2 more.",
+    );
+  });
+
+  it("is not applicable on a valid manifest that lists no entries", () => {
+    const result = audit.audit(ctxWith(manifest({ entries: [] })));
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.found).toBe("Valid ARD manifest with 0 entries");
+  });
+
   it("fails when no entry carries any indexable metadata", () => {
     const result = audit.audit(
       ctxWith(manifest({ entries: [bareEntry(1), bareEntry(2)] })),

@@ -117,6 +117,40 @@ describe("SyntheticMediaDisclosureValidityAudit", () => {
       ).toBe("unknown-concept");
       expect(classifyDisclosure("AI-generated").kind).toBe("free-text");
     });
+
+    it("reads an empty or whitespace-only value as free text", () => {
+      expect(classifyDisclosure("").kind).toBe("free-text");
+      expect(classifyDisclosure("   ").kind).toBe("free-text");
+    });
+  });
+
+  it("fails a vocabulary URI naming a concept outside the vocabulary", async () => {
+    const result = await run({
+      "https://example.com/a.jpg": jpegWith(
+        packet(`${DIGITAL_SOURCE_BASE}madeUpConcept`),
+      ),
+    });
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toBe(
+      'https://example.com/a.jpg: "madeUpConcept" is not a member of the IPTC DigitalSourceType vocabulary',
+    );
+    expect(strings(result, "declarations")).toEqual([
+      `https://example.com/a.jpg: "${DIGITAL_SOURCE_BASE}madeUpConcept" (unknown-concept)`,
+    ]);
+  });
+
+  it("fails a synthetic XMP declaration on an asset the manifest calls a capture", async () => {
+    const result = await run({
+      "https://example.com/a.jpg": jpegWith(
+        packet(VALID_URI),
+        "actions digitalCapture",
+      ),
+    });
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(strings(result, "failures").join(" ")).toContain(
+      'the XMP declares "trainedAlgorithmicMedia" while the C2PA manifest asserts a camera capture',
+    );
+    expect(AuditResultSchema.safeParse(result).success).toBe(true);
   });
 
   it("passes an exact vocabulary member", async () => {

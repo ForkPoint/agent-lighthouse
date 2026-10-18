@@ -64,6 +64,20 @@ describe("AiCatalogExistsAudit", () => {
     expect(result.message).toContain("1 entr");
   });
 
+  it("counts several entries in the plural", () => {
+    const body = JSON.parse(ard()) as { entries: unknown[] };
+    body.entries.push({
+      identifier: "urn:air:example.com:server:orders",
+      displayName: "Orders",
+      type: "application/mcp-server-card+json",
+      url: "https://example.com/mcp/orders.json",
+    });
+    const result = audit.audit(withCatalog(JSON.stringify(body)));
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.message).toContain("with 2 entries.");
+    expect(result.found).toBe("Valid ARD manifest with 2 entries");
+  });
+
   it("fails on the invented top-level services array", () => {
     const result = audit.audit(withCatalog(LEGACY));
     expect(result.status).toBe(CheckStatus.Fail);
@@ -211,6 +225,15 @@ describe("AiCatalogExistsAudit", () => {
     const result = audit.audit(ctx);
     expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("/ai-catalog.json");
+  });
+
+  it('does not count a rel="ai-catalog" link with no href as an advertisement', () => {
+    const ctx = mockCheckContext([page('<link rel="ai-catalog">')], {
+      "/.well-known/ai-catalog.json": mockFetchResult("", 404),
+    });
+    const result = audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.found).not.toContain("advertised");
   });
 
   it("matches the rel token case-insensitively and inside a multi-token rel", () => {

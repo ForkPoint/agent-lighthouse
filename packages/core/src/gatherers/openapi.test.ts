@@ -1,11 +1,26 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
+import type { FetchOptions } from "#core/fetcher";
+import { HttpMethod } from "#core/types";
 import {
   NO_OPENAPI_SPEC,
+  defectCount,
+  defectNote,
   openApiOperations,
+  probeOpenApiServer,
   readOpenApiPaths,
   readOpenApiSpec,
 } from "./openapi";
+
+// probeOpenApiServer gates every URL with isSafeUrl, which resolves DNS. An
+// offline stand-in that refuses private ranges keeps the gate observable.
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
+  return {
+    ...actual,
+    isSafeUrl: async (url: string) => !new URL(url).hostname.startsWith("10."),
+  };
+});
 
 const ctxWith = (body: string, status = 200) =>
   mockCheckContext([], { "/openapi.json": mockFetchResult(body, status) });
@@ -186,6 +201,16 @@ describe("readOpenApiPaths", () => {
       { paths: { "/x": { post: null } } },
       'paths entry "/x" declares post as null, not an operation object',
     ],
+    [
+      "a number path item",
+      { paths: { "/x": 1 } },
+      'paths entry "/x" is a number, not a path item object',
+    ],
+    [
+      "a method value that is a boolean",
+      { paths: { "/x": { get: true } } },
+      'paths entry "/x" declares get as a boolean, not an operation object',
+    ],
     // Every entry defective means nothing survives the read, so it is
     // malformed even though there is more than one broken thing.
     [
@@ -236,6 +261,81 @@ describe("readOpenApiPaths", () => {
       },
     });
     expect(reading.kind).toBe("operations");
+  });
+});
+
+describe("defectNote and defectCount", () => {
+  it("say nothing when nothing was skipped", () => {
+    expect(defectNote([])).toBe("");
+    expect(defectCount([])).toBe("");
+  });
+
+  it("name one skipped entry in the singular", () => {
+    const defects = ['paths entry "/x" is null, not a path item object'];
+    expect(defectNote(defects)).toBe(
+      ' Skipped 1 unreadable entry: paths entry "/x" is null, not a path item object.',
+    );
+    expect(defectCount(defects)).toBe("; 1 unreadable");
+  });
+
+  it("name the first of several and count the rest", () => {
+    const defects = ["first defect", "second defect", "third defect"];
+    expect(defectNote(defects)).toBe(
+      " Skipped 3 unreadable entries: first defect (+2 more).",
+    );
+    expect(defectCount(defects)).toBe("; 3 unreadable");
+  });
+});
+
+describe("probeOpenApiServer", () => {
+  function recordingCtx() {
+    const seen: FetchOptions[] = [];
+    const ctx = mockCheckContext([], {});
+    ctx.fetch = async (options) => {
+      seen.push(options);
+      return mockFetchResult("", 204);
+    };
+    return { ctx, seen };
+  }
+
+  it("sends OPTIONS with no headers when the caller names neither", async () => {
+    const { ctx, seen } = recordingCtx();
+    const result = await probeOpenApiServer(ctx, "https://api.example.com/v1");
+    expect(result?.status).toBe(204);
+    expect(seen).toHaveLength(1);
+    expect(seen[0]?.method).toBe(HttpMethod.Options);
+    expect(seen[0]?.headers).toBeUndefined();
+  });
+
+  it("answers a repeat request from the per-scan cache", async () => {
+    const { ctx, seen } = recordingCtx();
+    const url = "https://api.example.com/v1/products";
+    await probeOpenApiServer(ctx, url, { method: HttpMethod.Get });
+    await probeOpenApiServer(ctx, url, { method: HttpMethod.Get });
+    expect(seen).toHaveLength(1);
+    // Headers are part of the key, so a request that sends them is new.
+    await probeOpenApiServer(ctx, url, {
+      method: HttpMethod.Get,
+      headers: { Origin: "https://example.invalid" },
+    });
+    expect(seen).toHaveLength(2);
+  });
+
+  it("refuses a URL that fails the safety check without fetching it", async () => {
+    const { ctx, seen } = recordingCtx();
+    const result = await probeOpenApiServer(ctx, "http://10.0.0.5/internal");
+    expect(result).toBeUndefined();
+    expect(seen).toHaveLength(0);
+  });
+
+  it("returns undefined when the fetch throws", async () => {
+    const ctx = mockCheckContext([], {});
+    ctx.fetch = async () => {
+      throw new Error("network");
+    };
+    expect(
+      await probeOpenApiServer(ctx, "https://api.example.com/v1"),
+    ).toBeUndefined();
   });
 });
 

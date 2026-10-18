@@ -148,6 +148,26 @@ describe("TdmRepAudit", () => {
       expect(result.found).toContain("header");
     });
 
+    it("reports the tdm-policy header beside the reservation", () => {
+      const p = withHeader(page(), "tdm-reservation", "0");
+      withHeader(p, "tdm-policy", "https://example.com/tdm-policy");
+      const result = audit.audit(mockCheckContext([p]));
+      expect(result.status).toBe(CheckStatus.Pass);
+      expect(result.message).toBe(
+        "TDM-Rep declared by response header: mining explicitly permitted. Policy: https://example.com/tdm-policy.",
+      );
+    });
+
+    it("warns on a header value the protocol does not define", () => {
+      const result = audit.audit(
+        mockCheckContext([withHeader(page(), "tdm-reservation", "yes")]),
+      );
+      expect(result.status).toBe(CheckStatus.Warn);
+      expect(result.found).toBe("tdm-reservation header: yes (unrecognized)");
+      expect(result.message).not.toContain("permitted");
+      expect(result.message).not.toContain("reserved —");
+    });
+
     it("prefers the header over the meta tag", () => {
       const result = audit.audit(
         mockCheckContext([
@@ -177,6 +197,49 @@ describe("TdmRepAudit", () => {
       expect(result.status).toBe(CheckStatus.Pass);
       expect(result.message).toContain("reserved");
       expect(result.found).toContain("tdmrep.json");
+    });
+
+    const fileCtx = (entries: unknown[]) =>
+      mockCheckContext([page()], {
+        "/.well-known/tdmrep.json": mockFetchResult(
+          JSON.stringify(entries),
+          200,
+          "application/json",
+        ),
+      });
+
+    it("passes a file with no tdm-policy and names no policy", () => {
+      const result = audit.audit(
+        fileCtx([{ location: "/", "tdm-reservation": 0 }]),
+      );
+      expect(result.status).toBe(CheckStatus.Pass);
+      expect(result.message).toBe(
+        "TDM-Rep declared site-wide at /.well-known/tdmrep.json: mining explicitly permitted.",
+      );
+    });
+
+    it("warns on a file whose reservation value the protocol does not define", () => {
+      const result = audit.audit(
+        fileCtx([{ location: "/", "tdm-reservation": 2 }]),
+      );
+      expect(result.status).toBe(CheckStatus.Warn);
+      expect(result.found).toBe(
+        "/.well-known/tdmrep.json: tdm-reservation 2 (unrecognized)",
+      );
+    });
+
+    it("warns when entries declare different reservations", () => {
+      const result = audit.audit(
+        fileCtx([
+          { location: "/", "tdm-reservation": 1 },
+          { location: "/blog/", "tdm-reservation": 0 },
+        ]),
+      );
+      expect(result.status).toBe(CheckStatus.Warn);
+      expect(result.found).toBe(
+        "/.well-known/tdmrep.json: mixed reservations 1, 0",
+      );
+      expect(result.message).toContain("legal per-location");
     });
 
     // An SPA catch-all answering 200 + text/html at an unknown well-known path

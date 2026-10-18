@@ -170,4 +170,78 @@ describe("ChangePasswordUrlAudit", () => {
     );
     expect(result.status).toBe(CheckStatus.NotApplicable);
   });
+  it("is not applicable when the probe gets no response, naming the error", async () => {
+    const ctx = site({});
+    const result = await audit.audit({
+      ...ctx,
+      fetch: async () => ({
+        ...mockFetchResult("", 0),
+        error: "ECONNRESET",
+      }),
+    });
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.message).toContain("could not be fetched");
+    expect(result.found).toBe("ECONNRESET");
+  });
+
+  it("is not applicable when the fetch throws and no probe result exists", async () => {
+    const ctx = site({});
+    const result = await audit.audit({
+      ...ctx,
+      fetch: async () => {
+        throw new Error("socket hang up");
+      },
+    });
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.found).toBe("No response");
+  });
+
+  it("fails a redirect with no Location header", async () => {
+    const result = await audit.audit(
+      site({ [WELL_KNOWN]: mockFetchResult("", 302, "text/html") }),
+    );
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("no usable Location header");
+    expect(result.found).toBe("HTTP 302, Location: (none)");
+  });
+
+  it("fails a redirect whose Location does not parse as a URL", async () => {
+    const result = await audit.audit(
+      site({ [WELL_KNOWN]: redirect(307, "http://[bad") }),
+    );
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.found).toBe("HTTP 307, Location: http://[bad");
+  });
+
+  it("warns when the redirect target gives no response", async () => {
+    const result = await audit.audit(
+      site({
+        [WELL_KNOWN]: redirect(303, "/account/password"),
+        "https://example.com/account/password": {
+          ...mockFetchResult("", 0),
+          error: "ETIMEDOUT",
+        },
+      }),
+    );
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.message).toContain(
+      "redirects to https://example.com/account/password, but that page could not be fetched",
+    );
+    expect(result.found).toBe("ETIMEDOUT");
+  });
+
+  it("names the target when the redirect target throws with no error text", async () => {
+    const ctx = site({ [WELL_KNOWN]: redirect(302, "/account/password") });
+    const result = await audit.audit({
+      ...ctx,
+      fetch: async (req) => {
+        if (req.url === WELL_KNOWN) return ctx.fetch(req);
+        throw new Error("boom");
+      },
+    });
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.found).toBe(
+      "Redirect target https://example.com/account/password gave no response",
+    );
+  });
 });

@@ -40,6 +40,12 @@ describe("publicDossier", () => {
       );
     });
 
+    it("still reads the sections when a frontmatter block is never closed", () => {
+      const result = publicDossier("---\nslug: x\n\n## What it checks\n\nA.\n");
+      expect(result.published).toEqual(["What it checks"]);
+      expect(result.markdown).toBe("## What it checks\n\nA.");
+    });
+
     it("fails closed on a heading it does not know", () => {
       const source = "## What it checks\n\nA.\n\n## Internal ritual\n\nB.\n";
       const result = publicDossier(source);
@@ -85,6 +91,22 @@ describe("publicDossier", () => {
       ].join("\n");
       expect(publicDossier(source).markdown).toContain("Later.");
       expect(publicDossier(source).markdown).not.toContain("Earlier");
+    });
+
+    it("keeps the later date when both sections are dated, whatever the order", () => {
+      const source = [
+        "## Evidence (2026-08-22)",
+        "",
+        "Newest.",
+        "",
+        "## Evidence (2026-08-20)",
+        "",
+        "Oldest.",
+      ].join("\n");
+      const result = publicDossier(source);
+      expect(result.markdown).toContain("Newest.");
+      expect(result.markdown).not.toContain("Oldest.");
+      expect(result.withheld).toEqual(["Evidence (2026-08-20)"]);
     });
 
     it("falls back to file order when neither section is dated", () => {
@@ -143,6 +165,20 @@ describe("publicDossier", () => {
         expect(markdown, id).not.toContain("Recommended tier");
         expect(markdown, id).not.toContain("**Consumers:**");
       }
+    });
+
+    it("drops a Consumers or Recommended tier line and keeps the rest", () => {
+      const source = [
+        "## Evidence",
+        "",
+        "**Consumers:** none documented · **Recommended tier:** informative",
+        "",
+        "**Recommended tier:** scored",
+        "",
+        "Google documents the behaviour.",
+      ].join("\n");
+      const { markdown } = publicDossier(source);
+      expect(markdown).toBe("## Evidence\n\nGoogle documents the behaviour.");
     });
 
     it("leaves a section it does not have a promotion target for alone", () => {
@@ -236,6 +272,28 @@ describe("publicDossier", () => {
         "## Evidence\n\nBody.\n\n**Sources:** [A](https://a.example) (verified 2026-08-20) · [A again](https://a.example) (verified 2026-08-20)\n";
       const { markdown } = publicDossier(source);
       expect([...markdown.matchAll(/https:\/\/a\.example/g)]).toHaveLength(1);
+    });
+
+    it("leaves an empty sources line as written", () => {
+      const { markdown } = publicDossier(
+        "## Evidence\n\nBody.\n\n**Sources:**\n",
+      );
+      expect(markdown).toBe("## Evidence\n\nBody.\n\n**Sources:**");
+    });
+
+    it("drops a repeated source that carries no link, by its text", () => {
+      const source =
+        "## Evidence\n\nBody.\n\n**Sources:** Vendor handbook, section 4 (verified 2026-08-20) · Vendor handbook, section 4 (verified 2026-08-20)\n";
+      const { markdown } = publicDossier(source);
+      expect(markdown).toContain("**Sources** (all verified 2026-08-20):");
+      expect([...markdown.matchAll(/Vendor handbook/g)]).toHaveLength(1);
+    });
+
+    it("keeps a bare URL that does not parse as its own link label", () => {
+      const { markdown } = publicDossier(
+        "## Evidence\n\nSee https://[broken for details.\n",
+      );
+      expect(markdown).toContain("[https://[broken](https://[broken)");
     });
 
     it("puts a bare HTML tag in a code span and leaves one that already is", () => {
@@ -341,6 +399,21 @@ describe("publicDossier", () => {
       expect(markdown).toContain("(verified 2026-08-20)");
     });
 
+    it("never breaks inside a curly-quoted passage", () => {
+      const filler =
+        "The vendor documents this behaviour for one named agent today. ";
+      const source = `## Evidence\n\n${filler.repeat(11)}It says “One sentence. And a second.” That is all. ${filler.repeat(4)}\n`;
+      const { markdown } = publicDossier(source);
+      expect(markdown).toContain("“One sentence. And a second.”");
+      expect(markdown.split("\n\n").length).toBeGreaterThan(2);
+    });
+
+    it("leaves a long paragraph with no sentence boundary whole", () => {
+      const run = "word ".repeat(130).trim();
+      const { markdown } = publicDossier(`## Evidence\n\n${run}\n`);
+      expect(markdown).toBe(`## Evidence\n\n${run}`);
+    });
+
     it("puts a bare attribute in a code span so smart quotes cannot reach it", () => {
       const { markdown } = publicDossier(
         '## Evidence\n\nEmit rel="alternate" on the link.\n',
@@ -371,6 +444,19 @@ describe("publicDossier", () => {
         "The GEO-benchmark rebuild",
       ]);
       expect(result.markdown).toContain("## The GEO-benchmark rebuild");
+    });
+
+    it("publishes several public_extra sections in file order", () => {
+      const source =
+        "## What it checks\n\nA.\n\n## Second extra\n\nB.\n\n## First extra\n\nC.\n";
+      const result = publicDossier(source, {
+        publicExtra: ["First extra", "Second extra"],
+      });
+      expect(result.published).toEqual([
+        "What it checks",
+        "Second extra",
+        "First extra",
+      ]);
     });
 
     it("withholds a section named by public_omit", () => {

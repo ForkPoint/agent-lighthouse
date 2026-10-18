@@ -69,6 +69,16 @@ describe("FormAutofillTokenCoverageAudit", () => {
     expect(result.message).toContain('autocomplete="current-password"');
   });
 
+  // A form not identifiably a signup is far more often a sign-in.
+  it("expects current-password on a page that is neither signup nor login", () => {
+    const result = run(
+      `<form><label for="p">Password</label><input id="p" name="p" type="password"></form>`,
+      "https://example.test/account/settings",
+    );
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain('autocomplete="current-password"');
+  });
+
   // A sign-in identifier is the username token's documented case.
   it("expects username on an email-or-username sign-in field", () => {
     const result = run(

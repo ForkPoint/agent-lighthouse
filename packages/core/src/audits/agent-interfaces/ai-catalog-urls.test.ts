@@ -198,6 +198,57 @@ describe("AiCatalogUrlsAudit", () => {
     expect((await audit.audit(ctx)).status).toBe(CheckStatus.NotApplicable);
   });
 
+  it("counts several inline entries in the plural when nothing is linked", async () => {
+    const ctx = ctxWith([
+      entry({ data: { name: "a" } }),
+      entry({ data: { name: "b" } }),
+    ]);
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.message).toBe(
+      "All 2 catalog entries embed their artifact inline, so there is no url to dereference.",
+    );
+    expect(result.found).toBe("0 linked entries (2 inline)");
+  });
+
+  it("is not applicable when no entry carries a url or inline data", async () => {
+    const result = await audit.audit(ctxWith([entry({})]));
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.message).toBe(
+      "No catalog entry carries a url to dereference.",
+    );
+  });
+
+  it("names several skipped inline entries in the plural", async () => {
+    const ctx = ctxWith([
+      entry({ url: "https://example.com/a" }),
+      entry({ data: { name: "b" } }),
+      entry({ data: { name: "c" } }),
+    ]);
+    ctx.fetch = responder(() => 200);
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.message).toBe(
+      "All 1 catalog entry url(s) resolve to a live endpoint; 2 inline entries were skipped.",
+    );
+    expect(result.found).toBe(
+      "1/1 entry urls reachable; 2 inline entries skipped",
+    );
+  });
+
+  it("refuses an entry url that cannot be parsed, without fetching it", async () => {
+    const ctx = ctxWith([entry({ url: "http://[bad" })]);
+    const seen: string[] = [];
+    ctx.fetch = async ({ url }) => {
+      seen.push(url);
+      return mockFetchResult("", 200);
+    };
+    const result = await audit.audit(ctx);
+    expect(seen).toEqual([]);
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("Service (refused)");
+  });
+
   it("ships guidance about entries[].url, not a services array", () => {
     const code = AiCatalogUrlsAudit.meta.guidance?.code ?? "";
     expect(code).toContain("entries");
