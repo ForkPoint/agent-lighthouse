@@ -24,7 +24,9 @@ import {
   getAccessibleRefs,
   isAccessibleRef,
   arialabelText,
+  arialabelledbyText,
   isComboboxPopup,
+  label,
 } from "./aria";
 
 /**
@@ -354,5 +356,299 @@ describe("isComboboxPopup", () => {
   it("is false for a listbox no combobox controls", () => {
     const d = doc('<ul id="p" role="listbox"><li role="option">a</li></ul>');
     expect(isComboboxPopup(toVNode(d.querySelector("#p")!))).toBe(false);
+  });
+
+  it("is true for a listbox nested inside a combobox", () => {
+    const d = doc(
+      '<div role="combobox" aria-expanded="true"><ul id="p" role="listbox"><li role="option">a</li></ul></div>',
+    );
+    expect(isComboboxPopup(toVNode(d.querySelector("#p")!))).toBe(true);
+  });
+
+  it("is false for a listbox without an id outside a combobox", () => {
+    const d = doc('<ul role="listbox"><li role="option">a</li></ul>');
+    expect(isComboboxPopup(toVNode(d.querySelector("ul")!))).toBe(false);
+  });
+
+  it("is false for a role that is not a popup role", () => {
+    const d = doc('<div id="p" role="button">x</div>');
+    expect(isComboboxPopup(toVNode(d.querySelector("#p")!))).toBe(false);
+  });
+});
+
+describe("ARIA value access edge cases", () => {
+  it("returns null for an attribute that is not ARIA", () => {
+    expect(
+      getAriaValue(node('<div id="t" title="x"></div>'), "title"),
+    ).toBeNull();
+  });
+
+  it("throws when asked whether a non-ARIA attribute has a value", () => {
+    expect(() => hasAriaValue(node('<div id="t"></div>'), "title")).toThrow(
+      TypeError,
+    );
+  });
+
+  it("gives a text node no explicit role", () => {
+    const text = toVNode(
+      doc('<p id="t">hi</p>').querySelector("#t")!.firstChild!,
+    );
+    expect(getExplicitRole(text)).toBeNull();
+    expect(namedFromContents(text)).toBe(false);
+  });
+
+  it("ignores a DPUB role unless DPUB roles are requested", () => {
+    const n = node('<section id="t" role="doc-chapter">x</section>');
+    expect(getExplicitRole(n)).toBeNull();
+    expect(getExplicitRole(n, { dpub: true })).toBe("doc-chapter");
+  });
+});
+
+describe("implicit and inherited roles", () => {
+  it("returns the Chromium role for an element with no ARIA mapping", () => {
+    expect(
+      getImplicitRole(node('<canvas id="t"></canvas>'), { chromium: true }),
+    ).toBe("Canvas");
+    expect(
+      getImplicitRole(node('<div id="t"></div>'), { chromium: true }),
+    ).toBeNull();
+  });
+
+  // Required owned elements inherit a presentational role from their parent.
+  it("makes a list item presentational when its list is", () => {
+    expect(getRole(node('<ul role="none"><li id="t">a</li></ul>'))).toBe(
+      "none",
+    );
+  });
+
+  it("walks the inheritance chain from a cell up to the table", () => {
+    expect(
+      getRole(
+        node(
+          '<table role="presentation"><tbody><tr><td id="t">1</td></tr></tbody></table>',
+        ),
+      ),
+    ).toBe("presentation");
+  });
+
+  it("does not inherit from a presentational parent that has global ARIA", () => {
+    expect(
+      getRole(node('<ul role="none" aria-label="x"><li id="t">a</li></ul>')),
+    ).toBe("listitem");
+  });
+
+  it("does not inherit from a parent outside the required chain", () => {
+    expect(getRole(node('<div role="none"><li id="t">a</li></div>'))).toBe(
+      "listitem",
+    );
+  });
+
+  it("does not inherit through a parent with a non-presentational role", () => {
+    expect(getRole(node('<ul role="list"><li id="t">a</li></ul>'))).toBe(
+      "listitem",
+    );
+  });
+
+  // Presentational conflict resolution: a focusable element keeps its role.
+  it("ignores role=none on a focusable element", () => {
+    expect(getRole(node('<button id="t" role="none">x</button>'))).toBe(
+      "button",
+    );
+    expect(
+      getRole(node('<button id="t" role="none">x</button>'), {
+        noImplicit: true,
+      }),
+    ).toBeNull();
+  });
+
+  it("returns no implicit role when asked not to", () => {
+    expect(
+      getRole(node('<button id="t">x</button>'), { noImplicit: true }),
+    ).toBeNull();
+  });
+
+  it("hides a presentational role when asked to", () => {
+    expect(
+      getRole(node('<div id="t" role="none">x</div>'), {
+        noPresentational: true,
+      }),
+    ).toBeNull();
+  });
+
+  it("only names from contents in strict mode for roles that allow it", () => {
+    expect(
+      namedFromContents(node('<div id="t">x</div>'), { strict: true }),
+    ).toBe(false);
+    expect(namedFromContents(node('<div id="t">x</div>'))).toBe(true);
+  });
+
+  it("accepts a DOM node as well as a VNode", () => {
+    expect(
+      namedFromContents(node('<button id="t">x</button>').actualNode),
+    ).toBe(true);
+    expect(
+      validateAttrValue(
+        node('<div id="t" aria-busy="true"></div>').actualNode,
+        "aria-busy",
+      ),
+    ).toBe(true);
+  });
+});
+
+describe("allowedAttr for an unknown role", () => {
+  it("allows only the global attributes", () => {
+    const attrs = allowedAttr("not-a-role");
+    expect(attrs).toContain("aria-label");
+    expect(attrs).not.toContain("aria-checked");
+  });
+});
+
+describe("validateAttrValue by type", () => {
+  const check = (html: string, attr: string) =>
+    validateAttrValue(node(html), attr);
+
+  it("accepts true and false for a boolean attribute", () => {
+    expect(check('<div id="t" aria-atomic="TRUE"></div>', "aria-atomic")).toBe(
+      true,
+    );
+    expect(check('<div id="t" aria-atomic="yes"></div>', "aria-atomic")).toBe(
+      false,
+    );
+  });
+
+  it("requires every token of a token list to be allowed", () => {
+    expect(
+      check(
+        '<div id="t" aria-relevant="additions text"></div>',
+        "aria-relevant",
+      ),
+    ).toBe(true);
+    expect(
+      check(
+        '<div id="t" aria-relevant="additions sideways"></div>',
+        "aria-relevant",
+      ),
+    ).toBe(false);
+  });
+
+  it("resolves a single id reference", () => {
+    expect(
+      check(
+        '<div id="t" aria-activedescendant="o"><span id="o">x</span></div>',
+        "aria-activedescendant",
+      ),
+    ).toBe(true);
+    expect(
+      check(
+        '<div id="t" aria-activedescendant="missing"></div>',
+        "aria-activedescendant",
+      ),
+    ).toBe(false);
+  });
+
+  it("accepts an empty value where the attribute allows one", () => {
+    expect(
+      check(
+        '<div id="t" aria-activedescendant=""></div>',
+        "aria-activedescendant",
+      ),
+    ).toBe(true);
+  });
+
+  it("accepts a decimal and rejects a bare point", () => {
+    expect(
+      check('<div id="t" aria-valuenow="1.5"></div>', "aria-valuenow"),
+    ).toBe(true);
+    expect(
+      check('<div id="t" aria-valuenow="-.5"></div>', "aria-valuenow"),
+    ).toBe(true);
+    expect(check('<div id="t" aria-valuenow="."></div>', "aria-valuenow")).toBe(
+      false,
+    );
+    expect(
+      check('<div id="t" aria-valuenow="1e3"></div>', "aria-valuenow"),
+    ).toBe(false);
+  });
+
+  it("enforces an integer attribute's minimum", () => {
+    expect(check('<div id="t" aria-level="0"></div>', "aria-level")).toBe(
+      false,
+    );
+  });
+
+  it("passes an attribute that is not ARIA", () => {
+    expect(check('<div id="t" title="x"></div>', "title")).toBe(true);
+  });
+});
+
+describe("unallowed roles edge cases", () => {
+  it("lists nothing for an element that is not HTML", () => {
+    const d = doc('<svg><g id="t" role="button"></g></svg>');
+    expect(getElementUnallowedRoles(d.querySelector("#t")!)).toEqual([]);
+  });
+
+  it("disallows an element's implicit role when implicit roles are not allowed", () => {
+    expect(
+      getElementUnallowedRoles(
+        node('<button id="t" role="button">x</button>'),
+        false,
+      ),
+    ).toEqual(["button"]);
+  });
+
+  it("disallows the implicit role on an element that allows any other role", () => {
+    const figure = node('<figure id="t">x</figure>');
+    expect(isAriaRoleAllowedOnElement(figure, "figure")).toBe(false);
+    expect(isAriaRoleAllowedOnElement(figure.actualNode, "group")).toBe(true);
+  });
+
+  it("disallows a DPUB fallback role whose type differs from the element's role", () => {
+    expect(
+      getElementUnallowedRoles(node('<div id="t" role="doc-backlink">x</div>')),
+    ).toEqual(["doc-backlink"]);
+  });
+});
+
+describe("accessible references edge cases", () => {
+  it("records every element referring to the same id", () => {
+    const d = doc(
+      '<span id="l">L</span><div aria-labelledby="l"></div><div aria-describedby="l"></div><label for="l">x</label><label for="l">y</label>',
+    );
+    expect(getAccessibleRefs(toVNode(d.querySelector("#l")!))).toHaveLength(4);
+  });
+});
+
+describe("label", () => {
+  it("prefers the visible text of aria-labelledby", () => {
+    expect(
+      label(
+        node(
+          '<span id="a">Size</span><div id="t" aria-labelledby="a missing" aria-label="x"></div>',
+        ),
+      ),
+    ).toBe("Size");
+  });
+
+  it("falls back to aria-label when aria-labelledby yields nothing", () => {
+    expect(
+      label(
+        node(
+          '<span id="a"></span><div id="t" aria-labelledby="a" aria-label=" Size "></div>',
+        ),
+      ),
+    ).toBe("Size");
+  });
+
+  it("is null when aria-label is blank", () => {
+    expect(label(node('<div id="t" aria-label="   "></div>'))).toBeNull();
+  });
+});
+
+describe("arialabelledbyText", () => {
+  it("keeps a caller-supplied start node", () => {
+    const n = node(
+      '<span id="a">Size</span><div id="t" aria-labelledby="a"></div>',
+    );
+    expect(arialabelledbyText(n, { startNode: n })).toBe("Size");
   });
 });

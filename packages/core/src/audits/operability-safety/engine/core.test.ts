@@ -17,7 +17,10 @@ import {
   closest,
   findUp,
   isHtmlElement,
+  getRootNode,
 } from "./core";
+// Loading the rule module registers the role and name matchers.
+import { SUPPORTED_RULE_IDS } from "./rules";
 
 /**
  * The virtual-node layer every rule is built on.
@@ -298,5 +301,137 @@ describe("isHtmlElement", () => {
     expect(isHtmlElement(el('<my-widget id="t">x</my-widget>', "#t"))).toBe(
       false,
     );
+  });
+});
+
+describe("VNode over a non-element node", () => {
+  const text = () => toVNode(el('<p id="t">hello</p>', "#t").firstChild!);
+
+  it("reads no attributes from a text node", () => {
+    expect(text().attr("id")).toBeNull();
+    expect(text().hasAttr("id")).toBe(false);
+    expect(text().attrNames).toEqual([]);
+  });
+
+  it("returns an empty computed style without a window", () => {
+    const d = new JSDOM("").window.document.implementation.createHTMLDocument(
+      "x",
+    );
+    const div = d.createElement("div");
+    d.body.appendChild(div);
+    expect(toVNode(div).getComputedStylePropertyValue("display")).toBe("");
+  });
+});
+
+describe("escapeSelector edge cases", () => {
+  it("replaces NUL with the replacement character", () => {
+    expect(escapeSelector("a\u0000b")).toBe("a�b");
+  });
+
+  it("escapes a digit that follows a leading hyphen", () => {
+    expect(escapeSelector("-1")).toBe("-\\31 ");
+  });
+
+  it("escapes a lone hyphen", () => {
+    expect(escapeSelector("-")).toBe("\\-");
+  });
+});
+
+describe("getRootNode", () => {
+  it("returns the document for an attached element", () => {
+    const d = doc('<div id="a">x</div>');
+    expect(getRootNode(d.querySelector("#a")!)).toBe(d);
+  });
+
+  it("returns the document itself for a document", () => {
+    const d = doc("<p>x</p>");
+    expect(getRootNode(d)).toBe(d);
+  });
+
+  // A detached node is its own root; ids still resolve against its document.
+  it("falls back to the owner document for a detached element", () => {
+    const d = doc("<p>x</p>");
+    expect(getRootNode(d.createElement("div"))).toBe(d);
+  });
+});
+
+describe("matches with definition objects", () => {
+  const button = () =>
+    toVNode(el('<button id="t" aria-label="Save">x</button>', "#t"));
+
+  it("matches any definition in an array", () => {
+    expect(matches(button(), ["a", "button"])).toBe(true);
+    expect(matches(button(), ["a", "input"])).toBe(false);
+  });
+
+  it("matches nodeName by string, RegExp, slash-delimited string and function", () => {
+    expect(matches(button(), { nodeName: "button" })).toBe(true);
+    expect(matches(button(), { nodeName: /^butt/ })).toBe(true);
+    expect(matches(button(), { nodeName: "/^butt/" })).toBe(true);
+    expect(matches(button(), { nodeName: (n: string) => n.length === 6 })).toBe(
+      true,
+    );
+    expect(matches(button(), { nodeName: /^a$/ })).toBe(false);
+  });
+
+  it("matches attributes and properties", () => {
+    expect(matches(button(), { attributes: { "aria-label": "Save" } })).toBe(
+      true,
+    );
+    expect(matches(button(), { properties: { nodeType: 1 } })).toBe(true);
+  });
+
+  it("rejects a non-object attribute matcher", () => {
+    expect(() => matches(button(), { attributes: "aria-label" })).toThrow(
+      "Expect matcher to be an object",
+    );
+  });
+
+  it("runs a condition callback", () => {
+    expect(matches(button(), { condition: () => true })).toBe(true);
+    expect(matches(button(), { condition: () => false })).toBe(false);
+  });
+
+  // The role and name matchers are injected by the rule module at import.
+  it("matches the role and name matchers the rule module registers", () => {
+    expect(SUPPORTED_RULE_IDS).not.toHaveLength(0);
+    const b = button();
+    expect(matches(b, { explicitRole: null })).toBe(true);
+    expect(matches(b, { implicitRole: "button" })).toBe(true);
+    expect(matches(b, { semanticRole: "button" })).toBe(true);
+    expect(matches(b, { hasAccessibleName: true })).toBe(true);
+  });
+
+  it("matches a null role for an element with none", () => {
+    const div = toVNode(el('<div id="t"></div>', "#t"));
+    expect(matches(div, { implicitRole: null, semanticRole: null })).toBe(true);
+    expect(matches(div, { hasAccessibleName: true })).toBe(false);
+  });
+
+  it("rejects an unknown matcher", () => {
+    expect(() => matches(button(), { colour: "red" })).toThrow(
+      'Unknown matcher type "colour"',
+    );
+  });
+
+  it("does not match a selector against a text node", () => {
+    expect(matches(toVNode(el('<p id="t">x</p>', "#t").firstChild!), "p")).toBe(
+      false,
+    );
+  });
+
+  it("treats an invalid selector as no match", () => {
+    expect(matches(button(), "[[[")).toBe(false);
+  });
+});
+
+describe("findUp edge cases", () => {
+  it("accepts a VNode", () => {
+    const d = doc('<form id="f"><input id="t"></form>');
+    expect(findUp(toVNode(d.querySelector("#t")!), "form")?.id).toBe("f");
+  });
+
+  it("returns null for a text node", () => {
+    expect(findUp(el('<p id="t">x</p>', "#t").firstChild!, "p")).toBeNull();
   });
 });
