@@ -19,6 +19,7 @@ import {
 import { createProgressRenderer } from "./progress-renderer";
 import {
   parseCliOptions,
+  parseServeOptions,
   resolveCommand,
   displayUrl,
   isValidUrl,
@@ -77,6 +78,7 @@ function usage(exitCode = 1): never {
   console.log(`Usage:
   agent-lighthouse <url> [options]
   agent-lighthouse audit <url> [options]
+  agent-lighthouse serve [--port <n>] [--host <addr>] [--token <t>]
 
 Options:
   -c, --config <path>          Path to configuration file (e.g. agent-lighthouse.config.json)
@@ -114,6 +116,10 @@ Options:
                                NDJSON never interleaves with the terminal report on stdout;
                                all scanner logs (including error logs) are silenced to keep the
                                stream clean — audit errors still appear in the report itself.
+  serve: --port <n>            Port for the task server [default: 8787]
+  serve: --host <addr>         Address to bind [default: 127.0.0.1]
+  serve: --token <t>           Require "Authorization: Bearer <t>" to start or cancel scans.
+                               Also read from AL_SERVER_TOKEN
 
 Examples:
   npx @forkpoint/agent-lighthouse https://yourstore.com
@@ -535,9 +541,29 @@ async function audit(targetUrl?: string) {
   }
 }
 
+async function serve() {
+  const opts = parseServeOptions(args);
+  const loopback =
+    opts.host === "127.0.0.1" ||
+    opts.host === "::1" ||
+    opts.host === "localhost";
+  if (!loopback && opts.token === undefined)
+    console.error(
+      "\x1b[33mWarning:\x1b[0m listening beyond this machine without --token. Anyone who can reach the port can start scans.",
+    );
+  const { startServer } = await import("@forkpoint/agent-lighthouse-server");
+  const server = await startServer(opts);
+  printBanner();
+  console.log(`Serving on ${server.url}  (Ctrl+C to stop)`);
+  const stop = () => void server.close().then(() => process.exit(0));
+  process.once("SIGINT", stop);
+  process.once("SIGTERM", stop);
+}
+
 async function main() {
   const resolved = resolveCommand(args);
   if (resolved.action === CliCommand.Help) usage(0);
+  if (resolved.action === CliCommand.Serve) return serve();
   await audit(resolved.url);
 }
 

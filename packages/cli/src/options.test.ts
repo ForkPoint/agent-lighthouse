@@ -15,6 +15,8 @@ import {
   isValidUrl,
   parseCliOptions,
   resolveCommand,
+  parseServeOptions,
+  CliCommand,
   displayUrl,
   parseCategoryAssertions,
   failedAssertion,
@@ -931,5 +933,42 @@ describe("displayUrl", () => {
   it("leaves a URL without credentials exactly as typed", () => {
     expect(displayUrl("https://a.test")).toBe("https://a.test");
     expect(displayUrl("not a url")).toBe("not a url");
+  });
+});
+
+describe("serve", () => {
+  it("resolves the serve subcommand", () => {
+    expect(resolveCommand(["serve"])).toEqual({ action: CliCommand.Serve });
+    expect(resolveCommand(["serve", "--port", "9000"])).toEqual({
+      action: CliCommand.Serve,
+    });
+  });
+
+  it("defaults to loopback and port 8787", () => {
+    expect(parseServeOptions(["serve"], {})).toEqual({
+      port: 8787,
+      host: "127.0.0.1",
+    });
+  });
+
+  it("reads flags and the token from the environment", () => {
+    expect(
+      parseServeOptions(["serve", "--port", "9000", "--host", "0.0.0.0"], {
+        AL_SERVER_TOKEN: "t",
+      }),
+    ).toEqual({ port: 9000, host: "0.0.0.0", token: "t" });
+  });
+
+  it("prefers --token over the environment", () => {
+    expect(
+      parseServeOptions(["serve", "--token", "a"], { AL_SERVER_TOKEN: "b" })
+        .token,
+    ).toBe("a");
+  });
+
+  it("rejects a bad port", () => {
+    expect(() => parseServeOptions(["serve", "--port", "70000"], {})).toThrow(
+      /port/,
+    );
   });
 });

@@ -52,7 +52,8 @@
   },
   "dependencies": {
     "@forkpoint/agent-lighthouse-core": "workspace:*",
-    "@forkpoint/agent-lighthouse-report": "workspace:*"
+    "@forkpoint/agent-lighthouse-report": "workspace:*",
+    "@forkpoint/agent-lighthouse-server": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",

@@ -67,6 +67,9 @@ importers:
       '@forkpoint/agent-lighthouse-report':
         specifier: workspace:*
         version: link:../report
+      '@forkpoint/agent-lighthouse-server':
+        specifier: workspace:*
+        version: link:../server
     devDependencies:
       '@types/node':
         specifier: ^22.10.5
