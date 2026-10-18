@@ -17,3 +17,5 @@ export { startScanTask, scanEventToBody, traceToBody } from "./scan-task";
 export type { RunningTask } from "./scan-task";
 export { createTaskServer } from "./http";
 export type { TaskServer, TaskServerOptions } from "./http";
+export { startServer } from "./start";
+export type { StartServerOptions } from "./start";
