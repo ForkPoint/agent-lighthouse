@@ -65,6 +65,10 @@ export default defineConfig({
         __dirname,
         "packages/mcp/src/index.ts",
       ),
+      "@forkpoint/agent-lighthouse-server": resolve(
+        __dirname,
+        "packages/server/src/index.ts",
+      ),
     },
   },
 });

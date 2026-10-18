@@ -1,0 +1,51 @@
+{
+  "name": "@forkpoint/agent-lighthouse-server",
+  "version": "8.0.1",
+  "description": "HTTP server that runs Agent Lighthouse scans as tasks and streams live progress over Server-Sent Events",
+  "author": "ForkPoint",
+  "license": "Apache-2.0",
+  "homepage": "https://forkpoint.github.io/agent-lighthouse/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ForkPoint/agent-lighthouse.git",
+    "directory": "packages/server"
+  },
+  "bugs": {
+    "url": "https://github.com/ForkPoint/agent-lighthouse/issues"
+  },
+  "keywords": [
+    "forkpoint",
+    "agent-lighthouse",
+    "server-sent-events",
+    "sse",
+    "agent-readiness"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup && tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@forkpoint/agent-lighthouse-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "tsup": "^8.3.5",
+    "typescript": "~7.0.2"
+  }
+}

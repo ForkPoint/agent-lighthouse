@@ -165,6 +165,22 @@ importers:
         specifier: ^5.0.3
         version: 5.0.3(@types/node@22.20.1)(@vitest/coverage-v8@5.0.3)(jsdom@30.1.2)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
 
+  packages/server:
+    dependencies:
+      '@forkpoint/agent-lighthouse-core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.5
+        version: 22.20.1
+      tsup:
+        specifier: ^8.3.5
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.26)(tsx@4.23.15)(typescript@7.0.2)(yaml@2.9.1)
+      typescript:
+        specifier: ~7.0.2
+        version: 7.0.2
+
   packages/website:
     dependencies:
       '@astrojs/markdown-satteri':
@@ -5496,7 +5512,7 @@ snapshots:
       obug: 2.2.1
       std-env: 4.3.0
       tinyrainbow: 3.2.0
-      vitest: 5.0.3(@types/node@22.20.1)(@vitest/coverage-v8@5.0.3)(jsdom@30.1.2)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
+      vitest: 5.0.3(@types/node@22.20.1)(@vitest/coverage-v8@5.0.3)(jsdom@30.1.2)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
 
   '@vitest/istanbul-lib-coverage@1.0.2': {}
 
