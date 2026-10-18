@@ -66,7 +66,11 @@ afterEach(() => {
   expect(consoleProblems).toEqual([]);
 });
 
-function openPage(fetchImpl: FakeFetch, withEventSource = true) {
+function openPage(
+  fetchImpl: FakeFetch,
+  withEventSource = true,
+  setTimeoutImpl?: (fn: () => void, ms: number) => unknown,
+) {
   FakeEventSource.instances = [];
   consoleProblems.length = 0;
   const virtualConsole = new VirtualConsole();
@@ -86,6 +90,7 @@ function openPage(fetchImpl: FakeFetch, withEventSource = true) {
       Object.assign(window, { fetch: fetchImpl });
       if (withEventSource)
         Object.assign(window, { EventSource: FakeEventSource });
+      if (setTimeoutImpl) Object.assign(window, { setTimeout: setTimeoutImpl });
     },
   });
   const { document } = dom.window;
@@ -163,17 +168,24 @@ describe("page watcher", () => {
   it("stops the first poll loop and drops its in-flight reply", async () => {
     const firstPoll = deferred<unknown>();
     const calls: string[] = [];
+    // The page's own setTimeout is replaced, so the test decides when a
+    // 3-second poll delay elapses. Nothing waits in real time.
+    const timers: { fn: () => void; ms: number }[] = [];
     let posts = 0;
-    const page = openPage(async (url, init) => {
-      calls.push(url);
-      if (init?.method === "POST")
-        return ++posts === 1
-          ? ok({ taskId: "A", snapshot: snap("A", 1) })
-          : ok({ taskId: "B", snapshot: snap("B", 1) });
-      if (url.startsWith("tasks/A/")) return firstPoll.promise;
-      // The second task's poll stays pending for the rest of the test.
-      return new Promise(() => {});
-    }, false);
+    const page = openPage(
+      async (url, init) => {
+        calls.push(url);
+        if (init?.method === "POST")
+          return ++posts === 1
+            ? ok({ taskId: "A", snapshot: snap("A", 1) })
+            : ok({ taskId: "B", snapshot: snap("B", 1) });
+        if (url.startsWith("tasks/A/")) return firstPoll.promise;
+        // The second task's poll stays pending for the rest of the test.
+        return new Promise(() => {});
+      },
+      false,
+      (fn, ms) => timers.push({ fn, ms }),
+    );
 
     page.submit("https://a.test/");
     await tick();
@@ -181,16 +193,19 @@ describe("page watcher", () => {
 
     page.submit("https://b.test/");
     await tick();
+    // Not terminal: only cancellation can stop the first loop now.
     firstPoll.resolve(
       ok({
         events: [],
         reset: false,
-        snapshot: snap("A", 9, TaskStatus.Succeeded, { score: 99 }),
+        snapshot: snap("A", 9, TaskStatus.Running, { lastWorkId: "/late" }),
       }),
     );
     await tick();
+    // Let every scheduled poll delay elapse, then give the loop a chance to run.
+    for (const t of timers.splice(0)) t.fn();
+    await tick();
 
-    expect(page.text("result")).toBe("");
     expect(page.text("status")).toBe("Waiting to start.");
     expect(calls.filter((c) => c.startsWith("tasks/A/"))).toHaveLength(1);
     expect(calls).toContain("tasks/B/updates?after=1");
