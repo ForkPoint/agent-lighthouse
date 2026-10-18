@@ -41,19 +41,39 @@ describe("InMemoryTaskStore", () => {
     expect(store.append("t1", { type: "task.started" })).toBeUndefined();
   });
 
-  it("stores the result in the same step as task.succeeded", () => {
+  it("stores the result before subscribers run on task.succeeded", () => {
     const { store } = makeStore();
     store.create("https://shop.test/");
-    const listener = vi.fn();
+    let seenResult: ScanReport | undefined;
+    let seenStatus: string | undefined;
+    const listener = vi.fn(() => {
+      // Read inside the listener: the result and snapshot are already set.
+      seenResult = store.result("t1");
+      seenStatus = store.get("t1")?.status;
+    });
     store.subscribe("t1", listener);
     store.complete("t1", report);
     expect(listener).toHaveBeenCalledOnce();
-    // The listener ran after the result was readable.
-    expect(store.result("t1")).toBe(report);
-    expect(store.get("t1")).toMatchObject({
-      status: TaskStatus.Succeeded,
-      score: 81,
+    expect(seenResult).toBe(report);
+    expect(seenStatus).toBe(TaskStatus.Succeeded);
+    expect(store.get("t1")).toMatchObject({ score: 81 });
+  });
+
+  it("isolates a throwing listener from the task and other subscribers", () => {
+    const { store } = makeStore();
+    store.create("https://shop.test/");
+    const second = vi.fn();
+    store.subscribe("t1", () => {
+      throw new Error("socket closed");
     });
+    store.subscribe("t1", second);
+    const event = store.append("t1", { type: "task.started" });
+    expect(event).toMatchObject({ cursor: 2 });
+    expect(second).toHaveBeenCalledWith(
+      expect.objectContaining({ cursor: 2 }),
+      expect.objectContaining({ status: TaskStatus.Running }),
+    );
+    expect(store.get("t1")?.cursor).toBe(2);
   });
 
   it("notifies subscribers with the event and the new snapshot", () => {

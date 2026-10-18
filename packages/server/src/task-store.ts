@@ -1,5 +1,9 @@
 import { randomUUID } from "node:crypto";
-import type { ScanReport } from "@forkpoint/agent-lighthouse-core";
+import {
+  logger,
+  LogField,
+  type ScanReport,
+} from "@forkpoint/agent-lighthouse-core";
 import { applyTaskEvent, initialSnapshot } from "./reducer";
 import { MAX_EVENTS_PER_TASK, MAX_TASKS, TERMINAL_TTL_MS } from "./limits";
 import {
@@ -83,7 +87,17 @@ export class InMemoryTaskStore implements TaskStore {
     entry.events.push(event);
     if (entry.events.length > MAX_EVENTS_PER_TASK) entry.events.shift();
     if (isTerminal(entry.snapshot.status)) entry.terminalAt = this.now();
-    for (const listener of entry.listeners) listener(event, entry.snapshot);
+    for (const listener of entry.listeners) {
+      // A dead subscriber must not abort the scan or starve the others.
+      try {
+        listener(event, entry.snapshot);
+      } catch (error) {
+        logger.warn(
+          { taskId, [LogField.Error]: error },
+          "Task listener threw; ignoring",
+        );
+      }
+    }
     return event;
   }
 
