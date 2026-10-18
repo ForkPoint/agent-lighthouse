@@ -234,15 +234,6 @@ function readAt(ctx: CheckContext, path: string): ArdRead {
 }
 
 /**
- * Read and validate the ARD manifest out of the scan context.
- *
- * Both well-known paths are read. A valid manifest at either one wins, and
- * one that lists entries wins over an empty one; ard.json wins a tie. When
- * neither is valid, a present-but-broken file is reported ahead of an absent
- * one, so the site hears about the breakage instead of a 404 at the other
- * path. Every failure mode is named so callers can report the real diagnosis.
- */
-/**
  * Every valid manifest, in read order (ard.json first). A site may publish
  * both files with different entries; a caller looking for one kind of entry,
  * such as an MCP Server Card, searches all of them rather than the one
@@ -254,6 +245,15 @@ export function readAiCatalogs(ctx: CheckContext): ArdManifest[] {
   );
 }
 
+/**
+ * Read and validate the ARD manifest out of the scan context.
+ *
+ * Both well-known paths are read. A valid manifest at either one wins, and
+ * one that lists entries wins over an empty one; ard.json wins a tie. When
+ * neither is valid, a present-but-broken file is reported ahead of an absent
+ * one, so the site hears about the breakage instead of a 404 at the other
+ * path. Every failure mode is named so callers can report the real diagnosis.
+ */
 export function readAiCatalog(ctx: CheckContext): ArdRead {
   const reads = CATALOG_PATHS.map((path) => readAt(ctx, path));
   // A manifest that lists entries beats an empty one at the other path.
