@@ -19,13 +19,16 @@ const EXPECTED = "If Crawl-delay is present, it is <= 10 seconds";
  * ("other fields such as crawl-delay aren't supported"), Amazonbot ("They do
  * not support the crawl-delay directive") and Applebot ("Applebot does not
  * follow crawl-delay"). A delay addressed only to them throttles nothing, so
- * it is not judged. Matched on the product token, so every Google crawler
- * token (Googlebot-Image, Google-Extended, AdsBot-Google) counts.
+ * it is not judged. Matched on the product token. Google's crawler tokens
+ * start with "Google" (Googlebot-Image, GoogleOther, Google-Extended) or end
+ * with "-Google" (AdsBot-Google, Storebot-Google, APIs-Google); a token that
+ * only contains the word belongs to some other crawler and is judged.
  */
 function ignoresCrawlDelay(userAgent: string): boolean {
   const product = userAgent.trim().toLowerCase().split("/")[0] ?? "";
   return (
-    product.includes("google") ||
+    product.startsWith("google") ||
+    product.endsWith("-google") ||
     product === "amazonbot" ||
     product === "applebot" ||
     product === "applebot-extended"

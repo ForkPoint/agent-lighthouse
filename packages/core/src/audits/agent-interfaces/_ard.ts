@@ -91,10 +91,12 @@ export interface ArdManifest {
 
 export type ArdRead =
   | { ok: true; manifest: ArdManifest }
-  /** No 200 response at either well-known path. */
+  /**
+   * No manifest at either well-known path: no 200 response, or an HTML page
+   * answering for the file. A catch-all route serving the site's HTML is not a
+   * manifest the site published, the same line `isRootArtifact` draws.
+   */
   | { ok: false; reason: "absent"; path: string; found: string }
-  /** HTTP 200 but an HTML body — a SPA catch-all, not a manifest. */
-  | { ok: false; reason: "html"; path: string; found: string }
   | { ok: false; reason: "not-json"; path: string; found: string }
   /** Valid JSON object, but not an ARD manifest. */
   | {
@@ -187,9 +189,9 @@ function readAt(ctx: CheckContext, path: string): ArdRead {
   ) {
     return {
       ok: false,
-      reason: "html",
+      reason: "absent",
       path,
-      found: `HTTP 200 but ${contentType || "an HTML body"} — no manifest is served there`,
+      found: `HTTP 200 with an HTML page (${contentType || "HTML body"}), not the file`,
     };
   }
 
@@ -240,6 +242,18 @@ function readAt(ctx: CheckContext, path: string): ArdRead {
  * one, so the site hears about the breakage instead of a 404 at the other
  * path. Every failure mode is named so callers can report the real diagnosis.
  */
+/**
+ * Every valid manifest, in read order (ard.json first). A site may publish
+ * both files with different entries; a caller looking for one kind of entry,
+ * such as an MCP Server Card, searches all of them rather than the one
+ * `readAiCatalog` picks.
+ */
+export function readAiCatalogs(ctx: CheckContext): ArdManifest[] {
+  return CATALOG_PATHS.map((path) => readAt(ctx, path)).flatMap((read) =>
+    read.ok ? [read.manifest] : [],
+  );
+}
+
 export function readAiCatalog(ctx: CheckContext): ArdRead {
   const reads = CATALOG_PATHS.map((path) => readAt(ctx, path));
   // A manifest that lists entries beats an empty one at the other path.
@@ -270,9 +284,7 @@ export function readAiCatalog(ctx: CheckContext): ArdRead {
 export function describeFailure(read: Exclude<ArdRead, { ok: true }>): string {
   switch (read.reason) {
     case "absent":
-      return `Neither ${CATALOG_PATHS_LABEL} is served (${read.found}).`;
-    case "html":
-      return `${read.path} returns HTML, not a manifest — the request is being answered by a catch-all route.`;
+      return `Neither ${ARD_PATH} nor ${AI_CATALOG_PATH} is served (${read.found}).`;
     case "not-json":
       return `${read.path} is served but is not valid JSON.`;
     case "shape":

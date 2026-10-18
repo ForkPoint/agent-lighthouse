@@ -143,7 +143,7 @@ export class AiCatalogExistsAudit extends Audit {
       // The advertisement only mitigates *absence*. When a manifest is served
       // and merely malformed, saying "advertised but not served there" would be
       // a wrong diagnosis, so the ad is reported as context instead.
-      if (ad && (read.reason === "absent" || read.reason === "html")) {
+      if (ad && read.reason === "absent") {
         return this.warn(
           `${message} A catalog is advertised as ${ad.href} via rel="ai-catalog" (${ad.source}), but consumers resolve only ${ARD_PATH} and ${AI_CATALOG_PATH}.`,
           EXPECTED,

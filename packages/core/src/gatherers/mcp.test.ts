@@ -144,6 +144,52 @@ describe("discoverMcpEndpoint", () => {
     });
   });
 
+  // An ARD catalog lists other artifacts too. A card listed only in the
+  // second catalog still declares the server.
+  it("finds a Server Card in ai-catalog.json when ard.json lists no card", async () => {
+    const otherCatalog = JSON.stringify({
+      entries: [
+        {
+          type: "application/openapi+json",
+          url: "https://example.com/api.json",
+        },
+      ],
+    });
+    const found = await discoverMcpEndpoint(
+      ctxWith({
+        "/.well-known/ard.json": otherCatalog,
+        "/.well-known/ai-catalog.json": CATALOG,
+        "/card.json": CARD,
+      }),
+    );
+    expect(found).toEqual({
+      url: "https://a.test/mcp",
+      source: "ai-catalog",
+      cardUrl: CARD_URL,
+    });
+  });
+
+  // Entry and remote urls SHOULD be absolute; a relative one still names a
+  // reachable resource, resolved against the file that carries it.
+  it("resolves a relative card url against the catalog and a relative remote against the card", async () => {
+    const catalog = JSON.stringify({
+      entries: [
+        { type: "application/mcp-server-card+json", url: "/card.json" },
+      ],
+    });
+    const card = JSON.stringify({
+      remotes: [{ type: "streamable-http", url: "/mcp" }],
+    });
+    const found = await discoverMcpEndpoint(
+      ctxWith({ "/.well-known/ai-catalog.json": catalog, "/card.json": card }),
+    );
+    expect(found).toEqual({
+      url: "https://example.com/mcp",
+      source: "ai-catalog",
+      cardUrl: "https://example.com/card.json",
+    });
+  });
+
   it("prefers a streamable-http remote over an earlier one of another type", async () => {
     const card = JSON.stringify({
       remotes: [

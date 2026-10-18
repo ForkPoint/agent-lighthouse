@@ -5,7 +5,7 @@ import { isSafeUrl } from "#core/fetcher";
 import { HttpMethod } from "#core/types";
 import { LogField, withLogContext } from "#core/logger";
 import { isRootArtifact } from "./root-files";
-import { readAiCatalog } from "#core/audits/agent-interfaces/_ard";
+import { readAiCatalogs } from "#core/audits/agent-interfaces/_ard";
 
 /**
  * MCP's current specification revision. Pinning an older one makes servers that
@@ -103,12 +103,27 @@ export async function discoverMcpEndpoint(
 
   // The ARD reader owns both catalog paths (ard.json first, then
   // ai-catalog.json) and the manifest shape; discovery only picks the entry.
-  const catalog = readAiCatalog(ctx);
-  if (catalog.ok) {
-    const card = catalog.manifest.entries.find(
+  // Both catalogs are searched: a site may list its Server Card in
+  // ai-catalog.json (the path SEP-2127 names) and other artifacts in ard.json.
+  for (const manifest of readAiCatalogs(ctx)) {
+    const card = manifest.entries.find(
       (entry) => entry.type?.includes("mcp-server-card") && entry.url,
     );
-    if (card?.url) return resolveServerCard(ctx, card.url);
+    if (!card?.url) continue;
+    // Entry urls SHOULD be absolute; a relative one resolves against the
+    // catalog that carries it, as ai-catalog-urls resolves it.
+    let cardUrl: string;
+    try {
+      cardUrl = new URL(card.url, new URL(manifest.path, ctx.baseUrl)).href;
+    } catch {
+      return {
+        url: "",
+        source: "card-unreadable",
+        cardUrl: card.url,
+        found: `${card.url} -> not a valid URL`,
+      };
+    }
+    return resolveServerCard(ctx, cardUrl);
   }
 
   return undefined;
@@ -173,7 +188,14 @@ async function resolveServerCard(
       found: `${cardUrl} -> no remotes[].url`,
     };
   }
-  return { url: remote["url"] as string, source: "ai-catalog", cardUrl };
+  // A relative remote url names an endpoint on the card's own host.
+  let url: string;
+  try {
+    url = new URL(remote["url"] as string, cardUrl).href;
+  } catch {
+    return unreadable(`${cardUrl} -> remotes[].url is not a valid URL`);
+  }
+  return { url, source: "ai-catalog", cardUrl };
 }
 
 /** Frame a JSON-RPC 2.0 request. `params` is omitted entirely when absent. */

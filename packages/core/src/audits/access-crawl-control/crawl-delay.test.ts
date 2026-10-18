@@ -89,6 +89,33 @@ describe("CrawlDelayAudit", () => {
     expect(result.message).not.toContain("Googlebot");
   });
 
+  // Google's crawler tokens start with "Google" (Googlebot-Image, GoogleOther,
+  // Google-Extended) or end with "-Google" (AdsBot-Google, Storebot-Google).
+  // A token that merely contains the word is another crawler.
+  it.each([
+    "AdsBot-Google",
+    "Storebot-Google",
+    "GoogleOther",
+    "Google-Extended",
+  ])("does not judge the Google crawler token %s", (token) => {
+    const robots = [`User-agent: ${token}`, "Crawl-delay: 30"].join("\n");
+    const result = audit.audit(
+      mockCheckContext([], { "/robots.txt": mockFetchResult(robots, 200) }),
+    );
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+  });
+
+  it.each(["notgoogle", "MyGoogleScraper"])(
+    "judges %s, a token that only contains the word google",
+    (token) => {
+      const robots = [`User-agent: ${token}`, "Crawl-delay: 30"].join("\n");
+      const result = audit.audit(
+        mockCheckContext([], { "/robots.txt": mockFetchResult(robots, 200) }),
+      );
+      expect(result.status).toBe(CheckStatus.Fail);
+    },
+  );
+
   it("states no unsourced indexing-delay claim", () => {
     const robots = "User-agent: *\nCrawl-delay: 30";
     const ctx = mockCheckContext([], {
