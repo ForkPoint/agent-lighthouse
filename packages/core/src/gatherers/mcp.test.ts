@@ -45,9 +45,13 @@ function ctxWith(rootFiles: Record<string, string>): CheckContext {
 const SERVERS_JSON = JSON.stringify({
   servers: [{ url: "https://a.test/mcp" }],
 });
+// Google's Merchant UCP profile shape: services inside a `ucp` object.
 const UCP = JSON.stringify({
-  services: {
-    commerce: [{ transport: "mcp", endpoint: "https://a.test/ucp-mcp" }],
+  ucp: {
+    version: "2026-04-08",
+    services: {
+      commerce: [{ transport: "mcp", endpoint: "https://a.test/ucp-mcp" }],
+    },
   },
 });
 const CARD_URL = "https://example.com/card.json";
@@ -116,6 +120,58 @@ describe("discoverMcpEndpoint", () => {
       ctxWith({ "/.well-known/ucp": UCP }),
     );
     expect(found).toEqual({ url: "https://a.test/ucp-mcp", source: "ucp" });
+  });
+
+  // UCP 2026-01-11 nests one object per transport under each service.
+  it("reads the mcp endpoint of a 2026-01-11 UCP profile", async () => {
+    const found = await discoverMcpEndpoint(
+      ctxWith({
+        "/.well-known/ucp": JSON.stringify({
+          ucp: {
+            version: "2026-01-11",
+            services: {
+              "dev.ucp.shopping": {
+                version: "2026-01-11",
+                rest: { endpoint: "https://a.test/ucp/v1" },
+                mcp: { endpoint: "https://a.test/ucp/mcp" },
+              },
+            },
+          },
+        }),
+      }),
+    );
+    expect(found).toEqual({ url: "https://a.test/ucp/mcp", source: "ucp" });
+  });
+
+  it("resolves a relative UCP mcp endpoint against the profile URL", async () => {
+    const found = await discoverMcpEndpoint(
+      ctxWith({
+        "/.well-known/ucp": JSON.stringify({
+          ucp: {
+            services: {
+              commerce: [{ transport: "mcp", endpoint: "/ucp/mcp" }],
+            },
+          },
+        }),
+      }),
+    );
+    expect(found).toEqual({
+      url: "https://example.com/ucp/mcp",
+      source: "ucp",
+    });
+  });
+
+  it("ignores JSON at /.well-known/ucp that has no ucp key", async () => {
+    const found = await discoverMcpEndpoint(
+      ctxWith({
+        "/.well-known/ucp": JSON.stringify({
+          services: {
+            commerce: [{ transport: "mcp", endpoint: "https://a.test/x" }],
+          },
+        }),
+      }),
+    );
+    expect(found).toBeUndefined();
   });
 
   // SEP-2127: a catalog entry's `url` addresses the Server Card. The endpoint

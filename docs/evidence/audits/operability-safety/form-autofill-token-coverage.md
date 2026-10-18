@@ -89,8 +89,10 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
   no source shows. The split also misread the recommended
   `type="email" autocomplete="username"` sign-in field: the profile audit
   called it a wrong token and this audit never counted it. On a form with a
-  password and no username field the email is now the account identifier,
-  judged here, and `username` or `email` both cover it.
+  password and no username field (sign-in or sign-up) the first email field
+  is now the account identifier, judged here, and `username` or `email` both
+  cover it. A second email field, such as "confirm email", stays profile data
+  so the identifier is not counted twice.
 
 - **Narrowed to credential tokens on 2026-10-18.** The audit used to score
   every autofill token as one ratio at grade A. Only the credential tokens

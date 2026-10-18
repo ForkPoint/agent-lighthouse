@@ -88,6 +88,34 @@ describe("A2aAgentCardAudit", () => {
     expect(result.found).toContain("none of the Agent Card's keys");
   });
 
+  it("reads a minimal card at agent-card.json and warns about the missing Required fields", () => {
+    const result = audit.audit(
+      withCard({
+        name: "Booking Agent",
+        description: "Books tables.",
+        version: "1.0.0",
+        url: "https://example.com/a2a",
+      }),
+    );
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.message).toContain("skills");
+  });
+
+  it("does not read a bare name at agent-card.json as a card", () => {
+    const result = audit.audit(withCard({ name: "x", lastUpdate: "2026" }));
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+  });
+
+  it("keeps the legacy path strict: name and description alone are not an A2A card there", () => {
+    const result = audit.audit(
+      at(
+        "/.well-known/agent.json",
+        JSON.stringify({ name: "x", description: "some other agent format" }),
+      ),
+    );
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+  });
+
   // ── Broken ──
 
   it("fails a card that does not parse as JSON", () => {

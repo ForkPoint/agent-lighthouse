@@ -152,6 +152,25 @@ describe("FormAutofillTokenCoverageAudit", () => {
     expect(result.message).toContain('autocomplete="username"');
   });
 
+  // Only the first email field is the account identifier; a "confirm email"
+  // field is not a second one and stays profile data.
+  it("promotes only the first email field on a form with a password", () => {
+    const result = run(
+      `
+      <form action="/signup">
+        <label for="e">Email</label>
+        <input id="e" name="e" type="email" autocomplete="username">
+        <label for="e2">Confirm email</label>
+        <input id="e2" name="e2" type="email">
+        <label for="p">Password</label>
+        <input id="p" name="p" type="password" autocomplete="new-password">
+      </form>`,
+      "https://example.test/signup",
+    );
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.found).toContain("2 of 2");
+  });
+
   // A signup form with both a username and an email: the email is profile data.
   it("leaves the email to the profile audit when a username field exists", () => {
     const result = run(

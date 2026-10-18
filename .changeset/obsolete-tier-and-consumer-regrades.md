@@ -19,7 +19,7 @@ Consumer-evidence review: a new `obsolete` tier, re-grades, and checks that say 
 - `access-crawl-control/tdm-rep` experimental to informative (now runs by default).
 - `access-crawl-control/https-enabled` A to B. The grade rests on Chrome 154's prompt before plain-http sites; a plain-http site now fails at priority high, not critical.
 - `operability-safety/wikidata-round-trip-verification` B to C (informative).
-- `operability-safety/form-autofill-token-coverage` A to B, and now judges credential tokens only. An email field on a sign-in form counts as the account identifier. Contact, address and payment tokens move to the new `operability-safety/profile-autofill-token-coverage` (C, informative).
+- `operability-safety/form-autofill-token-coverage` A to B, and now judges credential tokens only. On a sign-in or sign-up form with a password field and no username field, the first email field counts as the account identifier. Contact, address and payment tokens move to the new `operability-safety/profile-autofill-token-coverage` (C, informative).
 
 **New audits:** `agent-interfaces/a2a-agent-card` (B, scored; A2A `/.well-known/agent-card.json`, IANA permanent), `agentic-commerce/ucp-profile` (B, scored), `operability-safety/change-password-url` (C, informative). A JSON body that lacks the artifact's own keys, such as a catch-all response served at every `/.well-known/` path, counts as no file.
 

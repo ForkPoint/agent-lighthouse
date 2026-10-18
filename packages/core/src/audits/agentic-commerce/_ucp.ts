@@ -41,7 +41,12 @@ export const NO_UCP_PROFILE = {
 
 export type UcpRead =
   | { kind: "absent"; found: string }
-  | { kind: "broken"; found: string }
+  | {
+      kind: "broken";
+      /** True when the body is a JSON object and only its `ucp` key is wrong. */
+      ucpKeyOnly: boolean;
+      found: string;
+    }
   | {
       kind: "profile";
       profile: Record<string, unknown>;
@@ -75,6 +80,7 @@ export function readUcpProfile(ctx: Pick<CheckContext, "rootFiles">): UcpRead {
   if (!isObject(parsed)) {
     return {
       kind: "broken",
+      ucpKeyOnly: false,
       found:
         parsed === undefined
           ? "HTTP 200, but the body does not parse as JSON"
@@ -91,8 +97,56 @@ export function readUcpProfile(ctx: Pick<CheckContext, "rootFiles">): UcpRead {
   if (!isObject(ucp)) {
     return {
       kind: "broken",
+      ucpKeyOnly: true,
       found: "HTTP 200, but the `ucp` key is not an object",
     };
   }
   return { kind: "profile", profile: parsed, ucp };
+}
+
+/** Transport keys of the 2026-01-11 profile shape, one object per transport. */
+const TRANSPORT_KEYS = ["rest", "mcp", "a2a", "embedded"] as const;
+
+/** One transport binding of a service, in either published profile shape. */
+export interface UcpBinding {
+  service: string;
+  /** `transport` of a current binding, or the nesting key of an older one. */
+  transport: string | undefined;
+  endpoint: unknown;
+}
+
+/**
+ * Every binding the profile's services declare. Current UCP (2026-04-08
+ * onward) maps each service to an array of bindings that carry `transport`
+ * and `endpoint`; the 2026-01-11 shape maps it to one object with a nested
+ * object per transport (`rest.endpoint`, `mcp.endpoint`, ...). A service
+ * object with neither is read as one binding with no transport.
+ */
+export function ucpBindings(ucp: Record<string, unknown>): UcpBinding[] {
+  const services = isObject(ucp["services"]) ? ucp["services"] : {};
+  const out: UcpBinding[] = [];
+  for (const [service, value] of Object.entries(services)) {
+    if (Array.isArray(value)) {
+      for (const binding of value.filter(isObject)) {
+        const transport = binding["transport"];
+        out.push({
+          service,
+          transport: typeof transport === "string" ? transport : undefined,
+          endpoint: binding["endpoint"],
+        });
+      }
+      continue;
+    }
+    if (!isObject(value)) continue;
+    const nested = TRANSPORT_KEYS.filter((key) => isObject(value[key]));
+    if (nested.length === 0) {
+      out.push({ service, transport: undefined, endpoint: value["endpoint"] });
+      continue;
+    }
+    for (const key of nested) {
+      const binding = value[key] as Record<string, unknown>;
+      out.push({ service, transport: key, endpoint: binding["endpoint"] });
+    }
+  }
+  return out;
 }

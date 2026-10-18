@@ -10,7 +10,7 @@ import {
   FixEffort,
   ScoreDisplayMode,
 } from "#core/types";
-import { NO_UCP_PROFILE, UCP_PATH, readUcpProfile } from "./_ucp";
+import { NO_UCP_PROFILE, UCP_PATH, readUcpProfile, ucpBindings } from "./_ucp";
 
 function isObject(val: unknown): val is Record<string, unknown> {
   return typeof val === "object" && val !== null && !Array.isArray(val);
@@ -24,42 +24,33 @@ function isAbsoluteHttps(url: string): boolean {
   }
 }
 
-/** Transport keys of the 2026-01-11 profile shape, one object per transport. */
-const TRANSPORT_KEYS = ["rest", "mcp", "a2a", "embedded"] as const;
-
-/**
- * The bindings a service declares, in either published shape. Current UCP
- * (2026-04-08 onward) maps each service to an array of bindings that carry
- * `transport` and `endpoint`; the 2026-01-11 shape maps it to one object with
- * a nested object per transport (`rest.endpoint`, `mcp.endpoint`, ...).
- */
-function bindingsOf(service: unknown): Record<string, unknown>[] {
-  if (Array.isArray(service)) return service.filter(isObject);
-  if (!isObject(service)) return [];
-  const nested = TRANSPORT_KEYS.map((key) => service[key]).filter(isObject);
-  return nested.length > 0 ? nested : [service];
-}
-
 /**
  * Declared endpoints that are not absolute https URLs. `endpoint` is optional
  * in the UCP specification, and an `embedded` binding has none, so only an
  * endpoint that is present is judged; the spec says a present one "MUST be a
  * valid URL with scheme (https)".
  */
-function badEndpoints(services: Record<string, unknown>): string[] {
+function badEndpoints(ucp: Record<string, unknown>): string[] {
   const bad: string[] = [];
-  for (const [name, service] of Object.entries(services)) {
-    for (const binding of bindingsOf(service)) {
-      const endpoint = binding["endpoint"];
-      if (endpoint === undefined) continue;
-      if (typeof endpoint !== "string" || !isAbsoluteHttps(endpoint)) {
-        bad.push(
-          `${name} (${typeof endpoint === "string" ? endpoint : JSON.stringify(endpoint)})`,
-        );
-      }
+  for (const { service, endpoint } of ucpBindings(ucp)) {
+    if (endpoint === undefined) continue;
+    if (typeof endpoint !== "string" || !isAbsoluteHttps(endpoint)) {
+      bad.push(
+        `${service} (${typeof endpoint === "string" ? endpoint : JSON.stringify(endpoint)})`,
+      );
     }
   }
   return bad;
+}
+
+/**
+ * Declared endpoints across every binding. Reported, not judged: the UCP
+ * specification marks `endpoint` optional for every transport (rest, mcp,
+ * a2a, embedded), so a profile with none is valid.
+ */
+function countEndpoints(ucp: Record<string, unknown>): number {
+  return ucpBindings(ucp).filter((binding) => binding.endpoint !== undefined)
+    .length;
 }
 
 /** Capabilities as a keyed object (current) or an array (2026-01-11). */
@@ -133,7 +124,9 @@ export class UcpProfileAudit extends Audit {
 
     if (read.kind === "broken") {
       return this.fail(
-        `The UCP profile at ${UCP_PATH} is not a JSON object, so Google cannot read it.`,
+        read.ucpKeyOnly
+          ? `The UCP profile at ${UCP_PATH} parses, but its \`ucp\` key is not an object, so Google cannot read it.`
+          : `The UCP profile at ${UCP_PATH} is not a JSON object, so Google cannot read it.`,
         EXPECTED,
         read.found,
         { priority: CheckPriority.High, code: SAMPLE },
@@ -162,6 +155,7 @@ export class UcpProfileAudit extends Audit {
     const details = {
       ...(version ? { version } : {}),
       services: serviceCount,
+      endpoints: countEndpoints(ucp),
       capabilities: capabilityCount,
       signingKeys,
     };
@@ -172,7 +166,7 @@ export class UcpProfileAudit extends Audit {
         "it names no `ucp.version`, which Google uses to pick the protocol version",
       );
     }
-    const bad = badEndpoints(services);
+    const bad = badEndpoints(ucp);
     if (bad.length > 0) {
       problems.push(
         `these declared endpoints are not absolute https URLs: ${bad.join(", ")}`,

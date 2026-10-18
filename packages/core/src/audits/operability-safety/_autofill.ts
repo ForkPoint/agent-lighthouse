@@ -310,7 +310,7 @@ interface RawField {
 }
 
 /**
- * Tokens accepted on the account identifier of a sign-in form. The field is
+ * Tokens accepted on the account identifier of a sign-in or sign-up form. The field is
  * the `username` concept, and an email address used as the login is
  * conventionally marked `type="email" autocomplete="username"`; a site that
  * declares `email` there still names the value a password manager fills.
@@ -385,15 +385,20 @@ function readFields(
     });
   });
 
-  // On a form with a password and no separate username field, the email field
-  // is the account identifier: it owes `username` (or `email`) and belongs to
-  // the credential audit. A signup form that also asks for a username keeps
-  // its email as profile data.
+  // On a form with a password and no separate username field (sign-in or
+  // sign-up), the first email field is the account identifier: it owes
+  // `username` (or `email`) and belongs to the credential audit. A second
+  // email field, such as "confirm email", is not another identifier and stays
+  // profile data. A signup form that also asks for a username keeps its email
+  // as profile data.
   const hasPassword = raw.some((field) => field.type === "password");
   const hasUsernameField = raw.some(
     (field) => field.reading.expected === "username",
   );
   const promoteEmail = hasPassword && !hasUsernameField;
+  const identifier = promoteEmail
+    ? raw.find((field) => field.reading.expected === "email")
+    : undefined;
 
   return raw.map((field) => {
     const { reading } = field;
@@ -401,7 +406,7 @@ function readFields(
     let accepted: ReadonlySet<string> = expected
       ? new Set([expected])
       : new Set();
-    if (promoteEmail && expected === "email") {
+    if (field === identifier) {
       expected = "username";
       accepted = IDENTIFIER_TOKENS;
       reading.expected = expected;

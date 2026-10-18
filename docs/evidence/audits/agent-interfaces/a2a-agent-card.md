@@ -93,7 +93,7 @@ The reference A2A client, given a domain, sends a GET to `/.well-known/agent-car
 
 ## Implementation deviations
 
-- Either path counts as a card only when its JSON object carries an A2A-only key (`skills`, `capabilities`, `protocolVersion`, `supportedInterfaces`, `defaultInputModes`, `defaultOutputModes` or `preferredTransport`). A JSON file there from another convention, or a card that carries none of those keys, reads as absent.
+- Either path counts as a card when its JSON object carries an A2A-only key (`skills`, `capabilities`, `protocolVersion`, `supportedInterfaces`, `defaultInputModes`, `defaultOutputModes` or `preferredTransport`). At `/.well-known/agent-card.json`, a path only A2A uses, a string `name` beside one more card field (`description`, `version`, `url` or an A2A-only key) is also enough, so a minimal card is judged for its missing Required fields instead of read as absent. The legacy path is shared with other formats and keeps the stricter test. A JSON file from another convention reads as absent.
 - An empty 200 body reads as absent, matching the other root-file readers.
 - The reader lives in `_a2a-card.ts` beside the audit and exports `NO_AGENT_CARD`, which enrols the audit in `absent-artifact-contract.test.ts`.
 - 2026-10-18 review: grade A to B (see Scoring). The A2A-key test now applies at both paths: a real-site scan found a server that answers every `/.well-known/*` path with one unrelated JSON document, and the audit warned that it missed all eight Required fields. The 0.3-shape warning is gone because the reference SDK converts that shape. The legacy-path message no longer says clients have no fallback, since Copilot Studio still names `agent.json`. `AgentInterface` Required fields are now checked.

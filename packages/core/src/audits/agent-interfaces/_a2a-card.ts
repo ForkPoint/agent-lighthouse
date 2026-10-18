@@ -17,7 +17,8 @@
  * - **Readable.** A JSON object that carries at least one key only an A2A
  *   card uses, handed back for the caller to judge.
  *
- * Only a body that looks like an A2A card counts, at either path. Some servers
+ * Only a body that looks like an A2A card counts, at either path (at the
+ * current path a `name` beside one more card field is enough). Some servers
  * answer every `/.well-known/*` path with the same unrelated JSON document; a
  * JSON object with none of the card's keys is somebody else's file, so it
  * reads as absent rather than as a card missing every field. The legacy path
@@ -86,6 +87,27 @@ function looksLikeA2aCard(val: Record<string, unknown>): boolean {
   return A2A_KEYS.some((key) => key in val);
 }
 
+/**
+ * Card fields that, beside a string `name`, mark a minimal card. Read only at
+ * {@link AGENT_CARD_PATH}, a path A2A alone owns: there a card that names
+ * itself and carries one more card field is a card missing Required fields,
+ * which the audit should report, not a stranger's file. The legacy path is
+ * shared with other formats, so it keeps the stricter {@link A2A_KEYS} test.
+ */
+const MINIMAL_CARD_KEYS = [
+  "description",
+  "version",
+  "url",
+  ...A2A_KEYS,
+] as const;
+
+function looksLikeMinimalCard(val: Record<string, unknown>): boolean {
+  return (
+    typeof val["name"] === "string" &&
+    MINIMAL_CARD_KEYS.some((key) => key in val)
+  );
+}
+
 /** Read the site's Agent Card, current path first. */
 export function readAgentCard(
   ctx: Pick<CheckContext, "rootFiles">,
@@ -103,7 +125,7 @@ export function readAgentCard(
             : "HTTP 200, but the JSON is not an object",
       };
     }
-    if (looksLikeA2aCard(parsed)) {
+    if (looksLikeA2aCard(parsed) || looksLikeMinimalCard(parsed)) {
       return {
         kind: "card",
         path: AGENT_CARD_PATH,

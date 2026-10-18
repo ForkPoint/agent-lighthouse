@@ -81,8 +81,8 @@ Each category in the JSON report carries `registryMass` and `assessedMass` for t
 | Answer Readiness           |     33 |     19 |          13.0 |
 | Machine Discovery          |     24 |     16 |          12.8 |
 | Agent Interfaces           |     26 |     17 |          12.6 |
-| Agentic Commerce           |     11 |     11 |           9.4 |
 | Structured Data            |     14 |     10 |           9.6 |
+| Agentic Commerce           |     11 |     11 |           9.4 |
 
 ### No score (`overallScore: null`)
 

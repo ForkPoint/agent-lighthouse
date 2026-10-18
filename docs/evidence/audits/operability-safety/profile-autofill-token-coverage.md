@@ -23,7 +23,7 @@ sources:
 
 Whether each contact, address and payment field declares the matching WHATWG `autocomplete` token: `email`, `tel`, `name`, `given-name`, `family-name`, `organization`, `bday`, `address-line1`, `address-line2`, `address-level1`, `address-level2`, `postal-code`, `country-name`, `cc-name`, `cc-number`, `cc-exp` and `cc-csc`. The concept is inferred from the field's type, name, id, placeholder, `aria-label` and label text.
 
-Sign-in, sign-up and one-time-code fields are judged by `operability-safety/form-autofill-token-coverage`. So is the email field of a sign-in form that has no separate username field: there the email is the account identifier.
+Sign-in, sign-up and one-time-code fields are judged by `operability-safety/form-autofill-token-coverage`. So is the first email field of a sign-in or sign-up form with a password field and no separate username field: there the email is the account identifier.
 
 A field counts as covered when all three hold:
 

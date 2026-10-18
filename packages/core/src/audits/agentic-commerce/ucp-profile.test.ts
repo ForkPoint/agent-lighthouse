@@ -92,6 +92,29 @@ describe("UcpProfileAudit", () => {
   it("fails a profile whose ucp key is not an object", () => {
     const result = audit.audit(withUcp({ ucp: "2026-08-25" }));
     expect(result.status).toBe(CheckStatus.Fail);
+    // The body is a JSON object; only its `ucp` key has the wrong type.
+    expect(result.message).toContain("`ucp` key is not an object");
+    expect(result.message).not.toContain("is not a JSON object");
+  });
+
+  it("says the body is not a JSON object when the body is an array", () => {
+    const result = audit.audit(withUcp("[]"));
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("is not a JSON object");
+  });
+
+  it("passes a profile whose bindings declare no endpoint at all: the spec makes endpoint optional for every transport", () => {
+    const result = audit.audit(
+      withUcp(
+        profile({
+          services: {
+            "dev.ucp.shopping": [{ version: "2026-04-08", transport: "rest" }],
+          },
+        }),
+      ),
+    );
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.details).toMatchObject({ endpoints: 0 });
   });
 
   it("fails a profile that declares no services", () => {
