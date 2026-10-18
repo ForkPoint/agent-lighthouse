@@ -11,3 +11,5 @@ export type {
   PhaseCounts,
 } from "./task-types";
 export { applyTaskEvent, initialSnapshot } from "./reducer";
+export { InMemoryTaskStore } from "./task-store";
+export type { TaskStore, TaskListener } from "./task-store";
