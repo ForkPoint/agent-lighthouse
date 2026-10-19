@@ -266,8 +266,11 @@ export function mergeHeaders(
   return out;
 }
 
-/** Raw bytes a text response may read; see the decode in `issue`. */
-const TEXT_READ_CAP_BYTES = 3 * MAX_RESPONSE_BODY_BYTES;
+/**
+ * Raw bytes a text response may read; see the decode in `issue`. The extra 3
+ * bytes cover a leading BOM, which TextDecoder strips without yielding a unit.
+ */
+const TEXT_READ_CAP_BYTES = 3 * MAX_RESPONSE_BODY_BYTES + 3;
 
 /**
  * Reads at most `cap` bytes of a response body, then stops. Leaving the loop

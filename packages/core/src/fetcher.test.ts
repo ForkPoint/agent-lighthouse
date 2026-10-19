@@ -607,8 +607,9 @@ describe("fetcher.fetch — body and headers edge cases", () => {
 
     expect(result.body.length).toBe(MAX_RESPONSE_BODY_BYTES);
     expect(closed).toBe(true);
+    // The cap is 3x plus 3 BOM bytes, so the reader takes at most one chunk past 3x.
     expect(yielded * chunk.length).toBeLessThanOrEqual(
-      3 * MAX_RESPONSE_BODY_BYTES,
+      3 * MAX_RESPONSE_BODY_BYTES + chunk.length,
     );
   });
 
