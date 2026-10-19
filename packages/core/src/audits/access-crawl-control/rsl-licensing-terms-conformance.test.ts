@@ -283,6 +283,163 @@ describe("RslLicensingTermsConformanceAudit", () => {
     expect(result.details?.["validDocuments"]).toBe(1);
   });
 
+  it("passes a conformant inline RSL document without fetching it", async () => {
+    const { ctx, fetched } = site({
+      body: `<script type="application/rsl+xml">   </script><script type="application/rsl+xml">${RSL}</script>`,
+    });
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.details?.["documents"]).toBe(1);
+    expect(fetched).toEqual([]);
+  });
+
+  it("ignores licence links that do not name the RSL media type", async () => {
+    const { ctx } = site({
+      robots: "User-agent: *\nAllow: /\n",
+      headers: {
+        link: '<https://creativecommons.org/licenses/by/4.0/>; rel="license"',
+      },
+      head: '<link rel="license" href="https://creativecommons.org/licenses/by/4.0/">',
+    });
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+  });
+
+  it("names an unresolvable licence link and reads no licence from it", async () => {
+    const { ctx } = site({
+      headers: {
+        link: '<http://[>; rel="license"; type="application/rsl+xml"',
+      },
+      head: '<link rel="license" type="application/rsl+xml" href="http://[">',
+    });
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.found).toContain("unresolvable licence URL");
+    expect(result.found).toContain("unresolvable href");
+  });
+
+  it("reads a URL advertised in two channels once", async () => {
+    const { ctx, fetched } = site({
+      robots: "License: https://example.com/a.xml\n",
+      head: '<link rel="license" type="application/rsl+xml; charset=utf-8" href="/a.xml">',
+      files: { "https://example.com/a.xml": rslFile() },
+    });
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(fetched).toEqual(["https://example.com/a.xml"]);
+    expect(result.details?.["documents"]).toBe(1);
+  });
+
+  it("fails an advertised licence the scanner will not fetch", async () => {
+    const { ctx, fetched } = site({
+      robots: "License: http://127.0.0.1/rsl.xml\n",
+    });
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(fetched).toEqual([]);
+    expect(strings(result, "conformanceErrors")[0]).toContain(
+      "is not a URL this scanner will fetch",
+    );
+  });
+
+  it("fails an advertised licence that does not answer 200", async () => {
+    const { ctx } = site({ robots: "License: https://example.com/a.xml\n" });
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(strings(result, "conformanceErrors")[0]).toContain(
+      "answered HTTP 404",
+    );
+  });
+
+  it("reads the content type from the result when the header map has none", async () => {
+    const file = rslFile();
+    delete file.headers["content-type"];
+    const { ctx } = site({
+      robots: "License: https://example.com/a.xml\n",
+      files: { "https://example.com/a.xml": file },
+    });
+    expect((await audit.audit(ctx)).status).toBe(CheckStatus.Pass);
+  });
+
+  it("fails a document with no content element", async () => {
+    const { ctx } = site({
+      robots: "License: https://example.com/a.xml\n",
+      files: {
+        "https://example.com/a.xml": rslFile(
+          '<rsl xmlns="https://rslstandard.org/rsl"><license><permits type="usage">search</permits></license></rsl>',
+        ),
+      },
+    });
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(strings(result, "conformanceErrors")[0]).toContain(
+      "no <content url=…> element",
+    );
+    expect(result.details?.["validDocuments"]).toBe(0);
+  });
+
+  it("fails a content element with no licence, and a licence with no terms", async () => {
+    const noLicence = site({
+      robots: "License: https://example.com/a.xml\n",
+      files: {
+        "https://example.com/a.xml": rslFile(
+          '<rsl xmlns="https://rslstandard.org/rsl"><content url="/"></content></rsl>',
+        ),
+      },
+    });
+    const first = await audit.audit(noLicence.ctx);
+    expect(first.status).toBe(CheckStatus.Fail);
+    expect(strings(first, "conformanceErrors")).toContain(
+      "robots.txt License: line 1: no <license> element",
+    );
+
+    const empty = site({
+      robots: "License: https://example.com/a.xml\n",
+      files: {
+        "https://example.com/a.xml": rslFile(
+          '<rsl xmlns="https://rslstandard.org/rsl"><content url="/"><license></license></content></rsl>',
+        ),
+      },
+    });
+    const second = await audit.audit(empty.ctx);
+    expect(second.status).toBe(CheckStatus.Fail);
+    expect(strings(second, "conformanceErrors")[0]).toContain(
+      "carries no permits, prohibits or payment",
+    );
+  });
+
+  it("names missing type and currency attributes", async () => {
+    const broken = RSL.replace('<prohibits type="usage">', "<prohibits>")
+      .replace('<payment type="crawl">', "<payment>")
+      .replace('currency="USD"', "");
+    const { ctx } = site({
+      robots: "License: https://example.com/a.xml\n",
+      files: { "https://example.com/a.xml": rslFile(broken) },
+    });
+    const errors = strings(await audit.audit(ctx), "conformanceErrors").join(
+      " ",
+    );
+    expect(errors).toContain('<prohibits type="missing">');
+    expect(errors).toContain('<payment type="missing">');
+    expect(errors).toContain('<amount currency="missing">');
+  });
+
+  it("compares an unparseable content url as written", async () => {
+    const { ctx } = site({
+      robots: "License: https://example.com/a.xml\n",
+      files: {
+        "https://example.com/a.xml": rslFile(
+          RSL.replace('url="/"', 'url="http://["'),
+        ),
+      },
+    });
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(strings(result, "conformanceErrors")[0]).toContain(
+      "<content url> covers http://[",
+    );
+  });
+
   it("is a scored grade B audit with an id inside the cap", () => {
     const { meta } = RslLicensingTermsConformanceAudit;
     expect(meta.evidenceGrade).toBe(EvidenceGrade.B);

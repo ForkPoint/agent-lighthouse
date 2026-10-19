@@ -5,6 +5,7 @@ export type {
   CategoryView,
   CoverageView,
   CheckCounts,
+  ObsoleteView,
   BuildReportViewOptions,
 } from "./view-model";
 export { generateScanSummary } from "./summary";
@@ -26,3 +27,11 @@ export type {
 } from "./page-scope";
 
 export { formatBrowserAssessment } from "./browser-assessment";
+
+export {
+  NOTICE_LABELS,
+  NOTICE_LINK_LABELS,
+  noticeKind,
+  noticeText,
+  obsoleteTally,
+} from "./notices";

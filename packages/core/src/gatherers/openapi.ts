@@ -232,10 +232,10 @@ export function readOpenApiPaths(spec: OpenApiSpec): OpenApiPathsReading {
 /**
  * Every operation the document declares, flattened to path + method + object.
  *
- * For callers that judge a site whether or not it publishes a document —
- * `agent-interfaces/search-endpoint`, `operability-safety/contact-form`. They
- * are looking for one endpoint, not grading the document, so a broken sibling
- * entry is skipped rather than discarding the entries beside it. A site with a
+ * For callers that judge a site whether or not it publishes a document, such
+ * as `operability-safety/contact-form`. They are looking for one endpoint,
+ * not grading the document, so a broken sibling entry is skipped rather than
+ * discarding the entries beside it. A site with a
  * `POST /contact` and one malformed path item does have a contact endpoint, and
  * saying otherwise is the wrong claim this module exists to prevent.
  *

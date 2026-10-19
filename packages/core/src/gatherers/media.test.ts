@@ -6,7 +6,9 @@ import {
   originOfVariant,
   imageCandidates,
   fetchImage,
+  fetchImageHead,
 } from "./media";
+import { HttpMethod } from "#core/types";
 import {
   mockPageContext,
   mockCheckContext,
@@ -76,6 +78,10 @@ describe("media gatherer", () => {
       ).toBe("bmff");
       expect(containerOf(raw("not an image at all"))).toBe("unknown");
     });
+
+    it("names nothing from fewer than four bytes", () => {
+      expect(containerOf(raw("\xff\xd8\xff"))).toBe("unknown");
+    });
   });
 
   describe("findC2paManifest", () => {
@@ -127,6 +133,82 @@ describe("media gatherer", () => {
     it("returns undefined for an unsigned asset", () => {
       expect(findC2paManifest(png("IDAT", "pixels"))).toBeUndefined();
     });
+
+    it("ignores an APP11 segment that does not open with the JUMBF identifier", () => {
+      expect(findC2paManifest(jpeg(0xeb, "XXjumbc2pa"))).toBeUndefined();
+    });
+
+    it("stops reading a JPEG at the start of scan", () => {
+      // An APP11 store after SOS is entropy-coded data, not a segment.
+      const bytes = join(
+        raw("\xff\xd8"),
+        raw("\xff\xda\x00\x04ab"),
+        jpeg(0xeb, "JP\x00\x01jumbc2pa").subarray(2),
+      );
+      expect(findC2paManifest(bytes)).toBeUndefined();
+    });
+
+    it("stops reading a JPEG at a byte that is not a marker or a bad length", () => {
+      const stray = join(
+        raw("\xff\xd8\x00\x00\x00\x00"),
+        jpeg(0xeb, "JP\x00\x01jumbc2pa").subarray(2),
+      );
+      expect(findC2paManifest(stray)).toBeUndefined();
+      const shortLength = join(
+        raw("\xff\xd8\xff\xe0\x00\x01"),
+        jpeg(0xeb, "JP\x00\x01jumbc2pa").subarray(2),
+      );
+      expect(findC2paManifest(shortLength)).toBeUndefined();
+    });
+
+    it("stops reading a PNG at IEND", () => {
+      const bytes = join(
+        png("IEND", ""),
+        png("caBX", "store").subarray(8), // a chunk past the end of image
+      );
+      expect(findC2paManifest(bytes)).toBeUndefined();
+    });
+
+    it("reads a BMFF box with a 64-bit size and skips a foreign uuid", () => {
+      const foreign = join(
+        new Uint8Array([0, 0, 0, 1]),
+        raw("uuid"),
+        new Uint8Array([0, 0, 0, 0, 0, 0, 0, 16 + 16]),
+        new Uint8Array(16).fill(0xaa),
+      );
+      const asset = join(raw("\x00\x00\x00\x10ftypavif0000"), foreign);
+      expect(findC2paManifest(asset)).toBeUndefined();
+    });
+
+    it("reads a BMFF box of size 0 as running to the end of the file", () => {
+      const uuid = Buffer.from("d8fec3d61b0e483c92975828877ec481", "hex");
+      const box = join(
+        new Uint8Array([0, 0, 0, 0]),
+        raw("uuid"),
+        new Uint8Array(uuid),
+        raw("store"),
+      );
+      const asset = join(raw("\x00\x00\x00\x10ftypavif0000"), box);
+      expect(findC2paManifest(asset)?.length).toBe("store".length);
+    });
+
+    it("stops reading BMFF at a box smaller than its own header", () => {
+      const uuid = Buffer.from("d8fec3d61b0e483c92975828877ec481", "hex");
+      const asset = join(
+        raw("\x00\x00\x00\x10ftypavif0000"),
+        new Uint8Array([0, 0, 0, 4]),
+        raw("free"),
+        new Uint8Array([0, 0, 0, 29]),
+        raw("uuid"),
+        new Uint8Array(uuid),
+        raw("store"),
+      );
+      expect(findC2paManifest(asset)).toBeUndefined();
+    });
+
+    it("returns undefined for an unknown container", () => {
+      expect(findC2paManifest(raw("GIF89a c2pa jumb"))).toBeUndefined();
+    });
   });
 
   describe("extractXmp", () => {
@@ -154,6 +236,43 @@ describe("media gatherer", () => {
 
     it("returns undefined when there is no packet", () => {
       expect(extractXmp(png("IDAT", "pixels"))).toBeUndefined();
+    });
+
+    it("skips JPEG segments that are not an XMP APP1", () => {
+      const packet = '<?xpacket begin="?"?><x:xmpmeta/><?xpacket end="w"?>';
+      const bytes = join(
+        raw("\xff\xd8"),
+        raw("\xff\xe0\x00\x06JFIF"),
+        jpeg(0xe1, `Exif\x00\x00${packet}`).subarray(2),
+      );
+      // The Exif APP1 is not XMP, so the delimiter scan finds the packet.
+      expect(extractXmp(bytes)).toBe(packet);
+    });
+
+    it("skips a PNG iTXt chunk that is not XMP", () => {
+      expect(
+        extractXmp(png("iTXt", "Comment\x00\x00\x00\x00\x00hello")),
+      ).toBeUndefined();
+    });
+
+    it("returns undefined for a truncated XMP iTXt chunk", () => {
+      expect(
+        extractXmp(png("iTXt", "XML:com.adobe.xmp\x00\x00\x00en")),
+      ).toBeUndefined();
+    });
+
+    it("falls through an XMP iTXt chunk with empty text", () => {
+      expect(
+        extractXmp(png("iTXt", "XML:com.adobe.xmp\x00\x00\x00\x00\x00")),
+      ).toBeUndefined();
+    });
+
+    it("needs both packet delimiters, and tolerates an unterminated end", () => {
+      expect(
+        extractXmp(raw('RIFF\x00\x00\x00\x00WEBP<?xpacket begin="?"?><x/>')),
+      ).toBeUndefined();
+      const open = '<?xpacket begin="?"?><x/><?xpacket end="w"';
+      expect(extractXmp(raw(`RIFF\x00\x00\x00\x00WEBP${open}`))).toBe(open);
     });
   });
 
@@ -185,6 +304,22 @@ describe("media gatherer", () => {
     it("returns undefined for a plain asset URL", () => {
       expect(originOfVariant("https://example.com/hero.jpg")).toBeUndefined();
     });
+
+    it("returns undefined for an unparseable URL or a Next.js URL without a target", () => {
+      expect(originOfVariant("not a url")).toBeUndefined();
+      expect(
+        originOfVariant("https://example.com/_next/image?w=640"),
+      ).toBeUndefined();
+      expect(
+        originOfVariant("https://example.com/_next/image?url=http%3A%2F%2F%5B"),
+      ).toBeUndefined();
+    });
+
+    it("drops the query string when stripping a WordPress suffix", () => {
+      expect(originOfVariant("https://example.com/a-1024x768.webp?ver=2")).toBe(
+        "https://example.com/a.webp",
+      );
+    });
   });
 
   describe("imageCandidates", () => {
@@ -214,6 +349,28 @@ describe("media gatherer", () => {
       // Another origin's image is not this site's to audit.
       expect(found.some((url) => url.includes("other.test"))).toBe(false);
       expect(new Set(found).size).toBe(found.length);
+    });
+
+    it("skips non-http sources, empty values and malformed JSON-LD image values", () => {
+      const jsonLd = JSON.stringify([
+        "a bare string node",
+        {
+          "@type": "Organization",
+          logo: { url: "https://example.com/logo.png" },
+          image: [null, 42, { contentUrl: "https://example.com/no-url.jpg" }],
+        },
+      ]);
+      const page = mockPageContext(
+        "https://example.com/about",
+        `<html><head><meta name="twitter:image" content="/tw.jpg">
+         <script type="application/ld+json">${jsonLd}</script></head>
+         <body><img src="data:image/png;base64,AAAA"><img src="  ">
+         <img src="http://[bad"></body></html>`,
+      );
+      expect(imageCandidates(page)).toEqual([
+        "https://example.com/tw.jpg",
+        "https://example.com/logo.png",
+      ]);
     });
   });
 
@@ -249,6 +406,42 @@ describe("media gatherer", () => {
       ctx.fetch = async () => mockFetchResult("", 404, "text/html");
       expect(
         await fetchImage(ctx, "https://example.com/missing.jpg"),
+      ).toBeUndefined();
+    });
+  });
+
+  describe("fetchImageHead", () => {
+    it("sends one HEAD per URL per scan and gates the URL", async () => {
+      const ctx = mockCheckContext([
+        mockPageContext("https://example.com/", "<html></html>"),
+      ]);
+      const requests: FetchOptions[] = [];
+      ctx.fetch = async (o: FetchOptions): Promise<FetchResult> => {
+        requests.push(o);
+        return mockFetchResult("", 200, "image/jpeg");
+      };
+      const [a, b] = await Promise.all([
+        fetchImageHead(ctx, "https://example.com/a.jpg"),
+        fetchImageHead(ctx, "https://example.com/a.jpg"),
+      ]);
+      expect(a?.status).toBe(200);
+      expect(b).toBe(a);
+      expect(requests.map((r) => r.method)).toEqual([HttpMethod.Head]);
+      expect(
+        await fetchImageHead(ctx, "https://other.test/a.jpg"),
+      ).toBeUndefined();
+      expect(requests).toHaveLength(1);
+    });
+
+    it("returns undefined when the request throws", async () => {
+      const ctx = mockCheckContext([
+        mockPageContext("https://example.com/", "<html></html>"),
+      ]);
+      ctx.fetch = async () => {
+        throw new Error("reset");
+      };
+      expect(
+        await fetchImageHead(ctx, "https://example.com/a.jpg"),
       ).toBeUndefined();
     });
   });

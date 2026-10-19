@@ -20,6 +20,9 @@ describe("LlmsFullTxtAudit", () => {
     const result = audit.audit(ctx);
     expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("llms-full.txt exists");
+    expect(result.message).toContain(
+      "No AI vendor documents reading llms-full.txt",
+    );
   });
 
   it("is not applicable when llms-full.txt returns 404", () => {

@@ -7,7 +7,8 @@
       "@forkpoint/agent-lighthouse",
       "@forkpoint/agent-lighthouse-core",
       "@forkpoint/agent-lighthouse-report",
-      "@forkpoint/agent-lighthouse-mcp"
+      "@forkpoint/agent-lighthouse-mcp",
+      "@forkpoint/agent-lighthouse-server"
     ]
   ],
   "linked": [],

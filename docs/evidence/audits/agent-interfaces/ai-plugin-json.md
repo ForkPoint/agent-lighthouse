@@ -1,45 +1,92 @@
 ---
-audit: agent-tools/ai-plugin-json
-category: agent-tools
-audit_id: "5.11"
-source_file: packages/core/src/audits/agent-tools/ai-plugin-json.ts
+audit: agent-interfaces/ai-plugin-json
+category: agent-interfaces
+source_file: packages/core/src/audits/agent-interfaces/ai-plugin-json.ts
 slug: ai-plugin-json
-review_verdict: delete
-severity: high
-disposition: "sunset (approved 2026-08-21)"
-status: sunset
-verdict: dead
+disposition: "obsolete tier (2026-10-18)"
 evidence_grade: D
-reviewed: 2026-08-21
+reviewed: 2026-10-18
+recommended_tier: obsolete
+consumers:
+  - none (ChatGPT plugins closed 2024-03-19)
+sources:
+  - openai-community-plugins-closure
+  - openai-plugins-quickstart-archived
+  - openai-plugin-manifest-docs-404
+  - openai-help-plugins-winddown
+  - iana-well-known-registry-aiplugin
+  - microsoft-build-2023-plugin-standard
 ---
 
-# ai-plugin-json — confirmed dead — delete
+# ai-plugin-json (`5.11`)
 
-> Adversarial redemption research, 2026-08-21. The researcher's task was to **save** this audit by finding grade A/B evidence of a real consumer. Grade found: **D**.
+> agent-interfaces · source `ai-plugin-json.ts` · revived 2026-10-18 from the 2026-08-21 sunset · evidence grade **D** · tier **obsolete** (weight 0, never fails)
 
-## Claimed mechanism (steelmanned)
+## What it checks
+
+Whether the site still publishes a ChatGPT plugin manifest at `/.well-known/ai-plugin.json`. The file is recognised by its manifest keys (`schema_version`, `name_for_model`, `description_for_model`, `name_for_human`). The scan already fetches the path, so the check costs no extra request.
+
+The check never asks a site to publish the file. It exists to tell an owner who still publishes it that the format is retired.
+
+| State                                                                                                       | Result                 |
+| :---------------------------------------------------------------------------------------------------------- | :--------------------- |
+| a JSON object with at least one plugin-manifest key                                                         | `warn`, priority `low` |
+| no response, a non-200, an HTML page, an empty body, a body that is not JSON, or JSON without manifest keys | `notApplicable`        |
+
+## Claimed mechanism (falsifiable)
+
+**Mechanism:** ChatGPT read `/.well-known/ai-plugin.json` to install third-party plugins during the 2023 plugins beta. The claim this audit tests is the reverse: that nothing reads the file today, so a site that still publishes it maintains a file with no reader.
+
+## Evidence
+
+- OpenAI closed the plugin store: "On March 19, 2024, you will no longer be able to install new plugins or create new conversations with existing plugins. You will be able to continue existing conversations until April 9, 2024." — [OpenAI Developer Community](https://community.openai.com/t/plugin-store-and-new-chats-with-plugins-closed-march-19-2024/689877) (verified 2026-10-18)
+- OpenAI's `openai/plugins-quickstart` repository is archived, and its README says plugins "have been superseded by GPTs" — [GitHub](https://github.com/openai/plugins-quickstart) (verified 2026-10-18)
+- OpenAI's current extension surface for ChatGPT apps is built on MCP, and its Actions take an OpenAPI document the developer supplies. Neither reads the manifest.
+- The path is not in the IANA Well-Known URIs registry.
+
+**Counter-evidence:** Microsoft announced in May 2023 that it would "adopt the same open plugin standard that OpenAI introduced for ChatGPT", across Bing and its copilots — [Microsoft Build 2023](https://blogs.microsoft.com/blog/2023/05/23/microsoft-build-brings-ai-tools-to-the-forefront-for-developers/) (verified 2026-10-18). So a second vendor once adopted the format. No current Microsoft documentation of reading the file was found, so the audit says no current vendor reads it. The OpenAI help-centre article on winding down the beta returns HTTP 403 to scripts, so it is cited but not used as proof. The community post and the archived repository carry the claim.
+
+## Scoring
+
+**Grade: D** — the only documented consumer, ChatGPT plugins, was shut down by its operator. Microsoft announced adoption in 2023, but no vendor documents reading the format today. An obsolete audit carries weight 0 and never returns `fail` (`sunset.test.ts`; `Audit.toCheckResult` lowers a stray `fail` to `warn`). It does not move any score.
+
+## Example finding
+
+`/.well-known/ai-plugin.json` serves `{"schema_version":"v1","name_for_model":"site",…}`. The report says the manifest is retired, that no client reads it, and that an MCP server declared through a Server Card is the current route.
+
+## Implementation deviations
+
+- 2026-10-18: revived from `docs/evidence/sunset/agent-tools/ai-plugin-json.md` as an obsolete-tier audit, at the user's request that owners still publishing retired files be told. `migration-map.json` 5.11 changed from `removed` to `renamed`.
+- The v1 audit failed every site without the file. This one is `notApplicable` on absence and only warns on a recognised manifest.
+- An unrelated JSON object at the path is not called a manifest; one manifest key is required.
+
+## Record before the obsolete tier
+
+The dossier as it stood before the move on 2026-10-18. Kept as the research record; withheld from the public page.
+
+### Claimed mechanism (steelmanned)
 
 Steelmanned: /.well-known/ai-plugin.json was a genuine, vendor-defined manifest — OpenAI specified it, ChatGPT read it to install third-party plugins, and it carried fields (name_for_model, description_for_model, api.url pointing at an OpenAPI spec) purpose-built for model consumption rather than human display. The audit's fallback claim is broader than ChatGPT: that the format became a de-facto cross-vendor tool manifest, so 'even if you do not build a ChatGPT plugin' the file helps any agent understand the site as a callable tool. For the audit to matter, some currently-shipping agent would have to fetch that path and act on it.
 
-## What we searched
+### What we searched
 
 With WebSearch unavailable I went straight to OpenAI's own properties. I attempted OpenAI's help-center deprecation article (HTTP 403, blocked). I then tested the audit's own docsUrl and the plugins docs root with curl following redirects, to establish whether OpenAI still publishes the manifest spec. I fetched developers.openai.com/apps-sdk to determine what OpenAI's current third-party extensibility mechanism actually is. I used the GitHub API to check the archival status and README of OpenAI's official openai/plugins-quickstart and openai/chatgpt-retrieval-plugin repos, which is where an official deprecation notice would live. I checked the IANA Well-Known URIs registry for an 'ai-plugin' registration. Finally I fetched the GPT Actions docs to confirm what replaced plugins.
 
-## Best evidence found for the audit
+### Best evidence found for the audit
 
 The best evidence for the audit is historical only: ai-plugin.json was unambiguously a real, first-party OpenAI-specified manifest with a documented consumer (ChatGPT) during the 2023 plugins beta, and OpenAI's official quickstart repo still has 4,236 stars attesting to that era. I could find no currently-shipping consumer of the path on any vendor property. Searching for a surviving cross-vendor role turned up nothing: no Anthropic, Google, Microsoft, or Perplexity documentation references ai-plugin.json, and the path is not in the IANA registry. The strongest surviving artifact is a stars count on an archived repo — that is, evidence the format once mattered, not that it now does.
 
-## Counter-evidence
+### Counter-evidence
 
 Direct positive proof of discontinuation: (1) OpenAI's official openai/plugins-quickstart repository is ARCHIVED (GitHub API archived=true), with last push 2024-01-30T23:23:11Z, and its README states verbatim: 'Plugins have been superseded by GPTs, learn more about creating a GPT with actions.' (2) OpenAI deleted the manifest specification from its docs entirely: the audit's own docsUrl https://platform.openai.com/docs/plugins/getting-started/plugin-manifest 301-redirects to https://developers.openai.com/api/docs/actions, which returns HTTP 404. The plugins docs root https://platform.openai.com/docs/plugins/introduction resolves to the same 404. There is no longer any OpenAI page describing ai-plugin.json. (3) OpenAI's current third-party extensibility surface, the Apps SDK, is built on MCP, not on plugin manifests — its docs describe building an MCP server to give an app 'tools and access to external systems' and never mention ai-plugin.json or plugin manifests. (4) The GPT Actions documentation that replaced plugins makes no reference to ai-plugin.json. (5) 'ai-plugin' / 'ai-plugin.json' are absent from the IANA Well-Known URIs registry.
 
-## Verdict
+### Verdict
 
 **confirmed dead — delete** (grade D)
 
 Grade D: the sole documented consumer (ChatGPT plugins) was discontinued, OpenAI archived its official quickstart with an explicit 'superseded by GPTs' notice, and OpenAI removed the manifest spec from its documentation so thoroughly that the audit's own docsUrl now 404s. No successor vendor adopted the format; OpenAI itself moved to MCP via the Apps SDK. The audit is worse than merely useless — it actively penalizes sites for omitting a manifest for a shut-down program and hands users a 404 link as remediation guidance. This is the cleanest 'dead' of the four: it fails not for lack of evidence but on positive proof of discontinuation. If any of the four had a case for being retained as a cautionary/informative example of a deprecated agent standard, it would be this one, but the rubric's grade-D rule is unambiguous and the audit as written scores sites against it.
 
-## Sources
+### Sources
 
 - **[openai/plugins-quickstart (ARCHIVED) — official ChatGPT plugin quickstart](https://github.com/openai/plugins-quickstart)** — OpenAI (repo, URL verified 2026-08-21)
   - GitHub API confirms archived=true, pushed_at=2024-01-30T23:23:11Z, 4,236 stars. README states verbatim: 'Plugins have been superseded by GPTs, learn more about creating a GPT with actions.' This is OpenAI's own first-party notice that the plugins program (and its ai-plugin.json manifest) is over.
@@ -54,15 +101,15 @@ Grade D: the sole documented consumer (ChatGPT plugins) was discontinued, OpenAI
 - **[Winding down the ChatGPT plugins beta (OpenAI Help Center)](https://help.openai.com/en/articles/8988022-winding-down-the-chatgpt-plugins-beta)** — OpenAI (announcement, URL verified 2026-08-21)
   - (Resolves; returns 403 to non-browser clients — page exists, bot-blocked.) Could not be verified — the help center returned HTTP 403 to automated fetching, and web.archive.org is not fetchable from this environment. No claim is based on this document; the discontinuation is instead established by the archived openai/plugins-quickstart repo and the 404'd manifest docs, both verified directly.
 
-## v1 dossier — what it checked and the 2026-08-20 code review
+### v1 dossier — what it checked and the 2026-08-20 code review
 
 Merged in on 2026-08-22 from `docs/evidence/audits/agent-tools/ai-plugin-json.md`, so a removed audit has exactly one dossier and it lives here.
 
-### What it checks
+#### What it checks
 
 ai-plugin.json is the ChatGPT plugin manifest format. Even if you do not build a ChatGPT plugin, having this file helps AI agents understand your site as a tool with human-readable and model-readable names, logos, and API references.
 
-### Code review findings (2026-08-20, 11-agent pass)
+#### Code review findings (2026-08-20, 11-agent pass)
 
 Dead standard presented as live. ai-plugin.json was the ChatGPT plugin manifest; OpenAI deprecated plugins in 2024 and shut the plugin store down. The audit's description and impact text assert it is 'the standard manifest used by ChatGPT and other AI platforms' and that without it 'your site cannot be installed as a plugin' — factually wrong guidance in 2026, delivered as a scored failure with a link to deprecated OpenAI docs.
 
@@ -82,9 +129,9 @@ Dead standard presented as live. ai-plugin.json was the ChatGPT plugin manifest;
 
 **Overlaps with:** `5.1`, `5.10`
 
-### Evidence
+#### Evidence
 
-#### Signal: ai-plugin-json — grade D (agent-action-surfaces)
+##### Signal: ai-plugin-json — grade D (agent-action-surfaces)
 
 **Mechanism:** Publishing /.well-known/ai-plugin.json (the ChatGPT plugin manifest pointing at an OpenAPI spec) makes a site's API callable by ChatGPT.
 
@@ -95,7 +142,7 @@ Dead standard presented as live. ai-plugin.json was the ChatGPT plugin manifest;
 
 **Sources:** [Plugin Store and New Chats With Plugins — Closed March 19 2024](https://community.openai.com/t/plugin-store-and-new-chats-with-plugins-closed-march-19-2024/689877) · [openai/plugins-quickstart (ARCHIVED) — official ChatGPT plugin quickstart](https://github.com/openai/plugins-quickstart) · [OpenAI API — Deprecations](https://developers.openai.com/api/docs/deprecations) · [OpenAI — Getting started with GPT Actions](https://developers.openai.com/api/docs/actions/getting-started) · [IANA Well-Known URIs registry](https://www.iana.org/assignments/well-known-uris/well-known-uris.xhtml) · [Live deployment: Zapier /.well-known/ai-catalog.json](https://zapier.com/.well-known/ai-catalog.json)
 
-#### Signal: agent-surface-soft-404-validation — grade A (agent-action-surfaces)
+##### Signal: agent-surface-soft-404-validation — grade A (agent-action-surfaces)
 
 **Mechanism:** A well-known or conventional agent-discovery path that returns HTTP 200 with an HTML body (an SPA catch-all rather than a real document) is worse than a 404, because a conforming client follows the standard, fails to parse, and has no recourse — so any audit must validate content-type and parseability, not status code.
 
@@ -106,7 +153,7 @@ Dead standard presented as live. ai-plugin.json was the ChatGPT plugin manifest;
 
 **Sources:** [Only Four API Providers Publish a Real .well-known/api-catalog Right Now](https://apievangelist.com/blog/2026/05/22/four-providers-publishing-well-known-api-catalog/) · [RFC 9727 — api-catalog: A Well-Known URI and Link Relation to Help Discovery of APIs](https://www.rfc-editor.org/rfc/rfc9727.html) · [experimental-ext-server-card — docs/discovery.md](https://raw.githubusercontent.com/modelcontextprotocol/experimental-ext-server-card/main/docs/discovery.md) · [Live deployment: Vercel /.well-known/api-catalog (RFC 9727)](https://vercel.com/.well-known/api-catalog) · [Live deployment: Vercel /.well-known/ai-catalog.json](https://vercel.com/.well-known/ai-catalog.json) · [Live deployment: Zapier /.well-known/api-catalog](https://zapier.com/.well-known/api-catalog)
 
-## Review history
+### Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 

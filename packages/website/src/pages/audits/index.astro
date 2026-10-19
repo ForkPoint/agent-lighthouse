@@ -7,12 +7,13 @@ import { categoryPath } from '../../lib/routes';
 const audits = auditList();
 const categories = categoryList();
 
-// The three tiers `TierBadge` knows, in the order the docs introduce them.
+// The four tiers `TierBadge` knows, in the order the docs introduce them.
 const tiers = [
   { value: 'all', label: 'All check types' },
   { value: 'scored', label: 'Scored' },
   { value: 'informative', label: 'Advisory' },
   { value: 'experimental', label: 'Experimental' },
+  { value: 'obsolete', label: 'Obsolete' },
 ];
 
 const pill =

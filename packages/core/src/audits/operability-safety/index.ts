@@ -45,6 +45,7 @@ export { SecurityHeaderHygieneAudit } from "./security-header-hygiene";
 
 // New in v2 (Plan 5): graduated from the proposal backlog on 2026-08-22.
 export { FormAutofillTokenCoverageAudit } from "./form-autofill-token-coverage";
+export { ProfileAutofillTokenCoverageAudit } from "./profile-autofill-token-coverage";
 export { NativeControlSubstitutionAudit } from "./native-control-substitution";
 export { InvisibleInstructionScanAudit } from "./invisible-instruction-scan";
 export { AriaLayerInjectionScanAudit } from "./aria-layer-injection-scan";
@@ -66,6 +67,9 @@ export { OrganizationIdentifierRegistryResolutionAudit } from "./organization-id
 export { SyntheticMediaDisclosureValidityAudit } from "./synthetic-media-disclosure-validity";
 export { TrustTxtReciprocityCoherenceAudit } from "./trust-txt-reciprocity-coherence";
 export { WikidataRoundTripVerificationAudit } from "./wikidata-round-trip-verification";
+
+// New in 9.0.0: the W3C change-password well-known URL.
+export { ChangePasswordUrlAudit } from "./change-password-url";
 
 // Not an audit: the rule-id list the orchestrator feeds to the engine. It is
 // only complete once every engine-backed audit module has been evaluated — this
@@ -97,6 +101,7 @@ import { TabindexAudit } from "./tabindex";
 import { PresentationConflictAudit } from "./presentation-conflict";
 import { SecurityHeaderHygieneAudit } from "./security-header-hygiene";
 import { FormAutofillTokenCoverageAudit } from "./form-autofill-token-coverage";
+import { ProfileAutofillTokenCoverageAudit } from "./profile-autofill-token-coverage";
 import { NativeControlSubstitutionAudit } from "./native-control-substitution";
 import { InvisibleInstructionScanAudit } from "./invisible-instruction-scan";
 import { AriaLayerInjectionScanAudit } from "./aria-layer-injection-scan";
@@ -118,6 +123,7 @@ import { OrganizationIdentifierRegistryResolutionAudit } from "./organization-id
 import { SyntheticMediaDisclosureValidityAudit } from "./synthetic-media-disclosure-validity";
 import { TrustTxtReciprocityCoherenceAudit } from "./trust-txt-reciprocity-coherence";
 import { WikidataRoundTripVerificationAudit } from "./wikidata-round-trip-verification";
+import { ChangePasswordUrlAudit } from "./change-password-url";
 
 /** Every audit that lives in the operability-safety category, in map order. */
 export const OPERABILITY_SAFETY_AUDITS = [
@@ -146,6 +152,7 @@ export const OPERABILITY_SAFETY_AUDITS = [
   PresentationConflictAudit,
   SecurityHeaderHygieneAudit,
   FormAutofillTokenCoverageAudit,
+  ProfileAutofillTokenCoverageAudit,
   NativeControlSubstitutionAudit,
   InvisibleInstructionScanAudit,
   AriaLayerInjectionScanAudit,
@@ -167,4 +174,5 @@ export const OPERABILITY_SAFETY_AUDITS = [
   SyntheticMediaDisclosureValidityAudit,
   TrustTxtReciprocityCoherenceAudit,
   WikidataRoundTripVerificationAudit,
+  ChangePasswordUrlAudit,
 ] as const;

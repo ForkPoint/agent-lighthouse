@@ -466,13 +466,9 @@ describe("runScan — evidence tier", () => {
     const all = report.categories.flatMap((c) => c.checks);
 
     expect(all.length).toBeGreaterThan(0);
+    const tiers: readonly string[] = Object.values(AuditTier);
     expect(
-      all.every(
-        (c) =>
-          c.tier === AuditTier.Scored ||
-          c.tier === AuditTier.Informative ||
-          c.tier === AuditTier.Experimental,
-      ),
+      all.every((c) => c.tier !== undefined && tiers.includes(c.tier)),
     ).toBe(true);
   });
 });
@@ -499,8 +495,12 @@ describe("runScan — category filter", () => {
 
     const ids = (r: typeof off) =>
       r.categories.flatMap((c) => c.checks).map((c) => c.id);
-    expect(ids(off)).not.toContain("access-crawl-control/tdm-rep");
-    expect(ids(on)).toContain("access-crawl-control/tdm-rep");
+    // tdm-rep left the experimental tier in 9.0.0; ai-content-declaration is
+    // the category's remaining experimental audit.
+    expect(ids(off)).not.toContain(
+      "access-crawl-control/ai-content-declaration",
+    );
+    expect(ids(on)).toContain("access-crawl-control/ai-content-declaration");
   });
 });
 
@@ -1538,7 +1538,8 @@ describe("runScan — v7 article scope", () => {
     "structured-data/article-schema",
     "structured-data/author-schema",
     "structured-data/speakable-schema",
-    "answer-readiness/meta-author",
+    // meta-author left this list on 2026-10-18: the tag is site-wide, so it
+    // now runs on every page type.
     "answer-readiness/named-author",
     "answer-readiness/author-page",
     "answer-readiness/author-same-as",
@@ -1559,7 +1560,7 @@ describe("runScan — v7 article scope", () => {
       });
       const checks = report.categories.flatMap((c) => c.checks);
       const articleChecks = checks.filter((c) => articleIds.includes(c.id));
-      expect(articleChecks).toHaveLength(12);
+      expect(articleChecks).toHaveLength(articleIds.length);
       for (const check of articleChecks) {
         expect(check.status, check.id).toBe(CheckStatus.NotApplicable);
         expect(check.tags, check.id).toContain("skipped:page-type");
@@ -1666,7 +1667,9 @@ describe("runScan — selected page evidence and mixed scope", () => {
     const checks = report.categories.flatMap((c) => c.checks);
     expect(traces).toHaveLength(checks.length);
     expect(new Set(traces.map((t) => t.id)).size).toBe(checks.length);
-    expect(checks).toHaveLength(215);
+    expect(checks).toHaveLength(
+      Object.values(defaultConfig.audits).flat().length,
+    );
     const check = checks.find(
       (c) => c.id === "structured-data/article-schema",
     )!;

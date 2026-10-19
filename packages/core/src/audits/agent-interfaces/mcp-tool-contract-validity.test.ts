@@ -316,4 +316,99 @@ describe("McpToolContractValidityAudit", () => {
     expect(result.message).toContain("page2Tool");
     expect(result.found).toContain("2 tool(s)");
   });
+
+  it("is notApplicable on a malformed declaration and names the defect", async () => {
+    const ctx: CheckContext = mockCheckContext([], {
+      "/.well-known/mcp/servers.json": mockFetchResult(
+        JSON.stringify([ENDPOINT]),
+        200,
+        "application/json",
+      ),
+    });
+    const result = (await audit.audit(ctx)) as Result;
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.found).toBe("Malformed declaration (no-array)");
+  });
+
+  it("fails a tool with no name and labels it by position", async () => {
+    const result = await run([CLEAN, { inputSchema: CLEAN.inputSchema }]);
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("tool #2 (unnamed) carries no `name`");
+    expect(result.message).toContain("1 of 2 tool(s) pass every MUST");
+  });
+
+  it("names the JavaScript type of an inputSchema that is not an object", async () => {
+    const result = await run([withSchema("object")]);
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain(
+      "probeTool has `inputSchema` of type string",
+    );
+  });
+
+  it("reports an inputSchema with no type as null", async () => {
+    const result = await run([withSchema({ properties: {} })]);
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("`inputSchema.type` null rather than");
+  });
+
+  it("fails an x-mcp-header on a property that declares no type", async () => {
+    const result = await run([
+      withSchema({
+        type: "object",
+        properties: { region: { "x-mcp-header": "Region" } },
+      }),
+    ]);
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("annotates a property of type null");
+    expect(result.found).toContain("1 x-mcp-header violation(s)");
+  });
+
+  // An annotation on the schema root itself has no property path at all, and
+  // no hop keyword to name either.
+  it("fails an x-mcp-header that sits on the schema root", async () => {
+    const result = await run([
+      withSchema({ type: "object", properties: {}, "x-mcp-header": "Region" }),
+    ]);
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain(
+      "it is not reachable from the schema root through `properties` keys only",
+    );
+  });
+
+  it("lists five MUST findings and counts the rest", async () => {
+    const tools = Array.from({ length: 7 }, (_, i) => ({ name: `t${i}` }));
+    const result = await run(tools);
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("(2 more)");
+    expect(result.message).toContain("0 of 7 tool(s) pass every MUST");
+  });
+
+  it("says when the page budget stopped the listing", async () => {
+    const ctx: CheckContext = mockCheckContext([], servers());
+    let n = 0;
+    ctx.fetch = async () => {
+      n += 1;
+      return mockFetchResult(
+        JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          result: {
+            tools: [{ ...CLEAN, name: `tool${n}` }],
+            nextCursor: `c${n}`,
+          },
+        }),
+        200,
+        "application/json",
+      );
+    };
+    const result = (await audit.audit(ctx)) as Result;
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.found).toContain("4 tool(s)");
+    expect(result.found).toContain("(stopped at 4)");
+  });
+
+  // Bug, see report: listTools returns `pages` as the loop index, which equals
+  // the pages fetched only when the budget ran out. The audit adds one, so a
+  // truncated listing of 4 pages is reported as "across 5 page(s)".
+  it.todo("reports 4 pages, not 5, for a listing stopped at the 4-page budget");
 });

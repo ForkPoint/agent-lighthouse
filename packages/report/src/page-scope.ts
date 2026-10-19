@@ -1,6 +1,7 @@
 import type { CheckResult, ScanReport } from "@forkpoint/agent-lighthouse-core";
 import {
   isInformative,
+  isObsolete,
   AuditTier,
   CheckStatus,
   CoverageProvenance,
@@ -9,6 +10,8 @@ import {
 export interface AssessmentView {
   status: CheckResult["status"];
   advisory: boolean;
+  /** An obsolete-tier result: unscored, and labelled for what it is. */
+  obsolete?: boolean;
   coverage?: CheckResult["coverage"];
   explanation?: string;
   displayValue?: string;
@@ -60,6 +63,7 @@ export function buildPageScope(
         index > 0 ||
         isInformative(a) ||
         (a.tier !== undefined && a.tier !== AuditTier.Scored),
+      ...(isObsolete(a) ? { obsolete: true } : {}),
       ...(a.coverage ? { coverage: a.coverage } : {}),
       ...(a.explanation ? { explanation: a.explanation } : {}),
       ...(a.displayValue ? { displayValue: a.displayValue } : {}),
@@ -104,7 +108,7 @@ export function formatAuditScope(audit: AuditScopeView): string {
   return audit.assessments
     .map((a) => {
       const lines = [
-        `${a.coverage?.provenance ?? "Scope not recorded"} — ${a.status.toUpperCase()} — ${a.advisory ? "Advisory — not scored" : a.status === CheckStatus.NotApplicable ? "Not assessed — not scored" : "Primary result"}`,
+        `${a.coverage?.provenance ?? "Scope not recorded"} — ${a.status.toUpperCase()} — ${a.obsolete ? "Obsolete — not scored" : a.advisory ? "Advisory — not scored" : a.status === CheckStatus.NotApplicable ? "Not assessed — not scored" : "Primary result"}`,
       ];
       if (a.explanation) lines.push(a.explanation);
       if (a.displayValue) lines.push(`Finding: ${a.displayValue}`);

@@ -7,6 +7,8 @@
  * than inferring it at runtime — keeps the declaration in the audit's own meta
  * where a reader finds it, and lets a build-time check refuse the drift.
  */
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import {
   auditSourceFiles,
   declaredIds,
@@ -193,6 +195,31 @@ export function usesA11yBase(source: string): boolean {
   return (
     /from\s+['"]\.\/_shared['"]/.test(source) && /\.\.\.base\b/.test(source)
   );
+}
+
+/**
+ * The source of a same-folder base class the audit extends, if any.
+ *
+ * An audit written as `class X extends SomeBase` with `SomeBase` imported from
+ * a sibling `./_name` module reads whatever that base reads. Without this, a
+ * shared base that walks `ctx.pages` hides the page read from the check, and
+ * the subclass looks like a root-file audit. Only a direct sibling import is
+ * followed; anything further away goes through the gatherer layer.
+ */
+export function inheritedBaseSource(auditFile: string, source: string): string {
+  const parents = [...source.matchAll(/\bextends\s+([A-Za-z_$][\w$]*)/g)].map(
+    (m) => m[1]!,
+  );
+  const sources: string[] = [];
+  for (const name of parents) {
+    const from = new RegExp(
+      `import\\s*\\{[^}]*\\b${name}\\b[^}]*\\}\\s*from\\s*['"]\\./(_[a-z0-9-]+)['"]`,
+    ).exec(source);
+    if (!from) continue;
+    const file = join(dirname(auditFile), `${from[1]}.ts`);
+    if (existsSync(file)) sources.push(readFileSync(file, "utf8"));
+  }
+  return sources.join("\n");
 }
 
 export interface ExpectedRequiresResult {

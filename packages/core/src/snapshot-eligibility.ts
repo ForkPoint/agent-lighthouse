@@ -38,6 +38,11 @@ export const SNAPSHOT_AUDITS: Readonly<
     evidence:
       "Serialized field labels, identifiers, types, constraints and autofill tokens; no filling or submission execution.",
   },
+  "operability-safety/profile-autofill-token-coverage": {
+    requires: [EvidenceKey.RenderedBody],
+    evidence:
+      "Serialized field labels, identifiers, types, constraints and autofill tokens; no filling or submission execution.",
+  },
 };
 
 export const SNAPSHOT_EVIDENCE_LIMITS = [

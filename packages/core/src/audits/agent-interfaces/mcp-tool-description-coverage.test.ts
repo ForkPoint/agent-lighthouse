@@ -298,4 +298,153 @@ describe("McpToolDescriptionCoverageAudit", () => {
     ]);
     expect(leaves.every((l) => l.isString)).toBe(true);
   });
+
+  it("reads a union type by its first entry and an untyped leaf as not a string", () => {
+    const leaves = collectLeaves(
+      {
+        type: "object",
+        properties: {
+          note: { type: ["string", "null"], format: "date" },
+          count: { type: "integer" },
+          loose: {},
+          broken: "not-a-schema",
+        },
+      },
+      "",
+    );
+    expect(leaves.map((l) => [l.path, l.isString])).toEqual([
+      ["note", true],
+      ["count", false],
+      ["loose", false],
+    ]);
+  });
+
+  it("returns no leaves for a schema without properties, or one past the depth limit", () => {
+    expect(collectLeaves(undefined, "")).toEqual([]);
+    expect(collectLeaves({ type: "object" }, "")).toEqual([]);
+    expect(
+      collectLeaves({ properties: { a: { type: "string" } } }, "x", 7),
+    ).toEqual([]);
+  });
+
+  // The walk descends through nested objects, then stops past six levels so a
+  // self-similar schema cannot run away.
+  it("stops descending past six levels of nesting", () => {
+    let schema: Record<string, unknown> = {
+      type: "object",
+      properties: { leaf: { type: "string" } },
+    };
+    for (let i = 7; i >= 0; i -= 1) {
+      schema = { type: "object", properties: { [`n${i}`]: schema } };
+    }
+    expect(collectLeaves(schema, "")).toEqual([]);
+    let shallow: Record<string, unknown> = {
+      type: "object",
+      properties: { leaf: { type: "string" } },
+    };
+    for (let i = 4; i >= 0; i -= 1) {
+      shallow = { type: "object", properties: { [`n${i}`]: shallow } };
+    }
+    expect(collectLeaves(shallow, "").map((l) => l.path)).toEqual([
+      "n0.n1.n2.n3.n4.leaf",
+    ]);
+  });
+
+  it("treats a property-less schema reached with a path as a leaf that carries its own required flag", () => {
+    expect(
+      collectLeaves(
+        { type: "string", description: "Tag.", pattern: "^[a-z]+$" },
+        "tags[]",
+        1,
+        true,
+      ),
+    ).toEqual([
+      {
+        path: "tags[]",
+        described: true,
+        required: true,
+        isString: true,
+        constrained: true,
+      },
+    ]);
+  });
+
+  it("is notApplicable on a malformed declaration and names the defect", async () => {
+    const audit = new McpToolDescriptionCoverageAudit();
+    const ctx: CheckContext = mockCheckContext([], {
+      "/.well-known/mcp/servers.json": mockFetchResult(
+        JSON.stringify({ servers: "https://api.example.com/mcp" }),
+        200,
+        "application/json",
+      ),
+    });
+    const r = await audit.audit(ctx);
+    expect(r.status).toBe(CheckStatus.NotApplicable);
+    expect(r.found).toBe("Malformed declaration (no-array)");
+  });
+
+  it("names an unnamed tool by its position and counts it as undescribed", async () => {
+    const r = await run({
+      tools: [GOOD(), { inputSchema: { type: "object" } }],
+      instructions: "x",
+    }).result;
+    expect(r.status).toBe(CheckStatus.Fail);
+    expect(strings(r, "undescribedTools")).toEqual(["tool #2"]);
+    expect(num(r, "toolDescriptionCoverage")).toBe(50);
+  });
+
+  it("names only five offenders in the message and counts the rest", async () => {
+    const tools = Array.from({ length: 7 }, (_, i) => ({ name: `t${i}` }));
+    const r = await run({ tools, instructions: "x" }).result;
+    expect(r.status).toBe(CheckStatus.Fail);
+    expect(r.message).toContain("7 of 7 tool(s) carry no description");
+    expect(r.message).toContain("t0, t1, t2, t3, t4 (2 more)");
+    expect(strings(r, "undescribedTools")).toHaveLength(7);
+  });
+
+  it("counts non-string leaves out of the constraint ratio", async () => {
+    const tool = {
+      ...GOOD(),
+      inputSchema: {
+        type: "object",
+        properties: {
+          limit: { type: "integer", description: "Max results." },
+          query: { type: "string", description: "Free text.", format: "uri" },
+        },
+      },
+    };
+    const r = await run({ tools: [tool], instructions: "x" }).result;
+    expect(r.status).toBe(CheckStatus.Pass);
+    expect(num(r, "constrainedStringRatio")).toBe(100);
+    expect(num(r, "parameters")).toBe(2);
+  });
+
+  // instructions come from the shared discover probe; a non-200 or a body that
+  // is not JSON-RPC both leave the length at zero, which warns.
+  it("reads no instructions from a discover that is not a 200 JSON-RPC result", async () => {
+    for (const discover of [
+      mockFetchResult("Unauthorized", 401, "text/plain"),
+      mockFetchResult("<html></html>", 200, "text/html"),
+    ]) {
+      const ctx: CheckContext = mockCheckContext([], servers());
+      ctx.fetch = async (o: FetchOptions): Promise<FetchResult> => {
+        const body = JSON.parse(o.body ?? "{}") as { method?: string };
+        if (body.method === "tools/list") {
+          return mockFetchResult(
+            JSON.stringify({
+              jsonrpc: "2.0",
+              id: 1,
+              result: { tools: [GOOD()] },
+            }),
+            200,
+            "application/json",
+          );
+        }
+        return discover;
+      };
+      const r = await new McpToolDescriptionCoverageAudit().audit(ctx);
+      expect(r.status).toBe(CheckStatus.Warn);
+      expect(num(r, "instructionsLength")).toBe(0);
+    }
+  });
 });

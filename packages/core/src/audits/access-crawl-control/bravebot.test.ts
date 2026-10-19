@@ -1,89 +1,80 @@
 import { describe, it, expect } from "vitest";
 import { BravebotAudit } from "./bravebot";
+import { weightForGrade } from "#core/scorer";
+import { AuditMetaSchema } from "#core/schemas";
 import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
-import { CheckStatus } from "#core/types";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import {
+  AuditTier,
+  CheckPriority,
+  CheckStatus,
+  EvidenceGrade,
+  NoticeKind,
+  ScoreDisplayMode,
+} from "#core/types";
 
-const robots = (body: string) =>
-  mockCheckContext([], { "/robots.txt": mockFetchResult(body, 200) });
+const robots = (body: string, status = 200) =>
+  mockCheckContext([], { "/robots.txt": mockFetchResult(body, status) });
 
 describe("BravebotAudit", () => {
   const audit = new BravebotAudit();
 
-  it("passes when Bravebot has its own group that permits /", () => {
-    const result = audit.audit(robots("User-agent: Bravebot\nAllow: /"));
-    expect(result.status).toBe(CheckStatus.Pass);
-    expect(result.message).toContain("its own robots.txt group");
-  });
-
-  // RFC 9309 §2.2.1: a bot with no group of its own obeys the catch-all, so
-  // an open catch-all grants the same access a named group would.
-  it("passes when Bravebot is allowed through the catch-all group", () => {
-    const result = audit.audit(robots("User-agent: *\nAllow: /"));
-    expect(result.status).toBe(CheckStatus.Pass);
-    expect(result.score).toBe(1);
-    expect(result.message).toContain("catch-all group applies");
-  });
-
-  it("passes when no group applies to Bravebot", () => {
-    const result = audit.audit(robots("User-agent: SomeOtherBot\nDisallow: /"));
-    expect(result.status).toBe(CheckStatus.Pass);
-    expect(result.message).toContain("No group in robots.txt applies");
-  });
-
-  it("follows its own group over a blocking catch-all", () => {
-    const result = audit.audit(
-      robots("User-agent: Bravebot\nAllow: /\n\nUser-agent: *\nDisallow: /"),
+  it.each([
+    ["an allowing group", "User-agent: Bravebot\nAllow: /"],
+    ["a blocking group", "User-agent: Bravebot\nDisallow: /"],
+    [
+      "a group shared with other tokens",
+      "User-agent: Googlebot\nUser-agent: Bravebot\nDisallow: /private",
+    ],
+    ["a lowercase token", "user-agent: bravebot\nDisallow: /"],
+    ["a versioned token", "User-agent: Bravebot/1.0\nDisallow: /"],
+  ])("warns that the group has no reliable reader for %s", (_label, body) => {
+    const result = audit.audit(robots(body));
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.priority).toBe(CheckPriority.Low);
+    expect(result.message).toContain("User-agent: Bravebot");
+    expect(result.message).toContain(
+      "Brave documents following the Googlebot rules",
     );
-    expect(result.status).toBe(CheckStatus.Pass);
+    // Brave's page does not say the group is ignored; the message must not.
+    expect(result.message).not.toContain("governs nothing");
   });
 
-  it("fails when Bravebot is blocked by its own group", () => {
-    const result = audit.audit(robots("User-agent: Bravebot\nDisallow: /"));
-    expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.message).toContain("blocked by robots.txt");
-    expect(result.found).toContain("Its own group");
+  // Access through the catch-all is the business of the other per-bot
+  // audits. This one speaks only about a group the owner wrote.
+  it.each([
+    ["an open catch-all", "User-agent: *\nAllow: /"],
+    ["a blocking catch-all", "User-agent: *\nDisallow: /"],
+    ["a group for another crawler", "User-agent: SomeOtherBot\nDisallow: /"],
+  ])("is not applicable for %s", (_label, body) => {
+    expect(audit.audit(robots(body)).status).toBe(CheckStatus.NotApplicable);
   });
 
-  it("fails when its own group blocks Bravebot under an open catch-all", () => {
-    const result = audit.audit(
-      robots("User-agent: Bravebot\nDisallow: /\n\nUser-agent: *\nAllow: /"),
+  it("is not applicable without a robots.txt", () => {
+    expect(audit.audit(robots("Not found", 404)).status).toBe(
+      CheckStatus.NotApplicable,
     );
-    expect(result.status).toBe(CheckStatus.Fail);
-  });
-
-  it("fails when a catch-all block reaches Bravebot", () => {
-    const result = audit.audit(robots("User-agent: *\nDisallow: /"));
-    expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.found).toContain("catch-all group disallows /");
-  });
-
-  it("warns in the fail remedy that a named group drops catch-all rules", () => {
-    const result = audit.audit(robots("User-agent: *\nDisallow: /"));
-    expect(result.remediation).toContain("replaces the catch-all");
-    expect(BravebotAudit.meta.guidance?.fix).toContain(
-      "replaces the catch-all",
-    );
-    expect(BravebotAudit.meta.description).toContain(
-      "A named group is not required",
+    expect(audit.audit(mockCheckContext([], {})).status).toBe(
+      CheckStatus.NotApplicable,
     );
   });
 
-  it("is not applicable when robots.txt is missing", () => {
-    const result = audit.audit(mockCheckContext([], {}));
-    expect(result.status).toBe(CheckStatus.NotApplicable);
-    expect(result.found).toContain("No robots.txt found");
+  it("is not applicable on a scan that read nothing", async () => {
+    await expectNotApplicableOnEmpty(audit);
   });
 
-  it("is not applicable when robots.txt returns non-200", () => {
-    const result = audit.audit(
-      mockCheckContext([], { "/robots.txt": mockFetchResult("", 404) }),
+  it("is an obsolete-tier audit with an obsolete notice", () => {
+    const { meta } = BravebotAudit;
+    expect(meta.tier).toBe(AuditTier.Obsolete);
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.D);
+    expect(meta.weight).toBe(
+      weightForGrade(EvidenceGrade.D, AuditTier.Obsolete),
     );
-    expect(result.status).toBe(CheckStatus.NotApplicable);
-    expect(result.found).toContain("No robots.txt found");
-  });
-
-  it("is not applicable when /robots.txt serves an HTML error page", () => {
-    const result = audit.audit(robots("<html><body>Not found</body></html>"));
-    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Informative);
+    expect(meta.deprecated?.kind).toBe(NoticeKind.Obsolete);
+    expect(meta.deprecated?.link).toBe(
+      "https://search.brave.com/help/brave-search-crawler",
+    );
+    expect(AuditMetaSchema.safeParse(meta).success).toBe(true);
   });
 });

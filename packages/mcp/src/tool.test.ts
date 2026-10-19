@@ -10,8 +10,10 @@ import {
   DocumentState,
   EvidenceSource,
   AttemptOutcome,
+  AuditTier,
   CheckPriority,
   CheckStatus,
+  NoticeKind,
   PageType,
   PageTypeSource,
   ScoreDisplayMode,
@@ -315,5 +317,80 @@ describe("browser snapshot tool contract", () => {
     const summary = buildAuditSummary(r, buildReportView(r));
     expect(summary.browserAssessment).toEqual(r.browserAssessment);
     expect(summary.overallScore).toBe(r.overallScore);
+  });
+});
+
+describe("obsolete checks", () => {
+  const retired = check({
+    id: "agent-interfaces/retired-file",
+    title: "Retired file still published",
+    status: CheckStatus.Warn,
+    tier: AuditTier.Obsolete,
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: 0,
+    deprecated: {
+      kind: NoticeKind.Obsolete,
+      notice: "The vendor retired this file in 2024.",
+      link: "https://example.com/retired",
+      replacement: "Publish the successor file.",
+    },
+  });
+
+  it("lists found obsolete artifacts so the model can tell the owner", () => {
+    const out = summarise(
+      report({
+        categories: [cat({ id: "agent-interfaces", checks: [retired] })],
+      }),
+    );
+    expect(out.obsoleteFound).toEqual([
+      {
+        id: "agent-interfaces/retired-file",
+        title: "Retired file still published",
+        notice: "The vendor retired this file in 2024.",
+        replacement: "Publish the successor file.",
+        link: "https://example.com/retired",
+      },
+    ]);
+    expect(out.categories[0]!.warnCount).toBe(0);
+  });
+
+  it("returns an empty list when nothing obsolete was found", () => {
+    expect(summarise(report()).obsoleteFound).toEqual([]);
+  });
+
+  it("passes on the notice of a check no AI vendor reads", () => {
+    const out = summarise(
+      report({
+        categories: [
+          cat({
+            id: "machine-discovery",
+            checks: [
+              check({
+                id: "machine-discovery/unread-file",
+                title: "Unread file is well formed",
+                tier: AuditTier.Informative,
+                scoreDisplayMode: ScoreDisplayMode.Informative,
+                weight: 0,
+                deprecated: {
+                  kind: NoticeKind.Unconsumed,
+                  notice: "No AI vendor documents reading this file.",
+                  link: "https://example.com/evidence",
+                },
+              }),
+            ],
+          }),
+        ],
+      }),
+    );
+    expect(out.notices).toEqual([
+      {
+        id: "machine-discovery/unread-file",
+        title: "Unread file is well formed",
+        kind: NoticeKind.Unconsumed,
+        notice: "No AI vendor documents reading this file.",
+        link: "https://example.com/evidence",
+      },
+    ]);
+    expect(summarise(report()).notices).toEqual([]);
   });
 });

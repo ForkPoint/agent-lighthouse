@@ -32,6 +32,7 @@ import {
   declaredIds,
   declaredRequires,
   expectedRequires,
+  inheritedBaseSource,
 } from "./lib/requires-analysis";
 
 async function main() {
@@ -68,7 +69,11 @@ async function main() {
     seen.add(id);
 
     const where = relative(repoRoot, file);
-    const { expected, unknownGatherers } = expectedRequires(source, id);
+    // A shared base in the same folder reads on the subclass's behalf.
+    const { expected, unknownGatherers } = expectedRequires(
+      `${source}\n${inheritedBaseSource(file, source)}`,
+      id,
+    );
 
     for (const name of unknownGatherers) {
       violations.push(

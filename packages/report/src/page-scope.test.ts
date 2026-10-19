@@ -4,6 +4,7 @@ import { buildReportView } from "./view-model";
 import { generateHtmlReport } from "./html-generator";
 import { generateMarkdownSummary } from "./markdown-generator";
 import { hydrateReport } from "./hydrate";
+import { formatAuditScope } from "./page-scope";
 import {
   AttemptOutcome,
   AuditTier,
@@ -167,6 +168,20 @@ describe("page scope reports", () => {
       expect(render(r)).not.toContain("</pre><script>alert(1)</script>");
       expect(render(r)).toContain("&lt;script&gt;");
     }
+  });
+  it("labels an obsolete-tier finding as obsolete, not advisory", () => {
+    const r = report();
+    const c = r.categories[0]!.checks[0]!;
+    c.tier = AuditTier.Obsolete;
+    c.scoreDisplayMode = ScoreDisplayMode.Informative;
+    c.status = CheckStatus.Warn;
+    delete c.advisoryResults;
+    const scope = buildReportView(r).pageScope;
+    const audit = scope?.audits.find((a) => a.id === c.id);
+    expect(audit?.assessments[0]).toMatchObject({ obsolete: true });
+    const text = formatAuditScope(audit!);
+    expect(text).toContain("Obsolete — not scored");
+    expect(text).not.toContain("Advisory — not scored");
   });
   it("keeps old reports readable without inventing coverage", () => {
     const r = report();

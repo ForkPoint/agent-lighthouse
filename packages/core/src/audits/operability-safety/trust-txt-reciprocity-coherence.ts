@@ -5,12 +5,14 @@ import { isSafeUrl } from "#core/url-utils";
 import { probeRsl } from "#core/gatherers/rsl";
 import { parseRobots, isPathAllowed } from "#core/gatherers/robots";
 import { detailLines } from "#core/detail-lines";
+import { weightForGrade } from "#core/scorer";
 import {
   AuditTier,
   CheckPriority,
   EvidenceGrade,
   EvidenceKey,
   FixEffort,
+  NoticeKind,
   ScoreDisplayMode,
 } from "#core/types";
 import { isRootArtifact } from "#core/gatherers/root-files";
@@ -85,10 +87,18 @@ export class TrustTxtReciprocityCoherenceAudit extends Audit {
     scoreDisplayMode: ScoreDisplayMode.Informative,
     tier: AuditTier.Informative,
     evidenceGrade: EvidenceGrade.C,
-    weight: 0,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
     defaultPriority: CheckPriority.Low,
     dossier:
       "docs/evidence/audits/operability-safety/trust-txt-reciprocity-coherence.md",
+    deprecated: {
+      kind: NoticeKind.Unconsumed,
+      notice:
+        "No search engine, platform or AI company documents reading trust.txt, so its reciprocity has no machine reader. The file still serves the JournalList network and its browser badge.",
+      link: "https://journallist.net/reference-document-for-trust-txt-specifications",
+      replacement:
+        "To state AI training preferences, use robots.txt groups for the AI crawlers.",
+    },
     requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
     guidance: {
       impact:
@@ -235,14 +245,15 @@ export class TrustTxtReciprocityCoherenceAudit extends Audit {
     const found = `${entries.length} attribute(s) at ${source}; ${checked} association(s) checked, ${reciprocated.length} reciprocated. ${observations.length} observation(s).`;
     const displayValue = `${reciprocated.length}/${checked} reciprocated`;
 
-    // Never a failure: the mechanism is sound, the consumer is not documented.
+    // Never a warning or a failure: the mechanism is sound, but no machine
+    // consumer is documented (policy.md, "Informative or obsolete"). The
+    // observations stay in the message and in details for the publisher.
     if (observations.length > 0) {
       return {
-        ...this.warn(
-          observations[0]!,
+        ...this.pass(
+          `${observations.length} observation(s); the first: ${observations[0]!}. No search engine, platform or AI company documents reading trust.txt, so this does not affect AI agents.`,
           expected,
           found,
-          "Ask each association to add a reciprocal member= line, and make datatrainingallowed say what robots.txt says.",
         ),
         displayValue,
         details,

@@ -31,6 +31,30 @@ export function isInformative(
   return check.scoreDisplayMode === ScoreDisplayMode.Informative;
 }
 
+/**
+ * True for a check from an obsolete-tier audit.
+ *
+ * Such a check is informative too, so every score path already drops it. This
+ * predicate is for counting and display: an obsolete result is reported in its
+ * own section and never counts as a category pass, warn or fail, where a
+ * "still publishes a retired file" notice would read as a defect.
+ */
+export function isObsolete(check: Pick<CheckResult, "tier">): boolean {
+  return check.tier === AuditTier.Obsolete;
+}
+
+/** Category pass/warn/fail tally; obsolete checks are reported separately. */
+export function countCategoryStatuses(
+  checks: CheckResult[],
+): Pick<CategoryResult, "passCount" | "warnCount" | "failCount"> {
+  const counted = checks.filter((c) => !isObsolete(c));
+  return {
+    passCount: counted.filter((c) => c.status === CheckStatus.Pass).length,
+    warnCount: counted.filter((c) => c.status === CheckStatus.Warn).length,
+    failCount: counted.filter((c) => c.status === CheckStatus.Fail).length,
+  };
+}
+
 export function calculateCategoryScore(checks: CheckResult[]): number {
   // Not-applicable checks leave the denominator entirely: "nothing to
   // assess" must not move a score in either direction. Informative checks
@@ -105,9 +129,7 @@ export function buildCategoryResult(
     assessedMass: assessedMassOf(checks),
     score: calculateCategoryScore(checks),
     checks,
-    passCount: checks.filter((c) => c.status === CheckStatus.Pass).length,
-    warnCount: checks.filter((c) => c.status === CheckStatus.Warn).length,
-    failCount: checks.filter((c) => c.status === CheckStatus.Fail).length,
+    ...countCategoryStatuses(checks),
   };
 }
 

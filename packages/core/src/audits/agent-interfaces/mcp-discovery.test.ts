@@ -1,140 +1,84 @@
 import { describe, it, expect } from "vitest";
 import { McpDiscoveryAudit } from "./mcp-discovery";
+import { weightForGrade } from "#core/scorer";
+import { AuditMetaSchema } from "#core/schemas";
 import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
 import {
   AuditTier,
+  CheckPriority,
   CheckStatus,
   EvidenceGrade,
+  NoticeKind,
   ScoreDisplayMode,
 } from "#core/types";
 
+const PATH = "/.well-known/mcp/servers.json";
+
+function runWith(files: Record<string, ReturnType<typeof mockFetchResult>>) {
+  return new McpDiscoveryAudit().audit(mockCheckContext([], files));
+}
+
 describe("McpDiscoveryAudit", () => {
-  const audit = new McpDiscoveryAudit();
-
-  it("passes when servers.json has a servers array", () => {
+  it("warns that servers.json is unread when a servers list is published", () => {
     const body = JSON.stringify({
-      servers: [
-        {
-          name: "MCP",
-          url: "https://example.com/mcp",
-          transport: "streamable-http",
-        },
-      ],
+      servers: [{ name: "MCP", url: "https://example.com/mcp" }],
     });
-    const ctx = mockCheckContext([], {
-      "/.well-known/mcp/servers.json": mockFetchResult(body, 200),
-    });
-    const result = audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Pass);
-    expect(result.message).toContain("1 server(s)");
+    const result = runWith({ [PATH]: mockFetchResult(body, 200) });
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.priority).toBe(CheckPriority.Low);
+    expect(result.message).toContain("No MCP specification or client reads");
+    expect(result.message).toContain("ai-catalog.json");
+    expect(result.found).toContain("1 server(s)");
   });
 
-  // Neither path is registered or specified and no shipping MCP client is
-  // documented as fetching either, so publishing nothing withholds nothing.
-  // This used to be a scored fail at weight 1.0 -- a false FAIL on precisely
-  // the sites running a real MCP server discovered by any other route.
-  it("reports na when no MCP discovery document is published", () => {
-    const result = audit.audit(mockCheckContext([], {}));
-    expect(result.status).toBe(CheckStatus.NotApplicable);
-    expect(result.message).toContain("no documented MCP client fetches");
+  it.each([
+    ["invalid JSON", "{not json"],
+    ["an object without a servers array", '{"name":"x"}'],
+    ["an empty servers array", '{"servers":[]}'],
+  ])("still warns, never fails, for %s", (_label, body) => {
+    const result = runWith({ [PATH]: mockFetchResult(body, 200) });
+    expect(result.status).toBe(CheckStatus.Warn);
   });
 
-  it("reports na when servers.json returns 404", () => {
-    const ctx = mockCheckContext([], {
-      "/.well-known/mcp/servers.json": mockFetchResult("", 404),
-    });
-    const result = audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.NotApplicable);
-    expect(result.found).toContain("HTTP 404");
+  it.each([
+    ["no response", {}],
+    ["a 404", { [PATH]: mockFetchResult("Not found", 404) }],
+    [
+      "an HTML page standing in for the file",
+      { [PATH]: mockFetchResult("<!doctype html><html></html>", 200) },
+    ],
+    ["an empty body", { [PATH]: mockFetchResult("", 200) }],
+  ])("is not applicable for %s", (_label, files) => {
+    expect(runWith(files).status).toBe(CheckStatus.NotApplicable);
   });
 
-  it("reports na when servers.json answers with an HTML page", () => {
-    const ctx = mockCheckContext([], {
-      "/.well-known/mcp/servers.json": mockFetchResult(
-        '<!DOCTYPE html>\n<html lang="fr"><head><title>Home</title></head><body>Shop</body></html>',
-        200,
-        "text/html",
-      ),
-    });
-    expect(audit.audit(ctx).status).toBe(CheckStatus.NotApplicable);
-  });
-
-  it("fails when servers.json is invalid JSON", () => {
-    const ctx = mockCheckContext([], {
-      "/.well-known/mcp/servers.json": mockFetchResult("nope {{{", 200),
-    });
-    const result = audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.message).toContain("not valid JSON");
-  });
-
-  it("fails when there is no servers array", () => {
-    const ctx = mockCheckContext([], {
-      "/.well-known/mcp/servers.json": mockFetchResult(
-        JSON.stringify({ name: "x" }),
-        200,
-      ),
-    });
-    const result = audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.message).toContain("carries no servers array");
-  });
-
-  // The shape of a discovery file without the discovery.
-  it("fails an empty servers array", () => {
-    const ctx = mockCheckContext([], {
-      "/.well-known/mcp/servers.json": mockFetchResult(
-        JSON.stringify({ servers: [] }),
-        200,
-      ),
-    });
-    const result = audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.message).toContain("lists no servers");
-  });
-
-  it("fails an empty UCP document rather than passing it", () => {
-    const ctx = mockCheckContext([], {
-      "/.well-known/ucp": mockFetchResult("{}", 200),
-    });
-    const result = audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.message).toContain("no services and no capabilities");
-  });
-
-  it("passes a UCP document that declares capabilities", () => {
-    const ctx = mockCheckContext([], {
+  // The UCP profile is read by Google Merchant; agentic-commerce/ucp-profile
+  // judges it now. This audit no longer looks at it.
+  it("ignores /.well-known/ucp", () => {
+    const result = runWith({
       "/.well-known/ucp": mockFetchResult(
-        JSON.stringify({ version: "1.0", capabilities: { checkout: true } }),
+        JSON.stringify({ ucp: { version: "2026-01-11", services: {} } }),
         200,
       ),
     });
-    expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
-  it("does not print a malformed object version as [object Object]", () => {
-    const ctx = mockCheckContext([], {
-      "/.well-known/ucp": mockFetchResult(
-        JSON.stringify({
-          version: { major: 1 },
-          capabilities: { checkout: true },
-        }),
-        200,
-      ),
-    });
-    const result = audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Pass);
-    expect(result.found).toBe("UCP profile (vstable, 1 capabilit(ies))");
+  it("is not applicable on a scan that read nothing", async () => {
+    await expectNotApplicableOnEmpty(new McpDiscoveryAudit());
   });
 
-  // Four of the five researched signals record `Consumers: none-known` and
-  // recommend informative or delete. The fifth is a validation rule already
-  // implemented by agent-interfaces/openapi-exists at the ratified path.
-  it("is registered informative at weight 0", () => {
+  it("is an obsolete-tier audit with an obsolete notice", () => {
     const { meta } = McpDiscoveryAudit;
-    expect(meta.evidenceGrade).toBe(EvidenceGrade.C);
-    expect(meta.tier).toBe(AuditTier.Informative);
-    expect(meta.weight).toBe(0);
+    expect(meta.tier).toBe(AuditTier.Obsolete);
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.D);
+    expect(meta.weight).toBe(
+      weightForGrade(EvidenceGrade.D, AuditTier.Obsolete),
+    );
     expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Informative);
+    expect(meta.deprecated?.kind).toBe(NoticeKind.Obsolete);
+    expect(meta.deprecated?.replacement).toContain("ai-catalog.json");
+    expect(AuditMetaSchema.safeParse(meta).success).toBe(true);
   });
 });

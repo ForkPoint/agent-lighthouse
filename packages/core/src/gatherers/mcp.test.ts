@@ -6,6 +6,7 @@ import {
   postRpc,
   mcpFetch,
   discoverProbe,
+  listTools,
   MCP_PROTOCOL_VERSION,
   MCP_ACCEPT,
 } from "./mcp";
@@ -45,9 +46,13 @@ function ctxWith(rootFiles: Record<string, string>): CheckContext {
 const SERVERS_JSON = JSON.stringify({
   servers: [{ url: "https://a.test/mcp" }],
 });
+// Google's Merchant UCP profile shape: services inside a `ucp` object.
 const UCP = JSON.stringify({
-  services: {
-    commerce: [{ transport: "mcp", endpoint: "https://a.test/ucp-mcp" }],
+  ucp: {
+    version: "2026-04-08",
+    services: {
+      commerce: [{ transport: "mcp", endpoint: "https://a.test/ucp-mcp" }],
+    },
   },
 });
 const CARD_URL = "https://example.com/card.json";
@@ -116,6 +121,58 @@ describe("discoverMcpEndpoint", () => {
       ctxWith({ "/.well-known/ucp": UCP }),
     );
     expect(found).toEqual({ url: "https://a.test/ucp-mcp", source: "ucp" });
+  });
+
+  // UCP 2026-01-11 nests one object per transport under each service.
+  it("reads the mcp endpoint of a 2026-01-11 UCP profile", async () => {
+    const found = await discoverMcpEndpoint(
+      ctxWith({
+        "/.well-known/ucp": JSON.stringify({
+          ucp: {
+            version: "2026-01-11",
+            services: {
+              "dev.ucp.shopping": {
+                version: "2026-01-11",
+                rest: { endpoint: "https://a.test/ucp/v1" },
+                mcp: { endpoint: "https://a.test/ucp/mcp" },
+              },
+            },
+          },
+        }),
+      }),
+    );
+    expect(found).toEqual({ url: "https://a.test/ucp/mcp", source: "ucp" });
+  });
+
+  it("resolves a relative UCP mcp endpoint against the profile URL", async () => {
+    const found = await discoverMcpEndpoint(
+      ctxWith({
+        "/.well-known/ucp": JSON.stringify({
+          ucp: {
+            services: {
+              commerce: [{ transport: "mcp", endpoint: "/ucp/mcp" }],
+            },
+          },
+        }),
+      }),
+    );
+    expect(found).toEqual({
+      url: "https://example.com/ucp/mcp",
+      source: "ucp",
+    });
+  });
+
+  it("ignores JSON at /.well-known/ucp that has no ucp key", async () => {
+    const found = await discoverMcpEndpoint(
+      ctxWith({
+        "/.well-known/ucp": JSON.stringify({
+          services: {
+            commerce: [{ transport: "mcp", endpoint: "https://a.test/x" }],
+          },
+        }),
+      }),
+    );
+    expect(found).toBeUndefined();
   });
 
   // SEP-2127: a catalog entry's `url` addresses the Server Card. The endpoint
@@ -237,6 +294,63 @@ describe("discoverMcpEndpoint", () => {
     expect(found).toMatchObject({
       url: "",
       source: "card-no-remote",
+      cardUrl: CARD_URL,
+    });
+  });
+
+  it("reports a Server Card whose remotes is not an array as having no remote", async () => {
+    const found = await discoverMcpEndpoint(
+      ctxWith({
+        "/.well-known/ai-catalog.json": CATALOG,
+        "/card.json": JSON.stringify({
+          remotes: { type: "streamable-http", url: "https://a.test/mcp" },
+        }),
+      }),
+    );
+    expect(found).toEqual({
+      url: "",
+      source: "card-no-remote",
+      cardUrl: CARD_URL,
+      found: `${CARD_URL} -> no remotes[].url`,
+    });
+  });
+
+  it("reports a Server Card whose fetch dies as unreachable", async () => {
+    const ctx = ctxWith({ "/.well-known/ai-catalog.json": CATALOG });
+    ctx.fetch = async () => {
+      throw new Error("socket hang up");
+    };
+    const found = await discoverMcpEndpoint(ctx);
+    expect(found).toEqual({
+      url: "",
+      source: "card-unreadable",
+      cardUrl: CARD_URL,
+      found: `${CARD_URL} -> unreachable`,
+    });
+  });
+
+  // A UCP profile that binds no service to MCP declares no MCP server, so the
+  // catalogs are still consulted.
+  it("falls through to the catalog when the UCP profile has no mcp binding", async () => {
+    const found = await discoverMcpEndpoint(
+      ctxWith({
+        "/.well-known/ucp": JSON.stringify({
+          ucp: {
+            version: "2026-04-08",
+            services: {
+              commerce: [
+                { transport: "rest", endpoint: "https://a.test/rest" },
+              ],
+            },
+          },
+        }),
+        "/.well-known/ai-catalog.json": CATALOG,
+        "/card.json": CARD,
+      }),
+    );
+    expect(found).toEqual({
+      url: "https://a.test/mcp",
+      source: "ai-catalog",
       cardUrl: CARD_URL,
     });
   });
@@ -400,6 +514,41 @@ describe("parseRpcResponse", () => {
     expect(out).toMatchObject({ ok: false });
   });
 
+  // An SSE stream that carries only notifications has no response frame. The
+  // last frame is read, and its missing result is reported as such.
+  it("falls back to the last SSE frame when no frame carries a result or error", () => {
+    const sse = mockFetchResult(
+      'event: message\ndata: {"jsonrpc":"2.0","method":"notifications/progress"}\n\n',
+      200,
+      "text/event-stream",
+    );
+    expect(parseRpcResponse(sse)).toEqual({
+      ok: false,
+      reason: "response carries no result object",
+    });
+  });
+
+  it("defaults a JSON-RPC error with no numeric code or string message", () => {
+    const out = parseRpcResponse(
+      json('{"jsonrpc":"2.0","id":1,"error":{"code":"x","data":{"hint":1}}}'),
+    );
+    expect(out).toEqual({
+      ok: false,
+      error: { code: 0, message: "unknown error", data: { hint: 1 } },
+      reason: "JSON-RPC error 0: unknown error",
+    });
+  });
+
+  it("rejects an error member that is not an object", () => {
+    const out = parseRpcResponse(
+      json('{"jsonrpc":"2.0","id":1,"error":"boom","result":{}}'),
+    );
+    expect(out).toEqual({
+      ok: false,
+      reason: "response is not valid JSON-RPC",
+    });
+  });
+
   it("rejects a response whose result is not an object", () => {
     const out = parseRpcResponse(
       json('{"jsonrpc":"2.0","id":1,"result":"ok"}'),
@@ -439,6 +588,18 @@ describe("postRpc", () => {
     });
     expect(JSON.parse(r.seen[0]!.body!)).toMatchObject({
       method: "initialize",
+    });
+  });
+
+  it("forwards extra request headers", async () => {
+    const r = recorder(
+      mockFetchResult('{"jsonrpc":"2.0","id":1,"result":{}}', 200),
+    );
+    await postRpc(r.ctx, "https://a.test/mcp", 1, "tools/list", undefined, {
+      "MCP-Protocol-Version": MCP_PROTOCOL_VERSION,
+    });
+    expect(r.seen[0]!.headers).toEqual({
+      "MCP-Protocol-Version": MCP_PROTOCOL_VERSION,
     });
   });
 
@@ -509,6 +670,14 @@ describe("mcpFetch and the shared probe cache", () => {
     expect(r.seen[0]!.contentType).toBeUndefined();
   });
 
+  it("passes an abort signal through to the fetch", async () => {
+    const r = recorder2(mockFetchResult("", 405));
+    const controller = new AbortController();
+    await mcpFetch(r.ctx, "https://a.test/mcp", { signal: controller.signal });
+    expect(r.seen[0]!.signal).toBe(controller.signal);
+    expect(r.seen[0]!.contentType).toBe("application/json");
+  });
+
   it("refuses a private-range URL without fetching it", async () => {
     const r = recorder2(mockFetchResult("{}", 200));
     expect(await mcpFetch(r.ctx, "http://10.0.0.1/mcp")).toBeUndefined();
@@ -550,5 +719,110 @@ describe("mcpFetch and the shared probe cache", () => {
     await discoverProbe(b.ctx, "https://a.test/mcp");
     expect(a.seen).toHaveLength(1);
     expect(b.seen).toHaveLength(1);
+  });
+});
+
+describe("listTools", () => {
+  const ENDPOINT = "https://a.test/mcp";
+
+  function page(result: unknown, status = 200): FetchResult {
+    return mockFetchResult(
+      JSON.stringify({ jsonrpc: "2.0", id: 1, result }),
+      status,
+      "application/json",
+    );
+  }
+
+  /** Answer each tools/list call by the cursor it carries. */
+  function byCursor(pages: Record<string, FetchResult>) {
+    const seen: FetchOptions[] = [];
+    const ctx = mockCheckContext([]);
+    ctx.fetch = async (o: FetchOptions) => {
+      seen.push(o);
+      const body = JSON.parse(o.body!) as { params: { cursor?: string } };
+      return pages[body.params.cursor ?? ""]!;
+    };
+    return { ctx, seen };
+  }
+
+  it("follows nextCursor across pages and keeps only object tools", async () => {
+    const r = byCursor({
+      "": page({ tools: [{ name: "a" }, "junk", null], nextCursor: "p2" }),
+      p2: page({ tools: [{ name: "b" }], nextCursor: "" }),
+    });
+    const out = await listTools(r.ctx, ENDPOINT, 5);
+    expect(out.tools).toEqual([{ name: "a" }, { name: "b" }]);
+    expect(out.truncated).toBe(false);
+    expect(r.seen).toHaveLength(2);
+    expect(JSON.parse(r.seen[1]!.body!).params.cursor).toBe("p2");
+  });
+
+  it("reports truncation when the page budget runs out with a cursor pending", async () => {
+    const r = byCursor({
+      "": page({ tools: [{ name: "a" }], nextCursor: "p2" }),
+      p2: page({ tools: [{ name: "b" }], nextCursor: "p3" }),
+    });
+    const out = await listTools(r.ctx, ENDPOINT, 2);
+    expect(out.tools.map((t) => t["name"])).toEqual(["a", "b"]);
+    expect(out.truncated).toBe(true);
+    expect(out.pages).toBe(2);
+  });
+
+  it("stops on a non-200 page that is not a sign-in refusal", async () => {
+    const r = byCursor({ "": page({ tools: [{ name: "a" }] }, 503) });
+    const out = await listTools(r.ctx, ENDPOINT, 3);
+    expect(out).toEqual({ tools: [], truncated: false, pages: 0 });
+  });
+
+  it("records a 401 or 403 on the first page as the sign-in status", async () => {
+    for (const status of [401, 403]) {
+      const r = byCursor({ "": page({ tools: [{ name: "a" }] }, status) });
+      const out = await listTools(r.ctx, ENDPOINT, 3);
+      expect(out).toEqual({
+        tools: [],
+        truncated: false,
+        pages: 0,
+        signInStatus: status,
+      });
+    }
+  });
+
+  // Only the first page decides sign-in: a refusal mid-listing is a broken
+  // pagination, not an endpoint that requires credentials.
+  it("does not report sign-in when a later page is refused", async () => {
+    const r = byCursor({
+      "": page({ tools: [{ name: "a" }], nextCursor: "p2" }),
+      p2: page({ tools: [] }, 401),
+    });
+    const out = await listTools(r.ctx, ENDPOINT, 3);
+    expect(out.tools).toEqual([{ name: "a" }]);
+    expect(out.signInStatus).toBeUndefined();
+  });
+
+  it("stops on a JSON-RPC error and keeps what earlier pages returned", async () => {
+    const r = byCursor({
+      "": page({ tools: [{ name: "a" }], nextCursor: "p2" }),
+      p2: mockFetchResult(
+        '{"jsonrpc":"2.0","id":1,"error":{"code":-32602,"message":"bad cursor"}}',
+        200,
+        "application/json",
+      ),
+    });
+    const out = await listTools(r.ctx, ENDPOINT, 3);
+    expect(out.tools).toEqual([{ name: "a" }]);
+    expect(out.truncated).toBe(true);
+  });
+
+  it("stops when a result carries no tools array", async () => {
+    const r = byCursor({ "": page({ tools: { name: "a" } }) });
+    const out = await listTools(r.ctx, ENDPOINT, 3);
+    expect(out).toEqual({ tools: [], truncated: false, pages: 0 });
+  });
+
+  it("stops without fetching when the endpoint is refused", async () => {
+    const r = byCursor({});
+    const out = await listTools(r.ctx, "http://127.0.0.1/mcp", 3);
+    expect(out).toEqual({ tools: [], truncated: false, pages: 0 });
+    expect(r.seen).toEqual([]);
   });
 });

@@ -3,10 +3,15 @@ audit: structured-data/faqpage-schema
 category: structured-data
 source_file: packages/core/src/audits/structured-data/faqpage-schema.ts
 slug: faqpage-schema
-evidence_grade: C
-disposition: "keep — fix required"
-reviewed: 2026-08-21
+evidence_grade: D
+disposition: "obsolete tier (2026-10-18)"
+reviewed: 2026-10-18
+consumers:
+  - none (Google stopped showing FAQ rich results on 2026-05-07)
 sources:
+  - google-search-updates-faq-2026
+  - google-howto-faq-blog
+  - google-faqpage-deprecation
   - google-faqpage-structured-data
   - google-search-gallery
   - webalmanac-2024-structured-data
@@ -14,21 +19,62 @@ sources:
   - google-ai-features-trust
   - searchviu-schema-ai-fetch-test
   - ahrefs-schema-ai-citations
+recommended_tier: obsolete
 ---
 
 # faqpage-schema (`3.7`)
 
-> structured-data · source `faqpage-schema.ts` · review verdict **fix** · evidence grade **C** · disposition: **keep — fix required**
+> structured-data · source `faqpage-schema.ts` · evidence grade **D** · tier **obsolete** (weight 0, never fails)
 
 ## What it checks
 
-AI answer engines like Perplexity and Google SGE extract FAQ-structured content with higher confidence for direct answers. FAQPage schema makes your Q&A content machine-readable, giving it priority in AI-generated responses over unstructured text.
+Whether any sampled page still publishes `FAQPage` structured data.
+
+Question headings without markup are no longer a finding. The visible questions and answers still matter, and `answer-readiness/faq-sections` checks them.
+
+| State                                         | Result                 |
+| :-------------------------------------------- | :--------------------- |
+| `FAQPage` markup on at least one sampled page | `warn`, priority `low` |
+| no `FAQPage` markup                           | `notApplicable`        |
+
+## Claimed mechanism (falsifiable)
+
+**Mechanism:** Google showed FAQ rich results from `FAQPage` markup. The claim this audit tests is that Google retired them and that no AI vendor documents reading the markup.
 
 ## Evidence
 
+- Google restricted FAQ rich results to well-known government and health sites in 2023 — [Changes to HowTo and FAQ rich results](https://developers.google.com/search/blog/2023/08/howto-faq-changes) (verified 2026-10-18)
+- Google's changelog, 2026-05-08: "Deprecating the FAQ rich result feature … This feature will no longer appear in Google Search starting May 7, 2026." — [Search Central updates](https://developers.google.com/search/updates) (verified 2026-10-18)
+- No AI vendor documents reading `FAQPage` markup. A controlled test found that chat assistants fetching a page did not read JSON-LD at all.
+
+**Counter-evidence:** A Microsoft Advertising blog post recommends FAQ schema for AI search but names no system that reads it. Google says unused markup causes no problems. The message therefore says removal is optional and keeps the visible Q&A as the thing that counts.
+
+## Scoring
+
+**Grade: D** — the only documented consumer was retired by its operator; the one vendor recommendation names no consumer. An obsolete audit carries weight 0 and never returns `fail` (`sunset.test.ts`; `Audit.toCheckResult` lowers a stray `fail` to `warn`). It does not move any score.
+
+## Example finding
+
+A help page carries `{"@type":"FAQPage","mainEntity":[…]}`. The report says Google retired FAQ rich results, that removing the markup is optional, and that the visible questions and answers should stay.
+
+## Implementation deviations
+
+- 2026-10-18: moved from informative (grade C) to the obsolete tier (grade D).
+- The heading heuristic is gone. The audit looks only for markup.
+
+## Record before the obsolete tier
+
+The dossier as it stood before the move on 2026-10-18. Kept as the research record; withheld from the public page.
+
+### What it checks
+
+AI answer engines like Perplexity and Google SGE extract FAQ-structured content with higher confidence for direct answers. FAQPage schema makes your Q&A content machine-readable, giving it priority in AI-generated responses over unstructured text.
+
+### Evidence
+
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
 
-## Evidence (2026-08-21)
+### Evidence (2026-08-21)
 
 **Mechanism claim:** Google Search parses FAQPage markup and renders its Question/acceptedAnswer pairs as an expandable FAQ rich result beneath the page's search listing.
 

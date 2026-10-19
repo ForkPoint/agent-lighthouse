@@ -11,6 +11,7 @@ import {
   ScoreDisplayMode,
 } from "#core/types";
 import { isRootArtifact, rootArtifactMiss } from "#core/gatherers/root-files";
+import { LLMS_TXT_NO_EFFECT, LLMS_TXT_NOTICE } from "./_llms-txt-notice";
 
 /** Link relations the llms.txt v2 spec defines for pointing at the file. */
 const DISCOVERY_RELS = new Set(["alternate", "describedby"]);
@@ -53,6 +54,7 @@ export class LlmsTxtExistsAudit extends Audit {
     evidenceGrade: EvidenceGrade.C,
     tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/machine-discovery/llms-txt-exists.md",
+    deprecated: LLMS_TXT_NOTICE,
     requires: [
       EvidenceKey.OriginReachable,
       EvidenceKey.UnblockedFetches,
@@ -83,10 +85,7 @@ export class LlmsTxtExistsAudit extends Audit {
 
     if (!isRootArtifact(result)) {
       const status = rootArtifactMiss(result);
-      // A site that links to llms.txt and does not serve it has a broken
-      // promise of its own making, which is worth a warning. A site that never
-      // claimed to have one has done nothing wrong: the file is optional, and
-      // the only shipping checker of it scores a 404 not-applicable.
+      // No file and no link: absent artifact, absent verdict.
       if (!link) {
         return this.notApplicable(
           "No llms.txt at the site root. The file is an optional community convention with no documented agent consumer, so its absence is not a defect.",
@@ -95,27 +94,30 @@ export class LlmsTxtExistsAudit extends Audit {
           page?.url,
         );
       }
-      return this.warn(
-        "The page links to llms.txt but the file is not served at the site root.",
+      // The site advertises the file and does not serve it. The dead link is
+      // present, so it is a defect to name, not an absence; like every other
+      // llms.txt defect it is reported in a pass, because nothing reads it.
+      return this.pass(
+        `The page links to llms.txt but the file is not served at the site root, so the link leads nowhere. ${LLMS_TXT_NO_EFFECT}`,
         "GET /llms.txt returns 200 with markdown starting with #",
         `${status}; ${linkNote}`,
-        CheckPriority.Low,
         page?.url,
       );
     }
 
     if (!result.body.trimStart().startsWith("#")) {
-      return this.warn(
-        "llms.txt missing markdown heading.",
+      // Reported, not warned: Chrome Lighthouse flags this, but no AI vendor
+      // reads the file, so the gap costs the site nothing with an agent.
+      return this.pass(
+        `llms.txt is served but does not start with a # heading; Chrome Lighthouse flags a file with no H1. ${LLMS_TXT_NO_EFFECT}`,
         "Body starts with # (H1 heading)",
         `Body starts with "${result.body.trimStart().slice(0, 40)}..."; ${linkNote}`,
-        CheckPriority.Low,
         page?.url,
       );
     }
 
     return this.pass(
-      "llms.txt exists and is valid.",
+      "llms.txt exists and starts with a # heading. No AI vendor documents reading it.",
       "HTTP 200 with # heading",
       `HTTP 200 with # heading; ${linkNote}`,
       page?.url,

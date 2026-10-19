@@ -38,7 +38,7 @@ describe("NEW_IN_V2 — audits with no v1 predecessor", () => {
     expect(overlapping).toEqual([]);
   });
 
-  it("accounts for the whole registry: 148 migrated plus the new ids", () => {
+  it("accounts for the whole registry: 149 migrated plus the new ids", () => {
     expect(registeredIds).toHaveLength(MIGRATED_COUNT + NEW_IN_V2.length);
   });
 });

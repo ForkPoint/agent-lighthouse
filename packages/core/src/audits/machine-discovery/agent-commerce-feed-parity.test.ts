@@ -96,6 +96,47 @@ function run(html: string | undefined, imageType = "image/jpeg") {
   return audit.audit(ctx);
 }
 
+/**
+ * Several sitemap URLs at once. `scanned` pages are already in the scan, so the
+ * audit must read them from context; the rest are served over GET.
+ */
+async function runSite(
+  served: Record<string, string>,
+  opts: { scanned?: Record<string, string>; imageType?: string } = {},
+) {
+  const audit = new AgentCommerceFeedParityAudit();
+  const pages = [
+    mockPageContext(
+      "https://example.com/",
+      "<html><body><main><p>Home.</p></main></body></html>",
+    ),
+    ...Object.entries(opts.scanned ?? {}).map(([url, html]) =>
+      mockPageContext(url, html),
+    ),
+  ];
+  const ctx = mockCheckContext(pages);
+  const locs = [...Object.keys(opts.scanned ?? {}), ...Object.keys(served)];
+  const xml = `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${locs.map((loc) => `<url><loc>${loc}</loc></url>`).join("")}</urlset>`;
+  const gets: string[] = [];
+  const heads: string[] = [];
+  ctx.fetch = async (o: FetchOptions): Promise<FetchResult> => {
+    const path = new URL(o.url).pathname;
+    if (path === "/sitemap.xml")
+      return mockFetchResult(xml, 200, "application/xml");
+    if (o.method === HttpMethod.Head) {
+      heads.push(o.url);
+      return mockFetchResult("", 200, opts.imageType ?? "image/jpeg");
+    }
+    gets.push(o.url);
+    const html = served[o.url];
+    return html
+      ? mockFetchResult(html, 200, "text/html")
+      : mockFetchResult("", 404);
+  };
+  const result = await audit.audit(ctx);
+  return { result, gets, heads };
+}
+
 describe("AgentCommerceFeedParityAudit", () => {
   const audit = new AgentCommerceFeedParityAudit();
 
@@ -310,5 +351,261 @@ describe("AgentCommerceFeedParityAudit", () => {
     const result = await run(pageHtml(node));
     expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("is not an absolute HTTPS URL");
+  });
+
+  it("reads a contentUrl ImageObject, a typed @type array and an offers array", async () => {
+    const node = product();
+    node["@type"] = ["Product", "Thing"];
+    node["image"] = [
+      { "@type": "ImageObject", name: "Front view" },
+      {
+        "@type": "ImageObject",
+        contentUrl: "https://example.com/img/ark-001.jpg",
+      },
+    ];
+    node["offers"] = [node["offers"]];
+    expect((await run(pageHtml(node))).status).toBe(CheckStatus.Pass);
+  });
+
+  it("reads a numeric sku, a brand array and a plain decimal price string", async () => {
+    const node = product();
+    node["sku"] = 1001;
+    node["brand"] = ["", { "@type": "Brand", name: "Alpine" }];
+    (node["offers"] as Record<string, unknown>)["price"] = "29.99";
+    expect((await run(pageHtml(node))).status).toBe(CheckStatus.Pass);
+  });
+
+  // ── identity ──
+
+  it("passes a GTIN with a correct check digit", async () => {
+    const node = product();
+    node["gtin13"] = "4006381333931";
+    expect((await run(pageHtml(node))).status).toBe(CheckStatus.Pass);
+  });
+
+  it("fails a GTIN with the wrong check digit", async () => {
+    const node = product();
+    node["gtin13"] = "4006381333932";
+    const result = await run(pageHtml(node));
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("gtin13");
+    expect(result.message).toContain("wrong check digit");
+  });
+
+  it("fails a GTIN that is not 8, 12, 13 or 14 digits", async () => {
+    const node = product();
+    node["gtin"] = "ABC-12345";
+    const result = await run(pageHtml(node));
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("not 8, 12, 13 or 14 digits");
+  });
+
+  it("fails an item_id over the 100-character cap", async () => {
+    const node = product();
+    node["sku"] = "S".repeat(101);
+    const result = await run(pageHtml(node));
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("over the 100-character cap");
+  });
+
+  it("fails a brand over the 70-character cap", async () => {
+    const node = product();
+    node["brand"] = { "@type": "Brand", name: "B".repeat(71) };
+    const result = await run(pageHtml(node));
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("brand is over the 70-character cap");
+  });
+
+  it("fails a description over the 5000-character cap", async () => {
+    const node = product();
+    node["description"] = "d".repeat(5001);
+    const result = await run(pageHtml(node));
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("over the 5000-character cap");
+  });
+
+  it("fails a product with no image", async () => {
+    const node = product();
+    delete node["image"];
+    const result = await run(pageHtml(node));
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("no image");
+  });
+
+  // ── offer ──
+
+  it("fails a Product with no Offer", async () => {
+    const node = product();
+    delete node["offers"];
+    const result = await run(pageHtml(node));
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("no Offer on the Product");
+  });
+
+  it("fails an Offer whose price is not a positive decimal", async () => {
+    const node = product();
+    (node["offers"] as Record<string, unknown>)["price"] = "29,99 USD";
+    const result = await run(pageHtml(node));
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("is not a positive decimal");
+    const zero = product();
+    (zero["offers"] as Record<string, unknown>)["price"] = 0;
+    expect((await run(pageHtml(zero))).status).toBe(CheckStatus.Fail);
+  });
+
+  it("fails when neither the Offer nor any variant carries a price", async () => {
+    const node = product();
+    delete (node["offers"] as Record<string, unknown>)["price"];
+    node["hasVariant"] = ["not a node", { "@type": "Product", offers: {} }];
+    node["inProductGroupWithID"] = "ARK";
+    const result = await run(pageHtml(node));
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain(
+      "carries no price, no lowPrice and no variant Offer price",
+    );
+    const single = product();
+    delete (single["offers"] as Record<string, unknown>)["price"];
+    const plain = await run(pageHtml(single));
+    expect(plain.status).toBe(CheckStatus.Fail);
+    expect(plain.message).toContain("carries no price");
+  });
+
+  it("fails a priceCurrency that is not an active ISO 4217 code", async () => {
+    const node = product();
+    (node["offers"] as Record<string, unknown>)["priceCurrency"] = "XYZ";
+    const result = await run(pageHtml(node));
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain('priceCurrency "XYZ"');
+  });
+
+  it("fails a schema.org availability URL that maps to no feed enum value", async () => {
+    const node = product();
+    (node["offers"] as Record<string, unknown>)["availability"] =
+      "https://schema.org/Discontinued";
+    const result = await run(pageHtml(node));
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("maps to no feed enum value");
+  });
+
+  it("fails an Offer with no availability and no seller", async () => {
+    const node = product();
+    const offers = node["offers"] as Record<string, unknown>;
+    delete offers["availability"];
+    delete offers["seller"];
+    const result = await run(pageHtml(node));
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("carries no availability");
+    expect(result.message).toContain("no offers.seller.name");
+  });
+
+  it("accepts a seller given as a plain name", async () => {
+    const node = product();
+    (node["offers"] as Record<string, unknown>)["seller"] = "Alpine Store";
+    expect((await run(pageHtml(node))).status).toBe(CheckStatus.Pass);
+  });
+
+  it("accepts availableAtOrFrom.address.addressCountry as the country signal", async () => {
+    const node = product();
+    const offers = node["offers"] as Record<string, unknown>;
+    delete offers["eligibleRegion"];
+    offers["availableAtOrFrom"] = {
+      "@type": "Place",
+      address: { "@type": "PostalAddress", addressCountry: "de" },
+    };
+    expect((await run(pageHtml(node))).status).toBe(CheckStatus.Pass);
+  });
+
+  // The dossier defers name mapping: only alpha-2 shapes resolve.
+  it("does not read a country name as a country signal", async () => {
+    const node = product();
+    (node["offers"] as Record<string, unknown>)["eligibleRegion"] =
+      "United States";
+    const result = await run(pageHtml(node));
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("no target country signal");
+  });
+
+  it("reads a comma-decimal rendered price", async () => {
+    const node = product();
+    (node["offers"] as Record<string, unknown>)["priceCurrency"] = "EUR";
+    expect(
+      (await run(pageHtml(node, { visiblePrice: "29,99 EUR" }))).status,
+    ).toBe(CheckStatus.Pass);
+  });
+
+  it("fails an offer url against a canonical that cannot be parsed", async () => {
+    const result = await run(pageHtml(product(), { canonical: "http://[" }));
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("is not the page canonical");
+  });
+
+  it("raises no image risk when the HEAD answer is not 200", async () => {
+    const node = product();
+    node["image"] = "https://example.com/img/ark-001.webp";
+    const audit = new AgentCommerceFeedParityAudit();
+    const ctx = mockCheckContext([
+      mockPageContext("https://example.com/", "<html></html>"),
+    ]);
+    const xml = `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${URL_0}</loc></url></urlset>`;
+    ctx.fetch = async (o: FetchOptions): Promise<FetchResult> => {
+      if (new URL(o.url).pathname === "/sitemap.xml")
+        return mockFetchResult(xml, 200, "application/xml");
+      if (o.method === HttpMethod.Head)
+        return mockFetchResult("", 403, "image/webp");
+      if (o.url === URL_0)
+        return mockFetchResult(pageHtml(node), 200, "text/html");
+      return mockFetchResult("", 404);
+    };
+    expect((await audit.audit(ctx)).status).toBe(CheckStatus.Pass);
+  });
+
+  // ── sampling ──
+
+  it("treats og:type=product with no Product node as a PDP missing its data", async () => {
+    const html = `<html><head><meta property="og:type" content="product"></head>
+      <body><main><h1>Kit</h1></main></body></html>`;
+    const result = await run(html);
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("no sku, mpn or productID");
+    expect(result.message).toContain("no Offer on the Product");
+    // Six defects, five shown.
+    expect(result.message).toContain("(1 more)");
+  });
+
+  it("is notApplicable when the sampled URL cannot be fetched", async () => {
+    expect((await run(undefined)).status).toBe(CheckStatus.NotApplicable);
+  });
+
+  it("reads a sitemap URL already in the scan from context, not the network", async () => {
+    const { result, gets } = await runSite(
+      {},
+      { scanned: { [URL_0]: pageHtml(product()) } },
+    );
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(gets).not.toContain(URL_0);
+  });
+
+  it("skips a scanned sitemap page that is not a product page", async () => {
+    const { result } = await runSite(
+      {},
+      { scanned: { [URL_0]: "<html><body><p>Article.</p></body></html>" } },
+    );
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+  });
+
+  it("HEADs at most two product images per scan", async () => {
+    const served: Record<string, string> = {};
+    for (let i = 0; i < 3; i += 1) {
+      const url = `https://example.com/products/q-${i}`;
+      const node = product();
+      node["url"] = url;
+      node["image"] = `https://example.com/img/q-${i}.jpg`;
+      (node["offers"] as Record<string, unknown>)["url"] = url;
+      served[url] = pageHtml(node, { canonical: url });
+    }
+    const { result, heads } = await runSite(served);
+    expect(heads).toHaveLength(2);
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.found).toContain("3 product page(s) sampled");
   });
 });

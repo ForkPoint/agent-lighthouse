@@ -11,10 +11,12 @@ import {
   EvidenceGrade,
   EvidenceKey,
   FixEffort,
+  NoticeKind,
   ScoreDisplayMode,
   HttpMethod,
 } from "#core/types";
 import { isRootArtifact } from "#core/gatherers/root-files";
+import { CATALOG_PATHS } from "#core/audits/agent-interfaces/_ard";
 
 /**
  * A fixed third-party origin for the probe. A browser always sends Origin on a
@@ -30,7 +32,7 @@ function carriesAcao(result: FetchResult | undefined): boolean {
 }
 
 const EXPECTED =
-  "Cross-origin requests (OPTIONS preflight or GET, with Origin) to /llms.txt and /.well-known/ai-catalog.json return Access-Control-Allow-Origin";
+  "Cross-origin requests (OPTIONS preflight or GET, with Origin) to each published AI file (/llms.txt, /.well-known/ard.json, /.well-known/ai-catalog.json) return Access-Control-Allow-Origin";
 
 export class CorsAiFilesAudit extends Audit {
   static override meta: AuditMeta = {
@@ -45,17 +47,23 @@ export class CorsAiFilesAudit extends Audit {
     evidenceGrade: EvidenceGrade.C,
     tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/machine-discovery/cors-ai-files.md",
+    deprecated: {
+      kind: NoticeKind.Unconsumed,
+      notice:
+        "No AI crawler or assistant documents reading these files from a browser. They fetch them from servers, where CORS does not apply, so CORS headers on them are not needed.",
+      link: "https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS",
+    },
     requires: [
       EvidenceKey.OriginReachable,
       EvidenceKey.UnblockedFetches,
       EvidenceKey.RenderedBody,
       EvidenceKey.SampleAdequate,
     ],
-    defaultPriority: CheckPriority.Medium,
+    defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
         "Agent code running inside a browser origin, such as a sandboxed app iframe, is governed by the same-origin policy. Without CORS headers on your llms.txt and AI catalog, such code receives a network error instead of your content. Server-side crawlers, agent backends and MCP clients are not browsers and are unaffected.",
-      fix: "Add Access-Control-Allow-Origin and Access-Control-Allow-Methods headers to your /llms.txt and /.well-known/ai-catalog.json responses. Use a wildcard origin (*) unless you need to restrict access to specific domains.",
+      fix: "Optional. Add Access-Control-Allow-Origin only if browser-side code you know of fetches these files cross-origin. Crawlers and server-side agents do not need it.",
       code: "Access-Control-Allow-Origin: *\nAccess-Control-Allow-Methods: GET, OPTIONS",
       effort: FixEffort.Easy,
       docsUrl: "https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS",
@@ -65,17 +73,17 @@ export class CorsAiFilesAudit extends Audit {
 
   async audit(ctx: CheckContext): Promise<AuditResult> {
     const page = ctx.pages?.[0];
-    const aiPaths = ["/llms.txt", "/.well-known/ai-catalog.json"];
-    const hasRootFiles = ctx.rootFiles && Object.keys(ctx.rootFiles).length > 0;
-    const existingAiPaths = hasRootFiles
-      ? aiPaths.filter((p) => isRootArtifact(ctx.rootFiles[p]))
-      : aiPaths;
+    const aiPaths = ["/llms.txt", ...CATALOG_PATHS];
+    // Only files the root fetch saw as present are probed. A path the scan
+    // never recorded is absent, not a file without CORS: absent artifact,
+    // absent verdict.
+    const existingAiPaths = aiPaths.filter((p) =>
+      isRootArtifact(ctx.rootFiles?.[p]),
+    );
 
-    // No AI file, no CORS headers to read. A site that publishes neither file
-    // has nothing for a cross-origin agent to fetch, so this is not a defect.
-    if (hasRootFiles && existingAiPaths.length === 0) {
+    if (existingAiPaths.length === 0) {
       return this.notApplicable(
-        "No AI files (/llms.txt, /.well-known/ai-catalog.json) found to check CORS headers.",
+        `No AI files (${aiPaths.join(", ")}) found to check CORS headers.`,
         EXPECTED,
         "No applicable AI files found",
         page?.url,
@@ -118,30 +126,25 @@ export class CorsAiFilesAudit extends Audit {
       );
     }
 
+    // Reported, never warned or failed: CORS governs scripts in a browser, and
+    // no AI vendor documents fetching these files from one (policy.md,
+    // "Informative or obsolete").
+    const missing = withoutCors.map((r) => r.path).join(", ");
+    const notNeeded =
+      "Not needed: crawlers and server-side agents fetch these files from servers, where CORS does not apply.";
     if (withCors.length > 0) {
-      return this.warn(
-        `Some AI files are missing CORS headers: ${withoutCors.map((r) => r.path).join(", ")}`,
+      return this.pass(
+        `Some AI files have no CORS headers: ${missing}. ${notNeeded}`,
         EXPECTED,
-        `CORS present: ${withCors.map((r) => r.path).join(", ")}; Missing: ${withoutCors.map((r) => r.path).join(", ")}`,
-        {
-          priority: CheckPriority.Medium,
-          description: CorsAiFilesAudit.meta.description,
-          code: "Access-Control-Allow-Origin: *\nAccess-Control-Allow-Methods: GET, OPTIONS",
-        },
+        `CORS present: ${withCors.map((r) => r.path).join(", ")}; Missing: ${missing}`,
         page?.url,
       );
     }
 
-    return this.fail(
-      "No AI files have CORS headers. Cross-origin AI agents cannot access these files.",
+    return this.pass(
+      `No AI file has CORS headers (${missing}). ${notNeeded}`,
       EXPECTED,
-      `No CORS headers on: ${withoutCors.map((r) => r.path).join(", ")}`,
-      {
-        priority: CheckPriority.Medium,
-        description:
-          "Without CORS headers, agent code running inside a browser origin cannot fetch your llms.txt or AI catalog cross-origin. Server-side crawlers, agent backends and MCP clients are not browsers and are unaffected.",
-        code: "Access-Control-Allow-Origin: *\nAccess-Control-Allow-Methods: GET, OPTIONS",
-      },
+      `No CORS headers on: ${missing}`,
       page?.url,
     );
   }

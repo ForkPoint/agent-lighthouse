@@ -36,7 +36,7 @@ describe("LlmsTxtLinksValidAudit", () => {
     expect(result.message).toContain("return HTTP 200");
   });
 
-  it("warns when a link is broken", async () => {
+  it("reports a broken link without warning", async () => {
     const body =
       "# Site\n\n## Pages\n" +
       "- [Home](https://example.com/): Home\n" +
@@ -46,17 +46,19 @@ describe("LlmsTxtLinksValidAudit", () => {
     });
     ctx.fetch = fetchStub({ "https://example.com/gone": 404 });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("404");
+    expect(result.message).toContain("are broken");
+    expect(result.message).toContain("No AI vendor documents reading llms.txt");
   });
 
-  it("warns when llms.txt has no links to validate", async () => {
+  it("reports an llms.txt with no links to validate", async () => {
     const ctx = mockCheckContext([], {
       "/llms.txt": mockFetchResult("# Site\n\n> Summary, no links.", 200),
     });
     ctx.fetch = fetchStub({});
     const result = await audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("No links found");
   });
 

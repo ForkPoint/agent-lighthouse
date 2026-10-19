@@ -96,8 +96,10 @@ export {
   buildCategoryResult,
   calculateOverallScore,
   categoryAssessedMass,
+  countCategoryStatuses,
   isCategoryAssessed,
   isInformative,
+  isObsolete,
   weightForGrade,
 } from "./scorer";
 export { extractProductFieldVerification } from "./product-fields";

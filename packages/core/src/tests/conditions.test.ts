@@ -110,9 +110,11 @@ describe("Phase 6: The score states its conditions", () => {
     expect(cond.unscored.totalCount).toBeGreaterThanOrEqual(
       cond.unscored.informativeCount,
     );
-    expect(cond.unscored.reasons["informative"]).toBe(
-      cond.unscored.informativeCount,
-    );
+    // Obsolete checks are informative too, but carry their own reason key.
+    expect(
+      (cond.unscored.reasons["informative"] ?? 0) +
+        (cond.unscored.reasons["obsolete"] ?? 0),
+    ).toBe(cond.unscored.informativeCount);
   });
 
   it("retains valid conditions structure when a scan is unscored or gated", async () => {

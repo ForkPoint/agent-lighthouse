@@ -42,6 +42,10 @@ interface Site {
   linkHeader?: string;
   /** Status the hub HEAD answers. */
   hubStatus?: number;
+  /** The fetcher's error text on the hub answer, as on a status-0 result. */
+  hubError?: string;
+  /** The hub HEAD throws instead of answering. */
+  hubThrows?: boolean;
   /** A whole feed document, replacing the default Atom feed. */
   feedXml?: string;
   /** Extra markup inside the default feed's first entry. */
@@ -77,7 +81,10 @@ function run(site: Site) {
     }
     if (new URL(o.url).pathname === "/feed")
       return mockFetchResult("", 404, "text/plain");
-    return mockFetchResult("", site.hubStatus ?? 200, "text/plain");
+    if (site.hubThrows) throw new Error("ECONNREFUSED");
+    const hub = mockFetchResult("", site.hubStatus ?? 200, "text/plain");
+    if (site.hubError !== undefined) hub.error = site.hubError;
+    return hub;
   };
 
   return { result: audit.audit(ctx), requests };
@@ -200,16 +207,44 @@ describe("WebsubHubAdvertisementAudit", () => {
     expect(strings(r, "observations").join(" ")).toContain("exactly one");
   });
 
-  it("reports a hub that is not absolute HTTPS", async () => {
+  // WebSub does not require an HTTPS hub, and http hubs are common.
+  it("accepts an absolute http hub URL", async () => {
     const { result } = run({
       documentLinks:
         '<link rel="self" href="https://example.com/feed.xml"/><link rel="hub" href="http://hub.example.net/"/>',
     });
     const r = await result;
+    expect(r.status).toBe(CheckStatus.Pass);
+  });
+
+  it("reports a relative hub URL", async () => {
+    const { result } = run({
+      documentLinks:
+        '<link rel="self" href="https://example.com/feed.xml"/><link rel="hub" href="/hub"/>',
+    });
+    const r = await result;
     expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "observations").join(" ")).toContain(
-      "not an absolute HTTPS URL",
+      "not an absolute URL",
     );
+  });
+
+  // A WAF or bot challenge in front of the hub refuses the scanner's HEAD;
+  // the hub is there, so the push path is not "unreachable".
+  it("accepts a hub that refuses the probe with 401, 403 or 429", async () => {
+    for (const hubStatus of [401, 403, 429]) {
+      const { result } = run({ documentLinks: SELF_AND_HUB, hubStatus });
+      const r = await result;
+      expect(r.status, String(hubStatus)).toBe(CheckStatus.Pass);
+      expect(strings(r, "hubProbes").join(" ")).toContain(String(hubStatus));
+    }
+  });
+
+  it("reports a hub that answers 404", async () => {
+    const { result } = run({ documentLinks: SELF_AND_HUB, hubStatus: 404 });
+    const r = await result;
+    expect(r.status).toBe(CheckStatus.Warn);
+    expect(strings(r, "observations").join(" ")).toContain("not reachable");
   });
 
   it("accepts 405 from a hub that refuses a bare HEAD", async () => {
@@ -224,6 +259,42 @@ describe("WebsubHubAdvertisementAudit", () => {
     const r = await result;
     expect(r.status).toBe(CheckStatus.Warn);
     expect(strings(r, "observations").join(" ")).toContain("not reachable");
+  });
+
+  it("names the fetcher's error beside a hub that did not answer", async () => {
+    const { result } = run({
+      documentLinks: SELF_AND_HUB,
+      hubStatus: 0,
+      hubError: "ETIMEDOUT",
+    });
+    const r = await result;
+    expect(r.status).toBe(CheckStatus.Warn);
+    expect(r.message).toBe(
+      "https://example.com/feed.xml: hub https://hub.example.net/ answered HTTP 0 (ETIMEDOUT), so the push path is advertised but not reachable",
+    );
+  });
+
+  it("reports a hub whose HEAD gets no response at all", async () => {
+    const { result } = run({ documentLinks: SELF_AND_HUB, hubThrows: true });
+    const r = await result;
+    expect(r.status).toBe(CheckStatus.Warn);
+    expect(strings(r, "observations")).toContain(
+      "https://example.com/feed.xml: hub https://hub.example.net/ answered with no response",
+    );
+    expect(strings(r, "hubProbes")).toEqual([]);
+  });
+
+  it("does not probe a hub on a private address", async () => {
+    const { result, requests } = run({
+      documentLinks:
+        '<link rel="self" href="https://example.com/feed.xml"/><link rel="hub" href="http://10.0.0.5/hub"/>',
+    });
+    const r = await result;
+    expect(r.status).toBe(CheckStatus.Warn);
+    expect(requests.some((o) => o.url.includes("10.0.0.5"))).toBe(false);
+    expect(strings(r, "observations").join(" ")).toContain(
+      "hub http://10.0.0.5/hub did not pass the address check, so it was not probed",
+    );
   });
 
   it("probes the hub with a HEAD and never subscribes", async () => {
@@ -255,12 +326,12 @@ describe("WebsubHubAdvertisementAudit", () => {
     expect(r.message).toContain("no WebSub hub");
   });
 
-  it("never returns fail and carries no scoring weight", async () => {
+  it("is scored at grade B and never returns fail", async () => {
     const { meta } = WebsubHubAdvertisementAudit;
-    expect(meta.tier).toBe(AuditTier.Informative);
-    expect(meta.weight).toBe(0);
-    expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Informative);
-    expect(meta.evidenceGrade).toBe(EvidenceGrade.C);
+    expect(meta.tier).toBe(AuditTier.Scored);
+    expect(meta.weight).toBe(0.6);
+    expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Ternary);
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
 
     const cases: Site[] = [
       {},

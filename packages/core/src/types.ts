@@ -26,6 +26,7 @@ export {
   FieldStatus,
   FixEffort,
   isPageType,
+  NoticeKind,
   PAGE_TYPE_LABELS,
   PAGE_TYPES,
   PageType,

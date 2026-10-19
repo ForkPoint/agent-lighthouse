@@ -21,28 +21,30 @@ describe("LlmsTxtStructureAudit", () => {
   });
 
   // Ported from llms-txt-blockquote: the summary half of the merged signal.
-  it("warns when the blockquote summary is missing but sections exist", () => {
+  it("reports a missing blockquote summary summary is missing but sections exist", () => {
     const result = audit.audit(
       ctxWith("# My Site\n\nSome intro text.\n\n## Docs\n- item"),
     );
-    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("no blockquote summary");
   });
 
   // Ported from llms-txt-sections: the section-shape half of the merged signal.
-  it("warns when H2 sections are missing but the blockquote is present", () => {
+  it("reports missing H2 sections are missing but the blockquote is present", () => {
     const result = audit.audit(
       ctxWith("# Site\n\n> Summary\n\n- [Home](https://example.com/)"),
     );
-    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("no H2 sections");
   });
 
-  it("fails when neither the blockquote nor any H2 section is present", () => {
+  it("reports a flat file without failing it", () => {
     const result = audit.audit(
       ctxWith("# Site\n\n- [Home](https://example.com/)"),
     );
-    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.message).toContain("Chrome Lighthouse");
+    expect(result.message).toContain("No AI vendor documents reading llms.txt");
     expect(result.message).toContain("no blockquote summary");
     expect(result.message).toContain("no H2 sections");
   });
@@ -89,7 +91,7 @@ describe("LlmsTxtStructureAudit", () => {
     const body =
       "# Site\n\n## Docs\n- item\n\nlots of text\n\nmore text\n\n> footnote at the bottom";
     const result = audit.audit(ctxWith(body));
-    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("no blockquote summary");
   });
 
@@ -99,7 +101,7 @@ describe("LlmsTxtStructureAudit", () => {
     const body =
       "# Site\n\n> Summary\n\n```\n## Not a section\n```\n\n- [Home](/)";
     const result = audit.audit(ctxWith(body));
-    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("no H2 sections");
   });
 
@@ -108,7 +110,7 @@ describe("LlmsTxtStructureAudit", () => {
     const result = audit.audit(
       ctxWith("# Site\n\n> Summary\n\n### Subsection\n- item"),
     );
-    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("no H2 sections");
   });
 

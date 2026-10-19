@@ -10,7 +10,12 @@ import {
 } from "#core/__tests__/test-utils";
 import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
 import type { CheckContext } from "#core/check-context";
+import type { AuditResult } from "#core/types";
 import { AuditTier, CheckStatus, EvidenceGrade } from "#core/types";
+
+/** The contradictions detail, defaulted so an absent list fails the assertion, not the read. */
+const contradictionsOf = (result: AuditResult): string[] =>
+  (result.details?.["contradictions"] ?? []) as string[];
 
 interface SiteSpec {
   robots?: string;
@@ -233,6 +238,173 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
         (stub) => stub.id === AiUsageSignalCoherenceAcrossChannelsAudit.meta.id,
       )?.status,
     ).toBe(CheckStatus.NotApplicable);
+  });
+
+  it("reads robots.txt alone when the scan sampled no page", async () => {
+    const ctx = mockCheckContext([], {
+      "/robots.txt": mockFetchResult(
+        "User-agent: *\nContent-Usage: train-ai=n\n",
+        200,
+        "text/plain",
+      ),
+    });
+    const result = audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.details?.["signals"]).toBe(1);
+  });
+
+  // attach-05 lets a Content-Usage value lead with a path prefix; declarations
+  // over disjoint paths cannot contradict each other.
+  it("compares AIPREF declarations only over overlapping path prefixes", async () => {
+    const disjoint = audit.audit(
+      site({
+        robots: "User-agent: *\nContent-Usage: /private/ train-ai=n\n",
+        headers: { "content-usage": "/public/ train-ai=y" },
+      }),
+    );
+    expect(disjoint.status).toBe(CheckStatus.Pass);
+    const overlapping = audit.audit(
+      site({
+        robots: "User-agent: *\nContent-Usage: /private/ train-ai=n\n",
+        headers: { "content-usage": "train-ai=y" },
+      }),
+    );
+    expect(overlapping.status).toBe(CheckStatus.Fail);
+    expect(contradictionsOf(overlapping)[0]).toContain(
+      "train-ai over /private/",
+    );
+  });
+
+  it("ignores values no channel's vocabulary defines", async () => {
+    const result = audit.audit(
+      site({
+        robots:
+          "User-agent: *\nContent-Usage: train-ai=maybe, bots=n\nContent-Signal: ai-train=perhaps, crawl=no\n",
+        headers: {
+          "content-usage": "((not a dictionary",
+          "tdm-reservation": "2",
+        },
+        head: '<meta name="tdm-reservation" content="yes">',
+      }),
+    );
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.details?.["signals"]).toBe(0);
+  });
+
+  it("does not compare declarations scoped to two different named agents", async () => {
+    const result = audit.audit(
+      site({
+        robots:
+          "User-agent: Google-Extended\nContent-Usage: train-ai=y\n\nUser-agent: CCBot\nDisallow: /\n",
+      }),
+    );
+    expect(result.status).toBe(CheckStatus.Pass);
+  });
+
+  it("matches a named agent across channels without regard to case", async () => {
+    const result = audit.audit(
+      site({
+        robots:
+          "User-agent: gptbot\nContent-Usage: train-ai=y\n\nUser-agent: GPTBot\nDisallow: /\n",
+      }),
+    );
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(contradictionsOf(result)[0]).toContain("robots.txt Disallow");
+  });
+
+  it("reads tdmrep.json rules, skipping entries that carry no reservation", async () => {
+    const result = audit.audit(
+      site({
+        tdmrep: JSON.stringify([
+          "not a rule",
+          null,
+          { location: "blog/", "tdm-reservation": 1 },
+          { location: "/x/", "tdm-reservation": "maybe" },
+        ]),
+        headers: { "content-usage": "train-ai=y" },
+      }),
+    );
+    expect(result.status).toBe(CheckStatus.Fail);
+    const [finding] = contradictionsOf(result);
+    expect(finding).toContain("/.well-known/tdmrep.json");
+    expect(finding).toContain('location "blog/" with tdm-reservation 1');
+  });
+
+  it("reads a location-less tdmrep.json rule as covering the whole site", async () => {
+    const result = audit.audit(
+      site({
+        tdmrep: '[{"tdm-reservation": "0"}]',
+        robots: "User-agent: *\nContent-Usage: train-ai=n\n",
+      }),
+    );
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(contradictionsOf(result)[0]).toContain("train-ai over /");
+  });
+
+  it("notes a tdmrep.json that is not JSON at all", async () => {
+    const result = audit.audit(
+      site({
+        tdmrep: "[{ broken",
+        robots: "User-agent: *\nContent-Usage: train-ai=y\n",
+      }),
+    );
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect((result.details!["notes"] as string[])[0]).toContain(
+      "array of rules",
+    );
+  });
+
+  it("reads noai in X-Robots-Tag and in meta robots as a training denial", async () => {
+    const header = audit.audit(
+      site({
+        headers: {
+          "x-robots-tag": "noindex, NoAI",
+          "content-usage": "train-ai=y",
+        },
+      }),
+    );
+    expect(header.status).toBe(CheckStatus.Fail);
+    expect(header.details?.["channels"] as string[]).toContain(
+      "X-Robots-Tag noai",
+    );
+    const meta = audit.audit(
+      site({
+        head: '<meta name="robots" content="noai, noimageai">',
+        robots: "User-agent: *\nContent-Usage: train-ai=y\n",
+      }),
+    );
+    expect(meta.status).toBe(CheckStatus.Fail);
+    expect(meta.details?.["channels"] as string[]).toContain(
+      '<meta name="robots"> noai',
+    );
+  });
+
+  it("scopes an inline RSL document to its content URL and reads only usage terms", async () => {
+    const rsl = (url: string, terms: string) =>
+      `<script type="application/rsl+xml"><rsl xmlns="https://rslstandard.org/rsl"><content url="${url}"><license>${terms}</license></content></rsl></script>`;
+    const scoped = audit.audit(
+      site({
+        body:
+          '<script type="application/rsl+xml">  </script>' +
+          rsl(
+            "https://example.com/blog/",
+            '<prohibits type="usage">train-ai, unknown-use</prohibits><prohibits type="user">search</prohibits>',
+          ),
+        headers: { "content-usage": "/shop/ train-ai=y, search=y" },
+      }),
+    );
+    // /blog/ and /shop/ do not overlap, and the `user` term is not a usage.
+    expect(scoped.status).toBe(CheckStatus.Pass);
+    expect(scoped.details?.["signals"]).toBe(3);
+
+    const unparseable = audit.audit(
+      site({
+        body: rsl("http://[", '<prohibits type="usage">search</prohibits>'),
+        headers: { "content-usage": "/shop/ search=y" },
+      }),
+    );
+    // An unreadable content URL falls back to the whole site, which overlaps.
+    expect(unparseable.status).toBe(CheckStatus.Fail);
   });
 
   it("is a scored grade B audit", () => {

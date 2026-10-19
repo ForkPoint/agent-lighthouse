@@ -3,9 +3,9 @@ audit: machine-discovery/websub-hub-advertisement
 category: machine-discovery
 source_file: packages/core/src/audits/machine-discovery/websub-hub-advertisement.ts
 slug: websub-hub-advertisement
-evidence_grade: C
-tier: informative
-disposition: "new in v2 — graduated from proposal 2026-08-23"
+evidence_grade: B
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23; re-graded C/informative to B/scored 2026-10-18"
 reviewed: 2026-10-18
 graduated: 2026-08-23
 sources:
@@ -17,25 +17,25 @@ sources:
 
 # WebSub hub advertisement and self-link correctness
 
-> Shipped in v2. Evidence grade **C** · informative tier · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **B** · scored tier (weight 0.6) · unique · implementation: `static-fetch`
 
 ## What it checks
 
-Checks the WebSub links on each feed that advertises a push hub. The feed should carry exactly one absolute rel=self link, and each hub should be an HTTPS URL that answers a HEAD. A missing, duplicated or relative self link breaks hub verification even when a hub is configured.
+Checks the WebSub links on each feed that advertises a push hub. The feed should carry exactly one absolute rel=self link, and each hub should be an absolute URL whose server answers a HEAD. WebSub does not require HTTPS for the hub, so an `http://` hub is accepted. A hub that refuses the scanner with 401, 403 or 429, as a WAF or bot challenge does, still counts as present. A missing, duplicated or relative self link breaks hub verification even when a hub is configured.
 
 The self URL may differ from the URL the feed was fetched from. The Recommendation allows it, so the audit does not compare them.
 
-| State                                                          | Result |
-| :------------------------------------------------------------- | :----- |
-| no feed                                                        | `na`   |
-| feeds, but none advertises a hub                               | `na`   |
-| every hubbed feed has one absolute self link and a live hub    | `pass` |
-| a hubbed feed has a missing, duplicated or relative self link  | `warn` |
-| a hub is not HTTPS, fails the address check or does not answer | `warn` |
+| State                                                                                  | Result |
+| :------------------------------------------------------------------------------------- | :----- |
+| no feed                                                                                | `na`   |
+| feeds, but none advertises a hub                                                       | `na`   |
+| every hubbed feed has one absolute self link and a live hub                            | `pass` |
+| a hubbed feed has a missing, duplicated or relative self link                          | `warn` |
+| a hub URL is relative, fails the address check, does not answer, or answers 404 or 5xx | `warn` |
 
 ## Claimed mechanism (falsifiable)
 
-WebSub is a W3C Recommendation. Publishers MUST implement at least one discovery mechanism: Link headers or embedded link elements. They SHOULD advertise at least one rel=hub and exactly one rel=self, and Link headers take discovery precedence. Falsifiable claim: a feed that declares a hub, but carries a missing, duplicated or relative rel=self, cannot complete hub subscription verification. The push path then silently degrades to whatever polling cadence subscribers happen to use. The failure is invisible to the publisher, because the hub appears configured. This check is scored as advisory only: the WebSub conformance assertion is exact and standards-backed, but no AI answer engine is documented as a WebSub subscriber, so the consumer-side benefit is a plausible convention rather than documented behaviour.
+WebSub is a W3C Recommendation. Publishers MUST implement at least one discovery mechanism: Link headers or embedded link elements. They SHOULD advertise at least one rel=hub and exactly one rel=self, and Link headers take discovery precedence. Falsifiable claim: a feed that declares a hub, but carries a missing, duplicated or relative rel=self, cannot complete hub subscription verification. The push path then silently degrades to whatever polling cadence subscribers happen to use. The failure is invisible to the publisher, because the hub appears configured. Google Search documents receiving WebSub notifications. No LLM vendor documents subscribing.
 
 ## Evidence
 
@@ -54,14 +54,25 @@ A WordPress site with the PubSubHubbub plugin emits `<atom:link rel="hub" href="
 
 ## Scoring
 
-Tier per evidence policy: **informative (weight 0)** — grade C does not meet the A/B bar required for scored audits.
+Tier per evidence policy: **scored (weight 0.6)**, ternary. A broken advertisement is a `warn`, never a `fail`; a site with no hub is not judged.
+
+**Grade: B** — Google Search documents WebSub as a way to "broadcast your changes to search engines, including Google" (verified 2026-10-18). That is a named consumer reading the push path. It is Google Search's crawl, not an LLM vendor, which is the same footing as `machine-discovery/rss-feed` (B). No AI answer engine documents subscribing to a hub, so the grade stops at B.
 
 ## Implementation deviations
 
 - **Renamed** from `websub-hub-advertisement-and-self-link-correctness`, which
   exceeds the 64-character id cap. Both halves ship.
-- **Nothing here is a failure.** The audit is informative at weight 0, so every
-  finding is a `warn`. A test asserts no input produces `fail`.
+- **Nothing here is a failure.** A broken advertisement degrades push to
+  polling and does not remove the feed, so every finding is a `warn`. A test
+  asserts no input produces `fail`.
+- **Re-graded C/informative to B/scored on 2026-10-18.** The Google sitemap
+  page names Google Search as a WebSub consumer. Absence was already
+  `notApplicable`, so a site without a hub is not penalised.
+- **2026-10-18 review: http hubs and refused probes.** Now that the audit is
+  scored, two warnings cost score without a source: WebSub does not require an
+  HTTPS hub, and a 401, 403 or 429 to the scanner's HEAD is a refusal, not a
+  missing hub. Both now pass. A relative hub URL, no response, 404, 410 and
+  5xx still warn.
 - **The hub HEAD is a cross-origin request.** The audit reads the status only.
   It never subscribes, POSTs or presents a callback URL. At most two hubs per
   feed are probed.

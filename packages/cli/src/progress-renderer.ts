@@ -129,6 +129,10 @@ export function createProgressRenderer(
         total = event.totalUnits;
         failures = 0;
         break;
+      case "phase:total":
+        // The planner corrected the phase's size; the next line drawn shows it.
+        total = event.totalUnits;
+        break;
       case "unit:done":
         completed = event.completed;
         total = event.total;

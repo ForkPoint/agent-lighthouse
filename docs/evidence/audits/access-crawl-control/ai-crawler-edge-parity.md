@@ -6,7 +6,7 @@ slug: ai-crawler-edge-parity
 evidence_grade: A
 tier: scored
 disposition: "new in v2 — graduated from proposal 2026-08-22"
-reviewed: 2026-08-20
+reviewed: 2026-10-18
 graduated: 2026-08-22
 sources:
   - s14
@@ -15,6 +15,13 @@ sources:
   - s4
   - s20
   - s21
+  - cloudflare-pay-per-crawl
+  - cloudflare-content-independence-day
+  - cloudflare-ai-options-2026
+  - cloudflare-googlebot-to-gptbot-2025
+  - cloudflare-perplexity-stealth-crawlers
+  - cloudflare-web-bot-auth
+  - cloudflare-crawl-refer-ratio
 ---
 
 # AI crawler edge-response parity
@@ -41,6 +48,18 @@ robots.txt (RFC 9309) is advisory metadata parsed by the crawler; the edge acces
   - The URL resolves, but served an Anubis deny page rather than the doc. That page itself confirmed the fingerprints an auditor needs: asset paths under `/.within.website/x/cmd/anubis/`, body text "Access Denied: error code <hex>", the footer "Protected by Anubis From Techaro", and a version banner (v1.27.1-…). Treat as a fingerprint source, not as a cited spec; re-verify the doc URL before shipping it in remediation copy.
 - **[AI Crawl Control — Cloudflare](https://developers.cloudflare.com/ai-crawl-control/)** — Cloudflare (vendor-doc, URL verified 2026-08-20)
   - "Works automatically on all Cloudflare plans"; operators "Set allow or block rules for individual crawlers" and monitor AI access. Default-block posture and blocked-crawler response codes are not documented on this page — so an auditor must not assert Cloudflare's default behaviour, only measure the observed response.
+
+### Signal: WAF / bot-management blocking AI agents (Cloudflare AI Crawl Control, default blocks, pay-per-crawl 402) — grade A (technical-infra)
+
+This signal moved here from `https-enabled` on 2026-10-18.
+
+**Mechanism:** Edge bot-management sitting in front of the origin can deny AI crawlers and agents outright, or gate them behind payment, so a site with perfect content structure can still be entirely invisible to AI systems. Falsifiable form: fetch the same URL with an AI-crawler User-Agent versus a browser User-Agent; divergent status codes (403 / 401 / 402 / challenge page for the former) prove an access gate independent of content quality.
+
+**Grade: A** — Cloudflare documents the behaviour at scale and by date. It began blocking AI crawlers by default for new domains on 1 July 2025. It has announced that from 15 September 2026, new domains on ad-displaying plans will block Training and Agent class bots by default. That is a named intermediary documenting exactly what it does to the traffic this audit is about, which is grade A. Two caveats shape how it can be measured, rather than whether it is true. User-agent probing is unreliable in both directions: Perplexity was documented using a Chrome-impersonating stealth crawler, and scrapers routinely spoof GPTBot. An opaque block therefore cannot be told apart from correct impersonation defence.
+
+**Evidence:** Fully documented vendor behaviour at large scale. Cloudflare began blocking AI crawlers by default for new domains on 1 July 2025, making permission the default posture across a very large share of the web. It has since announced that from 15 September 2026 new domains will block 'Training' and 'Agent' class bots by default on ad-displaying pages while leaving 'Search' allowed, and has extended managed robots.txt with a `use` signal (immediate / reference / full). Pay-per-crawl operationalises the gate in HTTP. Crawlers 'either present payment intent via request headers for successful HTTP 200 access, or receive an HTTP 402 Payment Required response with pricing', at a minimum of $0.001 per crawl. Critically, an existing WAF or Bot Management block rule overrides pay-per-crawl's charge behaviour, and silently converts a monetizable crawl into a hard block. Adoption context: of 3,816 top-10k domains with robots.txt, ~14% carried AI-bot directives; GPTBot was the most-disallowed at 312 domains. Verification is moving to cryptography — Cloudflare's Web Bot Auth implements RFC 9421 HTTP Message Signatures with Signature-Input / Signature / Signature-Agent headers and a JWKS key directory at /.well-known/http-message-signatures-directory.
+
+**Counter-evidence:** Two caveats that shape how this must be audited. (1) User-Agent-based probing is unreliable in both directions: Cloudflare documented Perplexity using a Chrome-impersonating stealth crawler on unlisted IPs across rotating ASNs at 3–6M requests/day to evade no-crawl directives, and conversely malicious scrapers routinely spoof GPTBot. An audit that merely sets a UA header measures the WAF's UA rules, not real agent access — genuine verification requires the vendors' published IP ranges (openai.com/gptbot.json, claude.com/crawling/bots.json, perplexity.com/perplexitybot.json) or Web Bot Auth signatures. (2) Blocking is often a deliberate, rational business decision, not a defect. Cloudflare's crawl-to-refer data puts Anthropic at about 71,000 crawls per HTML referral in the June 2025 window, with the caveat that Claude's native app sends no Referer. That makes uncompensated crawl a real cost. The audit should REPORT the gate neutrally as 'AI agents are blocked here' rather than scoring it as a failure, since the site owner may have chosen it.
 
 ## Example failure
 
@@ -70,3 +89,10 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 - **The soft-block threshold is fixed at 40% of the baseline main-content
   text.** A page that legitimately serves less to a crawler reads as a soft
   block.
+
+## Review history
+
+- **2026-10-18:** the WAF / bot-management signal (grade A) and its Cloudflare
+  sources moved here from `access-crawl-control/https-enabled`. This audit is
+  the one that measures the edge answer per crawler user agent. The grade
+  here was already A; it does not change.

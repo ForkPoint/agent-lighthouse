@@ -19,7 +19,7 @@ describe("LlmsTxtLinkDescriptionsAudit", () => {
     expect(result.message).toContain("include descriptions");
   });
 
-  it("warns when only some links have descriptions", () => {
+  it("reports when only some links have descriptions", () => {
     const body =
       "# Site\n\n## Pages\n" +
       "- [Home](https://example.com/): Main landing page\n" +
@@ -28,11 +28,11 @@ describe("LlmsTxtLinkDescriptionsAudit", () => {
       "/llms.txt": mockFetchResult(body, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("1/2 links have descriptions");
   });
 
-  it("fails when fewer than half the links have descriptions", () => {
+  it("reports, without failing, when fewer than half the links have descriptions", () => {
     const body =
       "# Site\n\n## Pages\n" +
       "- [A](https://example.com/a): Described page\n" +
@@ -42,16 +42,16 @@ describe("LlmsTxtLinkDescriptionsAudit", () => {
       "/llms.txt": mockFetchResult(body, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("1/3 links have descriptions");
   });
 
-  it("warns when llms.txt has no markdown links", () => {
+  it("reports an llms.txt with no markdown links", () => {
     const ctx = mockCheckContext([], {
       "/llms.txt": mockFetchResult("# Site\n\n> Summary only, no links.", 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.status).toBe(CheckStatus.Pass);
     expect(result.message).toContain("no markdown links");
   });
 

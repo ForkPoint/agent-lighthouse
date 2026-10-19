@@ -1,0 +1,121 @@
+{
+  "$comment": "Read by scripts/watch-sources.ts. `items` are pages and repos watched every week beside the sources in sources.json, because a change there can move a grade even when no dossier cites the page yet. `ianaPaths` are well-known suffixes that were researched and not built (or are unregistered claims); the watch reports when one is registered, changes status, or is modified in the IANA registry, so the decision can be revisited.",
+  "items": [
+    {
+      "id": "iana-well-known-registry",
+      "title": "IANA Well-Known URIs registry",
+      "url": "https://www.iana.org/assignments/well-known-uris/well-known-uris.xhtml",
+      "why": "New or changed registrations can create or retire an audit."
+    },
+    {
+      "id": "mcp-spec-changelog-draft",
+      "title": "MCP specification changelog (draft)",
+      "url": "https://modelcontextprotocol.io/specification/draft/changelog",
+      "why": "MCP discovery, transport and Server Card changes land here first."
+    },
+    {
+      "id": "ard-spec-repo",
+      "title": "Agent Resource Discovery (ARD) specification repository",
+      "url": "https://github.com/ards-project/ard-spec",
+      "why": "ARD moved its well-known path once (ai-catalog.json to ard.json)."
+    },
+    {
+      "id": "a2a-repo",
+      "title": "A2A protocol repository",
+      "url": "https://github.com/a2aproject/A2A",
+      "why": "Agent Card shape and path (agent-card.json) are defined here."
+    },
+    {
+      "id": "ietf-aipref-attach",
+      "title": "IETF AIPREF: attaching preferences",
+      "url": "https://datatracker.ietf.org/doc/draft-ietf-aipref-attach/",
+      "why": "ai-content-declaration stays experimental only while AIPREF is active."
+    },
+    {
+      "id": "ietf-aipref-vocab",
+      "title": "IETF AIPREF: vocabulary",
+      "url": "https://datatracker.ietf.org/doc/draft-ietf-aipref-vocab/",
+      "why": "ai-content-declaration stays experimental only while AIPREF is active."
+    },
+    {
+      "id": "openai-bots",
+      "title": "OpenAI crawlers and user agents",
+      "url": "https://developers.openai.com/api/docs/bots",
+      "why": "GPTBot, OAI-SearchBot and ChatGPT-User behaviour, including robots.txt."
+    },
+    {
+      "id": "anthropic-crawlers",
+      "title": "Anthropic crawler documentation",
+      "url": "https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler",
+      "why": "ClaudeBot, Claude-User and Claude-SearchBot behaviour, including Crawl-delay."
+    },
+    {
+      "id": "google-common-crawlers",
+      "title": "Google common crawlers",
+      "url": "https://developers.google.com/crawling/docs/crawlers-fetchers/google-common-crawlers",
+      "why": "Googlebot and Google-Extended tokens and robots.txt behaviour."
+    },
+    {
+      "id": "perplexity-crawlers",
+      "title": "Perplexity crawlers",
+      "url": "https://docs.perplexity.ai/docs/resources/perplexity-crawlers",
+      "why": "PerplexityBot and Perplexity-User behaviour."
+    },
+    {
+      "id": "apple-applebot",
+      "title": "About Applebot",
+      "url": "https://support.apple.com/en-us/119829",
+      "why": "Applebot and Applebot-Extended behaviour, including Crawl-delay."
+    }
+  ],
+  "ianaPaths": [
+    {
+      "suffix": "gpc.json",
+      "why": "Not built 2026-10-18: privacy declaration, no AI agent reads it."
+    },
+    {
+      "suffix": "open-resource-discovery",
+      "why": "Not built 2026-10-18: only SAP enterprise aggregators read it."
+    },
+    {
+      "suffix": "host-meta",
+      "why": "Not built 2026-10-18: fediverse tooling only."
+    },
+    {
+      "suffix": "webfinger",
+      "why": "Not built 2026-10-18: fediverse account lookup, no AI consumer."
+    },
+    {
+      "suffix": "nodeinfo",
+      "why": "Not built 2026-10-18: fediverse tooling only."
+    },
+    {
+      "suffix": "resourcesync",
+      "why": "Not built 2026-10-18: one academic aggregator; sitemap audits cover the format."
+    },
+    {
+      "suffix": "void",
+      "why": "Not built 2026-10-18: 2011 W3C note, no current consumer."
+    },
+    {
+      "suffix": "vacation-rental.json",
+      "why": "Not built 2026-10-18: only its publisher's own tool reads it."
+    },
+    {
+      "suffix": "ojobpub.json",
+      "why": "Not built 2026-10-18: only its publisher's job search reads it."
+    },
+    {
+      "suffix": "openbindings",
+      "why": "Not built 2026-10-18: draft, no third-party consumer."
+    },
+    {
+      "suffix": "xregistry",
+      "why": "Not built 2026-10-18: draft, no third-party consumer."
+    },
+    {
+      "suffix": "mcp.json",
+      "why": "Unregistered. Only a blog calls it superseded; no primary source yet."
+    }
+  ]
+}

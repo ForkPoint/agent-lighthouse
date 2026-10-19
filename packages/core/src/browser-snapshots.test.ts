@@ -117,7 +117,7 @@ describe("browser snapshot scan boundary", () => {
     expect(
       browserCheck(browser, "content-extraction/image-alt-text")?.status,
     ).toBe(CheckStatus.Pass);
-    expect(browser.browserAssessment?.coverage.assessed).toBe(6);
+    expect(browser.browserAssessment?.coverage.assessed).toBe(7);
     expect(browser.browserAssessment?.score).toBeNull();
   });
   it("finds added structured data only in the browser population", async () => {
@@ -256,8 +256,10 @@ describe("browser snapshot scan boundary", () => {
       ),
     });
     expect(
-      browserCheck(visible, "operability-safety/form-autofill-token-coverage")
-        ?.status,
+      browserCheck(
+        visible,
+        "operability-safety/profile-autofill-token-coverage",
+      )?.status,
     ).toBe(CheckStatus.Pass);
   });
   it("does not let a textless capture prove absence", async () => {
@@ -355,7 +357,7 @@ describe("browser snapshot scan boundary", () => {
       [url, CheckStatus.Pass],
       [other, CheckStatus.Fail],
     ]);
-    expect(report.browserAssessment!.coverage.assessed).toBe(12);
+    expect(report.browserAssessment!.coverage.assessed).toBe(14);
   });
   it("keeps HTTP-only gates closed even when a caller disables per-audit gates", () => {
     const page: PageContext = {
@@ -409,12 +411,12 @@ describe("browser snapshot scan boundary", () => {
       },
     }).finally(() => vi.mocked(runAudits).mockImplementation(actual.runAudits));
     const assessment = report.browserAssessment!;
-    expect(assessment.findings).toHaveLength(6);
+    expect(assessment.findings).toHaveLength(7);
     expect(assessment.findings.every((f) => f.pageUrl === url)).toBe(true);
-    expect(assessment.coverage.assessed).toBe(6);
+    expect(assessment.coverage.assessed).toBe(7);
     expect(
       assessment.missingEvidence.filter((m) => m.pageUrl === other),
-    ).toHaveLength(6);
+    ).toHaveLength(7);
   });
   it("reads deeply nested snapshot text in linear time", () => {
     const depth = 8000;
@@ -458,7 +460,7 @@ describe("browser snapshot scan boundary", () => {
         m.reason.includes(`deeper than ${DOM_WORK_LIMITS.maxDepth}`),
       ),
     ).toBe(true);
-    expect(assessment.missingEvidence).toHaveLength(6);
+    expect(assessment.missingEvidence).toHaveLength(7);
   });
   it("leaves URL-only output free of browser claims", async () => {
     const report = await runScan(url, options);

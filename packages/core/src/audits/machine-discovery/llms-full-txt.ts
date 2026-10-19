@@ -11,6 +11,7 @@ import {
   ScoreDisplayMode,
 } from "#core/types";
 import { isRootArtifact, rootArtifactMiss } from "#core/gatherers/root-files";
+import { LLMS_FULL_TXT_NO_EFFECT, LLMS_TXT_NOTICE } from "./_llms-txt-notice";
 
 export class LlmsFullTxtAudit extends Audit {
   static override meta: AuditMeta = {
@@ -19,18 +20,19 @@ export class LlmsFullTxtAudit extends Audit {
     title: "llms-full.txt present",
     failureTitle: "llms-full.txt present",
     description:
-      "llms-full.txt provides the complete content of your site in a single file, allowing AI agents to ingest everything in one request instead of crawling page by page.",
+      "llms-full.txt is a companion convention to llms.txt: the site's content in one markdown file. No AI vendor documents reading it from a website, so this check reports whether the file is served and never scores it.",
     scoreDisplayMode: ScoreDisplayMode.Informative,
     weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
     evidenceGrade: EvidenceGrade.C,
     tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/machine-discovery/llms-full-txt.md",
+    deprecated: LLMS_TXT_NOTICE,
     requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
-    defaultPriority: CheckPriority.High,
+    defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
-        "Without llms-full.txt, AI agents must crawl your site page by page, which is slow and often incomplete. This means AI assistants give shallow or outdated answers about your products and services.",
-      fix: "Create a /llms-full.txt file at your site root containing the full text content of all important pages in markdown format. Include headings, descriptions, and key details for each page.",
+        "No AI vendor documents fetching llms-full.txt from a website; crawlers and assistants read the pages themselves. Tools a user points at the file, such as documentation helpers in coding agents, may read it.",
+      fix: "Optional. Publish /llms-full.txt only if documentation tools your users run are a use case: the full text of your important pages in markdown, one file.",
       code: "# Your Site Name\n\n> Full content version for AI agents.\n\n## Home\nYour homepage content here...\n\n## About\nYour about page content here...\n\n## Documentation\nYour documentation content here...",
       effort: FixEffort.Moderate,
       docsUrl: "https://llmstxt.org/",
@@ -51,7 +53,7 @@ export class LlmsFullTxtAudit extends Audit {
     }
 
     return this.pass(
-      "llms-full.txt exists and returns HTTP 200.",
+      `llms-full.txt exists and returns HTTP 200. ${LLMS_FULL_TXT_NO_EFFECT}`,
       "HTTP 200",
       `HTTP ${result.status}`,
     );

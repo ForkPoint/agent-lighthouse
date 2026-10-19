@@ -5,7 +5,7 @@ source_file: packages/core/src/audits/machine-discovery/llms-txt-structure.ts
 slug: llms-txt-structure
 evidence_grade: C
 disposition: "merged 2026-08-22 (Plan 4, Task 4) — informative, weight 0"
-reviewed: 2026-08-22
+reviewed: 2026-10-18
 sources:
   - llmstxt-spec-link
   - llms-txt-core-source
@@ -16,13 +16,14 @@ sources:
   - evil-martians-llm-traffic
   - s18
   - perplexity-crawlers-docs
+  - ahrefs-llmstxt-study
 ---
 
 # llms-txt-structure (`1.2`, `1.3`)
 
 > machine-discovery · source `llms-txt-structure.ts` · merges llms-txt-blockquote (1.2) + llms-txt-sections (1.3) · evidence grade **C** · tier **informative** (weight 0)
 
-## Claimed mechanism (falsifiable)
+## Claimed mechanism (record before 2026-10-18)
 
 An agent that fetches `/llms.txt` parses the blockquote under the H1 as the site summary, and the H2 headings as the addressable sections of the link list. A file carrying both can therefore be consumed selectively — read the summary, pick a section — instead of end to end.
 
@@ -42,14 +43,22 @@ Result semantics:
 | State                                            | Result                                     |
 | :----------------------------------------------- | :----------------------------------------- |
 | both elements present                            | `pass`                                     |
-| exactly one missing                              | `warn`, priority `low`                     |
-| both missing                                     | `fail`, priority `low`                     |
+| exactly one missing                              | `pass`, missing element named              |
+| both missing                                     | `pass`, both named                         |
 | `/llms.txt` absent or non-200                    | `na` — that is `llms-txt-exists`' signal   |
 | 200 with no `#` heading at all (soft-404 / HTML) | `na` — the body is not a markdown llms.txt |
 
 `scoreDisplayMode: 'informative'` with `weight: 0` keeps every outcome out of the category score, the readiness vitals and the top-fails list.
 
-## Scoring
+## Why it matters
+
+No AI vendor documents reading llms.txt or llms-full.txt from a website at runtime. An [Ahrefs study of 137,210 domains](https://ahrefs.com/blog/llmstxt-study/) (verified 2026-10-18) found that 97% of llms.txt files received no requests in a month. AI tools never asked for a missing file. Tools a user points at the file, such as documentation helpers in coding agents, can still read it. [Chrome Lighthouse](https://developer.chrome.com/docs/lighthouse/agentic-browsing/llms-txt) (verified 2026-10-18) is the one shipping checker of the file. Its [audit source](https://raw.githubusercontent.com/GoogleChrome/lighthouse/main/core/audits/agentic/llms-txt.js) (verified 2026-10-18) flags a file with no H1 heading or no links; the documentation page does not list those checks. Lighthouse is a checker, not a consumer, so it does not change the grade. It does not check the blockquote summary or H2 sections that this audit reports.
+
+## How it scores
+
+Informative, weight 0. Every result carries an `unconsumed` notice: no AI vendor documents reading this file. The audit never warns or fails. An absent file is not applicable. A file that is present passes, and a missing blockquote summary or missing H2 sections are named in the pass message, with the note that it does not affect AI agents.
+
+## Scoring (record before 2026-10-18)
 
 **C — the strongest proven path for the merged signal, unchanged from both sources.**
 
@@ -89,3 +98,4 @@ The grade is additionally capped by that of `llms-txt-exists` (1.1): a formattin
 - **`>Summary` without a space counts** as a blockquote, as CommonMark allows.
 - **The H1 test matches `llms-txt-exists`.** A bare `#Site` counts, so one file
   cannot pass one audit and fail the other on the heading.
+- **Report only, from 2026-10-18.** The 2026-10-18 consumer review (policy.md, "Informative or obsolete") keeps this audit informative with an `unconsumed` notice and removes every warn and fail. A partial file used to warn and a flat file used to fail. Both now pass with the missing elements named, and the message says Chrome Lighthouse checks only the H1 and links.

@@ -25,6 +25,7 @@ import {
   assessedMassOf,
   calculateCategoryScore,
   calculateOverallScore,
+  countCategoryStatuses,
 } from "./scorer";
 import { traceFromCheck, type AuditTrace } from "./audit-trace";
 import {
@@ -39,6 +40,7 @@ import { auditPageTypes, normalizeAuditMeta } from "./audit-applicability";
 import { cacheOwner } from "./gatherers/cache-owner";
 import {
   AttemptOutcome,
+  AuditTier,
   CheckStatus,
   CoverageProvenance,
   EvidenceKey,
@@ -634,6 +636,14 @@ export async function runAudits(
                     `Not assessed: ${budgetReason(budget)} This audit was still running.`,
                   ),
                 );
+              // `toCheckResult` lowers an obsolete audit's `fail` to `warn`.
+              // Say so, so the downgrade never hides a fail path left behind.
+              if (
+                reg.meta.tier === AuditTier.Obsolete &&
+                result.status === CheckStatus.Fail
+              ) {
+                log.debug("Obsolete audit returned fail; reported as warn");
+              }
               // Zod types optional keys as `T | undefined`; parsing a
               // `CheckResult` adds no explicit undefined, so the shape holds.
               return CheckResultSchema.parse(
@@ -704,8 +714,6 @@ function buildWeightedCategoryResult(
     // unproven evidence that must not move the score.
     score: calculateCategoryScore(checks),
     checks,
-    passCount: checks.filter((c) => c.status === CheckStatus.Pass).length,
-    warnCount: checks.filter((c) => c.status === CheckStatus.Warn).length,
-    failCount: checks.filter((c) => c.status === CheckStatus.Fail).length,
+    ...countCategoryStatuses(checks),
   };
 }

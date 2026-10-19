@@ -9,6 +9,7 @@ import type {
 import {
   CATEGORY_MASS,
   CATEGORY_NAMES,
+  countCategoryStatuses,
   isInformative,
   CheckStatus,
 } from "@forkpoint/agent-lighthouse-core";
@@ -43,10 +44,6 @@ export interface PersistedScanRow {
   completedAt?: Date | string | null;
 }
 
-function countBy(checks: CheckResult[], status: CheckResult["status"]): number {
-  return checks.filter((c) => c.status === status).length;
-}
-
 /**
  * Reconstruct the canonical nested `ScanReport` from the flattened DB row.
  *
@@ -73,9 +70,7 @@ export function hydrateReport(row: PersistedScanRow): ScanReport {
       weight: CATEGORY_MASS[id] ?? 0,
       score: categoryScores[id] ?? 0,
       checks,
-      passCount: countBy(checks, CheckStatus.Pass),
-      warnCount: countBy(checks, CheckStatus.Warn),
-      failCount: countBy(checks, CheckStatus.Fail),
+      ...countCategoryStatuses(checks),
     };
   });
 

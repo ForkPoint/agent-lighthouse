@@ -1,4 +1,5 @@
 import { buildPageScope, type PageScopeView } from "./page-scope";
+import { noticedChecks } from "./notices";
 import type {
   CategoryResult,
   CheckRecommendation,
@@ -12,9 +13,11 @@ import {
   categoryAssessedMass,
   isCategoryAssessed,
   isInformative,
+  isObsolete,
   AuditTier,
   CheckPriority,
   CheckStatus,
+  TAG_SKIPPED_SCAN_BUDGET,
 } from "@forkpoint/agent-lighthouse-core";
 import {
   CATEGORY_ORDER,
@@ -35,6 +38,11 @@ export interface CheckCounts {
   na: number;
   /** Assessed checks whose tier is not `scored` — reported, never scored. */
   advisory: number;
+  /**
+   * Obsolete checks that found the retired thing still published. Kept out
+   * of every other count: they render in the report's obsolete section.
+   */
+  obsolete: number;
   /** Assessed checks only: pass + warn + fail. */
   total: number;
 }
@@ -96,6 +104,21 @@ export interface CoverageView {
   erroredChecks: CheckResult[];
 }
 
+/**
+ * The report's "Obsolete (not scored)" section, gathered across categories.
+ *
+ * `found` holds the checks that saw the retired thing still published (the
+ * owner has something to remove or replace); `absent` holds the ones that
+ * looked and found nothing, kept so the section can say what was checked.
+ * `unrun` holds the ones that never looked — errored, skipped for evidence,
+ * page type or budget — so no surface claims an absence nobody observed.
+ */
+export interface ObsoleteView {
+  found: CheckResult[];
+  absent: CheckResult[];
+  unrun: CheckResult[];
+}
+
 export interface ReportView {
   browserAssessment?: ScanReport["browserAssessment"];
   url: string;
@@ -113,6 +136,14 @@ export interface ReportView {
   groups: GroupView[];
   /** All categories flat, in canonical order. */
   categories: CategoryView[];
+  /** Obsolete-tier checks, outside every category list and count. */
+  obsolete: ObsoleteView;
+  /**
+   * Checks that reached a verdict and carry a non-obsolete notice, such as
+   * "no AI vendor reads this". Surfaces that list no individual checks print
+   * these so the qualifier still reaches the owner.
+   */
+  notices: CheckResult[];
   /** Highest-priority failing checks (a.k.a. topFails). */
   topFixes: CheckResult[];
   /** Highest-weight passing checks. */
@@ -135,7 +166,11 @@ export interface BuildReportViewOptions {
 
 // ── Derivation ──────────────────────────────────────────────────
 
-function countChecks(checks: CheckResult[]): CheckCounts {
+function countChecks(all: CheckResult[]): CheckCounts {
+  const obsolete = all.filter(
+    (c) => isObsolete(c) && c.status !== CheckStatus.NotApplicable,
+  ).length;
+  const checks = all.filter((c) => !isObsolete(c));
   const pass = checks.filter((c) => c.status === CheckStatus.Pass).length;
   const warn = checks.filter((c) => c.status === CheckStatus.Warn).length;
   const fail = checks.filter((c) => c.status === CheckStatus.Fail).length;
@@ -153,17 +188,25 @@ function countChecks(checks: CheckResult[]): CheckCounts {
       ((c.tier !== undefined && c.tier !== AuditTier.Scored) ||
         isInformative(c)),
   ).length;
-  return { pass, warn, fail, na, advisory, total: pass + warn + fail };
+  return {
+    pass,
+    warn,
+    fail,
+    na,
+    advisory,
+    obsolete,
+    total: pass + warn + fail,
+  };
 }
 
 function toCategoryView(
   cat: CategoryResult,
   original: CategoryResult = cat,
 ): CategoryView {
-  const assessed = cat.checks.filter(
-    (c) => c.status !== CheckStatus.NotApplicable,
-  );
-  const notApplicable = cat.checks.filter(
+  // Obsolete checks render in their own section, never inside a category.
+  const listed = cat.checks.filter((c) => !isObsolete(c));
+  const assessed = listed.filter((c) => c.status !== CheckStatus.NotApplicable);
+  const notApplicable = listed.filter(
     (c) => c.status === CheckStatus.NotApplicable,
   );
   return {
@@ -179,6 +222,16 @@ function toCategoryView(
     checks: assessed,
     notApplicable,
   };
+}
+
+/** A not-applicable stub the runner wrote for an audit that never looked. */
+function didNotRun(check: CheckResult): boolean {
+  return (
+    hasTag(check, TAG_SCAN_ERROR) ||
+    hasTag(check, TAG_SKIPPED_NO_EVIDENCE) ||
+    hasTag(check, TAG_SKIPPED_PAGE_TYPE) ||
+    hasTag(check, TAG_SKIPPED_SCAN_BUDGET)
+  );
 }
 
 function hasTag(check: CheckResult, tag: string): boolean {
@@ -307,6 +360,16 @@ export function buildReportView(
     );
   }
 
+  const obsoleteChecks = allChecks.filter(isObsolete);
+  const obsoleteNa = obsoleteChecks.filter(
+    (c) => c.status === CheckStatus.NotApplicable,
+  );
+  const obsolete: ObsoleteView = {
+    found: obsoleteChecks.filter((c) => c.status !== CheckStatus.NotApplicable),
+    absent: obsoleteNa.filter((c) => !didNotRun(c)),
+    unrun: obsoleteNa.filter(didNotRun),
+  };
+
   const pageScope = buildPageScope(report, allChecks);
   const vitals = report.readinessVitals ?? {
     commerce: 0,
@@ -331,6 +394,8 @@ export function buildReportView(
     readinessScore: report.readinessScore ?? report.overallScore ?? 0,
     groups,
     categories: categoryViews,
+    obsolete,
+    notices: noticedChecks(allChecks),
     topFixes,
     topPasses,
     recommendations,

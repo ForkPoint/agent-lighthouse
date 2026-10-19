@@ -128,7 +128,7 @@ export class SyntheticMediaDisclosureValidityAudit extends Audit {
     failureTitle:
       "This site’s AI disclosure is written in a form no machine reads",
     description:
-      "Reads `Iptc4xmpExt:DigitalSourceType` out of each image’s XMP packet and tests it against the ratified IPTC NewsCodes vocabulary. The property is typed as a URI, so a bare token, an `https` variant of the `http` vocabulary URI, a trailing slash or free text all read as nothing to a consumer. Also compares the XMP declaration against what the asset’s own C2PA manifest says.",
+      "Reads `Iptc4xmpExt:DigitalSourceType` out of each image’s XMP packet and tests it against the ratified IPTC NewsCodes vocabulary. The property is typed as a URI. Free text or a concept outside the vocabulary reads as nothing to a consumer and fails. A bare token, an `https` variant of the `http` vocabulary URI or a trailing slash is a near miss and warns: IPTC defines the `http` URI, and Google's documentation shows bare codes linked to `https` URIs without saying which spelling it reads. Also compares the XMP declaration against what the asset’s own C2PA manifest says.",
     scoreDisplayMode: ScoreDisplayMode.Ternary,
     tier: AuditTier.Scored,
     evidenceGrade: EvidenceGrade.B,
@@ -144,7 +144,7 @@ export class SyntheticMediaDisclosureValidityAudit extends Audit {
     ],
     guidance: {
       impact:
-        "Disclosure only counts if a machine can read it. IPTC types `DigitalSourceType` as a URI from a controlled vocabulary, so a consumer matching against that vocabulary silently ignores `AI-generated`, a bare `trainedAlgorithmicMedia`, or an `https://` spelling of the `http://` vocabulary URI. The publisher believes the image is disclosed; every machine reader sees an undisclosed image. Worse is an asset whose XMP and C2PA manifest disagree about whether a human took the photo — two provenance channels, one of them wrong.",
+        "Disclosure only counts if a machine can read it. IPTC types `DigitalSourceType` as a URI from a controlled vocabulary, so a consumer matching against that vocabulary silently ignores free text such as `AI-generated`, and may not match a bare `trainedAlgorithmicMedia` or an `https://` spelling of the `http://` vocabulary URI. The publisher believes the image is disclosed; every machine reader sees an undisclosed image. Worse is an asset whose XMP and C2PA manifest disagree about whether a human took the photo — two provenance channels, one of them wrong.",
       fix: "Write the full vocabulary URI, exactly: `http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia`. Keep the `http` scheme the vocabulary itself uses, no trailing slash, no free text, and make sure the value agrees with the digital source type asserted in the asset’s C2PA manifest.",
       effort: FixEffort.Moderate,
       docsUrl:
@@ -162,6 +162,10 @@ export class SyntheticMediaDisclosureValidityAudit extends Audit {
     }
 
     const failures: string[] = [];
+    // Near-miss spellings of a vocabulary member. IPTC defines the http URI,
+    // but Google's image-metadata page shows bare codes linked to https URIs
+    // and does not say which spelling it reads, so these warn, not fail.
+    const warnings: string[] = [];
     const declarations: string[] = [];
     let imagesRead = 0;
     let declared = 0;
@@ -181,17 +185,17 @@ export class SyntheticMediaDisclosureValidityAudit extends Audit {
 
       switch (verdict.kind) {
         case "bare-concept":
-          failures.push(
+          warnings.push(
             `${url}: DigitalSourceType is the bare concept "${verdict.concept}"; IPTC types the property as a URI, so write ${DIGITAL_SOURCE_BASE}${verdict.concept}`,
           );
           break;
         case "wrong-scheme":
-          failures.push(
+          warnings.push(
             `${url}: DigitalSourceType uses https where the vocabulary uses http; write ${DIGITAL_SOURCE_BASE}${verdict.concept}`,
           );
           break;
         case "trailing-slash":
-          failures.push(
+          warnings.push(
             `${url}: DigitalSourceType carries a trailing slash, so it does not match ${DIGITAL_SOURCE_BASE}${verdict.concept}`,
           );
           break;
@@ -253,11 +257,12 @@ export class SyntheticMediaDisclosureValidityAudit extends Audit {
       imagesRead,
       declarations: declarations.slice(0, 20),
       failures: failures.slice(0, 20),
+      warnings: warnings.slice(0, 20),
     };
     const expected =
       "Every DigitalSourceType is a full IPTC NewsCodes URI from the ratified vocabulary, agreeing with the asset’s C2PA manifest";
-    const found = `${declared} of ${imagesRead} image(s) declare a source type (${coverage}%); ${failures.length} invalid or contradictory.`;
-    const displayValue = `${declared - failures.length}/${declared} valid`;
+    const found = `${declared} of ${imagesRead} image(s) declare a source type (${coverage}%); ${failures.length} invalid or contradictory, ${warnings.length} spelled other than the vocabulary URI.`;
+    const displayValue = `${Math.max(0, declared - failures.length - warnings.length)}/${declared} valid`;
 
     if (failures.length > 0) {
       return {
@@ -266,6 +271,19 @@ export class SyntheticMediaDisclosureValidityAudit extends Audit {
           expected,
           found,
           `Write the full vocabulary URI, keeping the http scheme: ${DIGITAL_SOURCE_BASE}<concept>.`,
+        ),
+        displayValue,
+        details,
+      };
+    }
+
+    if (warnings.length > 0) {
+      return {
+        ...this.warn(
+          `${warnings[0]!}. IPTC defines the http vocabulary URI; Google's documentation shows bare codes linked to https URIs and does not say which it accepts.`,
+          expected,
+          found,
+          `Write ${DIGITAL_SOURCE_BASE}<concept> to match the standard.`,
         ),
         displayValue,
         details,

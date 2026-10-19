@@ -281,4 +281,114 @@ describe("McpToolsListDeterminismAudit", () => {
     expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("ttlMs 30000");
   });
+
+  it("is notApplicable on a malformed declaration and names the defect", async () => {
+    const ctx: CheckContext = mockCheckContext([], {
+      "/.well-known/mcp/servers.json": mockFetchResult(
+        JSON.stringify({ servers: [] }),
+        200,
+        "application/json",
+      ),
+    });
+    const result = (await audit.audit(ctx)) as Result;
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.found).toBe("Malformed declaration (no-url)");
+  });
+
+  // A 401 or 403 is the sign-in case, tested above; these are the other ways
+  // the first call can come back with nothing to compare.
+  it("is notApplicable when the first tools/list yields no usable page", async () => {
+    const answers: FetchResult[] = [
+      mockFetchResult("Service Unavailable", 503, "text/plain"),
+      mockFetchResult(
+        '{"jsonrpc":"2.0","id":1,"error":{"code":-32601,"message":"no"}}',
+        200,
+        "application/json",
+      ),
+      mockFetchResult(
+        '{"jsonrpc":"2.0","id":1,"result":{"tools":"none"}}',
+        200,
+        "application/json",
+      ),
+    ];
+    for (const answer of answers) {
+      const ctx: CheckContext = mockCheckContext([], servers());
+      ctx.fetch = async () => answer;
+      const result = (await audit.audit(ctx)) as Result;
+      expect(result.status).toBe(CheckStatus.NotApplicable);
+      expect(result.found).toBe(
+        `${ENDPOINT}; 0 of 3 call(s) answered; 0 tools`,
+      );
+    }
+  });
+
+  // A later call that does not answer ends the comparison; the calls that did
+  // answer are still judged.
+  it("judges the calls that answered when a later call fails", async () => {
+    const ctx: CheckContext = mockCheckContext([], servers());
+    let call = -1;
+    ctx.fetch = async (o: FetchOptions) => {
+      const body = JSON.parse(o.body ?? "{}") as { method?: string };
+      if (body.method !== "tools/list") return mockFetchResult("{}", 404);
+      call += 1;
+      if (call > 0) throw new Error("socket hang up");
+      return mockFetchResult(
+        JSON.stringify({ jsonrpc: "2.0", id: 1, result: healthy() }),
+        200,
+        "application/json",
+      );
+    };
+    const result = (await audit.audit(ctx)) as Result;
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.found).toContain("1 of 3 call(s) answered");
+  });
+
+  it("treats a nameless tool as one more entry in the compared set", async () => {
+    const result = await run((call) =>
+      healthy({
+        tools: call === 0 ? [TOOL_A, { inputSchema: {} }] : [TOOL_A],
+      }),
+    );
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.message).toContain("call 2 returned a different tool set");
+    expect(result.found).toContain("2 tool(s) across 1 page(s)");
+  });
+
+  it("fails a ttlMs that is not a non-negative integer", async () => {
+    for (const ttlMs of [-1, 1.5, "60000"]) {
+      const result = await run(() => healthy({ ttlMs }));
+      expect(result.status).toBe(CheckStatus.Fail);
+      expect(result.message).toContain(
+        `\`ttlMs\` is ${JSON.stringify(ttlMs)} rather than a non-negative integer`,
+      );
+      expect(result.found).toContain(
+        `ttlMs ${typeof ttlMs === "number" ? ttlMs : "absent"}`,
+      );
+    }
+  });
+
+  // The spec puts the caching-hint MUST on results with resultType "complete";
+  // a partial result carries no such obligation.
+  it("does not judge caching hints on a partial result", async () => {
+    const result = await run(() => ({
+      tools: [TOOL_A],
+      resultType: "partial",
+    }));
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.found).toContain("cacheScope absent");
+  });
+
+  it("reports a non-determinism finding alongside a caching-hint failure", async () => {
+    const result = await run((call) =>
+      healthy({
+        ttlMs: 0,
+        tools: call === 1 ? [TOOL_B, TOOL_A] : [TOOL_A, TOOL_B],
+      }),
+    );
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("`ttlMs: 0`");
+    expect(result.message).toContain(
+      "Also: call 2 returned the same tools in a different order",
+    );
+  });
 });

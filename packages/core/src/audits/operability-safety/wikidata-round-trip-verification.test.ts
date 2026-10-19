@@ -14,14 +14,21 @@ import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
 import { extractJsonLd, parseHtml } from "#core/parser";
 import type { FetchOptions, FetchResult } from "#core/fetcher";
 import type { AuditResult } from "#core/types";
-import { AuditTier, CheckStatus, EvidenceGrade } from "#core/types";
+import {
+  AuditTier,
+  CheckStatus,
+  EvidenceGrade,
+  ScoreDisplayMode,
+} from "#core/types";
+
+const dns = vi.hoisted(() => ({ wikidataResolves: true }));
 
 vi.mock("#core/fetcher", async (importOriginal) => {
   const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) =>
-      url.startsWith("https://www.wikidata.org"),
+      dns.wikidataResolves && url.startsWith("https://www.wikidata.org"),
   };
 });
 
@@ -120,6 +127,17 @@ describe("WikidataRoundTripVerificationAudit", () => {
     });
   });
 
+  it("reads an identity type out of an @type array", () => {
+    expect(
+      claimedEntities([
+        {
+          "@type": ["Thing", "Organization"],
+          sameAs: "https://www.wikidata.org/wiki/Q42",
+        },
+      ]),
+    ).toEqual(["Q42"]);
+  });
+
   describe("officialWebsite", () => {
     it("prefers a preferred-rank statement and ignores a deprecated one", () => {
       const body = JSON.stringify({
@@ -142,6 +160,50 @@ describe("WikidataRoundTripVerificationAudit", () => {
       });
       expect(officialWebsite(body)).toBe("https://preferred.test/");
       expect(officialWebsite("not json")).toBeUndefined();
+    });
+
+    it("skips malformed statements and keeps the first of equal rank", () => {
+      const body = JSON.stringify({
+        claims: {
+          P856: [
+            "not a statement",
+            { rank: "normal", mainsnak: "not a snak" },
+            { rank: "normal", mainsnak: { datavalue: "not a datavalue" } },
+            { rank: "normal", mainsnak: { datavalue: { value: 42 } } },
+            // No rank, or a rank Wikidata does not define, reads as normal.
+            { mainsnak: { datavalue: { value: "https://first.test/" } } },
+            {
+              rank: "unknown-rank",
+              mainsnak: { datavalue: { value: "https://second.test/" } },
+            },
+          ],
+        },
+      });
+      expect(officialWebsite(body)).toBe("https://first.test/");
+    });
+
+    it("keeps a preferred statement over a later normal one", () => {
+      const body = JSON.stringify({
+        claims: {
+          P856: [
+            {
+              rank: "preferred",
+              mainsnak: { datavalue: { value: "https://preferred.test/" } },
+            },
+            {
+              rank: "normal",
+              mainsnak: { datavalue: { value: "https://normal.test/" } },
+            },
+          ],
+        },
+      });
+      expect(officialWebsite(body)).toBe("https://preferred.test/");
+    });
+
+    it("finds nothing when P856 is not a statement list", () => {
+      expect(
+        officialWebsite(JSON.stringify({ claims: { P856: "x" } })),
+      ).toBeUndefined();
     });
   });
 
@@ -219,6 +281,52 @@ describe("WikidataRoundTripVerificationAudit", () => {
     expect(strings(r, "warnings").join(" ")).toContain("503");
   });
 
+  it("fails a P856 value that names no resolvable domain", async () => {
+    const { result } = run({
+      sameAs: ["https://www.wikidata.org/wiki/Q95"],
+      wikidata: { Q95: claims("not a url") },
+    });
+    const r = await result;
+    expect(r.status).toBe(CheckStatus.Fail);
+    expect(r.message).toContain("belongs to no resolvable domain");
+  });
+
+  it("is notApplicable when the Wikidata request gets no response", async () => {
+    const audit = new WikidataRoundTripVerificationAudit();
+    const html = `<html><head><script type="application/ld+json">${JSON.stringify(
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        sameAs: ["https://www.wikidata.org/wiki/Q95"],
+      },
+    )}</script></head><body></body></html>`;
+    const ctx = mockCheckContext([
+      mockPageContext("https://example.com/", html),
+    ]);
+    ctx.fetch = async () => {
+      throw new Error("connection reset");
+    };
+    const r = await audit.audit(ctx);
+    expect(r.status).toBe(CheckStatus.NotApplicable);
+    expect(r.message).toContain("Q95: Wikidata answered HTTP 0");
+  });
+
+  it("is notApplicable when the Wikidata URL fails the safety check", async () => {
+    dns.wikidataResolves = false;
+    try {
+      const { result, requests } = run({
+        sameAs: ["https://www.wikidata.org/wiki/Q95"],
+      });
+      const r = await result;
+      expect(r.status).toBe(CheckStatus.NotApplicable);
+      expect(r.message).toContain("Q95: Wikidata could not be reached");
+      expect(requests).toHaveLength(0);
+      expect(strings(r, "warnings").join(" ")).toContain("unverified");
+    } finally {
+      dns.wikidataResolves = true;
+    }
+  });
+
   it("resolves at most two entities per scan", async () => {
     const { result, requests } = run({
       sameAs: ["Q1", "Q2", "Q3"].map(
@@ -229,11 +337,12 @@ describe("WikidataRoundTripVerificationAudit", () => {
     expect(requests).toHaveLength(2);
   });
 
-  it("registers as a scored grade-B audit", () => {
+  it("registers as an informative grade-C audit", () => {
     const { meta } = WikidataRoundTripVerificationAudit;
-    expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
-    expect(meta.tier).toBe(AuditTier.Scored);
-    expect(meta.weight).toBeCloseTo(0.6);
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.C);
+    expect(meta.tier).toBe(AuditTier.Informative);
+    expect(meta.weight).toBe(0);
+    expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Informative);
     expect(meta.id.length).toBeLessThanOrEqual(64);
   });
 });

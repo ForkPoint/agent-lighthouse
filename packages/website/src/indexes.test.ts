@@ -89,6 +89,7 @@ describe.skipIf(!built)("rendered /audits/", () => {
       "scored",
       "informative",
       "experimental",
+      "obsolete",
     ]);
     for (const kind of ["category", "tier"]) {
       // Every pill carries a pressed state, and exactly one starts pressed.

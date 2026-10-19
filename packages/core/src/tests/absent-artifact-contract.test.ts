@@ -36,9 +36,8 @@ import { CheckStatus } from "#core/types";
  *
  * Why only this family. The general rule needs to know which artifact each
  * audit is *about*, and no syntactic test answers that:
- * `agent-interfaces/search-endpoint` and `operability-safety/contact-form`
- * both read the same document, and both are right to keep judging a site that
- * publishes none — they have other evidence. The shared precondition constant
+ * `operability-safety/contact-form` reads the same document, and is right to
+ * keep judging a site that publishes none — it has other evidence. The shared precondition constant
  * is the closest thing to a declaration, so a family pins its own instance by
  * exporting one and importing it. The next artifact to adopt the pattern
  * copies this block.
@@ -201,3 +200,69 @@ describe("absent artifact, absent verdict — the MCP server", () => {
     });
   }
 });
+
+/**
+ * Audits about a well-known JSON artifact that `rootFiles` fetches once. Each
+ * reader exports its own precondition, and an audit that imports it judges
+ * the artifact's contents, so a site that publishes none gets
+ * `notApplicable`. The artifact table is the list: adding a reader adds a row.
+ */
+const ROOT_ARTIFACTS = [
+  {
+    name: "the A2A Agent Card",
+    marker: "NO_AGENT_CARD",
+    path: "/.well-known/agent-card.json",
+    expected: ["agent-interfaces/a2a-agent-card"],
+  },
+  {
+    name: "the UCP business profile",
+    marker: "NO_UCP_PROFILE",
+    path: "/.well-known/ucp",
+    expected: ["agentic-commerce/ucp-profile"],
+  },
+] as const;
+
+for (const artifact of ROOT_ARTIFACTS) {
+  const audits = registrations.filter((r) =>
+    (sources.get(r.meta.id) ?? "").includes(artifact.marker),
+  );
+
+  describe(`absent artifact, absent verdict — ${artifact.name}`, () => {
+    it(`finds the audits that read ${artifact.marker}`, () => {
+      expect(audits.map((r) => r.meta.id).sort()).toEqual([
+        ...artifact.expected,
+      ]);
+    });
+
+    const states: Array<[string, CheckContext]> = [
+      [`no ${artifact.path} was fetched at all`, siteWithoutASpec()],
+      [
+        `${artifact.path} answers 404`,
+        siteWithoutASpec({ [artifact.path]: mockFetchResult("", 404) }),
+      ],
+      [
+        `${artifact.path} answers 200 with an HTML page`,
+        siteWithoutASpec({
+          [artifact.path]: mockFetchResult("<!doctype html><p>Home</p>", 200),
+        }),
+      ],
+    ];
+
+    for (const registration of audits) {
+      const { id } = registration.meta;
+
+      it(`${id}: declines a site that publishes no such artifact`, async () => {
+        for (const [label, ctx] of states) {
+          const result = await registration.create().audit(ctx);
+          expect(AuditResultSchema.safeParse(result).success).toBe(true);
+          expect(
+            result.status,
+            `${label}: reported "${result.status}" about ${artifact.name}, which the site never published — ` +
+              `"${result.message}". Absence is notApplicable; only a present-and-defective ` +
+              `artifact may fail.`,
+          ).toBe(CheckStatus.NotApplicable);
+        }
+      });
+    }
+  });
+}

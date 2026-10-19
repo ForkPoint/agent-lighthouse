@@ -237,4 +237,135 @@ describe("McpVersionDowngradeAudit", () => {
     await audit.audit(ctx);
     expect(seen).toContainEqual({ header: "1900-01-01", body: "1900-01-01" });
   });
+
+  it("is notApplicable on a malformed declaration and names the defect", async () => {
+    const ctx: CheckContext = mockCheckContext([], {
+      "/.well-known/mcp/servers.json": json({ servers: [{ url: "" }] }),
+    });
+    const result = (await audit.audit(ctx)) as Result;
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.found).toBe("Malformed declaration (no-url)");
+  });
+
+  it("fails a rejection that carries no JSON-RPC error at all", async () => {
+    const result = await run({
+      a: mockFetchResult("Bad Request", 400, "text/plain"),
+    });
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain(
+      "with HTTP 400 and no JSON-RPC error rather than -32022",
+    );
+    expect(result.found).toContain("probe A HTTP 400;");
+    expect(result.found).toContain("supported not advertised in the rejection");
+  });
+
+  it("fails a -32022 whose error carries no data object", async () => {
+    const result = await run({ a: rpcError(-32022) });
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("`error.data.supported` is missing");
+    expect(result.found).toContain("probe A HTTP 400 / -32022");
+  });
+
+  it("fails a -32022 whose data.supported is not a list", async () => {
+    const result = await run({
+      a: rpcError(-32022, { supported: CURRENT, requested: "1900-01-01" }),
+    });
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("`error.data.supported` is missing");
+  });
+
+  it("warns on a -32022 that arrives on a status other than 400", async () => {
+    const result = await run({
+      a: rpcError(
+        -32022,
+        { supported: ["2025-11-25", CURRENT], requested: "1900-01-01" },
+        422,
+      ),
+    });
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.message).toContain(
+      "the -32022 rejection arrived as HTTP 422 rather than 400",
+    );
+  });
+
+  it("warns on supported entries that are not YYYY-MM-DD revisions", async () => {
+    const result = await run({
+      a: rpcError(-32022, {
+        supported: ["2025-11-25", CURRENT, "latest"],
+        requested: "1900-01-01",
+      }),
+      discover: json({
+        jsonrpc: "2.0",
+        id: "al-1",
+        result: { supportedVersions: ["2025-11-25", CURRENT, "latest"] },
+      }),
+    });
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.message).toContain(
+      '`error.data.supported` lists "latest", which is not a YYYY-MM-DD revision',
+    );
+  });
+
+  it("warns when data.requested is absent and reports it as null", async () => {
+    const result = await run({
+      a: rpcError(-32022, { supported: ["2025-11-25", CURRENT] }),
+    });
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.message).toContain("`error.data.requested` is null");
+  });
+
+  // With no list from server/discover there is nothing to compare against, so
+  // the rejection's own list stands.
+  it("skips the list comparison when server/discover does not answer with a result", async () => {
+    for (const discover of [
+      mockFetchResult("", 401, "text/plain"),
+      mockFetchResult("not json", 200, "text/plain"),
+    ]) {
+      const result = await run({
+        a: rpcError(-32022, {
+          supported: ["2020-01-01"],
+          requested: "1900-01-01",
+        }),
+        discover,
+      });
+      expect(result.status).toBe(CheckStatus.Pass);
+      expect(result.message).not.toContain("server/discover advertises");
+    }
+  });
+
+  it("warns when the disagreement is rejected without a JSON-RPC error", async () => {
+    const result = await run({
+      b: mockFetchResult("Bad Request", 400, "text/plain"),
+    });
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.message).toContain(
+      "rejected with HTTP 400 rather than -32020",
+    );
+  });
+
+  it("reports both the critical break and the header/body gap together", async () => {
+    const ok = json({ jsonrpc: "2.0", id: "x", result: {} });
+    const result = await run({ a: ok, b: ok });
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("validates no protocol version");
+    expect(result.message).toContain(
+      "Additionally, it answered a request whose header said",
+    );
+  });
+
+  it("records probes B and C that get no answer without a finding", async () => {
+    const ctx: CheckContext = mockCheckContext([], servers());
+    ctx.fetch = async (o: FetchOptions) => {
+      const probe = probeOf(o);
+      if (probe.header === "1900-01-01") return REJECTION;
+      if (probe.header === CURRENT && probe.body === CURRENT)
+        return DISCOVER_OK;
+      throw new Error("socket hang up");
+    };
+    const result = (await audit.audit(ctx)) as Result;
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.found).toContain("probe B HTTP no answer");
+    expect(result.found).toContain("probe C HTTP no answer");
+    expect(result.message).not.toContain("Also:");
+  });
 });

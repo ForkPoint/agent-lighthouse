@@ -226,4 +226,34 @@ describe("createProgressRenderer", () => {
     });
     expect(out).toEqual(["✓ Audits 2/2 · 0.1s · 1 errored\n"]);
   });
+
+  it("shows the total that phase:total corrected", () => {
+    const out: string[] = [];
+    const handle = createProgressRenderer({
+      tty: false,
+      write: (s) => out.push(s),
+    });
+    handle({
+      type: "phase:start",
+      phase: PhaseId.FetchPages,
+      totalUnits: 5,
+      fraction: 0.1,
+      elapsedMs: 0,
+    });
+    handle({
+      type: "phase:total",
+      phase: PhaseId.FetchPages,
+      totalUnits: 2,
+      fraction: 0.1,
+      elapsedMs: 1,
+    });
+    handle({
+      type: "phase:done",
+      phase: PhaseId.FetchPages,
+      durationMs: 100,
+      fraction: 0.3,
+      elapsedMs: 100,
+    });
+    expect(out).toEqual(["✓ Pages 0/2 · 0.1s\n"]);
+  });
 });

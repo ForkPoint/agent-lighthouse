@@ -3,6 +3,7 @@ import { Audit } from "#core/audit";
 import type { CheckContext } from "#core/check-context";
 import { isSafeUrl } from "#core/url-utils";
 import { sharedFeeds, probeHubHead } from "#core/gatherers/feeds";
+import { weightForGrade } from "#core/scorer";
 import {
   AuditTier,
   CheckPriority,
@@ -15,8 +16,12 @@ import {
 /** Feeds inspected. The same cap the other Wave C feed audits use. */
 const MAX_FEEDS = 2;
 
-/** Hub statuses that prove something is listening. A hub may refuse a bare HEAD. */
-const HUB_ALIVE = new Set([400, 405]);
+/**
+ * Hub statuses that prove something is listening. A hub may refuse a bare
+ * HEAD (400, 405), and a WAF or bot challenge in front of it may refuse the
+ * scanner (401, 403, 429); none of those means the push path is gone.
+ */
+const HUB_ALIVE = new Set([400, 401, 403, 405, 429]);
 
 export class WebsubHubAdvertisementAudit extends Audit {
   static override meta: AuditMeta = {
@@ -26,23 +31,23 @@ export class WebsubHubAdvertisementAudit extends Audit {
       "Feeds that advertise a WebSub hub carry exactly one absolute self link",
     failureTitle: "This site’s WebSub advertisement is incomplete",
     description:
-      "Reads the WebSub discovery links on each feed — the `Link:` response headers first, as the specification requires, then the document — and, on each feed that advertises a hub, checks the shape the W3C Recommendation asks for: exactly one absolute `rel=self`, and every `rel=hub` over HTTPS and answering a HEAD. The self URL may differ from the URL the feed was fetched from; the Recommendation allows it. A feed with no hub is not judged. Advisory only: no AI answer engine is documented as a WebSub subscriber, so this audit never affects the score.",
-    scoreDisplayMode: ScoreDisplayMode.Informative,
-    tier: AuditTier.Informative,
-    evidenceGrade: EvidenceGrade.C,
-    weight: 0,
+      "Reads the WebSub discovery links on each feed — the `Link:` response headers first, as the specification requires, then the document — and, on each feed that advertises a hub, checks the shape the W3C Recommendation asks for: exactly one absolute `rel=self`, and every `rel=hub` an absolute URL whose server answers a HEAD. HTTP hubs are allowed, and a hub that refuses the scanner (401, 403, 429) counts as present. The self URL may differ from the URL the feed was fetched from; the Recommendation allows it. A feed with no hub is not judged. Google Search documents receiving WebSub notifications from Atom and RSS feeds; no LLM vendor documents subscribing.",
+    scoreDisplayMode: ScoreDisplayMode.Ternary,
+    tier: AuditTier.Scored,
+    evidenceGrade: EvidenceGrade.B,
+    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
     defaultPriority: CheckPriority.Low,
     dossier:
       "docs/evidence/audits/machine-discovery/websub-hub-advertisement.md",
     requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
     guidance: {
       impact:
-        "A hub subscription is verified against the feed’s own `rel=self`. When that link is missing, duplicated or relative, verification cannot complete, and the push path degrades to whatever polling cadence subscribers happen to use. The publisher sees a hub that looks configured and no error anywhere. The benefit side is unproven: WebSub is a W3C Recommendation, but no AI answer engine is documented as a subscriber, which is why this audit reports and does not score.",
-      fix: "Advertise the hub and the canonical topic URL in the feed’s `Link:` response headers, which is where a subscriber looks first. Emit exactly one `rel=self` with the absolute canonical topic URL, and at least one `rel=hub` over HTTPS. If you run no hub, a hosted one (Google’s pubsubhubbub, Superfeedr, websub.rocks) needs only the two link relations.",
+        "A hub subscription is verified against the feed’s own `rel=self`. When that link is missing, duplicated or relative, verification cannot complete, and the push path degrades to whatever polling cadence subscribers happen to use. The publisher sees a hub that looks configured and no error anywhere. Google Search documents WebSub as a way to broadcast feed changes to search engines; no LLM vendor documents subscribing.",
+      fix: "Advertise the hub and the canonical topic URL in the feed’s `Link:` response headers, which is where a subscriber looks first. Emit exactly one `rel=self` with the absolute canonical topic URL, and at least one `rel=hub` with an absolute URL (HTTPS is preferable, though WebSub does not require it). If you run no hub, a hosted one (Google’s pubsubhubbub, Superfeedr, websub.rocks) needs only the two link relations.",
       effort: FixEffort.Easy,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/machine-discovery/websub-hub-advertisement/",
-      tags: ["websub", "feeds", "push", "advisory"],
+      tags: ["websub", "feeds", "push"],
     },
   };
 
@@ -101,10 +106,10 @@ export class WebsubHubAdvertisementAudit extends Audit {
       feedsWithHub += 1;
 
       for (const raw of feed.hubLinksRaw.slice(0, 2)) {
-        if (!/^https:\/\//i.test(raw)) {
-          observations.push(
-            `${where}: hub "${raw}" is not an absolute HTTPS URL`,
-          );
+        // WebSub does not require HTTPS for the hub; only a relative or
+        // non-HTTP URL leaves a subscriber nowhere to go.
+        if (!/^https?:\/\//i.test(raw)) {
+          observations.push(`${where}: hub "${raw}" is not an absolute URL`);
           continue;
         }
         // A HEAD, and nothing more: the audit never subscribes, and a hub is
@@ -141,19 +146,19 @@ export class WebsubHubAdvertisementAudit extends Audit {
       observations: observations.slice(0, 20),
     };
     const expected =
-      "On each feed with a rel=hub: exactly one absolute rel=self, and reachable HTTPS hubs";
+      "On each feed with a rel=hub: exactly one absolute rel=self, and reachable hubs at absolute URLs";
     const found = `${feeds.length} feed(s); ${feedsWithHub} advertise a hub, ${feedsWithValidSelf} carry a valid rel=self. ${observations.length} observation(s).`;
     const displayValue = `${feedsWithHub}/${feeds.length} feeds advertise a hub`;
 
-    // Never a failure. The conformance assertion is exact, but no AI consumer
-    // is documented as a WebSub subscriber, so this reports and does not score.
+    // Never a failure. A broken advertisement degrades push to polling; it
+    // does not remove the feed, so the strongest verdict is a warning.
     if (observations.length > 0) {
       return {
         ...this.warn(
           observations[0]!,
           expected,
           found,
-          "Advertise exactly one absolute rel=self and HTTPS rel=hub links, in the Link response headers.",
+          "Advertise exactly one absolute rel=self and absolute rel=hub links, in the Link response headers.",
         ),
         displayValue,
         details,

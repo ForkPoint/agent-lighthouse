@@ -59,6 +59,21 @@ function mediaType(contentType: string | undefined): string {
   return (contentType ?? "").split(";")[0]!.trim().toLowerCase();
 }
 
+/** The keys a TDM-Rep policy entry carries. */
+const TDM_KEYS = ["location", "tdm-reservation", "tdm-policy"] as const;
+
+function isObjectArray(val: unknown): val is Record<string, unknown>[] {
+  return Array.isArray(val) && val.length > 0 && val.every(isObject);
+}
+
+/** True when the document, or any entry in it, names a TDM-Rep key. */
+function carriesTdmKey(val: unknown): boolean {
+  const entries = Array.isArray(val) ? val : [val];
+  return entries.some(
+    (entry) => isObject(entry) && TDM_KEYS.some((key) => key in entry),
+  );
+}
+
 type FileVerdict =
   | { kind: "absent" }
   | { kind: "unparseable" }
@@ -91,6 +106,12 @@ function readPolicyFile(ctx: CheckContext): FileVerdict {
   } catch {
     return { kind: "unparseable" };
   }
+
+  // A JSON object, or an array of objects, that names no TDM-Rep key at all is
+  // somebody else's document: some servers answer every /.well-known/* path
+  // with the same unrelated JSON. That is no policy file, not a broken one.
+  if (!carriesTdmKey(parsed) && (isObject(parsed) || isObjectArray(parsed)))
+    return { kind: "absent" };
 
   // The spec defines the document as an array of objects, each carrying a
   // mandatory `location` and `tdm-reservation`. The old `Record<string,
@@ -177,9 +198,9 @@ export class TdmRepAudit extends Audit {
     description:
       "TDM-Rep is a W3C Community Group Final Report — explicitly not a W3C Standard — that defines a machine-readable text-and-data-mining reservation, anchored in EU DSM Directive Article 4. Its value is legal evidence of an opt-out, not agent behaviour: no major AI crawler operator documents honouring it. This audit reports what a site declares and in which direction, and never scores it either way.",
     scoreDisplayMode: ScoreDisplayMode.Informative,
-    weight: weightForGrade(EvidenceGrade.C, AuditTier.Experimental),
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
     evidenceGrade: EvidenceGrade.C,
-    tier: AuditTier.Experimental,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/access-crawl-control/tdm-rep.md",
     // Gate exemption: being refused is what this category reports.
     requires: [
@@ -199,13 +220,7 @@ export class TdmRepAudit extends Audit {
       effort: FixEffort.Trivial,
       docsUrl:
         "https://www.w3.org/community/reports/tdmrep/CG-FINAL-tdmrep-20240510/",
-      tags: [
-        "tdm-rep",
-        "licensing",
-        "crawler-permissions",
-        "compliance",
-        "experimental",
-      ],
+      tags: ["tdm-rep", "licensing", "crawler-permissions", "compliance"],
     },
   };
 

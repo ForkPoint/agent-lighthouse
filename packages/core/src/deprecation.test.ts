@@ -7,6 +7,7 @@ import {
   CheckPriority,
   CheckStatus,
   EvidenceGrade,
+  NoticeKind,
   ScoreDisplayMode,
 } from "./types";
 import { omit } from "#core/tests/omit";
@@ -76,5 +77,70 @@ describe("deprecation notice flow", () => {
       score: 1,
     });
     expect(check.deprecated).toBeUndefined();
+  });
+});
+
+const OBSOLETE_NOTICE = {
+  kind: NoticeKind.Obsolete,
+  notice: "The vendor retired this file.",
+  link: "https://example.com/retirement-notice",
+  replacement: "Publish the successor file instead.",
+};
+
+class ObsoleteAudit extends Audit {
+  static override meta: AuditMeta = {
+    ...DeprecatedAudit.meta,
+    id: "agent-interfaces/retired-file",
+    tier: AuditTier.Obsolete,
+    deprecated: OBSOLETE_NOTICE,
+  };
+  audit(): AuditResult {
+    return { status: CheckStatus.Fail, score: 0, message: "Retired file." };
+  }
+}
+
+describe("obsolete tier", () => {
+  it("AuditMetaSchema accepts an obsolete audit with an obsolete notice", () => {
+    expect(() => AuditMetaSchema.parse(ObsoleteAudit.meta)).not.toThrow();
+  });
+
+  it("AuditMetaSchema rejects an obsolete audit without a notice", () => {
+    expect(
+      AuditMetaSchema.safeParse(omit(ObsoleteAudit.meta, "deprecated")).success,
+    ).toBe(false);
+  });
+
+  it("AuditMetaSchema rejects an obsolete audit whose notice is not obsolete", () => {
+    expect(
+      AuditMetaSchema.safeParse({
+        ...ObsoleteAudit.meta,
+        deprecated: { ...OBSOLETE_NOTICE, kind: NoticeKind.Unconsumed },
+      }).success,
+    ).toBe(false);
+  });
+
+  it("an unconsumed notice is legal on an informative audit", () => {
+    expect(
+      AuditMetaSchema.safeParse({
+        ...DeprecatedAudit.meta,
+        deprecated: { ...OBSOLETE_NOTICE, kind: NoticeKind.Unconsumed },
+      }).success,
+    ).toBe(true);
+  });
+
+  it("toCheckResult carries kind and replacement", () => {
+    const check = new ObsoleteAudit().toCheckResult({
+      status: CheckStatus.Warn,
+      score: 0.5,
+    });
+    expect(check.deprecated).toEqual(OBSOLETE_NOTICE);
+    expect(check.tier).toBe(AuditTier.Obsolete);
+  });
+
+  it("an obsolete audit never reports fail: toCheckResult lowers it to warn", () => {
+    const audit = new ObsoleteAudit();
+    const check = audit.toCheckResult(audit.audit());
+    expect(check.status).toBe(CheckStatus.Warn);
+    expect(check.title).toBe(ObsoleteAudit.meta.failureTitle);
   });
 });

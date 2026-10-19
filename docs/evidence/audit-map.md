@@ -8,9 +8,9 @@ Current fields come from registry metadata. Evidence dossiers govern consumer cl
 
 ## Summary
 
-- **Total Registered Audits:** 215 across 8 categories
-- **Historical v1 Legacy Audits:** 207 (181 carried forward, 26 sunset)
-- **Sunset Dossiers Preserved:** 27 under `docs/evidence/sunset/`
+- **Total Registered Audits:** 220 across 8 categories
+- **Historical v1 Legacy Audits:** 207 (182 carried forward, 25 sunset)
+- **Sunset Dossiers Preserved:** 26 under `docs/evidence/sunset/`
 - **Merged Dossiers Preserved:** 42 under `docs/evidence/merged/`
 
 ## Active Audits by Category
@@ -18,12 +18,12 @@ Current fields come from registry metadata. Evidence dossiers govern consumer cl
 | Category | Active Audits |
 | :--- | :--- |
 | `access-crawl-control` | 37 |
-| `agent-interfaces` | 24 |
-| `agentic-commerce` | 10 |
+| `agent-interfaces` | 26 |
+| `agentic-commerce` | 11 |
 | `answer-readiness` | 33 |
 | `content-extraction` | 27 |
 | `machine-discovery` | 24 |
-| `operability-safety` | 46 |
+| `operability-safety` | 48 |
 | `structured-data` | 14 |
 
 ## Audit Lifecycle & Taxonomy
@@ -46,7 +46,7 @@ The format version describes this file, not the package release version.
 | `features`, `priority` | Search tags and default priority from audit metadata. Tags are not guards. |
 | `applicability` | Current page-type gate. An empty type list is unrestricted by type; body and evidence guards still apply. |
 | `requires` | Current scan-evidence requirements. |
-| `tier`, `evidenceGrade`, `weight`, `scoreDisplayMode` | Scoring contract; eligibility still depends on the scan. |
+| `tier`, `evidenceGrade`, `weight`, `scoreDisplayMode` | Scoring contract; eligibility still depends on the scan. `obsolete` audits are grade D, weight 0, and never fail. |
 | `enabledByDefault` | False for experimental audits. |
 | `source`, `test`, `dossier` | Repository-relative implementation, test, and evidence paths. |
 | `legacyIds` | Links to preserved migration history. |

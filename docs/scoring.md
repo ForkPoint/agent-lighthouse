@@ -18,6 +18,7 @@ export function weightForGrade(grade: EvidenceGrade, tier: AuditTier): number {
 | `scored`       | 1.0     | 0.6     | 0       | 0       |
 | `informative`  | 0       | 0       | 0       | 0       |
 | `experimental` | 0       | 0       | 0       | 0       |
+| `obsolete`     | 0       | 0       | 0       | 0       |
 
 Only grades A and B in the `scored` tier move a score. The weight in a report is the weight the scorer used.
 
@@ -32,13 +33,18 @@ Each dossier under [`docs/evidence/`](./evidence/) assigns a grade, following th
 | **C** | A community convention with no proven consumer.                                                     |
 | **D** | Speculative; no known consumer or adoption.                                                         |
 
-A and B are scored. C is informative. D ships only as experimental, and only with an active draft-spec trajectory.
+A and B are scored. C is informative. D ships as experimental only with an active draft-spec trajectory, or as obsolete when a consumer retired or ignores the thing the audit finds.
 
-## The three tiers
+<span id="the-three-tiers"></span>
+
+## The tiers
 
 - **`scored`**: counts toward its category with weight 1.0 (A) or 0.6 (B).
 - **`informative`**: runs and is reported, with weight 0. It is left out of category scores, the overall score, top passes and fails, recommendations and readiness vitals. `isInformative()` is the one predicate every surface uses.
 - **`experimental`**: runs only with `--experimental` (CLI) or `includeExperimental: true` (SDK), and is never scored. See [cli.md](./cli.md#--experimental) and [config.md](./config.md#experimental-audits).
+- **`obsolete`**: runs by default and is never scored. It reports `notApplicable` when the site does not publish the retired thing, and `warn` when it does; it never fails. Its result carries a `deprecated` notice of kind `obsolete`, with the source and, where one exists, the replacement. Obsolete results are reported in their own section and left out of the category pass, warn and fail counts. `isObsolete()` is the predicate. The JSON report counts them under `conditions.unscored.reasons.obsolete`.
+
+A check in any tier can carry a `deprecated` notice. Its `kind` says which claim it makes: `obsolete` (retired, ignored, or a dead spec), `unconsumed` (live, but no AI vendor documents reading it), or `deprecated` (the audit itself leaves in the next major release; the default when `kind` is absent).
 
 ## Category score
 
@@ -65,18 +71,18 @@ overallScore = round( Σ(categoryScore · assessedMass) / Σ(assessedMass) )
 
 A category's **assessed mass** is the summed weight of its checks that reached a scored verdict. Its **registry mass** is the summed weight of every audit registered in it. Registry mass measures coverage; only assessed mass weights the score. So an audit keeps its own weight whichever category it sits in, and a category that was not assessed drops out. With no assessed mass anywhere, the score is 0.
 
-Each category in the JSON report carries `registryMass` and `assessedMass` for the run. The current registry has 215 audits: 164 scored, 48 informative, 3 experimental, with a total registry mass of 134.0:
+Each category in the JSON report carries `registryMass` and `assessedMass` for the run. The current registry has 220 audits: 166 scored, 45 informative, 2 experimental, 7 obsolete, with a total registry mass of 134.4:
 
 | Category                   | Audits | Scored | Registry mass |
 | :------------------------- | -----: | -----: | ------------: |
-| Agent Operability & Safety |     46 |     39 |          32.2 |
-| Access & Crawl Control     |     37 |     32 |          29.2 |
+| Agent Operability & Safety |     48 |     38 |          31.2 |
+| Access & Crawl Control     |     37 |     32 |          28.8 |
 | Content Extraction         |     27 |     23 |          17.0 |
 | Answer Readiness           |     33 |     19 |          13.0 |
-| Machine Discovery          |     24 |     15 |          12.2 |
-| Agent Interfaces           |     24 |     16 |          12.0 |
+| Machine Discovery          |     24 |     16 |          12.8 |
+| Agent Interfaces           |     26 |     17 |          12.6 |
 | Structured Data            |     14 |     10 |           9.6 |
-| Agentic Commerce           |     10 |     10 |           8.8 |
+| Agentic Commerce           |     11 |     11 |           9.4 |
 
 ### No score (`overallScore: null`)
 

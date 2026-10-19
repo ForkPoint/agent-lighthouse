@@ -158,6 +158,113 @@ describe("BuyableVariantResolutionAudit", () => {
     expect(strings(r, "warnings")[0]).toContain("partially generated");
   });
 
+  it("names the group-level fields a ProductGroup is missing", () => {
+    const r = run(
+      SIZE_SELECT +
+        ld({ "@type": "ProductGroup", name: "Merino Crew", hasVariant: "M" }),
+    );
+    expect(r.status).toBe(CheckStatus.Fail);
+    const message = strings(r, "failures")[0] ?? "";
+    expect(message).toContain("productGroupID");
+    expect(message).toContain("variesBy");
+    expect(message).toContain("hasVariant");
+  });
+
+  it("caps the named missing fields and counts the rest", () => {
+    const bare = (n: number) =>
+      Array.from({ length: n }, () => ({
+        "@type": "Product",
+        offers: { "@type": "Offer" },
+      }));
+    const r = run(SIZE_SELECT + ld(GROUP(bare(2))));
+    expect(r.status).toBe(CheckStatus.Fail);
+    // Two variants, each missing an identifier and three offer fields.
+    expect(strings(r, "failures")[0]).toContain("(3 more)");
+  });
+
+  it("names a missing per-variant price, reading the plain Offer beside an aggregate", () => {
+    const priceless = {
+      "@type": "Product",
+      sku: "MC-100-M",
+      offers: [
+        { "@type": "AggregateOffer", lowPrice: "70", highPrice: "80" },
+        {
+          "@type": "Offer",
+          priceCurrency: "GBP",
+          availability: "https://schema.org/InStock",
+        },
+      ],
+    };
+    const r = run(
+      SIZE_SELECT + ld(GROUP([priceless, variant("MC-100-L", "79.00")])),
+    );
+    expect(r.status).toBe(CheckStatus.Fail);
+    const message = strings(r, "failures")[0] ?? "";
+    expect(message).toContain("MC-100-M: offers.price");
+    expect(message).not.toContain("offers.priceCurrency");
+  });
+
+  it("fails a variant page that publishes no Offer at all", () => {
+    const r = run(
+      SIZE_SELECT + ld({ "@type": "Product", name: "Merino Crew", sku: "MC" }),
+    );
+    expect(r.status).toBe(CheckStatus.Fail);
+    expect(strings(r, "failures")[0]).toContain("publishes no Offer at all");
+  });
+
+  it("fails several Offers that no node ties to a unique identifier", () => {
+    const offer = (price: string) => ({
+      "@type": "Offer",
+      price,
+      priceCurrency: "GBP",
+      availability: "https://schema.org/InStock",
+    });
+    const r = run(
+      SIZE_SELECT +
+        ld({
+          "@type": "Product",
+          name: "Merino Crew",
+          offers: [offer("79.00"), offer("89.00")],
+        }),
+    );
+    expect(r.status).toBe(CheckStatus.Fail);
+    expect(strings(r, "failures")[0]).toContain(
+      "publishes 2 Offer(s), but only 0 node(s)",
+    );
+  });
+
+  it("accepts a numeric gtin as a per-variant identifier", () => {
+    const numeric = (gtin13: number, price: string) => ({
+      "@type": "Product",
+      gtin13,
+      offers: {
+        "@type": "Offer",
+        price,
+        priceCurrency: "GBP",
+        availability: "https://schema.org/InStock",
+      },
+    });
+    const r = run(
+      SIZE_SELECT +
+        ld([numeric(4006381333931, "79.00"), numeric(4006381333948, "89.00")]),
+    );
+    expect(r.status).toBe(CheckStatus.Pass);
+  });
+
+  it("takes the strongest variant count across sources", () => {
+    const swatches = `<div data-option-value="s">S</div><div data-option-value="m">M</div><div data-option-value="l">L</div>`;
+    const evidence = detectVariants(product(SIZE_SELECT + swatches));
+    expect(evidence?.count).toBe(3);
+    expect(evidence?.source).toBe("data-attribute");
+  });
+
+  it("finds no variants on a storefront page whose platform JSON lists none", () => {
+    const shopify = `<script src="https://cdn.shopify.com/x.js"></script><script>var meta = {"product":{"id":1}};</script>`;
+    expect(detectVariants(product(shopify))).toBeUndefined();
+    const woo = `<link href="/wp-content/plugins/woocommerce/x.css"><form class="cart"></form>`;
+    expect(detectVariants(product(woo))).toBeUndefined();
+  });
+
   it("reads variants off a select, ignoring the placeholder option", () => {
     const evidence = detectVariants(product(SIZE_SELECT));
     expect(evidence?.count).toBe(2);

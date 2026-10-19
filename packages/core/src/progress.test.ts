@@ -137,3 +137,34 @@ describe("ProgressTracker", () => {
       expect(done.durationMs).toBeGreaterThanOrEqual(0);
   });
 });
+
+describe("setPhaseTotal", () => {
+  it("emits phase:total with the corrected total", () => {
+    const events: ScanEvent[] = [];
+    const tracker = new ProgressTracker((e) => events.push(e));
+    tracker.phaseStart(PhaseId.FetchPages, 1);
+    tracker.setPhaseTotal(3);
+    expect(events.at(-1)).toMatchObject({
+      type: "phase:total",
+      phase: PhaseId.FetchPages,
+      totalUnits: 3,
+    });
+  });
+
+  it("never lowers the total below completed units", () => {
+    const events: ScanEvent[] = [];
+    const tracker = new ProgressTracker((e) => events.push(e));
+    tracker.phaseStart(PhaseId.FetchPages, 3);
+    tracker.unitDone();
+    tracker.unitDone();
+    tracker.setPhaseTotal(1);
+    expect(events.at(-1)).toMatchObject({ type: "phase:total", totalUnits: 2 });
+  });
+
+  it("emits nothing outside a phase", () => {
+    const events: ScanEvent[] = [];
+    const tracker = new ProgressTracker((e) => events.push(e));
+    tracker.setPhaseTotal(3);
+    expect(events).toEqual([]);
+  });
+});

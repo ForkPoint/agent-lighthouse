@@ -54,7 +54,7 @@ describe("LlmsTxtExistsAudit", () => {
     );
   });
 
-  it("warns when llms.txt exists but lacks H1 heading", () => {
+  it("reports, without warning, an llms.txt that lacks an H1 heading", () => {
     const ctx = mockCheckContext([], {
       "/llms.txt": mockFetchResult(
         "Welcome to my site\n\nNo heading here",
@@ -62,8 +62,9 @@ describe("LlmsTxtExistsAudit", () => {
       ),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Warn);
-    expect(result.message).toContain("missing markdown heading");
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.message).toContain("does not start with a # heading");
+    expect(result.message).toContain("Chrome Lighthouse");
   });
 
   it("is not applicable when fetch result is completely missing", () => {
@@ -162,8 +163,10 @@ describe("LlmsTxtExistsAudit", () => {
     });
 
     // A site that advertises the file and does not serve it broke a promise it
-    // made itself, which is the one llms.txt state worth reporting as wrong.
-    it("warns about a link that points at an llms.txt which is not there", () => {
+    // made itself. The dead link is present, so it is a defect to name, not an
+    // absence: the check passes with the defect in the message, as every other
+    // unconsumed llms.txt defect does, because nothing reads the file.
+    it("names a link that points at an llms.txt which is not there", () => {
       const ctx = mockCheckContext(
         [pageWithHead('<link rel="alternate" href="/llms.txt">')],
         {
@@ -171,8 +174,9 @@ describe("LlmsTxtExistsAudit", () => {
         },
       );
       const result = audit.audit(ctx);
-      expect(result.status).toBe(CheckStatus.Warn);
+      expect(result.status).toBe(CheckStatus.Pass);
       expect(result.message).toContain("links to llms.txt");
+      expect(result.message).toMatch(/no AI vendor documents reading/i);
     });
   });
 });

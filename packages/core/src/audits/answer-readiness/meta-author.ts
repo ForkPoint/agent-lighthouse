@@ -8,22 +8,37 @@ import {
   EvidenceGrade,
   EvidenceKey,
   FixEffort,
-  PageType,
+  NoticeKind,
   ScoreDisplayMode,
 } from "#core/types";
+
+const SOURCE_URL =
+  "https://developers.google.com/search/docs/crawling-indexing/special-tags";
 
 export class MetaAuthorAudit extends Audit {
   static override meta: AuditMeta = {
     id: "answer-readiness/meta-author",
     category: "answer-readiness",
-    title: "Meta author present",
-    failureTitle: "Meta author present",
+    // The audit speaks only when the owner publishes the tag, so both titles
+    // describe the tag.
+    title: "Meta author tag (no AI reader)",
+    failureTitle: "A meta author tag that no AI vendor reads is published",
     description:
-      "AI agents use the meta author tag to attribute content to a specific person or organization for E-E-A-T scoring. Without it, your content appears authorless, which reduces trust signals in AI ranking systems that prioritize named expertise.",
+      'Reports a `<meta name="author">` tag on sampled pages. `author` is a standard HTML metadata name, but Google lists the meta tags it supports, `author` is not among them, and Google says it ignores meta tags it does not support. No AI vendor documents reading the tag. Authorship that machines read lives in schema.org `author` markup and a visible byline.',
     scoreDisplayMode: ScoreDisplayMode.Informative,
     weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
     evidenceGrade: EvidenceGrade.C,
+    // Informative, not obsolete: Google never supported the tag, so nothing
+    // was withdrawn. The tag is live HTML that nobody documents reading.
     tier: AuditTier.Informative,
+    deprecated: {
+      kind: NoticeKind.Unconsumed,
+      notice:
+        "No AI vendor documents reading the meta author tag, and Google ignores meta tags it does not support, author among them. It does no harm.",
+      link: SOURCE_URL,
+      replacement:
+        "A visible byline and schema.org author markup on the article (structured-data/author-schema, answer-readiness/named-author).",
+    },
     dossier: "docs/evidence/audits/answer-readiness/meta-author.md",
     requires: [
       EvidenceKey.OriginReachable,
@@ -31,42 +46,45 @@ export class MetaAuthorAudit extends Audit {
       EvidenceKey.RenderedBody,
       EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: [PageType.Article],
-    defaultPriority: CheckPriority.Medium,
+    defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
-        "AI agents use the meta author tag to attribute content to a specific person or organization for E-E-A-T scoring. Without it, your content appears authorless, reducing trust signals in AI ranking systems.",
-      fix: 'Add a <meta name="author"> tag with the real name of the content creator or your organization name.',
-      code: '<meta name="author" content="Jane Smith">',
+        "None in either direction. Google ignores the author meta tag and no AI vendor documents reading it, so it neither helps nor hurts.",
+      fix: "Nothing is required; the tag can stay. To make authorship machine-readable, add a visible byline and schema.org author markup to the article.",
+      code: `{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "author": { "@type": "Person", "name": "Jane Smith", "url": "https://example.com/authors/jane" }
+}`,
       effort: FixEffort.Trivial,
-      tags: ["meta-tags", "e-e-a-t", "trust"],
+      docsUrl: SOURCE_URL,
+      tags: ["meta-tags", "authorship", "unconsumed"],
     },
   };
 
   audit(ctx: CheckContext): AuditResult {
-    const page = ctx.pages[0];
-    const author = page?.meta?.["author"] ?? "";
+    const expected =
+      "No meta author tag is needed: Google ignores it; authorship belongs in schema.org markup";
+    const tagged = ctx.pages.filter(
+      (page) => (page.meta?.["author"] ?? "").trim().length > 0,
+    );
 
-    if (author.trim().length > 0) {
-      return this.pass(
-        `Meta author is set to "${author}".`,
-        "meta[author] with a non-empty person or organisation name",
-        author,
-        page?.url,
+    // Absent artifact, absent verdict: a page without the tag has lost
+    // nothing, because nothing reads it.
+    if (tagged.length === 0) {
+      return this.notApplicable(
+        "No sampled page sets a meta author tag.",
+        expected,
+        "No meta author tag found",
       );
     }
 
-    return this.fail(
-      "Meta author tag is missing or empty.",
-      "meta[author] with a non-empty person or organisation name",
-      "Not found",
-      {
-        priority: CheckPriority.Medium,
-        description:
-          "AI agents use the meta author tag to attribute content to a specific person or organization for E-E-A-T scoring. Without it, your content appears authorless, which reduces trust signals in AI ranking systems that prioritize named expertise.",
-        code: '<meta name="author" content="Your Name or Organisation">',
-      },
-      page?.url,
+    const first = tagged[0]!;
+    return this.pass(
+      `A meta author tag is published. Google ignores meta tags it does not support, and author is not one of them; no AI vendor documents reading it. It does no harm. Machine-readable authorship belongs in schema.org author markup and a visible byline.`,
+      expected,
+      `meta author "${(first.meta?.["author"] ?? "").trim()}" on ${tagged.length} page(s)`,
+      first.url,
     );
   }
 }

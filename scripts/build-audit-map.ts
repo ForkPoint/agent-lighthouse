@@ -224,7 +224,7 @@ function generateAuditMap(): AuditMapDataset {
       applicability:
         "Current metadata page-type gate. Unrestricted does not mean unconditional: evidence requirements and audit body guards still apply. Article is distinct from unknown/general; legacy content input normalizes to unknown in runScan.",
       scoring:
-        "Weight is intrinsic evidence mass, not guaranteed score impact. na and informative results do not score. Detected-only typed matches remain informative. In mixed scans, declared matches provide the primary result and detected matches remain in advisoryResults; only the primary result can contribute weight. Experimental audits need opt-in.",
+        "Weight is intrinsic evidence mass, not guaranteed score impact. na and informative results do not score. Detected-only typed matches remain informative. In mixed scans, declared matches provide the primary result and detected matches remain in advisoryResults; only the primary result can contribute weight. Experimental audits need opt-in. Obsolete audits run by default, carry grade D and weight 0, never fail, and report what a consumer retired or ignores.",
       requires:
         "Current scan-evidence requirements from registry metadata. Artifact presence and feature guards belong in the audit or gatherer, not in this list.",
       references:
@@ -264,7 +264,7 @@ Current fields come from registry metadata. Evidence dossiers govern consumer cl
 ## Summary
 
 - **Total Registered Audits:** ${map.summary.totalActiveAudits} across ${map.categories.length} categories
-- **Historical v1 Legacy Audits:** ${map.summary.totalLegacyAudits} (181 carried forward, 26 sunset)
+- **Historical v1 Legacy Audits:** ${map.summary.totalLegacyAudits} (182 carried forward, 25 sunset)
 - **Sunset Dossiers Preserved:** ${map.summary.totalSunsetDossiers} under \`docs/evidence/sunset/\`
 - **Merged Dossiers Preserved:** ${map.summary.totalMergedDossiers} under \`docs/evidence/merged/\`
 
@@ -294,7 +294,7 @@ The format version describes this file, not the package release version.
 | \`features\`, \`priority\` | Search tags and default priority from audit metadata. Tags are not guards. |
 | \`applicability\` | Current page-type gate. An empty type list is unrestricted by type; body and evidence guards still apply. |
 | \`requires\` | Current scan-evidence requirements. |
-| \`tier\`, \`evidenceGrade\`, \`weight\`, \`scoreDisplayMode\` | Scoring contract; eligibility still depends on the scan. |
+| \`tier\`, \`evidenceGrade\`, \`weight\`, \`scoreDisplayMode\` | Scoring contract; eligibility still depends on the scan. \`obsolete\` audits are grade D, weight 0, and never fail. |
 | \`enabledByDefault\` | False for experimental audits. |
 | \`source\`, \`test\`, \`dossier\` | Repository-relative implementation, test, and evidence paths. |
 | \`legacyIds\` | Links to preserved migration history. |

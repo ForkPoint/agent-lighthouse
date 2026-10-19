@@ -93,6 +93,44 @@ describe("CorsApiRoutesAudit", () => {
       expect((await audit.audit(ctx)).status).toBe(CheckStatus.NotApplicable);
     });
 
+    it("is na when /openapi.json is not valid JSON", async () => {
+      const ctx = mockCheckContext([], {
+        "/openapi.json": mockFetchResult(
+          '{"openapi": "3.1.0",',
+          200,
+          "application/json",
+        ),
+      });
+      const result = await audit.audit(ctx);
+      expect(result.status).toBe(CheckStatus.NotApplicable);
+      expect(result.found).toBe("No OpenAPI document at /openapi.json");
+    });
+
+    it("is na when /openapi.json is a JSON array", async () => {
+      const ctx = mockCheckContext([], {
+        "/openapi.json": mockFetchResult("[]", 200, "application/json"),
+      });
+      expect((await audit.audit(ctx)).status).toBe(CheckStatus.NotApplicable);
+    });
+
+    it("is na when no declared server resolves to a URL", async () => {
+      const { fetch, seen } = corsFetch("*");
+      const ctx = mockCheckContext([], {
+        "/openapi.json": spec({
+          openapi: "3.1.0",
+          servers: [{ url: "http://[bad" }],
+          paths: { "/ping": { get: {} } },
+        }),
+      });
+      ctx.fetch = fetch;
+      const result = await audit.audit(ctx);
+      expect(result.status).toBe(CheckStatus.NotApplicable);
+      expect(result.found).toBe(
+        "No resolvable endpoint in the OpenAPI document",
+      );
+      expect(seen).toHaveLength(0);
+    });
+
     // The dead gate arm: /swagger.json is not in the orchestrator's
     // rootFilePaths, so ctx.rootFiles['/swagger.json'] was always undefined.
     it("does not reference /swagger.json at all", () => {
@@ -185,6 +223,80 @@ describe("CorsApiRoutesAudit", () => {
       ctx.fetch = fetch;
       await audit.audit(ctx);
       expect(seen.join(" ")).toContain("https://eu.example.com/v1/ping");
+    });
+
+    it("drops a server template whose variable has no string default", async () => {
+      const { fetch, seen } = corsFetch("*");
+      const ctx = mockCheckContext([], {
+        "/openapi.json": spec({
+          openapi: "3.1.0",
+          servers: [
+            {
+              url: "https://{region}.example.com/v1",
+              variables: { region: { enum: ["eu", "us"] } },
+            },
+            { url: "https://{zone}.example.com/v1", variables: { zone: "eu" } },
+            { url: "https://{tenant}.example.com/v1" },
+          ],
+          paths: { "/ping": { get: {} } },
+        }),
+      });
+      ctx.fetch = fetch;
+      await audit.audit(ctx);
+      // Every server is unresolvable, so the OpenAPI default of "/" applies.
+      expect(seen.join(" ")).not.toContain("{");
+      expect(seen).toContain("OPTIONS https://example.com/ping");
+    });
+
+    it("ignores a server entry with no url", async () => {
+      const { fetch, seen } = corsFetch("*");
+      const ctx = mockCheckContext([], {
+        "/openapi.json": spec({
+          openapi: "3.1.0",
+          servers: [{ description: "no url" }, { url: 42 }],
+          paths: { "/ping": { get: {} } },
+        }),
+      });
+      ctx.fetch = fetch;
+      const result = await audit.audit(ctx);
+      expect(result.status).toBe(CheckStatus.Pass);
+      expect(seen).toContain("OPTIONS https://example.com/ping");
+    });
+
+    it("probes the server base itself when every path is templated", async () => {
+      const { fetch, seen } = corsFetch("*");
+      const ctx = mockCheckContext([], {
+        "/openapi.json": spec({
+          openapi: "3.1.0",
+          servers: [{ url: "https://api.example.com/v1" }],
+          paths: { "/products/{id}": { get: {} } },
+        }),
+      });
+      ctx.fetch = fetch;
+      const result = await audit.audit(ctx);
+      expect(result.status).toBe(CheckStatus.Pass);
+      expect(seen).toContain("OPTIONS https://api.example.com/v1");
+      expect(seen.join(" ")).not.toContain("{id}");
+    });
+
+    it("probes a URL declared by two servers only once", async () => {
+      const { fetch, seen } = corsFetch(undefined);
+      const ctx = mockCheckContext([], {
+        "/openapi.json": spec({
+          openapi: "3.1.0",
+          servers: [
+            { url: "https://example.com/api" },
+            { url: "https://example.com/api/" },
+          ],
+          paths: { "/products": { get: {} } },
+        }),
+      });
+      ctx.fetch = fetch;
+      const result = await audit.audit(ctx);
+      expect(
+        seen.filter((s) => s === "OPTIONS https://example.com/api/products"),
+      ).toHaveLength(1);
+      expect(result.found).toContain("1 of 1 endpoint(s) answered");
     });
 
     it("sends OPTIONS first and falls back to GET when the preflight carries no ACAO", async () => {
@@ -285,6 +397,16 @@ describe("CorsApiRoutesAudit", () => {
       const result = await audit.audit(ctx);
       expect(result.status).toBe(CheckStatus.Warn);
       expect(result.message).toContain("own origin");
+    });
+
+    it("warns on an ACAO that is not a URL, quoting it as given", async () => {
+      const { fetch } = corsFetch("null");
+      const ctx = mockCheckContext([], { "/openapi.json": simpleSpec });
+      ctx.fetch = fetch;
+      const result = await audit.audit(ctx);
+      expect(result.status).toBe(CheckStatus.Warn);
+      expect(result.message).toContain("one named origin (null)");
+      expect(result.found).toContain("access-control-allow-origin: null");
     });
 
     it("warns when no probed endpoint carries an ACAO", async () => {

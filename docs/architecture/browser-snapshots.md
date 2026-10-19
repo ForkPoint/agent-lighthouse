@@ -1,6 +1,6 @@
 # Browser-rendered snapshot assessment
 
-A caller can hand the scan HTML that a browser rendered. Six reviewed audits then run on that DOM, and the report shows their findings apart from the crawler score. The engine includes no browser collector and no upload endpoint.
+A caller can hand the scan HTML that a browser rendered. Seven reviewed audits then run on that DOM, and the report shows their findings apart from the crawler score. The engine includes no browser collector and no upload endpoint.
 
 ## Public contract
 
@@ -75,14 +75,15 @@ HTTP pages and captures share `DOM_WORK_LIMITS`, checked before extraction and c
 
 Each row names an existing audit; its dossier is `docs/evidence/audits/<id>.md`.
 
-| Audit ID                                          | DOM evidence                                                                                   | Gate and limits                                                                                                                                                                  |
-| ------------------------------------------------- | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `content-extraction/image-alt-text`               | Image names from alt, ARIA labels/references, and title                                        | Complete unredacted DOM. Existing decorative and direct ARIA-hidden exclusions apply. Ancestor hiding and computed accessibility-tree coverage remain limited.                   |
-| `content-extraction/section-headings`             | Section content, heading descendants, and label attributes                                     | Complete unredacted DOM. Existing audit semantics apply, including descendant-heading and truthy-label rules. It does not resolve every section label or prove visual structure. |
-| `content-extraction/semantic-lists`               | List, definition, and numbered-prose structure                                                 | Readable static DOM. Existing hidden-content and navigation exclusions apply. ARIA-equivalent markup and computed CSS remain limited.                                            |
-| `structured-data/json-ld-present`                 | Parsed JSON-LD blocks in the captured DOM                                                      | Complete unredacted DOM. Presence does not prove delivery to GPTBot, Merchant Center, or any other crawler. Parse failures retain the existing audit behavior.                   |
-| `structured-data/schema-validation`               | Existing context/type checks on parsed JSON-LD, Microdata, and RDFa                            | Complete unredacted DOM. This is the existing heuristic, not complete JSON-LD validation. Nested-node and absence limitations remain.                                            |
-| `operability-safety/form-autofill-token-coverage` | Serialized labels, field identities, types, autocomplete tokens, constraints, and error wiring | Complete unredacted DOM. No input filling, current value, constraint execution, event handling, or submission proof.                                                             |
+| Audit ID                                             | DOM evidence                                                                                   | Gate and limits                                                                                                                                                                  |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `content-extraction/image-alt-text`                  | Image names from alt, ARIA labels/references, and title                                        | Complete unredacted DOM. Existing decorative and direct ARIA-hidden exclusions apply. Ancestor hiding and computed accessibility-tree coverage remain limited.                   |
+| `content-extraction/section-headings`                | Section content, heading descendants, and label attributes                                     | Complete unredacted DOM. Existing audit semantics apply, including descendant-heading and truthy-label rules. It does not resolve every section label or prove visual structure. |
+| `content-extraction/semantic-lists`                  | List, definition, and numbered-prose structure                                                 | Readable static DOM. Existing hidden-content and navigation exclusions apply. ARIA-equivalent markup and computed CSS remain limited.                                            |
+| `structured-data/json-ld-present`                    | Parsed JSON-LD blocks in the captured DOM                                                      | Complete unredacted DOM. Presence does not prove delivery to GPTBot, Merchant Center, or any other crawler. Parse failures retain the existing audit behavior.                   |
+| `structured-data/schema-validation`                  | Existing context/type checks on parsed JSON-LD, Microdata, and RDFa                            | Complete unredacted DOM. This is the existing heuristic, not complete JSON-LD validation. Nested-node and absence limitations remain.                                            |
+| `operability-safety/form-autofill-token-coverage`    | Serialized labels, field identities, types, autocomplete tokens, constraints, and error wiring | Complete unredacted DOM. No input filling, current value, constraint execution, event handling, or submission proof.                                                             |
+| `operability-safety/profile-autofill-token-coverage` | Serialized labels, field identities, types, autocomplete tokens, constraints, and error wiring | Complete unredacted DOM. No input filling, current value, constraint execution, event handling, or submission proof.                                                             |
 
 Grades, tiers and crawler weights are unchanged. Every browser finding is informative, with weight 0. `content-extraction/server-rendered` always uses the real HTTP response; headers, status, redirects, robots policy and actions never come from a snapshot. Other audits are reported as lacking a reviewed snapshot contract, which is not a claim they can never support one. Adding an audit takes a source and dossier review, an inventory entry, and tests for its evidence limits.
 
@@ -113,7 +114,7 @@ interface BrowserAssessment {
 }
 ```
 
-- There is no browser score. Six static checks cannot measure agent task success.
+- There is no browser score. Seven static checks cannot measure agent task success.
 - Unsupported audits stay out of the coverage denominator. Truncated, redacted and loading captures count as eligible but unassessed, as do unreadable pages, page-purpose gates and audit errors.
 - JSON, `ScanReportSchema`, `hydrateReport` and `buildReportView` keep the assessment. HTML, Markdown and terminal reports show it in its own section.
 - Report text from a snapshot is escaped (HTML, Markdown) or stripped of control characters (terminal). Snapshot scripts and handlers never run.

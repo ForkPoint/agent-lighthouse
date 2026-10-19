@@ -3,9 +3,16 @@ import {
   isInformative,
   AuditTier,
   CheckStatus,
+  NoticeKind,
 } from "@forkpoint/agent-lighthouse-core";
 import { formatPageScope, formatAuditScope } from "./page-scope";
-import type { ScanReport } from "@forkpoint/agent-lighthouse-core";
+import type { CheckResult, ScanReport } from "@forkpoint/agent-lighthouse-core";
+import {
+  NOTICE_LABELS,
+  NOTICE_LINK_LABELS,
+  noticeKind,
+  obsoleteTally,
+} from "./notices";
 import { buildReportView } from "./view-model";
 import { PROJECT_URL, REPORT_ICON, REPORT_ICON_URL } from "./brand";
 
@@ -20,6 +27,152 @@ function getGaugeColor(score: number): string {
   if (score >= 70) return "#3b82f6"; // blue-500
   if (score >= 50) return "#f59e0b"; // amber-500
   return "#ef4444"; // red-500
+}
+
+/** Label and tooltip for a check's not-scored pill, by tier. */
+function tierPill(c: CheckResult): { label: string; title: string } {
+  if (c.tier === AuditTier.Experimental) {
+    return {
+      label: "Experimental",
+      title:
+        "Experimental check — excluded from scoring while it is validated.",
+    };
+  }
+  if (c.tier === AuditTier.Obsolete) {
+    return {
+      label: "Obsolete",
+      title: "Obsolete check — tells you what to retire, never scored.",
+    };
+  }
+  return {
+    label: "Advisory",
+    title: "Advisory check — reported, never scored.",
+  };
+}
+
+/** One check as a collapsible card; shared by category cards and the obsolete section. */
+function renderCheck(c: CheckResult): string {
+  return `
+                  <details class="check-item py-3 group cursor-pointer" data-status="${c.status}">
+                    <summary class="flex items-start justify-between gap-3 list-none select-none">
+                      <div class="flex items-start gap-3">
+                        <span class="mt-0.5 w-5 h-5 flex items-center justify-center rounded-full text-xs font-bold shrink-0 ${
+                          c.status === CheckStatus.Pass
+                            ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800"
+                            : c.status === CheckStatus.Warn
+                              ? "bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-800"
+                              : "bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400 border border-red-300 dark:border-red-800"
+                        }">
+                          ${c.status === CheckStatus.Pass ? "✓" : c.status === CheckStatus.Warn ? "!" : "✗"}
+                        </span>
+                        <div>
+                          <div class="font-semibold text-slate-800 dark:text-slate-200 text-sm flex items-center gap-2">
+                            <span>${escapeHtml(c.title)}</span>
+                            <span class="text-[10px] uppercase tracking-wider font-mono text-slate-400">[${escapeHtml(c.id)}]</span>
+                            ${c.deprecated && noticeKind(c.deprecated) === NoticeKind.Deprecated ? '<span class="text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400">Deprecated</span>' : ""}
+                            ${isInformative(c) || (c.tier && c.tier !== AuditTier.Scored) ? `<span class="text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300" title="${escapeHtml(tierPill(c).title)}">${tierPill(c).label} — not scored</span>` : ""}
+                          </div>
+                          ${c.displayValue ? `<div class="text-xs font-mono text-slate-500 dark:text-slate-400 mt-0.5 whitespace-pre-line">${escapeHtml(c.displayValue)}</div>` : ""}
+                        </div>
+                      </div>
+                      <span class="text-xs text-slate-400 group-open:rotate-180 transition-transform mt-1">▼</span>
+                    </summary>
+
+                    <div class="mt-3 pl-8 text-xs text-slate-600 dark:text-slate-400 space-y-3 cursor-text">
+                      ${
+                        c.deprecated
+                          ? `
+                        <div class="bg-slate-100 dark:bg-slate-800/60 p-3 rounded-lg border border-slate-300 dark:border-slate-700">
+                          <strong class="text-slate-700 dark:text-slate-300 block mb-1">${NOTICE_LABELS[noticeKind(c.deprecated)]}</strong>
+                          <span>${escapeHtml(c.deprecated.notice)}</span>
+                          ${c.deprecated.replacement ? `<span class="block mt-1"><strong>Instead:</strong> ${escapeHtml(c.deprecated.replacement)}</span>` : ""}
+                          <a href="${escapeHtml(c.deprecated.link)}" target="_blank" rel="noopener" class="block mt-1 underline text-slate-500">${NOTICE_LINK_LABELS[noticeKind(c.deprecated)]}</a>
+                        </div>
+                      `
+                          : ""
+                      }
+
+                      ${c.explanation ? `<p class="leading-relaxed font-medium text-slate-700 dark:text-slate-300">${escapeHtml(c.explanation)}</p>` : ""}
+                      
+                      ${
+                        c.details?.found && c.details.found !== c.displayValue
+                          ? `
+                        <div class="bg-slate-50 dark:bg-slate-950/60 p-3 rounded-lg border border-slate-200/60 dark:border-slate-800/60">
+                          <strong class="text-slate-900 dark:text-slate-200 block mb-1">What we found:</strong>
+                          <span class="font-mono text-[11px] whitespace-pre-line">${escapeHtml(c.details.found)}</span>
+                        </div>
+                      `
+                          : ""
+                      }
+
+                      ${
+                        c.impact
+                          ? `
+                        <div class="bg-slate-50 dark:bg-slate-950/60 p-3 rounded-lg border border-slate-200/60 dark:border-slate-800/60">
+                          <strong class="text-slate-900 dark:text-slate-200 block mb-1">Impact on AI Agents:</strong>
+                          <span>${escapeHtml(c.impact)}</span>
+                        </div>
+                      `
+                          : ""
+                      }
+
+                      ${
+                        c.fix
+                          ? `
+                        <div class="bg-indigo-50/50 dark:bg-indigo-950/20 p-3 rounded-lg border border-indigo-200/50 dark:border-indigo-900/30">
+                          <strong class="text-indigo-900 dark:text-indigo-300 block mb-1">How to Fix:</strong>
+                          <span>${escapeHtml(c.fix)}</span>
+                        </div>
+                      `
+                          : ""
+                      }
+
+                      ${
+                        c.details?.evidenceUrl
+                          ? `
+                        <a href="${escapeHtml(c.details.evidenceUrl)}" target="_blank" rel="noopener"
+                           class="inline-block underline text-indigo-600 dark:text-indigo-400">Why this audit exists — the evidence</a>
+                      `
+                          : ""
+                      }
+
+                      ${
+                        c.details?.code
+                          ? `
+                        <div class="mt-2">
+                          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400 mb-1">
+                            <span>Recommended Code Snippet:</span>
+                            <button onclick="copySnippet(this)" class="hover:text-slate-200 font-sans">Copy Code</button>
+                          </div>
+                          <pre class="bg-slate-950 text-slate-200 p-3 rounded-lg font-mono text-[11px] overflow-x-auto border border-slate-800"><code>${escapeHtml(c.details.code)}</code></pre>
+                        </div>
+                      `
+                          : ""
+                      }
+                    </div>
+                  </details>
+`;
+}
+
+/**
+ * The "Obsolete (not scored)" section: what the site still publishes that its
+ * consumer retired or ignores. Empty when nothing obsolete was found.
+ */
+function renderObsoleteSection(found: CheckResult[], tally: string): string {
+  if (found.length === 0) return "";
+  return `
+      <div class="group-section mb-12" data-group="obsolete">
+        <div class="flex items-center justify-between pb-3 mb-6 border-b border-slate-200 dark:border-slate-800">
+          <h3 class="text-xl font-bold text-slate-900 dark:text-slate-100">Obsolete (not scored)</h3>
+        </div>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">This site still publishes things their consumers retired or ignore. None of this moves the score.${tally ? ` ${tally}` : ""}</p>
+        <div class="cat-card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+          <div class="checks-container divide-y divide-slate-100 dark:divide-slate-800/60">
+            ${found.map(renderCheck).join("")}
+          </div>
+        </div>
+      </div>
+    `;
 }
 
 /**
@@ -92,109 +245,7 @@ export function generateHtmlReport(report: ScanReport): string {
 
               <!-- Checks Accordion -->
               <div class="checks-container mt-4 divide-y divide-slate-100 dark:divide-slate-800/60">
-                ${cat.checks
-                  .map(
-                    (c) => `
-                  <details class="check-item py-3 group cursor-pointer" data-status="${c.status}">
-                    <summary class="flex items-start justify-between gap-3 list-none select-none">
-                      <div class="flex items-start gap-3">
-                        <span class="mt-0.5 w-5 h-5 flex items-center justify-center rounded-full text-xs font-bold shrink-0 ${
-                          c.status === CheckStatus.Pass
-                            ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800"
-                            : c.status === CheckStatus.Warn
-                              ? "bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-800"
-                              : "bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400 border border-red-300 dark:border-red-800"
-                        }">
-                          ${c.status === CheckStatus.Pass ? "✓" : c.status === CheckStatus.Warn ? "!" : "✗"}
-                        </span>
-                        <div>
-                          <div class="font-semibold text-slate-800 dark:text-slate-200 text-sm flex items-center gap-2">
-                            <span>${escapeHtml(c.title)}</span>
-                            <span class="text-[10px] uppercase tracking-wider font-mono text-slate-400">[${escapeHtml(c.id)}]</span>
-                            ${c.deprecated ? '<span class="text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400">Deprecated</span>' : ""}
-                            ${isInformative(c) || (c.tier && c.tier !== AuditTier.Scored) ? `<span class="text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300" title="${c.tier === AuditTier.Experimental ? "Experimental check — excluded from scoring while it is validated." : "Advisory check — reported, never scored."}">${c.tier === AuditTier.Experimental ? "Experimental" : "Advisory"} — not scored</span>` : ""}
-                          </div>
-                          ${c.displayValue ? `<div class="text-xs font-mono text-slate-500 dark:text-slate-400 mt-0.5 whitespace-pre-line">${escapeHtml(c.displayValue)}</div>` : ""}
-                        </div>
-                      </div>
-                      <span class="text-xs text-slate-400 group-open:rotate-180 transition-transform mt-1">▼</span>
-                    </summary>
-
-                    <div class="mt-3 pl-8 text-xs text-slate-600 dark:text-slate-400 space-y-3 cursor-text">
-                      ${
-                        c.deprecated
-                          ? `
-                        <div class="bg-slate-100 dark:bg-slate-800/60 p-3 rounded-lg border border-slate-300 dark:border-slate-700">
-                          <strong class="text-slate-700 dark:text-slate-300 block mb-1">Deprecated — no longer a factor</strong>
-                          <span>${escapeHtml(c.deprecated.notice)}</span>
-                          <a href="${escapeHtml(c.deprecated.link)}" target="_blank" rel="noopener" class="block mt-1 underline text-slate-500">Why this is not a factor</a>
-                        </div>
-                      `
-                          : ""
-                      }
-
-                      ${c.explanation ? `<p class="leading-relaxed font-medium text-slate-700 dark:text-slate-300">${escapeHtml(c.explanation)}</p>` : ""}
-                      
-                      ${
-                        c.details?.found && c.details.found !== c.displayValue
-                          ? `
-                        <div class="bg-slate-50 dark:bg-slate-950/60 p-3 rounded-lg border border-slate-200/60 dark:border-slate-800/60">
-                          <strong class="text-slate-900 dark:text-slate-200 block mb-1">What we found:</strong>
-                          <span class="font-mono text-[11px] whitespace-pre-line">${escapeHtml(c.details.found)}</span>
-                        </div>
-                      `
-                          : ""
-                      }
-
-                      ${
-                        c.impact
-                          ? `
-                        <div class="bg-slate-50 dark:bg-slate-950/60 p-3 rounded-lg border border-slate-200/60 dark:border-slate-800/60">
-                          <strong class="text-slate-900 dark:text-slate-200 block mb-1">Impact on AI Agents:</strong>
-                          <span>${escapeHtml(c.impact)}</span>
-                        </div>
-                      `
-                          : ""
-                      }
-
-                      ${
-                        c.fix
-                          ? `
-                        <div class="bg-indigo-50/50 dark:bg-indigo-950/20 p-3 rounded-lg border border-indigo-200/50 dark:border-indigo-900/30">
-                          <strong class="text-indigo-900 dark:text-indigo-300 block mb-1">How to Fix:</strong>
-                          <span>${escapeHtml(c.fix)}</span>
-                        </div>
-                      `
-                          : ""
-                      }
-
-                      ${
-                        c.details?.evidenceUrl
-                          ? `
-                        <a href="${escapeHtml(c.details.evidenceUrl)}" target="_blank" rel="noopener"
-                           class="inline-block underline text-indigo-600 dark:text-indigo-400">Why this audit exists — the evidence</a>
-                      `
-                          : ""
-                      }
-
-                      ${
-                        c.details?.code
-                          ? `
-                        <div class="mt-2">
-                          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400 mb-1">
-                            <span>Recommended Code Snippet:</span>
-                            <button onclick="copySnippet(this)" class="hover:text-slate-200 font-sans">Copy Code</button>
-                          </div>
-                          <pre class="bg-slate-950 text-slate-200 p-3 rounded-lg font-mono text-[11px] overflow-x-auto border border-slate-800"><code>${escapeHtml(c.details.code)}</code></pre>
-                        </div>
-                      `
-                          : ""
-                      }
-                    </div>
-                  </details>
-                `,
-                  )
-                  .join("")}
+                ${cat.checks.map(renderCheck).join("")}
               </div>
             </div>
           `,
@@ -418,6 +469,7 @@ export function generateHtmlReport(report: ScanReport): string {
     <!-- Category Groups -->
     <main id="audits-main">
       ${categoryCards}
+      ${renderObsoleteSection(view.obsolete.found, obsoleteTally(view.obsolete.absent.length, view.obsolete.unrun.length))}
     </main>
 
     <!-- Footer -->

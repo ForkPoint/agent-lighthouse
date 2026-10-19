@@ -68,13 +68,22 @@ function page(
 }
 
 function run(
-  options: { browser?: string; bot?: string; sitemap?: boolean } = {},
+  options: {
+    browser?: string;
+    bot?: string;
+    sitemap?: boolean;
+    /** HTTP status every crawler probe receives. */
+    botStatus?: number;
+    /** Sitemap URLs; one blog post by default. */
+    urls?: string[];
+  } = {},
 ) {
   const audit = new BotContentDeltaDeclaredAudit();
   const ctx = mockCheckContext([
     mockPageContext("https://example.com/", page(FULL_TEXT)),
   ]);
-  const xml = `<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://example.com/blog/resoling</loc></url></urlset>`;
+  const locs = options.urls ?? ["https://example.com/blog/resoling"];
+  const xml = `<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${locs.map((loc) => `<url><loc>${loc}</loc></url>`).join("")}</urlset>`;
 
   ctx.fetch = async (o: FetchOptions): Promise<FetchResult> => {
     if (new URL(o.url).pathname === "/sitemap.xml") {
@@ -82,11 +91,15 @@ function run(
         ? mockFetchResult("", 404)
         : mockFetchResult(xml, 200, "application/xml");
     }
-    const body =
-      o.userAgent === BASELINE_UA
-        ? (options.browser ?? page(FULL_TEXT))
-        : (options.bot ?? options.browser ?? page(FULL_TEXT));
-    return mockFetchResult(body, 200, "text/html");
+    const isBrowser = o.userAgent === BASELINE_UA;
+    const body = isBrowser
+      ? (options.browser ?? page(FULL_TEXT))
+      : (options.bot ?? options.browser ?? page(FULL_TEXT));
+    return mockFetchResult(
+      body,
+      isBrowser ? 200 : (options.botStatus ?? 200),
+      "text/html",
+    );
   };
   return audit.audit(ctx);
 }
@@ -160,6 +173,109 @@ describe("BotContentDeltaDeclaredAudit", () => {
     const result = await run({ browser: page(FULL_TEXT), bot: longer });
     expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("longer");
+  });
+
+  it("reads a declaration in any of the shapes schema.org allows", async () => {
+    const markup = {
+      "@context": "https://schema.org",
+      "@type": ["Thing", "NewsArticle"],
+      isAccessibleForFree: "False",
+      hasPart: [
+        "not a node",
+        { "@type": "WebPageElement", isAccessibleForFree: true },
+        { "@type": "WebPageElement", isAccessibleForFree: false },
+        {
+          "@type": ["WebPageElement"],
+          isAccessibleForFree: "false",
+          cssSelector: " .paywalled-body ",
+        },
+      ],
+    };
+    const result = await run({
+      browser: page(FULL_TEXT, {
+        jsonLd: markup,
+        selectorClass: "paywalled-body",
+      }),
+      bot: page(STUB_TEXT),
+    });
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.message).toContain("declared with restricted-content markup");
+  });
+
+  // Only the complete declaration differentiates a paywall from cloaking.
+  it("does not accept partial or misplaced restricted-content markup", async () => {
+    const partials: object[] = [
+      // The work says it is free.
+      { ...PAYWALL_MARKUP, isAccessibleForFree: true },
+      // Not a CreativeWork Google's markup accepts.
+      { ...PAYWALL_MARKUP, "@type": "Product" },
+      // No @type at all.
+      { isAccessibleForFree: false, hasPart: PAYWALL_MARKUP.hasPart },
+      // A part that is not a WebPageElement.
+      {
+        ...PAYWALL_MARKUP,
+        hasPart: { ...PAYWALL_MARKUP.hasPart, "@type": "WPHeader" },
+      },
+      // A part with no selector.
+      {
+        ...PAYWALL_MARKUP,
+        hasPart: { "@type": "WebPageElement", isAccessibleForFree: false },
+      },
+    ];
+    for (const jsonLd of partials) {
+      const result = await run({
+        browser: page(FULL_TEXT, { jsonLd, selectorClass: "paywalled-body" }),
+        bot: page(STUB_TEXT),
+      });
+      expect(result.status).toBe(CheckStatus.Fail);
+      expect(result.message).toContain("nothing declares it");
+    }
+  });
+
+  it("treats an unparseable cssSelector as matching nothing", async () => {
+    const markup = {
+      ...PAYWALL_MARKUP,
+      hasPart: { ...PAYWALL_MARKUP.hasPart, cssSelector: "div[" },
+    };
+    const result = await run({
+      browser: page(FULL_TEXT, { jsonLd: markup }),
+      bot: page(STUB_TEXT),
+    });
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain(`"div["`);
+    expect(result.message).toContain("no-op");
+  });
+
+  // A refused crawler never got a page; ai-crawler-edge-parity reports that.
+  it("is notApplicable when every crawler probe is refused", async () => {
+    const result = await run({ botStatus: 403 });
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.found).toContain("none comparable");
+  });
+
+  it("compares texts too short to shingle word by word", async () => {
+    const same = await run({ browser: page("Opening hours today") });
+    expect(same.status).toBe(CheckStatus.Pass);
+    const changed = await run({
+      browser: page("Opening hours today"),
+      bot: page("Closed for bots"),
+    });
+    expect(changed.status).toBe(CheckStatus.Fail);
+  });
+
+  it("summarises findings past the first four", async () => {
+    const result = await run({
+      urls: [
+        "https://example.com/blog/a",
+        "https://example.com/blog/b",
+        "https://example.com/blog/c",
+      ],
+      browser: page(FULL_TEXT),
+      bot: page(STUB_TEXT),
+    });
+    expect(result.status).toBe(CheckStatus.Fail);
+    // Three URLs times three crawlers: nine findings, four shown.
+    expect(result.message).toContain("(5 more)");
   });
 
   it("reports the crawler, the URL and both metrics", async () => {

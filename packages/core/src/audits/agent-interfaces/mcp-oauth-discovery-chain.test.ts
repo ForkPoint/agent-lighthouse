@@ -257,4 +257,174 @@ describe("McpOauthDiscoveryChainAudit", () => {
     expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("Bearer");
   });
+
+  it("is notApplicable on a malformed declaration and names the defect", async () => {
+    const ctx: CheckContext = mockCheckContext([], {
+      "/.well-known/mcp/servers.json": json({ mcp: [] }),
+    });
+    const result = (await audit.audit(ctx)) as Result;
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.found).toBe("Malformed declaration (no-array)");
+  });
+
+  // Reachability belongs to mcp-modern-era-reachability; this audit declines.
+  it("is notApplicable when the endpoint does not answer at all", async () => {
+    const ctx: CheckContext = mockCheckContext([], servers());
+    ctx.fetch = async () => {
+      throw new Error("socket hang up");
+    };
+    const result = (await audit.audit(ctx)) as Result;
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.message).toContain("mcp-modern-era-reachability");
+    expect(result.found).toBe(`${ENDPOINT}; endpoint unreachable`);
+  });
+
+  it("fails a 401 that carries no WWW-Authenticate header at all", async () => {
+    const bare = mockFetchResult("", 401, "text/plain");
+    const { result } = await run(bare, {
+      [PRM_ROOT]: json(PRM),
+      [AS_URL]: json(AS_META),
+    });
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("`WWW-Authenticate: (absent)`");
+    expect(result.found).toContain("challenge without resource_metadata");
+  });
+
+  // An endpoint at the origin root has no path suffix, so RFC 9728 §3 leaves a
+  // single well-known URL to try.
+  it("probes only the bare well-known for an endpoint at the origin root", async () => {
+    const root = "https://api.example.com/";
+    const seen: string[] = [];
+    const ctx: CheckContext = mockCheckContext([], {
+      "/.well-known/mcp/servers.json": json({ servers: [{ url: root }] }),
+    });
+    ctx.fetch = async (o: FetchOptions) => {
+      seen.push(o.url);
+      if (o.method === HttpMethod.Post) return challenge("", "Bearer");
+      if (o.url === PRM_ROOT)
+        return json({ ...PRM, resource: "https://api.example.com" });
+      if (o.url === AS_URL) return json(AS_META);
+      return mockFetchResult("Not Found", 404, "text/plain");
+    };
+    const result = (await audit.audit(ctx)) as Result;
+    expect(seen.filter((u) => u.includes("oauth-protected-resource"))).toEqual([
+      PRM_ROOT,
+    ]);
+    expect(result.status).toBe(CheckStatus.Pass);
+  });
+
+  // RFC 8414 §3.1 inserts the well-known segment before an issuer's path; the
+  // OIDC variants follow.
+  it("reads AS metadata for an issuer with a path from the path-inserted well-known", async () => {
+    const tenant = "https://auth.example.com/tenant1";
+    const insertedOidc =
+      "https://auth.example.com/.well-known/openid-configuration/tenant1";
+    const { result, seen } = await run(challenge(), {
+      [PRM_URL]: json({ ...PRM, authorization_servers: [tenant] }),
+      [insertedOidc]: json({ ...AS_META, issuer: tenant }),
+    });
+    expect(seen).toContain(
+      "https://auth.example.com/.well-known/oauth-authorization-server/tenant1",
+    );
+    expect(seen).toContain(insertedOidc);
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.found).toContain("AS metadata read 1");
+  });
+
+  it("falls through a metadata URL whose fetch throws to the next candidate", async () => {
+    const ctx: CheckContext = mockCheckContext([], servers());
+    ctx.fetch = async (o: FetchOptions) => {
+      if (o.url === ENDPOINT) return challenge();
+      if (o.url === PRM_URL) throw new Error("socket hang up");
+      if (o.url === PRM_ROOT) return json(PRM);
+      if (o.url === AS_URL) return json(AS_META);
+      return mockFetchResult("Not Found", 404, "text/plain");
+    };
+    const result = (await audit.audit(ctx)) as Result;
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.found).toContain(`PRM ${PRM_ROOT}`);
+  });
+
+  it("does not accept a PRM document that is JSON but not an object", async () => {
+    const { result } = await run(challenge(), {
+      [PRM_URL]: json([PRM]),
+      [PRM_ROOT]: json(["not", "metadata"]),
+    });
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("no Protected Resource Metadata");
+    expect(result.found).toContain("3 URL(s) probed");
+  });
+
+  it("fails a PRM with no resource value", async () => {
+    const { resource: _drop, ...withoutResource } = PRM;
+    const { result } = await run(challenge(), {
+      [PRM_URL]: json(withoutResource),
+      [AS_URL]: json(AS_META),
+    });
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("no `resource` value");
+  });
+
+  it("fails a plain-http authorization server", async () => {
+    const http = "http://auth.example.com";
+    const { result } = await run(challenge(), {
+      [PRM_URL]: json({ ...PRM, authorization_servers: [http] }),
+      "http://auth.example.com/.well-known/oauth-authorization-server": json({
+        ...AS_META,
+        issuer: http,
+      }),
+    });
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain(`"${http}" is not an https URL`);
+  });
+
+  it("fails an authorization server that is not an absolute URL without probing it", async () => {
+    const { result, seen } = await run(challenge(), {
+      [PRM_URL]: json({ ...PRM, authorization_servers: ["auth-server"] }),
+    });
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain('"auth-server" is not an absolute URL');
+    expect(result.message).not.toContain("publishes no metadata");
+    expect(seen.filter((u) => u.includes("authorization-server"))).toEqual([]);
+    expect(result.found).toContain("AS metadata read 0");
+  });
+
+  it("fails an AS whose metadata names no authorization or token endpoint", async () => {
+    const { result } = await run(challenge(), {
+      [PRM_URL]: json(PRM),
+      [AS_URL]: json({ issuer: ISSUER }),
+    });
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("declares no `authorization_endpoint`");
+    expect(result.message).toContain("declares no `token_endpoint`");
+  });
+
+  it("warns on the RECOMMENDED items: resource_name, scopes_supported and RFC 9207", async () => {
+    const { result } = await run(challenge(), {
+      [PRM_URL]: json({ resource: ENDPOINT, authorization_servers: [ISSUER] }),
+      [AS_URL]: json({
+        ...AS_META,
+        authorization_response_iss_parameter_supported: false,
+      }),
+    });
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.message).toContain("no `resource_name`");
+    expect(result.message).toContain("no `scopes_supported`");
+    expect(result.message).toContain(
+      "authorization_response_iss_parameter_supported",
+    );
+    expect(result.found).toContain("scopes none declared");
+  });
+
+  // A status that is neither a challenge nor an open answer adds no note.
+  it("records a non-401, non-200 discover status without a challenge note", async () => {
+    const forbidden = mockFetchResult("Forbidden", 403, "text/plain");
+    const { result } = await run(forbidden, {
+      [PRM_ROOT]: json(PRM),
+      [AS_URL]: json(AS_META),
+    });
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.found).toContain("challenge absent (HTTP 403)");
+    expect(result.message).not.toContain("Also:");
+  });
 });

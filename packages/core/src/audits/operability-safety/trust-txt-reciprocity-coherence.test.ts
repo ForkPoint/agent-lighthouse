@@ -45,6 +45,8 @@ interface Site {
   /** Other domains' trust.txt bodies, keyed by host. */
   others?: Record<string, string | number>;
   robotsTxt?: string;
+  /** Hosts whose fetch throws, as a refused connection does. */
+  unreachable?: string[];
 }
 
 function run(site: Site) {
@@ -71,6 +73,7 @@ function run(site: Site) {
   ctx.fetch = async (o: FetchOptions): Promise<FetchResult> => {
     requests.push(o);
     const url = new URL(o.url);
+    if (site.unreachable?.includes(url.host)) throw new Error("ECONNREFUSED");
     if (url.host === "example.com") {
       return url.pathname === "/trust.txt" && site.trustTxt !== undefined
         ? mockFetchResult(site.trustTxt, 200, "text/plain")
@@ -140,7 +143,9 @@ describe("TrustTxtReciprocityCoherenceAudit", () => {
       others: { "assoc.test": "member=https://someone-else.test/\n" },
     });
     const r = await result;
-    expect(r.status).toBe(CheckStatus.Warn);
+    expect(r.status).toBe(CheckStatus.Pass);
+    expect(r.message).toContain("1 observation");
+    expect(r.message).toContain("No search engine, platform or AI company");
     expect(strings(r, "observations").join(" ")).toContain(
       "no member= line naming example.com",
     );
@@ -153,6 +158,80 @@ describe("TrustTxtReciprocityCoherenceAudit", () => {
     });
     const r = await result;
     expect(strings(r, "observations").join(" ")).toContain("503");
+  });
+
+  it("reads a bare domain as an association and checks it", async () => {
+    const { result, requests } = run({
+      trustTxt: "belongto=assoc.test\n",
+      others: { "assoc.test": "member=example.com\n" },
+    });
+    const r = await result;
+    expect(requests.map((o) => o.url)).toContain(
+      "https://assoc.test/trust.txt",
+    );
+    expect(strings(r, "reciprocated")).toEqual(["belongto=assoc.test"]);
+    expect(r.displayValue).toBe("1/1 reciprocated");
+  });
+
+  it("checks controlledby against the other domain's control= lines", async () => {
+    const { result } = run({
+      trustTxt: "controlledby=https://parent.test/\n",
+      others: { "parent.test": "control=https://www.example.com/\n" },
+    });
+    const r = await result;
+    expect(strings(r, "reciprocated")).toEqual([
+      "controlledby=https://parent.test/",
+    ]);
+  });
+
+  it("names control= as the missing line for an unreciprocated controlledby", async () => {
+    const { result } = run({
+      trustTxt: "controlledby=https://parent.test/\n",
+      others: { "parent.test": "member=https://example.com/\n" },
+    });
+    const r = await result;
+    expect(strings(r, "observations").join(" ")).toContain(
+      "no control= line naming example.com",
+    );
+  });
+
+  it("does not probe an association that names this site or nothing", async () => {
+    const { result, requests } = run({
+      trustTxt: "belongto=https://www.example.com/\nbelongto=\n",
+    });
+    const r = await result;
+    expect(requests.some((o) => o.url.includes(".test/"))).toBe(false);
+    expect(r.details?.["associationsChecked"]).toBe(0);
+  });
+
+  it("reports an association whose domain cannot be made into a URL", async () => {
+    const { result, requests } = run({
+      trustTxt: "belongto=not a host\n",
+    });
+    const r = await result;
+    expect(requests.some((o) => o.url.includes("not a host"))).toBe(false);
+    expect(strings(r, "observations").join(" ")).toContain(
+      "belongto=not a host: that domain could not be reached",
+    );
+    expect(r.details?.["associationsChecked"]).toBe(0);
+  });
+
+  it("reports HTTP 0 for an association whose host refuses the connection", async () => {
+    const { result } = run({
+      trustTxt: "belongto=https://assoc.test/\n",
+      unreachable: ["assoc.test"],
+    });
+    const r = await result;
+    expect(strings(r, "observations").join(" ")).toContain(
+      "trust.txt answered HTTP 0, so the association is unverifiable",
+    );
+  });
+
+  it("is notApplicable when the scan carries no absolute base URL", async () => {
+    const ctx = mockCheckContext([]);
+    const r = await audit.audit({ ...ctx, baseUrl: "not a url" });
+    expect(r.status).toBe(CheckStatus.NotApplicable);
+    expect(r.found).toBe('baseUrl: "not a url"');
   });
 
   it("flags an attribute name the specification does not define", async () => {
@@ -200,7 +279,7 @@ describe("TrustTxtReciprocityCoherenceAudit", () => {
     );
   });
 
-  it("never returns fail, whatever the input", async () => {
+  it("never warns or fails, whatever the input", async () => {
     const cases: Site[] = [
       {},
       {
@@ -216,6 +295,7 @@ describe("TrustTxtReciprocityCoherenceAudit", () => {
     for (const site of cases) {
       const r = await run(site).result;
       expect(r.status, JSON.stringify(site)).not.toBe(CheckStatus.Fail);
+      expect(r.status, JSON.stringify(site)).not.toBe(CheckStatus.Warn);
     }
   });
 

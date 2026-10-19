@@ -3,13 +3,12 @@ audit: agent-interfaces/agents-json
 category: agent-interfaces
 source_file: packages/core/src/audits/agent-interfaces/agents-json.ts
 slug: agents-json
-evidence_grade: C
-disposition: "informative, weight 0 (approved 2026-08-21)"
-reviewed: 2026-08-24
-recommended_tier: scored
-tier_rationale: 'Recommended scored on the strength of the published spec; ships informative because the 2026-08-21 redemption pass returned "confirmed dead" for the site-facing signal and no consumer was found (contradiction sweep, 2026-08-24).'
+evidence_grade: D
+disposition: "obsolete tier (2026-10-18)"
+reviewed: 2026-10-18
+recommended_tier: obsolete
 consumers:
-  - all clients following RFC 8615 well-known conventions
+  - none-known (no client documents reading /.well-known/agents.json)
 signals:
   - name: agents-json
     grade: D
@@ -18,8 +17,8 @@ signals:
     grade: A
     domain: agent-action-surfaces
 sources:
-  - agents-json-com-dead
   - wildcard-agents-json-repo
+  - agents-json-com-dead
   - iana-well-known-uris
   - apievangelist-api-catalog-adoption
   - rfc-9727
@@ -31,9 +30,50 @@ sources:
 
 # agents-json (`5.10`)
 
-> agent-tools · source `agents-json.ts` · review verdict **delete** · evidence grade **C** · disposition: **informative, weight 0 (approved 2026-08-21)**
+> agent-interfaces · source `agents-json.ts` · evidence grade **D** · tier **obsolete** (weight 0, never fails)
 
 ## What it checks
+
+Whether the site still publishes an agents.json document (Wild Card AI, spec v0.1.0) at `/.well-known/agents.json`. A document is recognised by the shape the spec defines: an `info` object with a `sources` or a `flows` array.
+
+The check never asks a site to publish the file. It exists to tell an owner who still publishes it that no reader is known.
+
+| State                                                                                                  | Result                 |
+| :----------------------------------------------------------------------------------------------------- | :--------------------- |
+| a parseable agents.json document                                                                       | `warn`, priority `low` |
+| no response, a non-200, an HTML page, an empty body, a body that is not JSON, or JSON of another shape | `notApplicable`        |
+
+## Claimed mechanism (falsifiable)
+
+**Mechanism:** agents.json was proposed in 2025 as an OpenAPI-derived contract that lets agents discover and call a site's API workflows. The claim this audit tests is that nothing reads it today.
+
+## Evidence
+
+- The spec repository was last pushed on 2025-08-21 and the spec never moved past v0.1.0 — [wild-card-ai/agents-json](https://github.com/wild-card-ai/agents-json) (verified 2026-10-18)
+- The project homepage, agents-json.com, did not answer on 2026-10-18.
+- `/.well-known/agents.json` is not in the IANA Well-Known URIs registry — [IANA](https://www.iana.org/assignments/well-known-uris/well-known-uris.xhtml) (verified 2026-10-18)
+- No AI vendor or agent framework documents fetching the path. At least four incompatible formats publish files at it.
+
+**Counter-evidence:** The repository is not archived, so the project could resume. The audit would then be re-graded.
+
+## Scoring
+
+**Grade: D** — no consumer is documented, the spec is dormant, and the path is unregistered. An obsolete audit carries weight 0 and never returns `fail` (`sunset.test.ts`; `Audit.toCheckResult` lowers a stray `fail` to `warn`). It does not move any score.
+
+## Example finding
+
+`/.well-known/agents.json` serves `{"info":{…},"sources":[…]}`. The report says no client reads the file and names A2A `agent-card.json`, an MCP Server Card, or RFC 9727 `api-catalog` as maintained routes.
+
+## Implementation deviations
+
+- 2026-10-18: moved from informative (grade C) to the obsolete tier (grade D). The 2026-10-17 review had already found that the evidence supported D.
+- The soft-404 warnings (HTML 200, unparseable body, wrong shape, `text/html` media type) are gone. Those are not obsolete documents; they are now `notApplicable`. The soft-404 signal stays scored in `agent-interfaces/openapi-exists`.
+
+## Record before the obsolete tier
+
+The dossier as it stood before the move on 2026-10-18. Kept as the research record; withheld from the public page.
+
+### What it checks
 
 Whether anything is published at `/.well-known/agents.json`, and if so whether what is
 published there is a real agents.json document.
@@ -54,17 +94,17 @@ warning, at weight 0, when what is served is something else:
 The check never returns a failure. Its evidence grade is **C**, so it carries weight 0 and cannot
 move a score in any direction.
 
-## Evidence
+### Evidence
 
-### Signal: agents-json — grade D (agent-action-surfaces)
+#### Signal: agents-json — grade D (agent-action-surfaces)
 
 **Mechanism:** Publishing an agents.json file (the Wildcard AI OpenAPI-derived contract describing flows, links and actions) lets AI agents discover and reliably invoke a site's API workflows.
 
 **Evidence:** agents.json was a genuine 2025 proposal: an open spec layered on OpenAPI, adding flows (chains of calls), links between actions, and agent-facing metadata. It accumulated 1,314 stars and 66 forks. It was not fringe at its peak.
 
-**Counter-evidence:** The project is dead by every measurable signal, checked 2026-08-20. The repository wild-card-ai/agents-json has not been pushed since 2025-08-21 — twelve months stale — and its description field is now empty. Its declared homepage https://agents-json.com fails to resolve entirely (curl exit code 6 / HTTP 000). The documentation host docs.wild-card.ai serves an EXPIRED TLS certificate (valid 2026-01-09 to 2026-04-09, i.e. expired four months ago) so the spec itself is unreachable over HTTPS without an error. The spec version never advanced past 0.1.0. No agent vendor has ever documented consuming it, and there is no IANA registration. Auditing for agents.json would tell site owners to implement a specification whose own documentation site has been broken since April. Re-checked 2026-10-17: the repository's last push is still 2025-08-21, https://agents-json.com still does not answer, and docs.wild-card.ai still serves an expired certificate — https://github.com/wild-card-ai/agents-json (verified 2026-10-17).
+**Counter-evidence:** The project is dead by every measurable signal, checked 2026-08-20. The repository wild-card-ai/agents-json has not been pushed since 2025-08-21 — twelve months stale — and its description field is now empty. Its declared homepage https://agents-json.com resolves in DNS but does not answer (the connection times out; curl exit code 28 / HTTP 000). The documentation host docs.wild-card.ai serves an EXPIRED TLS certificate (valid 2026-01-09 to 2026-04-09, i.e. expired four months ago) so the spec itself is unreachable over HTTPS without an error. The spec version never advanced past 0.1.0. No agent vendor has ever documented consuming it, and there is no IANA registration. Auditing for agents.json would tell site owners to implement a specification whose own documentation site has been broken since April. Re-checked 2026-10-18: the repository's last push is still 2025-08-21 and it is not archived, https://agents-json.com still does not answer, and docs.wild-card.ai still serves an expired certificate — https://github.com/wild-card-ai/agents-json (verified 2026-10-18).
 
-### Signal: agent-surface-soft-404-validation — grade A (agent-action-surfaces)
+#### Signal: agent-surface-soft-404-validation — grade A (agent-action-surfaces)
 
 **Mechanism:** A well-known or conventional agent-discovery path that returns HTTP 200 with an HTML body is worse than a 404 — that body is an SPA catch-all rather than a real document. A conforming client follows the standard, fails to parse, and has no recourse. Any audit must therefore validate content-type and parseability, not status code.
 
@@ -72,7 +112,7 @@ move a score in any direction.
 
 **Counter-evidence:** None found — this is a validation-correctness requirement, not a contested adoption claim. The only nuance is that content negotiation is legitimate. RFC 9727 permits additional formats beyond the mandatory Linkset, so an audit should send an explicit Accept header before concluding a publisher is non-conformant. It should also not penalise a clean 404, which is honest, the way it penalises an HTML 200, which is a lie.
 
-## Implementation deviations
+### Implementation deviations
 
 - Absence is `notApplicable`. The audit never returns `fail`; every defect is a `warn` at weight 0.
 - The soft-404 case is a body sniff only. A body that begins with `<!doctype html>` or `<html` is reported as the site shell.
@@ -81,7 +121,7 @@ move a score in any direction.
 - `guidance.effort` is required by `AuditGuidance`, so it still ships as `easy` on `na` rows.
 - The grade-A soft-404 signal is applied here at weight 0. It is scored once, in `agent-interfaces/openapi-exists`, so it is not scored twice.
 
-## Deferred
+### Deferred
 
 - The `## Evidence` section heads the site-facing signal "grade D", while the frontmatter says C. The audit keeps C. A re-grade to D would move the audit to "Rejected — not shipped" under `policy.md`.
 - 2026-10-17 review: the evidence supports D, not C. `policy.md` defines D as "no known consumer, no adoption evidence", and this dossier records both. C needs "partial adoption", and no site adoption was ever measured. The meta grade is open for a major-bump re-grade and deprecation; it was not changed here.

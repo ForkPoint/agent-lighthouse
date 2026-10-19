@@ -6,6 +6,11 @@ import { HttpMethod } from "#core/types";
 import { LogField, withLogContext } from "#core/logger";
 import { isRootArtifact } from "./root-files";
 import { readAiCatalogs } from "#core/audits/agent-interfaces/_ard";
+import {
+  UCP_PATH,
+  readUcpProfile,
+  ucpBindings,
+} from "#core/audits/agentic-commerce/_ucp";
 
 /**
  * MCP's current specification revision. Pinning an older one makes servers that
@@ -77,27 +82,24 @@ export async function discoverMcpEndpoint(
     };
   }
 
-  const ucp = ctx.rootFiles["/.well-known/ucp"];
-  if (isRootArtifact(ucp) && ucp.body) {
-    const parsed = tryParseJson(ucp.body);
-    if (isObject(parsed)) {
-      const root = (parsed["ucp"] ?? parsed) as Record<string, unknown>;
-      const services = (parsed["services"] ?? root["services"]) as
-        Record<string, unknown> | undefined;
-      if (isObject(services)) {
-        for (const list of Object.values(services)) {
-          if (!Array.isArray(list)) continue;
-          for (const svc of list) {
-            if (
-              isObject(svc) &&
-              svc["transport"] === "mcp" &&
-              typeof svc["endpoint"] === "string"
-            ) {
-              return { url: svc["endpoint"], source: "ucp" };
-            }
-          }
-        }
+  // The UCP reader owns the profile's identification and both service
+  // shapes; discovery only picks the mcp binding. A relative endpoint is
+  // resolved against the profile URL.
+  const ucp = readUcpProfile(ctx);
+  if (ucp.kind === "profile") {
+    const binding = ucpBindings(ucp.ucp).find(
+      (b) =>
+        b.transport === "mcp" && typeof b.endpoint === "string" && b.endpoint,
+    );
+    if (binding) {
+      const endpoint = binding.endpoint as string;
+      let url = endpoint;
+      try {
+        url = new URL(endpoint, new URL(UCP_PATH, ctx.baseUrl)).href;
+      } catch {
+        // Left as written; the caller's isSafeUrl refuses what cannot parse.
       }
+      return { url, source: "ucp" };
     }
   }
 

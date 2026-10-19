@@ -57,6 +57,7 @@ import { generateScanSummary } from "./summary";
 import { sitemapSiteRoot } from "./gatherers/sitemap";
 import {
   isInformative,
+  isObsolete,
   gatedMassShare,
   skippedMassShare,
   GATED_MASS_UNSCORED_THRESHOLD,
@@ -73,6 +74,7 @@ import {
   EvidenceKey,
   PageType,
   PageTypeSource,
+  ScoreDisplayMode,
 } from "./types";
 
 /**
@@ -424,6 +426,8 @@ async function scanWithinBudget(
     "/.well-known/mcp/servers.json",
     "/.well-known/ucp",
     "/.well-known/agents.json",
+    "/.well-known/agent-card.json",
+    "/.well-known/agent.json",
     "/.well-known/ai-plugin.json",
     "/.well-known/security.txt",
     "/.well-known/tdmrep.json",
@@ -969,8 +973,12 @@ async function scanWithinBudget(
   for (const check of allChecks) {
     if (isInformative(check)) {
       informativeCount++;
-      unscoredReasons["informative"] =
-        (unscoredReasons["informative"] ?? 0) + 1;
+      // Obsolete checks are informative too; their own key lets a reader of
+      // the JSON tell "not scored yet" from "retired, never will be".
+      const reason = isObsolete(check)
+        ? AuditTier.Obsolete
+        : ScoreDisplayMode.Informative;
+      unscoredReasons[reason] = (unscoredReasons[reason] ?? 0) + 1;
     } else if (check.status === CheckStatus.NotApplicable) {
       if (check.tags?.includes(TAG_SKIPPED_NO_EVIDENCE)) {
         gatedCount++;

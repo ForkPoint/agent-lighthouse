@@ -28,6 +28,10 @@ export { McpOriginValidationCorsAudit } from "./mcp-origin-validation-cors";
 export { McpRegistryListingOwnershipAudit } from "./mcp-registry-listing-ownership";
 export { McpToolDescriptionCoverageAudit } from "./mcp-tool-description-coverage";
 
+// New in 9.0.0: the IANA-registered A2A discovery path.
+export { A2aAgentCardAudit } from "./a2a-agent-card";
+export { AiPluginJsonAudit } from "./ai-plugin-json";
+
 import { OpenApiExistsAudit } from "./openapi-exists";
 import { OpenApiEndpointsAudit } from "./openapi-endpoints";
 import { OpenApiOperationIdsAudit } from "./openapi-operation-ids";
@@ -52,6 +56,8 @@ import { McpVersionDowngradeAudit } from "./mcp-version-downgrade";
 import { McpOriginValidationCorsAudit } from "./mcp-origin-validation-cors";
 import { McpRegistryListingOwnershipAudit } from "./mcp-registry-listing-ownership";
 import { McpToolDescriptionCoverageAudit } from "./mcp-tool-description-coverage";
+import { A2aAgentCardAudit } from "./a2a-agent-card";
+import { AiPluginJsonAudit } from "./ai-plugin-json";
 
 /** Every audit that lives in the agent-interfaces category, in map order. */
 export const AGENT_INTERFACES_AUDITS = [
@@ -79,4 +85,6 @@ export const AGENT_INTERFACES_AUDITS = [
   McpOriginValidationCorsAudit,
   McpRegistryListingOwnershipAudit,
   McpToolDescriptionCoverageAudit,
+  A2aAgentCardAudit,
+  AiPluginJsonAudit,
 ] as const;

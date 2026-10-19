@@ -1,6 +1,10 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach } from "vitest";
-import { mountReportViewer, MAX_REPORT_BYTES } from "./report-viewer";
+import {
+  mountReportViewer,
+  MAX_CATEGORIES,
+  MAX_REPORT_BYTES,
+} from "./report-viewer";
 import {
   AttemptOutcome,
   PageType,
@@ -222,6 +226,47 @@ describe("mountReportViewer", () => {
     zone.dispatchEvent(new Event("dragleave"));
     expect(zone.classList.contains("border-brand")).toBe(false);
     expect(zone.classList.contains("border-border-subtle")).toBe(true);
+  });
+
+  it("says how many categories it left out past the render cap", async () => {
+    const categories = Array.from({ length: MAX_CATEGORIES + 3 }, (_, i) => ({
+      name: `Category ${i}.`,
+      score: 50,
+      checks: [],
+    }));
+    await choose(jsonFile(JSON.stringify({ overallScore: 50, categories })));
+
+    expect(output().textContent).toContain(
+      "…and 3 more categories this view does not render.",
+    );
+    expect(output().textContent).toContain(`Category ${MAX_CATEGORIES - 1}.`);
+    expect(output().textContent).not.toContain(`Category ${MAX_CATEGORIES}.`);
+  });
+
+  it("ignores a drop that carries no file", async () => {
+    const event = new Event("drop", { bubbles: true, cancelable: true });
+    Object.defineProperty(event, "dataTransfer", { value: { files: [] } });
+    el("#report-dropzone").dispatchEvent(event);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(status()).toBe("");
+    expect(output().hidden).toBe(true);
+  });
+
+  // Only the module's own sentences reach the reader; anything else thrown
+  // while reading becomes the generic one.
+  it("shows the generic sentence for an error the viewer did not raise", async () => {
+    const broken = jsonFile("{}");
+    Object.defineProperty(broken, "size", {
+      get() {
+        throw new TypeError("internal detail");
+      },
+    });
+    await choose(broken);
+
+    expect(status()).toBe("That file could not be read as a scan report.");
+    expect(status()).not.toContain("internal detail");
+    expect(output().hidden).toBe(true);
   });
 
   it("does nothing at all on a page without the panel", () => {

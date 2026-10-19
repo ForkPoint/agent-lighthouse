@@ -153,12 +153,36 @@ export const ScoreDisplayMode = {
 export type ScoreDisplayMode =
   (typeof ScoreDisplayMode)[keyof typeof ScoreDisplayMode];
 
-/** Public sunset notice for a deprecated audit (see docs/evidence/sunset/not-a-factor.md). */
+/**
+ * Why an audit carries a public notice instead of (or beside) a verdict.
+ *
+ * The three kinds make different claims, and each needs a different source:
+ * `obsolete` says a consumer withdrew the thing, a vendor documents ignoring
+ * it, or its spec is dead; `unconsumed` says only that no AI vendor documents
+ * reading it, while it stays live; `deprecated` says the audit itself leaves
+ * in the next major release (docs/evidence/policy.md, deprecation process).
+ */
+export const NoticeKind = {
+  Deprecated: "deprecated",
+  Obsolete: "obsolete",
+  Unconsumed: "unconsumed",
+} as const;
+
+export type NoticeKind = (typeof NoticeKind)[keyof typeof NoticeKind];
+
+/**
+ * Public notice attached to an audit and copied onto every result it
+ * produces. An `obsolete`-tier audit must carry one of kind `obsolete`.
+ */
 export interface DeprecationNotice {
+  /** Absent means `deprecated`, the original and only meaning before 9.0. */
+  kind?: NoticeKind;
   /** One sentence: why this signal is not a factor. */
   notice: string;
-  /** Public rationale URL (not-a-factor.md anchor). */
+  /** Public rationale URL: the cited source or the audit's dossier. */
   link: string;
+  /** What to publish instead, when anything replaces it. */
+  replacement?: string;
 }
 
 /**
@@ -177,11 +201,17 @@ export type EvidenceGrade = (typeof EvidenceGrade)[keyof typeof EvidenceGrade];
 /**
  * How an audit participates in scoring. Derived from its evidence grade
  * (spec §4): only `scored` audits move a category score.
+ *
+ * `informative` reports a live practice no consumer documents yet;
+ * `obsolete` tells a site owner that something it publishes was retired,
+ * is ignored by its consumer, or follows a dead spec. Obsolete audits carry
+ * grade D and a `NoticeKind.Obsolete` notice, and never fail.
  */
 export const AuditTier = {
   Scored: "scored",
   Informative: "informative",
   Experimental: "experimental",
+  Obsolete: "obsolete",
 } as const;
 
 export type AuditTier = (typeof AuditTier)[keyof typeof AuditTier];

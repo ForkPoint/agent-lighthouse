@@ -1,93 +1,77 @@
 import { describe, it, expect } from "vitest";
 import { ChatgptUserAudit } from "./chatgpt-user";
+import { weightForGrade } from "#core/scorer";
+import { AuditMetaSchema } from "#core/schemas";
 import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
-import { CheckStatus } from "#core/types";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import {
+  AuditTier,
+  CheckStatus,
+  EvidenceGrade,
+  NoticeKind,
+  ScoreDisplayMode,
+} from "#core/types";
 
-const robots = (body: string) =>
-  mockCheckContext([], { "/robots.txt": mockFetchResult(body, 200) });
+const robots = (body: string, status = 200) =>
+  mockCheckContext([], { "/robots.txt": mockFetchResult(body, status) });
 
 describe("ChatgptUserAudit", () => {
   const audit = new ChatgptUserAudit();
 
-  it("passes when ChatGPT-User has its own group that permits /", () => {
-    const result = audit.audit(robots("User-agent: ChatGPT-User\nAllow: /"));
+  // OpenAI says the rules "may not apply": a hedge, not a documented refusal.
+  // The group is reported with that qualifier and never costs anything.
+  it.each([
+    ["an allowing group", "User-agent: ChatGPT-User\nAllow: /"],
+    ["a blocking group", "User-agent: ChatGPT-User\nDisallow: /"],
+    [
+      "a group shared with other tokens",
+      "User-agent: Googlebot\nUser-agent: ChatGPT-User\nDisallow: /private",
+    ],
+    ["a lowercase token", "user-agent: chatgpt-user\nDisallow: /"],
+    ["a versioned token", "User-agent: ChatGPT-User/1.0\nDisallow: /"],
+  ])("passes with the OpenAI qualifier for %s", (_label, body) => {
+    const result = audit.audit(robots(body));
     expect(result.status).toBe(CheckStatus.Pass);
-    expect(result.message).toContain("its own robots.txt group");
+    expect(result.message).toContain("User-agent: ChatGPT-User");
+    expect(result.message).toContain("may not apply");
+    expect(result.message).toContain("OAI-SearchBot");
   });
 
-  // RFC 9309 §2.2.1: a bot with no group of its own obeys the catch-all, so
-  // an open catch-all grants the same access a named group would.
-  it("passes when ChatGPT-User is allowed through the catch-all group", () => {
-    const result = audit.audit(robots("User-agent: *\nAllow: /"));
-    expect(result.status).toBe(CheckStatus.Pass);
-    expect(result.score).toBe(1);
-    expect(result.message).toContain("catch-all group applies");
+  // Access through the catch-all is the business of the other per-bot
+  // audits. This one speaks only about a group the owner wrote.
+  it.each([
+    ["an open catch-all", "User-agent: *\nAllow: /"],
+    ["a blocking catch-all", "User-agent: *\nDisallow: /"],
+    ["a group for another crawler", "User-agent: SomeOtherBot\nDisallow: /"],
+  ])("is not applicable for %s", (_label, body) => {
+    expect(audit.audit(robots(body)).status).toBe(CheckStatus.NotApplicable);
   });
 
-  it("passes when no group applies to ChatGPT-User", () => {
-    const result = audit.audit(robots("User-agent: SomeOtherBot\nDisallow: /"));
-    expect(result.status).toBe(CheckStatus.Pass);
-    expect(result.message).toContain("No group in robots.txt applies");
-  });
-
-  it("follows its own group over a blocking catch-all", () => {
-    const result = audit.audit(
-      robots(
-        "User-agent: ChatGPT-User\nAllow: /\n\nUser-agent: *\nDisallow: /",
-      ),
+  it("is not applicable without a robots.txt", () => {
+    expect(audit.audit(robots("Not found", 404)).status).toBe(
+      CheckStatus.NotApplicable,
     );
-    expect(result.status).toBe(CheckStatus.Pass);
-  });
-
-  it("fails when ChatGPT-User is blocked by its own group", () => {
-    const result = audit.audit(robots("User-agent: ChatGPT-User\nDisallow: /"));
-    expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.message).toContain("blocked by robots.txt");
-    expect(result.found).toContain("Its own group");
-  });
-
-  it("fails when its own group blocks ChatGPT-User under an open catch-all", () => {
-    const result = audit.audit(
-      robots(
-        "User-agent: ChatGPT-User\nDisallow: /\n\nUser-agent: *\nAllow: /",
-      ),
-    );
-    expect(result.status).toBe(CheckStatus.Fail);
-  });
-
-  it("fails when a catch-all block reaches ChatGPT-User", () => {
-    const result = audit.audit(robots("User-agent: *\nDisallow: /"));
-    expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.found).toContain("catch-all group disallows /");
-  });
-
-  it("warns in the fail remedy that a named group drops catch-all rules", () => {
-    const result = audit.audit(robots("User-agent: *\nDisallow: /"));
-    expect(result.remediation).toContain("replaces the catch-all");
-    expect(ChatgptUserAudit.meta.guidance?.fix).toContain(
-      "replaces the catch-all",
-    );
-    expect(ChatgptUserAudit.meta.description).toContain(
-      "A named group is not required",
+    expect(audit.audit(mockCheckContext([], {})).status).toBe(
+      CheckStatus.NotApplicable,
     );
   });
 
-  it("is not applicable when robots.txt is missing", () => {
-    const result = audit.audit(mockCheckContext([], {}));
-    expect(result.status).toBe(CheckStatus.NotApplicable);
-    expect(result.found).toContain("No robots.txt found");
+  it("is not applicable on a scan that read nothing", async () => {
+    await expectNotApplicableOnEmpty(audit);
   });
 
-  it("is not applicable when robots.txt returns non-200", () => {
-    const result = audit.audit(
-      mockCheckContext([], { "/robots.txt": mockFetchResult("", 404) }),
+  it("is an informative grade-C audit with an unconsumed notice", () => {
+    const { meta } = ChatgptUserAudit;
+    expect(meta.tier).toBe(AuditTier.Informative);
+    expect(meta.evidenceGrade).toBe(EvidenceGrade.C);
+    expect(meta.weight).toBe(
+      weightForGrade(EvidenceGrade.C, AuditTier.Informative),
     );
-    expect(result.status).toBe(CheckStatus.NotApplicable);
-    expect(result.found).toContain("No robots.txt found");
-  });
-
-  it("is not applicable when /robots.txt serves an HTML error page", () => {
-    const result = audit.audit(robots("<html><body>Not found</body></html>"));
-    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Informative);
+    expect(meta.deprecated?.kind).toBe(NoticeKind.Unconsumed);
+    expect(meta.deprecated?.link).toBe(
+      "https://developers.openai.com/api/docs/bots",
+    );
+    expect(AuditMetaSchema.safeParse(meta).success).toBe(true);
   });
 });

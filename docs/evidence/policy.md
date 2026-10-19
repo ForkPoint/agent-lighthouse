@@ -26,7 +26,17 @@ A grade licenses the mechanism it was proven for, and nothing wider. If the mech
 | A, B                                   | **Scored** — contributes to the category and overall score                               |
 | C                                      | **Informative** — shown in the report with weight 0                                      |
 | D with an active draft-spec trajectory | **Experimental** — behind a flag, unscored                                               |
+| D, retired or ignored by its consumer  | **Obsolete** — runs by default, weight 0, never fails; tells the owner what to retire    |
 | D otherwise                            | **Rejected** — not shipped; if previously shipped, deprecated with a dated public notice |
+
+### Informative or obsolete
+
+Both tiers carry weight 0. They make different claims, so they need different sources.
+
+- **Informative**: the thing is live. No consumer documents reading it yet. The audit may grade it, and may carry a notice of kind `unconsumed` ("no AI vendor reads this").
+- **Obsolete**: a consumer withdrew the thing, a vendor documents ignoring it, its spec is dead, or the governing project documents a successor in its place (superseded: the project considered the old location and chose another). The audit carries grade D, because the grade states the strongest proven consumer path and there is none. Its notice, of kind `obsolete`, cites the dated source for the retirement and names the replacement where one exists.
+
+An obsolete audit answers one question: does this site still publish the retired thing? Absent is `notApplicable`. Present is `warn`. It never returns `fail`, because a dead file harms nothing; it only wastes the owner's effort. A "no consumer" finding alone is not enough for the obsolete tier. Calling a live but unread thing "retired" claims more than any source documents.
 
 ## Source requirements
 
@@ -34,18 +44,22 @@ A grade licenses the mechanism it was proven for, and nothing wider. If the mech
 - Primary sources outrank secondary: vendor docs and spec text over blog posts over social media.
 - Every source URL is verified to resolve at research time; the registry records the access date.
 - **Counter-evidence is recorded, not hidden.** If Google states it ignores a file, the dossier for that file's audit says so. Credibility comes from showing the evidence against our own checks.
-- CI runs a link checker over the registry. A dead link fails the build; a source older than 12 months triggers a re-review flag.
+- CI runs a link checker over the registry. A dead link fails the build; a source older than the citing audit's review window triggers a re-review flag.
 
 ## Re-review cadence
 
-The AI-agent ecosystem changes quarterly. Every audit's dossier carries a `reviewed:` date. An audit whose evidence is older than 12 months, or whose cited standard changes status (ratified, deprecated, abandoned), is re-graded. Downgrades below B remove the audit from scoring in the next minor release.
+The AI-agent ecosystem changes quarterly. Every audit's dossier carries a `reviewed:` date. An audit whose evidence is older than its grade's review window (A: 12 months; B: 6 months; C and D: 3 months), or whose cited standard changes status (ratified, deprecated, abandoned), is re-graded. Downgrades below B remove the audit from scoring in the next minor release.
 
 ## Deprecation process
 
-Audits die publicly, not silently:
+Audits die publicly, not silently.
+
+When owners may still publish the thing the audit finds, the audit moves to the **obsolete** tier instead of leaving. The report keeps telling them it is retired, which is more use to them than silence. The move is a major release, because the tier and grade change.
+
+When there is nothing to tell an owner (the audit judged a practice, not an artifact, and its evidence fell away):
 
 1. The dossier's status changes to `deprecated`, with the evidence for removal cited.
-2. The audit ships one more minor release as informative (weight 0) with a deprecation notice in the report.
+2. The audit ships one more minor release as informative (weight 0) with a notice of kind `deprecated` in the report.
 3. The next major release removes it. The dossier stays published as the record of why.
 
 ## History
@@ -55,3 +69,4 @@ Audits die publicly, not silently:
 - 2026-08-24 — the grade-**D** example `ai-catalog.json` retired: it is no longer speculative or invented. Since 2026-06-17 it is the file defined by the [Agentic Resource Discovery specification](https://github.com/ards-project/ard-spec) (draft v0.9; Google, Microsoft, Hugging Face and others under a Linux Foundation working group, Apache 2.0), and it has a documented first-party consumer client in [`huggingface/hf-discover`](https://github.com/huggingface/hf-discover), which performs automatic `/.well-known/ai-catalog.json` discovery from a website. Under this table's own bars that is stronger evidence than the grade-C row above it, so keeping it as the canonical grade-D example was false on both halves.
 - 2026-08-26 — ARD v0.91 moved the well-known path from `/.well-known/ai-catalog.json` to `/.well-known/ard.json`, with the link relation `rel="ard"` (commit `a305a528`, "spec: publish v0.91"). A consumer MUST fetch `ard.json` and MAY also consult the predecessor path. The MCP Server Card extension still names `ai-catalog.json`, so both paths are live. Neither is in the IANA Well-Known URIs registry (verified 2026-10-18). Recorded on 2026-10-18.
 - 2026-08-29 — the core rule gained its population clause: a grade covers sites that publish the artifact its mechanism is about. Four `openapi-*` audits (`openapi-servers`, `openapi-endpoints`, `openapi-schemas`, `openapi-operation-ids` — B / scored / 0.6 each, 2.4 combined) were charging `fail` at high or medium priority to every site with no OpenAPI document at all, on 41 of 41 corpus fixtures. No source documents a consumer that is worse off for the absence, and `openapi-servers`' own recorded counter-evidence argues the opposite for the weaker case. Corrected to `notApplicable` on the absence; every verdict on a document that exists is unchanged.
+- 2026-10-18 — the **obsolete** tier added. A consumer-evidence review of the grade C and D file and protocol audits found some that check things their consumer retired or ignores, which site owners still publish. Deleting those audits would leave the owners uninformed. They now move to an obsolete tier at grade D: weight 0, `warn` when the thing is present, never `fail`, with a dated retirement source and a replacement. Live but unread things stay informative with a notice of kind `unconsumed`. The same day, independent review moved `answer-readiness/meta-author` and `access-crawl-control/chatgpt-user` back to informative: Google never supported the author tag, and OpenAI's "may not apply" is a hedge, so neither was withdrawn or documented as ignored. The "superseded" ground was written down for paths a governing project replaced, such as `/.well-known/mcp/servers.json`.

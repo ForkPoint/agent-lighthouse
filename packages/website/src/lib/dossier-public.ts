@@ -41,7 +41,8 @@ export const PAGE_ORDER = [
   "Evidence",
   "Limits",
   "How it scores",
-  "Example failure",
+  // A finding, not only a failure: warn-only and obsolete audits never fail.
+  "Example finding",
   // Built from the registry rather than from the body: the dossier names ids,
   // and `docs/evidence/sources.json` holds the title, publisher, type and the
   // date the URL was last resolved.
@@ -63,7 +64,12 @@ const PUBLIC_SECTIONS = new Map<string, PublicName>([
   ["Claimed mechanism (falsifiable)", "Why it matters"],
   ["Evidence", "Evidence"],
   ["Scoring", "How it scores"],
-  ["Example failure", "Example failure"],
+  // Dossiers written after the rename pass use the public names directly.
+  ["Why it matters", "Why it matters"],
+  ["Limits", "Limits"],
+  ["How it scores", "How it scores"],
+  ["Example failure", "Example finding"],
+  ["Example finding", "Example finding"],
   // `ai-bot-directives` is the one merged dossier that names its evidence and
   // its limits after the merge rather than after the contract. The content is
   // the reader's either way, so it is mapped rather than left to `public_extra`.

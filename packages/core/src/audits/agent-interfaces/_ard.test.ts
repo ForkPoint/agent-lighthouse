@@ -78,6 +78,42 @@ describe("readAiCatalog", () => {
     expect(read.found).toContain("HTML page");
   });
 
+  it("says 'HTML body' when an HTML stand-in carries no content type", () => {
+    const read = readAiCatalog(
+      ctxWith("<!doctype html><html></html>", 200, ""),
+    );
+    expect(read.ok).toBe(false);
+    if (read.ok) return;
+    expect(read.found).toContain(
+      "HTTP 200 with an HTML page (HTML body), not the file",
+    );
+  });
+
+  // An entry that is not an object still holds its place, so later entries
+  // keep their position and the bad one is labelled by number.
+  it("keeps a non-object entry as an empty entry at its position", () => {
+    const read = readAiCatalog(
+      ctxWith(
+        JSON.stringify({
+          entries: ["not an entry", { identifier: "urn:air:example.com:b" }],
+        }),
+      ),
+    );
+    expect(read.ok).toBe(true);
+    if (!read.ok) return;
+    const [first, second] = read.manifest.entries;
+    expect(first).toEqual({
+      hasData: false,
+      capabilities: [],
+      representativeQueries: [],
+      tags: [],
+      hasTrustManifest: false,
+      index: 0,
+    });
+    expect(entryLabel(first!)).toBe("entry #1");
+    expect(second?.identifier).toBe("urn:air:example.com:b");
+  });
+
   it("treats an HTML stand-in beside a 404 as absent, naming both paths", () => {
     const read = readAiCatalog(
       mockCheckContext([], {

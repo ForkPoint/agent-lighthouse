@@ -5,8 +5,8 @@ source_file: packages/core/src/audits/machine-discovery/llms-txt-links-valid.ts
 slug: llms-txt-links-valid
 evidence_grade: C
 disposition: "keep — fix required"
-reviewed: 2026-08-24
-recommended_tier: scored
+reviewed: 2026-10-18
+recommended_tier: informative
 tier_rationale: "Recommended scored; ships informative. The B rested on a signal whose mechanism covers checks this audit does not perform. Re-graded C / informative / weight 0 (evidence sweep, 2026-08-24)."
 consumers:
   - "Google Lighthouse 13.3+ (llms-txt audit: H1, markdown-link, 50-char checks)"
@@ -40,6 +40,7 @@ sources:
   - chrome-lighthouse-agentic-browsing
   - debugbear-llms-txt-audit-doc
   - sej-lighthouse-markdown-links
+  - ahrefs-llmstxt-study
 ---
 
 # llms-txt-links-valid (`1.5`)
@@ -48,7 +49,15 @@ sources:
 
 ## What it checks
 
-Valid links in llms.txt ensure AI agents can navigate to your content without encountering dead ends.
+Whether the links inside a published `/llms.txt` resolve to HTTP 200. Up to 20 links are checked, spread across the file. A link that is refused or unanswered (0, 401, 403, 429) counts as unverifiable, not broken.
+
+## Why it matters
+
+No AI vendor documents reading llms.txt or llms-full.txt from a website at runtime. An [Ahrefs study of 137,210 domains](https://ahrefs.com/blog/llmstxt-study/) (verified 2026-10-18) found that 97% of llms.txt files received no requests in a month. AI tools never asked for a missing file. Tools a user points at the file, such as documentation helpers in coding agents, can still read it.
+
+## How it scores
+
+Informative, weight 0. Every result carries an `unconsumed` notice: no AI vendor documents reading this file. The audit never warns or fails. An absent file is not applicable. A file that is present passes, and broken links, or a file with no links, are named in the pass message, with the note that it does not affect AI agents.
 
 ## Evidence
 
@@ -87,6 +96,7 @@ the link. When no checked link can be verified, the result is not applicable.
   cost other audits their evidence.
 - **`ctx.wafProtection` is not read.** The unverifiable class covers the same
   answers link by link.
+- **Report only, from 2026-10-18.** The 2026-10-18 consumer review (policy.md, "Informative or obsolete") keeps this audit informative with an `unconsumed` notice and removes every warn and fail. Broken links and a file with no links used to warn. Both now pass, with the broken URLs kept in the message and in `found`.
 
 ## Deferred
 

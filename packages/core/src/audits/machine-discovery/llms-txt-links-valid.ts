@@ -14,6 +14,7 @@ import {
   ScoreDisplayMode,
 } from "#core/types";
 import { isRootArtifact, rootArtifactMiss } from "#core/gatherers/root-files";
+import { LLMS_TXT_NO_EFFECT, LLMS_TXT_NOTICE } from "./_llms-txt-notice";
 
 /**
  * How many links one scan checks. A large llms.txt lists hundreds of pages;
@@ -72,6 +73,7 @@ export class LlmsTxtLinksValidAudit extends Audit {
     evidenceGrade: EvidenceGrade.C,
     tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/machine-discovery/llms-txt-links-valid.md",
+    deprecated: LLMS_TXT_NOTICE,
     requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
     defaultPriority: CheckPriority.Low,
     guidance: {
@@ -101,16 +103,12 @@ export class LlmsTxtLinksValidAudit extends Audit {
     const links = extractMarkdownLinks(result.body);
 
     if (links.length === 0) {
-      return this.warn(
-        "No links found in llms.txt to validate.",
+      // Reported, not warned: Chrome Lighthouse flags a file with no links,
+      // but no AI vendor reads the file.
+      return this.pass(
+        `No links found in llms.txt to validate; Chrome Lighthouse flags a file with no links. ${LLMS_TXT_NO_EFFECT}`,
         "All links return HTTP 200",
         "No links found",
-        {
-          priority: CheckPriority.Low,
-          description:
-            "An llms.txt with no links is an index of nothing. If you publish the file, list your key pages in it.",
-          code: `- [Home](/): Main landing page\n- [About](/about/): Company information`,
-        },
       );
     }
 
@@ -157,16 +155,12 @@ export class LlmsTxtLinksValidAudit extends Audit {
         broken.length > 10
           ? `${topBroken} (+${broken.length - 10} more)`
           : topBroken;
-      return this.warn(
-        `${broken.length} of ${checked.length} checked link(s) are broken.`,
+      // Named, not warned: a person or a tool the user points at the file
+      // would hit these dead ends, but no AI vendor reads the file.
+      return this.pass(
+        `${broken.length} of ${checked.length} checked link(s) are broken. ${LLMS_TXT_NO_EFFECT}`,
         "All links return HTTP 200",
         `${scope}. Broken: ${brokenSummary}${unverifiedNote}`,
-        {
-          priority: CheckPriority.Low,
-          description:
-            "Broken links in llms.txt cause AI agents to hit dead ends, wasting their context window and degrading user experience. Fix the URLs to point to valid pages or remove links to pages that no longer exist.",
-          code: `- [Page Name](/correct-path): Description of the page`,
-        },
       );
     }
 

@@ -16,6 +16,8 @@ import {
   hasContent,
   isHTML5,
   idrefs,
+  getResolvedRefs,
+  querySelectorAll,
 } from "./dom";
 
 /**
@@ -229,5 +231,197 @@ describe("isHTML5", () => {
       '<html lang="en"><head><title>T</title></head><body><p>x</p></body></html>',
     );
     expect(isHTML5(dom.window.document)).toBe(false);
+  });
+});
+
+describe("getResolvedRefs", () => {
+  it("resolves every id to a VNode, or null when missing", () => {
+    const doc = build(
+      '<span id="a">A</span><div id="t" aria-describedby="a missing"></div>',
+    );
+    const refs = getResolvedRefs(doc.querySelector("#t")!, "aria-describedby");
+    expect(refs.map((r) => r?.props.id ?? null)).toEqual(["a", null]);
+  });
+
+  it("drops a self-reference when asked to", () => {
+    const doc = build('<div id="t" aria-describedby="t">x</div>');
+    const el = doc.querySelector("#t")!;
+    expect(getResolvedRefs(el, "aria-describedby")).toHaveLength(1);
+    expect(getResolvedRefs(el, "aria-describedby", { self: false })).toEqual(
+      [],
+    );
+  });
+
+  it("is empty when the attribute is absent", () => {
+    const doc = build('<div id="t"></div>');
+    expect(
+      getResolvedRefs(doc.querySelector("#t")!, "aria-describedby"),
+    ).toEqual([]);
+  });
+});
+
+describe("hiding rules beyond display", () => {
+  it("hides natively hidden elements", () => {
+    const doc = build('<p>x</p><template id="t"><p>y</p></template>');
+    expect(isHiddenForEveryone(doc.querySelector("#t")!)).toBe(true);
+  });
+
+  it("hides a detached element", () => {
+    const doc = build("<p>x</p>");
+    expect(isHiddenForEveryone(doc.createElement("div"))).toBe(true);
+  });
+
+  it("keeps an area visible regardless of display", () => {
+    const n = node('<map name="m"><area id="t" href="/x" alt="X"></map>');
+    expect(isHiddenForEveryone(n, { skipAncestors: true })).toBe(false);
+  });
+
+  // In a closed <details>, only the first summary renders.
+  it("hides the content of a closed details element", () => {
+    const doc = build(
+      '<details><summary id="s1">More</summary><summary id="s2">Again</summary><p id="p">Body</p></details>',
+    );
+    expect(isHiddenForEveryone(doc.querySelector("#s1")!)).toBe(false);
+    expect(isHiddenForEveryone(doc.querySelector("#s2")!)).toBe(true);
+    expect(isHiddenForEveryone(doc.querySelector("#p")!)).toBe(true);
+  });
+
+  it("shows the content of an open details element", () => {
+    const doc = build(
+      '<details open><summary>More</summary><p id="p">Body</p></details>',
+    );
+    expect(isHiddenForEveryone(doc.querySelector("#p")!)).toBe(false);
+  });
+
+  it("hides an element whose ancestor has content-visibility:hidden", () => {
+    const doc = build(
+      '<div style="content-visibility:hidden"><p id="p">Body</p></div>',
+    );
+    expect(isHiddenForEveryone(doc.querySelector("#p")!)).toBe(true);
+  });
+
+  // content-visibility hides the descendants, not the element itself.
+  it("keeps the element that carries content-visibility:hidden", () => {
+    const n = node('<div id="t" style="content-visibility:hidden">x</div>');
+    expect(isHiddenForEveryone(n)).toBe(false);
+  });
+});
+
+describe("hidden on screen but not from screen readers", () => {
+  it("treats opacity:0 as off screen", () => {
+    const n = node('<span id="t" style="opacity:0">x</span>');
+    expect(isVisibleOnScreen(n)).toBe(false);
+    expect(isVisibleToScreenReaders(n)).toBe(true);
+  });
+
+  // The visually-hidden clip pattern keeps text for screen readers.
+  it("treats a zero clip rect on a positioned element as off screen", () => {
+    const n = node(
+      '<span id="t" style="position:absolute; clip:rect(0px, 0px, 0px, 0px)">x</span>',
+    );
+    expect(isVisibleOnScreen(n)).toBe(false);
+    expect(isVisibleToScreenReaders(n)).toBe(true);
+  });
+
+  it("ignores a clip rect on a static element", () => {
+    const n = node(
+      '<span id="t" style="clip:rect(0px, 0px, 0px, 0px)">x</span>',
+    );
+    expect(isVisibleOnScreen(n)).toBe(true);
+  });
+
+  it("ignores a clip rect with area", () => {
+    const n = node(
+      '<span id="t" style="position:absolute; clip:rect(0px, 10px, 10px, 0px)">x</span>',
+    );
+    expect(isVisibleOnScreen(n)).toBe(true);
+  });
+
+  it.each([
+    ["inset(50%)", false],
+    ["inset(10%)", true],
+    ["circle(0)", false],
+    ["circle(5px)", true],
+    ["polygon(0 0, 1px 1px)", true],
+  ])("reads clip-path %s as visible on screen: %p", (clipPath, visible) => {
+    const n = node(`<span id="t" style="clip-path:${clipPath}">x</span>`);
+    expect(isVisibleOnScreen(n)).toBe(visible);
+  });
+});
+
+describe("focusDisabled and native focus", () => {
+  it("disables a control inside a disabled fieldset", () => {
+    const n = node('<fieldset disabled><input id="t"></fieldset>');
+    expect(focusDisabled(n)).toBe(true);
+    expect(isFocusable(n)).toBe(false);
+  });
+
+  // HTML exempts the first legend's contents from fieldset disabling.
+  it("keeps a control inside the legend of a disabled fieldset", () => {
+    const n = node(
+      '<fieldset disabled><legend><input id="t"></legend></fieldset>',
+    );
+    expect(focusDisabled(n)).toBe(false);
+  });
+
+  it("does not disable a control in an enabled fieldset", () => {
+    expect(focusDisabled(node('<fieldset><input id="t"></fieldset>'))).toBe(
+      false,
+    );
+  });
+
+  it("does not treat an area as disabled by visibility", () => {
+    const n = node('<map name="m"><area id="t" href="/x" alt="X"></map>');
+    expect(focusDisabled(n)).toBe(false);
+    expect(isNativelyFocusable(n)).toBe(true);
+  });
+
+  it.each([
+    ['<input id="t">', true],
+    ['<input id="t" type="hidden">', false],
+    ['<textarea id="t"></textarea>', true],
+    ['<select id="t"></select>', true],
+    ['<details><summary id="t">More</summary></details>', true],
+    ['<details id="t"><p>x</p></details>', true],
+    ['<details id="t"><summary>More</summary></details>', false],
+    ['<div id="t">x</div>', false],
+  ])("isNativelyFocusable(%s) is %p", (html, expected) => {
+    expect(isNativelyFocusable(node(html))).toBe(expected);
+  });
+
+  it("never focuses a text node", () => {
+    const text = toVNode(node('<p id="t">x</p>').actualNode.firstChild!);
+    expect(isFocusable(text)).toBe(false);
+    expect(isInTabOrder(text)).toBe(false);
+  });
+});
+
+describe("querySelectorAll", () => {
+  it("returns VNodes for matching descendants", () => {
+    const found = querySelectorAll(
+      node('<ul id="t"><li>a</li><li>b</li></ul>'),
+      "li",
+    );
+    expect(found.map((v) => v.props.nodeName)).toEqual(["li", "li"]);
+  });
+
+  it("returns nothing for a text node", () => {
+    const text = toVNode(node('<p id="t">x</p>').actualNode.firstChild!);
+    expect(querySelectorAll(text, "*")).toEqual([]);
+  });
+});
+
+describe("content detection edge cases", () => {
+  it("uses the explicit role to judge visual content", () => {
+    expect(isVisualContent(node('<div id="t" role="img"></div>'))).toBe(true);
+    expect(isVisualContent(node('<div id="t" role="button"></div>'))).toBe(
+      false,
+    );
+  });
+
+  it("does not count text inside elements whose text is never rendered", () => {
+    expect(
+      hasContent(node('<div id="t"><script>var a;</script></div>').actualNode),
+    ).toBe(false);
   });
 });

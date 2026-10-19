@@ -19,6 +19,7 @@ import {
 import { createProgressRenderer } from "./progress-renderer";
 import {
   parseCliOptions,
+  parseServeOptions,
   resolveCommand,
   displayUrl,
   isValidUrl,
@@ -30,11 +31,15 @@ import {
   CliCommand,
 } from "./options";
 import { tierMarker } from "./tier-marker";
+import { noticeLines, obsoleteLines } from "./notice-block";
 import {
   buildReportView,
   formatBrowserAssessment,
   generateHtmlReport,
   generateMarkdownSummary,
+  NOTICE_LABELS,
+  noticeKind,
+  noticeText,
 } from "@forkpoint/agent-lighthouse-report";
 import {
   writeFileSync,
@@ -73,6 +78,7 @@ function usage(exitCode = 1): never {
   console.log(`Usage:
   agent-lighthouse <url> [options]
   agent-lighthouse audit <url> [options]
+  agent-lighthouse serve [--port <n>] [--host <addr>] [--token <t>]
 
 Options:
   -c, --config <path>          Path to configuration file (e.g. agent-lighthouse.config.json)
@@ -110,6 +116,10 @@ Options:
                                NDJSON never interleaves with the terminal report on stdout;
                                all scanner logs (including error logs) are silenced to keep the
                                stream clean — audit errors still appear in the report itself.
+  serve: --port <n>            Port for the task server [default: 8787]
+  serve: --host <addr>         Address to bind [default: 127.0.0.1]
+  serve: --token <t>           Require "Authorization: Bearer <t>" to start or cancel scans.
+                               Also read from AL_SERVER_TOKEN
 
 Examples:
   npx @forkpoint/agent-lighthouse https://yourstore.com
@@ -338,7 +348,7 @@ async function audit(targetUrl?: string) {
       for (const audit of view.pageScope.audits) {
         for (const result of audit.assessments.slice(1)) {
           console.log(
-            `Advisory — not scored: [${audit.id}] ${result.status.toUpperCase()} — ${result.explanation ?? result.displayValue ?? "See audit details."}`,
+            `${result.obsolete ? "Obsolete" : "Advisory"} — not scored: [${audit.id}] ${result.status.toUpperCase()} — ${result.explanation ?? result.displayValue ?? "See audit details."}`,
           );
         }
       }
@@ -380,13 +390,21 @@ async function audit(targetUrl?: string) {
       }
     }
     console.log();
+    for (const line of [...obsoleteLines(view), ...noticeLines(view)])
+      console.log(line);
   }
 
   // Audit Debugger Output
   if (debugAudit) {
-    const allChecks = view.groups.flatMap((g) =>
-      g.categories.flatMap((c) => [...c.checks, ...c.notApplicable]),
-    );
+    // Obsolete checks live outside the categories, so they join here.
+    const allChecks = [
+      ...view.groups.flatMap((g) =>
+        g.categories.flatMap((c) => [...c.checks, ...c.notApplicable]),
+      ),
+      ...view.obsolete.found,
+      ...view.obsolete.absent,
+      ...view.obsolete.unrun,
+    ];
     const targetChecks = selectDebugChecks(allChecks, debugAudit);
 
     if (targetChecks.length === 0) {
@@ -430,6 +448,10 @@ async function audit(targetUrl?: string) {
           console.log(`  \x1b[90mImpact:\x1b[0m      ${check.impact}`);
         if (check.fix)
           console.log(`  \x1b[90mFix:\x1b[0m         ${check.fix}`);
+        if (check.deprecated)
+          console.log(
+            `  \x1b[90m${NOTICE_LABELS[noticeKind(check.deprecated)]}:\x1b[0m ${noticeText(check.deprecated)} (${check.deprecated.link})`,
+          );
         if (check.details?.code) {
           console.log(`  \x1b[90mCode Example:\x1b[0m`);
           console.log(
@@ -519,9 +541,29 @@ async function audit(targetUrl?: string) {
   }
 }
 
+async function serve() {
+  const opts = parseServeOptions(args);
+  const loopback =
+    opts.host === "127.0.0.1" ||
+    opts.host === "::1" ||
+    opts.host === "localhost";
+  if (!loopback && opts.token === undefined)
+    console.error(
+      "\x1b[33mWarning:\x1b[0m listening beyond this machine without --token. Anyone who can reach the port can start scans.",
+    );
+  const { startServer } = await import("@forkpoint/agent-lighthouse-server");
+  const server = await startServer(opts);
+  printBanner();
+  console.log(`Serving on ${server.url}  (Ctrl+C to stop)`);
+  const stop = () => void server.close().then(() => process.exit(0));
+  process.once("SIGINT", stop);
+  process.once("SIGTERM", stop);
+}
+
 async function main() {
   const resolved = resolveCommand(args);
   if (resolved.action === CliCommand.Help) usage(0);
+  if (resolved.action === CliCommand.Serve) return serve();
   await audit(resolved.url);
 }
 

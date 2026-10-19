@@ -305,6 +305,7 @@ export function parseCliOptions(
 export const CliCommand = {
   Help: "help",
   Audit: "audit",
+  Serve: "serve",
 } as const;
 
 export type CliCommand = (typeof CliCommand)[keyof typeof CliCommand];
@@ -345,6 +346,7 @@ export function resolveCommand(args: string[]): {
 } {
   if (args.length === 0 || args.includes("-h") || args.includes("--help"))
     return { action: CliCommand.Help };
+  if (args[0] === "serve") return { action: CliCommand.Serve };
   const rest = args[0] === "audit" ? args.slice(1) : args;
   const candidates: string[] = [];
   for (let i = 0; i < rest.length; i++) {
@@ -361,6 +363,32 @@ export function resolveCommand(args: string[]): {
   return url === undefined
     ? { action: CliCommand.Audit }
     : { action: CliCommand.Audit, url };
+}
+
+/** Flags of `agent-lighthouse serve`. The token may come from `AL_SERVER_TOKEN`. */
+export function parseServeOptions(
+  args: string[],
+  env: NodeJS.ProcessEnv = process.env,
+): { port: number; host: string; token?: string } {
+  // A flag that is present must carry a value: a silent fallback would start
+  // the server without the auth or bind address the operator asked for.
+  const value = (flag: string) => {
+    const present = args.some((a) => a === flag || a.startsWith(`${flag}=`));
+    const found = getArgValue(args, "", flag);
+    if (present && (found === undefined || found === ""))
+      throw new Error(`Missing value for ${flag}`);
+    return found;
+  };
+  const rawPort = value("--port") ?? "8787";
+  const port = Number(rawPort);
+  if (!Number.isInteger(port) || port < 0 || port > 65_535)
+    throw new Error(`Invalid --port: ${rawPort}`);
+  const token = value("--token") ?? env["AL_SERVER_TOKEN"];
+  return {
+    port,
+    host: value("--host") ?? "127.0.0.1",
+    ...(token !== undefined && token !== "" && { token }),
+  };
 }
 
 /**
