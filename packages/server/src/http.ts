@@ -103,6 +103,9 @@ export function createTaskServer(options: TaskServerOptions = {}): TaskServer {
       !req.headers["content-type"]?.toLowerCase().startsWith("application/json")
     )
       return json(res, 415, { error: "unsupported_media_type" });
+    // Checked before the DNS lookup too, so refused requests cost no lookup.
+    if (running.size >= MAX_RUNNING_TASKS)
+      return json(res, 429, { error: "too_many_tasks" });
     let target: URL;
     try {
       const body = (await readJson(req)) as { url?: unknown };
@@ -114,7 +117,8 @@ export function createTaskServer(options: TaskServerOptions = {}): TaskServer {
     if (!(await isSafeUrl(target.href)))
       return json(res, 422, { error: FailureReason.UnsafeTarget });
     // Counts scan promises, not task status: a cancelled task is terminal at
-    // once, but its scan holds a slot until the promise settles.
+    // once, but its scan holds a slot until the promise settles. Checked again
+    // because other requests may have filled the cap during the lookup.
     if (running.size >= MAX_RUNNING_TASKS)
       return json(res, 429, { error: "too_many_tasks" });
     const snapshot = store.create(publicUrl(target));

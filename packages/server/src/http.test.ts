@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createServer, type Server } from "node:http";
 import { connect, type AddressInfo } from "node:net";
 import {
+  isSafeUrl,
   PhaseId,
   type ScanOptions,
   type ScanReport,
@@ -219,5 +220,13 @@ describe("task routes", () => {
       origin: base,
     });
     expect(res.status).toBe(202);
+  });
+
+  it("refuses a POST when the scan cap is full without resolving the target", async () => {
+    for (let i = 0; i < 4; i++)
+      expect((await post({ url: `https://s${i}.test/` })).status).toBe(202);
+    vi.mocked(isSafeUrl).mockClear();
+    expect((await post({ url: "https://five.test/" })).status).toBe(429);
+    expect(isSafeUrl).not.toHaveBeenCalled();
   });
 });
