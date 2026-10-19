@@ -1017,6 +1017,29 @@ describe("serve", () => {
     expect("allowedOrigins" in parseServeOptions(["serve"], {})).toBe(false);
   });
 
+  it("accepts a bare origin with a port", () => {
+    expect(
+      parseServeOptions(
+        ["serve", "--allow-origin", "http://localhost:3000"],
+        {},
+      ).allowedOrigins,
+    ).toEqual(["http://localhost:3000"]);
+  });
+
+  it.each([
+    "null",
+    "chrome-extension://abc/",
+    "https://app.example/path",
+    "https://app.example?x=1",
+    "https://user@app.example",
+    "app.example",
+    "https://app.example:port",
+  ])("rejects --allow-origin %s", (origin) => {
+    expect(() =>
+      parseServeOptions(["serve", `--allow-origin=${origin}`], {}),
+    ).toThrow(/Invalid --allow-origin/);
+  });
+
   it("rejects an --allow-origin without a value", () => {
     expect(() => parseServeOptions(["serve", "--allow-origin"], {})).toThrow(
       /Missing value for --allow-origin/,

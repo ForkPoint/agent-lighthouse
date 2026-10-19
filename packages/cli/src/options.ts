@@ -365,6 +365,10 @@ export function resolveCommand(args: string[]): {
     : { action: CliCommand.Audit, url };
 }
 
+/** `scheme://host[:port]`, as a browser sends it in `Origin`. */
+const BARE_ORIGIN =
+  /^[a-z][a-z0-9+.-]*:\/\/(?:\[[0-9a-f:.]+\]|[^/?#@\s:[\]]+)(?::\d{1,5})?$/;
+
 /** Flags of `agent-lighthouse serve`. The token may come from `AL_SERVER_TOKEN`. */
 export function parseServeOptions(
   args: string[],
@@ -396,6 +400,13 @@ export function parseServeOptions(
       if (origin !== undefined) i++;
     } else continue;
     if (!origin) throw new Error("Missing value for --allow-origin");
+    // Compared to the Origin header byte for byte, so it must have that
+    // header's shape: no path, no trailing slash, no credentials. `null` is
+    // the origin of sandboxed and file pages, which any page can claim.
+    if (origin === "null" || !BARE_ORIGIN.test(origin))
+      throw new Error(
+        `Invalid --allow-origin: ${origin}. Expected scheme://host[:port] with no path or trailing slash, such as chrome-extension://<id>.`,
+      );
     allowedOrigins.push(origin);
   }
   return {
