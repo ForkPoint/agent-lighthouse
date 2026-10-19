@@ -37,6 +37,19 @@ const mockLookup = vi.mocked(dns.lookup);
 // Helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * A body stream that yields one chunk, as undici's body does. `read` is the
+ * spy a test checks or replaces to hold the body back.
+ */
+function streamOf(bytes: Uint8Array) {
+  return {
+    read: vi.fn(async (): Promise<Uint8Array> => bytes),
+    async *[Symbol.asyncIterator](this: { read(): Promise<Uint8Array> }) {
+      yield await this.read();
+    },
+  };
+}
+
 function mockResponse(
   statusCode: number,
   body: string,
@@ -46,10 +59,7 @@ function mockResponse(
     statusCode,
     headers,
     body: {
-      text: vi.fn().mockResolvedValue(body),
-      arrayBuffer: vi
-        .fn()
-        .mockResolvedValue(Buffer.from(body, "binary").buffer),
+      ...streamOf(Buffer.from(body, "utf8")),
       dump: vi.fn().mockResolvedValue(undefined),
     },
   };
@@ -64,15 +74,7 @@ function mockBinaryResponse(
     statusCode: 200,
     headers,
     body: {
-      text: vi.fn().mockResolvedValue(""),
-      arrayBuffer: vi
-        .fn()
-        .mockResolvedValue(
-          bytes.buffer.slice(
-            bytes.byteOffset,
-            bytes.byteOffset + bytes.byteLength,
-          ),
-        ),
+      ...streamOf(bytes),
       dump: vi.fn().mockResolvedValue(undefined),
     },
   };
@@ -364,7 +366,7 @@ describe("fetcher.fetch — HTTP methods", () => {
     });
 
     expect(resp.body.dump).toHaveBeenCalled();
-    expect(resp.body.text).not.toHaveBeenCalled();
+    expect(resp.body.read).not.toHaveBeenCalled();
     expect(result.body).toBe("");
   });
 
@@ -375,7 +377,7 @@ describe("fetcher.fetch — HTTP methods", () => {
     const fetcher = createFetcher();
     await fetcher.fetch({ url: "https://example.com" });
 
-    expect(resp.body.text).toHaveBeenCalled();
+    expect(resp.body.read).toHaveBeenCalled();
     expect(resp.body.dump).not.toHaveBeenCalled();
   });
 });
@@ -577,6 +579,48 @@ describe("fetcher.fetch — body and headers edge cases", () => {
     expect(result.body).toBe("<html></html>");
   });
 
+  it("stops reading an endless body instead of buffering it whole", async () => {
+    const chunk = Buffer.alloc(1024 * 1024, 0x61);
+    let yielded = 0;
+    let closed = false;
+    mockRequest.mockResolvedValue({
+      statusCode: 200,
+      headers: { "content-type": "text/html" },
+      body: {
+        async *[Symbol.asyncIterator]() {
+          try {
+            for (;;) {
+              yielded++;
+              yield chunk;
+            }
+          } finally {
+            closed = true;
+          }
+        },
+        dump: vi.fn().mockResolvedValue(undefined),
+      },
+    } as any);
+
+    const result = await createFetcher().fetch({
+      url: "https://example.com/endless",
+    });
+
+    expect(result.body.length).toBe(MAX_RESPONSE_BODY_BYTES);
+    expect(closed).toBe(true);
+    expect(yielded * chunk.length).toBeLessThanOrEqual(
+      3 * MAX_RESPONSE_BODY_BYTES,
+    );
+  });
+
+  it("keeps the first units of a multi-byte body exactly", async () => {
+    const huge = "é".repeat(MAX_RESPONSE_BODY_BYTES + 10);
+    mockRequest.mockResolvedValue(
+      mockResponse(200, huge, { "content-type": "text/html" }) as any,
+    );
+    const result = await createFetcher().fetch({ url: "https://example.com/" });
+    expect(result.body).toBe(huge.slice(0, MAX_RESPONSE_BODY_BYTES));
+  });
+
   it("caps a binary response at MAX_RESPONSE_BODY_BYTES", async () => {
     const huge = new Uint8Array(MAX_RESPONSE_BODY_BYTES + 100).fill(0x41);
     mockRequest.mockResolvedValue(
@@ -678,7 +722,10 @@ describe("fetcher.fetch — body and headers edge cases", () => {
       statusCode: 200,
       headers: {},
       body: {
-        text: vi.fn().mockRejectedValue(new Error("body read failed")),
+        // oxlint-disable-next-line require-yield
+        async *[Symbol.asyncIterator]() {
+          throw new Error("body read failed");
+        },
         dump: vi.fn().mockResolvedValue(undefined),
       },
     } as any);
@@ -1109,9 +1156,9 @@ describe("createFetcher — maxConcurrent", () => {
       release = resolve;
     });
     const response = mockResponse(200, "ok");
-    response.body.text = vi.fn().mockImplementation(async () => {
+    response.body.read = vi.fn(async () => {
       await held;
-      return "ok";
+      return Buffer.from("ok");
     });
     return { response, release };
   }
