@@ -20,8 +20,8 @@ import {
 
 /**
  * Returns the bots from the given list that have at least one explicit
- * User-agent group in robots.txt (matched case-insensitively, including
- * aliases like ClaudeBot for anthropic-ai).
+ * User-agent group in robots.txt (matched case-insensitively, including any
+ * alias a row declares; no current row declares one).
  *
  * Deliberately NOT the gatherer's `matchesUserAgent`: that compares RFC 9309
  * product tokens, so it also counts a `User-agent: GPTBot/1.1` group as an
@@ -184,11 +184,20 @@ export class AgentGovernanceAudit extends Audit {
       trainingNamed.length > 0
         ? "live conversational agents"
         : "training crawlers";
-    // Both categories can be named yet too thin to count: one of each with
-    // the same policy. The message must not then claim a category is unnamed.
+    // Both categories can be named yet too thin to count: fewer than two on
+    // at least one side, under the same policy. The message names the thin
+    // side rather than claiming a category is unnamed.
+    const thin = [
+      trainingNamed.length < 2
+        ? `${trainingNamed.length} training crawler`
+        : "",
+      realtimeNamed.length < 2
+        ? `${realtimeNamed.length} live conversational agent`
+        : "",
+    ].filter(Boolean);
     const message =
       trainingNamed.length > 0 && realtimeNamed.length > 0
-        ? "robots.txt names both training crawlers and live conversational agents, but too few of each, under the same policy, to separate the two."
+        ? `robots.txt names both training crawlers and live conversational agents under the same policy, but only ${thin.join(" and ")}, too few to separate the two.`
         : `Only ${covered} are explicitly governed in robots.txt — no rules for ${missing}.`;
     const result = this.warn(
       message,

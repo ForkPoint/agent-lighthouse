@@ -210,5 +210,27 @@ describe("AgentGovernanceAudit", () => {
     const result = audit.audit(ctx);
     expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).not.toContain("no rules for");
+    expect(result.message).toBe(
+      "robots.txt names both training crawlers and live conversational agents under the same policy, but only 1 training crawler and 1 live conversational agent, too few to separate the two.",
+    );
+  });
+
+  // Three training crawlers clear the bar on their own; only the live side is thin.
+  it("names only the thin side when the other has enough", () => {
+    const robots = [
+      "User-agent: GPTBot",
+      "User-agent: CCBot",
+      "User-agent: ClaudeBot",
+      "User-agent: ChatGPT-User",
+      "Allow: /",
+    ].join("\n");
+    const ctx = mockCheckContext([], {
+      "/robots.txt": mockFetchResult(robots, 200),
+    });
+    const result = audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.message).toBe(
+      "robots.txt names both training crawlers and live conversational agents under the same policy, but only 1 live conversational agent, too few to separate the two.",
+    );
   });
 });
