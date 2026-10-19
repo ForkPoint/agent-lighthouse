@@ -59,9 +59,11 @@ interface DirectiveBot {
  *
  * `documentedActive` is a claim about the *evidence*, not about crawl volume:
  * You.com and the Allen Institute both publish a crawler page naming their
- * token, so a directive aimed at them has a documented reader. ByteDance,
- * Cohere and Diffbot publish none, and Bytespider is additionally measured
- * fetching disallowed URLs — so their rows are reported, never scored.
+ * token, so a directive aimed at them has a documented reader. ByteDance and
+ * Cohere publish none, and Bytespider is additionally measured fetching
+ * disallowed URLs — so their rows are reported, never scored. Diffbot's page
+ * says its crawls follow robots.txt by default; its row stays unscored until
+ * that page is reviewed (the dossier's `## Deferred`).
  *
  * Every token is a bot registry row. The registry marks Bytespider and
  * cohere-ai `documented: false`; it records Diffbot's crawler page, which
@@ -97,7 +99,7 @@ const DIRECTIVE_BOTS: DirectiveBot[] = [
     botName: BotToken.Diffbot,
     displayName: "Diffbot",
     documentedActive: false,
-    note: "informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility",
+    note: "informational — Diffbot says its crawls follow robots.txt by default; not scored pending review against its crawler page",
   },
 ];
 

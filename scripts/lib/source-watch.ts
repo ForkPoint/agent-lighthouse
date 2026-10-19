@@ -31,23 +31,48 @@ export interface WatchedBot {
 }
 
 /**
+ * A watch id that depends only on the page, so reordering or removing a
+ * registry row cannot rename an item. A renamed id has no previous snapshot,
+ * and `diffEach` skips it, which would silently drop that week's change.
+ */
+function botWatchId(url: string): string {
+  let key = url;
+  try {
+    const parsed = new URL(url);
+    key = `${parsed.hostname}${parsed.pathname}`;
+  } catch {
+    // An unparseable URL keeps its raw text as the key.
+  }
+  const slug = key
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return `bot-registry:${slug}`;
+}
+
+/**
  * One watch item per operator page the bot registry cites, so a vendor that
  * renames a token, restates a purpose or changes a User-Agent string shows up
  * in the weekly report. Rows sharing a page share one item, which names
  * every token it backs. Undocumented rows cite no page and add nothing.
+ *
+ * A page that `already` watches (the hand-kept watchlist items) is skipped,
+ * so one vendor edit is reported once rather than under two ids.
  */
 export function botRegistryWatchItems(
   bots: readonly WatchedBot[],
+  already: readonly WatchItem[] = [],
 ): WatchItem[] {
+  const watched = new Set(already.map((item) => item.url));
   const byUrl = new Map<string, { operator: string; tokens: string[] }>();
   for (const bot of bots) {
-    if (!bot.docUrl) continue;
+    if (!bot.docUrl || watched.has(bot.docUrl)) continue;
     const existing = byUrl.get(bot.docUrl);
     if (existing) existing.tokens.push(bot.token);
     else byUrl.set(bot.docUrl, { operator: bot.operator, tokens: [bot.token] });
   }
   return [...byUrl].map(([url, { operator, tokens }]) => ({
-    id: `bot-registry:${tokens[0]!.toLowerCase()}`,
+    id: botWatchId(url),
     title: `${operator} crawler page (${tokens.join(", ")})`,
     url,
     why: "The bot registry (packages/core/src/bot-registry.ts) copies tokens, purposes and User-Agent strings from this page.",

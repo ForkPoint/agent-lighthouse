@@ -154,6 +154,11 @@ export const BOT_REGISTRY: readonly BotEntry[] = [
     purpose: BotPurpose.Training,
     docUrl: OPENAI_DOC,
     ipRangesUrl: "https://openai.com/gptbot.json",
+    // OpenAI says that "when fetching robots.txt files, we may add a
+    // robots.txt marker to the user-agent string", but, unlike for
+    // OAI-SearchBot, prints no GPTBot string with the marker (verified
+    // 2026-10-19). Writing one here would invent it, so only the printed
+    // string is listed.
     userAgents: [
       "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; GPTBot/1.4; +https://openai.com/gptbot",
     ],

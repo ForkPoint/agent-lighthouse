@@ -288,7 +288,7 @@ async function main(): Promise<void> {
   ) as { items: WatchItem[]; ianaPaths: WatchIanaPath[] };
   const watchItems = [
     ...watchlist.items,
-    ...botRegistryWatchItems(BOT_REGISTRY),
+    ...botRegistryWatchItems(BOT_REGISTRY, watchlist.items),
   ];
 
   let sources = registry.sources.filter(

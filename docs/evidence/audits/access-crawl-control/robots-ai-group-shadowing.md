@@ -88,3 +88,14 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 
 - Group merging relies on `groupsForBot` returning every group for a token. A
   typo'd token does not merge and is reported as no named group.
+- **A vendor-invited training opt-out still warns.** A site that writes
+  `User-agent: MistralAI-Training` / `Disallow: /` beside an open `*` group
+  gets the unintended-block warning. Mistral says "Webmasters can disallow
+  this user agent in their `robots.txt` file" (https://docs.mistral.ai/robots,
+  verified 2026-10-19), and OpenAI says each of its settings "is independent
+  of the others" (https://developers.openai.com/api/docs/bots, verified
+  2026-10-19). Since 2026-10-19 the registry adds more training tokens, so
+  more sites can see this warning. The warning already applied to GPTBot,
+  CCBot and Google-Extended. Exempting rows whose registry purpose is
+  training would move verdicts on a scored-A audit, so it needs its own
+  change.

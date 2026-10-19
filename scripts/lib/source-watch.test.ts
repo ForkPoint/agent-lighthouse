@@ -353,9 +353,49 @@ describe("botRegistryWatchItems", () => {
     ]);
     expect(items).toHaveLength(1);
     expect(items[0]).toMatchObject({
-      id: "bot-registry:gptbot",
+      id: "bot-registry:a-example-bots",
       url: "https://a.example/bots",
       title: "OpenAI crawler page (GPTBot, ChatGPT-User)",
     });
+  });
+
+  it("keeps an item's id when the rows behind it are reordered", () => {
+    const rows = [
+      { token: "GPTBot", operator: "OpenAI", docUrl: "https://a.example/bots" },
+      {
+        token: "ChatGPT-User",
+        operator: "OpenAI",
+        docUrl: "https://a.example/bots",
+      },
+    ];
+    const forward = botRegistryWatchItems(rows);
+    const reversed = botRegistryWatchItems([...rows].reverse());
+    expect(reversed[0]!.id).toBe(forward[0]!.id);
+  });
+
+  it("skips a page the watchlist already watches", () => {
+    const items = botRegistryWatchItems(
+      [
+        {
+          token: "GPTBot",
+          operator: "OpenAI",
+          docUrl: "https://a.example/bots",
+        },
+        {
+          token: "CCBot",
+          operator: "Common Crawl",
+          docUrl: "https://b.example/",
+        },
+      ],
+      [
+        {
+          id: "openai-bots",
+          title: "OpenAI bots",
+          url: "https://a.example/bots",
+          why: "",
+        },
+      ],
+    );
+    expect(items.map((item) => item.url)).toEqual(["https://b.example/"]);
   });
 });
