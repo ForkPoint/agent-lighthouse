@@ -119,6 +119,9 @@ describe("AgentUaContentDivergenceDiffAudit", () => {
     );
     expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("kilo");
+    expect(result.message).toBe(
+      "8 of 8 responses to a User-Agent naming an AI crawler differ from the browser response. The probes come from the scanner's address, so this is how the site answers the User-Agent, not what the verified crawler receives.",
+    );
   });
 
   // 17 of 20 shared -> 0.85 exactly, the floor, which passes.

@@ -108,6 +108,10 @@ describe("AgentUaCommerceParityAudit", () => {
     });
     expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("403");
+    expect(result.message).toMatch(/^A request naming \S+ gets HTTP 403 /);
+    expect(result.message).toContain(
+      "These probes come from the scanner's address, not OpenAI's published ranges, so they show how the site answers a request that names the agent, not what the real agent receives.",
+    );
   });
 
   it("fails on a challenge interstitial and names the fingerprint", async () => {

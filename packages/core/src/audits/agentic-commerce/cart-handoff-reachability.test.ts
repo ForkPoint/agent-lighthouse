@@ -189,6 +189,9 @@ describe("CartHandoffReachabilityAudit", () => {
     expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures")[0]).toContain("ChatGPT-User");
     expect(strings(r, "failures")[0]).toContain("403");
+    expect(strings(r, "failures")[0]).toBe(
+      "/cart answers 403 to a request naming ChatGPT-User from the scanner's address, so the cart refuses that User-Agent outright; the real agent, from OpenAI's published ranges, may be answered differently",
+    );
   });
 
   it("fails a 429 under the browser user agent", async () => {

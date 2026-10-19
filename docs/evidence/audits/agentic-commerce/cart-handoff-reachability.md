@@ -15,6 +15,10 @@ sources:
   - openai-searchbot-ips
   - acp-architecture
   - chromium-dash-stable
+  - s4
+  - google-verify-requests
+  - cloudflare-fake-bot-rules
+  - cloudflare-block-ai-bots
 ---
 
 # Cart Handoff Reachability
@@ -50,6 +54,14 @@ Falsifiable claim: ACP 2026-04-17 adds a seller-hosted Cart API whose response c
 - **[ACP Concepts: Architecture](https://agenticcommerce.dev/docs/concepts/architecture)** — Agentic Commerce Protocol (spec, URL verified 2026-08-20)
   - Four roles: Buyer, Agent, Seller (merchant of record, implements Checkout API), Payment Provider (tokenizes credentials with allowance constraints). A negative result worth stating: the architecture documents no seller discovery mechanism — no registry, no .well-known URL, no automatic endpoint discovery. Seller onboarding is out-of-band/manual. This means any 'ACP endpoint discovery' audit check would be speculative today, and endpoint conformance testing must accept an operator-supplied base URL.
 
+## Limits
+
+- Every probe leaves the scanner's own address with ChatGPT-User in the User-Agent. It shows how the site answers a request that names ChatGPT-User. It does not show what the real ChatGPT-User receives.
+- Real bots are told apart by network or signature, not by the string. Cloudflare grants verified status to a bot that "declares who it is deterministically, through a cryptographic Web Bot Auth signature, a published IP list with a stable user-agent, or reverse DNS" ([Cloudflare verified bots policy](https://developers.cloudflare.com/bots/concepts/bot/verified-bots/policy/) (verified 2026-10-19)). OpenAI publishes one IP-range file per bot, for example https://openai.com/gptbot.json and https://openai.com/chatgpt-user.json ([OpenAI crawlers and user agents](https://developers.openai.com/api/docs/bots) (verified 2026-10-19)). Google documents a reverse-DNS check, or a match against its published IP ranges ([Verifying Google crawlers and fetchers](https://developers.google.com/crawling/docs/crawlers-fetchers/verify-google-requests) (verified 2026-10-19)). The scanner can present none of these.
+- A CDN block of a spoofed User-Agent is ambiguous evidence. Cloudflare's managed rules flag a request whose User-Agent "matches a known bot but the source cannot be verified", and add that "automated testing tools that set a bot-like User-Agent header may also be flagged" ([Cloudflare fake bot managed rules](https://developers.cloudflare.com/waf/troubleshooting/fake-bot-managed-rules/) (verified 2026-10-19)). Its Block AI bots setting blocks verified bots "plus additional unverified bots that fall under these classifications" ([Cloudflare Block AI bots](https://developers.cloudflare.com/bots/additional-configurations/block-ai-bots/) (verified 2026-10-19)). A refusal is consistent with the real bot being refused too. It does not prove it.
+- A pass does not prove access either. A rule keyed on the verified bot's identity rather than its string can refuse the real bot and still let the probe through.
+- Account walls and challenge widgets are read from the document, so they hold for the browser request as well. The ambiguity is only in a refusal that the ChatGPT-User request gets and the browser request does not.
+
 ## Example failure
 
 A store's /cart renders fine but /checkout issues a 302 to /account/login?checkout_url=... because guest checkout is disabled. Feed data, policy links and structured markup all score perfectly; the agent walks the buyer to a login form for an account they do not have and the purchase dies at the last click. Variant: Cloudflare Turnstile is mounted on the checkout document only, so every other page in the audit passes cleanly.
@@ -84,6 +96,7 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 - ChatGPT-User is sent as the full string OpenAI documents (https://developers.openai.com/api/docs/bots, verified 2026-10-19).
 - The browser baseline is a Mac Chrome UA on the current Stable major, 155 (https://chromiumdash.appspot.com/fetch_releases?channel=Stable&platform=Mac&num=1, verified 2026-10-19). It was Chrome 140 before 2026-10-19.
 - Since 2026-10-19 the probe strings are read from the bot registry (`packages/core/src/bot-registry.ts`) rather than kept in the gatherer. The strings this audit sends are unchanged.
+- Since 2026-10-19 messages, titles and `details` strings say how the site answers a request whose User-Agent names a bot, never that the bot itself is blocked or sees a page. The verdicts did not change.
 
 ## Deferred
 
@@ -92,3 +105,7 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 - A store that shows the cart to anonymous buyers but demands an account at
   the payment step reads as reachable.
 - Edge blocks keyed on IP rather than UA are invisible to a UA-string probe.
+- **A 403 or 429 to the ChatGPT-User User-Agent still fails.** It can be how the
+  edge treats an unverified look-alike (Limits). The finding now says the cart
+  refused that User-Agent from the scanner's address. Moving it to a warning
+  needs the dossier revised first. Not changed in the 2026-10-19 wording patch.

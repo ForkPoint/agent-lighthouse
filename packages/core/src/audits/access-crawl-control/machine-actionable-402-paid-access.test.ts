@@ -129,6 +129,9 @@ describe("MachineActionable402PaidAccessAudit", () => {
     const result = await run();
     expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.found).toContain("none answered 402");
+    expect(result.message).toBe(
+      "No 402 was observed: the site did not charge any request whose User-Agent names an AI crawler.",
+    );
   });
 
   it("accepts a well-formed crawler-price header", async () => {
@@ -165,6 +168,7 @@ describe("MachineActionable402PaidAccessAudit", () => {
     const result = await run({ challenge: {} });
     expect(result.status).toBe(CheckStatus.Fail);
     expect(strings(result, "findings")[0]).toContain("no crawler-price");
+    expect(strings(result, "findings")[0]).toMatch(/^request naming \S+ at /);
   });
 
   it("reports a malformed price and a malformed x402 challenge as their own findings", async () => {

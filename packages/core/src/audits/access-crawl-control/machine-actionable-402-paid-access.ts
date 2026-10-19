@@ -120,7 +120,7 @@ export class MachineActionable402PaidAccessAudit extends Audit {
     failureTitle:
       "This site charges crawlers but does not say how to pay in a form they can read",
     description:
-      "Looks at every 402 the crawler-UA probes and the browser baseline received, and asks whether any machine-readable payment mechanism came with it: a `crawler-price` header, an x402 `PAYMENT-REQUIRED` challenge, or an RSL licence with a crawl payment covering the path. A 402 carrying only an HTML page is a price tag no crawler can read.",
+      "Looks at every 402 the crawler-UA probes and the browser baseline received, and asks whether any machine-readable payment mechanism came with it: a `crawler-price` header, an x402 `PAYMENT-REQUIRED` challenge, or an RSL licence with a crawl payment covering the path. A 402 carrying only an HTML page is a price tag no crawler can read. The probes come from the scanner's address and carry no Web Bot Auth signature, so they read the 402 a request naming the crawler gets; they never exercise the paid path.",
     scoreDisplayMode: ScoreDisplayMode.Ternary,
     tier: AuditTier.Scored,
     evidenceGrade: EvidenceGrade.B,
@@ -255,7 +255,7 @@ export class MachineActionable402PaidAccessAudit extends Audit {
 
     if (challenges.length === 0) {
       return this.notApplicable(
-        "No 402 was observed: this site does not charge for crawler access.",
+        "No 402 was observed: the site did not charge any request whose User-Agent names an AI crawler.",
         "A machine-readable payment mechanism on any 402 response",
         `${probes.length} crawler probe(s), none answered 402`,
       );
@@ -265,7 +265,7 @@ export class MachineActionable402PaidAccessAudit extends Audit {
     const browserFacing = challenges.filter((c) => c.hitsBrowsers);
     const findings: string[] = [];
     for (const challenge of challenges) {
-      const where = `${challenge.token} at ${challenge.url}`;
+      const where = `request naming ${challenge.token} at ${challenge.url}`;
       if (challenge.mechanisms.length === 0) {
         findings.push(
           `${where}: 402 with ${challenge.contentType || "no content type"} and no crawler-price, x402 challenge or RSL crawl payment`,

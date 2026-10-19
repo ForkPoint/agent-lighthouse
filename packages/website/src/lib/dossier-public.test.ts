@@ -659,7 +659,10 @@ describe("publicDossier", () => {
         // day: both `c2pa-*` audits gained theirs the same way. 156 since
         // 2026-10-18 (9.0.0): five new or revived dossiers publish theirs. 157
         // since 2026-10-19: `mcp-tool-annotation-coverage` publishes its own.
-        Limits: 157,
+        // 162 since the same day: five UA-parity dossiers gained a Limits
+        // section on what a User-Agent probe can prove (`ai-crawler-edge-parity`
+        // already published one from its counter-evidence).
+        Limits: 162,
         // Every scored audit publishes its grade reasoning; the shortfall is
         // in the informative and experimental tiers, which the bar exempts.
         // 199 since 2026-10-18 (9.0.0): the new audits, and the obsolete and

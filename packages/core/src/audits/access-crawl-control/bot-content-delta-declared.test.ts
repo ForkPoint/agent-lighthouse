@@ -129,6 +129,9 @@ describe("BotContentDeltaDeclaredAudit", () => {
     });
     expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("isAccessibleForFree");
+    expect(result.message).toMatch(
+      /^A request naming \S+ gets different content at /,
+    );
   });
 
   // Length alone cannot tell a stub from a rewritten page, which is why the

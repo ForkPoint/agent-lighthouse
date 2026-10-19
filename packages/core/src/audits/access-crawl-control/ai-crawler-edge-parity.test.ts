@@ -113,6 +113,22 @@ describe("AiCrawlerEdgeParityAudit", () => {
     expect(result.message).toContain("503");
   });
 
+  // A probe from the scanner's address shows how the site answers the
+  // User-Agent. It never says what the verified crawler receives.
+  it("words a finding as the answer to the User-Agent, not to the real crawler", async () => {
+    const result = await run({
+      robots: ALLOW_ALL,
+      probe: () => mockFetchResult("", 503),
+    });
+    expect(result.message).toContain(
+      "robots.txt admits these crawlers, and the edge answers differently when the User-Agent names them:",
+    );
+    expect(result.message).toContain(
+      "so they show how the site answers a request that names the crawler, not what the real crawler receives.",
+    );
+    expect(result.message).not.toMatch(/\bsees\b|edge does not/);
+  });
+
   it("passes when robots.txt disallows the crawler the edge also blocks", async () => {
     const result = await run({
       robots: DENY_ALL,
