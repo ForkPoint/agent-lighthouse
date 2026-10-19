@@ -66,3 +66,7 @@ One MCP endpoint audit, over one connection: find the endpoint the site _declare
 - `Mcp-Session-Id` is not handled. A server that requires a session may answer 400.
 - `server/discover` is not used. `initialize` is the interoperable path across the deployed base.
 - Only a boolean `readOnlyHint` is required on each tool. `untrustedContentHint`, `destructiveHint`, `idempotentHint` and `openWorldHint` are not scored.
+
+## Review history
+
+- 2026-10-19 — re-grade considered after the proposal evidence review and not made. The review documents consumers for the boolean `readOnlyHint` this audit warns on: Anthropic's connector review criteria, VS Code's `mcpLanguageModelToolContribution.ts` and OpenAI's plugin guidelines. That evidence covers one `warn` branch. The audit's other verdicts — the `fail` on a malformed `servers.json`, an unreadable Server Card, a non-200 or unreachable endpoint, and the `warn` on a handshake with no capabilities — rest on the declared-endpoint and NLWeb evidence above, which stays at C. The grade is the strongest proven consumer path for what the audit scores, so it stays C, informative. The annotation evidence is scored instead by the new `agent-interfaces/mcp-tool-annotation-coverage` (grade A).

@@ -6,6 +6,8 @@ import { CheckPriority, FixEffort, ScoreDisplayMode } from "#core/types";
 // TODO: implement proposed audit "Overlay Interception Hazard".
 // Status: stub — not registered in any category index; returns notApplicable until implemented.
 // Evidence grade A → scored tier. Implementation difficulty: headless-browser.
+// Blocked: needs a headless browser to hit-test the rendered page. The scanner has none, and the
+// HTML-only ScanOptions.snapshots carry no geometry, so this stays a proposal (not shipped in 9.0.0).
 // Dossier (mechanism, evidence, competitor coverage): docs/evidence/proposals/agent-operability/overlay-interception-hazard.md
 //
 // Implementation sketch (from the 2026-08-20 research pass):
