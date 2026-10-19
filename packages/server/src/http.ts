@@ -15,6 +15,7 @@ import { openTaskStream } from "./sse";
 import {
   MAX_BODY_BYTES,
   MAX_PAYLOAD_BODY_BYTES,
+  MAX_READING_TASK_BODIES,
   MAX_RUNNING_DETECTS,
   MAX_RUNNING_TASKS,
   MAX_STREAMS,
@@ -158,8 +159,13 @@ function scanInput(
         error: "invalid_request",
         message: "detectionId must come alone",
       };
-    const entry =
-      typeof detectionId === "string" ? payloads.get(detectionId) : undefined;
+    if (typeof detectionId !== "string")
+      return {
+        status: 400,
+        error: "invalid_request",
+        message: "detectionId must be a string",
+      };
+    const entry = payloads.get(detectionId);
     if (!entry)
       return {
         status: 404,
@@ -242,6 +248,7 @@ export function createTaskServer(options: TaskServerOptions = {}): TaskServer {
   const allowedOrigins = new Set(options.allowedOrigins ?? []);
   let streams = 0;
   let detecting = 0;
+  let readingTasks = 0;
 
   const authorized = (req: IncomingMessage) =>
     options.token === undefined ||
@@ -259,7 +266,22 @@ export function createTaskServer(options: TaskServerOptions = {}): TaskServer {
     // Checked before the DNS lookup too, so refused requests cost no lookup.
     if (running.size >= MAX_RUNNING_TASKS)
       return json(res, 429, { error: "too_many_tasks" });
-    const body = await readBody(req, res);
+    // The scan cap counts scans; this counts the bodies being read, each up
+    // to MAX_PAYLOAD_BODY_BYTES, so many slow uploads cannot pile up.
+    if (readingTasks >= MAX_READING_TASK_BODIES)
+      return json(
+        res,
+        429,
+        { error: "too_many_tasks" },
+        { "retry-after": "1" },
+      );
+    readingTasks++;
+    let body;
+    try {
+      body = await readBody(req, res);
+    } finally {
+      readingTasks--;
+    }
     if (!body) return;
     const input = scanInput(body, payloads);
     if ("status" in input)
@@ -335,6 +357,12 @@ export function createTaskServer(options: TaskServerOptions = {}): TaskServer {
         detected = await detectUrl(target, publicUrl(target));
       }
       const detectionId = payloads.put(detected);
+      // Not kept means no id to hand out: a page this large cannot be reused.
+      if (detectionId === undefined)
+        return json(res, 413, {
+          error: "payload_too_large",
+          message: "page too large to keep",
+        });
       return json(res, 200, { detectionId, ...detected.identity });
     } catch (error) {
       if (!(error instanceof DetectError)) throw error;
@@ -380,6 +408,7 @@ export function createTaskServer(options: TaskServerOptions = {}): TaskServer {
     if (allowedOrigin) {
       // Every answer, errors included, so the extension can read why.
       res.setHeader("access-control-allow-origin", origin);
+      res.setHeader("access-control-expose-headers", "Retry-After");
       res.setHeader("vary", "Origin");
     }
     if (

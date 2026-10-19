@@ -26,6 +26,19 @@ export class DetectError extends Error {
 
 type Detected = Omit<DetectionEntry, "detectionId">;
 
+/**
+ * A short code for a failed fetch, not undici's prose: the fetcher ends its
+ * error text with the cause's code, such as `(ECONNREFUSED)`. A deadline
+ * carries no code and reads as `timeout`.
+ */
+function fetchErrorCode(error: string | undefined): string {
+  const code = /\(([A-Z][A-Z0-9_]*)\)$/.exec(error ?? "")?.[1];
+  if (code) return code;
+  if (/timeout|timed out/i.test(error ?? "")) return "timeout";
+  if (/abort/i.test(error ?? "")) return "aborted";
+  return "fetch_error";
+}
+
 const HTML_TYPES = ["text/html", "application/xhtml+xml"];
 
 function payloadOf(
@@ -80,14 +93,27 @@ export function detectSnapshot(snapshot: BrowserSnapshot): Detected {
  * page is read, and a gateway target is reported, not followed.
  */
 export async function detectUrl(target: URL, shown: string): Promise<Detected> {
-  if (!(await isSafeUrl(target.href)))
-    throw new DetectError(400, "unsafe_url", "unsafe URL");
+  // One deadline covers the DNS check and the fetch. A lookup cannot be
+  // aborted, so it races the deadline instead.
+  const deadline = Date.now() + DETECT_FETCH_TIMEOUT_MS;
+  let timer: NodeJS.Timeout | undefined;
+  const safe = await Promise.race([
+    isSafeUrl(target.href),
+    new Promise<"timeout">((resolve) => {
+      timer = setTimeout(() => resolve("timeout"), DETECT_FETCH_TIMEOUT_MS);
+    }),
+  ]).finally(() => clearTimeout(timer));
+  if (safe === "timeout") throw new DetectError(502, "fetch_failed", "timeout");
+  if (!safe) throw new DetectError(400, "unsafe_url", "unsafe URL");
   const response = await createFetcher().fetch({
     url: target.href,
-    timeout: DETECT_FETCH_TIMEOUT_MS,
+    timeout: Math.max(1, deadline - Date.now()),
   });
+  // A redirect hop into private address space is refused by the fetcher.
+  if (response.error === "redirect-refused")
+    throw new DetectError(400, "unsafe_url", "unsafe URL");
   if (response.error !== undefined || response.status === 0)
-    throw new DetectError(502, "fetch_failed", response.error ?? "no response");
+    throw new DetectError(502, "fetch_failed", fetchErrorCode(response.error));
   if (response.status >= 400)
     throw new DetectError(
       422,

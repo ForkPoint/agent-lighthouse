@@ -24,7 +24,13 @@ export const MAX_DETECTIONS = 50;
 export const MAX_DETECTION_BYTES = 32 * 1024 * 1024;
 /** Detections that may run at once. More are refused with 429. */
 export const MAX_RUNNING_DETECTS = 8;
-/** Deadline for the single page fetch of a URL detection. */
+/**
+ * `POST /tasks` bodies read at once. A body can be 2.2 MiB, and the scan cap
+ * counts scans, not bodies in flight, so this bounds their memory. More are
+ * refused with 429.
+ */
+export const MAX_READING_TASK_BODIES = 8;
+/** Deadline for a URL detection: its DNS check and its single page fetch. */
 export const DETECT_FETCH_TIMEOUT_MS = 15_000;
 /**
  * Largest body for `POST /detect` and `POST /tasks`: one snapshot's 2 MiB of
