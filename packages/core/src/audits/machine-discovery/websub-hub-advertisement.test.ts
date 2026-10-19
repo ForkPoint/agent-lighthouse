@@ -132,8 +132,8 @@ describe("WebsubHubAdvertisementAudit", () => {
     const { result } = run({
       feedXml: rss(
         'xmlns:x="https://example.org/not-atom"',
-        '<x:link href="https://example.com/feed.xml" rel="self"/>',
-      ),
+        '<x:link href="https://example.com/feed.xml" rel="self"/><atom:link rel="hub" href="https://hub.example.net/"/>',
+      ).replace("<rss ", '<rss xmlns:atom="http://www.w3.org/2005/Atom" '),
     });
     const r = await result;
     expect(strings(r, "observations").join(" ")).toContain("no rel=self");
@@ -170,29 +170,24 @@ describe("WebsubHubAdvertisementAudit", () => {
     expect(strings(r, "observations").join(" ")).toContain("is relative");
   });
 
-  it("reports a self link that names a different topic URL", async () => {
+  // The Recommendation: the topic is the self URL, "which may be different
+  // from the URL that was used to make the discovery request".
+  it("accepts a self link that differs from the fetch URL", async () => {
     const { result } = run({
       documentLinks:
         '<link rel="self" href="https://example.com/other.xml"/><link rel="hub" href="https://hub.example.net/"/>',
     });
     const r = await result;
-    expect(r.status).toBe(CheckStatus.Warn);
-    expect(strings(r, "observations").join(" ")).toContain(
-      "different topic URL",
-    );
+    expect(r.status).toBe(CheckStatus.Pass);
+    expect(r.details?.["feedsWithValidSelf"]).toBe(1);
   });
 
-  // http vs https is a different topic URL to a hub, however similar it looks.
-  it("reports an http self link on an https feed", async () => {
+  it("accepts an http self link on an https feed", async () => {
     const { result } = run({
       documentLinks:
         '<link rel="self" href="http://example.com/feed.xml"/><link rel="hub" href="https://hub.example.net/"/>',
     });
-    const r = await result;
-    expect(r.status).toBe(CheckStatus.Warn);
-    expect(strings(r, "observations").join(" ")).toContain(
-      "different topic URL",
-    );
+    expect((await result).status).toBe(CheckStatus.Pass);
   });
 
   it("reports more than one self link", async () => {
@@ -249,13 +244,15 @@ describe("WebsubHubAdvertisementAudit", () => {
     ).toBe(true);
   });
 
-  it("reports a missing hub without failing", async () => {
+  // Absent artifact, absent verdict: Google documents WebSub as optional
+  // ("you can use WebSub"), so a feed with no hub has nothing to judge.
+  it("is notApplicable when no feed advertises a hub", async () => {
     const { result } = run({
       documentLinks: '<link rel="self" href="https://example.com/feed.xml"/>',
     });
     const r = await result;
-    expect(r.status).toBe(CheckStatus.Warn);
-    expect(strings(r, "observations").join(" ")).toContain("no rel=hub");
+    expect(r.status).toBe(CheckStatus.NotApplicable);
+    expect(r.message).toContain("no WebSub hub");
   });
 
   it("never returns fail and carries no scoring weight", async () => {

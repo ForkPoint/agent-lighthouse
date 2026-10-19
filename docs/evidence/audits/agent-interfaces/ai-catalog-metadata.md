@@ -14,6 +14,7 @@ sources:
   - hf-discover
   - ard-spec-repo
   - google-ard-announcement
+  - ard-spec-v091
 ---
 
 # ai-catalog-metadata (`5.8`)
@@ -42,6 +43,8 @@ Complete metadata helps AI agents understand who owns the service, when it was l
 **Counter-evidence:** No crawler is documented to downrank a site for thin catalog metadata. The consequence is mechanical — the client matches less text — rather than a published ranking signal. The hosted Hugging Face server does not fetch arbitrary well-known files at all: "Navigation is intentionally not exposed by the hosted server". The consuming path is therefore a user-driven CLI, not a background crawler. The specification is also a draft and says so. Historically this audit scored an invented field list: `owner`, `contact`, `lastUpdated` and `services`. None of those appears in any revision of the spec, or in any of the four live manifests checked — the ARD conformance example, neon.com, weaviate.io and the Shopware core template. A spec-perfect manifest therefore scored zero until the 2026-08-22 rewrite.
 
 ## Implementation deviations
+
+- The manifest comes from the shared `_ard.ts` reader: `/.well-known/ard.json` or `/.well-known/ai-catalog.json`, with only `entries` required (ARD v0.91 — https://github.com/ards-project/ard-spec/blob/main/spec/ard.md, verified 2026-10-18). A manifest with no `host` object is graded on its entries alone; the `host.displayName` warning fires only when a `host` object is present but unnamed. Before 2026-10-18 a manifest without `host` or `specVersion` was rejected upstream and this audit returned `notApplicable`.
 
 - No manifest, or a manifest with no entries, is `na`. `ai-catalog-exists` already scores the absence.
 - Blank strings and empty arrays do not count as metadata.

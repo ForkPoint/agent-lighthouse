@@ -31,8 +31,16 @@ import {
   EvidenceGrade,
   EvidenceKey,
   FixEffort,
+  HttpMethod,
   ScoreDisplayMode,
 } from "#core/types";
+
+/**
+ * A fixed third-party origin for the probes, standing in for the origin of a
+ * browser-sandboxed agent. A server that allowlists named origins will not
+ * admit it, which is the point: neither would it admit an unknown agent.
+ */
+const PROBE_ORIGIN = "https://example.invalid";
 
 /** How many endpoints to probe. Two is enough to tell a policy from an accident. */
 const MAX_TARGETS = 2;
@@ -161,8 +169,20 @@ async function probe(ctx: CheckContext, url: string): Promise<Probe> {
   try {
     // A preflight is what a browser sends first; some servers answer CORS
     // headers only on the actual request, so GET is the documented fallback.
-    for (const method of ["OPTIONS", "GET"] as const) {
-      const result = await probeOpenApiServer(ctx, url, { method });
+    // Both probes carry Origin: a browser always sends it, and many API
+    // gateways emit ACAO only when it is present.
+    const attempts = [
+      {
+        method: HttpMethod.Options,
+        headers: {
+          Origin: PROBE_ORIGIN,
+          "Access-Control-Request-Method": "GET",
+        },
+      },
+      { method: HttpMethod.Get, headers: { Origin: PROBE_ORIGIN } },
+    ];
+    for (const attempt of attempts) {
+      const result = await probeOpenApiServer(ctx, url, attempt);
       if (result) {
         answered = true;
         const value = result.headers["access-control-allow-origin"];
@@ -195,7 +215,7 @@ export class CorsApiRoutesAudit extends Audit {
     title: "CORS on declared API routes",
     failureTitle: "CORS on declared API routes",
     description:
-      "CORS matters for one class of AI consumer: agent code running inside a browser origin, such as an OpenAI Apps SDK widget in an isolated iframe under a strict CSP. Server-side crawlers and MCP clients are not browsers and are unaffected. This audit reads the endpoints out of your published OpenAPI document and probes those, and applies only to sites that publish one.",
+      "CORS matters for one class of AI consumer: agent code running inside a browser origin, such as an MCP App or an OpenAI Apps SDK widget in an isolated iframe under a strict CSP. Server-side crawlers and MCP clients are not browsers and are unaffected. This audit reads the endpoints out of your published OpenAPI document and probes those, and applies only to sites that publish one.",
     scoreDisplayMode: ScoreDisplayMode.Informative,
     weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
     evidenceGrade: EvidenceGrade.C,

@@ -128,6 +128,18 @@ describe("McpVersionDowngradeAudit", () => {
     expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
+  it.each([401, 403])(
+    "is notApplicable when the server answers the probe with HTTP %i (login required)",
+    async (status) => {
+      const refused = mockFetchResult("", status);
+      if (status === 401)
+        refused.headers["www-authenticate"] = 'Bearer resource_metadata="x"';
+      const result = await run({ a: refused, b: refused, c: refused });
+      expect(result.status).toBe(CheckStatus.NotApplicable);
+      expect(result.message).toContain("requires sign-in");
+    },
+  );
+
   it("passes a server that rejects an unsupported revision recoverably", async () => {
     const result = await run();
     expect(result.status).toBe(CheckStatus.Pass);

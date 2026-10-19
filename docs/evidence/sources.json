@@ -1022,6 +1022,15 @@
       "verified": "2026-08-24"
     },
     {
+      "id": "ard-spec-v091",
+      "title": "ARD Specification v0.91 — well-known path and manifest schema",
+      "url": "https://github.com/ards-project/ard-spec/blob/main/spec/ard.md",
+      "publisher": "ARD Project (Google/Microsoft/Hugging Face authors)",
+      "type": "draft-spec",
+      "keyFindings": "v0.91 (commit a305a528, 2026-08-26), status Proposal. §5.1: a consumer MUST fetch /.well-known/ard.json and MUST honour rel=\"ard\"; the predecessor path /.well-known/ai-catalog.json and rel=\"ai-catalog\" MAY additionally be consulted, and publishers on the predecessor path SHOULD move. The ArdManifest JSON schema (spec/schemas/ard-entry.schema.json) requires only entries; additionalProperties is open, so specVersion and host are not ARD requirements (they come from the Linux Foundation AI Catalog spec).",
+      "verified": "2026-10-18"
+    },
+    {
       "id": "ardvark-crawler",
       "title": "ardvark — ARD crawler/probe (GitHub code search hits)",
       "url": "https://github.com/HelgeSverre/ardvark",
@@ -3771,6 +3780,15 @@
       "keyFindings": "Largest outcome study found. 2,400 domains (326 with llms.txt), Feb 1 – Apr 30 2026, citations tracked across 8 AI surfaces (ChatGPT, Gemini, Perplexity, Claude, Copilot, Grok, Google AI Mode, AI Overviews), 240 matched pairs controlling for category, organic visibility and content volume. RESULT: citation rate 11.8% with llms.txt vs 11.6% without = +0.2pp, inside the ±0.5pp noise band. Before/after on 58 deploying sites: median +0.1pp vs +0.2pp for controls. Crawler side: 19 customer sites saw 41 total /llms.txt requests against ~1.1M AI-crawler page fetches."
     },
     {
+      "id": "mcp-apps-csp-cors",
+      "title": "CSP and CORS — MCP Apps",
+      "url": "https://apps.extensions.modelcontextprotocol.io/api/documents/csp-and-cors.html",
+      "type": "spec",
+      "publisher": "Model Context Protocol",
+      "verified": "2026-10-18",
+      "keyFindings": "MCP Apps HTML 'runs in a sandboxed iframe with no same-origin server', and 'Any app that makes network requests must configure Content Security Policy (CSP) and possibly CORS'. CORS 'controls what the API server allows'. 'Public APIs that respond with Access-Control-Allow-Origin: *' work without configuration; for origin allowlists, _meta.ui.domain gives the app a stable origin the API server can allowlist. Scope: APIs the app author lists in connectDomains. Nothing documents an MCP App fetching a third-party site's llms.txt or ai-catalog.json."
+    },
+    {
       "id": "mcp-code-search-link-rel",
       "title": "GitHub code search: rel=\"mcp\" in the MCP specification repository",
       "url": "https://github.com/modelcontextprotocol/modelcontextprotocol",
@@ -3786,8 +3804,8 @@
       "url": "https://raw.githubusercontent.com/modelcontextprotocol/experimental-ext-server-card/main/docs/discovery.md",
       "type": "draft-spec",
       "publisher": "Model Context Protocol",
-      "verified": "2026-08-20",
-      "keyFindings": "'Protocol Revision: draft'. 'An AI Catalog MAY be served from any URL. For automated domain-level discovery, hosts MAY publish one at: /.well-known/ai-catalog.json. Clients performing domain-level discovery SHOULD attempt to retrieve this well-known URL. When served over HTTP, the document SHOULD use the `application/ai-catalog+json` media type.' Entry type for MCP is `application/mcp-server-card+json`; identifiers use `urn:air:{publisher}:{namespace}:{name}`. Repo has only 5 stars (created 2026-04-27, last push 2026-08-12)."
+      "verified": "2026-10-18",
+      "keyFindings": "'Protocol Revision: draft'. 'An AI Catalog MAY be served from any URL. For automated domain-level discovery, hosts MAY publish one at: /.well-known/ai-catalog.json. Clients performing domain-level discovery SHOULD attempt to retrieve this well-known URL. When served over HTTP, the document SHOULD use the `application/ai-catalog+json` media type.' Entry type for MCP is `application/mcp-server-card+json`; identifiers use `urn:air:{publisher}:{namespace}:{name}`. Repo has only 5 stars (created 2026-04-27, last push 2026-08-12). An entry's `url` is the \"URL where the full Server Card can be retrieved\"; exactly one of `url` or inline `data` is used. Client flow: \"retrieve the Server Card from that URL\" then \"Use the Server Card metadata to configure and establish an MCP connection\". The card's connection details are its `remotes[]` endpoints (re-checked 2026-10-18)."
     },
     {
       "id": "mcp-http",

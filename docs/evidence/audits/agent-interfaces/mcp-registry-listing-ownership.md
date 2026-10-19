@@ -61,6 +61,7 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 - Only the aggregator case fails. An `io.github.<user>` listing is held by someone who can update it, so it does not fail.
 - The proof is fetched at `https://<apex>/.well-known/mcp-registry-auth`, not read from the scan's root files. The namespace binds to the apex, not the scanned host.
 - 2026-10-17: a first-party listing no longer fails when the proof file is absent or malformed. The authentication guide checks the proof at login by DNS TXT or HTTP file and requires neither to persist, so a TXT-only domain was failed wrongly. An absent file is reported in `details.ownershipProof` only. A malformed one is a warning.
+- 2026-10-18: when no registry search gets an answer (network error or a non-200 status), the audit is not applicable. Only an answered search can show that no listing exists; it used to fail as "no registry listing".
 
 ## Deferred
 

@@ -4,7 +4,7 @@ import { weightForGrade } from "#core/scorer";
 import type { CheckContext } from "#core/check-context";
 import { isSafeUrl } from "#core/url-utils";
 import { sharedProbeUrl } from "#core/gatherers/discovery";
-import { AI_CATALOG_PATH, entryLabel, readAiCatalog } from "./_ard";
+import { entryLabel, readAiCatalog } from "./_ard";
 import type { ArdEntry } from "./_ard";
 import {
   AuditTier,
@@ -145,7 +145,7 @@ export class AiCatalogUrlsAudit extends Audit {
     // same absence would penalize one missing file three times over.
     if (!read.ok) {
       return this.notApplicable(
-        `No ARD manifest to traverse: ${AI_CATALOG_PATH} ${read.reason === "absent" ? "is not served" : "is not a valid ARD manifest"} — see the AI Catalog exists check.`,
+        `No ARD manifest to traverse: ${read.path} ${read.reason === "absent" ? "is not served" : "is not a valid ARD manifest"} — see the AI Catalog exists check.`,
         EXPECTED,
         read.found,
       );

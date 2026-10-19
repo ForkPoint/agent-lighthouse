@@ -324,29 +324,16 @@ export class SearchEndpointAudit extends Audit {
       );
     }
 
-    if (state.kind === "no-action") {
-      return this.warn(
-        "WebSite schema found but it declares no SearchAction.",
-        EXPECTED,
-        "WebSite schema without a potentialAction SearchAction",
-        {
-          priority: CheckPriority.Low,
-          description: SearchEndpointAudit.meta.description,
-          code: SAMPLE,
-        },
-        state.pageUrl,
-      );
-    }
-
-    return this.fail(
-      "No search endpoint declared (no SearchAction and no OpenAPI search operation).",
+    // Absent artifact, absent verdict: a site that declares no search
+    // endpoint (including a WebSite node without a SearchAction) has done
+    // nothing wrong, and no vendor documents reading the declaration.
+    return this.notApplicable(
+      state.kind === "no-action"
+        ? "WebSite schema found but it declares no SearchAction, and no OpenAPI search operation exists."
+        : "No search endpoint declared (no SearchAction and no OpenAPI search operation).",
       EXPECTED,
       "No search endpoint detected",
-      {
-        priority: CheckPriority.Low,
-        description: SearchEndpointAudit.meta.description,
-        code: SAMPLE,
-      },
+      state.kind === "no-action" ? state.pageUrl : undefined,
     );
   }
 }

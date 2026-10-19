@@ -19,6 +19,7 @@ sources:
   - nlweb-repo-howto
   - iana-well-known-uris
   - probe-cloudflare-mcp-json
+  - mcp-ext-server-card-discovery
 ---
 
 # mcp-endpoint (`5.13`, `5.14`, `5.24`)
@@ -34,7 +35,8 @@ One MCP endpoint audit, over one connection: find the endpoint the site _declare
 | valid JSON-RPC `initialize` result, at least one negotiated capability, and — when `tools` is negotiated — every listed tool carrying a boolean `readOnlyHint` | `pass`                  |
 | HTTP 401 with a `WWW-Authenticate` challenge — a correctly protected server, not a broken one                                                                  | `pass` (with note)      |
 | valid handshake but no negotiated capability, or some listed tools missing a boolean `readOnlyHint`, or HTTP 200 whose body is not JSON-RPC                    | `warn`, priority `high` |
-| no endpoint declared anywhere, malformed `servers.json`, an endpoint that is not safe to probe, another non-200, or unreachable                                | `fail`, priority `high` |
+| malformed `servers.json`, an unreadable Server Card or one with no `remotes[].url`, an endpoint that is not safe to probe, another non-200, or unreachable     | `fail`, priority `high` |
+| no endpoint declared anywhere                                                                                                                                  | `notApplicable`         |
 
 `tools/list` is only called when the server negotiates the `tools` capability, and a `tools/list` that does not answer is reported, never punished.
 
@@ -52,7 +54,11 @@ One MCP endpoint audit, over one connection: find the endpoint the site _declare
 
 - The audit absorbs mcp-capabilities (5.14) and webmcp-tool-annotations (5.24). Their records are in `docs/evidence/merged/agent-interfaces/`.
 - `/mcp`, `/api/mcp` and `/sse` are not probed. The NLWeb evidence says to detect only a declared endpoint, never by path guessing.
-- Declared endpoints come from `servers.json`, the UCP service list, and an `application/mcp-server-card+json` entry in `/.well-known/ai-catalog.json`.
+- Declared endpoints come from `servers.json`, the UCP service list, and an `application/mcp-server-card+json` entry in the ARD catalog at `/.well-known/ard.json` or `/.well-known/ai-catalog.json`.
+- A catalog entry's `url` addresses the Server Card, not the endpoint ([discovery.md](https://github.com/modelcontextprotocol/experimental-ext-server-card/blob/main/docs/discovery.md), verified 2026-10-18). `gatherers/mcp.ts` reads the card and returns its `remotes[].url`, preferring a `streamable-http` remote. A card that cannot be read, or that names no remote, is a broken declaration and fails. Until 2026-10-18 the audit POSTed `initialize` to the card URL, which failed sites that published a correct catalog.
+- Both catalogs are searched for the Server Card entry, `ard.json` first. A site may list other artifacts in `ard.json` and the card in `ai-catalog.json`, the path the Server Card extension names. A relative card `url` resolves against its catalog, and a relative `remotes[].url` against the card, because the spec says only that these SHOULD be absolute.
+- An entry that embeds its Server Card inline (`data` instead of `url`) is not read yet, and counts as no declaration.
+- No declared endpoint returns `notApplicable` (absent artifact, absent verdict). Until 2026-10-18 it returned `fail` at high priority on every site without an MCP server.
 - The request sends `Accept: application/json, text/event-stream`, and SSE frames are unwrapped.
 - 401 with a `WWW-Authenticate` challenge passes with a note. A bare 401 fails.
 - The POST is gated by `isSafeUrl()`.

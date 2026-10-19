@@ -18,26 +18,15 @@ const MAX_FEEDS = 2;
 /** Hub statuses that prove something is listening. A hub may refuse a bare HEAD. */
 const HUB_ALIVE = new Set([400, 405]);
 
-/** Compare two URLs the way WebSub means "the same topic". */
-function normalize(raw: string): string {
-  try {
-    const url = new URL(raw);
-    url.hash = "";
-    const path = url.pathname.replace(/\/+$/, "");
-    return `${url.protocol}//${url.host}${path}${url.search}`;
-  } catch {
-    return raw;
-  }
-}
-
 export class WebsubHubAdvertisementAudit extends Audit {
   static override meta: AuditMeta = {
     id: "machine-discovery/websub-hub-advertisement",
     category: "machine-discovery",
-    title: "Feeds advertise a WebSub hub and exactly one canonical self link",
+    title:
+      "Feeds that advertise a WebSub hub carry exactly one absolute self link",
     failureTitle: "This site’s WebSub advertisement is incomplete",
     description:
-      "Reads the WebSub discovery links on each feed — the `Link:` response headers first, as the specification requires, then the document — and checks the shape the W3C Recommendation asks for: exactly one absolute `rel=self` equal to the URL the feed was fetched from, and at least one `rel=hub` over HTTPS that answers a HEAD. Advisory only: no AI answer engine is documented as a WebSub subscriber, so this audit never affects the score.",
+      "Reads the WebSub discovery links on each feed — the `Link:` response headers first, as the specification requires, then the document — and, on each feed that advertises a hub, checks the shape the W3C Recommendation asks for: exactly one absolute `rel=self`, and every `rel=hub` over HTTPS and answering a HEAD. The self URL may differ from the URL the feed was fetched from; the Recommendation allows it. A feed with no hub is not judged. Advisory only: no AI answer engine is documented as a WebSub subscriber, so this audit never affects the score.",
     scoreDisplayMode: ScoreDisplayMode.Informative,
     tier: AuditTier.Informative,
     evidenceGrade: EvidenceGrade.C,
@@ -48,8 +37,8 @@ export class WebsubHubAdvertisementAudit extends Audit {
     requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
     guidance: {
       impact:
-        "A hub subscription is verified against the feed’s own `rel=self`. When that link is missing, relative, or points at a different URL than the one the feed is served from, verification cannot complete, and the push path degrades to whatever polling cadence subscribers happen to use. The publisher sees a hub that looks configured and no error anywhere. The benefit side is unproven: WebSub is a W3C Recommendation, but no AI answer engine is documented as a subscriber, which is why this audit reports and does not score.",
-      fix: "Advertise the hub and the canonical topic URL in the feed’s `Link:` response headers, which is where a subscriber looks first. Emit exactly one `rel=self` with an absolute URL identical to the address the feed is served from, and at least one `rel=hub` over HTTPS. If you run no hub, a hosted one (Google’s pubsubhubbub, Superfeedr, websub.rocks) needs only the two link relations.",
+        "A hub subscription is verified against the feed’s own `rel=self`. When that link is missing, duplicated or relative, verification cannot complete, and the push path degrades to whatever polling cadence subscribers happen to use. The publisher sees a hub that looks configured and no error anywhere. The benefit side is unproven: WebSub is a W3C Recommendation, but no AI answer engine is documented as a subscriber, which is why this audit reports and does not score.",
+      fix: "Advertise the hub and the canonical topic URL in the feed’s `Link:` response headers, which is where a subscriber looks first. Emit exactly one `rel=self` with the absolute canonical topic URL, and at least one `rel=hub` over HTTPS. If you run no hub, a hosted one (Google’s pubsubhubbub, Superfeedr, websub.rocks) needs only the two link relations.",
       effort: FixEffort.Easy,
       docsUrl:
         "https://forkpoint.github.io/agent-lighthouse/audits/machine-discovery/websub-hub-advertisement/",
@@ -67,12 +56,25 @@ export class WebsubHubAdvertisementAudit extends Audit {
       );
     }
 
+    // Absent artifact, absent verdict. WebSub is optional: Google documents
+    // that a publisher "can use WebSub" to announce changes. Only a feed that
+    // advertises a hub has a push path whose shape can be judged; the self
+    // link matters only for hub verification, so a hubless feed is skipped.
+    const hubbed = feeds.filter((feed) => feed.hubLinksRaw.length > 0);
+    if (hubbed.length === 0) {
+      return this.notApplicable(
+        `${feeds.length} feed(s) found, but no WebSub hub is advertised, so there is no push path to judge.`,
+        "A feed advertising a rel=hub",
+        `${feeds.length} feed(s), no rel=hub`,
+      );
+    }
+
     const observations: string[] = [];
     const hubProbes: string[] = [];
     let feedsWithHub = 0;
     let feedsWithValidSelf = 0;
 
-    for (const feed of feeds) {
+    for (const feed of hubbed) {
       const where = feed.url;
       const source = feed.linksFromHeader ? "Link headers" : "the document";
 
@@ -91,21 +93,11 @@ export class WebsubHubAdvertisementAudit extends Audit {
           observations.push(
             `${where}: rel=self "${raw}" is relative; WebSub requires an absolute URL`,
           );
-        } else if (normalize(raw) !== normalize(where)) {
-          observations.push(
-            `${where}: rel=self points at ${raw}, which is a different topic URL than the feed is served from`,
-          );
         } else {
           feedsWithValidSelf += 1;
         }
       }
 
-      if (feed.hubLinksRaw.length === 0) {
-        observations.push(
-          `${where}: no rel=hub, so every subscriber falls back to polling`,
-        );
-        continue;
-      }
       feedsWithHub += 1;
 
       for (const raw of feed.hubLinksRaw.slice(0, 2)) {
@@ -149,7 +141,7 @@ export class WebsubHubAdvertisementAudit extends Audit {
       observations: observations.slice(0, 20),
     };
     const expected =
-      "Exactly one absolute rel=self equal to the feed URL, and at least one reachable HTTPS rel=hub";
+      "On each feed with a rel=hub: exactly one absolute rel=self, and reachable HTTPS hubs";
     const found = `${feeds.length} feed(s); ${feedsWithHub} advertise a hub, ${feedsWithValidSelf} carry a valid rel=self. ${observations.length} observation(s).`;
     const displayValue = `${feedsWithHub}/${feeds.length} feeds advertise a hub`;
 
@@ -161,7 +153,7 @@ export class WebsubHubAdvertisementAudit extends Audit {
           observations[0]!,
           expected,
           found,
-          "Advertise one absolute rel=self equal to the feed URL and at least one HTTPS rel=hub, in the Link response headers.",
+          "Advertise exactly one absolute rel=self and HTTPS rel=hub links, in the Link response headers.",
         ),
         displayValue,
         details,
@@ -170,7 +162,7 @@ export class WebsubHubAdvertisementAudit extends Audit {
 
     return {
       ...this.pass(
-        `${feeds.length} feed(s) advertise a reachable hub and a canonical self link.`,
+        `${feedsWithHub} feed(s) advertise a reachable hub and one absolute self link.`,
         expected,
         found,
       ),

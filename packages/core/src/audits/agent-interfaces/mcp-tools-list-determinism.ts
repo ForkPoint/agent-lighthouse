@@ -16,6 +16,8 @@ import {
   postRpcRaw,
   discoverParams,
   isObject,
+  listTools,
+  signInMessage,
   MCP_PROTOCOL_VERSION,
 } from "#core/gatherers/mcp";
 import {
@@ -193,7 +195,7 @@ export class McpToolsListDeterminismAudit extends Audit {
   };
 
   async audit(ctx: CheckContext): Promise<AuditResult> {
-    const endpoint = discoverMcpEndpoint(ctx);
+    const endpoint = await discoverMcpEndpoint(ctx);
     if (!endpoint || !endpoint.url) {
       return this.notApplicable(
         "This site declares no MCP endpoint, so there is no tool list to fetch.",
@@ -212,6 +214,17 @@ export class McpToolsListDeterminismAudit extends Audit {
       calls.push(call);
     }
 
+    if (calls.length === 0) {
+      // Shared with the other tool audits, so usually a cache hit.
+      const { signInStatus } = await listTools(ctx, url, 1);
+      if (signInStatus !== undefined) {
+        return this.notApplicable(
+          signInMessage(url, signInStatus, "its tool list"),
+          EXPECTED,
+          `${url}; tools/list -> HTTP ${signInStatus}`,
+        );
+      }
+    }
     if (calls.length === 0 || calls[0]!.names.length === 0) {
       return this.notApplicable(
         `${url} returned no tool list, so there is nothing to compare. Whether the endpoint answers at all is scored by agent-interfaces/mcp-modern-era-reachability.`,

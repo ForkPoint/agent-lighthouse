@@ -203,6 +203,33 @@ describe("CorsApiRoutesAudit", () => {
       expect(result.status).toBe(CheckStatus.Pass);
     });
 
+    it("sends Origin and Access-Control-Request-Method on the preflight, and Origin on the GET", async () => {
+      const seen: FetchOptions[] = [];
+      const ctx = mockCheckContext([], { "/openapi.json": simpleSpec });
+      ctx.fetch = async (options) => {
+        seen.push(options);
+        return mockFetchResult("", 204);
+      };
+      await audit.audit(ctx);
+      const preflight = seen.find((o) => o.method === HttpMethod.Options);
+      const get = seen.find((o) => o.method === HttpMethod.Get);
+      expect(preflight?.headers?.["Origin"]).toMatch(/^https:\/\//);
+      expect(preflight?.headers?.["Access-Control-Request-Method"]).toBe("GET");
+      expect(get?.headers?.["Origin"]).toMatch(/^https:\/\//);
+    });
+
+    it("passes an API that emits ACAO only when Origin is present", async () => {
+      const ctx = mockCheckContext([], { "/openapi.json": simpleSpec });
+      ctx.fetch = async (options) => {
+        const r = mockFetchResult("", 204);
+        if (options.headers?.["Origin"])
+          r.headers["access-control-allow-origin"] = "*";
+        return r;
+      };
+      const result = await audit.audit(ctx);
+      expect(result.status).toBe(CheckStatus.Pass);
+    });
+
     it("refuses to probe a private-address server url", async () => {
       const { fetch, seen } = corsFetch("*");
       const ctx = mockCheckContext([], {

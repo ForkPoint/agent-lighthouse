@@ -65,6 +65,7 @@ export const ROOT_PATHS = [
   "/openapi.yaml",
   "/.well-known/api-catalog",
   "/.well-known/ai-catalog.json",
+  "/.well-known/ard.json",
   "/.well-known/mcp/servers.json",
   "/.well-known/ucp",
   "/.well-known/agents.json",

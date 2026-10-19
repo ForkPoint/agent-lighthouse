@@ -31,7 +31,13 @@ export function sharedProbeUrl(
     cache = new Map();
     probeUrlCache.set(cacheOwner(ctx), cache);
   }
-  const cacheKey = `${options.method ?? "GET"}|${options.followRedirects ?? false}|${url}`;
+  // Headers change the answer (a CORS probe without Origin gets no ACAO from
+  // many servers), so a request sent with headers never shares a cache entry
+  // with one sent without. Header-less keys keep their old shape.
+  const headerKey = options.headers
+    ? `|${JSON.stringify(Object.entries(options.headers).sort(([a], [b]) => a.localeCompare(b)))}`
+    : "";
+  const cacheKey = `${options.method ?? "GET"}|${options.followRedirects ?? false}|${url}${headerKey}`;
   let hit = cache.get(cacheKey);
   if (!hit) {
     hit = withLogContext({ [LogField.Gatherer]: "discovery" }, async () => {

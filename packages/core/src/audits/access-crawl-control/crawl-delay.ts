@@ -14,6 +14,30 @@ import {
 
 const EXPECTED = "If Crawl-delay is present, it is <= 10 seconds";
 
+/**
+ * Crawlers whose operators document that they ignore Crawl-delay: Google
+ * ("other fields such as crawl-delay aren't supported"), Amazonbot ("They do
+ * not support the crawl-delay directive") and Applebot ("Applebot does not
+ * follow crawl-delay"). A delay addressed only to them throttles nothing, so
+ * it is not judged. Matched on the product token. Google's crawler tokens
+ * start with "Google" (Googlebot-Image, GoogleOther, Google-Extended), end
+ * with "-Google" (AdsBot-Google, Storebot-Google, APIs-Google), or carry
+ * "-Google-" between hyphenated parts (AdsBot-Google-Mobile). A token that only
+ * contains the word inside another name belongs to some other crawler and is
+ * judged.
+ */
+function ignoresCrawlDelay(userAgent: string): boolean {
+  const product = userAgent.trim().toLowerCase().split("/")[0] ?? "";
+  return (
+    product.startsWith("google") ||
+    product.endsWith("-google") ||
+    product.includes("-google-") ||
+    product === "amazonbot" ||
+    product === "applebot" ||
+    product === "applebot-extended"
+  );
+}
+
 export class CrawlDelayAudit extends Audit {
   static override meta: AuditMeta = {
     id: "access-crawl-control/crawl-delay",
@@ -21,7 +45,7 @@ export class CrawlDelayAudit extends Audit {
     title: "Crawl-delay is reasonable",
     failureTitle: "Crawl-delay is reasonable",
     description:
-      "Excessive Crawl-delay values (over 10 seconds) dramatically slow AI indexing, meaning your latest content may take days or weeks to appear in AI search results.",
+      "Checks the Crawl-delay values robots.txt sets for crawlers that honour the directive (Anthropic's crawlers, Bingbot, CCBot, YouBot). Bing recommends no value above 10 seconds. Groups addressed only to Google, Amazonbot or Applebot are not judged: those crawlers document that they ignore Crawl-delay.",
     scoreDisplayMode: ScoreDisplayMode.Informative,
     weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
     evidenceGrade: EvidenceGrade.C,
@@ -32,7 +56,7 @@ export class CrawlDelayAudit extends Audit {
     defaultPriority: CheckPriority.High,
     guidance: {
       impact:
-        "Excessive Crawl-delay values (over 10 seconds) dramatically slow AI indexing, meaning your latest content may take days or weeks to appear in AI search results while competitors with lower delays get indexed faster.",
+        "Crawlers that honour Crawl-delay wait that long between requests, so a large value caps how many pages they can fetch in a day. Bing recommends against any value higher than 10. Google, Amazonbot and Applebot ignore the directive.",
       fix: "Reduce Crawl-delay to 5 seconds or less, or remove it entirely if your server can handle the crawl load. Most modern servers can handle AI crawler traffic without throttling.",
       code: "User-agent: *\nCrawl-delay: 5",
       effort: FixEffort.Trivial,
@@ -68,26 +92,38 @@ export class CrawlDelayAudit extends Audit {
       );
     }
 
-    const excessive = delays.filter((d) => d.crawlDelay > 10);
+    const judged = delays.filter((d) => !ignoresCrawlDelay(d.userAgent));
+    if (judged.length === 0) {
+      const ignored = delays
+        .map((d) => `${d.userAgent}: ${d.crawlDelay}s`)
+        .join(", ");
+      return this.notApplicable(
+        `robots.txt sets Crawl-delay only for crawlers that document they ignore it (${ignored}), so it throttles nothing.`,
+        EXPECTED,
+        `Crawl-delays for ignoring crawlers only: ${ignored}`,
+      );
+    }
+
+    const excessive = judged.filter((d) => d.crawlDelay > 10);
 
     if (excessive.length > 0) {
       const details = excessive
         .map((d) => `${d.userAgent}: ${d.crawlDelay}s`)
         .join(", ");
       return this.fail(
-        `Excessive Crawl-delay values found: ${details}. Values above 10 seconds significantly slow down AI crawlers.`,
+        `Excessive Crawl-delay values found: ${details}. Crawlers that honour the directive wait that long between requests.`,
         EXPECTED,
         `Excessive delays: ${details}`,
         {
           priority: CheckPriority.High,
           description:
-            "Excessive Crawl-delay values (over 10 seconds) dramatically slow AI indexing, meaning your latest content may take days or weeks to appear in AI search results. Reduce to 5 seconds or less, or remove the directive entirely if your server can handle the load.",
+            "Anthropic's crawlers, Bingbot, CCBot and YouBot wait the Crawl-delay value between requests, and Bing recommends against any value higher than 10. Reduce it to 10 seconds or less, or remove the directive if your server can handle the load.",
           code: "User-agent: *\nCrawl-delay: 5",
         },
       );
     }
 
-    const allDetails = delays
+    const allDetails = judged
       .map((d) => `${d.userAgent}: ${d.crawlDelay}s`)
       .join(", ");
     return this.pass(

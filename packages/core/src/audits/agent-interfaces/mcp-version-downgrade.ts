@@ -15,6 +15,8 @@ import {
   discoverProbe,
   parseRpcResponse,
   postRpcRaw,
+  requiresSignIn,
+  signInMessage,
   isObject,
   MCP_PROTOCOL_VERSION,
 } from "#core/gatherers/mcp";
@@ -132,7 +134,7 @@ export class McpVersionDowngradeAudit extends Audit {
   };
 
   async audit(ctx: CheckContext): Promise<AuditResult> {
-    const endpoint = discoverMcpEndpoint(ctx);
+    const endpoint = await discoverMcpEndpoint(ctx);
     if (!endpoint || !endpoint.url) {
       return this.notApplicable(
         "This site declares no MCP endpoint, so there is no version negotiation to probe.",
@@ -165,6 +167,14 @@ export class McpVersionDowngradeAudit extends Audit {
         `${url} did not answer, so its rejection behaviour cannot be probed. Reachability is scored by agent-interfaces/mcp-modern-era-reachability.`,
         EXPECTED,
         `${url}; endpoint unreachable`,
+      );
+    }
+
+    if (requiresSignIn(probeA)) {
+      return this.notApplicable(
+        signInMessage(url, probeA.status, "its version negotiation"),
+        EXPECTED,
+        `${url}; probe A HTTP ${probeA.status}`,
       );
     }
 

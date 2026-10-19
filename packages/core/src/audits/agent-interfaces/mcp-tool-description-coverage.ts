@@ -6,6 +6,7 @@ import {
   discoverMcpEndpoint,
   discoverProbe,
   listTools,
+  signInMessage,
   parseRpcResponse,
   isObject,
 } from "#core/gatherers/mcp";
@@ -187,7 +188,7 @@ export class McpToolDescriptionCoverageAudit extends Audit {
   };
 
   async audit(ctx: CheckContext): Promise<AuditResult> {
-    const endpoint = discoverMcpEndpoint(ctx);
+    const endpoint = await discoverMcpEndpoint(ctx);
     if (!endpoint || !endpoint.url) {
       return this.notApplicable(
         "This site declares no MCP endpoint, so there is no tool surface to measure.",
@@ -199,7 +200,18 @@ export class McpToolDescriptionCoverageAudit extends Audit {
     }
 
     const url = endpoint.url;
-    const { tools, truncated } = await listTools(ctx, url, MAX_PAGES);
+    const { tools, truncated, signInStatus } = await listTools(
+      ctx,
+      url,
+      MAX_PAGES,
+    );
+    if (signInStatus !== undefined) {
+      return this.notApplicable(
+        signInMessage(url, signInStatus, "its tool descriptions"),
+        EXPECTED,
+        `${url}; tools/list -> HTTP ${signInStatus}`,
+      );
+    }
     if (tools.length === 0) {
       return this.notApplicable(
         `${url} returned no tool definitions, so there is nothing to measure. Whether the endpoint answers at all is scored by agent-interfaces/mcp-modern-era-reachability.`,

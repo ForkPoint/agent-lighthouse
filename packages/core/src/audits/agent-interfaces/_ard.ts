@@ -1,15 +1,18 @@
 /**
- * Shared reader for the ARD capability manifest at
- * `/.well-known/ai-catalog.json`.
+ * Shared reader for the ARD capability manifest at `/.well-known/ard.json`
+ * or `/.well-known/ai-catalog.json`.
  *
  * Three audits (`ai-catalog-exists`, `ai-catalog-metadata`, `ai-catalog-urls`)
  * all read the same file, so the shape lives here once rather than being
  * re-derived — and re-invented — in each of them.
  *
- * Schema source: Agentic Resource Discovery (ARD) specification v0.9 §4.1-4.3
+ * Schema source: Agentic Resource Discovery (ARD) specification v0.91 §4-5
  * (Junjie Bu/Google, R.V. Guha/Microsoft, Shaun Smith/Hugging Face).
- *   - Required top level: `specVersion`, `host`, `entries`.
- *   - `host` describes the catalog operator; `displayName` is required,
+ *   - Required top level: `entries` only. The `ArdManifest` JSON schema leaves
+ *     `additionalProperties` open; `specVersion` and `host` come from the Linux
+ *     Foundation AI Catalog spec and are read when present, never required.
+ *     hf-discover, the one documented consumer, reads only `entries`.
+ *   - `host` describes the catalog operator; `displayName` is expected,
  *     `identifier` (a DID), `documentationUrl`, `logoUrl` and `trustManifest`
  *     are optional.
  *   - Each entry requires `identifier` (a domain-anchored URN), `displayName`
@@ -24,8 +27,21 @@
 
 import type { CheckContext } from "#core/check-context";
 
-/** The only location a documented consumer (hf-discover) resolves. */
+/** ARD v0.91 §5.1 normative path: consumers MUST fetch it. */
+export const ARD_PATH = "/.well-known/ard.json";
+
+/**
+ * ARD's predecessor path. hf-discover resolves only this one, and the MCP
+ * Server Card extension (SEP-2127) still names it, so it stays a first-class
+ * location rather than a legacy fallback.
+ */
 export const AI_CATALOG_PATH = "/.well-known/ai-catalog.json";
+
+/** Read order: the current ARD path first, then the predecessor. */
+export const CATALOG_PATHS = [ARD_PATH, AI_CATALOG_PATH] as const;
+
+/** Both well-known paths, for messages that name where the audit looked. */
+export const CATALOG_PATHS_LABEL = `${ARD_PATH} or ${AI_CATALOG_PATH}`;
 
 /** Optional fields are undefined when the manifest entry omits them or leaves them blank. */
 export interface ArdEntry {
@@ -53,8 +69,14 @@ export interface ArdEntry {
 }
 
 export interface ArdManifest {
-  specVersion: string;
+  /** Well-known path the manifest was read from. */
+  path: string;
+  /** AI Catalog spec field; optional under ARD v0.91. */
+  specVersion?: string | undefined;
+  /** Empty when the manifest carries no `host` object (optional under ARD v0.91). */
   host: Record<string, unknown>;
+  /** True when the manifest carries a `host` object at all. */
+  hasHost: boolean;
   entries: ArdEntry[];
   /**
    * Optional attestation extension on the **host** object (§4.3, "Trust
@@ -69,13 +91,21 @@ export interface ArdManifest {
 
 export type ArdRead =
   | { ok: true; manifest: ArdManifest }
-  /** No 200 response at the well-known path. */
-  | { ok: false; reason: "absent"; found: string }
-  /** HTTP 200 but an HTML body — a SPA catch-all, not a manifest. */
-  | { ok: false; reason: "html"; found: string }
-  | { ok: false; reason: "not-json"; found: string }
+  /**
+   * No manifest at either well-known path: no 200 response, or an HTML page
+   * answering for the file. A catch-all route serving the site's HTML is not a
+   * manifest the site published, the same line `isRootArtifact` draws.
+   */
+  | { ok: false; reason: "absent"; path: string; found: string }
+  | { ok: false; reason: "not-json"; path: string; found: string }
   /** Valid JSON object, but not an ARD manifest. */
-  | { ok: false; reason: "shape"; missing: string[]; found: string };
+  | {
+      ok: false;
+      reason: "shape";
+      path: string;
+      missing: string[];
+      found: string;
+    };
 
 function isObject(val: unknown): val is Record<string, unknown> {
   return typeof val === "object" && val !== null && !Array.isArray(val);
@@ -134,18 +164,18 @@ function parseEntry(raw: unknown, index: number): ArdEntry {
   };
 }
 
-/**
- * Read and validate the ARD manifest out of the scan context.
- *
- * Every failure mode is named so callers can report the real diagnosis: the
- * old audits reported "not valid JSON" for an HTML soft-404 and "no services
- * array" for a perfectly conformant manifest.
- */
-export function readAiCatalog(ctx: CheckContext): ArdRead {
-  const result = ctx.rootFiles[AI_CATALOG_PATH];
-  if (!result) return { ok: false, reason: "absent", found: "Not fetched" };
+/** Read and validate the manifest at one well-known path. */
+function readAt(ctx: CheckContext, path: string): ArdRead {
+  const result = ctx.rootFiles[path];
+  if (!result)
+    return { ok: false, reason: "absent", path, found: "Not fetched" };
   if (result.status !== 200 || !result.body) {
-    return { ok: false, reason: "absent", found: `HTTP ${result.status}` };
+    return {
+      ok: false,
+      reason: "absent",
+      path,
+      found: `HTTP ${result.status}`,
+    };
   }
 
   const contentType = (
@@ -159,8 +189,9 @@ export function readAiCatalog(ctx: CheckContext): ArdRead {
   ) {
     return {
       ok: false,
-      reason: "html",
-      found: `HTTP 200 but ${contentType || "an HTML body"} — no manifest is served there`,
+      reason: "absent",
+      path,
+      found: `HTTP 200 with an HTML page (${contentType || "HTML body"}), not the file`,
     };
   }
 
@@ -169,38 +200,78 @@ export function readAiCatalog(ctx: CheckContext): ArdRead {
     return {
       ok: false,
       reason: "not-json",
+      path,
       found: "HTTP 200 but the body is not a JSON object",
     };
   }
 
-  const specVersion = nonEmptyString(parsed["specVersion"]);
-  const host = isObject(parsed["host"]) ? parsed["host"] : undefined;
   const entries = Array.isArray(parsed["entries"])
     ? parsed["entries"]
     : undefined;
-
-  const missing: string[] = [];
-  if (!specVersion) missing.push("specVersion");
-  if (!host) missing.push("host");
-  if (!entries) missing.push("entries");
-  if (!specVersion || !host || !entries) {
+  if (!entries) {
     return {
       ok: false,
       reason: "shape",
-      missing,
-      found: `JSON without ARD §4.1 required field(s): ${missing.join(", ")}`,
+      path,
+      missing: ["entries"],
+      found: "JSON without the ARD required field entries",
     };
   }
 
+  const host = isObject(parsed["host"]) ? parsed["host"] : undefined;
   return {
     ok: true,
     manifest: {
-      specVersion,
-      host,
+      path,
+      specVersion: nonEmptyString(parsed["specVersion"]),
+      host: host ?? {},
+      hasHost: host !== undefined,
       entries: entries.map(parseEntry),
-      hostHasTrustManifest: isObject(host["trustManifest"]),
+      hostHasTrustManifest: isObject(host?.["trustManifest"]),
       contentType,
     },
+  };
+}
+
+/**
+ * Every valid manifest, in read order (ard.json first). A site may publish
+ * both files with different entries; a caller looking for one kind of entry,
+ * such as an MCP Server Card, searches all of them rather than the one
+ * `readAiCatalog` picks.
+ */
+export function readAiCatalogs(ctx: CheckContext): ArdManifest[] {
+  return CATALOG_PATHS.map((path) => readAt(ctx, path)).flatMap((read) =>
+    read.ok ? [read.manifest] : [],
+  );
+}
+
+/**
+ * Read and validate the ARD manifest out of the scan context.
+ *
+ * Both well-known paths are read. A valid manifest at either one wins, and
+ * one that lists entries wins over an empty one; ard.json wins a tie. When
+ * neither is valid, a present-but-broken file is reported ahead of an absent
+ * one, so the site hears about the breakage instead of a 404 at the other
+ * path. Every failure mode is named so callers can report the real diagnosis.
+ */
+export function readAiCatalog(ctx: CheckContext): ArdRead {
+  const reads = CATALOG_PATHS.map((path) => readAt(ctx, path));
+  // A manifest that lists entries beats an empty one at the other path.
+  const valid =
+    reads.find((r) => r.ok && r.manifest.entries.length > 0) ??
+    reads.find((r) => r.ok);
+  if (valid) return valid;
+
+  const failures = reads.filter(
+    (r): r is Exclude<ArdRead, { ok: true }> => !r.ok,
+  );
+  const broken = failures.find((r) => r.reason !== "absent");
+  if (broken) return broken;
+  return {
+    ok: false,
+    reason: "absent",
+    path: CATALOG_PATHS_LABEL,
+    found: failures.map((r) => `${r.path}: ${r.found}`).join("; "),
   };
 }
 
@@ -213,12 +284,10 @@ export function readAiCatalog(ctx: CheckContext): ArdRead {
 export function describeFailure(read: Exclude<ArdRead, { ok: true }>): string {
   switch (read.reason) {
     case "absent":
-      return `${AI_CATALOG_PATH} is not served (${read.found}).`;
-    case "html":
-      return `${AI_CATALOG_PATH} returns HTML, not a manifest — the request is being answered by a catch-all route.`;
+      return `Neither ${ARD_PATH} nor ${AI_CATALOG_PATH} is served (${read.found}).`;
     case "not-json":
-      return `${AI_CATALOG_PATH} is served but is not valid JSON.`;
+      return `${read.path} is served but is not valid JSON.`;
     case "shape":
-      return `${AI_CATALOG_PATH} is not an ARD manifest: it is missing the required field(s) ${read.missing.join(", ")} (ARD §4.1).`;
+      return `${read.path} is not an ARD manifest: it is missing the required field(s) ${read.missing.join(", ")}.`;
   }
 }

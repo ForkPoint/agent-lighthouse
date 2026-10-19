@@ -29,7 +29,9 @@ sources:
 
 ## What it checks
 
-Without CORS headers, AI agents running in browser contexts cannot fetch your llms.txt or API spec. Browser-based AI tools, ChatGPT plugins, and MCP clients are all blocked by same-origin policy, making your AI-facing files completely inaccessible to cross-origin agents.
+Whether `/llms.txt` and `/.well-known/ai-catalog.json` answer a cross-origin request with `Access-Control-Allow-Origin`. Only agent code running inside a browser origin needs that header. Server-side crawlers, agent backends and MCP clients are not browsers and read the files either way.
+
+The audit sends an OPTIONS preflight with `Origin` and `Access-Control-Request-Method: GET`, then a GET with `Origin` if the preflight carries no header. Either answer with the header counts.
 
 ## Evidence
 
@@ -40,3 +42,8 @@ Without CORS headers, AI agents running in browser contexts cannot fetch your ll
 **Evidence:** The mechanism is real but its scope is much narrower than the audit implies. CORS matters only for code running inside a browser origin: MDN states 'browsers restrict cross-origin HTTP requests initiated from scripts', and the server merely opts in via ACAO. The genuine AI consumer class is browser-sandboxed agent code. OpenAI's Apps SDK widgets run in an isolated iframe under a strict CSP, and must declare connect_domains — mapped to connect-src — for every origin they will fetch from. Such a widget fetching a publisher's JSON or llms.txt cross-origin will be blocked without ACAO. That class is small today but growing.
 
 **Counter-evidence:** Decisive counter-evidence for the general case: GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, Claude-User, PerplexityBot and every server-side agent backend are non-browser HTTP clients. They do not implement the same-origin policy and are completely unaffected by a missing Access-Control-Allow-Origin header. Browser extensions with host permissions (the Claude-in-Chrome / sidebar class) also bypass CORS. No AI vendor doc requires CORS on publisher resources, and the llms.txt spec says nothing about it. Therefore 'missing CORS blocks AI agents' is false as a general claim. Recommend rewording the audit to target only browser-embedded agent consumption and demoting it out of the score.
+
+## Implementation deviations
+
+- Before 2026-10-18 the probe sent OPTIONS with no `Origin` header. A browser always sends Origin on a cross-origin request, and many servers and CDNs emit ACAO only when it is present, so the probe read correctly configured files as missing CORS. The probe now sends `Origin: https://example.invalid` on an OPTIONS preflight (with `Access-Control-Request-Method: GET`) and on a GET fallback.
+- The audit copy named "ChatGPT plugins", a retired product, and said MCP clients are blocked by the same-origin policy. MCP clients are not browsers. Both claims are removed.

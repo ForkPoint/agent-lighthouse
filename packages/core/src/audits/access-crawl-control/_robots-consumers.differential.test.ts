@@ -723,7 +723,7 @@ const BASELINE: Record<string, Record<string, Row>> = {
       status: CheckStatus.Fail,
       score: 0,
       message:
-        "Excessive Crawl-delay values found: *: 30s. Values above 10 seconds significantly slow down AI crawlers.",
+        "Excessive Crawl-delay values found: *: 30s. Crawlers that honour the directive wait that long between requests.",
       found: "Excessive delays: *: 30s",
       priority: CheckPriority.High,
       details: "{}",

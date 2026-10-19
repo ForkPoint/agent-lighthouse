@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { entryLabel, nonEmptyString, readAiCatalog, stringList } from "./_ard";
+import {
+  describeFailure,
+  entryLabel,
+  nonEmptyString,
+  readAiCatalog,
+  readAiCatalogs,
+  stringList,
+} from "./_ard";
 import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
 
 const ctxWith = (
@@ -39,9 +46,11 @@ describe("readAiCatalog", () => {
     expect(read.manifest.entries[1]!.url).toBeUndefined();
   });
 
+  // An HTML page at a well-known path is a catch-all route answering for a
+  // file that does not exist: absent, as isRootArtifact rules everywhere else.
   it.each([
     ["absent", undefined],
-    ["html", "<!doctype html><html></html>"],
+    ["absent", "<!doctype html><html></html>"],
     ["not-json", "nope {{{"],
     ["shape", JSON.stringify({ services: [] })],
   ])("names the %s failure mode", (reason, body) => {
@@ -51,7 +60,7 @@ describe("readAiCatalog", () => {
         : ctxWith(
             body,
             200,
-            reason === "html" ? "text/html" : "application/json",
+            body.startsWith("<") ? "text/html" : "application/json",
           );
     const read = readAiCatalog(ctx);
     expect(read.ok).toBe(false);
@@ -65,7 +74,49 @@ describe("readAiCatalog", () => {
     );
     expect(read.ok).toBe(false);
     if (read.ok) return;
-    expect(read.reason).toBe("html");
+    expect(read.reason).toBe("absent");
+    expect(read.found).toContain("HTML page");
+  });
+
+  it("treats an HTML stand-in beside a 404 as absent, naming both paths", () => {
+    const read = readAiCatalog(
+      mockCheckContext([], {
+        "/.well-known/ard.json": mockFetchResult(
+          "<!doctype html><html></html>",
+          200,
+          "text/html",
+        ),
+        "/.well-known/ai-catalog.json": mockFetchResult("", 404),
+      }),
+    );
+    expect(read.ok).toBe(false);
+    if (read.ok) return;
+    expect(read.reason).toBe("absent");
+    expect(read.found).toContain(
+      "/.well-known/ard.json: HTTP 200 with an HTML page",
+    );
+    expect(read.found).toContain("/.well-known/ai-catalog.json: HTTP 404");
+    expect(describeFailure(read)).toMatch(/^Neither .+ nor .+ is served/);
+  });
+
+  it("reports a broken manifest ahead of an HTML stand-in at the other path", () => {
+    const read = readAiCatalog(
+      mockCheckContext([], {
+        "/.well-known/ard.json": mockFetchResult(
+          "<!doctype html><html></html>",
+          200,
+          "text/html",
+        ),
+        "/.well-known/ai-catalog.json": mockFetchResult(
+          "nope {{{",
+          200,
+          "application/json",
+        ),
+      }),
+    );
+    expect(read.ok).toBe(false);
+    if (read.ok) return;
+    expect(read.reason).toBe("not-json");
   });
 
   // ARD §4.2: updatedAt is an entry field. §4.2/§4.3: trustManifest sits on the
@@ -122,13 +173,85 @@ describe("readAiCatalog", () => {
     expect(read.manifest.entries[0]!.hasTrustManifest).toBe(false);
   });
 
-  it("treats a whitespace-only specVersion as missing", () => {
+  // ARD v0.91 requires only `entries`; specVersion is read when present.
+  it("treats a whitespace-only specVersion as absent without rejecting the manifest", () => {
     const read = readAiCatalog(
       ctxWith(JSON.stringify({ specVersion: "  ", host: {}, entries: [] })),
     );
+    expect(read.ok).toBe(true);
+    if (!read.ok) return;
+    expect(read.manifest.specVersion).toBeUndefined();
+  });
+
+  it("reports only entries as missing", () => {
+    const read = readAiCatalog(ctxWith(JSON.stringify({ specVersion: "1.0" })));
     expect(read.ok).toBe(false);
     if (read.ok) return;
-    expect(read.reason === "shape" && read.missing).toEqual(["specVersion"]);
+    expect(read.reason === "shape" && read.missing).toEqual(["entries"]);
+  });
+
+  it("prefers the manifest that lists entries over an empty one", () => {
+    const read = readAiCatalog(
+      mockCheckContext([], {
+        "/.well-known/ard.json": mockFetchResult(
+          JSON.stringify({ entries: [] }),
+          200,
+          "application/json",
+        ),
+        "/.well-known/ai-catalog.json": mockFetchResult(
+          JSON.stringify({ entries: [{ identifier: "x" }] }),
+          200,
+          "application/json",
+        ),
+      }),
+    );
+    expect(read.ok).toBe(true);
+    if (!read.ok) return;
+    expect(read.manifest.path).toBe("/.well-known/ai-catalog.json");
+    expect(read.manifest.hasHost).toBe(false);
+  });
+});
+
+describe("readAiCatalogs", () => {
+  it("returns every valid manifest, ard.json first", () => {
+    const manifests = readAiCatalogs(
+      mockCheckContext([], {
+        "/.well-known/ard.json": mockFetchResult(
+          JSON.stringify({ entries: [{ identifier: "a" }] }),
+          200,
+          "application/json",
+        ),
+        "/.well-known/ai-catalog.json": mockFetchResult(
+          JSON.stringify({ entries: [{ identifier: "b" }] }),
+          200,
+          "application/json",
+        ),
+      }),
+    );
+    expect(manifests.map((m) => m.path)).toEqual([
+      "/.well-known/ard.json",
+      "/.well-known/ai-catalog.json",
+    ]);
+  });
+
+  it("skips absent and broken paths", () => {
+    const manifests = readAiCatalogs(
+      mockCheckContext([], {
+        "/.well-known/ard.json": mockFetchResult(
+          "nope",
+          200,
+          "application/json",
+        ),
+        "/.well-known/ai-catalog.json": mockFetchResult(
+          JSON.stringify({ entries: [] }),
+          200,
+          "application/json",
+        ),
+      }),
+    );
+    expect(manifests.map((m) => m.path)).toEqual([
+      "/.well-known/ai-catalog.json",
+    ]);
   });
 });
 

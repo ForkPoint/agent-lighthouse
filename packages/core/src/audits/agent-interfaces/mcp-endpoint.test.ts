@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { McpEndpointAudit } from "./mcp-endpoint";
 import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
 import type { FetchOptions, FetchResult } from "#core/fetcher";
-import { CheckStatus } from "#core/types";
+import { CheckStatus, HttpMethod } from "#core/types";
 
 // isSafeUrl performs a real DNS lookup before the audit POSTs to the declared
 // endpoint. Stub it with an offline stand-in that still blocks loopback and
@@ -168,9 +168,11 @@ describe("McpEndpointAudit", () => {
 
   // ── endpoint discovery ──────────────────────────────────────
 
-  it("fails when no endpoint is declared anywhere", async () => {
+  // Absent artifact, absent verdict: a site with no MCP server has done
+  // nothing wrong.
+  it("is not applicable when no endpoint is declared anywhere", async () => {
     const ctx = mockCheckContext([], {});
-    expect((await audit.audit(ctx)).status).toBe(CheckStatus.Fail);
+    expect((await audit.audit(ctx)).status).toBe(CheckStatus.NotApplicable);
   });
 
   it("fails when no server URL is present", async () => {
@@ -211,15 +213,16 @@ describe("McpEndpointAudit", () => {
     expect(result.message).toContain("No MCP endpoint is declared");
   });
 
-  it("discovers an MCP endpoint declared in the ai-catalog", async () => {
-    const ctx = mockCheckContext([], {
+  // An ai-catalog MCP entry's `url` addresses the Server Card, not the
+  // endpoint; the endpoint is the card's `remotes[].url`.
+  const catalogCtx = () =>
+    mockCheckContext([], {
       "/.well-known/ai-catalog.json": mockFetchResult(
         JSON.stringify({
-          specVersion: "1.0",
           entries: [
             {
               type: "application/mcp-server-card+json",
-              url: "https://example.com/mcp",
+              url: "https://example.com/.well-known/mcp/server-card.json",
             },
           ],
         }),
@@ -227,11 +230,51 @@ describe("McpEndpointAudit", () => {
         "application/ai-catalog+json",
       ),
     });
-    ctx.fetch = rpcRouter({
-      initialize: () =>
-        mockFetchResult(initializeResult({ resources: {} }), 200),
-    });
-    expect((await audit.audit(ctx)).status).toBe(CheckStatus.Pass);
+
+  const serverCard = (remotes: unknown) =>
+    JSON.stringify({ name: "io.example/server", version: "1.0.0", remotes });
+
+  it("initializes the Server Card's remote, not the card URL itself", async () => {
+    const ctx = catalogCtx();
+    const posted: string[] = [];
+    ctx.fetch = async (options) => {
+      if (options.url.endsWith("server-card.json")) {
+        if (options.method === HttpMethod.Post) {
+          posted.push(options.url);
+          return mockFetchResult("", 405);
+        }
+        return mockFetchResult(
+          serverCard([
+            { type: "streamable-http", url: "https://example.com/mcp" },
+          ]),
+          200,
+          "application/json",
+        );
+      }
+      posted.push(options.url);
+      return mockFetchResult(initializeResult({ resources: {} }), 200);
+    };
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(posted).toEqual(["https://example.com/mcp"]);
+    expect(result.message).toContain("https://example.com/mcp");
+  });
+
+  it("fails when the Server Card declares no remote endpoint", async () => {
+    const ctx = catalogCtx();
+    ctx.fetch = async () =>
+      mockFetchResult(serverCard([]), 200, "application/json");
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("remotes");
+  });
+
+  it("fails when the Server Card is unreachable", async () => {
+    const ctx = catalogCtx();
+    ctx.fetch = async () => mockFetchResult("", 404);
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("Server Card");
   });
 
   // ── absorbed mcp-capabilities (5.14): capabilities off the wire ──

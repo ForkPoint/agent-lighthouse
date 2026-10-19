@@ -50,20 +50,20 @@ const UCP = JSON.stringify({
     commerce: [{ transport: "mcp", endpoint: "https://a.test/ucp-mcp" }],
   },
 });
+const CARD_URL = "https://example.com/card.json";
 const CATALOG = JSON.stringify({
-  entries: [
-    {
-      type: "application/mcp-server-card+json",
-      url: "https://a.test/catalog-mcp",
-    },
-  ],
+  entries: [{ type: "application/mcp-server-card+json", url: CARD_URL }],
+});
+const CARD = JSON.stringify({
+  name: "io.example/server",
+  remotes: [{ type: "streamable-http", url: "https://a.test/mcp" }],
 });
 
 describe("discoverMcpEndpoint", () => {
   // A homepage redirect answers each well-known path with HTML. None of them
   // declares anything, so discovery moves on to the next source.
-  it("skips an HTML page at servers.json and reads the UCP service", () => {
-    const found = discoverMcpEndpoint(
+  it("skips an HTML page at servers.json and reads the UCP service", async () => {
+    const found = await discoverMcpEndpoint(
       ctxWith({
         "/.well-known/mcp/servers.json":
           '<!DOCTYPE html>\n<html lang="fr"><head><title>Home</title></head><body>Shop</body></html>',
@@ -73,21 +73,22 @@ describe("discoverMcpEndpoint", () => {
     expect(found).toEqual({ url: "https://a.test/ucp-mcp", source: "ucp" });
   });
 
-  it("skips HTML pages at servers.json and ucp and reads the ai-catalog", () => {
-    const found = discoverMcpEndpoint(
+  it("skips HTML pages at servers.json and ucp and reads the ai-catalog", async () => {
+    const found = await discoverMcpEndpoint(
       ctxWith({
         "/.well-known/mcp/servers.json":
           '<!DOCTYPE html>\n<html lang="fr"><head><title>Home</title></head><body>Shop</body></html>',
         "/.well-known/ucp":
           '<!DOCTYPE html>\n<html lang="fr"><head><title>Home</title></head><body>Shop</body></html>',
         "/.well-known/ai-catalog.json": CATALOG,
+        "/card.json": CARD,
       }),
     );
     expect(found?.source).toBe("ai-catalog");
   });
 
-  it("finds nothing when every source is an HTML page", () => {
-    const found = discoverMcpEndpoint(
+  it("finds nothing when every source is an HTML page", async () => {
+    const found = await discoverMcpEndpoint(
       ctxWith({
         "/.well-known/mcp/servers.json":
           '<!DOCTYPE html>\n<html lang="fr"><head><title>Home</title></head><body>Shop</body></html>',
@@ -100,8 +101,8 @@ describe("discoverMcpEndpoint", () => {
     expect(found).toBeUndefined();
   });
 
-  it("reads the endpoint out of /.well-known/mcp/servers.json", () => {
-    const found = discoverMcpEndpoint(
+  it("reads the endpoint out of /.well-known/mcp/servers.json", async () => {
+    const found = await discoverMcpEndpoint(
       ctxWith({ "/.well-known/mcp/servers.json": SERVERS_JSON }),
     );
     expect(found).toEqual({
@@ -110,52 +111,204 @@ describe("discoverMcpEndpoint", () => {
     });
   });
 
-  it("reads an mcp-transport service out of /.well-known/ucp", () => {
-    const found = discoverMcpEndpoint(ctxWith({ "/.well-known/ucp": UCP }));
+  it("reads an mcp-transport service out of /.well-known/ucp", async () => {
+    const found = await discoverMcpEndpoint(
+      ctxWith({ "/.well-known/ucp": UCP }),
+    );
     expect(found).toEqual({ url: "https://a.test/ucp-mcp", source: "ucp" });
   });
 
-  it("reads an mcp-server-card entry out of /.well-known/ai-catalog.json", () => {
-    const found = discoverMcpEndpoint(
-      ctxWith({ "/.well-known/ai-catalog.json": CATALOG }),
+  // SEP-2127: a catalog entry's `url` addresses the Server Card. The endpoint
+  // is inside the card, at `remotes[].url`.
+  it("resolves an ai-catalog entry through its Server Card to remotes[].url", async () => {
+    const found = await discoverMcpEndpoint(
+      ctxWith({ "/.well-known/ai-catalog.json": CATALOG, "/card.json": CARD }),
     );
     expect(found).toEqual({
-      url: "https://a.test/catalog-mcp",
+      url: "https://a.test/mcp",
       source: "ai-catalog",
+      cardUrl: CARD_URL,
     });
+  });
+
+  // ARD v0.91 moved the catalog to ard.json; the same Server Card entry there
+  // declares the same server.
+  it("finds the Server Card through /.well-known/ard.json too", async () => {
+    const found = await discoverMcpEndpoint(
+      ctxWith({ "/.well-known/ard.json": CATALOG, "/card.json": CARD }),
+    );
+    expect(found).toEqual({
+      url: "https://a.test/mcp",
+      source: "ai-catalog",
+      cardUrl: CARD_URL,
+    });
+  });
+
+  // An ARD catalog lists other artifacts too. A card listed only in the
+  // second catalog still declares the server.
+  it("finds a Server Card in ai-catalog.json when ard.json lists no card", async () => {
+    const otherCatalog = JSON.stringify({
+      entries: [
+        {
+          type: "application/openapi+json",
+          url: "https://example.com/api.json",
+        },
+      ],
+    });
+    const found = await discoverMcpEndpoint(
+      ctxWith({
+        "/.well-known/ard.json": otherCatalog,
+        "/.well-known/ai-catalog.json": CATALOG,
+        "/card.json": CARD,
+      }),
+    );
+    expect(found).toEqual({
+      url: "https://a.test/mcp",
+      source: "ai-catalog",
+      cardUrl: CARD_URL,
+    });
+  });
+
+  // Entry and remote urls SHOULD be absolute; a relative one still names a
+  // reachable resource, resolved against the file that carries it.
+  it("resolves a relative card url against the catalog and a relative remote against the card", async () => {
+    const catalog = JSON.stringify({
+      entries: [
+        { type: "application/mcp-server-card+json", url: "/card.json" },
+      ],
+    });
+    const card = JSON.stringify({
+      remotes: [{ type: "streamable-http", url: "/mcp" }],
+    });
+    const found = await discoverMcpEndpoint(
+      ctxWith({ "/.well-known/ai-catalog.json": catalog, "/card.json": card }),
+    );
+    expect(found).toEqual({
+      url: "https://example.com/mcp",
+      source: "ai-catalog",
+      cardUrl: "https://example.com/card.json",
+    });
+  });
+
+  it("prefers a streamable-http remote over an earlier one of another type", async () => {
+    const card = JSON.stringify({
+      remotes: [
+        { type: "sse", url: "https://a.test/sse" },
+        { type: "streamable-http", url: "https://a.test/mcp" },
+      ],
+    });
+    const found = await discoverMcpEndpoint(
+      ctxWith({ "/.well-known/ai-catalog.json": CATALOG, "/card.json": card }),
+    );
+    expect(found?.url).toBe("https://a.test/mcp");
+  });
+
+  // Absent, unreadable and remote-less are three different findings: the
+  // catalog declared a card, so a card that is not there is a broken
+  // declaration, not an absent one.
+  it("reports a Server Card that cannot be read", async () => {
+    const found = await discoverMcpEndpoint(
+      ctxWith({ "/.well-known/ai-catalog.json": CATALOG }),
+    );
+    expect(found).toMatchObject({
+      url: "",
+      source: "card-unreadable",
+      cardUrl: CARD_URL,
+    });
+  });
+
+  it("reports a Server Card that is not JSON", async () => {
+    const found = await discoverMcpEndpoint(
+      ctxWith({
+        "/.well-known/ai-catalog.json": CATALOG,
+        "/card.json": "<!doctype html><p>Home</p>",
+      }),
+    );
+    expect(found).toMatchObject({ url: "", source: "card-unreadable" });
+  });
+
+  it("reports a Server Card with no remotes[].url", async () => {
+    const found = await discoverMcpEndpoint(
+      ctxWith({
+        "/.well-known/ai-catalog.json": CATALOG,
+        "/card.json": JSON.stringify({ name: "x", remotes: [{ type: "sse" }] }),
+      }),
+    );
+    expect(found).toMatchObject({
+      url: "",
+      source: "card-no-remote",
+      cardUrl: CARD_URL,
+    });
+  });
+
+  it("refuses to fetch a Server Card on a private address", async () => {
+    const catalog = JSON.stringify({
+      entries: [
+        {
+          type: "application/mcp-server-card+json",
+          url: "http://127.0.0.1/card.json",
+        },
+      ],
+    });
+    const ctx = ctxWith({ "/.well-known/ai-catalog.json": catalog });
+    let fetched = false;
+    ctx.fetch = async () => {
+      fetched = true;
+      return mockFetchResult("", 404);
+    };
+    const found = await discoverMcpEndpoint(ctx);
+    expect(fetched).toBe(false);
+    expect(found).toMatchObject({ url: "", source: "card-unreadable" });
+  });
+
+  it("reads the Server Card once per scan", async () => {
+    const ctx = ctxWith({
+      "/.well-known/ai-catalog.json": CATALOG,
+      "/card.json": CARD,
+    });
+    const inner = ctx.fetch;
+    let calls = 0;
+    ctx.fetch = async (options) => {
+      calls += 1;
+      return inner(options);
+    };
+    await discoverMcpEndpoint(ctx);
+    await discoverMcpEndpoint(ctx);
+    expect(calls).toBe(1);
   });
 
   // servers.json is the MCP-native declaration, so it decides even when the
   // other two files also name an endpoint.
-  it("prefers servers.json, then ucp, then the catalog", () => {
+  it("prefers servers.json, then ucp, then the catalog", async () => {
     const all = ctxWith({
       "/.well-known/mcp/servers.json": SERVERS_JSON,
       "/.well-known/ucp": UCP,
       "/.well-known/ai-catalog.json": CATALOG,
     });
-    expect(discoverMcpEndpoint(all)?.source).toBe("servers.json");
+    expect((await discoverMcpEndpoint(all))?.source).toBe("servers.json");
     const twoLeft = ctxWith({
       "/.well-known/ucp": UCP,
       "/.well-known/ai-catalog.json": CATALOG,
+      "/card.json": CARD,
     });
-    expect(discoverMcpEndpoint(twoLeft)?.source).toBe("ucp");
+    expect((await discoverMcpEndpoint(twoLeft))?.source).toBe("ucp");
   });
 
-  it("returns undefined when no root file declares one", () => {
-    expect(discoverMcpEndpoint(ctxWith({}))).toBeUndefined();
+  it("returns undefined when no root file declares one", async () => {
+    expect(await discoverMcpEndpoint(ctxWith({}))).toBeUndefined();
   });
 
   // A malformed declaration is not the same as no declaration: the site said it
   // has a server and got the shape wrong, which an audit must report.
-  it("reports a servers.json with no servers array", () => {
-    const found = discoverMcpEndpoint(
+  it("reports a servers.json with no servers array", async () => {
+    const found = await discoverMcpEndpoint(
       ctxWith({ "/.well-known/mcp/servers.json": JSON.stringify({ mcp: [] }) }),
     );
     expect(found).toEqual({ url: "", source: "no-array" });
   });
 
-  it("reports a servers array with no usable url", () => {
-    const found = discoverMcpEndpoint(
+  it("reports a servers array with no usable url", async () => {
+    const found = await discoverMcpEndpoint(
       ctxWith({
         "/.well-known/mcp/servers.json": JSON.stringify({
           servers: [{ name: "x" }],

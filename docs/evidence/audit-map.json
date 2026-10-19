@@ -574,7 +574,7 @@
       "category": "access-crawl-control",
       "slug": "crawl-delay",
       "title": "Crawl-delay is reasonable",
-      "purpose": "Excessive Crawl-delay values (over 10 seconds) dramatically slow AI indexing, meaning your latest content may take days or weeks to appear in AI search results.",
+      "purpose": "Checks the Crawl-delay values robots.txt sets for crawlers that honour the directive (Anthropic's crawlers, Bingbot, CCBot, YouBot). Bing recommends no value above 10 seconds. Groups addressed only to Google, Amazonbot or Applebot are not judged: those crawlers document that they ignore Crawl-delay.",
       "features": [
         "crawler-permissions",
         "performance",
@@ -1385,7 +1385,7 @@
       "category": "agent-interfaces",
       "slug": "cors-api-routes",
       "title": "CORS on declared API routes",
-      "purpose": "CORS matters for one class of AI consumer: agent code running inside a browser origin, such as an OpenAI Apps SDK widget in an isolated iframe under a strict CSP. Server-side crawlers and MCP clients are not browsers and are unaffected. This audit reads the endpoints out of your published OpenAPI document and probes those, and applies only to sites that publish one.",
+      "purpose": "CORS matters for one class of AI consumer: agent code running inside a browser origin, such as an MCP App or an OpenAI Apps SDK widget in an isolated iframe under a strict CSP. Server-side crawlers and MCP clients are not browsers and are unaffected. This audit reads the endpoints out of your published OpenAPI document and probes those, and applies only to sites that publish one.",
       "features": [
         "api",
         "browser-agents",
@@ -4643,7 +4643,7 @@
       "category": "machine-discovery",
       "slug": "cors-ai-files",
       "title": "CORS on AI files",
-      "purpose": "Without CORS headers, AI agents running in browser contexts cannot fetch your llms.txt or API spec. Browser-based AI tools, ChatGPT plugins, and MCP clients are all blocked by same-origin policy, making your AI-facing files completely inaccessible to cross-origin agents.",
+      "purpose": "Without CORS headers, agent code running inside a browser origin cannot fetch your llms.txt or AI catalog cross-origin. Server-side crawlers, agent backends and MCP clients are not browsers and are unaffected.",
       "features": [
         "ai-files",
         "cors",
@@ -5265,8 +5265,8 @@
       "id": "machine-discovery/websub-hub-advertisement",
       "category": "machine-discovery",
       "slug": "websub-hub-advertisement",
-      "title": "Feeds advertise a WebSub hub and exactly one canonical self link",
-      "purpose": "Reads the WebSub discovery links on each feed — the `Link:` response headers first, as the specification requires, then the document — and checks the shape the W3C Recommendation asks for: exactly one absolute `rel=self` equal to the URL the feed was fetched from, and at least one `rel=hub` over HTTPS that answers a HEAD. Advisory only: no AI answer engine is documented as a WebSub subscriber, so this audit never affects the score.",
+      "title": "Feeds that advertise a WebSub hub carry exactly one absolute self link",
+      "purpose": "Reads the WebSub discovery links on each feed — the `Link:` response headers first, as the specification requires, then the document — and, on each feed that advertises a hub, checks the shape the W3C Recommendation asks for: exactly one absolute `rel=self`, and every `rel=hub` over HTTPS and answering a HEAD. The self URL may differ from the URL the feed was fetched from; the Recommendation allows it. A feed with no hub is not judged. Advisory only: no AI answer engine is documented as a WebSub subscriber, so this audit never affects the score.",
       "features": [
         "advisory",
         "feeds",

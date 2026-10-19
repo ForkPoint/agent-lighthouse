@@ -8,6 +8,7 @@ disposition: "kept — rebuilt spec-driven, na without an API surface 2026-08-22
 reviewed: 2026-08-22
 recommended_tier: informative
 consumers:
+  - MCP Apps (browser-sandboxed, author-declared APIs)
   - OpenAI Apps SDK widgets (browser-sandboxed)
   - in-browser agent JS
   - none-known among server-side crawlers
@@ -16,6 +17,7 @@ signals:
     grade: C
     domain: technical-infra
 sources:
+  - mcp-apps-csp-cors
   - mdn-cors
   - openai-apps-sdk-security
   - llmstxt-spec-link
@@ -29,7 +31,7 @@ sources:
 
 ## What it checks
 
-CORS matters for one class of AI consumer: agent code running inside a browser origin, such as an OpenAI Apps SDK widget in an isolated iframe under a strict CSP. Server-side crawlers and MCP clients are not browsers and are unaffected. The audit reads the endpoints out of the published OpenAPI document, probes those, and applies only to sites that publish one.
+CORS matters for one class of AI consumer: agent code running inside a browser origin, such as an MCP App or an OpenAI Apps SDK widget in an isolated iframe under a strict CSP. Server-side crawlers and MCP clients are not browsers and are unaffected. The audit reads the endpoints out of the published OpenAPI document, probes those, and applies only to sites that publish one.
 
 It probes at most two declared endpoints. `Access-Control-Allow-Origin: *` passes. A named origin, or no header at all, warns. The audit never fails, and a site with no usable `/openapi.json` is not applicable.
 
@@ -43,6 +45,8 @@ A missing header does not block AI agents in general. Crawlers such as GPTBot an
 
 **Evidence:** The mechanism is real but its scope is much narrower than the audit implies. CORS matters only for code running inside a browser origin: MDN states 'browsers restrict cross-origin HTTP requests initiated from scripts', and the server merely opts in via ACAO. The genuine AI consumer class is browser-sandboxed agent code. OpenAI's Apps SDK widgets run in an isolated iframe under a strict CSP, and must declare connect_domains — mapped to connect-src — for every origin they will fetch from. Such a widget fetching a publisher's JSON or llms.txt cross-origin will be blocked without ACAO. That class is small today but growing.
 
+MCP Apps run in a sandboxed iframe, and the MCP Apps documentation states that an API answering `Access-Control-Allow-Origin: *` works without further configuration (https://apps.extensions.modelcontextprotocol.io/api/documents/csp-and-cors.html, verified 2026-10-18). That covers apps whose author calls this API. No source documents an agent calling a site's declared API from a browser on its own.
+
 **Counter-evidence:** Decisive counter-evidence for the general case: GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, Claude-User, PerplexityBot and every server-side agent backend are non-browser HTTP clients. They do not implement the same-origin policy and are completely unaffected by a missing Access-Control-Allow-Origin header. Browser extensions with host permissions (the Claude-in-Chrome / sidebar class) also bypass CORS. No AI vendor doc requires CORS on publisher resources, and the llms.txt spec says nothing about it. Therefore 'missing CORS blocks AI agents' is false as a general claim. Recommend rewording the audit to target only browser-embedded agent consumption and demoting it out of the score.
 
 ## Implementation deviations
@@ -52,6 +56,6 @@ A missing header does not block AI agents in general. Crawlers such as GPTBot an
 - `/swagger.json` is not read. The orchestrator does not fetch it into `ctx.rootFiles`.
 - Targets come from `servers[].url` plus concrete declared paths. Relative server urls resolve against the site base, and no `servers` array means `/`.
 - `{variable}` templates expand from their `default`. A url still holding braces is dropped. Paths with `{param}` are skipped.
-- At most two endpoints are probed, with OPTIONS first and GET as the fallback.
+- At most two endpoints are probed, with OPTIONS first and GET as the fallback. Both carry `Origin: https://example.invalid`, and the OPTIONS probe also carries `Access-Control-Request-Method: GET`. A browser always sends Origin, and many gateways emit ACAO only when it is present; before 2026-10-18 the probes sent neither header and read such APIs as missing CORS.
 - Every target passes `isSafeUrl()`. A refused target warns with the reason.
 - The grade stays C, tier `informative`. Re-examine it if a vendor documents a browser-sandboxed agent that needs publisher-side ACAO.

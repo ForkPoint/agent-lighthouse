@@ -9,7 +9,12 @@ import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
 import { weightForGrade } from "#core/scorer";
 import type { CheckContext } from "#core/check-context";
-import { discoverMcpEndpoint, listTools, isObject } from "#core/gatherers/mcp";
+import {
+  discoverMcpEndpoint,
+  listTools,
+  isObject,
+  signInMessage,
+} from "#core/gatherers/mcp";
 import {
   AuditTier,
   CheckPriority,
@@ -152,7 +157,7 @@ export class McpToolContractValidityAudit extends Audit {
   };
 
   async audit(ctx: CheckContext): Promise<AuditResult> {
-    const endpoint = discoverMcpEndpoint(ctx);
+    const endpoint = await discoverMcpEndpoint(ctx);
     if (!endpoint || !endpoint.url) {
       return this.notApplicable(
         "This site declares no MCP endpoint, so there are no tool definitions to validate.",
@@ -164,8 +169,19 @@ export class McpToolContractValidityAudit extends Audit {
     }
 
     const url = endpoint.url;
-    const { tools, truncated, pages } = await listTools(ctx, url, MAX_PAGES);
+    const { tools, truncated, pages, signInStatus } = await listTools(
+      ctx,
+      url,
+      MAX_PAGES,
+    );
 
+    if (signInStatus !== undefined) {
+      return this.notApplicable(
+        signInMessage(url, signInStatus, "its tool contracts"),
+        EXPECTED,
+        `${url}; tools/list -> HTTP ${signInStatus}`,
+      );
+    }
     if (tools.length === 0) {
       return this.notApplicable(
         `${url} returned no tool definitions, so there is no contract to validate. Whether the endpoint answers at all is scored by agent-interfaces/mcp-modern-era-reachability.`,

@@ -54,6 +54,7 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 - A description under 40 characters is counted as a stub but still clears the tool-description gate.
 - `constrainedStringRatio` is advisory and never gated. A free-text parameter is legitimate.
 - At most four pages are read. `details.pagesTruncated` reports a cut.
+- 2026-10-18: a `tools/list` answered with HTTP 401 or 403 is not applicable, and the message names the sign-in requirement. The verdict was already not applicable; only the message changed.
 
 ## Deferred
 
