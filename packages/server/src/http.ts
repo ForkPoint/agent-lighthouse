@@ -1,15 +1,29 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { isSafeUrl, runScan } from "@forkpoint/agent-lighthouse-core";
+import {
+  BrowserSnapshotSchema,
+  isSafeUrl,
+  runScan,
+} from "@forkpoint/agent-lighthouse-core";
 import { InMemoryTaskStore, type TaskStore } from "./task-store";
 import { startScanTask, type RunningTask } from "./scan-task";
 import { openTaskStream } from "./sse";
-import { MAX_BODY_BYTES, MAX_RUNNING_TASKS, MAX_STREAMS } from "./limits";
+import {
+  MAX_BODY_BYTES,
+  MAX_PAYLOAD_BODY_BYTES,
+  MAX_RUNNING_DETECTS,
+  MAX_RUNNING_TASKS,
+  MAX_STREAMS,
+} from "./limits";
 import { FailureReason, TaskStatus } from "./task-types";
 import { PAGE_HTML } from "./page";
+import { InMemoryPayloadStore, type PayloadStore } from "./payload-store";
+import { DetectError, detectSnapshot, detectUrl } from "./detect";
 
 export interface TaskServerOptions {
   store?: TaskStore;
+  /** Where `POST /detect` keeps payloads for a later scan. */
+  payloads?: PayloadStore;
   /** When set, POST and DELETE need `Authorization: Bearer <token>`. */
   token?: string;
   scan?: typeof runScan;
@@ -21,6 +35,12 @@ export interface TaskServerOptions {
    * mount the handler behind their own routing.
    */
   allowedHosts?: string[];
+  /**
+   * Foreign origins, such as `chrome-extension://<id>`, that may call the
+   * server from a browser. Exact match only. Such an origin passes the
+   * foreign-Origin check, gets CORS headers and a preflight answer.
+   */
+  allowedOrigins?: string[];
 }
 
 export interface TaskServer {
@@ -30,24 +50,55 @@ export interface TaskServer {
 }
 
 const TASK_PATH = /^\/tasks\/([^/]+)(\/stream|\/updates|\/result)?$/;
+const DETECT_PATH = /^\/detect\/([^/]+)$/;
 
-function json(res: ServerResponse, status: number, body: unknown): void {
+/** Routes whose body may carry a page payload. */
+const PAYLOAD_ROUTES = new Set(["/detect", "/tasks"]);
+
+function json(
+  res: ServerResponse,
+  status: number,
+  body: unknown,
+  headers: Record<string, string> = {},
+): void {
   res.writeHead(status, {
     "content-type": "application/json; charset=utf-8",
     "cache-control": "no-store",
+    ...headers,
   });
   res.end(JSON.stringify(body));
 }
 
-async function readJson(req: IncomingMessage): Promise<unknown> {
+class BodyTooLarge extends Error {}
+
+async function readJson(req: IncomingMessage, limit: number): Promise<unknown> {
   let size = 0;
   const chunks: Buffer[] = [];
   for await (const chunk of req as AsyncIterable<Buffer>) {
     size += chunk.length;
-    if (size > MAX_BODY_BYTES) throw new Error("body too large");
+    if (size > limit) throw new BodyTooLarge("body too large");
     chunks.push(chunk);
   }
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+}
+
+/** The body as an object, or a response already sent and undefined. */
+async function readBody(
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<Record<string, unknown> | undefined> {
+  try {
+    const body = await readJson(req, MAX_PAYLOAD_BODY_BYTES);
+    if (typeof body === "object" && body !== null && !Array.isArray(body))
+      return body as Record<string, unknown>;
+  } catch (error) {
+    if (error instanceof BodyTooLarge) {
+      json(res, 413, { error: "payload_too_large" });
+      return undefined;
+    }
+  }
+  json(res, 400, { error: "invalid_request" });
+  return undefined;
 }
 
 const sha256 = (value: string) => createHash("sha256").update(value).digest();
@@ -83,34 +134,39 @@ function publicUrl(url: URL): string {
 
 export function createTaskServer(options: TaskServerOptions = {}): TaskServer {
   const store = options.store ?? new InMemoryTaskStore();
+  const payloads = options.payloads ?? new InMemoryPayloadStore();
   const scan = options.scan ?? runScan;
   const page = options.page ?? PAGE_HTML;
   const running = new Map<string, RunningTask>();
   const allowedHosts =
     options.allowedHosts &&
     new Set(options.allowedHosts.map((h) => h.toLowerCase()));
+  const allowedOrigins = new Set(options.allowedOrigins ?? []);
   let streams = 0;
+  let detecting = 0;
 
   const authorized = (req: IncomingMessage) =>
     options.token === undefined ||
     sameSecret(req.headers.authorization ?? "", `Bearer ${options.token}`);
 
+  // A cross-site form or no-cors fetch cannot send this type without a
+  // preflight, which the server answers only for an allowed origin.
+  const declaresJson = (req: IncomingMessage) =>
+    req.headers["content-type"]?.toLowerCase().startsWith("application/json");
+
   async function create(req: IncomingMessage, res: ServerResponse) {
     if (!authorized(req)) return json(res, 401, { error: "unauthorized" });
-    // A cross-site form or no-cors fetch cannot send this type without a
-    // preflight, which the server never answers.
-    if (
-      !req.headers["content-type"]?.toLowerCase().startsWith("application/json")
-    )
+    if (!declaresJson(req))
       return json(res, 415, { error: "unsupported_media_type" });
     // Checked before the DNS lookup too, so refused requests cost no lookup.
     if (running.size >= MAX_RUNNING_TASKS)
       return json(res, 429, { error: "too_many_tasks" });
+    const body = await readBody(req, res);
+    if (!body) return;
     let target: URL;
     try {
-      const body = (await readJson(req)) as { url?: unknown };
-      if (typeof body.url !== "string") throw new Error("no url");
-      target = new URL(body.url);
+      if (typeof body["url"] !== "string") throw new Error("no url");
+      target = new URL(body["url"]);
     } catch {
       return json(res, 400, { error: "invalid_request" });
     }
@@ -132,6 +188,65 @@ export function createTaskServer(options: TaskServerOptions = {}): TaskServer {
     });
   }
 
+  async function detect(req: IncomingMessage, res: ServerResponse) {
+    if (!authorized(req)) return json(res, 401, { error: "unauthorized" });
+    if (!declaresJson(req))
+      return json(res, 415, { error: "unsupported_media_type" });
+    // The slot covers the body read too, so the cap also bounds the memory
+    // that bodies in flight hold.
+    if (detecting >= MAX_RUNNING_DETECTS)
+      return json(
+        res,
+        429,
+        { error: "too_many_detections" },
+        { "retry-after": "1" },
+      );
+    detecting++;
+    try {
+      const body = await readBody(req, res);
+      if (!body) return;
+      const { url, snapshot } = body;
+      if ((url === undefined) === (snapshot === undefined))
+        return json(res, 400, {
+          error: "invalid_request",
+          message: "send exactly one of url or snapshot",
+        });
+      let detected;
+      if (snapshot !== undefined) {
+        const parsed = BrowserSnapshotSchema.safeParse(snapshot);
+        if (!parsed.success) {
+          const issue = parsed.error.issues[0]!;
+          return json(res, 400, {
+            error: "invalid_snapshot",
+            message: issue.path.length
+              ? `${issue.path.join(".")}: ${issue.message}`
+              : issue.message,
+          });
+        }
+        detected = detectSnapshot(parsed.data);
+      } else {
+        let target: URL;
+        try {
+          if (typeof url !== "string") throw new Error("no url");
+          target = new URL(url);
+        } catch {
+          return json(res, 400, { error: "invalid_request" });
+        }
+        detected = await detectUrl(target, publicUrl(target));
+      }
+      const detectionId = payloads.put(detected);
+      return json(res, 200, { detectionId, ...detected.identity });
+    } catch (error) {
+      if (!(error instanceof DetectError)) throw error;
+      return json(res, error.status, {
+        error: error.code,
+        message: error.message,
+      });
+    } finally {
+      detecting--;
+    }
+  }
+
   // Async so a synchronous throw becomes a rejection that `handle` catches.
   async function route(
     req: IncomingMessage,
@@ -148,8 +263,41 @@ export function createTaskServer(options: TaskServerOptions = {}): TaskServer {
       !allowedHosts.has(req.headers.host?.toLowerCase() ?? "")
     )
       return json(res, 421, { error: "misdirected_request" });
-    if ((req.method === "POST" || req.method === "DELETE") && !sameOrigin(req))
+
+    const origin = req.headers.origin;
+    const allowedOrigin = origin !== undefined && allowedOrigins.has(origin);
+    if (req.method === "OPTIONS") {
+      if (!allowedOrigin) return json(res, 403, { error: "forbidden_origin" });
+      res.writeHead(204, {
+        "access-control-allow-origin": origin,
+        "access-control-allow-headers": "Authorization, Content-Type",
+        "access-control-allow-methods": "GET, POST, DELETE",
+        vary: "Origin",
+      });
+      res.end();
+      return;
+    }
+    if (allowedOrigin) {
+      // Every answer, errors included, so the extension can read why.
+      res.setHeader("access-control-allow-origin", origin);
+      res.setHeader("vary", "Origin");
+    }
+    if (
+      (req.method === "POST" || req.method === "DELETE") &&
+      !allowedOrigin &&
+      !sameOrigin(req)
+    )
       return json(res, 403, { error: "forbidden_origin" });
+
+    // A declared length over the route's limit is refused before any read.
+    // The two payload routes also count the bytes as they stream in.
+    const bodyLimit =
+      req.method === "POST" && PAYLOAD_ROUTES.has(url.pathname)
+        ? MAX_PAYLOAD_BODY_BYTES
+        : MAX_BODY_BYTES;
+    if (Number(req.headers["content-length"] ?? 0) > bodyLimit)
+      return json(res, 413, { error: "payload_too_large" });
+
     if (req.method === "GET" && url.pathname === "/") {
       res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
       res.end(page);
@@ -157,6 +305,20 @@ export function createTaskServer(options: TaskServerOptions = {}): TaskServer {
     }
     if (req.method === "POST" && url.pathname === "/tasks")
       return create(req, res);
+    if (req.method === "POST" && url.pathname === "/detect")
+      return detect(req, res);
+
+    const detection = DETECT_PATH.exec(url.pathname);
+    if (detection) {
+      if (req.method !== "DELETE")
+        return json(res, 405, { error: "method_not_allowed" });
+      if (!authorized(req)) return json(res, 401, { error: "unauthorized" });
+      if (!payloads.delete(detection[1]!))
+        return json(res, 404, { error: "not_found" });
+      res.writeHead(204, { "cache-control": "no-store" });
+      res.end();
+      return;
+    }
 
     const match = TASK_PATH.exec(url.pathname);
     if (!match) return json(res, 404, { error: "not_found" });
