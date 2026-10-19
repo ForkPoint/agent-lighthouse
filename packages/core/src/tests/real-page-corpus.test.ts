@@ -186,7 +186,7 @@ describe("real-page corpus", () => {
   });
 
   for (const name of fixtures) {
-    // One `it` runs 215 audits over one page, and the heaviest fixtures are
+    // One `it` runs 221 audits over one page, and the heaviest fixtures are
     // heavy by design: `nodejs-docs-fs` is 35,290 words, `otto-de-category`
     // 1.78 MB. The slowest measures ~19 s on a laptop, which leaves too little
     // room under the global 30 s default for a two-core CI runner — and a

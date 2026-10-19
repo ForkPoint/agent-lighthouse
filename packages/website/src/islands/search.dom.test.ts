@@ -34,7 +34,7 @@ function polyfillDialog(dialog: HTMLDialogElement): void {
 const fixture = () => `
   <button id="search-trigger" type="button" hidden aria-haspopup="dialog">Search</button>
   <dialog id="search-dialog" aria-label="Search this site">
-    <label for="search-input">Search 215 dossiers</label>
+    <label for="search-input">Search 221 dossiers</label>
     <input id="search-input" type="search" />
     <p id="search-status" aria-live="polite"></p>
     <ul id="search-results"></ul>

@@ -134,7 +134,7 @@ describe.skipIf(!built)("the built search index", () => {
     );
     const audits = byUrl.get("/audits/")!;
 
-    // `/audits/` prints all 215 cards. Indexing them would put this page in the
+    // `/audits/` prints all 221 cards. Indexing them would put this page in the
     // results for every query the site can answer; it is indexed for what it is.
     expect(audits.meta.title).toBe("Website checks");
     expect(audits.content).not.toContain("Offer Truth Consistency");

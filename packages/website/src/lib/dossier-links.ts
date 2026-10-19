@@ -96,7 +96,7 @@ export function dossierLinksPlugin(published: Set<string>): MdastPlugin {
   return {
     name: "agent-lighthouse:dossier-links",
     link(node, ctx) {
-      // `audit` carries the `<category>/<slug>` id on all 215 dossiers, and that
+      // `audit` carries the `<category>/<slug>` id on all 221 dossiers, and that
       // is what a relative link resolves against. A file without it — the policy
       // page, any future loose markdown — is left as written.
       const fromId = ctx.data.astro?.frontmatter["audit"];
