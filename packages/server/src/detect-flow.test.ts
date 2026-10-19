@@ -23,7 +23,9 @@ const net = vi.hoisted(() => ({
 }));
 
 vi.mock("../../core/src/fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../core/src/fetcher")>();
+  // Typed loosely: a type import of core's source would pull it into this
+  // package's program, outside its rootDir.
+  const actual = await importOriginal<Record<string, unknown>>();
   const answer = (url: string): FetchResult => {
     const body = net.pages.get(url);
     return {
