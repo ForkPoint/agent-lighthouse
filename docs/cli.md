@@ -27,6 +27,8 @@ agent-lighthouse --help
 - The URL must be absolute, with its scheme (`https://example.com`, not `example.com`). Anything else exits 1.
 - `-h` or `--help` anywhere prints usage and exits 0. So does running the command with no arguments.
 - The URL may come from a [config file](./config.md#the-config-file) instead. `agent-lighthouse audit` with no URL, or a command made only of flags such as `agent-lighthouse --silent`, reads it. If neither the command nor the file names a URL, the CLI prints usage and exits 1.
+- `agent-lighthouse serve` — run the task server. See [server.md](server.md).
+  Flags: `--port` (default `8787`), `--host` (default `127.0.0.1`), `--token` (or `AL_SERVER_TOKEN`).
 
 Flags that take a value accept `--flag value` and `--flag=value`. In the space form the value must not start with `-`, or it is read as the next flag.
 

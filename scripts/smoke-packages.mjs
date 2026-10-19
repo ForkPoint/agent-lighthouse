@@ -37,13 +37,14 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const PACKAGES = ["core", "report", "mcp", "cli"];
+const PACKAGES = ["core", "report", "mcp", "server", "cli"];
 const BINS = ["agent-lighthouse", "agent-lighthouse-mcp"];
 const LIBRARIES = [
   "@forkpoint/agent-lighthouse-core",
   "@forkpoint/agent-lighthouse-core/contracts",
   "@forkpoint/agent-lighthouse-report",
   "@forkpoint/agent-lighthouse-mcp",
+  "@forkpoint/agent-lighthouse-server",
 ];
 /** A refused target: the SSRF gate stops it, so the scan sends nothing. */
 const TARGET = "http://127.0.0.1:9/";
