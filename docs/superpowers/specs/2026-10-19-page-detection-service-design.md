@@ -56,7 +56,8 @@ function detectPage(
 
 - Wraps `classifyPage` (`packages/core/src/parser.ts`), with the same parse
   and `DOM_WORK_LIMITS` as a scan. It fetches nothing and runs no audit.
-- A partial payload sets `partial: true` and caps `confidence` at `"low"`.
+- A partial payload sets `partial: true` and caps `confidence`: `strong`
+  becomes `hint`; `hint` and `unknown` stay.
 - `PayloadOrigin` is a const object plus type, per the enum rule.
 
 ## Server: `POST /detect`
@@ -99,8 +100,8 @@ The body carries exactly one of `url` or `snapshot`:
   "detectionId": "d_7f3a…",
   "url": "…",
   "type": "product",
-  "confidence": "high",
-  "signals": ["schema.org Product", "offer price"],
+  "confidence": "strong",
+  "signals": ["product-open-graph"],
   "payloadSha256": "ab12…",
   "origin": "fetched",
   "partial": false
@@ -117,7 +118,9 @@ timestamps, ad ids).
 
 - In memory, behind an interface, like `TaskStore`.
 - TTL 10 minutes, at most 50 entries, at most 32 MiB in total. The oldest
-  entry is evicted first; a full store never refuses a request.
+  entry is evicted first; a full store never refuses a request. One page
+  larger than 32 MiB on its own is not kept: `/detect` answers `413` and
+  returns no `detectionId`.
 - Expiry is checked on every read.
 - `DELETE /detect/:id` removes an entry.
 - The entry stays until its TTL ends, so a failed scan start can retry.
@@ -133,11 +136,13 @@ New constants in `packages/server/src/limits.ts`: `DETECTION_TTL_MS`,
 ```
 
 - `detectionId` must come alone. With `url` or `snapshot` it is `400`.
-- The scan's target URL comes from the entry. The scan uses the stored payload
-  for the target page and does not fetch it again. Other sampled pages are
-  fetched and classified as today.
-- A supplied payload also feeds `snapshots`, so the browser assessment runs
-  on it as today.
+- The scan's target URL comes from the entry. A fetched payload is the
+  target's response: the scan does not fetch the target page again. Other
+  sampled pages are fetched and classified as today.
+- A supplied payload feeds `snapshots`, so the browser assessment runs on it
+  as today. It does not replace the HTTP fetch: the crawler still reads the
+  target over HTTP, because no status, header or redirect may come from a
+  snapshot.
 - `POST /tasks` with a plain `snapshot` and no `detectionId` stays possible.
 
 ### Report field
@@ -197,9 +202,10 @@ on it remain advisory (`audit-runner.ts`). Only a type a person states
 - Payload store: TTL, eviction by count, eviction by bytes, delete.
 - `http.test.ts`: every row of the error table; preflight for an allowed and
   a refused origin; the larger body limit only on the two routes.
-- End to end: snapshot to `/detect`, its id to `/tasks`; the report carries
-  `pageIdentity` with the same `payloadSha256`, and the target URL is not
-  fetched again.
+- End to end: URL to `/detect`, its id to `/tasks`; the report carries
+  `pageIdentity` with the same `payloadSha256`, and the target page is not
+  fetched again. Snapshot to `/detect`, its id to `/tasks`; the report
+  carries the same `payloadSha256` and a browser assessment of the capture.
 - URL detection mocks the fetcher. No test performs real network or DNS.
 
 ## Docs and release
@@ -208,3 +214,23 @@ on it remain advisory (`audit-runner.ts`). Only a type a person states
   (HTML kept in memory up to 10 minutes; a snapshot can hold private data).
 - `docs/architecture/browser-snapshots.md`: link to the detection flow.
 - One `minor` changeset: new route, new flag, new report field.
+
+## Implementation deviations
+
+1. A supplied snapshot does not replace the HTTP fetch of the target. It runs
+   as the scan's snapshot only. `docs/architecture/browser-snapshots.md`
+   forbids any status, header or redirect from a snapshot, and crawler scores
+   describe HTTP evidence. A fetched payload replaces the target fetch
+   through `ScanOptions.targetPage`.
+2. There is no `low` confidence. The values are `strong`, `hint` and
+   `unknown`; a partial payload caps `strong` to `hint`.
+3. `POST /tasks` did not accept a plain `snapshot` before. It does now: a
+   snapshot alone, or with a `url` that names the same page.
+4. "Not fetched again" covers the scan's own page read. Audits that probe the
+   target on purpose, such as UA parity, still send their own requests.
+5. "Non-JSON body" means a `content-type` that is not JSON (`415`), as the
+   server already worked. A malformed JSON body stays `400`.
+6. The 16 KiB limit on the other routes is checked on the declared
+   `Content-Length`, because those routes never read a body. `413` replaces
+   the earlier `400` for an oversize body on every route.
+7. `DELETE /detect/:id` answers `204`.

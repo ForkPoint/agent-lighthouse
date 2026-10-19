@@ -49,7 +49,7 @@ Error statuses:
 | `415`  | `unsupported_media_type` | A `POST /tasks` or `POST /detect` whose `content-type` is not `application/json`.                                                           |
 | `421`  | `misdirected_request`    | A loopback-bound server got a `Host` that is not a loopback name.                                                                           |
 | `422`  | `unsafe_target`          | The target resolves to a private or loopback address.                                                                                       |
-| `429`  | `too_many_tasks`         | Four scans already run, or the task store is full.                                                                                          |
+| `429`  | `too_many_tasks`         | Four scans already run, the task store is full, or eight `POST /tasks` bodies are being read (then with `Retry-After: 1`).                  |
 | `429`  | `too_many_streams`       | Too many SSE streams are open.                                                                                                              |
 
 Every error body carries `error`. Some also carry a `message` for a person.
@@ -134,7 +134,8 @@ must name the same page.
 
 The server keeps each detected payload in memory, HTML included, for up to
 10 minutes, so a scan can reuse it. At most 50 payloads and 32 MiB are kept;
-the oldest goes first. A scan that starts from a detection does not remove
+the oldest goes first. A single page over 32 MiB is not kept: `POST /detect`
+answers `413` with `message` "page too large to keep" and no `detectionId`. A scan that starts from a detection does not remove
 it, so a failed start can retry. `DELETE /detect/:id` removes it sooner. A
 restart loses every payload.
 
@@ -143,22 +144,23 @@ device. A client that sends one must say so to its user and get consent.
 
 ### Errors
 
-| Case                                         | Status | Body `error`, `message`                                                    |
-| :------------------------------------------- | :----- | :------------------------------------------------------------------------- |
-| Missing or wrong token                       | `401`  | `unauthorized`                                                             |
-| Foreign `Origin` not in `--allow-origin`     | `403`  | `forbidden_origin`                                                         |
-| Body not declared as JSON                    | `415`  | `unsupported_media_type`                                                   |
-| Body over the limit                          | `413`  | `payload_too_large`                                                        |
-| Both `url` and `snapshot`, or neither        | `400`  | `invalid_request`                                                          |
-| Snapshot fails `BrowserSnapshotSchema`       | `400`  | `invalid_snapshot`, the first schema error                                 |
-| `isSafeUrl` refuses the URL                  | `400`  | `unsafe_url`, "unsafe URL"                                                 |
-| Fetch error or timeout                       | `502`  | `fetch_failed`, the fetch error text                                       |
-| Response is not HTML (`content-type`)        | `422`  | `not_html`, "not an HTML page"                                             |
-| Page answers HTTP 400 or above               | `422`  | `page_status`, "page returned HTTP <status>"                               |
-| Page over the DOM work limits                | `422`  | `page_too_deep`, "page too deep to assess"                                 |
-| Eight detections already run                 | `429`  | `too_many_detections`, with `Retry-After: 1`                               |
-| Unknown or expired `detectionId` on `/tasks` | `404`  | `detection_expired`, "detection expired; detect again or send the payload" |
-| `detectionId` with `url` or `snapshot`       | `400`  | `invalid_request`                                                          |
+| Case                                          | Status | Body `error`, `message`                                                    |
+| :-------------------------------------------- | :----- | :------------------------------------------------------------------------- |
+| Missing or wrong token                        | `401`  | `unauthorized`                                                             |
+| Foreign `Origin` not in `--allow-origin`      | `403`  | `forbidden_origin`                                                         |
+| Body not declared as JSON                     | `415`  | `unsupported_media_type`                                                   |
+| Body over the limit                           | `413`  | `payload_too_large`                                                        |
+| Both `url` and `snapshot`, or neither         | `400`  | `invalid_request`                                                          |
+| Snapshot fails `BrowserSnapshotSchema`        | `400`  | `invalid_snapshot`, the first schema error                                 |
+| `isSafeUrl` refuses the URL or a redirect hop | `400`  | `unsafe_url`, "unsafe URL"                                                 |
+| Fetch error or timeout                        | `502`  | `fetch_failed`, a code such as `ECONNREFUSED`, `ENOTFOUND` or `timeout`    |
+| Response is not HTML (`content-type`)         | `422`  | `not_html`, "not an HTML page"                                             |
+| Page answers HTTP 400 or above                | `422`  | `page_status`, "page returned HTTP <status>"                               |
+| Page over the DOM work limits                 | `422`  | `page_too_deep`, "page too deep to assess"                                 |
+| Eight detections already run                  | `429`  | `too_many_detections`, with `Retry-After: 1`                               |
+| Page too large for the payload store          | `413`  | `payload_too_large`, "page too large to keep"                              |
+| Unknown or expired `detectionId` on `/tasks`  | `404`  | `detection_expired`, "detection expired; detect again or send the payload" |
+| `detectionId` with `url` or `snapshot`        | `400`  | `invalid_request`                                                          |
 
 ## Frames
 
@@ -182,7 +184,13 @@ were not assessed. Every audit's `work.settled` event carries a
 
 Tasks live in memory. A restart loses them. Four scans run at once; more
 answer `429`. A finished task stays readable for 60 minutes. Eight
-detections run at once; more answer `429` with `Retry-After: 1`.
+detections run at once; more answer `429` with `Retry-After: 1`. Eight
+`POST /tasks` bodies are read at once; more answer `429` with
+`Retry-After: 1`. The 15-second deadline of a URL detection covers its DNS
+check and its fetch.
+
+The fetcher stops reading a response body once it has enough for the 5 MB
+the scan keeps, so a huge or endless page costs at most that much.
 
 `POST /detect` and `POST /tasks` accept bodies up to about 2.2 MiB, room for
 one 2 MiB snapshot. Every other route accepts 16 KiB. A larger body gets
@@ -216,9 +224,12 @@ example a browser extension:
 
     npx @forkpoint/agent-lighthouse serve --allow-origin chrome-extension://<id>
 
-The match is exact: scheme, host and port, with no wildcard. The flag
+The match is exact: scheme, host and port, with no wildcard. The value must
+be a bare origin, `scheme://host[:port]` with no path or trailing slash.
+`null` is refused, because any sandboxed page can send it. The flag
 repeats. An allowed origin passes the `Origin` check, and every answer to
-it carries `Access-Control-Allow-Origin: <origin>` and `Vary: Origin`. Its
+it carries `Access-Control-Allow-Origin: <origin>`,
+`Access-Control-Expose-Headers: Retry-After` and `Vary: Origin`. Its
 `OPTIONS` preflight gets `204` with
 `Access-Control-Allow-Headers: Authorization, Content-Type` and
 `Access-Control-Allow-Methods: GET, POST, DELETE`. A preflight from any
