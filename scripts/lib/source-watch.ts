@@ -309,6 +309,36 @@ export function diffSnapshot(
   return changes;
 }
 
+/**
+ * The snapshot to save for the next run. A failed datatracker or GitHub call
+ * comes back with null fields, and `diffSnapshot` never reports a change from
+ * a null baseline, so saving the failure would hide the next real change.
+ * Each failed part keeps its last good value instead. The URL probe is always
+ * taken as new: a broken page is itself a finding.
+ */
+export function keepLastGood(
+  prev: SourceSnapshot | undefined,
+  next: SourceSnapshot,
+): SourceSnapshot {
+  if (!prev) return next;
+  const out: SourceSnapshot = { ...next };
+  if (next.ietf && next.ietf.rev === null && prev.ietf?.rev) {
+    out.ietf = prev.ietf;
+  }
+  const pg = prev.github;
+  const ng = next.github;
+  if (ng && pg) {
+    // A good repo response always carries `pushed_at`.
+    if (ng.pushedAt === null && ng.archived === null) {
+      out.github = pg;
+    } else if (ng.latestRelease === null && pg.latestRelease !== null) {
+      // The releases call can fail on its own; keep the last tag.
+      out.github = { ...ng, latestRelease: pg.latestRelease };
+    }
+  }
+  return out;
+}
+
 /** Parse RFC 4180 CSV, including quoted fields with commas, quotes and newlines. */
 export function parseCsv(text: string): string[][] {
   const rows: string[][] = [];

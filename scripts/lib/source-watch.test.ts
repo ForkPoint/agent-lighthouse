@@ -8,6 +8,7 @@ import {
   groupBy,
   hashBody,
   ietfDraftOf,
+  keepLastGood,
   mapSourcesToAudits,
   needsReview,
   normalizeHtml,
@@ -143,6 +144,58 @@ describe("diffSnapshot", () => {
       ietf: { name: "draft-x", rev: null, state: null, expires: null },
     };
     expect(diffSnapshot(a, failed)).toEqual([]);
+  });
+
+  it("keeps the last good draft state across a failed request", () => {
+    const draft = (rev: string | null, state: string | null) => ({
+      ...ok("h"),
+      ietf: { name: "draft-x", rev, state, expires: null },
+    });
+    const first = draft("04", "Active");
+    // The saved state after a failed datatracker call is still the good one.
+    const saved = keepLastGood(first, draft(null, null));
+    expect(saved.ietf).toEqual(first.ietf);
+    expect(
+      diffSnapshot(saved, draft("05", "Expired")).map((c) => c.kind),
+    ).toEqual([ChangeKind.DraftRevised, ChangeKind.DraftStateChanged]);
+  });
+
+  it("keeps the last good repo state across a failed request", () => {
+    const repo = (
+      pushedAt: string | null,
+      archived: boolean | null,
+      latestRelease: string | null,
+    ) => ({
+      ...ok("h"),
+      github: { repo: "o/r", pushedAt, archived, latestRelease },
+    });
+    const first = repo("2026-01-01", false, "v1");
+    const saved = keepLastGood(first, repo(null, null, null));
+    expect(saved.github).toEqual(first.github);
+    expect(
+      diffSnapshot(saved, repo("2026-02-01", true, "v2")).map((c) => c.kind),
+    ).toEqual([
+      ChangeKind.RepoArchived,
+      ChangeKind.RepoReleased,
+      ChangeKind.RepoPushed,
+    ]);
+    // A failed releases call beside a good repo call keeps the old tag, so
+    // the next run does not report it as a new release.
+    const partial = keepLastGood(first, repo("2026-01-02", false, null));
+    expect(partial.github).toEqual({
+      repo: "o/r",
+      pushedAt: "2026-01-02",
+      archived: false,
+      latestRelease: "v1",
+    });
+  });
+
+  it("takes the new snapshot when there is no earlier one", () => {
+    const next = {
+      ...ok("h"),
+      ietf: { name: "draft-x", rev: null, state: null, expires: null },
+    };
+    expect(keepLastGood(undefined, next)).toBe(next);
   });
 
   it("reports archive, release and push on a repo", () => {

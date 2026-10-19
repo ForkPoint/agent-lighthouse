@@ -31,6 +31,7 @@ import {
   groupBy,
   hashBody,
   ietfDraftOf,
+  keepLastGood,
   mapSourcesToAudits,
   needsReview,
   parseIanaRegistry,
@@ -310,11 +311,24 @@ async function main(): Promise<void> {
   // every entry being removed.
   const iana = ianaCsv ? parseIanaRegistry(ianaCsv) : (prev?.iana ?? {});
 
+  // The diff below compares against this run's raw probes; the saved state
+  // keeps the last good draft and repo fields so a failed request today does
+  // not erase the baseline the next run compares against.
+  const saved = (
+    before: Record<string, SourceSnapshot> | undefined,
+    after: Record<string, SourceSnapshot>,
+  ): Record<string, SourceSnapshot> =>
+    Object.fromEntries(
+      Object.entries(after).map(([id, snap]) => [
+        id,
+        keepLastGood(before?.[id], snap),
+      ]),
+    );
   const next: WatchState = {
     version: 1,
     checkedAt: new Date().toISOString(),
-    sources: sourceSnaps,
-    watchlist: watchSnaps,
+    sources: saved(prev?.sources, sourceSnaps),
+    watchlist: saved(prev?.watchlist, watchSnaps),
     iana,
   };
 
