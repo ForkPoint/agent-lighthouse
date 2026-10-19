@@ -87,11 +87,7 @@ export async function detectUrl(target: URL, shown: string): Promise<Detected> {
     timeout: DETECT_FETCH_TIMEOUT_MS,
   });
   if (response.error !== undefined || response.status === 0)
-    throw new DetectError(
-      502,
-      "fetch_failed",
-      response.error ?? "no response",
-    );
+    throw new DetectError(502, "fetch_failed", response.error ?? "no response");
   if (response.status >= 400)
     throw new DetectError(
       422,

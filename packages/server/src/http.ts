@@ -214,7 +214,10 @@ function scanInput(
       error: "invalid_request",
       message: "snapshot requestedUrl is not the url",
     };
-  return { target, scanOptions: { snapshots: { version: 1, pages: [capture] } } };
+  return {
+    target,
+    scanOptions: { snapshots: { version: 1, pages: [capture] } },
+  };
 }
 
 /** A schema issue as one line: its path, then its message. */

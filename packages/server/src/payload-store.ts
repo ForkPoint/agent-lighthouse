@@ -116,6 +116,7 @@ export class InMemoryPayloadStore implements PayloadStore {
   }
 
   private sweep(): void {
-    for (const [id, slot] of this.slots) if (this.expired(slot)) this.remove(id);
+    for (const [id, slot] of this.slots)
+      if (this.expired(slot)) this.remove(id);
   }
 }

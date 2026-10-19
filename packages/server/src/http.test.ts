@@ -366,7 +366,12 @@ describe("POST /detect", () => {
   });
 
   it("refuses a missing or wrong token", async () => {
-    const res = await post({ url: "https://shop.test/" }, "wrong", {}, "/detect");
+    const res = await post(
+      { url: "https://shop.test/" },
+      "wrong",
+      {},
+      "/detect",
+    );
     expect(res.status).toBe(401);
   });
 
@@ -376,7 +381,10 @@ describe("POST /detect", () => {
       { origin: "https://evil.example" },
     );
     expect(foreign.status).toBe(403);
-    const allowed = await detect({ snapshot: capture() }, { origin: EXTENSION });
+    const allowed = await detect(
+      { snapshot: capture() },
+      { origin: EXTENSION },
+    );
     expect(allowed.status).toBe(200);
     expect(allowed.headers.get("access-control-allow-origin")).toBe(EXTENSION);
     expect(allowed.headers.get("vary")).toBe("Origin");
@@ -460,9 +468,7 @@ describe("POST /detect", () => {
     const slow = Array.from({ length: MAX_RUNNING_DETECTS }, () =>
       detect({ url: "https://slow.test/" }),
     );
-    await vi.waitFor(() =>
-      expect(net.held).toHaveLength(MAX_RUNNING_DETECTS),
-    );
+    await vi.waitFor(() => expect(net.held).toHaveLength(MAX_RUNNING_DETECTS));
     const refused = await detect({ snapshot: capture() });
     expect(refused.status).toBe(429);
     expect(refused.headers.get("retry-after")).toBe("1");
