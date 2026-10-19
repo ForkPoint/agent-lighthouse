@@ -370,9 +370,14 @@ export function parseServeOptions(
   args: string[],
   env: NodeJS.ProcessEnv = process.env,
 ): { port: number; host: string; token?: string } {
+  // A flag that is present must carry a value: a silent fallback would start
+  // the server without the auth or bind address the operator asked for.
   const value = (flag: string) => {
-    const i = args.indexOf(flag);
-    return i >= 0 ? args[i + 1] : undefined;
+    const present = args.some((a) => a === flag || a.startsWith(`${flag}=`));
+    const found = getArgValue(args, "", flag);
+    if (present && (found === undefined || found === ""))
+      throw new Error(`Missing value for ${flag}`);
+    return found;
   };
   const rawPort = value("--port") ?? "8787";
   const port = Number(rawPort);

@@ -971,4 +971,34 @@ describe("serve", () => {
       /port/,
     );
   });
+
+  it("rejects a flag without a value", () => {
+    expect(() => parseServeOptions(["serve", "--token"], {})).toThrow(
+      /Missing value for --token/,
+    );
+    expect(() =>
+      parseServeOptions(["serve", "--token", "--host", "0.0.0.0"], {}),
+    ).toThrow(/--token/);
+    expect(() => parseServeOptions(["serve", "--port"], {})).toThrow(
+      /Missing value for --port/,
+    );
+    expect(() => parseServeOptions(["serve", "--host"], {})).toThrow(
+      /Missing value for --host/,
+    );
+  });
+
+  it("accepts the --flag=value form", () => {
+    expect(
+      parseServeOptions(
+        ["serve", "--port=9000", "--host=0.0.0.0", "--token=t"],
+        {},
+      ),
+    ).toEqual({ port: 9000, host: "0.0.0.0", token: "t" });
+  });
+
+  it("treats an empty --token= as missing", () => {
+    expect(() => parseServeOptions(["serve", "--token="], {})).toThrow(
+      /Missing value for --token/,
+    );
+  });
 });
