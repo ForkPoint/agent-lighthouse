@@ -117,6 +117,20 @@ describe("runScan — targetPage", () => {
     expect(ScanReportSchema.parse(report).pageIdentity).toEqual(pageIdentity);
   });
 
+  it("ignores a response for another URL and reads the target", async () => {
+    h.map.set(TARGET, response(TARGET, 200, PRODUCT));
+    const other = "https://shop.example/p/other";
+    await runScan(TARGET, { targetPage: response(other, 200, "<p>x</p>") });
+    expect(pageReads(TARGET)).toHaveLength(1);
+  });
+
+  it("matches the target without its trailing slash or fragment", async () => {
+    await runScan(TARGET, {
+      targetPage: response(`${TARGET}/#top`, 200, PRODUCT),
+    });
+    expect(pageReads(TARGET)).toEqual([]);
+  });
+
   it("adds no identity to a plain scan", async () => {
     h.map.set(TARGET, response(TARGET, 200, PRODUCT));
     const report = await runScan(TARGET);
