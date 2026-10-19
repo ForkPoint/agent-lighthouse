@@ -1020,10 +1020,15 @@ describe("serve", () => {
   it("accepts a bare origin with a port", () => {
     expect(
       parseServeOptions(
-        ["serve", "--allow-origin", "http://localhost:3000"],
+        [
+          "serve",
+          "--allow-origin",
+          "http://localhost:3000",
+          "--allow-origin=http://[::1]:8080",
+        ],
         {},
       ).allowedOrigins,
-    ).toEqual(["http://localhost:3000"]);
+    ).toEqual(["http://localhost:3000", "http://[::1]:8080"]);
   });
 
   it.each([
