@@ -3,9 +3,10 @@ import { Audit } from "#core/audit";
 import type { CheckContext } from "#core/check-context";
 import { CheckPriority, FixEffort, ScoreDisplayMode } from "#core/types";
 
-// TODO: implement proposed audit "Question-Heading Answer Span Alignment".
+// Do not implement: proposed audit "Question-Heading Answer Span Alignment" was retired; this stub awaits removal.
 // Status: stub — not registered in any category index; returns notApplicable until implemented.
-// Evidence grade C → informative tier. Implementation difficulty: llm-assisted.
+// RETIRED 2026-10-19: evidence grade D, no documented consumer; the checkable part ships in
+// answer-readiness/text-fragment-addressability and answer-readiness/question-headings. See the dossier.
 // Dossier (mechanism, evidence, competitor coverage): docs/evidence/proposals/answer-selection-forensics/question-heading-answer-span-alignment.md
 //
 // Implementation sketch (from the 2026-08-20 research pass):

@@ -2,53 +2,58 @@
 check: question-heading-answer-span-alignment
 title: "Question-Heading Answer Span Alignment"
 domain: answer-selection-forensics
-status: proposed
-evidence_grade: C
+status: retired
+evidence_grade: D
 uniqueness: unique
 difficulty: llm-assisted
-scoring_tier: informative (weight 0)
-reviewed: 2026-08-20
+scoring_tier: rejected
+reviewed: 2026-10-19
+consumers: []
 ---
 
 # Question-Heading Answer Span Alignment
 
-> Proposed check. Evidence grade **C** · unique · implementation: `llm-assisted`
+> Retired proposal. Evidence grade **D** · no documented consumer · implementation: `llm-assisted`
 
 ## What it checks
 
-For every interrogative heading, checks that the immediately following content is a self-contained declarative answer inside a measurable envelope — appears within the first ~320 characters of the section, is a contiguous span inside one block element, restates a content word from the heading, and is not a teaser or link-out. Roadmap item: the structural half is deterministic, but judging whether the span actually answers the question needs an LLM adjudicator.
+For every question-shaped heading, whether the content right after it is a self-contained answer. The 2026-08-20 sketch set an envelope: the answer starts within about 320 characters of the heading, sits in one block element, repeats a content word from the heading, runs 8 to 40 words, and is not a teaser. A model would judge whether the span answers the question.
 
 ## Claimed mechanism (falsifiable)
 
-A citable answer must be a contiguous extractable span: Google's featured snippet is exactly such a span and is deep-linked with an auto-generated text fragment (S12), which the spec constrains to a single block-level element (S2, S3). So a question heading whose answer is spread across three paragraphs, or deferred behind 'here's what you need to know first', has no single span that a citing surface can lift. Chunk segmentation reinforces this: heading-based chunkers (S5) put the heading and the answer in the same chunk only when the answer is near the heading. The honest limitation is that the semantic part — does this sentence answer this question — is not decidable by regex, which is why this is graded C and not scored.
+The 2026-08-20 claim: a citing surface can lift an answer only as a contiguous span inside one block element. Google's featured snippets link to such spans with text fragments. Heading-based chunkers keep the heading and answer together only when the answer is near the heading.
 
 ## Evidence
 
-- **[Text fragments](https://web.dev/articles/text-fragments)** — Google / web.dev (vendor-doc, URL verified 2026-08-20)
-  - Confirms a shipped answer-surface consumer: "Clicking a featured snippet takes the user directly to the featured snippet text on the source web page. This works thanks to automatically created Text Fragments URLs." Support: Chrome 89+, Edge 89+, Firefox 131+, Safari 18.2+. Restates the boundary rule: "Each of prefix-, start, end, and -suffix can only match text within a single block-level element, but full start,end ranges can span multiple blocks." Opt-out header: Document-Policy: force-load-at-top.
-- **[Playwright: Auto-waiting / Actionability checks](https://playwright.dev/docs/actionability)** — Microsoft (vendor-doc, URL verified 2026-08-20)
-  - Before click/check/fill/selectOption, Playwright enforces five checks: Visible (non-empty bounding box, not visibility:hidden), Stable (same bounding box over 2 animation frames), Receives Events (element is the hit target at the action point — overlays cause failure), Enabled (not [disabled]/aria-disabled), Editable (not readonly/aria-readonly). Fill requires visible+enabled+editable. This is the exact gate every Playwright-based agent (Playwright-MCP, browser-use, most CUA harnesses) passes through, so each check is a directly testable site-side failure cause.
-- **[MCP Specification 2026-07-28 — Caching](https://modelcontextprotocol.io/specification/2026-07-28/server/utilities/caching)** — Model Context Protocol (spec, URL verified 2026-08-20)
-  - 'Servers MUST include caching hints on results with resultType: "complete"' for server/discover, tools/list, prompts/list, resources/list, resources/templates/list, resources/read. ttlMs is an integer ms; servers MUST provide ttlMs >= 0. If ttlMs is absent clients SHOULD assume 0 = immediately stale. cacheScope is exactly "public" or "private". Servers MUST apply the same cacheScope to all pages of a paginated list. Public scope on an authenticated endpoint may be shared across access tokens — servers MUST NOT rely on cacheScope for access control.
-- **[MCP Specification 2026-07-28 — Versioning and Compatibility](https://modelcontextprotocol.io/specification/2026-07-28/basic/versioning)** — Model Context Protocol (spec, URL verified 2026-08-20)
-  - 'There is no negotiation handshake.' Terminology: Modern = 2026-07-28+ (per-request _meta); Legacy = 2025-11-25 and earlier (initialize handshake). Unsupported version MUST return error code -32022 with data.supported[] and data.requested. Verbatim compatibility matrix: Modern client + Legacy server = FAILS. Legacy client + Modern server = FAILS. Only dual-era implementations bridge. Extensions negotiated via capabilities.extensions map with mandatory reverse-DNS prefix.
+- web.dev documents that clicking a featured snippet uses "automatically created Text Fragments URLs". It also states: "Each of prefix-, start, end, and -suffix can only match text within a single block-level element, but full start,end ranges can span multiple blocks." — https://web.dev/articles/text-fragments (verified 2026-10-19)
+- The Text Fragments specification is a WICG Community Group draft (`Status: CG-DRAFT`). It defines matching within "a single block-level container" — https://github.com/WICG/scroll-to-text-fragment/blob/main/index.bs (verified 2026-10-19). The rendered spec at wicg.github.io timed out twice on 2026-10-19.
+- Google's featured-snippets page: "How can I mark my page as a featured snippet? You can't. Google systems determine whether a page would make a good featured snippet". Scrolling to the snippet "happens automatically, without any additional annotation by the site" — https://developers.google.com/search/docs/appearance/featured-snippets (verified 2026-10-19)
+- Google's generative-AI guide, updated 2026-07-10: "For Google Search, you can ignore tactics like 'chunking' content". It recommends "headings that provide a clear structure to navigate content" — https://developers.google.com/search/docs/fundamentals/ai-optimization-guide (verified 2026-10-19)
+
+## What the evidence does and does not support
+
+- Documented: Google links featured snippets with text fragments, and each fragment term matches within one block.
+- Contradicted: the claim that an answer spread across several paragraphs "has no single span that a citing surface can lift". A start,end range can span blocks.
+- Contradicted: the chunking rationale. Google says to ignore chunking tactics for Search.
+- Unproven: the 320-character window, the 8 to 40 word envelope and the content-word overlap rule. No source sets any of them. They were invented.
+- Unproven: that any answer engine prefers an answer placed directly under a question heading. No vendor documents this.
+
+## Overlap with shipped audits
+
+- `answer-readiness/text-fragment-addressability` (grade A, scored) already checks whether answer spans are fragment-addressable within one block.
+- `answer-readiness/question-headings` (grade C, informative) already reports question-form headings, with Google's counter-evidence recorded.
+
+What is left for this proposal is the semantic judgement, and no consumer is documented for it.
 
 ## Competitor coverage
 
-Content-optimization tools (Surfer, Clearscope, MarketMuse) score keyword coverage and heading counts, not heading-to-answer-span proximity. Lighthouse's agentic category has no content-semantics audit. Some AEO consultancies advise 'answer in the first 40 words' as a rule of thumb, but no shipping tool measures it against the block-boundary and lexical-overlap constraints, and none checks the answer is a fragment-addressable contiguous span.
-
-## Implementation sketch
-
-Static parse plus an LLM adjudication pass. 1) Detect interrogative headings: text ends with '?' or begins with what/how/why/when/where/who/which/can/do/does/is/are/should/will. 2) Take the section body up to the next heading. 3) Deterministic gates, all reportable without an LLM: (a) proximity — the candidate answer sentence starts within 320 characters of the heading; (b) block containment — the sentence lies wholly inside one block-level element, so it is text-fragment addressable (reuse the addressability engine); (c) lexical anchoring — the sentence shares at least one non-stopword content token with the heading; (d) length envelope — 8 to 40 words; (e) not-a-teaser — does not match /^(in this (article|guide|post|section)|let's|first,? (let's|we)|read on|keep reading|before we|here's what)/i and is not a link-only paragraph. 4) LLM gate: send heading plus candidate span to a judge with a strict rubric returning answers|partial|no, plus the reason. Cache by content hash. 5) Report as advisory findings with the heading, the candidate span, and which gate failed; do not fold into the numeric score while grade is C. 6) Cheap variant for score-free CI: run gates (a)-(e) only, and report coverage as an informational metric.
-
-## Example failure
-
-An h2 reads 'How long does a passport renewal take?' and the section opens 'In this section we'll walk through the renewal timeline, the factors that affect it, and what to do if you're in a hurry.' The number appears 700 characters later, split as 'Standard processing currently runs' in one <p> and '6 to 8 weeks' inside a <strong> in the next. No contiguous single-block span answers the question, so no featured-snippet-style extraction and no text-fragment citation is constructible.
+Content tools score keyword coverage and heading counts. Some consultancies advise "answer in the first 40 words". That advice traces to no vendor source, so it is not evidence.
 
 ## Scoring
 
-Tier per evidence policy: **informative (weight 0)** — grade C does not meet the A/B bar required for scored audits.
+Tier: **rejected**. Grade D: the mechanism has no documented consumer, its thresholds are invented, and Google's guidance argues against it. The checkable part ships already. Nothing is gained by shipping the rest.
 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+- 2026-10-19 — evidence review. Grade C lowered to D and the proposal retired. Three of the four cited sources (Playwright actionability, MCP caching, MCP versioning) had no bearing on this check. The mechanism's labels S2, S3 and S5 point to those unrelated registry entries. Google's guidance contradicts the chunking rationale, and web.dev contradicts the cross-block claim. The deterministic gates duplicate `text-fragment-addressability` and `question-headings`.
