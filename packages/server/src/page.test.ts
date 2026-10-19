@@ -210,4 +210,35 @@ describe("page watcher", () => {
     expect(calls.filter((c) => c.startsWith("tasks/A/"))).toHaveLength(1);
     expect(calls).toContain("tasks/B/updates?after=1");
   });
+
+  it("reports a start that fails instead of leaving a rejection", async () => {
+    const rejections: unknown[] = [];
+    const onRejection = (reason: unknown) => rejections.push(reason);
+    process.on("unhandledRejection", onRejection);
+    try {
+      const page = openPage(async () => ({
+        ok: false,
+        status: 502,
+        json: async () => {
+          throw new SyntaxError("Unexpected token <");
+        },
+      }));
+      page.submit("https://a.test/");
+      expect(page.text("status")).toBe("Starting…");
+      await tick();
+      await tick();
+      expect(page.text("status")).toBe("Could not start: HTTP 502");
+
+      const offline = openPage(async () => {
+        throw new TypeError("Failed to fetch");
+      });
+      offline.submit("https://a.test/");
+      await tick();
+      await tick();
+      expect(offline.text("status")).toBe("Could not start: network error");
+      expect(rejections).toEqual([]);
+    } finally {
+      process.off("unhandledRejection", onRejection);
+    }
+  });
 });

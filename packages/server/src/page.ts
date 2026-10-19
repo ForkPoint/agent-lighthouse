@@ -107,8 +107,17 @@ $("f").addEventListener("submit", async (e) => {
   $("phases").hidden = true;
   const headers = { "content-type": "application/json" };
   if ($("token").value) headers.authorization = "Bearer " + $("token").value;
-  const r = await fetch("tasks", { method: "POST", headers, body: JSON.stringify({ url: $("url").value }) });
-  const body = await r.json();
+  $("status").textContent = "Starting…";
+  let r = null;
+  let body;
+  try {
+    r = await fetch("tasks", { method: "POST", headers, body: JSON.stringify({ url: $("url").value }) });
+    body = await r.json();
+  } catch {
+    if (mine !== submission) return;
+    $("status").textContent = "Could not start: " + (r ? "HTTP " + r.status : "network error");
+    return;
+  }
   // A later submission won while this request was in flight.
   if (mine !== submission) return;
   if (!r.ok) { $("status").textContent = "Could not start: " + body.error; return; }
