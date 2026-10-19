@@ -1,6 +1,6 @@
 # Browser-rendered snapshot assessment
 
-A caller can hand the scan HTML that a browser rendered. Seven reviewed audits then run on that DOM, and the report shows their findings apart from the crawler score. The engine includes no browser collector and no upload endpoint.
+A caller can hand the scan HTML that a browser rendered. Seven reviewed audits then run on that DOM, and the report shows their findings apart from the crawler score. The engine includes no browser collector. The [task server](../server.md#page-detection) accepts captures over HTTP.
 
 ## Public contract
 
@@ -28,6 +28,8 @@ The shapes live in `packages/core/src/contracts.ts`. `BrowserSnapshotsSchema` an
 
 The CLI reads the same `snapshots` field from its [config file](../config.md#keys). The MCP `audit_website` tool accepts it and returns the browser assessment.
 
+The task server takes a snapshot over HTTP. `POST /detect` reports a capture's page type without a scan, and `POST /tasks` with the returned `detectionId` scans it with the stored capture as its snapshot. See [page detection](../server.md#page-detection).
+
 All metadata is the client's claim. The engine does not verify who captured a page, when, or with what cookies. No status code, header, cookie, redirect or timing comes from a snapshot.
 
 ## Input limits
@@ -51,7 +53,7 @@ URLs associate without fragment, credentials or trailing path slash; the query m
 
 A truncated, redacted or still-loading capture stays in the report but yields no findings: each eligible audit records missing evidence, because a partial DOM cannot prove absence. An `interactive` or `complete` capture can run static checks; neither proves late scripts finished.
 
-Raw HTML can hold private data. Collectors must disclose the upload and obtain consent. The engine does no redaction and keeps no raw HTML in the report.
+Raw HTML can hold private data. Collectors must disclose the upload and obtain consent. The engine does no redaction and keeps no raw HTML in the report. The task server keeps a detected capture's HTML in memory for up to 10 minutes; see [retention](../server.md#retention).
 
 ## How a snapshot runs
 
@@ -159,4 +161,4 @@ Serialized HTML cannot show computed appearance, a full accessibility tree, even
 
 ## Deferred
 
-Not built: snapshot contracts for the other audits, browser automation, computed styles, accessibility-tree input, shadow-root and frame capture, action traces, authenticated collector provenance, a freshness policy, a browser score, an extension collector, and upload or storage endpoints.
+Not built: snapshot contracts for the other audits, browser automation, computed styles, accessibility-tree input, shadow-root and frame capture, action traces, authenticated collector provenance, a freshness policy, a browser score, an extension collector, and durable snapshot storage. The task server keeps a detected capture in memory for 10 minutes only.
