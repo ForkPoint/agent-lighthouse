@@ -5,7 +5,8 @@ import { CheckPriority, FixEffort, ScoreDisplayMode } from "#core/types";
 
 // TODO: implement proposed audit "ACP Endpoint Conformance Probe".
 // Status: stub — not registered in any category index; returns notApplicable until implemented.
-// Evidence grade A → informative tier. Implementation difficulty: static-fetch.
+// Evidence grade A (authenticated tier only; re-graded 2026-10-19) → informative tier. Implementation difficulty: operator-credential.
+// The 2026-10-19 review dropped the unauthenticated probes below; the dossier governs where this sketch disagrees.
 // Dossier (mechanism, evidence, competitor coverage): docs/evidence/proposals/agentic-commerce/acp-endpoint-conformance-probe.md
 //
 // Implementation sketch (from the 2026-08-20 research pass):
