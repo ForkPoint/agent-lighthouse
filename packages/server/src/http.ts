@@ -3,7 +3,11 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import {
   BrowserSnapshotSchema,
   isSafeUrl,
+  PageTypeSource,
   runScan,
+  snapshotUrlKey,
+  type BrowserSnapshot,
+  type ScanOptions,
 } from "@forkpoint/agent-lighthouse-core";
 import { InMemoryTaskStore, type TaskStore } from "./task-store";
 import { startScanTask, type RunningTask } from "./scan-task";
@@ -132,6 +136,97 @@ function publicUrl(url: URL): string {
   return copy.href;
 }
 
+type ScanInput =
+  | { target: URL; scanOptions: ScanOptions }
+  | { status: number; error: string; message?: string };
+
+/**
+ * What a `POST /tasks` body asks to scan. One of three shapes:
+ * `{detectionId}` alone reuses a stored detection; `{url}` scans a URL;
+ * `{snapshot}`, with or without the `url` it was captured from, scans that
+ * URL with the snapshot.
+ */
+function scanInput(
+  body: Record<string, unknown>,
+  payloads: PayloadStore,
+): ScanInput {
+  const { url, snapshot, detectionId } = body;
+  if (detectionId !== undefined) {
+    if (url !== undefined || snapshot !== undefined)
+      return {
+        status: 400,
+        error: "invalid_request",
+        message: "detectionId must come alone",
+      };
+    const entry =
+      typeof detectionId === "string" ? payloads.get(detectionId) : undefined;
+    if (!entry)
+      return {
+        status: 404,
+        error: "detection_expired",
+        message: "detection expired; detect again or send the payload",
+      };
+    const pageIdentity = {
+      type: entry.identity.type,
+      // Detection is the classifier's claim, never a person's statement.
+      source: PageTypeSource.Detected,
+      detectionId: entry.detectionId,
+      payloadSha256: entry.payload.sha256,
+      origin: entry.payload.origin,
+    };
+    // A fetched payload is the server's own HTTP response and replaces the
+    // scan's target fetch. A supplied one is the client's capture: it runs as
+    // the scan's snapshot, and the crawler reads the page over HTTP, because
+    // no status, header or redirect may come from a snapshot.
+    return {
+      target: new URL(entry.target),
+      scanOptions: entry.response
+        ? { targetPage: entry.response, pageIdentity }
+        : {
+            snapshots: { version: 1, pages: [entry.snapshot!] },
+            pageIdentity,
+          },
+    };
+  }
+  let capture: BrowserSnapshot | undefined;
+  if (snapshot !== undefined) {
+    const parsed = BrowserSnapshotSchema.safeParse(snapshot);
+    if (!parsed.success)
+      return {
+        status: 400,
+        error: "invalid_snapshot",
+        message: firstIssue(parsed.error.issues),
+      };
+    capture = parsed.data;
+  }
+  let target: URL;
+  try {
+    const raw = url ?? capture?.requestedUrl;
+    if (typeof raw !== "string") throw new Error("no url");
+    target = new URL(raw);
+  } catch {
+    return { status: 400, error: "invalid_request" };
+  }
+  if (!capture) return { target, scanOptions: {} };
+  if (snapshotUrlKey(capture.requestedUrl) !== snapshotUrlKey(target.href))
+    return {
+      status: 400,
+      error: "invalid_request",
+      message: "snapshot requestedUrl is not the url",
+    };
+  return { target, scanOptions: { snapshots: { version: 1, pages: [capture] } } };
+}
+
+/** A schema issue as one line: its path, then its message. */
+function firstIssue(
+  issues: readonly { path: readonly PropertyKey[]; message: string }[],
+): string {
+  const issue = issues[0]!;
+  return issue.path.length
+    ? `${issue.path.map(String).join(".")}: ${issue.message}`
+    : issue.message;
+}
+
 export function createTaskServer(options: TaskServerOptions = {}): TaskServer {
   const store = options.store ?? new InMemoryTaskStore();
   const payloads = options.payloads ?? new InMemoryPayloadStore();
@@ -163,13 +258,13 @@ export function createTaskServer(options: TaskServerOptions = {}): TaskServer {
       return json(res, 429, { error: "too_many_tasks" });
     const body = await readBody(req, res);
     if (!body) return;
-    let target: URL;
-    try {
-      if (typeof body["url"] !== "string") throw new Error("no url");
-      target = new URL(body["url"]);
-    } catch {
-      return json(res, 400, { error: "invalid_request" });
-    }
+    const input = scanInput(body, payloads);
+    if ("status" in input)
+      return json(res, input.status, {
+        error: input.error,
+        ...(input.message !== undefined && { message: input.message }),
+      });
+    const { target, scanOptions } = input;
     if (!(await isSafeUrl(target.href)))
       return json(res, 422, { error: FailureReason.UnsafeTarget });
     // Counts scan promises, not task status: a cancelled task is terminal at
@@ -179,7 +274,13 @@ export function createTaskServer(options: TaskServerOptions = {}): TaskServer {
       return json(res, 429, { error: "too_many_tasks" });
     const snapshot = store.create(publicUrl(target));
     if (!snapshot) return json(res, 429, { error: "too_many_tasks" });
-    const task = startScanTask(store, snapshot.taskId, target.href, scan);
+    const task = startScanTask(
+      store,
+      snapshot.taskId,
+      target.href,
+      scan,
+      scanOptions,
+    );
     running.set(snapshot.taskId, task);
     void task.done.then(() => running.delete(snapshot.taskId));
     json(res, 202, {
@@ -214,15 +315,11 @@ export function createTaskServer(options: TaskServerOptions = {}): TaskServer {
       let detected;
       if (snapshot !== undefined) {
         const parsed = BrowserSnapshotSchema.safeParse(snapshot);
-        if (!parsed.success) {
-          const issue = parsed.error.issues[0]!;
+        if (!parsed.success)
           return json(res, 400, {
             error: "invalid_snapshot",
-            message: issue.path.length
-              ? `${issue.path.join(".")}: ${issue.message}`
-              : issue.message,
+            message: firstIssue(parsed.error.issues),
           });
-        }
         detected = detectSnapshot(parsed.data);
       } else {
         let target: URL;

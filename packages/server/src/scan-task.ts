@@ -6,6 +6,7 @@ import {
   runScan,
   type AuditTrace,
   type ScanEvent,
+  type ScanOptions,
 } from "@forkpoint/agent-lighthouse-core";
 import type { TaskStore } from "./task-store";
 import { FailureReason, WorkOutcome, type TaskEventBody } from "./task-types";
@@ -79,18 +80,24 @@ export interface RunningTask {
   done: Promise<void>;
 }
 
-/** Starts a scan in the background and records its progress in `store`. */
+/**
+ * Starts a scan in the background and records its progress in `store`.
+ * `options` carries the scan's inputs, such as snapshots or a reused target
+ * response; the task owns the signal and the progress callbacks.
+ */
 export function startScanTask(
   store: TaskStore,
   taskId: string,
   url: string,
   scan: typeof runScan = runScan,
+  options: Omit<ScanOptions, "signal" | "onEvent" | "onAuditTrace"> = {},
 ): RunningTask {
   const controller = new AbortController();
   store.append(taskId, { type: "task.started" });
   const run = async (): Promise<void> => {
     try {
       const report = await scan(url, {
+        ...options,
         signal: controller.signal,
         onEvent: (event) => {
           const body = scanEventToBody(event);

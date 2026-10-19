@@ -9,6 +9,7 @@ import {
   DocumentState,
   isSafeUrl,
   PageType,
+  PageTypeSource,
   PayloadOrigin,
   PhaseId,
   type BrowserSnapshot,
@@ -536,5 +537,92 @@ describe("body limits", () => {
       body: JSON.stringify(big),
     });
     expect(res.status).toBe(413);
+  });
+});
+
+describe("POST /tasks with detectionId", () => {
+  const lastOptions = () => scan.mock.calls.at(-1)![1]!;
+
+  it("scans the stored target with the stored response and its identity", async () => {
+    net.pages.set("https://shop.test/p/1", { body: PRODUCT_HTML });
+    const { detectionId } = await (
+      await detect({ url: "https://shop.test/p/1" })
+    ).json();
+    scan.mockClear();
+    const res = await post({ detectionId });
+    expect(res.status).toBe(202);
+    expect((await res.json()).snapshot.url).toBe("https://shop.test/p/1");
+    expect(scan.mock.calls[0]![0]).toBe("https://shop.test/p/1");
+    const options = lastOptions();
+    expect(options.targetPage?.body).toBe(PRODUCT_HTML);
+    expect(options.snapshots).toBeUndefined();
+    // A detected type is never handed over as a declared one.
+    expect(options.pageType).toBeUndefined();
+    expect(options.pageIdentity).toEqual({
+      type: PageType.Product,
+      source: PageTypeSource.Detected,
+      detectionId,
+      payloadSha256: sha(PRODUCT_HTML),
+      origin: PayloadOrigin.Fetched,
+    });
+  });
+
+  it("feeds a supplied payload to the scan as its snapshot", async () => {
+    const { detectionId } = await (
+      await detect({ snapshot: capture() })
+    ).json();
+    scan.mockClear();
+    expect((await post({ detectionId })).status).toBe(202);
+    const options = lastOptions();
+    expect(options.snapshots).toEqual({ version: 1, pages: [capture()] });
+    expect(options.targetPage).toBeUndefined();
+    expect(options.pageIdentity?.origin).toBe(PayloadOrigin.Supplied);
+  });
+
+  it("keeps the entry, so a failed start can retry", async () => {
+    const { detectionId } = await (
+      await detect({ snapshot: capture() })
+    ).json();
+    expect((await post({ detectionId })).status).toBe(202);
+    expect((await post({ detectionId })).status).toBe(202);
+  });
+
+  it("refuses a detectionId sent with url or snapshot", async () => {
+    const { detectionId } = await (
+      await detect({ snapshot: capture() })
+    ).json();
+    expect(
+      (await post({ detectionId, url: "https://shop.test/p/1" })).status,
+    ).toBe(400);
+    expect((await post({ detectionId, snapshot: capture() })).status).toBe(400);
+  });
+
+  it("answers 404 for an unknown or expired detectionId", async () => {
+    const res = await post({ detectionId: "d_unknown" });
+    expect(res.status).toBe(404);
+    expect((await res.json()).message).toBe(
+      "detection expired; detect again or send the payload",
+    );
+  });
+});
+
+describe("POST /tasks with a plain snapshot", () => {
+  it("scans the snapshot's URL with the snapshot", async () => {
+    scan.mockClear();
+    const res = await post({ snapshot: capture() });
+    expect(res.status).toBe(202);
+    expect(scan.mock.calls[0]![0]).toBe("https://shop.test/p/1");
+    expect(scan.mock.calls[0]![1]!.snapshots?.pages).toHaveLength(1);
+    expect(scan.mock.calls[0]![1]!.pageIdentity).toBeUndefined();
+  });
+
+  it("refuses a snapshot of another page than the url", async () => {
+    expect(
+      (await post({ url: "https://shop.test/other", snapshot: capture() }))
+        .status,
+    ).toBe(400);
+    expect(
+      (await post({ snapshot: capture({ capturedAt: "yesterday" }) })).status,
+    ).toBe(400);
   });
 });
