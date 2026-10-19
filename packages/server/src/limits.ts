@@ -16,3 +16,19 @@ export const MAX_STREAM_BUFFER_BYTES = 256 * 1024;
 export const MAX_BODY_BYTES = 16 * 1024;
 /** Reconnect delay the browser uses after a dropped stream. */
 export const SSE_RETRY_MS = 3000;
+/** How long a detected payload stays reusable by a scan. */
+export const DETECTION_TTL_MS = 10 * 60 * 1000;
+/** Detected payloads kept in memory. The oldest is evicted first. */
+export const MAX_DETECTIONS = 50;
+/** HTML bytes kept across all detected payloads. The oldest is evicted first. */
+export const MAX_DETECTION_BYTES = 32 * 1024 * 1024;
+/** Detections that may run at once. More are refused with 429. */
+export const MAX_RUNNING_DETECTS = 8;
+/** Deadline for the single page fetch of a URL detection. */
+export const DETECT_FETCH_TIMEOUT_MS = 15_000;
+/**
+ * Largest body for `POST /detect` and `POST /tasks`: one snapshot's 2 MiB of
+ * HTML, plus room for its metadata and JSON escaping. Every other route keeps
+ * MAX_BODY_BYTES.
+ */
+export const MAX_PAYLOAD_BODY_BYTES = Math.floor(2.2 * 1024 * 1024);

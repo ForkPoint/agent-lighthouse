@@ -13,6 +13,8 @@ export type {
 export { applyTaskEvent, initialSnapshot } from "./reducer";
 export { InMemoryTaskStore } from "./task-store";
 export type { TaskStore, TaskListener } from "./task-store";
+export { InMemoryPayloadStore } from "./payload-store";
+export type { PayloadStore, DetectionEntry } from "./payload-store";
 export { startScanTask, scanEventToBody, traceToBody } from "./scan-task";
 export type { RunningTask } from "./scan-task";
 export { createTaskServer } from "./http";
