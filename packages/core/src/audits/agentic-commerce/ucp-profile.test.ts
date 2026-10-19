@@ -123,6 +123,43 @@ describe("UcpProfileAudit", () => {
     expect(result.message).toContain("services");
   });
 
+  it.each([
+    ["null", null],
+    ["an empty array", []],
+    ["an array of non-objects", [42]],
+    ["a string", "rest"],
+  ])(
+    "fails a service whose value is %s: it has no readable binding",
+    (_, value) => {
+      const result = audit.audit(
+        withUcp(profile({ services: { "dev.ucp.shopping": value } })),
+      );
+      expect(result.status).toBe(CheckStatus.Fail);
+      expect(result.message).toContain("services");
+    },
+  );
+
+  it("grades the readable bindings and names the malformed entries beside them", () => {
+    const result = audit.audit(
+      withUcp(
+        profile({
+          services: {
+            "dev.ucp.shopping": [
+              42,
+              { transport: "rest", endpoint: "https://example.com/ucp/v1" },
+            ],
+            "dev.ucp.other": null,
+          },
+        }),
+      ),
+    );
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.message).toContain("dev.ucp.shopping[0]");
+    expect(result.message).toContain("dev.ucp.other");
+    expect(result.details?.["services"]).toBe(1);
+    expect(AuditResultSchema.safeParse(result).success).toBe(true);
+  });
+
   it("warns when the version is missing", () => {
     const result = audit.audit(withUcp(profile({ version: undefined })));
     expect(result.status).toBe(CheckStatus.Warn);

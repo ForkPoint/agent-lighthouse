@@ -26,18 +26,20 @@ sources:
 
 Whether the Universal Commerce Protocol business profile at `/.well-known/ucp` can be read in the shape Google documents.
 
-| State                                                                  | Verdict       |
-| :--------------------------------------------------------------------- | :------------ |
-| No 200, an HTML page answering for the path, or an empty body          | notApplicable |
-| 401 or 403                                                             | notApplicable |
-| JSON with no `ucp` key (for example one document served at every path) | notApplicable |
-| Body is not a JSON object, or `ucp` is not an object                   | fail          |
-| `ucp.services` missing or empty                                        | fail          |
-| `ucp.version` missing                                                  | warn          |
-| A declared `endpoint` is not an absolute https URL                     | warn          |
-| A binding with no `endpoint` (for example an `embedded` binding)       | not judged    |
-| `ucp.capabilities` missing                                             | not judged    |
-| All of the above in order                                              | pass          |
+| State                                                                                | Verdict                            |
+| :----------------------------------------------------------------------------------- | :--------------------------------- |
+| No 200, an HTML page answering for the path, or an empty body                        | notApplicable                      |
+| 401 or 403                                                                           | notApplicable                      |
+| JSON with no `ucp` key (for example one document served at every path)               | notApplicable                      |
+| Body is not a JSON object, or `ucp` is not an object                                 | fail                               |
+| `ucp.services` missing or empty                                                      | fail                               |
+| No service has a readable binding (`null`, a scalar, `[]`, or only non-object items) | fail                               |
+| A malformed service entry beside readable bindings                                   | warn; the readable ones are graded |
+| `ucp.version` missing                                                                | warn                               |
+| A declared `endpoint` is not an absolute https URL                                   | warn                               |
+| A binding with no `endpoint` (for example an `embedded` binding)                     | not judged                         |
+| `ucp.capabilities` missing                                                           | not judged                         |
+| All of the above in order                                                            | pass                               |
 
 Both published profile shapes are read: the current one, where each service lists bindings with `transport` and `endpoint`, and the 2026-01-11 one, where each service holds one object per transport (`rest.endpoint`) and capabilities are an array.
 
@@ -85,5 +87,6 @@ The profile declares no services, so it names nowhere to send a request.
 
 - This audit replaces the `/.well-known/ucp` half of `agent-interfaces/mcp-discovery`, which read the profile as MCP discovery. Google reads it as a commerce profile, so it moved to `agentic-commerce` with its own grade.
 - The reader lives in `_ucp.ts` beside the audit and exports `NO_UCP_PROFILE`, which enrols the audit in `absent-artifact-contract.test.ts`.
+- 2026-10-19 review: a service whose value is `null`, a scalar, an empty array or only non-object items no longer counts as a service. A probe with `{"dev.ucp.shopping": null}`, `[]` or `[42]` passed before. Such a profile now fails when no service has a readable binding. A malformed entry beside readable ones warns and names the entry, and `details.services` counts only services with a readable binding.
 - 2026-10-18 second review: a profile whose bindings declare no endpoint at all still passes. The UCP specification marks `endpoint` Optional for every transport (rest, mcp, a2a, embedded), so warning would claim a requirement the spec does not make. `details.endpoints` reports how many bindings declare one. The binding reader (`ucpBindings` in `_ucp.ts`) is shared with MCP discovery, which now reads both profile shapes and resolves a relative endpoint against the profile URL. A non-object `ucp` key gets its own failure message.
 - 2026-10-18 review: grade A to B, because Google's page says "will enable" and the integration is a pilot. A JSON body with no `ucp` key now reads as absent: a real-site scan found a server that answers every `/.well-known/*` path with one unrelated JSON document, and the audit failed it. An endpoint-less binding and missing capabilities are no longer warned, following the UCP specification. The 2026-01-11 shape and the `keys` array are read.

@@ -53,6 +53,37 @@ function countEndpoints(ucp: Record<string, unknown>): number {
     .length;
 }
 
+/**
+ * Services that carry at least one readable binding, and the entries that do
+ * not. A service maps to an array of binding objects (current UCP) or to one
+ * object (2026-01-11). A null, a scalar, an empty array or a non-object array
+ * item is no binding at all, so it names the entry instead of counting it. A
+ * malformed entry beside good ones does not erase the good ones.
+ */
+function readableServices(ucp: Record<string, unknown>): {
+  count: number;
+  unreadable: string[];
+} {
+  const services = isObject(ucp["services"]) ? ucp["services"] : {};
+  let count = 0;
+  const unreadable: string[] = [];
+  for (const [service, value] of Object.entries(services)) {
+    if (isObject(value)) {
+      count++;
+      continue;
+    }
+    if (!Array.isArray(value) || value.length === 0) {
+      unreadable.push(service);
+      continue;
+    }
+    value.forEach((item, index) => {
+      if (!isObject(item)) unreadable.push(`${service}[${index}]`);
+    });
+    if (value.some(isObject)) count++;
+  }
+  return { count, unreadable };
+}
+
 /** Capabilities as a keyed object (current) or an array (2026-01-11). */
 function countCapabilities(capabilities: unknown): number {
   if (Array.isArray(capabilities)) return capabilities.length;
@@ -135,13 +166,14 @@ export class UcpProfileAudit extends Audit {
 
     const { ucp } = read;
 
-    const services = isObject(ucp["services"]) ? ucp["services"] : {};
-    const serviceCount = Object.keys(services).length;
+    const { count: serviceCount, unreadable } = readableServices(ucp);
     if (serviceCount === 0) {
       return this.fail(
-        `The UCP profile at ${UCP_PATH} declares no services, so it tells Google nowhere to send requests.`,
+        `The UCP profile at ${UCP_PATH} declares no readable services, so it tells Google nowhere to send requests.`,
         EXPECTED,
-        "`ucp.services` is missing or empty",
+        unreadable.length > 0
+          ? `\`ucp.services\` has no readable binding: ${unreadable.join(", ")}`
+          : "`ucp.services` is missing or empty",
         { priority: CheckPriority.High, code: SAMPLE },
       );
     }
@@ -164,6 +196,11 @@ export class UcpProfileAudit extends Audit {
     if (!version) {
       problems.push(
         "it names no `ucp.version`, which Google uses to pick the protocol version",
+      );
+    }
+    if (unreadable.length > 0) {
+      problems.push(
+        `these service entries are not readable bindings: ${unreadable.join(", ")}`,
       );
     }
     const bad = badEndpoints(ucp);
