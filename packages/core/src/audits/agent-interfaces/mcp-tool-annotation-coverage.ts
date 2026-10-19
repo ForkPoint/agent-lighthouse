@@ -57,17 +57,21 @@ export class McpToolAnnotationCoverageAudit extends Audit {
     failureTitle: "MCP tools missing behaviour hints",
     description:
       "Reads the tools your MCP server already returned from tools/list and checks that each one declares the behaviour hints hosts use to decide when to ask the user: a boolean `readOnlyHint` or `destructiveHint` on every tool, and ideally all three of `readOnlyHint`, `destructiveHint` and `openWorldHint`.",
-    scoreDisplayMode: ScoreDisplayMode.Ternary,
-    tier: AuditTier.Scored,
+    // Informative: the hint requirements bind only servers submitted to the
+    // Claude or ChatGPT directories, and the audit cannot see a submission.
+    // Endpoints found through UCP are often a commerce platform's server,
+    // which the site cannot change. See the dossier's "How it scores".
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    tier: AuditTier.Informative,
     evidenceGrade: EvidenceGrade.A,
-    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
+    weight: weightForGrade(EvidenceGrade.A, AuditTier.Informative),
     defaultPriority: CheckPriority.Medium,
     dossier:
       "docs/evidence/audits/agent-interfaces/mcp-tool-annotation-coverage.md",
     requires: [EvidenceKey.OriginReachable, EvidenceKey.UnblockedFetches],
     guidance: {
       impact:
-        "Claude runs a tool marked read-only without asking and always asks before a destructive one. VS Code asks the user to confirm every call to a tool that does not set `readOnlyHint`. OpenAI requires explicit boolean `readOnlyHint`, `destructiveHint` and `openWorldHint` on every tool of a ChatGPT app, and its review flags annotation issues. A tool with no hints gets a confirmation prompt on every call and fails both directory reviews.",
+        "Hosts treat a tool with no hints as possibly destructive and ask before every call, including calls to tools that only read. Claude runs a tool marked read-only without asking, and VS Code asks before any call to a tool that does not set `readOnlyHint`. The Claude and ChatGPT directory reviews require a hint on servers submitted to them: OpenAI requires explicit boolean `readOnlyHint`, `destructiveHint` and `openWorldHint` on every tool of a plugin in the ChatGPT Directory.",
       fix: "Add an `annotations` object to every tool in tools/list. Set `readOnlyHint` to true for tools that only read, `destructiveHint` to true for tools that delete, overwrite, cancel or revoke, and `openWorldHint` to say whether the tool reaches systems outside your own. Use explicit booleans, never null or strings.",
       code: SAMPLE,
       effort: FixEffort.Easy,
@@ -114,7 +118,7 @@ export class McpToolAnnotationCoverageAudit extends Audit {
     }
 
     // Tools a host cannot classify at all: neither a read-only nor a
-    // destructive claim, so Claude's and OpenAI's reviews both flag them.
+    // destructive claim, which both directory reviews flag on a submitted server.
     const unannotated: string[] = [];
     // Tools with a confirmation hint but without the full set OpenAI requires.
     const incomplete: string[] = [];
@@ -175,7 +179,7 @@ export class McpToolAnnotationCoverageAudit extends Audit {
     if (unannotated.length > 0) {
       return {
         ...this.fail(
-          `${unannotated.length} of ${total} tool(s) carry neither a boolean readOnlyHint nor a boolean destructiveHint: ${list(unannotated)}. Hosts cannot tell whether these tools only read or change data, so VS Code asks for confirmation on every call, and both Claude's and OpenAI's directory reviews flag them.`,
+          `${unannotated.length} of ${total} tool(s) carry neither a boolean readOnlyHint nor a boolean destructiveHint: ${list(unannotated)}. Hosts treat a tool with no hints as possibly destructive and ask before every call, including calls to tools that only read. The Claude and ChatGPT directory reviews require a hint on servers submitted to them.`,
           EXPECTED,
           found,
           "Give every tool an annotations object with explicit boolean readOnlyHint, destructiveHint and openWorldHint.",
@@ -188,7 +192,7 @@ export class McpToolAnnotationCoverageAudit extends Audit {
     if (incomplete.length > 0) {
       return {
         ...this.warn(
-          `${incomplete.length} of ${total} tool(s) lack an explicit boolean for at least one of readOnlyHint, destructiveHint and openWorldHint: ${list(incomplete)}. OpenAI requires all three on every tool of a ChatGPT app.`,
+          `${incomplete.length} of ${total} tool(s) lack an explicit boolean for at least one of readOnlyHint, destructiveHint and openWorldHint: ${list(incomplete)}. OpenAI requires all three on every tool of a plugin in the ChatGPT Directory.`,
           EXPECTED,
           found,
           "Set readOnlyHint, destructiveHint and openWorldHint to explicit booleans on every tool.",

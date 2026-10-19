@@ -5,7 +5,12 @@ import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
 import type { CheckContext } from "#core/check-context";
 import type { FetchOptions, FetchResult } from "#core/fetcher";
 import type { AuditResult } from "#core/types";
-import { AuditTier, CheckStatus, EvidenceGrade } from "#core/types";
+import {
+  AuditTier,
+  CheckStatus,
+  EvidenceGrade,
+  ScoreDisplayMode,
+} from "#core/types";
 import { AuditResultSchema } from "#core/schemas";
 import { weightForGrade } from "#core/scorer";
 
@@ -38,6 +43,8 @@ interface Server {
   undeclared?: boolean;
   /** HTTP status tools/list answers with, when not 200. */
   status?: number;
+  /** When set, every tools/list page returns this `nextCursor`, so paging never ends. */
+  nextCursor?: string;
 }
 
 function run(server: Server = {}) {
@@ -58,7 +65,10 @@ function run(server: Server = {}) {
         JSON.stringify({
           jsonrpc: "2.0",
           id: 1,
-          result: { tools: server.tools ?? [] },
+          result: {
+            tools: server.tools ?? [],
+            ...(server.nextCursor ? { nextCursor: server.nextCursor } : {}),
+          },
         }),
         200,
         "application/json",
@@ -86,12 +96,18 @@ const parse = (result: AuditResult) =>
   expect(AuditResultSchema.safeParse(result).success).toBe(true);
 
 describe("McpToolAnnotationCoverageAudit", () => {
-  it("is grade A in the scored tier, weighted by the meta law", () => {
+  // Informative: the directory requirements cover only submitted servers,
+  // which the audit cannot see, so the check reports and never scores.
+  it("is grade A in the informative tier, with weight 0 from the meta law", () => {
     const { meta } = McpToolAnnotationCoverageAudit;
     expect(meta.id).toBe("agent-interfaces/mcp-tool-annotation-coverage");
     expect(meta.evidenceGrade).toBe(EvidenceGrade.A);
-    expect(meta.tier).toBe(AuditTier.Scored);
-    expect(meta.weight).toBe(weightForGrade(EvidenceGrade.A, AuditTier.Scored));
+    expect(meta.tier).toBe(AuditTier.Informative);
+    expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Informative);
+    expect(meta.weight).toBe(
+      weightForGrade(EvidenceGrade.A, AuditTier.Informative),
+    );
+    expect(meta.weight).toBe(0);
   });
 
   it("is notApplicable on an empty site", async () => {
@@ -188,6 +204,34 @@ describe("McpToolAnnotationCoverageAudit", () => {
     }).result;
     expect(r.status).toBe(CheckStatus.Pass);
     expect(num(r, "idempotentHintCoverage")).toBe(50);
+  });
+
+  // `annotations` must be an object; a string or an array carries no hints.
+  it.each([
+    ["a string", "readOnlyHint"],
+    ["an array", [{ readOnlyHint: true }]],
+  ])(
+    "counts a tool whose annotations is %s as unannotated",
+    async (_, value) => {
+      const tool = { name: "lookup", annotations: value };
+      const r = await run({ tools: [tool] }).result;
+      expect(r.status).toBe(CheckStatus.Fail);
+      expect(strings(r, "unannotatedTools")).toEqual(["lookup"]);
+      expect(num(r, "readOnlyHintCoverage")).toBe(0);
+      parse(r);
+    },
+  );
+
+  it("reports pagesTruncated when nextCursor outlasts the page budget", async () => {
+    const r = await run({ tools: [FULL()], nextCursor: "more" }).result;
+    expect(r.details?.["pagesTruncated"]).toBe(true);
+    parse(r);
+  });
+
+  it("reports pagesTruncated false when the list ends", async () => {
+    const r = await run({ tools: [FULL()] }).result;
+    expect(r.details?.["pagesTruncated"]).toBe(false);
+    parse(r);
   });
 
   it("names a tool without a name by its position", async () => {

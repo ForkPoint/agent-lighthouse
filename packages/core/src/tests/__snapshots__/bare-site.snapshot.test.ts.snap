@@ -48,6 +48,7 @@ na   0   agent-interfaces/ai-plugin-json
 na   0   agent-interfaces/cors-api-routes
 na   0   agent-interfaces/mcp-discovery
 na   0   agent-interfaces/mcp-endpoint
+na   0   agent-interfaces/mcp-tool-annotation-coverage
 na   0   agent-interfaces/openapi-exists
 na   0   agent-interfaces/search-endpoint
 na   0   agent-interfaces/webmcp-registered-tools
@@ -147,7 +148,6 @@ na   1   access-crawl-control/robots-ai-group-shadowing
 na   1   access-crawl-control/sensitive-paths
 na   1   agent-interfaces/mcp-modern-era-reachability
 na   1   agent-interfaces/mcp-oauth-discovery-chain
-na   1   agent-interfaces/mcp-tool-annotation-coverage
 na   1   agent-interfaces/mcp-tool-contract-validity
 na   1   agent-interfaces/mcp-tools-list-determinism
 na   1   agent-interfaces/mcp-version-downgrade

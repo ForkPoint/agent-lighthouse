@@ -1691,10 +1691,10 @@
       },
       "source": "packages/core/src/audits/agent-interfaces/mcp-tool-annotation-coverage.ts",
       "test": "packages/core/src/audits/agent-interfaces/mcp-tool-annotation-coverage.test.ts",
-      "tier": "scored",
+      "tier": "informative",
       "evidenceGrade": "A",
-      "weight": 1,
-      "scoreDisplayMode": "ternary",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
       "dossier": "docs/evidence/audits/agent-interfaces/mcp-tool-annotation-coverage.md",
       "requires": [
         "origin-reachable",

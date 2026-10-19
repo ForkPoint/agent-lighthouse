@@ -32,9 +32,9 @@ them and retired a fourth, whose stub was deleted the same day.
 - **`mcp-server-quality/behavior-annotation-coverage-and-claim-consistency`**
   needs a model to judge whether a tool's annotations match its description.
   Its grade rose from C to A: Claude and VS Code decide confirmation prompts
-  from `readOnlyHint`, and ChatGPT apps require all three hints. The
+  from `readOnlyHint`, and the ChatGPT Directory requires all three hints. The
   deterministic coverage half graduated on 2026-10-19 as
-  `agent-interfaces/mcp-tool-annotation-coverage` (grade A, scored). Only the
+  `agent-interfaces/mcp-tool-annotation-coverage` (grade A, informative). Only the
   claim-consistency judge stays here.
 - **`answer-selection-forensics/question-heading-answer-span-alignment`** was
   retired at grade D and its stub deleted on 2026-10-19. No consumer is
