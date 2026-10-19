@@ -128,6 +128,47 @@ describe("A2aAgentCardAudit", () => {
     expect(result.status).toBe(CheckStatus.Fail);
   });
 
+  it("fails interface fields of the wrong type", () => {
+    const result = audit.audit(
+      withCard(
+        card({
+          supportedInterfaces: [
+            { url: 42, protocolBinding: {}, protocolVersion: [] },
+          ],
+        }),
+      ),
+    );
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("supportedInterfaces[0].url");
+    expect(result.message).toContain("supportedInterfaces[0].protocolBinding");
+    expect(result.message).toContain("supportedInterfaces[0].protocolVersion");
+  });
+
+  it("fails a 0.3 card whose top-level url is not a string", () => {
+    const { supportedInterfaces: _, ...legacy } = card({ url: 42 });
+    const result = audit.audit(withCard(legacy));
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("`url`");
+  });
+
+  it("still warns, not fails, on an interface field that is an empty string", () => {
+    const result = audit.audit(
+      withCard(
+        card({
+          supportedInterfaces: [
+            {
+              url: "https://example.com/a2a",
+              protocolBinding: "",
+              protocolVersion: "1.0",
+            },
+          ],
+        }),
+      ),
+    );
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.message).toContain("protocolBinding");
+  });
+
   it("fails capabilities sent as an array", () => {
     const result = audit.audit(withCard(card({ capabilities: ["streaming"] })));
     expect(result.status).toBe(CheckStatus.Fail);

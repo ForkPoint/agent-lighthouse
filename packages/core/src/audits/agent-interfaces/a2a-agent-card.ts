@@ -81,6 +81,36 @@ function typeErrors(card: Record<string, unknown>): string[] {
       errors.push(`\`${key}\` has an entry that is not an object`);
     }
   }
+  // The interface fields are proto strings, so a number or an object there
+  // fails the parse the same way a top-level field does. Null counts as
+  // absent and is reported later as a missing value.
+  const list = card["supportedInterfaces"];
+  if (Array.isArray(list)) {
+    list.forEach((item, index) => {
+      if (!isObject(item)) return;
+      for (const key of INTERFACE_FIELDS) {
+        const value = item[key];
+        if (
+          value !== undefined &&
+          value !== null &&
+          typeof value !== "string"
+        ) {
+          errors.push(
+            `\`supportedInterfaces[${index}].${key}\` is not a string`,
+          );
+        }
+      }
+    });
+  }
+  // A 0.3 card names its endpoint in a top-level `url`, which the reference
+  // SDK converts into an interface, so it must be a string too.
+  if (
+    isLegacyShape(card) &&
+    card["url"] !== null &&
+    typeof card["url"] !== "string"
+  ) {
+    errors.push("`url` is not a string");
+  }
   return errors;
 }
 
