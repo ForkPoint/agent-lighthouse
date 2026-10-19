@@ -98,7 +98,11 @@ describe("AgentUaCommerceParityAudit", () => {
   });
 
   it("passes when the agent UAs get what a browser gets", async () => {
-    expect((await run({ robots: ALLOW_ALL })).status).toBe(CheckStatus.Pass);
+    const result = await run({ robots: ALLOW_ALL });
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.message).toMatch(
+      /^Requests naming both shopping agents got the same response a browser got across \d+ commerce target\(s\), and robots\.txt admits them there\.$/,
+    );
   });
 
   it("fails when a commerce path answers the agent UA with 403 and the browser with 200", async () => {
@@ -155,6 +159,9 @@ describe("AgentUaCommerceParityAudit", () => {
     });
     expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("OAI-SearchBot");
+    // A robots.txt finding is read from the file, so the probe scope note
+    // does not apply to it.
+    expect(result.message).not.toContain("These probes come from");
   });
 
   it("names the published IP-range sources when it finds a block", async () => {

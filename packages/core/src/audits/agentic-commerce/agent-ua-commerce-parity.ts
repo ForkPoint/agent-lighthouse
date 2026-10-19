@@ -98,7 +98,7 @@ function reasonFor(probe: UaProbe): string | undefined {
 }
 
 const EXPECTED =
-  "ChatGPT-User and OAI-SearchBot receive the same response a browser receives on the homepage, the product pages, the cart and the policy pages, and robots.txt admits them on the commerce paths";
+  "Requests naming ChatGPT-User and OAI-SearchBot receive the same response a browser receives on the homepage, the product pages, the cart and the policy pages, and robots.txt admits them on the commerce paths";
 
 const SAMPLE = `# robots.txt — opt out of training without leaving search or the shopper's agent
 User-agent: GPTBot
@@ -184,12 +184,16 @@ export class AgentUaCommerceParityAudit extends Audit {
     }
 
     const findings: string[] = [];
+    // The scope note belongs to probe findings only. A robots.txt finding is
+    // read from the file, not from a probe.
+    let probeFindings = 0;
     for (const probe of comparable) {
       const reason = reasonFor(probe);
-      if (reason)
-        findings.push(
-          `A request naming ${labelFor(probe.token)} gets ${reason} at ${probe.url}`,
-        );
+      if (!reason) continue;
+      probeFindings += 1;
+      findings.push(
+        `A request naming ${labelFor(probe.token)} gets ${reason} at ${probe.url}`,
+      );
     }
 
     // robots.txt is the other half: an edge that lets the agent through cannot
@@ -227,7 +231,7 @@ export class AgentUaCommerceParityAudit extends Audit {
           ? ` (${findings.length - MAX_SHOWN} more)`
           : "";
       return this.fail(
-        `${shown}${more}. ${SCOPE} ${CIDR_SOURCES}${posture}`,
+        `${shown}${more}. ${probeFindings > 0 ? `${SCOPE} ` : ""}${CIDR_SOURCES}${posture}`,
         EXPECTED,
         found,
         CheckPriority.Critical,

@@ -187,6 +187,10 @@ export class CartHandoffReachabilityAudit extends Audit {
       const document = agent && agent.status === 200 ? agent : browser;
       if (!document || document.status === 404) continue;
       answered += 1;
+      // The checks below read the ChatGPT-User response whenever it is a 200,
+      // so each finding names whose response it read.
+      const reader =
+        document === agent ? "a request naming ChatGPT-User" : "a browser";
 
       const finalPath = (() => {
         try {
@@ -197,7 +201,7 @@ export class CartHandoffReachabilityAudit extends Audit {
       })();
       if (LOGIN_PATH.test(finalPath)) {
         failures.push(
-          `${path} ends at ${finalPath}, an account wall on the buy path: a shopper with no account cannot get past it`,
+          `${path} ends at ${finalPath} for ${reader}, an account wall on the buy path: a shopper with no account cannot get past it`,
         );
         continue;
       }
@@ -211,7 +215,7 @@ export class CartHandoffReachabilityAudit extends Audit {
           : null;
       if (wall?.isBlocked && !wall.isRateLimit) {
         failures.push(
-          `${path} answers with ${wall.name} instead of the cart (${wall.reason}), so the request never reaches the cart document`,
+          `${path} answers ${reader} with ${wall.name} instead of the cart (${wall.reason}), so that request never reaches the cart document`,
         );
         continue;
       }
@@ -222,7 +226,7 @@ export class CartHandoffReachabilityAudit extends Audit {
       const challenge = challengeIn(document.body);
       if (challenge && textLength(document.body) < MIN_TEXT) {
         failures.push(
-          `${path} mounts ${challenge} on a document with no readable cart content, so the challenge is the page an agent has to read`,
+          `${path} mounts ${challenge} on the document served to ${reader}, which has no readable cart content, so the challenge is the page that request has to read`,
         );
         continue;
       }

@@ -215,8 +215,15 @@ export class AiCrawlerEdgeParityAudit extends Audit {
     >();
     const consistent: string[] = [];
     const perCrawler = new Map<string, { blocked: number; probed: number }>();
+    // URLs where the browser itself got a non-2xx. The mechanism compares a
+    // crawler answer against a browser 200, so these show no difference.
+    const unreadable = new Set<string>();
 
     for (const probe of probes) {
+      if (probe.baselineStatus < 200 || probe.baselineStatus >= 300) {
+        unreadable.add(probe.url);
+        continue;
+      }
       const label = labelFor(probe.token);
       const entry = perCrawler.get(label) ?? { blocked: 0, probed: 0 };
       entry.probed += 1;
@@ -260,7 +267,11 @@ export class AiCrawlerEdgeParityAudit extends Audit {
           `${label}: ${entry.blocked}/${entry.probed} answered differently`,
       )
       .join("; ");
-    const found = `${urls.length} URL(s) probed with ${tokens.length} crawler UA(s) from the scanner's address; ${summary}`;
+    const skipped =
+      unreadable.size > 0
+        ? `; ${unreadable.size} URL(s) not compared, because the browser got a non-2xx there too: ${[...unreadable].slice(0, MAX_SHOWN).join(", ")}`
+        : "";
+    const found = `${urls.length} URL(s) probed with ${tokens.length} crawler UA(s) from the scanner's address; ${summary}${skipped}`;
 
     const hard = lines(hardGroups);
     const ambiguous = lines(ambiguousGroups);

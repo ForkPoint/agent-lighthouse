@@ -18,7 +18,6 @@ sources:
   - s4
   - google-verify-requests
   - cloudflare-fake-bot-rules
-  - cloudflare-block-ai-bots
 ---
 
 # Cart Handoff Reachability
@@ -57,10 +56,10 @@ Falsifiable claim: ACP 2026-04-17 adds a seller-hosted Cart API whose response c
 ## Limits
 
 - Every probe leaves the scanner's own address with ChatGPT-User in the User-Agent. It shows how the site answers a request that names ChatGPT-User. It does not show what the real ChatGPT-User receives.
-- Real bots are told apart by network or signature, not by the string. Cloudflare grants verified status to a bot that "declares who it is deterministically, through a cryptographic Web Bot Auth signature, a published IP list with a stable user-agent, or reverse DNS" ([Cloudflare verified bots policy](https://developers.cloudflare.com/bots/concepts/bot/verified-bots/policy/) (verified 2026-10-19)). OpenAI publishes one IP-range file per bot, for example https://openai.com/gptbot.json and https://openai.com/chatgpt-user.json ([OpenAI crawlers and user agents](https://developers.openai.com/api/docs/bots) (verified 2026-10-19)). Google documents a reverse-DNS check, or a match against its published IP ranges ([Verifying Google crawlers and fetchers](https://developers.google.com/crawling/docs/crawlers-fetchers/verify-google-requests) (verified 2026-10-19)). The scanner can present none of these.
-- A CDN block of a spoofed User-Agent is ambiguous evidence. Cloudflare's managed rules flag a request whose User-Agent "matches a known bot but the source cannot be verified", and add that "automated testing tools that set a bot-like User-Agent header may also be flagged" ([Cloudflare fake bot managed rules](https://developers.cloudflare.com/waf/troubleshooting/fake-bot-managed-rules/) (verified 2026-10-19)). Its Block AI bots setting blocks verified bots "plus additional unverified bots that fall under these classifications" ([Cloudflare Block AI bots](https://developers.cloudflare.com/bots/additional-configurations/block-ai-bots/) (verified 2026-10-19)). A refusal is consistent with the real bot being refused too. It does not prove it.
+- Real bots are told apart by network or signature, not by the string. Cloudflare grants verified status to a bot that "declares who it is deterministically, through a cryptographic Web Bot Auth signature, a published IP list with a stable user-agent, or reverse DNS" ([Cloudflare verified bots policy](https://developers.cloudflare.com/bots/concepts/bot/verified-bots/policy/) (verified 2026-10-19)). OpenAI publishes one IP-range file per bot, for example https://openai.com/gptbot.json and https://openai.com/chatgpt-user.json ([OpenAI crawlers and user agents](https://developers.openai.com/api/docs/bots) (verified 2026-10-19)). Google, whose crawlers this audit does not probe, illustrates the same rule: it documents a reverse-DNS check, or a match against its published IP ranges ([Verifying Google crawlers and fetchers](https://developers.google.com/crawling/docs/crawlers-fetchers/verify-google-requests) (verified 2026-10-19)). The scanner can present none of these.
+- A CDN block of a request naming ChatGPT-User is ambiguous evidence. Without a signature, a published IP list or reverse DNS, the request is by definition not the verified bot ([Cloudflare verified bots policy](https://developers.cloudflare.com/bots/concepts/bot/verified-bots/policy/) (verified 2026-10-19)), so an edge may treat it as unknown automated traffic. Cloudflare does ship managed rules that flag an unverified request naming Googlebot or Bingbot as a fake bot ([Cloudflare fake bot managed rules](https://developers.cloudflare.com/waf/troubleshooting/fake-bot-managed-rules/) (verified 2026-10-19)). It documents no such rule for AI crawlers, and the scanner never sends either of those names. The analogy shows the mechanism exists. It is not evidence about the bots probed here. A refusal is consistent with the real bot being refused too. It does not prove it.
 - A pass does not prove access either. A rule keyed on the verified bot's identity rather than its string can refuse the real bot and still let the probe through.
-- Account walls and challenge widgets are read from the document, so they hold for the browser request as well. The ambiguity is only in a refusal that the ChatGPT-User request gets and the browser request does not.
+- The account-wall, challenge-page and challenge-widget checks read the ChatGPT-User response whenever it is a 200, and the browser response otherwise. A 200 challenge served only to the unverified ChatGPT-User request therefore fails, even when the browser got the cart. Each finding names whose response it read; see Deferred.
 
 ## Example failure
 
@@ -109,3 +108,9 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
   edge treats an unverified look-alike (Limits). The finding now says the cart
   refused that User-Agent from the scanner's address. Moving it to a warning
   needs the dossier revised first. Not changed in the 2026-10-19 wording patch.
+- **A challenge served only to the ChatGPT-User User-Agent fails.** The walls
+  are read from that response when it is a 200. A bot-management product that
+  answers the unverified request with a 200 challenge page, while the browser
+  gets the cart, fails as "answers a request naming ChatGPT-User with … instead
+  of the cart". Reading walls from the browser document instead would move
+  verdicts, so it needs its own change.

@@ -39,6 +39,8 @@ interface RunOptions {
   baselineStatus?: number;
   /** The response every crawler UA gets. Defaults to the browser response. */
   probe?: () => FetchResult;
+  /** A path that answers 404 to the browser and to every crawler UA alike. */
+  stale?: string;
 }
 
 function run(options: RunOptions = {}) {
@@ -70,6 +72,9 @@ function run(options: RunOptions = {}) {
     if (new URL(o.url).pathname === "/sitemap.xml") {
       return mockFetchResult(xml, 200, "application/xml");
     }
+    if (options.stale && new URL(o.url).pathname === options.stale) {
+      return mockFetchResult("Not found", 404, "text/html");
+    }
     if (o.userAgent === BASELINE_UA) {
       return mockFetchResult(FULL, options.baselineStatus ?? 200, "text/html");
     }
@@ -99,7 +104,11 @@ describe("AiCrawlerEdgeParityAudit", () => {
   });
 
   it("passes when every crawler gets the same response a browser gets", async () => {
-    expect((await run({ robots: ALLOW_ALL })).status).toBe(CheckStatus.Pass);
+    const result = await run({ robots: ALLOW_ALL });
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.message).toBe(
+      "Every request naming a crawler robots.txt admits got the same response a browser got across 2 URL(s).",
+    );
   });
 
   // robots.txt is advisory metadata; the edge decides independently, and the
@@ -127,6 +136,18 @@ describe("AiCrawlerEdgeParityAudit", () => {
       "so they show how the site answers a request that names the crawler, not what the real crawler receives.",
     );
     expect(result.message).not.toMatch(/\bsees\b|edge does not/);
+  });
+
+  // The mechanism compares a crawler answer against a browser 200. A stale
+  // URL that answers 404 to everyone shows no difference at all.
+  it("does not report a status the browser got as well", async () => {
+    const result = await run({ robots: ALLOW_ALL, stale: "/docs/a" });
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.message).not.toContain("404");
+    expect(result.found).toContain(
+      "1 URL(s) not compared, because the browser got a non-2xx there too: https://example.com/docs/a",
+    );
+    expect(result.found).toContain("GPTBot: 0/1 answered differently");
   });
 
   it("passes when robots.txt disallows the crawler the edge also blocks", async () => {
@@ -195,6 +216,9 @@ describe("AiCrawlerEdgeParityAudit", () => {
     });
     expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("source IP");
+    expect(result.message).toMatch(
+      /^When the User-Agent names these crawlers, the edge answers differently: /,
+    );
   });
 
   it("is notApplicable when the browser baseline is blocked too", async () => {

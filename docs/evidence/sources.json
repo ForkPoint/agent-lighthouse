@@ -1571,7 +1571,7 @@
       "type": "vendor-doc",
       "publisher": "Cloudflare",
       "verified": "2026-10-19",
-      "keyFindings": "Groups AI bot controls as Search, Agent and Training categories, making the training/realtime split an operational reality rather than a taxonomy invented for this audit. Re-checked 2026-10-19: \"Each blocking option will block Verified bots classified with that behavior, plus additional unverified bots that fall under these classifications.\" A block seen by a spoofed AI-bot User-Agent is consistent with the real bot being blocked, but does not prove it."
+      "keyFindings": "Groups AI bot controls as Search, Agent and Training categories, making the training/realtime split an operational reality rather than a taxonomy invented for this audit. Re-checked 2026-10-19: \"Each blocking option will block Verified bots classified with that behavior, plus additional unverified bots that fall under these classifications.\" A block seen by a spoofed AI-bot User-Agent is consistent with the real bot being blocked, but does not prove it. Re-checked 2026-10-19: the legacy setting is labelled \"Block AI bots [Deprecating on September 15, 2026]\"; it \"blocks verified bots that are classified as crawling for the purpose of AI training\" and \"excludes mixed-purpose bots that are used both for Training and for Search.\""
     },
     {
       "id": "cloudflare-content-independence-day",
@@ -7212,7 +7212,7 @@
       "publisher": "Cloudflare",
       "accessed": "2026-10-19",
       "verified": "2026-10-19",
-      "keyFindings": "The Managed Ruleset has \"rules that detect requests impersonating well-known bots such as Googlebot and Bingbot\". \"If the User-Agent matches a known bot but the source cannot be verified, the rule flags the request as a fake bot.\" Rules: \"Anomaly:Header:User-Agent - Fake Google Bot\" and \"Anomaly:Header:User-Agent - Fake Bing or MSN Bot\". \"Third-party uptime monitors or automated testing tools that set a bot-like User-Agent header may also be flagged.\" Grounds the UA-parity audits' statement that a CDN block of a spoofed User-Agent is ambiguous evidence."
+      "keyFindings": "The Managed Ruleset has \"rules that detect requests impersonating well-known bots such as Googlebot and Bingbot\". \"If the User-Agent matches a known bot but the source cannot be verified, the rule flags the request as a fake bot.\" Rules: \"Anomaly:Header:User-Agent - Fake Google Bot\" and \"Anomaly:Header:User-Agent - Fake Bing or MSN Bot\". \"Third-party uptime monitors or automated testing tools that set a bot-like User-Agent header may also be flagged.\" The page covers Googlebot and Bingbot only and names no AI crawler. The UA-parity audits cite it as an analogy, not as evidence about the AI bots they probe."
     },
     {
       "id": "google-verify-requests",

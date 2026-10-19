@@ -176,7 +176,7 @@ function usable(probe: UaProbe): boolean {
 }
 
 const EXPECTED =
-  "AI crawlers receive the same main content a browser receives, or the difference is declared with isAccessibleForFree:false and a hasPart WebPageElement whose cssSelector resolves in the served DOM";
+  "Requests naming an AI crawler receive the same main content a browser receives, or the difference is declared with isAccessibleForFree:false and a hasPart WebPageElement whose cssSelector resolves in the served DOM";
 
 const SAMPLE = `<script type="application/ld+json">
 {
@@ -250,7 +250,7 @@ export class BotContentDeltaDeclaredAudit extends Audit {
 
     if (comparable.length === 0) {
       return this.notApplicable(
-        "No crawler probe returned a readable page to compare against the browser response; access-crawl-control/ai-crawler-edge-parity reports blocked crawlers.",
+        "No crawler probe returned a readable page to compare against the browser response; access-crawl-control/ai-crawler-edge-parity reports how the edge answers those User-Agents.",
         EXPECTED,
         `${probes.length} probe(s), none comparable`,
       );

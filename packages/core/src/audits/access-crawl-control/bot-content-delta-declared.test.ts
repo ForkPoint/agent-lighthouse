@@ -118,7 +118,11 @@ describe("BotContentDeltaDeclaredAudit", () => {
   });
 
   it("passes when the crawler and the browser get the same text", async () => {
-    expect((await run()).status).toBe(CheckStatus.Pass);
+    const result = await run();
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.message).toMatch(
+      /^All \d+ crawler-UA probe\(s\) received the same main content a browser received\.$/,
+    );
   });
 
   // Serving a crawler less than a user is sanctioned only when it is declared.
@@ -176,6 +180,9 @@ describe("BotContentDeltaDeclaredAudit", () => {
     const result = await run({ browser: page(FULL_TEXT), bot: longer });
     expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("longer");
+    expect(result.message).toMatch(
+      /^A request naming \S+ receives a longer page than the browser at /,
+    );
   });
 
   it("reads a declaration in any of the shapes schema.org allows", async () => {
