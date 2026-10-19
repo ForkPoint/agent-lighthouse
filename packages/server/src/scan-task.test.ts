@@ -1,7 +1,8 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   AuditOutcome,
   CheckStatus,
+  logger,
   PhaseId,
   type AuditTrace,
   type ScanOptions,
@@ -123,6 +124,10 @@ describe("traceToBody", () => {
 });
 
 describe("startScanTask", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("streams progress and completes with the report", async () => {
     const store = new InMemoryTaskStore();
     const { taskId } = store.create("https://shop.test/")!;
@@ -156,6 +161,7 @@ describe("startScanTask", () => {
   });
 
   it("fails with a safe reason code and no raw error text", async () => {
+    const logged = vi.spyOn(logger, "error").mockImplementation(() => {});
     const store = new InMemoryTaskStore();
     const { taskId } = store.create("https://shop.test/")!;
     const scan = vi.fn(async () => {
@@ -168,6 +174,31 @@ describe("startScanTask", () => {
     });
     expect(JSON.stringify(store.eventsAfter(taskId, 0))).not.toContain(
       "secret",
+    );
+    expect(logged).toHaveBeenCalledWith(
+      expect.objectContaining({ taskId }),
+      expect.any(String),
+    );
+  });
+
+  it("resolves done even when the store throws on the terminal event", async () => {
+    const logged = vi.spyOn(logger, "error").mockImplementation(() => {});
+    const store = new InMemoryTaskStore();
+    const { taskId } = store.create("https://shop.test/")!;
+    const append = store.append.bind(store);
+    vi.spyOn(store, "append").mockImplementation((id, body) => {
+      if (body.type === "task.failed") throw new Error("store down");
+      return append(id, body);
+    });
+    const scan = vi.fn(async () => {
+      throw new Error("scan broke");
+    });
+    await expect(
+      startScanTask(store, taskId, "https://shop.test/", scan).done,
+    ).resolves.toBeUndefined();
+    expect(logged).toHaveBeenCalledWith(
+      expect.objectContaining({ taskId }),
+      expect.any(String),
     );
   });
 

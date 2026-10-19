@@ -112,6 +112,13 @@ export function startScanTask(
       });
     }
   };
-  const done = run();
+  // `run` catches the scan's errors; this catches a store that throws while
+  // recording the outcome, so `done` never rejects.
+  const done = run().catch((error: unknown) => {
+    logger.error(
+      { taskId, [LogField.Error]: error },
+      "Scan task could not record its outcome",
+    );
+  });
   return { cancel: () => controller.abort(), done };
 }
