@@ -174,6 +174,13 @@ describe("crawler tables", () => {
     expect([...training, ...realtime]).not.toContain("Bravebot");
   });
 
+  // Neither token has an operator page, so the bot registry marks both
+  // undocumented and no scored table reads them.
+  it("does not count the undocumented Bytespider and cohere-ai tokens", () => {
+    expect([...training, ...realtime]).not.toContain("Bytespider");
+    expect([...training, ...realtime]).not.toContain("cohere-ai");
+  });
+
   it("lists the documented search and user-triggered tokens", () => {
     expect(realtime).toEqual(
       expect.arrayContaining([

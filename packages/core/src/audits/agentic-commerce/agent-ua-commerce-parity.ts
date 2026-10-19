@@ -19,6 +19,7 @@ import {
   sharedUaProbes,
   type UaProbe,
 } from "#core/gatherers/ua-parity";
+import { BotToken } from "#core/bot-registry";
 import { resolvePolicyLinks } from "./acp-policy-link-surface";
 import {
   AuditTier,
@@ -30,7 +31,9 @@ import {
 } from "#core/types";
 
 /** The two OpenAI agents a purchase depends on. */
-const TOKENS = ["chatgpt-user", "oai-searchbot"];
+const TOKENS = [BotToken.ChatGPTUser, BotToken.OAISearchBot].map((token) =>
+  token.toLowerCase(),
+);
 /** How many product pages to probe. */
 const MAX_PDPS = 2;
 /** Below this share of the browser text, the agent got a stub of the page. */

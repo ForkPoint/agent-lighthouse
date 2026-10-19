@@ -1,0 +1,9 @@
+---
+"@forkpoint/agent-lighthouse-core": minor
+---
+
+Add a bot registry: one table of AI and search bot tokens, each copied from its operator's crawler page (verified 2026-10-19), with purpose, User-Agent strings, IP list URL and Web Bot Auth status. It is exported as `BOT_REGISTRY`, with `BotToken`, `BotPurpose`, `botEntry` and `botsByPurpose`. The UA probe set, the robots.txt training and live crawler tables, and the token lists of robots-ai-group-shadowing, robots-directives, sensitive-paths, ai-crawler-surface-reachability, ai-bot-directives and trust-txt-reciprocity-coherence now read from it. The weekly source watch now watches every crawler page it cites.
+
+The UA-parity audits (ai-crawler-edge-parity, agent-ua-content-divergence-diff, machine-actionable-402-paid-access) also probe Perplexity-User and MistralAI-User, the two user-triggered fetchers whose vendors publish a literal User-Agent string. That adds up to two requests per probed URL. `AI_CRAWLER_UAS` rows gain an `observed` flag, true for the ClaudeBot and Claude-User strings, which Anthropic does not publish.
+
+Some verdicts move. Bytespider and cohere-ai have no operator documentation, so agent-governance, ai-usage-signal-coherence-across-channels, robots-ai-group-shadowing and ai-crawler-surface-reachability no longer count them; ai-bot-directives still lists them for information. robots-ai-group-shadowing stops reading Bravebot and starts reading the documented Meta-WebIndexer, Amzn-SearchBot, Amzn-User, MistralAI-Training, MistralAI-Index, Google-CloudVertexBot and Diffbot-User tokens. robots-directives no longer reads a `<meta name="anthropic-ai">` tag. No audit id, tier, grade or weight changes.

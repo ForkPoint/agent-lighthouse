@@ -23,6 +23,37 @@ export interface WatchItem {
   why: string;
 }
 
+/** The slice of a bot registry row the watch reads. */
+export interface WatchedBot {
+  token: string;
+  operator: string;
+  docUrl: string | null;
+}
+
+/**
+ * One watch item per operator page the bot registry cites, so a vendor that
+ * renames a token, restates a purpose or changes a User-Agent string shows up
+ * in the weekly report. Rows sharing a page share one item, which names
+ * every token it backs. Undocumented rows cite no page and add nothing.
+ */
+export function botRegistryWatchItems(
+  bots: readonly WatchedBot[],
+): WatchItem[] {
+  const byUrl = new Map<string, { operator: string; tokens: string[] }>();
+  for (const bot of bots) {
+    if (!bot.docUrl) continue;
+    const existing = byUrl.get(bot.docUrl);
+    if (existing) existing.tokens.push(bot.token);
+    else byUrl.set(bot.docUrl, { operator: bot.operator, tokens: [bot.token] });
+  }
+  return [...byUrl].map(([url, { operator, tokens }]) => ({
+    id: `bot-registry:${tokens[0]!.toLowerCase()}`,
+    title: `${operator} crawler page (${tokens.join(", ")})`,
+    url,
+    why: "The bot registry (packages/core/src/bot-registry.ts) copies tokens, purposes and User-Agent strings from this page.",
+  }));
+}
+
 /** One suffix from docs/evidence/watchlist.json `ianaPaths`. */
 export interface WatchIanaPath {
   suffix: string;

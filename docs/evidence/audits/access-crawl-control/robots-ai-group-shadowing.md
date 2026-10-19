@@ -14,6 +14,18 @@ sources:
   - openai-searchbot-ips
   - anthropic-crawlers
   - anthropic-bots-json
+  - perplexity-crawlers-doc
+  - meta-crawlers
+  - amazonbot-docs
+  - mistral-robots-docs
+  - duckduckgo-duckassistbot
+  - youbot-docs
+  - allenai-crawler
+  - diffbot-robots-txt
+  - brave-search-crawler
+  - google-common-crawlers
+  - apple-applebot-docs
+  - commoncrawl-ccbot
   - lh-config
   - lh-ard-pr
   - oss-github
@@ -25,7 +37,7 @@ sources:
 
 ## What it checks
 
-Detects the RFC 9309 group-precedence trap: adding any named group for an AI product token silently voids every rule in the `User-agent: *` group for that bot. Parse robots.txt into groups; merge groups sharing a product token (§2.2.1) but never merge a named group with `*`. Twenty-three AI tokens can carry an explicit group: GPTBot, OAI-SearchBot, ChatGPT-User, OAI-AdsBot, ClaudeBot, Claude-User, Claude-SearchBot, PerplexityBot, Perplexity-User, Google-Extended, Applebot-Extended, CCBot, Bytespider, Amazonbot, meta-externalagent, meta-externalfetcher, Bravebot, DuckAssistBot, cohere-ai, MistralAI-User, Diffbot, AI2Bot and YouBot. For each one that does, build a probe path set P: every Allow/Disallow pattern literal appearing in any group, plus '/', plus up to 200 sitemap URLs. Evaluate each p in P twice — under the merged named group R_T and under the wildcard group R_star — using RFC 9309 longest-match-wins, Allow-wins-on-tie. Report three distinct failure classes. (a) SHADOWED-PROTECTION, high: p is Disallowed by R_star but Allowed by R_T — a path the operator meant to keep out of crawlers is open to this AI bot. (b) EMPTY-GROUP, critical. R_T contains zero Allow or Disallow rules — only Crawl-delay, Sitemap, or comments. Per §2.2.1 the bot matches this group and obeys its zero rules. The wildcard is never consulted, so the entire site including every wildcard-disallowed path is open. (c) UNINTENDED-BLOCK, critical: R_star allows '/' but R_T disallows '/' — usually a copy-pasted block template that silently removed the site from that engine. Output a per-token table of divergent paths and the class.
+Detects the RFC 9309 group-precedence trap: adding any named group for an AI product token silently voids every rule in the `User-agent: *` group for that bot. Parse robots.txt into groups; merge groups sharing a product token (§2.2.1) but never merge a named group with `*`. The tokens read are every documented AI row in the bot registry (`packages/core/src/bot-registry.ts`), 27 as of 2026-10-19: GPTBot, OAI-SearchBot, ChatGPT-User, OAI-AdsBot, Google-Extended, Google-CloudVertexBot, ClaudeBot, Claude-User, Claude-SearchBot, Applebot-Extended, CCBot, PerplexityBot, Perplexity-User, Meta-ExternalAgent, Meta-ExternalFetcher, Meta-WebIndexer, Amazonbot, Amzn-SearchBot, Amzn-User, DuckAssistBot, AI2Bot, MistralAI-Training, MistralAI-User, MistralAI-Index, YouBot, Diffbot and Diffbot-User. Each one can carry an explicit group. For each one that does, build a probe path set P: every Allow/Disallow pattern literal appearing in any group, plus '/', plus up to 200 sitemap URLs. Evaluate each p in P twice — under the merged named group R_T and under the wildcard group R_star — using RFC 9309 longest-match-wins, Allow-wins-on-tie. Report three distinct failure classes. (a) SHADOWED-PROTECTION, high: p is Disallowed by R_star but Allowed by R_T — a path the operator meant to keep out of crawlers is open to this AI bot. (b) EMPTY-GROUP, critical. R_T contains zero Allow or Disallow rules — only Crawl-delay, Sitemap, or comments. Per §2.2.1 the bot matches this group and obeys its zero rules. The wildcard is never consulted, so the entire site including every wildcard-disallowed path is open. (c) UNINTENDED-BLOCK, critical: R_star allows '/' but R_T disallows '/' — usually a copy-pasted block template that silently removed the site from that engine. Output a per-token table of divergent paths and the class.
 
 ## Claimed mechanism (falsifiable)
 
@@ -68,6 +80,8 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 - The wildcard baseline is evaluated by passing a token that appears in no group, over the groups filtered to `*`.
 - Probe paths are every `Allow`/`Disallow` literal in any group (trailing `$` stripped, prefix before the first `*` added), plus `/`, plus the pathname of every scanned page, capped at 200. Sitemap URLs are not used.
 - A reopened wildcard-protected path and an empty named group fail. A named group that blocks a bot the wildcard allowed warns, because it is often deliberate.
+- The token list is read from the bot registry since 2026-10-19, not kept in the audit. Every row comes from its operator's crawler page, re-read that day: OpenAI (https://developers.openai.com/api/docs/bots), Anthropic (https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler), Google (https://developers.google.com/crawling/docs/crawlers-fetchers/google-common-crawlers), Apple (https://support.apple.com/en-us/119829), Common Crawl (https://commoncrawl.org/ccbot), Perplexity (https://docs.perplexity.ai/docs/resources/perplexity-crawlers), Meta (https://developers.facebook.com/docs/sharing/webmasters/web-crawlers/), Amazon (https://developer.amazon.com/amazonbot), DuckDuckGo (https://duckduckgo.com/duckduckgo-help-pages/results/duckassistbot), the Allen Institute (https://allenai.org/crawler), Mistral (https://docs.mistral.ai/robots), You.com (https://you.com/docs/youbot) and Diffbot (https://www.diffbot.com/docs/crawl/faq/robots-txt), all verified 2026-10-19.
+- That move changed the set. Added: Google-CloudVertexBot, Meta-WebIndexer, Amzn-SearchBot, Amzn-User, MistralAI-Training, MistralAI-Index and Diffbot-User, each named by its operator. A shadowing group for one of them is now reported. Removed: Bravebot, Bytespider and cohere-ai. Brave says its crawler "does not advertise a differentiated user agent" (https://search.brave.com/help/brave-search-crawler, verified 2026-10-19). No operator page names Bytespider or cohere-ai. A group for one of those three describes no documented reader, so it is no longer judged. The mechanism and the grade are unchanged: RFC 9309 §2.2.1 group selection applies to every token alike.
 - `requires` omits `rendered-body` and `sample-adequate`. The verdict comes from robots.txt. Scanned pages only add probe paths.
 
 ## Deferred

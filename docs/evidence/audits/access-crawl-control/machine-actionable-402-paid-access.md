@@ -9,6 +9,10 @@ disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-10-19
 graduated: 2026-08-23
 sources:
+  - duckduckgo-duckassistbot
+  - meta-crawlers
+  - amazonbot-docs
+  - mistral-robots-docs
   - s5
   - s6
   - s19
@@ -60,6 +64,8 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 - OAI-SearchBot is sent as `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36; compatible; OAI-SearchBot/1.4; +https://openai.com/searchbot`, the example OpenAI gives (https://developers.openai.com/api/docs/bots, verified 2026-10-19). Before 2026-10-19 the probe sent a bare `OAI-SearchBot/1.0` string that OpenAI does not document. GPTBot and ChatGPT-User match the same page.
 - PerplexityBot is sent as the full string Perplexity documents (https://docs.perplexity.ai/docs/resources/perplexity-crawlers, verified 2026-10-19).
 - The ClaudeBot and Claude-User strings are observed, not vendor-documented. Anthropic's crawler page names both tokens but publishes no User-Agent string (https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler, verified 2026-10-19). A finding for either reports how the site answers a request that carries that observed string.
+- Since 2026-10-19 the probe set is read from the bot registry (`packages/core/src/bot-registry.ts`): every documented row with a literal User-Agent string. That added two user-triggered fetchers. Perplexity-User is sent as `Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Perplexity-User/1.0; +https://perplexity.ai/perplexity-user)`; Perplexity says it "supports user actions within Perplexity" (https://docs.perplexity.ai/docs/resources/perplexity-crawlers, verified 2026-10-19). MistralAI-User is sent as `Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; MistralAI-User/1.0; +https://docs.mistral.ai/robots)`, which Mistral labels the full user-agent string of the fetcher that answers a user's question in Vibe (https://docs.mistral.ai/robots, verified 2026-10-19). Both strings are copied verbatim. A block of either now counts the same way a ChatGPT-User block already did. Each costs one request per probed URL.
+- The other documented user-triggered fetchers are not probed, because no literal string exists. Amazon's Amzn-User string carries a `Chrome/W.X.Y.Z` placeholder (https://developer.amazon.com/amazonbot, verified 2026-10-19). Meta says its log entries "will be similar to" `meta-externalfetcher/1.1 (+/documentation/sharing/webmasters/web-crawlers)` (https://developers.facebook.com/docs/sharing/webmasters/web-crawlers/, verified 2026-10-19). Filling in either would invent a string. DuckAssistBot is not probed: DuckDuckGo does not say its fetches are user-triggered.
 - The browser baseline is a Mac Chrome UA on the current Stable major, 155 (https://chromiumdash.appspot.com/fetch_releases?channel=Stable&platform=Mac&num=1, verified 2026-10-19). It was Chrome 140 before 2026-10-19.
 
 ## Deferred

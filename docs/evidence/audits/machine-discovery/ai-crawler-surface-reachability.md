@@ -62,3 +62,17 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 - **Only on-site surfaces are judged.** A `Sitemap:` value or feed on another
   host is dropped, since this robots.txt does not govern it.
 - **`Disallow` outside a group is ignored**, as RFC 9309 requires.
+- **The panel is 16 bot registry tokens.** Each name is a row in
+  `packages/core/src/bot-registry.ts` with an operator crawler page. Since
+  2026-10-19 Bytespider is not in the panel. No operator page names it, so a
+  Bytespider group that disallows a sitemap no longer fails the site. The
+  other 16 names are unchanged; `meta-externalagent` is now reported in Meta's
+  capitalised spelling, Meta-ExternalAgent
+  (https://developers.facebook.com/docs/sharing/webmasters/web-crawlers/,
+  verified 2026-10-19).
+
+## Deferred
+
+- The panel is a fixed selection, not every documented registry row.
+  Widening it to Meta-WebIndexer, Amzn-SearchBot, MistralAI-Index and the
+  other search rows would move verdicts, so it needs its own review.

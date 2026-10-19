@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  botRegistryWatchItems,
   ChangeKind,
   diffIana,
   diffSnapshot,
@@ -336,5 +337,25 @@ describe("formatReport", () => {
     expect(body).toContain("recorded a baseline");
     expect(body).toContain("List truncated");
     expect(body.length).toBeLessThanOrEqual(60_000);
+  });
+});
+
+describe("botRegistryWatchItems", () => {
+  it("watches each cited page once and skips rows with no page", () => {
+    const items = botRegistryWatchItems([
+      { token: "GPTBot", operator: "OpenAI", docUrl: "https://a.example/bots" },
+      {
+        token: "ChatGPT-User",
+        operator: "OpenAI",
+        docUrl: "https://a.example/bots",
+      },
+      { token: "Bytespider", operator: "ByteDance", docUrl: null },
+    ]);
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({
+      id: "bot-registry:gptbot",
+      url: "https://a.example/bots",
+      title: "OpenAI crawler page (GPTBot, ChatGPT-User)",
+    });
   });
 });

@@ -61,6 +61,30 @@ describe("RobotsAiGroupShadowingAudit", () => {
     expect(result.message).toContain("GPTBot");
   });
 
+  // The token set is the bot registry's documented AI rows.
+  it("reads a documented registry token such as Meta-WebIndexer", () => {
+    const result = run(
+      "User-agent: *\nAllow: /\n\nUser-agent: Meta-WebIndexer\nDisallow: /\n",
+    );
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.message).toContain("Meta-WebIndexer");
+  });
+
+  it("ignores tokens no operator documents: Bytespider, cohere-ai and Bravebot", () => {
+    const result = run(
+      [
+        "User-agent: *",
+        "Allow: /",
+        "",
+        "User-agent: Bytespider",
+        "User-agent: cohere-ai",
+        "User-agent: Bravebot",
+        "Disallow: /",
+      ].join("\n"),
+    );
+    expect(result.status).toBe(CheckStatus.Pass);
+  });
+
   it("finds nothing when no AI token has a named group", () => {
     const result = run("User-agent: *\nAllow: /\nDisallow: /admin\n");
     expect(result.status).toBe(CheckStatus.Pass);

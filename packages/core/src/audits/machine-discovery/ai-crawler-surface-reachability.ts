@@ -21,6 +21,7 @@ import {
   RobotsRuleType,
 } from "#core/gatherers/robots";
 import { siteSitemapTree, sampleEntries } from "#core/gatherers/sitemap";
+import { BotToken } from "#core/bot-registry";
 import {
   AuditTier,
   CheckPriority,
@@ -36,26 +37,28 @@ import {
  * Retrieval agents (ChatGPT-User, Claude-User, Perplexity-User) sit beside the
  * indexers deliberately: a surface unreachable to them is unreachable at answer
  * time even when the index is current.
+ *
+ * Every name is a bot registry row with an operator page. Bytespider left the
+ * panel when the registry recorded that no operator documents it.
  */
-const UA_PANEL = [
-  "GPTBot",
-  "OAI-SearchBot",
-  "OAI-AdsBot",
-  "ChatGPT-User",
-  "ClaudeBot",
-  "Claude-User",
-  "Claude-SearchBot",
-  "PerplexityBot",
-  "Perplexity-User",
-  "Google-Extended",
-  "Googlebot",
-  "Bingbot",
-  "Amazonbot",
-  "Applebot-Extended",
-  "meta-externalagent",
-  "CCBot",
-  "Bytespider",
-] as const;
+const UA_PANEL: readonly BotToken[] = [
+  BotToken.GPTBot,
+  BotToken.OAISearchBot,
+  BotToken.OAIAdsBot,
+  BotToken.ChatGPTUser,
+  BotToken.ClaudeBot,
+  BotToken.ClaudeUser,
+  BotToken.ClaudeSearchBot,
+  BotToken.PerplexityBot,
+  BotToken.PerplexityUser,
+  BotToken.GoogleExtended,
+  BotToken.Googlebot,
+  BotToken.Bingbot,
+  BotToken.Amazonbot,
+  BotToken.ApplebotExtended,
+  BotToken.MetaExternalAgent,
+  BotToken.CCBot,
+];
 
 /** `<link rel="alternate">` types that advertise a machine-readable feed. */
 const FEED_TYPES = new Set([

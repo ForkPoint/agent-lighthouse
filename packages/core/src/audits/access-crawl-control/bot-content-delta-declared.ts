@@ -18,6 +18,7 @@ import {
   type UaProbe,
   BlockClass,
 } from "#core/gatherers/ua-parity";
+import { BotToken } from "#core/bot-registry";
 import {
   AuditTier,
   CheckPriority,
@@ -30,7 +31,11 @@ import {
 /** How many content URLs to compare. */
 const MAX_URLS = 3;
 /** The crawlers whose UA strings are compared against the browser baseline. */
-const TOKENS = ["gptbot", "claudebot", "perplexitybot"];
+const TOKENS = [
+  BotToken.GPTBot,
+  BotToken.ClaudeBot,
+  BotToken.PerplexityBot,
+].map((token) => token.toLowerCase());
 /** Below this share of the browser text, the crawler is being served a different page. */
 const LENGTH_FLOOR = 0.6;
 /** Below this shingle similarity, the text differs even at an equal length. */

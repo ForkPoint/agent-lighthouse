@@ -83,6 +83,7 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
   A widget on a readable cart passes, because it guards a form on the page.
 - ChatGPT-User is sent as the full string OpenAI documents (https://developers.openai.com/api/docs/bots, verified 2026-10-19).
 - The browser baseline is a Mac Chrome UA on the current Stable major, 155 (https://chromiumdash.appspot.com/fetch_releases?channel=Stable&platform=Mac&num=1, verified 2026-10-19). It was Chrome 140 before 2026-10-19.
+- Since 2026-10-19 the probe strings are read from the bot registry (`packages/core/src/bot-registry.ts`) rather than kept in the gatherer. The strings this audit sends are unchanged.
 
 ## Deferred
 

@@ -12,6 +12,7 @@ import {
   BASELINE_UA,
   sharedUaFetch,
 } from "#core/gatherers/ua-parity";
+import { BotToken } from "#core/bot-registry";
 import { parseRobots, isPathAllowed } from "#core/gatherers/robots";
 import { detectWafProtection } from "#core/waf-detector";
 import {
@@ -50,7 +51,7 @@ const CHALLENGE = [
 ];
 
 /** The shopper's agent: the UA that matters on a buy path. */
-const AGENT_TOKEN = "chatgpt-user";
+const AGENT_TOKEN = BotToken.ChatGPTUser.toLowerCase();
 /** Text this short means the document rendered nothing without JavaScript. */
 const MIN_TEXT = 200;
 

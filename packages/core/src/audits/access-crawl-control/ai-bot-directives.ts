@@ -4,6 +4,7 @@ import type { CheckContext } from "#core/check-context";
 import { parseRobotsFile, type RobotsGroup } from "#core/gatherers/robots";
 import { isAllowed } from "./_robots-txt-helpers";
 import { weightForGrade } from "#core/scorer";
+import { BotToken } from "#core/bot-registry";
 import {
   AuditTier,
   CheckPriority,
@@ -41,7 +42,7 @@ type Stance = (typeof Stance)[keyof typeof Stance];
 
 interface DirectiveBot {
   /** The robots.txt product token, matched per RFC 9309. */
-  botName: string;
+  botName: BotToken;
   /** Label used in the report table. */
   displayName: string;
   /**
@@ -61,34 +62,39 @@ interface DirectiveBot {
  * token, so a directive aimed at them has a documented reader. ByteDance,
  * Cohere and Diffbot publish none, and Bytespider is additionally measured
  * fetching disallowed URLs — so their rows are reported, never scored.
+ *
+ * Every token is a bot registry row. The registry marks Bytespider and
+ * cohere-ai `documented: false`; it records Diffbot's crawler page, which
+ * this audit's scoring has not yet been reviewed against (see the dossier's
+ * `## Deferred`).
  */
 const DIRECTIVE_BOTS: DirectiveBot[] = [
   {
-    botName: "YouBot",
+    botName: BotToken.YouBot,
     displayName: "YouBot",
     documentedActive: true,
     note: "scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier)",
   },
   {
-    botName: "AI2Bot",
+    botName: BotToken.AI2Bot,
     displayName: "AI2Bot",
     documentedActive: true,
     note: "scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora",
   },
   {
-    botName: "Bytespider",
+    botName: BotToken.Bytespider,
     displayName: "Bytespider",
     documentedActive: false,
     note: "informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt",
   },
   {
-    botName: "cohere-ai",
+    botName: BotToken.CohereAi,
     displayName: "cohere-ai",
     documentedActive: false,
     note: "informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler)",
   },
   {
-    botName: "Diffbot",
+    botName: BotToken.Diffbot,
     displayName: "Diffbot",
     documentedActive: false,
     note: "informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility",

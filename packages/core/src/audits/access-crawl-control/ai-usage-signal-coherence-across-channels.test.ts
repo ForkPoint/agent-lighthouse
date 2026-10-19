@@ -196,6 +196,20 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
     expect(contradictionsOf(result)).toEqual([]);
   });
 
+  // Review scenario: no operator documents Bytespider or cohere-ai as a
+  // training crawler, so blocking them states no training preference.
+  it("does not read a Bytespider or cohere-ai block as a training denial", async () => {
+    const result = audit.audit(
+      site({
+        robots:
+          "User-agent: Bytespider\nDisallow: /\n\nUser-agent: cohere-ai\nDisallow: /\n",
+        headers: { "content-usage": "train-ai=y" },
+      }),
+    );
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(contradictionsOf(result)).toEqual([]);
+  });
+
   it("still passes a single declaration with nothing to contradict it", async () => {
     const result = audit.audit(
       site({ robots: "User-agent: *\nContent-Usage: train-ai=n\n" }),

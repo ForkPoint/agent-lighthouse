@@ -6,63 +6,45 @@ import { LogField, logger, withLogContext } from "#core/logger";
 const log = logger.child({ [LogField.Component]: "ua-parity" });
 import { getMainContentText } from "#core/parser";
 import { DomWorkLimitError, parseBoundedHtml } from "#core/dom-work";
+import { BOT_REGISTRY } from "#core/bot-registry";
 
 /**
- * The AI crawler User-Agent strings the UA-parity audits send.
+ * The AI crawler User-Agent strings the UA-parity audits send, read from the
+ * bot registry (`packages/core/src/bot-registry.ts`): every documented row
+ * with a probe string, in registry order.
  *
- * The OpenAI and Perplexity strings are copied from the vendors' bot pages
- * (https://developers.openai.com/api/docs/bots and
- * https://docs.perplexity.ai/docs/resources/perplexity-crawlers, verified
+ * The OpenAI, Perplexity and Mistral strings are the vendors' own (verified
  * 2026-10-19). OpenAI labels the GPTBot and OAI-SearchBot strings "Example"
  * and says the version number may change.
  *
  * The ClaudeBot and Claude-User strings are observed, not vendor-documented:
  * Anthropic's crawler page names the bots and their robots.txt tokens but
- * publishes no User-Agent string. Each consuming dossier records this under
- * `## Implementation deviations`.
+ * publishes no User-Agent string. `observed` marks them, and each consuming
+ * dossier records this under `## Implementation deviations`.
  *
- * `Google-Extended` is deliberately absent: it is a robots.txt product token
- * only, with no user agent of its own, so a UA probe for it would compare the
- * site against a string that never appears in real traffic.
+ * A row gets no probe when the vendor publishes no literal string: a token
+ * with no request of its own (Google-Extended), a version placeholder
+ * (Amzn-User's `Chrome/W.X.Y.Z`), or a string the vendor only says logs "will
+ * be similar to" (Meta). Googlebot and Bingbot are never probed: Cloudflare
+ * ships managed rules that flag their UA from an unverified source.
  */
 export const AI_CRAWLER_UAS: ReadonlyArray<{
   token: string;
   ua: string;
   label: string;
-}> = [
-  {
-    token: "gptbot",
-    label: "GPTBot",
-    ua: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; GPTBot/1.4; +https://openai.com/gptbot",
-  },
-  {
-    token: "oai-searchbot",
-    label: "OAI-SearchBot",
-    ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36; compatible; OAI-SearchBot/1.4; +https://openai.com/searchbot",
-  },
-  {
-    token: "chatgpt-user",
-    label: "ChatGPT-User",
-    ua: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ChatGPT-User/1.0; +https://openai.com/bot",
-  },
-  // Observed string; Anthropic documents no ClaudeBot User-Agent.
-  {
-    token: "claudebot",
-    label: "ClaudeBot",
-    ua: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; ClaudeBot/1.0; +claudebot@anthropic.com)",
-  },
-  // Observed string; Anthropic documents no Claude-User User-Agent.
-  {
-    token: "claude-user",
-    label: "Claude-User",
-    ua: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Claude-User/1.0; +Claude-User@anthropic.com)",
-  },
-  {
-    token: "perplexitybot",
-    label: "PerplexityBot",
-    ua: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; PerplexityBot/1.0; +https://perplexity.ai/perplexitybot)",
-  },
-];
+  observed: boolean;
+}> = BOT_REGISTRY.flatMap((bot) =>
+  bot.documented && bot.probe
+    ? [
+        {
+          token: bot.token.toLowerCase(),
+          label: bot.token,
+          ua: bot.probe.ua,
+          observed: bot.probe.observed,
+        },
+      ]
+    : [],
+);
 
 /**
  * A mainstream browser UA. The control half of every pair.
@@ -258,8 +240,8 @@ function unanswered(baseline: FetchResult): boolean {
  * Fetch each URL once as a browser, then once per crawler token, and classify
  * the difference. A URL whose baseline got no HTTP answer is not probed.
  *
- * The baseline is fetched once per URL and reused across tokens, so a six-token
- * sweep costs seven requests per URL rather than twelve. URLs are `isSafeUrl`-
+ * The baseline is fetched once per URL and reused across tokens, so an
+ * eight-token sweep costs nine requests per URL rather than sixteen. URLs are `isSafeUrl`-
  * gated because callers pass in addresses read out of site-controlled content.
  */
 export async function probeUaParity(
