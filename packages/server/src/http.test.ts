@@ -229,4 +229,15 @@ describe("task routes", () => {
     expect((await post({ url: "https://five.test/" })).status).toBe(429);
     expect(isSafeUrl).not.toHaveBeenCalled();
   });
+
+  it("shows the target without credentials but scans it with them", async () => {
+    scan.mockClear();
+    const res = await post({ url: "https://u:p@shop.test/" });
+    const { snapshot } = await res.json();
+    expect(snapshot.url).toBe("https://shop.test/");
+    expect(scan).toHaveBeenCalledWith(
+      "https://u:p@shop.test/",
+      expect.anything(),
+    );
+  });
 });
