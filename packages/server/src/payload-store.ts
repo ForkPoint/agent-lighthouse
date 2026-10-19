@@ -27,14 +27,18 @@ export interface DetectionEntry {
 /**
  * Where detected payloads live between `POST /detect` and the scan that
  * reuses them. The in-memory store serves one process; another backend can
- * implement the same interface. Every implementation keeps three rules: an
+ * implement the same interface. Every implementation keeps four rules: an
  * entry expires DETECTION_TTL_MS after it was stored, whether or not a scan
- * read it; a full store evicts the oldest entry and never refuses a new one;
+ * read it; a full store evicts the oldest entries to make room; an entry
+ * larger than MAX_DETECTION_BYTES on its own is refused, and evicts nothing;
  * expiry is checked on every read.
  */
 export interface PayloadStore {
-  /** Stores the entry and returns its new detection id. */
-  put(entry: Omit<DetectionEntry, "detectionId">): string;
+  /**
+   * Stores the entry and returns its new detection id. Undefined when the
+   * entry alone is over MAX_DETECTION_BYTES; the store is left as it was.
+   */
+  put(entry: Omit<DetectionEntry, "detectionId">): string | undefined;
   /** Undefined when the id is unknown or expired. */
   get(detectionId: string): DetectionEntry | undefined;
   /** False when the id is unknown or expired. */
@@ -59,9 +63,10 @@ export class InMemoryPayloadStore implements PayloadStore {
       options.newId ?? (() => `d_${randomUUID().replaceAll("-", "")}`);
   }
 
-  put(entry: Omit<DetectionEntry, "detectionId">): string {
+  put(entry: Omit<DetectionEntry, "detectionId">): string | undefined {
     this.sweep();
     const bytes = Buffer.byteLength(entry.payload.html, "utf8");
+    if (bytes > MAX_DETECTION_BYTES) return undefined;
     // Map iteration is insertion order, so the first slot is the oldest.
     for (const id of this.slots.keys()) {
       if (
