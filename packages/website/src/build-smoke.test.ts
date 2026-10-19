@@ -83,7 +83,7 @@ describe.skipIf(!built)("built site", () => {
 
   /**
    * GitHub Pages serves `404.html` from the site root for anything it cannot
-   * match. Every HTML report this tool writes carries 215 `evidenceUrl`
+   * match. Every HTML report this tool writes carries 221 `evidenceUrl`
    * addresses, so a stale one has to land somewhere navigable rather than on
    * GitHub's generic page.
    */

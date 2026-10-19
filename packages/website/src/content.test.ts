@@ -89,7 +89,7 @@ describe("dossier content", () => {
     // intro block, so the layout supplies the page's only `<h1>` — and the
     // registry title is the better name regardless: the body heading is a
     // working title on most dossiers (`og-type (4.7)`), while every list that
-    // links here shows the registry title. The rendered check over all 215
+    // links here shows the registry title. The rendered check over all 221
     // built pages is in `layouts/chrome.test.ts`.
     expect(
       template,

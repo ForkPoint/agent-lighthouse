@@ -48,6 +48,7 @@ na   0   agent-interfaces/ai-plugin-json
 na   0   agent-interfaces/cors-api-routes
 na   0   agent-interfaces/mcp-discovery
 na   0   agent-interfaces/mcp-endpoint
+na   0   agent-interfaces/mcp-tool-annotation-coverage
 na   0   agent-interfaces/openapi-exists
 na   0   agent-interfaces/search-endpoint
 na   0   agent-interfaces/webmcp-registered-tools

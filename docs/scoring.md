@@ -71,7 +71,7 @@ overallScore = round( Σ(categoryScore · assessedMass) / Σ(assessedMass) )
 
 A category's **assessed mass** is the summed weight of its checks that reached a scored verdict. Its **registry mass** is the summed weight of every audit registered in it. Registry mass measures coverage; only assessed mass weights the score. So an audit keeps its own weight whichever category it sits in, and a category that was not assessed drops out. With no assessed mass anywhere, the score is 0.
 
-Each category in the JSON report carries `registryMass` and `assessedMass` for the run. The current registry has 220 audits: 166 scored, 45 informative, 2 experimental, 7 obsolete, with a total registry mass of 134.4:
+Each category in the JSON report carries `registryMass` and `assessedMass` for the run. The current registry has 221 audits: 166 scored, 46 informative, 2 experimental, 7 obsolete, with a total registry mass of 134.4:
 
 | Category                   | Audits | Scored | Registry mass |
 | :------------------------- | -----: | -----: | ------------: |
@@ -80,7 +80,7 @@ Each category in the JSON report carries `registryMass` and `assessedMass` for t
 | Content Extraction         |     27 |     23 |          17.0 |
 | Answer Readiness           |     33 |     19 |          13.0 |
 | Machine Discovery          |     24 |     16 |          12.8 |
-| Agent Interfaces           |     26 |     17 |          12.6 |
+| Agent Interfaces           |     27 |     17 |          12.6 |
 | Structured Data            |     14 |     10 |           9.6 |
 | Agentic Commerce           |     11 |     11 |           9.4 |
 

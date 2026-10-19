@@ -178,6 +178,7 @@ describe("absent artifact, absent verdict — the MCP server", () => {
       "agent-interfaces/mcp-oauth-discovery-chain",
       "agent-interfaces/mcp-origin-validation-cors",
       "agent-interfaces/mcp-registry-listing-ownership",
+      "agent-interfaces/mcp-tool-annotation-coverage",
       "agent-interfaces/mcp-tool-contract-validity",
       "agent-interfaces/mcp-tool-description-coverage",
       "agent-interfaces/mcp-tools-list-determinism",

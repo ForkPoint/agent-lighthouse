@@ -3,50 +3,85 @@ check: behavior-annotation-coverage-and-claim-consistency
 title: "Behavior Annotation Coverage and Claim Consistency"
 domain: mcp-server-quality
 status: proposed
-evidence_grade: C
+evidence_grade: A
 uniqueness: unique
 difficulty: llm-assisted
 scoring_tier: informative (weight 0)
-reviewed: 2026-08-20
+reviewed: 2026-10-19
+consumers:
+  - Claude (Anthropic) — read-only tools run without per-call confirmation; destructive tools always prompt
+  - VS Code (Microsoft) — asks for confirmation before every MCP tool call unless the tool sets `readOnlyHint`
+  - ChatGPT Directory plugins (OpenAI) — require explicit boolean `readOnlyHint`, `destructiveHint` and `openWorldHint` on every tool; automated review flags annotation issues
 ---
 
 # Behavior Annotation Coverage and Claim Consistency
 
-> Proposed check. Evidence grade **C** · unique · implementation: `llm-assisted`
+> Proposed check. Evidence grade **A** · unique · implementation: `llm-assisted`
 
 ## What it checks
 
-Roadmap check. Measures what fraction of tools carry the behavior-hint annotations hosts use to decide whether to auto-approve a call, then uses an LLM judge to flag annotations that contradict the tool's own name and description (a tool named delete_* or refund_* asserting readOnlyHint: true).
+Two things about the tools an MCP server lists:
+
+1. Coverage: how many tools carry boolean behaviour hints (`readOnlyHint`, `destructiveHint`, `openWorldHint`).
+2. Consistency: whether a hint contradicts the tool's own name and description. Example: a tool named `delete_*` that sets `readOnlyHint: true`.
 
 ## Claimed mechanism (falsifiable)
 
-Hosts that offer auto-approval, allowlisting, or 'safe tools only' modes gate on the annotation block; a tool with no annotations must be treated conservatively and therefore prompts the user on every invocation, which is precisely the friction that makes multi-step agent workflows unusable. The consistency half rests on the spec's own repeated warning that 'clients MUST consider tool annotations to be untrusted unless they come from trusted servers' — an annotation that contradicts the tool's stated behavior is exactly the signal that warning anticipates, and a first-party audit is the right place to catch an accidental one. Graded C deliberately: we verified that the 2026-07-28 tools page describes `annotations` as 'optional properties describing tool behavior' and carries the untrusted-annotations warning, but we could NOT retrieve the ToolAnnotations type definition or its per-field default values from the 2026-07-28 schema reference. Any check that scores against specific defaults (readOnlyHint, destructiveHint, idempotentHint, openWorldHint) must first confirm those field names and defaults against schema/2026-07-28/schema.ts. Until that is done this is unscoreable.
+Hosts decide whether to ask the user before a tool call from these hints. Claude runs a tool marked read-only without asking, and always asks before a destructive one. VS Code asks before any tool that does not set `readOnlyHint`. So a missing hint costs a prompt on every call. A wrong `readOnlyHint: true` on a mutating tool lets that tool run without a prompt.
 
 ## Evidence
 
-- **[MCP Specification 2026-07-28 — Tools](https://modelcontextprotocol.io/specification/2026-07-28/server/tools)** — Model Context Protocol (spec, URL verified 2026-08-20)
-  - tools/list result set MUST NOT vary per-connection or as a side effect of other requests (MAY vary by authorization). Servers SHOULD return tools in deterministic order — rationale given verbatim: enables client caching and 'improves LLM prompt cache hit rates'. inputSchema MUST be a valid JSON Schema object (not null); defaults to JSON Schema 2020-12. Tool names SHOULD be 1-128 chars, case-sensitive, only [A-Za-z0-9_.-], unique within a server. Full x-mcp-header constraint list including static-reachability rule (chain of only `properties` keys; never through items/oneOf/anyOf/allOf/not/if/then/else/$ref). Clients MUST exclude violating tools from tools/list. If outputSchema present, servers MUST conform. Clients MUST treat annotations as untrusted.
-- **[MCP Specification (latest) — index](https://modelcontextprotocol.io/specification/latest)** — Model Context Protocol (spec, URL verified 2026-08-20)
-  - Confirms the current authoritative revision is 2026-07-28 (schema/2026-07-28/schema.ts). Lists optional extensions negotiated in capabilities: Tasks (io.modelcontextprotocol/tasks), MCP Apps (io.modelcontextprotocol/ui), Skills over MCP. Restates that annotations describing tool behavior 'should be considered untrusted, unless obtained from a trusted server'.
+- Anthropic's connector review criteria: "Every tool must include a title and the applicable hint: readOnlyHint: true for read-only tools, and destructiveHint: true for tools that modify or delete data. These determine auto-permissions in Claude. Read-only tools can run without per-call confirmation, and destructive tools always prompt." — https://claude.com/docs/connectors/building/review-criteria (verified 2026-10-19)
+- Anthropic's submission page: the portal "flags tools that are missing them", and "review criteria explain how reviewers read tool names and descriptions" — https://claude.com/docs/connectors/building/submission (verified 2026-10-19)
+- VS Code registers each MCP tool with `canRequestPreApproval: !tool.definition.annotations?.readOnlyHint`. When `readOnlyHint` is not set, it builds a "Run {0}" confirmation for the call. Proof pointer: `mcpLanguageModelToolContribution.ts` — https://github.com/microsoft/vscode/blob/main/src/vs/workbench/contrib/mcp/common/mcpLanguageModelToolContribution.ts (verified 2026-10-19)
+- OpenAI's plugin guidelines: "Set `readOnlyHint`, `destructiveHint`, and `openWorldHint` to explicit boolean values (`true` or `false`) in each tool's `annotations` object." "If our automated review flags an annotation issue, you can submit an appeal". The guidelines also define which verbs make a tool destructive, such as "deletion, overwriting, cancellation, access revocation" — https://developers.openai.com/plugins/plugin-guidelines (verified 2026-10-19; the old Apps SDK submission-guidelines URL redirects here)
+- OpenAI's reference lists all three hints as "Required". `destructiveHint` exists "so the host knows to elicit explicit approval first" — https://developers.openai.com/plugins/reference (verified 2026-10-19; redirected from the Apps SDK reference)
+- MCP 2026-07-28 `schema.ts`, `ToolAnnotations`: `readOnlyHint` "Default: false", `destructiveHint` "Default: true", `idempotentHint` "Default: false", `openWorldHint` "Default: true". The type is documented as hints only: "Clients should never make tool use decisions based on `ToolAnnotations` received from untrusted servers." — https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/schema/2026-07-28/schema.ts (verified 2026-10-19)
+- MCP 2026-07-28 tools page: "clients **MUST** consider tool annotations to be untrusted unless they come from trusted servers." — https://modelcontextprotocol.io/specification/2026-07-28/server/tools (verified 2026-10-19)
+
+## What is inference
+
+- That a model judge can detect contradictions with useful precision. No source measures this. Anthropic and OpenAI both review annotations against names and descriptions, but neither documents its method.
+- That a given contradiction is a defect. The scanner cannot run the tool, so it cannot prove a hint false. A finding can only say "review this claim".
+
+## Counter-evidence and limits
+
+- The spec tells clients not to trust annotations from untrusted servers. A host that follows this ignores the hints for such servers, and coverage then changes nothing for it. Claude and VS Code, per the sources above, do act on them.
+- VS Code builds its confirmation message only for servers that are not sandboxed. For sandboxed servers the hints do not drive that message. What the host then shows is not traced here.
+
+## Overlap with shipped audits
+
+`agent-interfaces/mcp-endpoint` already reports how many listed tools carry a boolean `readOnlyHint`. It is graded C, informative. The sources above document a consumer for that half. Re-grading it is a separate change to a shipped audit and is not made here.
+
+Since 2026-10-19 the coverage half ships as [`agent-interfaces/mcp-tool-annotation-coverage`](../../audits/agent-interfaces/mcp-tool-annotation-coverage.md) (grade A, informative). It checks boolean `readOnlyHint`, `destructiveHint` and `openWorldHint` on every listed tool. What this proposal still adds is the consistency judgement.
 
 ## Competitor coverage
 
-Unique in the audit space. Some MCP security research tools scan for prompt-injection payloads inside tool descriptions, which is a different question (malicious content) from this one (accidental annotation drift). Lighthouse, Profound, Otterly, Semrush and Ahrefs cover none of it. Flagged as roadmap on two grounds: it needs an LLM judge, and its scoring basis is unverified pending the schema.ts confirmation described above.
+Anthropic's and OpenAI's directory reviews check annotations, but only for servers submitted to them. Some MCP security scanners look for prompt injection in descriptions, which is a different question. No site-audit tool checks annotation consistency.
 
 ## Implementation sketch
 
-Phase 1 (deterministic, ships first): from tools/list, compute annotationCoverage = tools with a non-empty `annotations` object / total tools, and report the distribution of which annotation keys actually appear across the tool set. Report as an unscored informational metric with the caveat that the authoritative field list must be confirmed against the 2026-07-28 schema.ts before any threshold is attached.
-Phase 2 (LLM judge, gated on Phase 1 confirming the field names): for each tool, pass {name, title, description, inputSchema property names, annotations} to a judge with a strict rubric and require it to return a verdict plus the specific token it relied on. Flag only high-confidence contradictions: a tool whose name or description contains a mutating verb (delete, remove, cancel, refund, purchase, send, publish, revoke, transfer, charge) while annotations assert a read-only or non-destructive posture; or a tool that reaches an external network service while asserting a closed-world posture. Require two independent judge passes to agree before reporting, and always render the finding as 'review this claim' with the evidence quoted, never as an automatic failure — the scanner cannot execute the tool and so cannot prove the annotation false.
-Prerequisite before promoting to scoreable: fetch https://modelcontextprotocol.io/specification/2026-07-28/schema and locate the ToolAnnotations definition to confirm the exact field names and documented defaults in the current revision. If the defaults are unchanged from 2025-03-26 (readOnlyHint false, destructiveHint true, idempotentHint false, openWorldHint true), the coverage metric can be scored at grade B, since an absent annotation block then means the host's conservative default treats every tool as destructive.
+Phase 1, deterministic: from `tools/list`, count tools with each boolean hint. Flag a tool whose name starts with a verb OpenAI lists as destructive (delete, remove, cancel, revoke, overwrite) and that sets `readOnlyHint: true`. This needs no model.
+
+Phase 2, model judge: give the judge `{name, title, description, inputSchema property names, annotations}`. Require a verdict and the exact token it relied on. Require two independent passes to agree. Report as "review this claim", never as a failure.
+
+Phase 2 needs a model. The scanner has none. That is the blocker.
 
 ## Example failure
 
-A payments server exposes `void_transaction` with the description 'Voids a pending transaction and returns the authorization hold to the cardholder' but annotates it as read-only and non-destructive — most likely because the annotation block was copy-pasted from the neighboring `get_transaction` tool. A host running in auto-approve-read-only mode invokes it without prompting the user, and money moves with no human in the loop. The judge flags the contradiction on the verb 'Voids' plus 'returns the authorization hold'.
+A payments server lists `void_transaction`, described as "Voids a pending transaction and returns the authorization hold to the cardholder". It sets `readOnlyHint: true`, likely copied from `get_transaction`. Claude would run it without asking the user. The phase-1 rule does not catch "void"; the judge flags "Voids" and "returns the authorization hold".
 
 ## Scoring
 
-Tier per evidence policy: **informative (weight 0)** — grade C does not meet the A/B bar required for scored audits.
+Tier: **informative (weight 0)** until the judge's precision is measured. The mechanism is grade A. The method is unproven. A false "contradiction" finding would send owners to change correct hints.
+
+## Deferred
+
+- Measure judge precision on a labelled set of real `tools/list` responses before any weight.
+- Re-grade the readOnlyHint half of `agent-interfaces/mcp-endpoint` against the consumers above. Considered on 2026-10-19 and not done: that audit's verdicts rest mostly on its handshake and discovery checks, whose evidence stays at C. Its dossier records why.
 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+- 2026-10-19 — evidence review. Grade C raised to A. The stated prerequisite is met: `schema.ts` for 2026-07-28 confirms the four hints and their defaults are unchanged. Added three consumers with primary sources: Anthropic's connector review criteria, VS Code's MCP tool contribution source, and OpenAI's plugin guidelines and reference. Recorded that `agent-interfaces/mcp-endpoint` already ships the readOnlyHint coverage half. The blocker is the model judge, not the evidence.
+- 2026-10-19 — Phase 1 coverage graduated as `agent-interfaces/mcp-tool-annotation-coverage` (grade A, informative since the same day). The phase-1 verb rule was not shipped; it judges a claim and stays with the phase-2 judge. This proposal now covers the consistency judgement only.

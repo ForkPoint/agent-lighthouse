@@ -94,7 +94,7 @@ export function invariantViolations(
   // Rule 3, tripwire. Nothing obtained: the scan holds no response it can
   // attribute to this site, so no audit may congratulate it. Mirrors
   // `hostile-state-contract.test.ts`, which asserts the same thing per audit on
-  // a synthetic state. The runner's unread-scan guard skips all 215 audits to
+  // a synthetic state. The runner's unread-scan guard skips all 221 audits to
   // `na` before any audit runs. On a live scan this fires only if that guard
   // regresses or another path constructs an inconsistent report.
   if (!validity.evidence[EvidenceKey.OriginReachable] && passes.length > 0) {

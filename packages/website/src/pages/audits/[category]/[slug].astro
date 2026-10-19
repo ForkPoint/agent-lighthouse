@@ -43,7 +43,7 @@ export async function getStaticPaths() {
     const audit = byId.get(entry.id)!;
 
     // The sidebar lists every category and expands the current one. Expanding
-    // all eight would put 215 links on every page for no navigational gain.
+    // all eight would put 221 links on every page for no navigational gain.
     const nav = categories.map((group) => ({
       label: `${group.name} (${group.count})`,
       href: categoryPath(group.id),
@@ -116,7 +116,7 @@ const sourceUrl = `https://github.com/ForkPoint/agent-lighthouse/blob/main/${ent
         strip rather than following the badges into the card: a filter declared
         twice on one page is collected twice, and the strip renders once while
         the card renders in both the rail and the compact disclosure. The dialog
-        prints the category under each result — 215 dossiers is enough that
+        prints the category under each result — 221 dossiers is enough that
         "which one of these is it?" is a real question. */}
     <div
       class="flex flex-wrap items-center gap-2"

@@ -8,7 +8,7 @@ import { AuditTier, EvidenceGrade } from "@forkpoint/agent-lighthouse-core";
 /**
  * The source registry, by id.
  *
- * Read once for the whole collection rather than per dossier: 215 entries share
+ * Read once for the whole collection rather than per dossier: 221 entries share
  * 715 records, and the ids are the only thing a dossier stores.
  */
 const registry = new Map<string, SourceRef>(

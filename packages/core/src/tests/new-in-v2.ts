@@ -83,6 +83,7 @@ export const NEW_IN_V2: readonly string[] = [
   "agent-interfaces/a2a-agent-card",
   "agentic-commerce/ucp-profile",
   "operability-safety/change-password-url",
+  "agent-interfaces/mcp-tool-annotation-coverage",
 ];
 
 /**

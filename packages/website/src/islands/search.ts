@@ -200,7 +200,7 @@ function resultItem(fragment: PagefindFragment): HTMLLIElement {
   link.append(title);
 
   // The category filter is set on the dossier's own badge strip, so it is only
-  // ever present on the 215 dossiers — which are exactly the results a reader
+  // ever present on the 221 dossiers — which are exactly the results a reader
   // needs help telling apart.
   const category = fragment.filters?.["category"]?.[0];
   if (category) {

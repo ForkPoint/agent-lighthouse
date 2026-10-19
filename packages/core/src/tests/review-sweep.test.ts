@@ -18,7 +18,7 @@ describe("Phase 6: Audit Review Sweep (Law 10: Warrant Expires)", () => {
   it("sweeps the live audit dossiers directory and returns structured metrics", () => {
     const result = sweepAudits();
 
-    expect(result.totalAudits).toBeGreaterThanOrEqual(215);
+    expect(result.totalAudits).toBeGreaterThanOrEqual(221);
     expect(typeof result.overdueCount).toBe("number");
     expect(Array.isArray(result.dossiers)).toBe(true);
     expect(result.dossiers.length).toBe(result.totalAudits);

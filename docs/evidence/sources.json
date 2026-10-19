@@ -35,7 +35,7 @@
       "url": "https://web.dev/articles/text-fragments",
       "type": "vendor-doc",
       "publisher": "Google / web.dev",
-      "verified": "2026-08-20",
+      "verified": "2026-10-19",
       "keyFindings": "Confirms a shipped answer-surface consumer: \"Clicking a featured snippet takes the user directly to the featured snippet text on the source web page. This works thanks to automatically created Text Fragments URLs.\" Support: Chrome 89+, Edge 89+, Firefox 131+, Safari 18.2+. Restates the boundary rule: \"Each of prefix-, start, end, and -suffix can only match text within a single block-level element, but full start,end ranges can span multiple blocks.\" Opt-out header: Document-Policy: force-load-at-top."
     },
     {
@@ -71,7 +71,7 @@
       "url": "https://github.com/microsoft/playwright-mcp",
       "type": "repo",
       "publisher": "Microsoft",
-      "verified": "2026-08-21",
+      "verified": "2026-10-19",
       "keyFindings": "Default mode is 'Playwright's accessibility tree, not pixel-based input'; browser_snapshot returns interactive elements with roles and accessible names, and every action tool takes a 'target' = 'exact target element reference from the page snapshot'. Coordinate clicking exists only behind the optional --caps=vision flag. Therefore an element absent from the a11y snapshot is literally unaddressable by the default toolchain."
     },
     {
@@ -107,7 +107,7 @@
       "url": "https://playwright.dev/docs/actionability",
       "type": "vendor-doc",
       "publisher": "Microsoft",
-      "verified": "2026-08-20",
+      "verified": "2026-10-19",
       "keyFindings": "Before click/check/fill/selectOption, Playwright enforces five checks: Visible (non-empty bounding box, not visibility:hidden), Stable (same bounding box over 2 animation frames), Receives Events (element is the hit target at the action point — overlays cause failure), Enabled (not [disabled]/aria-disabled), Editable (not readonly/aria-readonly). Fill requires visible+enabled+editable. This is the exact gate every Playwright-based agent (Playwright-MCP, browser-use, most CUA harnesses) passes through, so each check is a directly testable site-side failure cause."
     },
     {
@@ -125,7 +125,7 @@
       "url": "https://modelcontextprotocol.io/specification/2026-07-28/server/tools",
       "type": "spec",
       "publisher": "Model Context Protocol",
-      "verified": "2026-08-20",
+      "verified": "2026-10-19",
       "keyFindings": "tools/list result set MUST NOT vary per-connection or as a side effect of other requests (MAY vary by authorization). Servers SHOULD return tools in deterministic order — rationale given verbatim: enables client caching and 'improves LLM prompt cache hit rates'. inputSchema MUST be a valid JSON Schema object (not null); defaults to JSON Schema 2020-12. Tool names SHOULD be 1-128 chars, case-sensitive, only [A-Za-z0-9_.-], unique within a server. Full x-mcp-header constraint list including static-reachability rule (chain of only `properties` keys; never through items/oneOf/anyOf/allOf/not/if/then/else/$ref). Clients MUST exclude violating tools from tools/list. If outputSchema present, servers MUST conform. Clients MUST treat annotations as untrusted."
     },
     {
@@ -243,7 +243,7 @@
       "publisher": "OpenAI",
       "type": "spec",
       "keyFindings": "Five REST endpoints: POST /checkout_sessions, POST /checkout_sessions/{id}, /complete, /cancel, GET /checkout_sessions/{id}. Scoped to checkout only, not search or catalog browsing. REST-only delivery; \"In the future, the Agentic Checkout Spec will support MCP servers\". No in-page tools, no HTML attributes, no WebMCP reference.",
-      "verified": "2026-08-20",
+      "verified": "2026-10-19",
       "accessed": "2026-08-21"
     },
     {
@@ -306,7 +306,7 @@
       "url": "https://raw.githubusercontent.com/agentic-commerce-protocol/agentic-commerce-protocol/main/spec/2026-04-17/openapi/openapi.agentic_checkout.yaml",
       "type": "spec",
       "publisher": "Agentic Commerce Protocol",
-      "verified": "2026-08-20",
+      "verified": "2026-10-19",
       "keyFindings": "CheckoutSession REQUIRED fields (9): id, status, currency, line_items, totals, fulfillment_options, messages, links, capabilities. links[].type enum expanded to 8 values: terms_of_use, privacy_policy, return_policy, shipping_policy, contact_us, about_us, faq, support. status enum (11): incomplete, not_ready_for_payment, requires_escalation, authentication_required, ready_for_payment, pending_approval, complete_in_progress, completed, canceled, in_progress, expired. totals[].type enum (12): items_base_amount, items_discount, subtotal, discount, fulfillment, tax, fee, gift_wrap, tip, store_credit, total, amount_refunded. Message error codes extended with low_stock, quantity_exceeded, coupon_invalid, coupon_expired, minimum_not_met, maximum_exceeded, region_restricted, age_verification_required, approval_required, unsupported, not_found, conflict, rate_limited, expired, intervention_required. API-Version is YYYY-MM-DD, required on all requests. Response headers Idempotency-Key and Request-Id are required echoes."
     },
     {
@@ -342,7 +342,7 @@
       "url": "https://agenticcommerce.dev/docs/concepts/security",
       "type": "spec",
       "publisher": "Agentic Commerce Protocol",
-      "verified": "2026-08-20",
+      "verified": "2026-10-19",
       "keyFindings": "All ACP endpoints use HTTPS and send/receive JSON. Bearer-token authentication between agent and seller; sellers retrieve tokens through the agent's application. Mandatory headers: Authorization: Bearer <token>, Content-Type: application/json, Accept: application/json."
     },
     {
@@ -351,7 +351,7 @@
       "url": "https://agenticcommerce.dev/docs/getting-started/sellers",
       "type": "spec",
       "publisher": "Agentic Commerce Protocol",
-      "verified": "2026-08-20",
+      "verified": "2026-10-19",
       "keyFindings": "Seller obligations: implement the five HTTPS/JSON checkout endpoints; calculate all amounts (item prices, discounts, taxes, shipping); manage inventory and availability; process payments through their PSP; fulfil orders. Sellers must declare capabilities in EVERY checkout response, including payment handlers (handler id, name, version, PSP reference, configuration) and optional extensions. Sellers must validate payment handler IDs against declared capabilities and manage state transitions to ready_for_payment."
     },
     {
@@ -756,7 +756,7 @@
       "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/computer-use-tool",
       "type": "vendor-doc",
       "publisher": "Anthropic",
-      "verified": "2026-08-20",
+      "verified": "2026-10-19",
       "keyFindings": "COUNTER-EVIDENCE for a blanket 'agents read the a11y tree' claim. The desktop computer-use tool is screenshot-only: 17 member actions (screenshot, zoom, clicks, scroll, type, key, wait) with no DOM or accessibility-tree access. Doc redirects web work to the browser use tool: 'For tasks that stay inside webpages, the browser use tool is the closer fit: its member tools read and act on the page itself.'"
     },
     {
@@ -2196,7 +2196,7 @@
       "url": "https://developers.google.com/search/docs/fundamentals/ai-optimization-guide",
       "type": "vendor-doc",
       "publisher": "Google Search Central",
-      "verified": "2026-10-18",
+      "verified": "2026-10-19",
       "keyFindings": "The single most important primary source for this domain, and it is largely COUNTER-evidence for structural AEO tactics. Google defines query fan-out as 'A set of concurrent, related queries generated by the model to request more information and fetch additional relevant search results.' It recommends organizing content so that 'web pages are organized by paragraphs and sections, along with headings that provide a clear structure' and to 'Write content for your human audience.' It explicitly enumerates what is NOT needed: 'There's no requirement to break your content into tiny pieces for AI to better understand it'; 'You don't need to write in a specific way just for generative AI search'; 'You don't need to create new machine readable files, AI text files, markup, or Markdown to appear in Google Search'; 'Structured data isn't required for generative AI search, and there's no special schema.org markup you need to add'; llms.txt — 'Google Search itself doesn't use them.' It stresses first-hand original value: 'A first-hand review provides a unique perspective based on personal experience, whereas a summary of existing content simply restates information already available elsewhere.'"
     },
     {
@@ -2370,7 +2370,7 @@
       "url": "https://developers.google.com/search/docs/appearance/featured-snippets",
       "type": "vendor-doc",
       "publisher": "Google Search Central",
-      "verified": "2026-08-20",
+      "verified": "2026-10-19",
       "keyFindings": "Counter-evidence against markup-driven extraction: asked whether you can mark content to become a featured snippet, Google answers 'You can't. Google systems determine whether a page would make a good featured snippet for a user's search request, and if so, elevates it.' The doc gives no guidance on paragraph/list/table formats or definition patterns; its only actionable lever is max-snippet length ('Featured snippets will only appear if enough text can be shown to generate a useful featured snippet')."
     },
     {
@@ -7041,6 +7041,141 @@
       "type": "vendor-doc",
       "keyFindings": "\"Stable release date: September 22nd, 2026\". Under Privacy and security: \"Ask before HTTP on by default. Chrome prompts users by default when they connect to a site over an insecure ( http ) connection. Administrators can control this default behavior using the HttpsOnlyMode enterprise policy.\" No mention of automation, headless or agent modes.",
       "verified": "2026-10-18"
+    },
+    {
+      "id": "playwright-mcp-browser-click",
+      "title": "Playwright MCP source: browser_click tool (snapshot.ts)",
+      "url": "https://github.com/microsoft/playwright/blob/main/packages/playwright-core/src/tools/backend/snapshot.ts",
+      "publisher": "Microsoft / Playwright",
+      "type": "repo",
+      "keyFindings": "The `click` tool (`browser_click`) resolves the snapshot ref to a locator and calls `locator.click(options)` with only `button`, `modifiers` and the action timeout. No `force` option is passed, so Playwright's receives-events actionability check applies.",
+      "verified": "2026-10-19"
+    },
+    {
+      "id": "playwright-pointer-retry",
+      "title": "Playwright source: _retryPointerAction (dom.ts)",
+      "url": "https://github.com/microsoft/playwright/blob/main/packages/playwright-core/src/server/dom.ts",
+      "publisher": "Microsoft / Playwright",
+      "type": "repo",
+      "keyFindings": "`_retryPointerAction` cycles scroll alignments (default, end, center, start) because the default scroll \"might not work to scroll from under position:sticky elements that overlay the target element\"; \"This works in most scenarios.\" Each interception is logged as \"<element> intercepts pointer events\".",
+      "verified": "2026-10-19"
+    },
+    {
+      "id": "playwright-mcp-error-result",
+      "title": "Playwright MCP source: tool error result (browserBackend.ts)",
+      "url": "https://github.com/microsoft/playwright/blob/main/packages/playwright-core/src/tools/backend/browserBackend.ts",
+      "publisher": "Microsoft / Playwright",
+      "type": "repo",
+      "keyFindings": "A thrown tool error is returned to the model as a result with `isError: true` and text `String(error)`.",
+      "verified": "2026-10-19"
+    },
+    {
+      "id": "browser-use-paint-order",
+      "title": "browser-use source: PaintOrderRemover (paint_order.py)",
+      "url": "https://github.com/browser-use/browser-use/blob/main/browser_use/dom/serializer/paint_order.py",
+      "publisher": "Browser Use",
+      "type": "repo",
+      "keyFindings": "Marks a node `ignored_by_paint_order` when the union of rectangles painted above it fully contains it. Layers with a transparent background or opacity below 0.8 are not counted as covering. Enabled by `paint_order_filtering`, default True, \"Slightly experimental\" (browser_use/browser/profile.py).",
+      "verified": "2026-10-19"
+    },
+    {
+      "id": "cssom-view-element-from-point",
+      "title": "CSSOM View Module — elementFromPoint()",
+      "url": "https://drafts.csswg.org/cssom-view/#dom-document-elementfrompoint",
+      "publisher": "W3C CSS Working Group",
+      "type": "draft-spec",
+      "keyFindings": "Defines elementFromPoint() and elementsFromPoint() over boxes \"that would be a target for hit testing\"; notes pointer-events can exclude an element from hit testing.",
+      "verified": "2026-10-19"
+    },
+    {
+      "id": "openai-commerce-production",
+      "title": "OpenAI: Agentic commerce in production",
+      "url": "https://developers.openai.com/commerce/guides/production",
+      "publisher": "OpenAI",
+      "type": "vendor-doc",
+      "keyFindings": "Launch certification tests in sandbox, including error handling (invalid_request / 400) and idempotency (idempotency_conflict with HTTP 409). \"All traffic to you must use TLS 1.2 or later on port 443 with a valid public certificate.\" \"Allowlist OpenAI's IP addresses.\"",
+      "verified": "2026-10-19"
+    },
+    {
+      "id": "acp-discovery-rfc",
+      "title": "ACP RFC: Agentic Checkout — Discovery",
+      "url": "https://github.com/agentic-commerce-protocol/agentic-commerce-protocol/blob/main/rfcs/rfc.discovery.md",
+      "publisher": "Agentic Commerce Protocol",
+      "type": "draft-spec",
+      "keyFindings": "Defines /.well-known/acp.json with api_base_url, protocol, transports and capabilities. \"The document MUST be publicly accessible without a Bearer token.\" Status line: \"Proposal\". The 2026-04-17 changelog lists it as added. Not in the IANA Well-Known URIs registry (checked 2026-10-19).",
+      "verified": "2026-10-19"
+    },
+    {
+      "id": "openai-apps-monetization",
+      "title": "OpenAI Apps SDK: Monetization",
+      "url": "https://developers.openai.com/apps-sdk/build/monetization",
+      "publisher": "OpenAI",
+      "type": "vendor-doc",
+      "keyFindings": "\"the recommended and generally available approach is to use external checkout, where users complete purchases on the developer's own domain.\" Checkout with the ChatGPT payment sheet is in private beta.",
+      "verified": "2026-10-19"
+    },
+    {
+      "id": "wicg-text-fragments-source",
+      "title": "Text Fragments specification source (index.bs)",
+      "url": "https://github.com/WICG/scroll-to-text-fragment/blob/main/index.bs",
+      "publisher": "WICG",
+      "type": "draft-spec",
+      "keyFindings": "Status: CG-DRAFT. Defines matching of text directive terms within a single block-level container, via the nearest block ancestor.",
+      "verified": "2026-10-19"
+    },
+    {
+      "id": "claude-connector-review-criteria",
+      "title": "Claude: Connector pre-submission checklist",
+      "url": "https://claude.com/docs/connectors/building/review-criteria",
+      "publisher": "Anthropic",
+      "type": "vendor-doc",
+      "keyFindings": "\"Every tool must include a title and the applicable hint: readOnlyHint: true for read-only tools, and destructiveHint: true for tools that modify or delete data. These determine auto-permissions in Claude. Read-only tools can run without per-call confirmation, and destructive tools always prompt.\"",
+      "verified": "2026-10-19"
+    },
+    {
+      "id": "claude-connector-submission",
+      "title": "Claude: Submit a connector to the directory",
+      "url": "https://claude.com/docs/connectors/building/submission",
+      "publisher": "Anthropic",
+      "type": "vendor-doc",
+      "keyFindings": "Every tool needs a title and a readOnlyHint or destructiveHint annotation; \"the portal flags tools that are missing them\"; \"review criteria explain how reviewers read tool names and descriptions\".",
+      "verified": "2026-10-19"
+    },
+    {
+      "id": "vscode-mcp-tool-confirmation",
+      "title": "VS Code source: mcpLanguageModelToolContribution.ts",
+      "url": "https://github.com/microsoft/vscode/blob/main/src/vs/workbench/contrib/mcp/common/mcpLanguageModelToolContribution.ts",
+      "publisher": "Microsoft / VS Code",
+      "type": "repo",
+      "keyFindings": "Registers each MCP tool with `canRequestPreApproval: !tool.definition.annotations?.readOnlyHint`. For non-sandboxed servers, builds a \"Run {0}\" confirmation when readOnlyHint is not set, and sets confirmResults when openWorldHint is set.",
+      "verified": "2026-10-19"
+    },
+    {
+      "id": "openai-plugin-guidelines",
+      "title": "OpenAI: Plugin guidelines (formerly Apps SDK submission guidelines)",
+      "url": "https://developers.openai.com/plugins/plugin-guidelines",
+      "publisher": "OpenAI",
+      "type": "vendor-doc",
+      "keyFindings": "\"Set readOnlyHint, destructiveHint, and openWorldHint to explicit boolean values (true or false) in each tool's annotations object.\" \"If our automated review flags an annotation issue, you can submit an appeal\". Defines destructive effects such as deletion, overwriting, cancellation and access revocation.",
+      "verified": "2026-10-19"
+    },
+    {
+      "id": "openai-plugins-reference",
+      "title": "OpenAI: Plugins reference (formerly Apps SDK reference)",
+      "url": "https://developers.openai.com/plugins/reference",
+      "publisher": "OpenAI",
+      "type": "vendor-doc",
+      "keyFindings": "Lists readOnlyHint, destructiveHint and openWorldHint as Required. destructiveHint: \"Declare that the tool may delete or overwrite user data so the host knows to elicit explicit approval first.\"",
+      "verified": "2026-10-19"
+    },
+    {
+      "id": "mcp-schema-2026-07-28-tool-annotations",
+      "title": "MCP schema 2026-07-28 — ToolAnnotations (schema.ts)",
+      "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/schema/2026-07-28/schema.ts",
+      "publisher": "Model Context Protocol",
+      "type": "spec",
+      "keyFindings": "ToolAnnotations: readOnlyHint Default false; destructiveHint Default true; idempotentHint Default false; openWorldHint Default true. \"Clients should never make tool use decisions based on ToolAnnotations received from untrusted servers.\"",
+      "verified": "2026-10-19"
     }
   ]
 }

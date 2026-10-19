@@ -4,7 +4,7 @@
  * It imports nothing at all — not even a type from `registry.ts`. The page it
  * runs on has already rendered every audit as a card, so the explorer reads its
  * data back out of those cards instead of being handed a serialized copy of the
- * registry: the same 215 titles and descriptions would otherwise ship twice,
+ * registry: the same 221 titles and descriptions would otherwise ship twice,
  * once as HTML and once as JSON (127 KB of it, a third of the page gzipped).
  */
 export interface ExplorerQuery {

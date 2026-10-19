@@ -61,7 +61,7 @@ describe("resolveDossierLink", () => {
     expect(resolveDossierLink("#deferred", "a/b", published)).toBe("#deferred");
   });
 
-  // Shapes beyond the six above, taken from the links the 215 dossiers really carry.
+  // Shapes beyond the six above, taken from the links the 221 dossiers really carry.
 
   it("leaves a site-absolute path alone", () => {
     expect(resolveDossierLink("/about", "a/b", published)).toBe("/about");
