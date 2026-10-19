@@ -1,3 +1,4 @@
+import { createHash, timingSafeEqual } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { isSafeUrl, runScan } from "@forkpoint/agent-lighthouse-core";
 import { InMemoryTaskStore, type TaskStore } from "./task-store";
@@ -49,6 +50,13 @@ async function readJson(req: IncomingMessage): Promise<unknown> {
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
 }
 
+const sha256 = (value: string) => createHash("sha256").update(value).digest();
+
+/** Constant-time string compare; digests give both sides the same length. */
+function sameSecret(presented: string, expected: string): boolean {
+  return timingSafeEqual(sha256(presented), sha256(expected));
+}
+
 /**
  * True when the request carries no `Origin`, or one whose host is the request's
  * own `Host`. Browsers send `Origin` on every cross-origin POST and DELETE, so
@@ -85,7 +93,7 @@ export function createTaskServer(options: TaskServerOptions = {}): TaskServer {
 
   const authorized = (req: IncomingMessage) =>
     options.token === undefined ||
-    req.headers.authorization === `Bearer ${options.token}`;
+    sameSecret(req.headers.authorization ?? "", `Bearer ${options.token}`);
 
   async function create(req: IncomingMessage, res: ServerResponse) {
     if (!authorized(req)) return json(res, 401, { error: "unauthorized" });
