@@ -3,6 +3,7 @@ import {
   DocumentState,
   EvidenceSource,
   FieldStatus,
+  PayloadOrigin,
   NoticeKind,
   ScoreTier,
   WafProvider,
@@ -510,6 +511,15 @@ export const SnapshotScanOptionsSchema = PageScopeOptionsSchema.extend({
   snapshots: BrowserSnapshotsSchema.optional(),
 });
 
+/** The page detection a scan started from; information only. */
+export const ScanPageIdentitySchema = z.object({
+  type: StoredPageTypeSchema,
+  source: z.enum(PageTypeSource),
+  detectionId: z.string().optional(),
+  payloadSha256: z.string(),
+  origin: z.enum(PayloadOrigin),
+});
+
 /** Validate a complete saved report without discarding its browser assessment. */
 export const ScanReportSchema = z.object({
   scanId: z.string(),
@@ -595,6 +605,7 @@ export const ScanReportSchema = z.object({
   originEvidence: ScanConditionsSchema.shape.origin.optional(),
   conditions: ScanConditionsSchema.optional(),
   browserAssessment: BrowserAssessmentSchema.optional(),
+  pageIdentity: ScanPageIdentitySchema.optional(),
 });
 
 const buildSnapshotsJsonSchema = () =>

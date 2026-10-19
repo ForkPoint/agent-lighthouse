@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { DomWorkLimitError } from "./dom-work";
 import { SnapshotScanOptionsSchema, snapshotUrlKey } from "./schemas";
-import type { BrowserSnapshots } from "./contracts";
+import type { BrowserSnapshots, ScanPageIdentity } from "./contracts";
 import { parsePageContext } from "./page-context";
 import { assessBrowserSnapshots } from "./browser-snapshots";
 import type { Dispatcher } from "undici";
@@ -165,6 +165,19 @@ export interface ScanOptions {
    * it again.
    */
   robotsTxt?: FetchResult | undefined;
+  /**
+   * The target's own response, as the caller already fetched it, used instead
+   * of fetching the target again. It must be a real HTTP response for `url`:
+   * its status, headers and redirect chain are read as the scan's own. Every
+   * other request, gateway pages included, is sent as usual.
+   */
+  targetPage?: FetchResult | undefined;
+  /**
+   * The page detection the caller started this scan from. Copied to
+   * `report.pageIdentity` as a record; it does not set the page type, so a
+   * detected type keeps its detected source.
+   */
+  pageIdentity?: ScanPageIdentity | undefined;
 }
 
 // Cap how many pages get the jsdom-based a11y pass. Accessibility issues are
@@ -529,12 +542,9 @@ async function scanWithinBudget(
   signal?.throwIfAborted();
 
   tracker.phaseStart(PhaseId.FetchPages, 1 + overrideUrls.length);
-  const pageResult = await fetchPageWithRetry(
-    fetcher,
-    url,
-    fetchSignal,
-    signal,
-  );
+  const pageResult =
+    options?.targetPage ??
+    (await fetchPageWithRetry(fetcher, url, fetchSignal, signal));
   tracker.unitDone(displayUrl);
 
   if (!originHomepageResult && (url === `${baseUrl}/` || url === baseUrl)) {
@@ -1100,6 +1110,9 @@ async function scanWithinBudget(
     ...(productFields !== undefined && { productFields }),
     originEvidence: originCondition,
     conditions,
+    ...(options?.pageIdentity !== undefined && {
+      pageIdentity: options.pageIdentity,
+    }),
   };
 
   // Snapshot execution has its own contexts, caches, evidence gates and denominator.
