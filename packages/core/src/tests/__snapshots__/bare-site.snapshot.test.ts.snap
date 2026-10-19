@@ -147,6 +147,7 @@ na   1   access-crawl-control/robots-ai-group-shadowing
 na   1   access-crawl-control/sensitive-paths
 na   1   agent-interfaces/mcp-modern-era-reachability
 na   1   agent-interfaces/mcp-oauth-discovery-chain
+na   1   agent-interfaces/mcp-tool-annotation-coverage
 na   1   agent-interfaces/mcp-tool-contract-validity
 na   1   agent-interfaces/mcp-tools-list-determinism
 na   1   agent-interfaces/mcp-version-downgrade

@@ -14,7 +14,7 @@ npx @forkpoint/agent-lighthouse https://example.com --view
 | :--------------- | :----------------------------------------------------------------------- |
 | What it is       | Open-source CLI, SDK, GitHub Action and MCP server                       |
 | What it does     | Audits whether AI agents can discover, parse, cite and act on a website  |
-| Checks           | 220 audits across 8 categories, each backed by a public evidence dossier |
+| Checks           | 221 audits across 8 categories, each backed by a public evidence dossier |
 | Outputs          | Terminal, HTML, JSON and Markdown reports                                |
 | Licence          | Apache-2.0                                                               |
 | Repository       | https://github.com/ForkPoint/agent-lighthouse                            |

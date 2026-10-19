@@ -32,6 +32,9 @@ export { McpToolDescriptionCoverageAudit } from "./mcp-tool-description-coverage
 export { A2aAgentCardAudit } from "./a2a-agent-card";
 export { AiPluginJsonAudit } from "./ai-plugin-json";
 
+// New in 9.0.0: the coverage half of the behaviour-annotation proposal, graduated 2026-10-19.
+export { McpToolAnnotationCoverageAudit } from "./mcp-tool-annotation-coverage";
+
 import { OpenApiExistsAudit } from "./openapi-exists";
 import { OpenApiEndpointsAudit } from "./openapi-endpoints";
 import { OpenApiOperationIdsAudit } from "./openapi-operation-ids";
@@ -58,6 +61,7 @@ import { McpRegistryListingOwnershipAudit } from "./mcp-registry-listing-ownersh
 import { McpToolDescriptionCoverageAudit } from "./mcp-tool-description-coverage";
 import { A2aAgentCardAudit } from "./a2a-agent-card";
 import { AiPluginJsonAudit } from "./ai-plugin-json";
+import { McpToolAnnotationCoverageAudit } from "./mcp-tool-annotation-coverage";
 
 /** Every audit that lives in the agent-interfaces category, in map order. */
 export const AGENT_INTERFACES_AUDITS = [
@@ -87,4 +91,5 @@ export const AGENT_INTERFACES_AUDITS = [
   McpToolDescriptionCoverageAudit,
   A2aAgentCardAudit,
   AiPluginJsonAudit,
+  McpToolAnnotationCoverageAudit,
 ] as const;

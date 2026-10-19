@@ -53,7 +53,7 @@ Hosts decide whether to ask the user before a tool call from these hints. Claude
 
 `agent-interfaces/mcp-endpoint` already reports how many listed tools carry a boolean `readOnlyHint`. It is graded C, informative. The sources above document a consumer for that half. Re-grading it is a separate change to a shipped audit and is not made here.
 
-What this proposal adds is the consistency judgement and coverage of `destructiveHint` and `openWorldHint`.
+Since 2026-10-19 the coverage half ships as [`agent-interfaces/mcp-tool-annotation-coverage`](../../audits/agent-interfaces/mcp-tool-annotation-coverage.md) (grade A, scored). It checks boolean `readOnlyHint`, `destructiveHint` and `openWorldHint` on every listed tool. What this proposal still adds is the consistency judgement.
 
 ## Competitor coverage
 
@@ -78,9 +78,10 @@ Tier: **informative (weight 0)** until the judge's precision is measured. The me
 ## Deferred
 
 - Measure judge precision on a labelled set of real `tools/list` responses before any weight.
-- Re-grade the readOnlyHint half of `agent-interfaces/mcp-endpoint` against the consumers above.
+- Re-grade the readOnlyHint half of `agent-interfaces/mcp-endpoint` against the consumers above. Considered on 2026-10-19 and not done: that audit's verdicts rest mostly on its handshake and discovery checks, whose evidence stays at C. Its dossier records why.
 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
 - 2026-10-19 — evidence review. Grade C raised to A. The stated prerequisite is met: `schema.ts` for 2026-07-28 confirms the four hints and their defaults are unchanged. Added three consumers with primary sources: Anthropic's connector review criteria, VS Code's MCP tool contribution source, and OpenAI's plugin guidelines and reference. Recorded that `agent-interfaces/mcp-endpoint` already ships the readOnlyHint coverage half. The blocker is the model judge, not the evidence.
+- 2026-10-19 — Phase 1 coverage graduated as `agent-interfaces/mcp-tool-annotation-coverage` (grade A, scored). The phase-1 verb rule was not shipped; it judges a claim and stays with the phase-2 judge. This proposal now covers the consistency judgement only.

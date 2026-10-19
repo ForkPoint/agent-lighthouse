@@ -1,6 +1,6 @@
 # Proposed audits — TODO stubs
 
-4 stub files for proposed checks that are researched but not yet shippable.
+3 stub files for proposed checks that are researched but not yet shippable.
 Every stub compiles, is **not** registered in any category index, and returns
 `notApplicable` until implemented. Each file's header carries its
 implementation sketch; the full proof lives in
@@ -14,10 +14,10 @@ Tier per [evidence policy](../../../../../docs/evidence/policy.md): grade A/B �
 
 ## Why these have not graduated
 
-Three are blocked on infrastructure the scanner does not have, not on
-evidence. The fourth is retired. The 2026-10-19 evidence review
+All three are blocked on infrastructure the scanner does not have, not on
+evidence. None ships in 9.0.0. The 2026-10-19 evidence review
 ([log](../../../../../docs/evidence/proposals/REVIEW-2026-10-19.md)) re-graded
-all four.
+them and retired a fourth, whose stub was deleted the same day.
 
 - **`agent-operability/overlay-interception-hazard`** needs a headless browser.
   The hazard is an overlay that intercepts a click, which only exists once the
@@ -32,12 +32,17 @@ all four.
 - **`mcp-server-quality/behavior-annotation-coverage-and-claim-consistency`**
   needs a model to judge whether a tool's annotations match its description.
   Its grade rose from C to A: Claude and VS Code decide confirmation prompts
-  from `readOnlyHint`. The readOnlyHint coverage half already ships in
-  `agent-interfaces/mcp-endpoint`.
-- **`answer-selection-forensics/question-heading-answer-span-alignment`** is
-  retired at grade D. No consumer is documented, its thresholds were invented,
-  and the checkable part ships in `answer-readiness/text-fragment-addressability`
-  and `answer-readiness/question-headings`. Its stub awaits removal.
+  from `readOnlyHint`, and ChatGPT apps require all three hints. The
+  deterministic coverage half graduated on 2026-10-19 as
+  `agent-interfaces/mcp-tool-annotation-coverage` (grade A, scored). Only the
+  claim-consistency judge stays here.
+- **`answer-selection-forensics/question-heading-answer-span-alignment`** was
+  retired at grade D and its stub deleted on 2026-10-19. No consumer is
+  documented, its thresholds were invented, and the checkable part ships in
+  `answer-readiness/text-fragment-addressability` and
+  `answer-readiness/question-headings`. Its dossier stays in
+  [docs/evidence/proposals](../../../../../docs/evidence/proposals/answer-selection-forensics/question-heading-answer-span-alignment.md)
+  as the record of why.
 
 Seven stubs left this folder on 2026-08-22: six tool surveys moved to
 [docs/evidence/research](../../../../../docs/evidence/research/README.md)
@@ -54,10 +59,6 @@ because their verdict is a market fact identical for every scanned URL, and
 
 - [ ] TODO [`acp-endpoint-conformance-probe`](./agentic-commerce/acp-endpoint-conformance-probe.ts) — ACP Endpoint Conformance Probe (grade A for the authenticated tier, informative, `operator-credential`) · [dossier](../../../../../docs/evidence/proposals/agentic-commerce/acp-endpoint-conformance-probe.md)
 
-## answer-selection-forensics
-
-- [x] RETIRED [`question-heading-answer-span-alignment`](./answer-selection-forensics/question-heading-answer-span-alignment.ts) — Question-Heading Answer Span Alignment (grade D, retired 2026-10-19) · [dossier](../../../../../docs/evidence/proposals/answer-selection-forensics/question-heading-answer-span-alignment.md)
-
 ## mcp-server-quality
 
-- [ ] TODO [`behavior-annotation-coverage-and-claim-consistency`](./mcp-server-quality/behavior-annotation-coverage-and-claim-consistency.ts) — Behavior Annotation Coverage and Claim Consistency (grade A, informative until the judge is measured, `llm-assisted`) · [dossier](../../../../../docs/evidence/proposals/mcp-server-quality/behavior-annotation-coverage-and-claim-consistency.md)
+- [ ] TODO [`behavior-annotation-coverage-and-claim-consistency`](./mcp-server-quality/behavior-annotation-coverage-and-claim-consistency.ts) — Behavior Annotation Coverage and Claim Consistency (grade A, informative until the judge is measured, `llm-assisted`; the coverage half ships as `agent-interfaces/mcp-tool-annotation-coverage`) · [dossier](../../../../../docs/evidence/proposals/mcp-server-quality/behavior-annotation-coverage-and-claim-consistency.md)

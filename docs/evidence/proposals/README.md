@@ -29,3 +29,12 @@ Retired, kept as the record of why:
 
 The 2026-10-19 evidence review re-graded all four. Its claim-by-claim log is
 [REVIEW-2026-10-19.md](./REVIEW-2026-10-19.md).
+
+On 2026-10-19 the deterministic coverage half of Behavior Annotation Coverage
+and Claim Consistency shipped as
+[`agent-interfaces/mcp-tool-annotation-coverage`](../audits/agent-interfaces/mcp-tool-annotation-coverage.md)
+(grade A, scored). The dossier stays here for the claim-consistency judge,
+which needs a model. The retired dossier stays in this folder as the record;
+its stub was deleted. Overlay Interception Hazard needs a headless browser and
+ACP Endpoint Conformance Probe needs a merchant-issued token; the scanner has
+neither, so both stay proposals.

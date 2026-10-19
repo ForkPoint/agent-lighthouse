@@ -8,6 +8,9 @@ import { CheckPriority, FixEffort, ScoreDisplayMode } from "#core/types";
 // Evidence grade A (re-graded 2026-10-19; schema defaults confirmed) → informative tier until the
 // judge's precision is measured. Implementation difficulty: llm-assisted.
 // Dossier (mechanism, evidence, competitor coverage): docs/evidence/proposals/mcp-server-quality/behavior-annotation-coverage-and-claim-consistency.md
+// Graduated 2026-10-19: Phase 1 (hint coverage) ships as agent-interfaces/mcp-tool-annotation-coverage.
+// Blocked: Phase 2 needs a model judge, which the scanner has none of, so it stays a proposal.
+// The sketch below predates that split; the dossier governs where they disagree.
 //
 // Implementation sketch (from the 2026-08-20 research pass):
 // Phase 1 (deterministic, ships first): from tools/list, compute annotationCoverage = tools with a
