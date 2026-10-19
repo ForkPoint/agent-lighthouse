@@ -78,7 +78,7 @@ function usage(exitCode = 1): never {
   console.log(`Usage:
   agent-lighthouse <url> [options]
   agent-lighthouse audit <url> [options]
-  agent-lighthouse serve [--port <n>] [--host <addr>] [--token <t>]
+  agent-lighthouse serve [--port <n>] [--host <addr>] [--token <t>] [--allow-origin <origin>]...
 
 Options:
   -c, --config <path>          Path to configuration file (e.g. agent-lighthouse.config.json)
@@ -120,6 +120,8 @@ Options:
   serve: --host <addr>         Address to bind [default: 127.0.0.1]
   serve: --token <t>           Require "Authorization: Bearer <t>" to start or cancel scans.
                                Also read from AL_SERVER_TOKEN
+  serve: --allow-origin <o>    Let this browser origin (e.g. chrome-extension://<id>) call the
+                               server, with CORS. Exact match; repeat for more origins
 
 Examples:
   npx @forkpoint/agent-lighthouse https://yourstore.com

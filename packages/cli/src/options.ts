@@ -369,7 +369,7 @@ export function resolveCommand(args: string[]): {
 export function parseServeOptions(
   args: string[],
   env: NodeJS.ProcessEnv = process.env,
-): { port: number; host: string; token?: string } {
+): { port: number; host: string; token?: string; allowedOrigins?: string[] } {
   // A flag that is present must carry a value: a silent fallback would start
   // the server without the auth or bind address the operator asked for.
   const value = (flag: string) => {
@@ -384,10 +384,25 @@ export function parseServeOptions(
   if (!Number.isInteger(port) || port < 0 || port > 65_535)
     throw new Error(`Invalid --port: ${rawPort}`);
   const token = value("--token") ?? env["AL_SERVER_TOKEN"];
+  // Repeatable, so every occurrence is read; getArgValue returns the first.
+  const allowedOrigins: string[] = [];
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i]!;
+    let origin: string | undefined;
+    if (arg.startsWith("--allow-origin=")) origin = arg.slice(15);
+    else if (arg === "--allow-origin") {
+      const next = args[i + 1];
+      origin = next?.startsWith("-") ? undefined : next;
+      if (origin !== undefined) i++;
+    } else continue;
+    if (!origin) throw new Error("Missing value for --allow-origin");
+    allowedOrigins.push(origin);
+  }
   return {
     port,
     host: value("--host") ?? "127.0.0.1",
     ...(token !== undefined && token !== "" && { token }),
+    ...(allowedOrigins.length > 0 && { allowedOrigins }),
   };
 }
 

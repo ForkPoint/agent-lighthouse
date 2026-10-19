@@ -1001,4 +1001,31 @@ describe("serve", () => {
       /Missing value for --token/,
     );
   });
+
+  it("collects every --allow-origin, in both forms", () => {
+    expect(
+      parseServeOptions(
+        [
+          "serve",
+          "--allow-origin",
+          "chrome-extension://abc",
+          "--allow-origin=moz-extension://def",
+        ],
+        {},
+      ).allowedOrigins,
+    ).toEqual(["chrome-extension://abc", "moz-extension://def"]);
+    expect("allowedOrigins" in parseServeOptions(["serve"], {})).toBe(false);
+  });
+
+  it("rejects an --allow-origin without a value", () => {
+    expect(() => parseServeOptions(["serve", "--allow-origin"], {})).toThrow(
+      /Missing value for --allow-origin/,
+    );
+    expect(() =>
+      parseServeOptions(["serve", "--allow-origin", "--port", "1"], {}),
+    ).toThrow(/Missing value for --allow-origin/);
+    expect(() => parseServeOptions(["serve", "--allow-origin="], {})).toThrow(
+      /Missing value for --allow-origin/,
+    );
+  });
 });
