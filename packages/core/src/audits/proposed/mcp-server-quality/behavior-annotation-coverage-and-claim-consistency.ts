@@ -5,7 +5,8 @@ import { CheckPriority, FixEffort, ScoreDisplayMode } from "#core/types";
 
 // TODO: implement proposed audit "Behavior Annotation Coverage and Claim Consistency".
 // Status: stub — not registered in any category index; returns notApplicable until implemented.
-// Evidence grade C → informative tier. Implementation difficulty: llm-assisted.
+// Evidence grade A (re-graded 2026-10-19; schema defaults confirmed) → informative tier until the
+// judge's precision is measured. Implementation difficulty: llm-assisted.
 // Dossier (mechanism, evidence, competitor coverage): docs/evidence/proposals/mcp-server-quality/behavior-annotation-coverage-and-claim-consistency.md
 //
 // Implementation sketch (from the 2026-08-20 research pass):
