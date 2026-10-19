@@ -5,4 +5,5 @@ Server-Sent Events.
 
     npx @forkpoint/agent-lighthouse serve --port 8787
 
-See `docs/server.md` in the repository for the routes and the event format.
+See the [server documentation](https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/server.md)
+for the routes and the event format.

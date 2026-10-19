@@ -17,6 +17,7 @@ One rule sits above the rest, and everything below is a consequence of it:
 | `packages/cli`     | `npx @forkpoint/agent-lighthouse <url>`                                                     |
 | `packages/report`  | Terminal, HTML, JSON and Markdown renderers                                                 |
 | `packages/mcp`     | MCP server exposing a scan as a tool                                                        |
+| `packages/server`  | Task server: runs scans as tasks and streams progress over SSE (`agent-lighthouse serve`)   |
 | `packages/website` | The Astro site, built from the registry and `docs/evidence/` at build time                  |
 
 Audits live in `packages/core/src/audits/<category>/<slug>.ts`, one of eight
