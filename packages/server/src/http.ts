@@ -13,6 +13,13 @@ export interface TaskServerOptions {
   token?: string;
   scan?: typeof runScan;
   page?: string;
+  /**
+   * `Host` header values (`host:port`, lower case) the server answers. Any
+   * other value gets 421. `startServer` sets it on a loopback bind so a DNS
+   * rebinding page cannot read tasks. Absent: no Host check, for callers that
+   * mount the handler behind their own routing.
+   */
+  allowedHosts?: string[];
 }
 
 export interface TaskServer {
@@ -42,6 +49,22 @@ async function readJson(req: IncomingMessage): Promise<unknown> {
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
 }
 
+/**
+ * True when the request carries no `Origin`, or one whose host is the request's
+ * own `Host`. Browsers send `Origin` on every cross-origin POST and DELETE, so
+ * this refuses a page on another site that tries to start or cancel a scan.
+ */
+function sameOrigin(req: IncomingMessage): boolean {
+  const origin = req.headers.origin;
+  if (origin === undefined) return true;
+  try {
+    return new URL(origin).host === req.headers.host?.toLowerCase();
+  } catch {
+    // `Origin: null` and other opaque origins are never the server itself.
+    return false;
+  }
+}
+
 /** The target as a task shows it: without a `user:password@` part. */
 function publicUrl(url: URL): string {
   const copy = new URL(url);
@@ -55,6 +78,9 @@ export function createTaskServer(options: TaskServerOptions = {}): TaskServer {
   const scan = options.scan ?? runScan;
   const page = options.page ?? PAGE_HTML;
   const running = new Map<string, RunningTask>();
+  const allowedHosts =
+    options.allowedHosts &&
+    new Set(options.allowedHosts.map((h) => h.toLowerCase()));
   let streams = 0;
 
   const authorized = (req: IncomingMessage) =>
@@ -63,6 +89,12 @@ export function createTaskServer(options: TaskServerOptions = {}): TaskServer {
 
   async function create(req: IncomingMessage, res: ServerResponse) {
     if (!authorized(req)) return json(res, 401, { error: "unauthorized" });
+    // A cross-site form or no-cors fetch cannot send this type without a
+    // preflight, which the server never answers.
+    if (
+      !req.headers["content-type"]?.toLowerCase().startsWith("application/json")
+    )
+      return json(res, 415, { error: "unsupported_media_type" });
     let target: URL;
     try {
       const body = (await readJson(req)) as { url?: unknown };
@@ -99,6 +131,13 @@ export function createTaskServer(options: TaskServerOptions = {}): TaskServer {
     } catch {
       return json(res, 400, { error: "invalid_request" });
     }
+    if (
+      allowedHosts &&
+      !allowedHosts.has(req.headers.host?.toLowerCase() ?? "")
+    )
+      return json(res, 421, { error: "misdirected_request" });
+    if ((req.method === "POST" || req.method === "DELETE") && !sameOrigin(req))
+      return json(res, 403, { error: "forbidden_origin" });
     if (req.method === "GET" && url.pathname === "/") {
       res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
       res.end(page);

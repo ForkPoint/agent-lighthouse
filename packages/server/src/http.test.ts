@@ -50,12 +50,17 @@ afterEach(async () => {
   await new Promise((r) => http.close(r));
 });
 
-const post = (body: unknown, token = "s3cret") =>
+const post = (
+  body: unknown,
+  token = "s3cret",
+  extra: Record<string, string> = {},
+) =>
   fetch(`${base}/tasks`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
       authorization: `Bearer ${token}`,
+      ...extra,
     },
     body: JSON.stringify(body),
   });
@@ -181,5 +186,38 @@ describe("task routes", () => {
     });
     expect(raw.startsWith("HTTP/1.1 400")).toBe(true);
     expect((await fetch(`${base}/`)).status).toBe(200);
+  });
+
+  it("refuses a POST whose body is not declared as JSON", async () => {
+    const res = await post({ url: "https://shop.test/" }, "s3cret", {
+      "content-type": "text/plain",
+    });
+    expect(res.status).toBe(415);
+    expect(await res.json()).toEqual({ error: "unsupported_media_type" });
+  });
+
+  it("refuses a POST and a DELETE from a foreign origin", async () => {
+    const res = await post({ url: "https://shop.test/" }, "s3cret", {
+      origin: "https://evil.example",
+    });
+    expect(res.status).toBe(403);
+    expect(await res.json()).toEqual({ error: "forbidden_origin" });
+
+    const { taskId } = await (await post({ url: "https://shop.test/" })).json();
+    const del = await fetch(`${base}/tasks/${taskId}`, {
+      method: "DELETE",
+      headers: {
+        authorization: "Bearer s3cret",
+        origin: "https://evil.example",
+      },
+    });
+    expect(del.status).toBe(403);
+  });
+
+  it("accepts a POST from its own origin", async () => {
+    const res = await post({ url: "https://shop.test/" }, "s3cret", {
+      origin: base,
+    });
+    expect(res.status).toBe(202);
   });
 });
