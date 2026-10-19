@@ -8,7 +8,18 @@ import { getMainContentText } from "#core/parser";
 import { DomWorkLimitError, parseBoundedHtml } from "#core/dom-work";
 
 /**
- * The AI crawlers whose published User-Agent strings can actually be sent.
+ * The AI crawler User-Agent strings the UA-parity audits send.
+ *
+ * The OpenAI and Perplexity strings are copied from the vendors' bot pages
+ * (https://developers.openai.com/api/docs/bots and
+ * https://docs.perplexity.ai/docs/resources/perplexity-crawlers, verified
+ * 2026-10-19). OpenAI labels the GPTBot and OAI-SearchBot strings "Example"
+ * and says the version number may change.
+ *
+ * The ClaudeBot and Claude-User strings are observed, not vendor-documented:
+ * Anthropic's crawler page names the bots and their robots.txt tokens but
+ * publishes no User-Agent string. Each consuming dossier records this under
+ * `## Implementation deviations`.
  *
  * `Google-Extended` is deliberately absent: it is a robots.txt product token
  * only, with no user agent of its own, so a UA probe for it would compare the
@@ -27,18 +38,20 @@ export const AI_CRAWLER_UAS: ReadonlyArray<{
   {
     token: "oai-searchbot",
     label: "OAI-SearchBot",
-    ua: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; OAI-SearchBot/1.0; +https://openai.com/searchbot",
+    ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36; compatible; OAI-SearchBot/1.4; +https://openai.com/searchbot",
   },
   {
     token: "chatgpt-user",
     label: "ChatGPT-User",
     ua: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ChatGPT-User/1.0; +https://openai.com/bot",
   },
+  // Observed string; Anthropic documents no ClaudeBot User-Agent.
   {
     token: "claudebot",
     label: "ClaudeBot",
     ua: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; ClaudeBot/1.0; +claudebot@anthropic.com)",
   },
+  // Observed string; Anthropic documents no Claude-User User-Agent.
   {
     token: "claude-user",
     label: "Claude-User",
@@ -51,9 +64,15 @@ export const AI_CRAWLER_UAS: ReadonlyArray<{
   },
 ];
 
-/** A mainstream browser UA. The control half of every pair. */
+/**
+ * A mainstream browser UA. The control half of every pair.
+ *
+ * The Chrome major tracks the current Stable channel (155 per
+ * https://chromiumdash.appspot.com/fetch_releases?channel=Stable&platform=Mac&num=1,
+ * verified 2026-10-19), with the reduced `.0.0.0` version Chrome itself sends.
+ */
 export const BASELINE_UA =
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36";
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36";
 
 /**
  * How a site answered a crawler UA, relative to the same request as a browser.

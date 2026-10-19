@@ -6,12 +6,15 @@ slug: bot-content-delta-declared
 evidence_grade: A
 tier: scored
 disposition: "new in v2 — graduated from proposal 2026-08-22"
-reviewed: 2026-08-20
+reviewed: 2026-10-19
 graduated: 2026-08-22
 sources:
   - s15
   - s18
   - openai-searchbot-ips
+  - anthropic-crawlers
+  - perplexity-crawlers-doc
+  - chromium-dash-stable
 ---
 
 # Bot-specific content delta declared, not cloaked
@@ -31,7 +34,7 @@ Google states that `isAccessibleForFree: false` with `hasPart`/`cssSelector` mar
 - **[Paywalled content structured data](https://developers.google.com/search/docs/appearance/structured-data/paywalled-content)** — Google (vendor-doc, URL verified 2026-08-20)
   - `isAccessibleForFree: false` plus `hasPart` with `@type: WebPageElement`, `isAccessibleForFree: false` and a `cssSelector` naming the restricted region. Applies to CreativeWork subtypes (Article, NewsArticle, Blog, Course, HowTo, Review, WebPage, Comment, Message). Google states this markup "helps Google differentiate paywalled content from the practice of cloaking, which violates spam policies" — i.e. serving less content to a crawler is only safe when declared.
 - **[OpenAI crawlers and user agents](https://developers.openai.com/api/docs/bots)** — OpenAI (vendor-doc, URL verified 2026-08-20)
-  - Exact UA strings and published IP-range JSONs. OAI-SearchBot (…compatible; OAI-SearchBot/1.4; +https://openai.com/searchbot) → https://openai.com/searchbot.json. GPTBot (…compatible; GPTBot/1.4; +https://openai.com/gptbot) → https://openai.com/gptbot.json. ChatGPT-User (…compatible; ChatGPT-User/1.0; +https://openai.com/bot) → https://openai.com/chatgpt-user.json. OAI-AdsBot → https://openai.com/adsbot.json. All four JSON endpoints return HTTP 200 (curl-verified). No mention of Web Bot Auth. Note Google-Extended has no UA at all, so it cannot be probed by request.
+  - Exact UA strings and published IP-range JSONs (re-verified 2026-10-19). OAI-SearchBot (`Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) … Chrome/131.0.0.0 Safari/537.36; compatible; OAI-SearchBot/1.4; +https://openai.com/searchbot`) → https://openai.com/searchbot.json. GPTBot (…compatible; GPTBot/1.4; +https://openai.com/gptbot) → https://openai.com/gptbot.json. ChatGPT-User (…compatible; ChatGPT-User/1.0; +https://openai.com/bot) → https://openai.com/chatgpt-user.json. OAI-AdsBot → https://openai.com/adsbot.json. All four JSON endpoints return HTTP 200 (curl-verified). No mention of Web Bot Auth. Note Google-Extended has no UA at all, so it cannot be probed by request.
 
 ## Example failure
 
@@ -49,6 +52,9 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 - `isAccessibleForFree` is read as a boolean and as the strings "false"/"False".
 - The `cssSelector` is resolved with cheerio against the body the browser baseline received.
 - An unparseable selector counts as resolving to nothing.
+- PerplexityBot is sent as the full string Perplexity documents (https://docs.perplexity.ai/docs/resources/perplexity-crawlers, verified 2026-10-19).
+- The ClaudeBot string is observed, not vendor-documented. Anthropic's crawler page names the token but publishes no User-Agent string (https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler, verified 2026-10-19). A finding for it reports how the site answers a request that carries that observed string.
+- The browser baseline is a Mac Chrome UA on the current Stable major, 155 (https://chromiumdash.appspot.com/fetch_releases?channel=Stable&platform=Mac&num=1, verified 2026-10-19). It was Chrome 140 before 2026-10-19.
 
 ## Deferred
 

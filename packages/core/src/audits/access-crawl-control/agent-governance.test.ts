@@ -154,4 +154,61 @@ describe("AgentGovernanceAudit", () => {
     const result = audit.audit(ctx);
     expect(result.status).toBe(CheckStatus.NotApplicable);
   });
+  // The crawler tables follow the vendors' crawler pages (verified 2026-10-19).
+  it("counts ClaudeBot as a training crawler and ignores the legacy anthropic-ai token", () => {
+    const robots = [
+      "User-agent: anthropic-ai",
+      "Disallow: /",
+      "",
+      "User-agent: ClaudeBot",
+      "Disallow: /",
+      "",
+      "User-agent: Perplexity-User",
+      "Allow: /",
+    ].join("\n");
+    const ctx = mockCheckContext([], {
+      "/robots.txt": mockFetchResult(robots, 200),
+    });
+    const result = audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.details?.["trainingAgents"]).toEqual(["ClaudeBot"]);
+    expect(result.details?.["realtimeAgents"]).toEqual(["Perplexity-User"]);
+  });
+
+  it("counts PerplexityBot as a live agent, not a training crawler", () => {
+    const robots = "User-agent: PerplexityBot\nDisallow: /";
+    const ctx = mockCheckContext([], {
+      "/robots.txt": mockFetchResult(robots, 200),
+    });
+    const result = audit.audit(ctx);
+    expect(result.details?.["trainingAgents"]).toEqual([]);
+    expect(result.details?.["realtimeAgents"]).toEqual(["PerplexityBot"]);
+  });
+
+  it("does not count Bravebot, which Brave says sends no user agent of its own", () => {
+    const robots =
+      "User-agent: Bravebot\nDisallow: /\n\nUser-agent: *\nAllow: /";
+    const ctx = mockCheckContext([], {
+      "/robots.txt": mockFetchResult(robots, 200),
+    });
+    const result = audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.details?.["realtimeAgents"]).toEqual([]);
+  });
+
+  it("does not say a category is unnamed when both are named too thinly", () => {
+    const robots = [
+      "User-agent: GPTBot",
+      "Allow: /",
+      "",
+      "User-agent: OAI-SearchBot",
+      "Allow: /",
+    ].join("\n");
+    const ctx = mockCheckContext([], {
+      "/robots.txt": mockFetchResult(robots, 200),
+    });
+    const result = audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.message).not.toContain("no rules for");
+  });
 });

@@ -244,6 +244,14 @@ describe("robots.txt consumers — shared-gatherer differential", () => {
 // move from `warn` to `pass`; the four with no readable robots.txt move from
 // `warn` to `na`; the three that block a scored bot stay `fail`. No other
 // audit's rows moved.
+// Regenerated deliberately (2026-10-19): the crawler tables in
+// `_robots-txt-helpers.ts` now follow the vendors' crawler pages. Anthropic's
+// row is `ClaudeBot` alone, so `anthropic-ai` no longer counts as a training
+// crawler (`mixed-case-tokens`, `anthropic-alias-only`). YouBot moved from the
+// training table to the live table, because You.com documents it as its search
+// crawler: `youbot-blocked` moves from `warn` to `pass`, and
+// `youbot-and-ai2bot-explicit` keeps `warn` with a message that no longer says
+// live agents are unnamed. Only agent-governance rows moved.
 const BASELINE: Record<string, Record<string, Row>> = {
   "no-blanket-block": {
     missing: {
@@ -506,20 +514,20 @@ const BASELINE: Record<string, Record<string, Row>> = {
       score: 0.5,
       message:
         "Only training crawlers are explicitly governed in robots.txt \u2014 no rules for live conversational agents.",
-      found: "Training: GPTBot, anthropic-ai / ClaudeBot; Realtime: none",
+      found: "Training: GPTBot; Realtime: none",
       priority: CheckPriority.Medium,
       details:
-        '{"trainingAgents":["GPTBot","anthropic-ai / ClaudeBot"],"realtimeAgents":[],"hasCatchAll":false}',
+        '{"trainingAgents":["GPTBot"],"realtimeAgents":[],"hasCatchAll":false}',
     },
     "anthropic-alias-only": {
       status: CheckStatus.Warn,
       score: 0.5,
       message:
         "Only training crawlers are explicitly governed in robots.txt \u2014 no rules for live conversational agents.",
-      found: "Training: anthropic-ai / ClaudeBot; Realtime: none",
+      found: "Training: ClaudeBot; Realtime: none",
       priority: CheckPriority.Medium,
       details:
-        '{"trainingAgents":["anthropic-ai / ClaudeBot"],"realtimeAgents":[],"hasCatchAll":true}',
+        '{"trainingAgents":["ClaudeBot"],"realtimeAgents":[],"hasCatchAll":true}',
     },
     "comments-and-crlf": {
       status: CheckStatus.NotApplicable,
@@ -581,21 +589,21 @@ const BASELINE: Record<string, Record<string, Row>> = {
       status: CheckStatus.Warn,
       score: 0.5,
       message:
-        "Only training crawlers are explicitly governed in robots.txt \u2014 no rules for live conversational agents.",
-      found: "Training: YouBot, AI2Bot; Realtime: none",
+        "robots.txt names both training crawlers and live conversational agents, but too few of each, under the same policy, to separate the two.",
+      found: "Training: AI2Bot; Realtime: YouBot",
       priority: CheckPriority.Medium,
       details:
-        '{"trainingAgents":["YouBot","AI2Bot"],"realtimeAgents":[],"hasCatchAll":true}',
+        '{"trainingAgents":["AI2Bot"],"realtimeAgents":["YouBot"],"hasCatchAll":true}',
     },
     "youbot-blocked": {
-      status: CheckStatus.Warn,
-      score: 0.5,
+      status: CheckStatus.Pass,
+      score: 1,
       message:
-        "Only training crawlers are explicitly governed in robots.txt \u2014 no rules for live conversational agents.",
-      found: "Training: YouBot, AI2Bot; Realtime: none",
+        "Granular agentic governance: 1 training crawler(s) and 1 live agent(s) explicitly named with different policies.",
+      found: "Training: AI2Bot; Realtime: YouBot",
       priority: CheckPriority.Medium,
       details:
-        '{"trainingAgents":["YouBot","AI2Bot"],"realtimeAgents":[],"hasCatchAll":false}',
+        '{"trainingAgents":["AI2Bot"],"realtimeAgents":["YouBot"],"hasCatchAll":false}',
     },
   },
   "crawl-delay": {

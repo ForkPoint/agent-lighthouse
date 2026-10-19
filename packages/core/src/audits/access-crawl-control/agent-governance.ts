@@ -184,8 +184,14 @@ export class AgentGovernanceAudit extends Audit {
       trainingNamed.length > 0
         ? "live conversational agents"
         : "training crawlers";
+    // Both categories can be named yet too thin to count: one of each with
+    // the same policy. The message must not then claim a category is unnamed.
+    const message =
+      trainingNamed.length > 0 && realtimeNamed.length > 0
+        ? "robots.txt names both training crawlers and live conversational agents, but too few of each, under the same policy, to separate the two."
+        : `Only ${covered} are explicitly governed in robots.txt — no rules for ${missing}.`;
     const result = this.warn(
-      `Only ${covered} are explicitly governed in robots.txt — no rules for ${missing}.`,
+      message,
       expected,
       `Training: ${trainingNamed.map((b) => b.displayName).join(", ") || "none"}; Realtime: ${realtimeNamed.map((b) => b.displayName).join(", ") || "none"}`,
       { priority: CheckPriority.Medium },

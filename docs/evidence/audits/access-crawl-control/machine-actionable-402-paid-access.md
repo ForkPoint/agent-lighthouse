@@ -6,13 +6,17 @@ slug: machine-actionable-402-paid-access
 evidence_grade: B
 tier: scored
 disposition: "new in v2 — graduated from proposal 2026-08-23"
-reviewed: 2026-08-20
+reviewed: 2026-10-19
 graduated: 2026-08-23
 sources:
   - s5
   - s6
   - s19
   - s12
+  - s18
+  - anthropic-crawlers
+  - perplexity-crawlers-doc
+  - chromium-dash-stable
 ---
 
 # Machine-actionable 402 paid-access response
@@ -53,6 +57,10 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 - RSL is read from inline `<script type="application/rsl+xml">` blocks, not fetched. `access-crawl-control/rsl-licensing-terms-conformance` fetches the licence document. An advertised but unread licence is reported as such.
 - A `Cache-Control` that lets a shared cache store the 402 is a warning, not a failure.
 - No 402 anywhere is not applicable, so free sites are not penalised.
+- OAI-SearchBot is sent as `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36; compatible; OAI-SearchBot/1.4; +https://openai.com/searchbot`, the example OpenAI gives (https://developers.openai.com/api/docs/bots, verified 2026-10-19). Before 2026-10-19 the probe sent a bare `OAI-SearchBot/1.0` string that OpenAI does not document. GPTBot and ChatGPT-User match the same page.
+- PerplexityBot is sent as the full string Perplexity documents (https://docs.perplexity.ai/docs/resources/perplexity-crawlers, verified 2026-10-19).
+- The ClaudeBot and Claude-User strings are observed, not vendor-documented. Anthropic's crawler page names both tokens but publishes no User-Agent string (https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler, verified 2026-10-19). A finding for either reports how the site answers a request that carries that observed string.
+- The browser baseline is a Mac Chrome UA on the current Stable major, 155 (https://chromiumdash.appspot.com/fetch_releases?channel=Stable&platform=Mac&num=1, verified 2026-10-19). It was Chrome 140 before 2026-10-19.
 
 ## Deferred
 

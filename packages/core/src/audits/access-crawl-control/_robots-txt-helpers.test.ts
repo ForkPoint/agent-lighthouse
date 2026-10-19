@@ -3,8 +3,9 @@ import {
   parseRobotsTxt,
   isBlanketBlocked,
   isAllowed,
-  isAnthropicAllowed,
   checkSensitivePaths,
+  TRAINING_CRAWLERS,
+  REALTIME_CRAWLERS,
 } from "./_robots-txt-helpers";
 import { RobotsRuleType } from "#core/gatherers/robots";
 
@@ -135,26 +136,6 @@ describe("isAllowed", () => {
   });
 });
 
-describe("isAnthropicAllowed", () => {
-  it("passes if either alias is allowed when both are explicit", () => {
-    const groups = parseRobotsTxt(
-      "User-agent: anthropic-ai\nDisallow: /\n\nUser-agent: ClaudeBot\nAllow: /",
-    );
-    expect(isAnthropicAllowed(groups)).toEqual({
-      explicitly: true,
-      allowed: true,
-    });
-  });
-
-  it("is blocked when the only explicit alias is disallowed", () => {
-    const groups = parseRobotsTxt("User-agent: anthropic-ai\nDisallow: /");
-    expect(isAnthropicAllowed(groups)).toEqual({
-      explicitly: true,
-      allowed: false,
-    });
-  });
-});
-
 describe("checkSensitivePaths", () => {
   it("separates protected from unprotected paths", () => {
     const groups = parseRobotsTxt("User-agent: *\nDisallow: /api/");
@@ -167,5 +148,43 @@ describe("checkSensitivePaths", () => {
     const groups = parseRobotsTxt("User-agent: GPTBot\nDisallow: /api/");
     const result = checkSensitivePaths(groups, ["/api/"]);
     expect(result.unprotected).toEqual(["/api/"]);
+  });
+});
+
+describe("crawler tables", () => {
+  const training = TRAINING_CRAWLERS.map((b) => b.botName);
+  const realtime = REALTIME_CRAWLERS.map((b) => b.botName);
+
+  // Anthropic's crawler page names ClaudeBot and never anthropic-ai.
+  it("models Anthropic's training crawler as ClaudeBot alone", () => {
+    expect(training).toContain("ClaudeBot");
+    expect([...training, ...realtime]).not.toContain("anthropic-ai");
+    expect(TRAINING_CRAWLERS.some((b) => b.aliases?.length)).toBe(false);
+  });
+
+  // Each vendor says these crawlers do not collect training data.
+  it("keeps non-training crawlers out of the training table", () => {
+    for (const bot of ["PerplexityBot", "YouBot", "Diffbot"]) {
+      expect(training).not.toContain(bot);
+    }
+  });
+
+  // Brave documents no distinct user agent for its crawler.
+  it("does not list Bravebot", () => {
+    expect([...training, ...realtime]).not.toContain("Bravebot");
+  });
+
+  it("lists the documented search and user-triggered tokens", () => {
+    expect(realtime).toEqual(
+      expect.arrayContaining([
+        "PerplexityBot",
+        "Perplexity-User",
+        "Meta-WebIndexer",
+        "Amzn-SearchBot",
+        "Amzn-User",
+        "MistralAI-Index",
+      ]),
+    );
+    expect(training).toContain("MistralAI-Training");
   });
 });

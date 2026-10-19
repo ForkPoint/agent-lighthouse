@@ -170,6 +170,32 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
     expect(contradictions[0]).toContain("Content-Usage response header");
   });
 
+  // Anthropic documents `ClaudeBot` as its training token; `anthropic-ai`
+  // appears in no Anthropic document. Perplexity says PerplexityBot is not
+  // used to crawl content for AI foundation models.
+  it("reads a ClaudeBot block as a training denial", async () => {
+    const result = audit.audit(
+      site({
+        robots: "User-agent: ClaudeBot\nDisallow: /\n",
+        headers: { "content-usage": "train-ai=y" },
+      }),
+    );
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(contradictionsOf(result)[0]).toContain("ClaudeBot is blocked");
+  });
+
+  it("does not read a PerplexityBot or anthropic-ai block as a training denial", async () => {
+    const result = audit.audit(
+      site({
+        robots:
+          "User-agent: PerplexityBot\nDisallow: /\n\nUser-agent: anthropic-ai\nDisallow: /\n",
+        headers: { "content-usage": "train-ai=y" },
+      }),
+    );
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(contradictionsOf(result)).toEqual([]);
+  });
+
   it("still passes a single declaration with nothing to contradict it", async () => {
     const result = audit.audit(
       site({ robots: "User-agent: *\nContent-Usage: train-ai=n\n" }),

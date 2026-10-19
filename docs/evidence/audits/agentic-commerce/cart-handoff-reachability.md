@@ -6,7 +6,7 @@ slug: cart-handoff-reachability
 evidence_grade: B
 tier: scored
 disposition: "new in v2 — graduated from proposal 2026-08-23"
-reviewed: 2026-08-20
+reviewed: 2026-10-19
 graduated: 2026-08-23
 sources:
   - acp-openapi-cart
@@ -14,6 +14,7 @@ sources:
   - s18
   - openai-searchbot-ips
   - acp-architecture
+  - chromium-dash-stable
 ---
 
 # Cart Handoff Reachability
@@ -80,6 +81,8 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
   `detectWafProtection` verdict reading the response as a challenge page fails.
   So does a widget mounted on a document under 200 characters of visible text.
   A widget on a readable cart passes, because it guards a form on the page.
+- ChatGPT-User is sent as the full string OpenAI documents (https://developers.openai.com/api/docs/bots, verified 2026-10-19).
+- The browser baseline is a Mac Chrome UA on the current Stable major, 155 (https://chromiumdash.appspot.com/fetch_releases?channel=Stable&platform=Mac&num=1, verified 2026-10-19). It was Chrome 140 before 2026-10-19.
 
 ## Deferred
 
