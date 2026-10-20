@@ -45,7 +45,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Browser view
 
-No browser-agent tool reviewed documents reading structured data, so no browser consumer is claimed. The browser view reports only whether the blocks in the captured DOM pass the existing context and type checks. It claims nothing about crawler delivery, rich results or agent behaviour.
+This entry is a documented exception: it shipped before the browser-agent rule, and no browser-agent consumer is claimed. The browser view reports only whether the captured DOM's JSON-LD parses and matches schema.org types; Microdata and RDFa get the same type check. It claims nothing about crawler delivery, rich results or agent behaviour.
 
 The snapshot path reuses this audit on each complete, unredacted, non-loading DOM capture that carries readable text. It reports the original static verdict as an unscored browser finding. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. The source and page URL accompany every finding. Existing implementation limits still apply.
 

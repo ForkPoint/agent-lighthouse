@@ -26,6 +26,27 @@ const REVIEWED_BEFORE_RULE = new Set([
   "operability-safety/profile-autofill-token-coverage",
 ]);
 
+/**
+ * Named exceptions to rule 3 (the dossier grade rests on a browser-agent tool),
+ * kept by the user's decision on 2026-10-20. Both shipped before the rule, and
+ * both claim presence or validity in the captured DOM only: no browser-agent
+ * consumer is claimed.
+ */
+const NO_BROWSER_CONSUMER = new Map([
+  [
+    "structured-data/json-ld-present",
+    "Shipped before the rule; claims only that parsed JSON-LD is present in the captured DOM.",
+  ],
+  [
+    "structured-data/schema-validation",
+    "Shipped before the rule; claims only that the captured DOM's JSON-LD parses and matches schema.org types.",
+  ],
+]);
+
+/** A quote from one of the browser-agent tool pages the review accepts. */
+const BROWSER_TOOL_QUOTE =
+  /`read_page`|`find`|`form_input`|Playwright MCP|`take_snapshot`|`selectOption`/;
+
 describe("browser view eligibility", () => {
   const ids = Object.keys(SNAPSHOT_AUDITS);
 
@@ -120,6 +141,24 @@ describe("browser view eligibility", () => {
       );
       expect(dossier, id).toContain("snapshot-eligibility.ts");
     }
+  });
+
+  it("cites a browser-agent tool for every entry except the named exceptions", () => {
+    for (const id of ids) {
+      const dossier = readFileSync(
+        join(repoRoot, "docs", "evidence", "audits", `${id}.md`),
+        "utf8",
+      );
+      const section = dossier.split(/^## Browser view$/m)[1]?.split(/^## /m)[0];
+      if (section === undefined) continue;
+      if (NO_BROWSER_CONSUMER.has(id)) {
+        expect(section, id).toContain("no browser-agent consumer is claimed");
+        expect(section, id).not.toMatch(BROWSER_TOOL_QUOTE);
+      } else {
+        expect(section, id).toMatch(BROWSER_TOOL_QUOTE);
+      }
+    }
+    for (const id of NO_BROWSER_CONSUMER.keys()) expect(ids).toContain(id);
   });
 
   it("argues each browser view from its own evidence, not a shared paragraph", () => {

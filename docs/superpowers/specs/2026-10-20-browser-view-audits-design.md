@@ -110,11 +110,18 @@ gatherers. They need fetched artifacts, computed style or a site-wide sample.
 
 ### Entries that predate the rule
 
-The first seven entries were reviewed in their own dossiers before this
-rule. `json-ld-present` and `schema-validation` claim only that parsed
-structured data is present in the captured DOM, with no consumer claim.
-`profile-autofill-token-coverage` is grade C. They stay; their dossiers now
-carry a `## Browser view` section with an audit-specific lead.
+The first seven entries were reviewed in their own dossiers before this rule.
+
+Two are named exceptions to rule 3, by the user's decision on 2026-10-20.
+`structured-data/json-ld-present` and `structured-data/schema-validation`
+shipped before the rule and stay. No browser-agent consumer is claimed for
+either. `json-ld-present` claims presence in the captured DOM only.
+`schema-validation` claims only that the captured DOM's JSON-LD parses and
+matches schema.org types. `snapshot-eligibility.test.ts` lists both as
+named exceptions with this reason, and their `## Browser view` leads say so.
+
+`profile-autofill-token-coverage` is grade C and also predates the rule. It
+stays, exempted from the grade check in the same test.
 
 ## Reporting
 

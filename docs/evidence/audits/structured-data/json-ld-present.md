@@ -60,7 +60,7 @@ AI agents rely on JSON-LD structured data to understand what your site offers, w
 
 ## Browser view
 
-No browser-agent tool reviewed documents reading JSON-LD. The browser view therefore claims one fact only: a parsed JSON-LD block is present in the captured DOM. It makes no delivery, rich-result or citation claim for any crawler.
+This entry is a documented exception: it shipped before the browser-agent rule, and no browser-agent consumer is claimed. The browser view claims one fact only: a parsed JSON-LD block is present in the captured DOM. It makes no delivery, rich-result or citation claim for any crawler.
 
 The snapshot path reuses this audit on each complete, unredacted, non-loading DOM capture that carries readable text. It reports the original static verdict as an unscored browser finding. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. The source and page URL accompany every finding. Existing implementation limits still apply.
 
