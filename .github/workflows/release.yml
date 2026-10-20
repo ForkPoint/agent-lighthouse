@@ -42,6 +42,11 @@ jobs:
       - name: Smoke-test the installed packages
         run: pnpm smoke:packages
 
+      # 9.1.0 published a CommonJS core whose accessibility audits all ran
+      # one audit's rule; the ESM bundle was right and no test ran either.
+      - name: Check core's CJS and ESM bundles agree
+        run: pnpm check:bundle-parity
+
       - name: Create Release Pull Request or Publish to npm
         id: changesets
         uses: changesets/action@v2
