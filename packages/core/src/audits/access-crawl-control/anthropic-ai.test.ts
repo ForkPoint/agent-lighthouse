@@ -47,7 +47,7 @@ describe("AnthropicAudit (ClaudeBot)", () => {
   });
 
   describe("the legacy anthropic-ai token never moves the result", () => {
-    // The shipped defect: `isAnthropicAllowed` returned `a || b` when both
+    // The shipped defect: the since-removed `isAnthropicAllowed` returned `a || b` when both
     // tokens were explicit, so this file scored 1.0 while Anthropic's only
     // documented training crawler was fully blocked.
     it("fails when anthropic-ai is allowed but ClaudeBot is blocked", () => {

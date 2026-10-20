@@ -69,5 +69,4 @@ The legacy `anthropic-ai` and `Claude-Web` tokens are detected and reported on t
 ## Deferred
 
 - The audit id still carries the legacy spelling. It scores `ClaudeBot` but is registered as `access-crawl-control/anthropic-ai`.
-- `_robots-txt-helpers.ts` still declares the Anthropic row of `TRAINING_CRAWLERS` as `{ botName: 'anthropic-ai', aliases: ['ClaudeBot'] }`. `agent-governance` and `ai-usage-signal-coherence-across-channels` read that table, so the retired token still counts there.
-- `isAnthropicAllowed` in `_robots-txt-helpers.ts` has no caller outside its own test. It can go with the item above.
+- Resolved 2026-10-19: the Anthropic row of `TRAINING_CRAWLERS` in `_robots-txt-helpers.ts` is now `ClaudeBot` alone, so the retired token no longer counts in `agent-governance` or `ai-usage-signal-coherence-across-channels`. The unused `isAnthropicAllowed` helper was removed with it.

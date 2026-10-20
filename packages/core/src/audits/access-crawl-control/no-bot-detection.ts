@@ -47,7 +47,7 @@ export class NoBotDetectionAudit extends Audit {
       impact:
         "Bot-detection services like Cloudflare Turnstile, DataDome, and reCAPTCHA can block legitimate AI agents from accessing your content. When agents are challenged, they cannot complete page fetches, making your content inaccessible to AI-powered search and assistants.",
       fix: "Configure your bot-detection service to allowlist known AI agent user-agents (GPTBot, ChatGPT-User, Claude-User, PerplexityBot) so they bypass challenges while still protecting against malicious bots.",
-      code: "// Allowlist these AI agent user-agents in your WAF/CDN config:\n// GPTBot, ChatGPT-User, OAI-SearchBot (OpenAI)\n// Claude-User, Claude-SearchBot, anthropic-ai (Anthropic)\n// PerplexityBot, Google-Extended, Bravebot, DuckAssistBot",
+      code: "// Allowlist these AI agent user-agents in your WAF/CDN config:\n// GPTBot, ChatGPT-User, OAI-SearchBot (OpenAI)\n// ClaudeBot, Claude-User, Claude-SearchBot (Anthropic)\n// PerplexityBot, Perplexity-User (Perplexity), DuckAssistBot",
       effort: FixEffort.Moderate,
       tags: ["security", "bot-detection", "crawler-permissions"],
     },
@@ -161,7 +161,7 @@ export class NoBotDetectionAudit extends Audit {
         priority: CheckPriority.High,
         description:
           "Bot-detection services like Cloudflare Turnstile, DataDome, and reCAPTCHA can block legitimate AI agents from accessing your content. Configure your service to allowlist known AI user-agents so they are not challenged, while still protecting against malicious bots.",
-        code: '// Allowlist these AI agent user-agents in your bot-detection config:\n// GPTBot, ChatGPT-User, OAI-SearchBot (OpenAI)\n// Claude-User, Claude-SearchBot, anthropic-ai (Anthropic)\n// PerplexityBot (Perplexity)\n// Google-Extended (Google AI)\n// Bravebot, DuckAssistBot\n//\n// Example Cloudflare WAF rule:\n// IF User-Agent contains "ChatGPT-User" OR "Claude-User"\n// THEN Skip all managed challenges',
+        code: '// Allowlist these AI agent user-agents in your bot-detection config:\n// GPTBot, ChatGPT-User, OAI-SearchBot (OpenAI)\n// ClaudeBot, Claude-User, Claude-SearchBot (Anthropic)\n// PerplexityBot, Perplexity-User (Perplexity)\n// DuckAssistBot (DuckDuckGo)\n//\n// Example Cloudflare WAF rule:\n// IF User-Agent contains "ChatGPT-User" OR "Claude-User"\n// THEN Skip all managed challenges',
       },
     );
   }

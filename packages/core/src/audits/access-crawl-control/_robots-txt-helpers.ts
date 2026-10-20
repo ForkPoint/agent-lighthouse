@@ -55,27 +55,6 @@ export function isAllowed(
 }
 
 /**
- * Check 2.3 needs to look at both "anthropic-ai" and "ClaudeBot" user-agents.
- */
-export function isAnthropicAllowed(groups: RobotsGroup[]): {
-  explicitly: boolean;
-  allowed: boolean;
-} {
-  const result1 = isAllowed(groups, "anthropic-ai");
-  const result2 = isAllowed(groups, "ClaudeBot");
-
-  // If both have explicit rules, pass if either alias is allowed
-  if (result1.explicitly && result2.explicitly) {
-    return { explicitly: true, allowed: result1.allowed || result2.allowed };
-  }
-  if (result1.explicitly) return result1;
-  if (result2.explicitly) return result2;
-
-  // Neither is explicit — fall back (both return the same wildcard result)
-  return result1;
-}
-
-/**
  * Checks whether specific sensitive paths are disallowed for the wildcard
  * user-agent. Returns an object with the paths that are and aren't protected.
  */
@@ -113,7 +92,7 @@ export interface CrawlerBot {
   botName: string;
   displayName: string;
   category: CrawlerPurpose;
-  /** Optional alias bot names to also check (e.g. ClaudeBot for anthropic-ai) */
+  /** Optional alias bot names to also check. No current row needs one. */
   aliases?: string[];
   /**
    * True for a usage-control token such as Google-Extended: robots.txt rules
@@ -122,6 +101,24 @@ export interface CrawlerBot {
   controlToken?: boolean;
 }
 
+/**
+ * Robots.txt product tokens of crawlers whose operator says the content they
+ * fetch may train AI models.
+ *
+ * Each vendor-documented row follows its operator's crawler page (verified
+ * 2026-10-19): OpenAI (GPTBot), Google (Google-Extended), Anthropic
+ * (ClaudeBot), Apple (Applebot-Extended), Common Crawl (CCBot), Meta
+ * (Meta-ExternalAgent), Amazon (Amazonbot), Allen AI (AI2Bot) and Mistral
+ * (MistralAI-Training). Anthropic's page names `ClaudeBot` as the token; the
+ * legacy `anthropic-ai` spelling appears in no Anthropic document and is not
+ * read here. `Bytespider` and `cohere-ai` have no reachable operator page and
+ * are kept pending their own review (see the agent-governance dossier).
+ *
+ * PerplexityBot, YouBot and Diffbot are not here: Perplexity says PerplexityBot
+ * "is not used to crawl content for AI foundation models", You.com documents
+ * YouBot as its search crawler, and Diffbot says its crawler "is not used for
+ * AI training".
+ */
 export const TRAINING_CRAWLERS: CrawlerBot[] = [
   {
     botName: "GPTBot",
@@ -134,14 +131,8 @@ export const TRAINING_CRAWLERS: CrawlerBot[] = [
     category: CrawlerPurpose.Training,
   },
   {
-    botName: "anthropic-ai",
-    displayName: "anthropic-ai / ClaudeBot",
-    category: CrawlerPurpose.Training,
-    aliases: ["ClaudeBot"],
-  },
-  {
-    botName: "PerplexityBot",
-    displayName: "PerplexityBot",
+    botName: "ClaudeBot",
+    displayName: "ClaudeBot",
     category: CrawlerPurpose.Training,
   },
   {
@@ -149,7 +140,11 @@ export const TRAINING_CRAWLERS: CrawlerBot[] = [
     displayName: "Applebot-Extended",
     category: CrawlerPurpose.Training,
   },
-  { botName: "CCBot", displayName: "CCBot", category: CrawlerPurpose.Training },
+  {
+    botName: "CCBot",
+    displayName: "CCBot",
+    category: CrawlerPurpose.Training,
+  },
   {
     botName: "Meta-ExternalAgent",
     displayName: "Meta-ExternalAgent",
@@ -171,31 +166,30 @@ export const TRAINING_CRAWLERS: CrawlerBot[] = [
     category: CrawlerPurpose.Training,
   },
   {
-    botName: "YouBot",
-    displayName: "YouBot",
-    category: CrawlerPurpose.Training,
-  },
-  {
-    botName: "Diffbot",
-    displayName: "Diffbot",
-    category: CrawlerPurpose.Training,
-  },
-  {
     botName: "AI2Bot",
     displayName: "AI2Bot",
     category: CrawlerPurpose.Training,
   },
+  {
+    botName: "MistralAI-Training",
+    displayName: "MistralAI-Training",
+    category: CrawlerPurpose.Training,
+  },
 ];
 
+/**
+ * Robots.txt product tokens of search crawlers and user-triggered fetchers
+ * that serve live answers, each documented by its operator (verified
+ * 2026-10-19): OpenAI, Anthropic, Perplexity, Meta, Amazon, DuckDuckGo,
+ * Mistral and You.com.
+ *
+ * `Bravebot` is not here: Brave documents that its crawler "does not advertise
+ * a differentiated user agent" and follows the Googlebot rules.
+ */
 export const REALTIME_CRAWLERS: CrawlerBot[] = [
   {
     botName: "ChatGPT-User",
     displayName: "ChatGPT-User",
-    category: CrawlerPurpose.Realtime,
-  },
-  {
-    botName: "Claude-User",
-    displayName: "Claude-User",
     category: CrawlerPurpose.Realtime,
   },
   {
@@ -204,13 +198,43 @@ export const REALTIME_CRAWLERS: CrawlerBot[] = [
     category: CrawlerPurpose.Realtime,
   },
   {
+    botName: "Claude-User",
+    displayName: "Claude-User",
+    category: CrawlerPurpose.Realtime,
+  },
+  {
+    botName: "Claude-SearchBot",
+    displayName: "Claude-SearchBot",
+    category: CrawlerPurpose.Realtime,
+  },
+  {
+    botName: "PerplexityBot",
+    displayName: "PerplexityBot",
+    category: CrawlerPurpose.Realtime,
+  },
+  {
+    botName: "Perplexity-User",
+    displayName: "Perplexity-User",
+    category: CrawlerPurpose.Realtime,
+  },
+  {
     botName: "Meta-ExternalFetcher",
     displayName: "Meta-ExternalFetcher",
     category: CrawlerPurpose.Realtime,
   },
   {
-    botName: "Bravebot",
-    displayName: "Bravebot",
+    botName: "Meta-WebIndexer",
+    displayName: "Meta-WebIndexer",
+    category: CrawlerPurpose.Realtime,
+  },
+  {
+    botName: "Amzn-SearchBot",
+    displayName: "Amzn-SearchBot",
+    category: CrawlerPurpose.Realtime,
+  },
+  {
+    botName: "Amzn-User",
+    displayName: "Amzn-User",
     category: CrawlerPurpose.Realtime,
   },
   {
@@ -224,8 +248,13 @@ export const REALTIME_CRAWLERS: CrawlerBot[] = [
     category: CrawlerPurpose.Realtime,
   },
   {
-    botName: "Claude-SearchBot",
-    displayName: "Claude-SearchBot",
+    botName: "MistralAI-Index",
+    displayName: "MistralAI-Index",
+    category: CrawlerPurpose.Realtime,
+  },
+  {
+    botName: "YouBot",
+    displayName: "YouBot",
     category: CrawlerPurpose.Realtime,
   },
 ];

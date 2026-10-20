@@ -317,6 +317,14 @@ describe("AI_CRAWLER_UAS", () => {
     ]);
   });
 
+  // OpenAI's bots page (verified 2026-10-19) gives OAI-SearchBot/1.4 behind a
+  // full Mac Chrome prefix; the probe used to send a bare OAI-SearchBot/1.0.
+  it("sends the OAI-SearchBot string OpenAI documents", () => {
+    expect(AI_CRAWLER_UAS.find((u) => u.token === "oai-searchbot")?.ua).toBe(
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36; compatible; OAI-SearchBot/1.4; +https://openai.com/searchbot",
+    );
+  });
+
   it("carries the product token inside its own UA string", () => {
     for (const { token, ua } of AI_CRAWLER_UAS) {
       expect(ua.toLowerCase()).toContain(token);
