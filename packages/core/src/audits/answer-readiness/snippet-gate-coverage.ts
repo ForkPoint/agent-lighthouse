@@ -11,6 +11,12 @@ import { weightForGrade } from "#core/scorer";
 import type { CheckContext, PageContext } from "#core/check-context";
 import { allJsonLdNodes } from "#core/parser";
 import {
+  DOCUMENTED_ROBOTS_NAMES,
+  GENERIC_ROBOTS_NAME,
+  UNDOCUMENTED_ROBOTS_NAMES,
+  parseXRobotsTag,
+} from "#core/robots-meta-names";
+import {
   AuditTier,
   CheckPriority,
   EvidenceGrade,
@@ -21,21 +27,6 @@ import {
 
 /** Above this share of main-content characters, suppression is structural. */
 const COVERAGE_FLOOR = 0.2;
-/** Meta names that carry snippet directives for a crawler we care about. */
-const BOT_METAS = new Set([
-  "robots",
-  "googlebot",
-  "googlebot-news",
-  "google-extended",
-  "bingbot",
-]);
-/** Directive names that look like a bot prefix but are not one. */
-const DIRECTIVE_NAMES = new Set([
-  "max-snippet",
-  "max-image-preview",
-  "max-video-preview",
-  "unavailable_after",
-]);
 /** Directives that remove a page from snippet-bearing surfaces outright. */
 const BLOCKING = new Set(["nosnippet", "noindex", "none"]);
 
@@ -45,21 +36,32 @@ interface Directive {
   /** `*` for the generic rule, otherwise the named crawler. */
   bot: string;
   token: string;
+  /**
+   * False under a name no operator documents reading (`gptbot`,
+   * `google-extended`, …): listed in `found`, never evaluated.
+   */
+  documented: boolean;
 }
 
+/**
+ * Robots meta tags under a documented name, plus the per-bot names sites use
+ * that no operator documents (kept only to be listed as not evaluated).
+ */
 function parseMeta(page: PageContext): Directive[] {
   const out: Directive[] = [];
   page.$("meta[name]").each((_i, el) => {
     const name = (page.$(el).attr("name") ?? "").toLowerCase().trim();
-    if (!BOT_METAS.has(name)) return;
+    const documented = DOCUMENTED_ROBOTS_NAMES.has(name);
+    if (!documented && !UNDOCUMENTED_ROBOTS_NAMES.has(name)) return;
     const content = (page.$(el).attr("content") ?? "").toLowerCase();
     for (const token of content.split(",")) {
       const trimmed = token.trim();
       if (trimmed)
         out.push({
           source: `${name} meta`,
-          bot: name === "robots" ? "*" : name,
+          bot: name === GENERIC_ROBOTS_NAME ? "*" : name,
           token: trimmed,
+          documented,
         });
     }
   });
@@ -67,31 +69,20 @@ function parseMeta(page: PageContext): Directive[] {
 }
 
 /**
- * Parse the (possibly combined) X-Robots-Tag field value.
- *
- * A `bot:` prefix scopes the directives that follow it until the next prefix —
- * the standard within-line reading. Once repeated field lines are combined into
- * one value, line boundaries are no longer visible, so an unprefixed directive
- * on a later line is attributed to the last named bot. The full directive list
- * is reported so a human can adjudicate.
+ * The (possibly combined) X-Robots-Tag field value, read by the shared parser:
+ * a `bot:` prefix scopes the directives after it until the next prefix, and an
+ * unprefixed directive on a later combined line goes to the last named bot.
+ * A prefix outside the documented names is listed but never evaluated.
  */
 function parseHeader(page: PageContext): Directive[] {
-  const raw = page.fetchResult.headers["x-robots-tag"];
-  if (!raw) return [];
-  const out: Directive[] = [];
-  let bot = "*";
-  for (const segment of raw.toLowerCase().split(",")) {
-    const trimmed = segment.trim();
-    if (!trimmed) continue;
-    const prefixed = /^([a-z0-9._-]+)\s*:\s*(.+)$/.exec(trimmed);
-    if (prefixed && !DIRECTIVE_NAMES.has(prefixed[1]!)) {
-      bot = prefixed[1]!;
-      out.push({ source: "X-Robots-Tag", bot, token: prefixed[2]!.trim() });
-      continue;
-    }
-    out.push({ source: "X-Robots-Tag", bot, token: trimmed });
-  }
-  return out;
+  return parseXRobotsTag(page.fetchResult.headers["x-robots-tag"]).map(
+    ({ name, token }) => ({
+      source: "X-Robots-Tag",
+      bot: name === GENERIC_ROBOTS_NAME ? "*" : name,
+      token,
+      documented: DOCUMENTED_ROBOTS_NAMES.has(name),
+    }),
+  );
 }
 
 /** The most restrictive snippet permission a named crawler ends up with. */
@@ -167,6 +158,8 @@ function markedUpAnswers(page: PageContext): {
 interface Analysis {
   pageUrl: string;
   directives: Directive[];
+  /** Directives under an undocumented name: listed, never evaluated. */
+  unevaluated: Directive[];
   /** Crawlers whose resolved permission blocks snippets outright. */
   blockedBots: Array<{ bot: string; why: Directive | string }>;
   markupType?: string;
@@ -181,13 +174,9 @@ interface Analysis {
 
 function analyse(page: PageContext): Analysis {
   const $ = page.$;
-  const directives = [...parseMeta(page), ...parseHeader(page)];
-  const bots = new Set<string>([
-    "*",
-    "googlebot",
-    "google-extended",
-    "bingbot",
-  ]);
+  const all = [...parseMeta(page), ...parseHeader(page)];
+  const directives = all.filter((d) => d.documented);
+  const bots = new Set<string>(["*", "googlebot", "bingbot"]);
   for (const directive of directives) bots.add(directive.bot);
 
   const blockedBots: Analysis["blockedBots"] = [];
@@ -235,6 +224,7 @@ function analyse(page: PageContext): Analysis {
   const analysis: Analysis = {
     pageUrl: page.url,
     directives,
+    unevaluated: all.filter((d) => !d.documented),
     blockedBots,
     ...(markup.type ? { markupType: markup.type } : {}),
     coverage: mainText.length === 0 ? 0 : suppressedChars / mainText.length,
@@ -351,6 +341,12 @@ export class SnippetGateCoverageAudit extends Audit {
                 `${d.source}${d.bot === "*" ? "" : ` ${d.bot}`} ${d.token}`,
             )
             .join("; ");
+    const unevaluated =
+      a.unevaluated.length === 0
+        ? ""
+        : `; not evaluated, no operator documents the name: ${a.unevaluated
+            .map((d) => `${d.source} ${d.bot} ${d.token}`)
+            .join("; ")}`;
     const pct = `${(a.coverage * 100).toFixed(1)}%`;
 
     const findings: string[] = [];
@@ -385,7 +381,7 @@ export class SnippetGateCoverageAudit extends Audit {
       );
     }
 
-    const found = `${findings.length} snippet finding(s); ${directiveList}; data-nosnippet ${pct} of main content`;
+    const found = `${findings.length} snippet finding(s); ${directiveList}${unevaluated}; data-nosnippet ${pct} of main content`;
 
     if (findings.length > 0) {
       return this.fail(
