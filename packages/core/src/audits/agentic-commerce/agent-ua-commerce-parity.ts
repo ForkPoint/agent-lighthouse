@@ -18,6 +18,8 @@ import {
   AI_CRAWLER_UAS,
   sharedUaProbes,
   type UaProbe,
+  BlockClass,
+  probeChallenge,
 } from "#core/gatherers/ua-parity";
 import { BotToken } from "#core/bot-registry";
 import { resolvePolicyLinks } from "./acp-policy-link-surface";
@@ -38,20 +40,8 @@ const TOKENS = [BotToken.ChatGPTUser, BotToken.OAISearchBot].map((token) =>
 const MAX_PDPS = 2;
 /** Below this share of the browser text, the agent got a stub of the page. */
 const TEXT_FLOOR = 0.6;
-/** Statuses that are a block however the body reads. */
-const BLOCKING_STATUS = new Set([403, 429, 503]);
 /** How many findings a message lists before it summarises. */
 const MAX_SHOWN = 4;
-
-/** Body markers left by the common bot-challenge products. */
-const CHALLENGE_MARKERS = [
-  "Just a moment...",
-  "cf-chl-",
-  "__cf_chl",
-  "_Incapsula_",
-  "px-captcha",
-  "/akam/",
-];
 
 /**
  * What a probe shows: how the site answers a request from the scanner's own
@@ -61,6 +51,13 @@ const CHALLENGE_MARKERS = [
  */
 const SCOPE =
   "These probes come from the scanner's address, not OpenAI's published ranges, so they show how the site answers a request that names the agent, not what the real agent receives.";
+
+/**
+ * Why a refusal of the probe only warns. The probe is by definition not the
+ * verified agent, and an edge can answer the two differently.
+ */
+const AMBIGUITY =
+  "A challenge, a 403, a 429 or another refusal can be the edge's defence against an unverified request naming the agent, and the real agent, from OpenAI's published ranges, may be answered differently. Confirm against the edge logs before changing anything.";
 
 /** Where the merchant's allowlist should come from: addresses, not UA strings. */
 const CIDR_SOURCES =
@@ -78,21 +75,38 @@ function pathOf(url: string): string {
   }
 }
 
-/** The single decisive reason this probe failed, or undefined when it did not. */
-function reasonFor(probe: UaProbe): string | undefined {
-  const marker = CHALLENGE_MARKERS.find((m) => probe.probeBody.includes(m));
-  if (marker) return `a bot challenge (body contains "${marker}")`;
-  if (BLOCKING_STATUS.has(probe.probeStatus)) {
-    return `HTTP ${probe.probeStatus} where a browser got ${probe.baselineStatus}`;
+/**
+ * The single decisive reason this probe differs, or undefined when it does not.
+ *
+ * `hard` marks the answers that say something about the site rather than the
+ * probe, read the same way `access-crawl-control/ai-crawler-edge-parity` reads
+ * them: a pay-per-crawl price, and a stub page with no challenge in it. A
+ * challenge (read by the shared `probeChallenge`, so an Anubis wall served with
+ * HTTP 200 counts), a 403, a 429, a 503 or any other non-2xx is a refusal an
+ * edge can give an unverified request while it admits the verified agent.
+ */
+function reasonFor(
+  probe: UaProbe,
+): { hard: boolean; text: string } | undefined {
+  const challenge = probeChallenge(probe);
+  if (challenge) return { hard: false, text: `a ${challenge}` };
+  if (probe.blockClass === BlockClass.PayPerCrawl) {
+    return { hard: true, text: `a pay-per-crawl price (${probe.evidence})` };
   }
   if (
     Math.floor(probe.probeStatus / 100) !==
     Math.floor(probe.baselineStatus / 100)
   ) {
-    return `HTTP ${probe.probeStatus} where a browser got ${probe.baselineStatus}`;
+    return {
+      hard: false,
+      text: `HTTP ${probe.probeStatus} where a browser got ${probe.baselineStatus}`,
+    };
   }
   if (probe.textRatio < TEXT_FLOOR) {
-    return `${Math.round(probe.textRatio * 100)}% of the text a browser got — a stub, not the page`;
+    return {
+      hard: true,
+      text: `${Math.round(probe.textRatio * 100)}% of the text a browser got — a stub, not the page`,
+    };
   }
   return undefined;
 }
@@ -123,7 +137,7 @@ export class AgentUaCommerceParityAudit extends Audit {
     failureTitle:
       "Commerce paths answer differently when the User-Agent names a shopping agent, or robots.txt turns it away",
     description:
-      "Issues paired requests to the homepage, sampled product pages, the cart and the linked policy pages with a browser User-Agent and with the ChatGPT-User and OAI-SearchBot User-Agents, detecting WAF blocks, challenge interstitials and stub pages that a robots.txt-only audit cannot see. The probes come from the scanner's address, so they show how the site answers a request that names the agent, not what the real agent, arriving from OpenAI's published ranges, receives. Reads the OpenAI robots.txt tokens separately, so opting out of training while staying in search is reported as the deliberate posture it is.",
+      "Issues paired requests to the homepage, sampled product pages, the cart and the linked policy pages with a browser User-Agent and with the ChatGPT-User and OAI-SearchBot User-Agents, detecting WAF blocks, challenge interstitials and stub pages that a robots.txt-only audit cannot see. A stub page or a pay-per-crawl price fails; a challenge or another refusal warns, because an edge can refuse an unverified request naming the agent and still admit the real one. The probes come from the scanner's address, so they show how the site answers a request that names the agent, not what the real agent, arriving from OpenAI's published ranges, receives. Reads the OpenAI robots.txt tokens separately, so opting out of training while staying in search is reported as the deliberate posture it is.",
     scoreDisplayMode: ScoreDisplayMode.Ternary,
     weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
     evidenceGrade: EvidenceGrade.A,
@@ -139,7 +153,7 @@ export class AgentUaCommerceParityAudit extends Audit {
     defaultPriority: CheckPriority.Critical,
     guidance: {
       impact:
-        "OpenAI operates four separately-tokened agents with separately published IP ranges: OAI-SearchBot (search indexing), ChatGPT-User (user-initiated fetches — the shopper's agent), GPTBot (training) and OAI-AdsBot (ad landing-page validation). Falsifiable claim: if a product page returns 403, 429, 503 or a challenge interstitial to ChatGPT-User or OAI-SearchBot while returning 200 to a browser, ChatGPT cannot read live price and availability nor follow the buy link, so the product cannot be surfaced or transacted no matter how good the feed is. The probe comes from the scanner's address, so it shows the answer to a request that names the agent; a rule keyed on OpenAI's published ranges can answer the real agent differently. That block lives at the WAF or CDN edge, which is why an audit that only parses robots.txt is structurally blind to it. Disproof condition: a site 403ing ChatGPT-User on its product pages that still shows live, accurate prices in ChatGPT.",
+        "OpenAI operates four separately-tokened agents with separately published IP ranges: OAI-SearchBot (search indexing), ChatGPT-User (user-initiated fetches — the shopper's agent), GPTBot (training) and OAI-AdsBot (ad landing-page validation). Falsifiable claim: if a product page returns 403, 429, 503 or a challenge interstitial to ChatGPT-User or OAI-SearchBot while returning 200 to a browser, ChatGPT cannot read live price and availability nor follow the buy link, so the product cannot be surfaced or transacted no matter how good the feed is. The probe comes from the scanner's address, so it shows the answer to a request that names the agent; a rule keyed on OpenAI's published ranges can answer the real agent differently, so a refusal or a challenge to the probe warns, and only a stub page or a priced 402 fails. That block lives at the WAF or CDN edge, which is why an audit that only parses robots.txt is structurally blind to it. Disproof condition: a site 403ing ChatGPT-User on its product pages that still shows live, accurate prices in ChatGPT.",
       fix: "Separate the four OpenAI tokens instead of treating 'OpenAI' as one switch: Disallow GPTBot if you do not want your catalogue in training, and keep OAI-SearchBot and ChatGPT-User allowed, since those two are what put your product in an answer and let the shopper's agent read the page. At the edge, allowlist the published address ranges from https://openai.com/searchbot.json and https://openai.com/chatgpt-user.json — UA-string rules are both spoofable and, when they misfire, invisible from the dashboard. Then verify from outside with curl -A on a product page, the cart and the policy pages, and check you get the whole page rather than a stub.",
       code: SAMPLE,
       effort: FixEffort.Complex,
@@ -150,14 +164,35 @@ export class AgentUaCommerceParityAudit extends Audit {
   };
 
   async audit(ctx: CheckContext): Promise<AuditResult> {
-    const pdps = ctx.pages.slice(0, MAX_PDPS).map((page) => page.url);
+    const homeUrl = `${ctx.baseUrl}/`;
+    // One key per URL, so the homepage and a trailing-slash variant of it are
+    // probed and reported once.
+    const keyOf = (url: string): string => url.replace(/\/+$/, "");
+    // The homepage is always a target, so the two sampled pages are the first
+    // two other scanned pages.
+    const pdps: string[] = [];
+    for (const page of ctx.pages) {
+      if (pdps.length >= MAX_PDPS) break;
+      const key = keyOf(page.url);
+      if (key === keyOf(homeUrl) || pdps.some((url) => keyOf(url) === key))
+        continue;
+      pdps.push(page.url);
+    }
+    // A scan of the homepage alone samples the homepage, so its robots.txt
+    // rules still count as a commerce path.
+    const first = ctx.pages[0];
+    if (pdps.length === 0 && first) pdps.push(first.url);
     const cartUrl = `${ctx.baseUrl}/cart`;
     const policies = resolvePolicyLinks(ctx);
 
-    const targets = [`${ctx.baseUrl}/`, ...pdps, cartUrl];
+    const targets: string[] = [];
+    const add = (url: string | undefined): void => {
+      if (url && !targets.some((target) => keyOf(target) === keyOf(url)))
+        targets.push(url);
+    };
+    for (const url of [homeUrl, ...pdps, cartUrl]) add(url);
     for (const type of ["terms_of_use", "privacy_policy"] as const) {
-      const url = policies.get(type);
-      if (url && !targets.includes(url)) targets.push(url);
+      add(policies.get(type));
     }
 
     const probes = await sharedUaProbes(ctx, targets, TOKENS);
@@ -167,7 +202,7 @@ export class AgentUaCommerceParityAudit extends Audit {
     );
     const cartReachable = comparable.some((probe) => probe.url === cartUrl);
 
-    if (pdps.length === 0 && !cartReachable) {
+    if (ctx.pages.length === 0 && !cartReachable) {
       return this.notApplicable(
         "No product page was scanned and /cart does not answer, so there is no commerce path to probe.",
         EXPECTED,
@@ -184,16 +219,20 @@ export class AgentUaCommerceParityAudit extends Audit {
     }
 
     const findings: string[] = [];
+    const refusals: string[] = [];
     // The scope note belongs to probe findings only. A robots.txt finding is
     // read from the file, not from a probe.
     let probeFindings = 0;
     for (const probe of comparable) {
       const reason = reasonFor(probe);
       if (!reason) continue;
-      probeFindings += 1;
-      findings.push(
-        `A request naming ${labelFor(probe.token)} gets ${reason} at ${probe.url}`,
-      );
+      const line = `A request naming ${labelFor(probe.token)} gets ${reason.text} at ${probe.url}`;
+      if (reason.hard) {
+        probeFindings += 1;
+        findings.push(line);
+      } else {
+        refusals.push(line);
+      }
     }
 
     // robots.txt is the other half: an edge that lets the agent through cannot
@@ -222,7 +261,7 @@ export class AgentUaCommerceParityAudit extends Audit {
       ? " robots.txt disallows GPTBot while admitting OAI-SearchBot: opting out of training while staying in search is a deliberate posture, and this audit scores nothing against it."
       : "";
 
-    const found = `${targets.length} commerce target(s) probed from the scanner's address with the ${TOKENS.map(labelFor).join(" and ")} User-Agents; ${comparable.length} comparable probe(s); ${findings.length} finding(s)`;
+    const found = `${targets.length} commerce target(s) probed from the scanner's address with the ${TOKENS.map(labelFor).join(" and ")} User-Agents; ${comparable.length} comparable probe(s); ${findings.length} finding(s); ${refusals.length} ambiguous refusal(s)`;
 
     if (findings.length > 0) {
       const shown = findings.slice(0, MAX_SHOWN).join("; ");
@@ -230,11 +269,30 @@ export class AgentUaCommerceParityAudit extends Audit {
         findings.length > MAX_SHOWN
           ? ` (${findings.length - MAX_SHOWN} more)`
           : "";
+      const note =
+        refusals.length > 0
+          ? ` ${refusals.length} further finding(s) are ambiguous. ${AMBIGUITY}`
+          : "";
+      const scope = probeFindings > 0 || refusals.length > 0 ? `${SCOPE} ` : "";
       return this.fail(
-        `${shown}${more}. ${probeFindings > 0 ? `${SCOPE} ` : ""}${CIDR_SOURCES}${posture}`,
+        `${shown}${more}.${note} ${scope}${CIDR_SOURCES}${posture}`,
         EXPECTED,
         found,
         CheckPriority.Critical,
+      );
+    }
+
+    if (refusals.length > 0) {
+      const shown = refusals.slice(0, MAX_SHOWN).join("; ");
+      const more =
+        refusals.length > MAX_SHOWN
+          ? ` (${refusals.length - MAX_SHOWN} more)`
+          : "";
+      return this.warn(
+        `${shown}${more}. ${SCOPE} ${AMBIGUITY} ${CIDR_SOURCES}${posture}`,
+        EXPECTED,
+        found,
+        CheckPriority.Medium,
       );
     }
 
