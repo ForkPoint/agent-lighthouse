@@ -11,6 +11,8 @@ sources:
   - playwright-mcp-repo
   - w3c-accname-12
   - webmcp-declarative-explainer
+public_extra:
+  - Browser view
 ---
 
 # form-actionability (`5.27`, `5.22`)
@@ -57,12 +59,10 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - A dangling `aria-labelledby` reference is accepted on presence.
 - A form-less SPA scan is a plain `notApplicable`.
 
-## Limits
+## Browser view
 
-### Browser snapshot evidence
+Anthropic's `find` searches "for elements matching a natural-language description such as 'search field' or 'add to cart button'", and `form_input` will "Set a form element's value directly" on the element it returns (verified 2026-10-20). Playwright MCP's `browser_fill_form` will "Fill multiple form fields" by ref (verified 2026-10-20). A field without a native element or an explicit label is a node neither tool can match by purpose. A supplied browser snapshot is the rendered DOM those tools read, so the browser view runs this audit on it.
 
-Browser agents read the rendered page as an accessibility tree. Anthropic's `read_page` returns "the page's accessibility tree as text", Playwright MCP "uses accessibility snapshots instead of screenshots", and Chrome DevTools MCP `take_snapshot` is "based on the a11y tree" (verified 2026-10-20). A supplied browser snapshot is that rendered DOM, so the browser view reuses this audit on it.
+The browser view runs on each complete, unredacted, non-loading capture that carries readable text. It reads the parsed capture DOM only. The finding is informative with weight 0. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. A truncated, redacted or still-loading capture records missing evidence. Existing implementation limits still apply.
 
-The snapshot path runs this audit on each complete, unredacted, non-loading capture that carries readable text. It reads the parsed capture DOM only. It reports the original static verdict as an unscored browser finding with weight 0. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. A truncated, redacted or still-loading capture records missing evidence. Existing implementation limits still apply.
-
-The review and limits appear in [Browser-rendered snapshot assessment](../../../architecture/browser-snapshots.md#supported-audit-inventory). The eligibility record lives in `packages/core/src/snapshot-eligibility.ts`. The crawler grade, tier and weight stay unchanged.
+The review appears in [Browser-rendered snapshot assessment](../../../architecture/browser-snapshots.md#supported-audit-inventory). The eligibility record lives in `packages/core/src/snapshot-eligibility.ts`. The crawler grade, tier and weight stay unchanged.

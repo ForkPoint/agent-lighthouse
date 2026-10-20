@@ -14,6 +14,8 @@ sources:
   - anthropic-cu-ui-tips
   - S2
   - S11
+public_extra:
+  - Browser view
 ---
 
 # Native Control Substitution Index
@@ -78,12 +80,10 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 - **Action-cost reporting.** Counting the agent actions a widget costs needs a headless browser. The audit reports the weighted substitution index and the contract defect instead.
 - **Virtualised option lists.** Whether a list renders only part of its options is observable only once its script runs, so it is not assessed.
 
-## Limits
+## Browser view
 
-### Browser snapshot evidence
+Playwright's `selectOption` states: "If the target element is not a `<select>` element, this method throws an error" (verified 2026-10-20). Playwright MCP exposes it as `browser_select_option`, which will "Select an option in a dropdown" (verified 2026-10-20). A custom widget has to be driven click by click instead. A supplied browser snapshot is the rendered DOM those tools read, so the browser view runs this audit on it.
 
-Browser agents read the rendered page as an accessibility tree. Anthropic's `read_page` returns "the page's accessibility tree as text", Playwright MCP "uses accessibility snapshots instead of screenshots", and Chrome DevTools MCP `take_snapshot` is "based on the a11y tree" (verified 2026-10-20). A supplied browser snapshot is that rendered DOM, so the browser view reuses this audit on it.
+The browser view runs on each complete, unredacted, non-loading capture that carries readable text. It reads the parsed capture DOM only. The finding is informative with weight 0. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. A truncated, redacted or still-loading capture records missing evidence. Existing implementation limits still apply.
 
-The snapshot path runs this audit on each complete, unredacted, non-loading capture that carries readable text. It reads the parsed capture DOM only. It reports the original static verdict as an unscored browser finding with weight 0. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. A truncated, redacted or still-loading capture records missing evidence. Existing implementation limits still apply.
-
-The review and limits appear in [Browser-rendered snapshot assessment](../../../architecture/browser-snapshots.md#supported-audit-inventory). The eligibility record lives in `packages/core/src/snapshot-eligibility.ts`. The crawler grade, tier and weight stay unchanged.
+The review appears in [Browser-rendered snapshot assessment](../../../architecture/browser-snapshots.md#supported-audit-inventory). The eligibility record lives in `packages/core/src/snapshot-eligibility.ts`. The crawler grade, tier and weight stay unchanged.

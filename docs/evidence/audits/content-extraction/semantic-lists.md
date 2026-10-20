@@ -27,6 +27,8 @@ sources:
   - cloudflare-markdown-for-agents
   - observation-reduction-paper
   - mozilla-readability-source
+public_extra:
+  - Browser view
 ---
 
 # semantic-lists (`6.8`, `6.13`, `9.6`)
@@ -73,9 +75,9 @@ Navigation, breadcrumb, pagination, tab, carousel and table-of-contents lists ar
 - A repeated short-text card layout that is not a list still counts once against the ratio. On a page with no semantic list, that can fail it.
 - Browser snapshots provide serialized markup observations only. The browser assessment is informative with weight 0. Truncated, redacted and still-loading captures produce missing-evidence records rather than verdicts.
 
-## Limits
+## Browser view
 
-### Browser snapshot evidence
+Playwright MCP "uses accessibility snapshots instead of screenshots", and its snapshot examples list `list` and `listitem` nodes (verified 2026-10-20). List markup is what turns a run of items into that structure; div soup reads as loose text.
 
 The snapshot path reuses this audit on each complete, unredacted, non-loading DOM capture that carries readable text. It reports the original static verdict as an unscored browser finding. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. The source and page URL accompany every finding. Existing implementation limits still apply.
 

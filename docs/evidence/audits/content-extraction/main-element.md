@@ -60,13 +60,3 @@ AI scrapers use <main> to identify primary content and discard nav/footer chrome
 
 - The predicate is the literal `<main>`. `[role="main"]`, multiple main landmarks and hidden landmarks are not handled.
 - Fetched HTML does not prove the hydrated browser DOM.
-
-## Limits
-
-### Browser snapshot evidence
-
-Browser agents read the rendered page, not the served HTML. Anthropic's `get_page_text` returns "the page's visible text as plain text, prioritizing the main article content", and Playwright MCP snapshots list headings and landmarks by role (verified 2026-10-20). A supplied browser snapshot is that rendered DOM, so the browser view reuses this audit on it.
-
-The snapshot path runs this audit on each complete, unredacted, non-loading capture that carries readable text. It reads the parsed capture DOM only. It reports the original static verdict as an unscored browser finding with weight 0. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. A truncated, redacted or still-loading capture records missing evidence. Existing implementation limits still apply.
-
-The review and limits appear in [Browser-rendered snapshot assessment](../../../architecture/browser-snapshots.md#supported-audit-inventory). The eligibility record lives in `packages/core/src/snapshot-eligibility.ts`. The crawler grade, tier and weight stay unchanged.

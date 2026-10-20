@@ -69,9 +69,66 @@ function release(): void {
  * state some rules inspect and cost nothing to keep.
  */
 export function stripStyles(html: string): string {
-  return html
-    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
-    .replace(/<link\b[^>]*\brel\s*=\s*["']?stylesheet\b[^>]*>/gi, "");
+  return stripStylesheetLinks(stripStyleBlocks(html));
+}
+
+/*
+ * Both passes are linear in the input. The earlier regexes rescanned to the end
+ * of the string for every unclosed `<style` or `<link`, which is quadratic, and
+ * the input can be a client-supplied capture. Each search below starts where the
+ * previous one ended, and a pass stops as soon as no later match is possible.
+ */
+
+/** True when the character after a tag name ends the name, like regex `\b`. */
+function endsName(html: string, at: number): boolean {
+  return at >= html.length || !/\w/.test(html[at]!);
+}
+
+/** Remove `<style …>…</style>` blocks, matching tag names case-insensitively. */
+function stripStyleBlocks(html: string): string {
+  const open = /<style/gi;
+  const close = /<\/style>/gi;
+  let out = "";
+  let kept = 0;
+  let match: RegExpExecArray | null;
+  while ((match = open.exec(html))) {
+    const start = match.index;
+    if (!endsName(html, start + 6)) continue;
+    const tagEnd = html.indexOf(">", start + 6);
+    // No `>` left: no later block can open either.
+    if (tagEnd === -1) break;
+    close.lastIndex = tagEnd + 1;
+    const end = close.exec(html);
+    // No `</style>` left: no later block can close either.
+    if (!end) break;
+    out += html.slice(kept, start);
+    kept = end.index + end[0].length;
+    open.lastIndex = kept;
+  }
+  return out + html.slice(kept);
+}
+
+const STYLESHEET_REL = /\brel\s*=\s*["']?stylesheet\b/i;
+
+/** Remove `<link>` tags whose attributes declare `rel=stylesheet`. */
+function stripStylesheetLinks(html: string): string {
+  const open = /<link/gi;
+  let out = "";
+  let kept = 0;
+  let match: RegExpExecArray | null;
+  while ((match = open.exec(html))) {
+    const start = match.index;
+    if (!endsName(html, start + 5)) continue;
+    const tagEnd = html.indexOf(">", start + 5);
+    if (tagEnd === -1) break;
+    // The attribute text is bounded by this tag, so the test is local to it.
+    if (STYLESHEET_REL.test(html.slice(start + 5, tagEnd))) {
+      out += html.slice(kept, start);
+      kept = tagEnd + 1;
+    }
+    open.lastIndex = tagEnd + 1;
+  }
+  return out + html.slice(kept);
 }
 
 /**

@@ -29,6 +29,8 @@ sources:
   - openai-computer-use-guide
   - gemini-computer-use-docs
   - anthropic-cu-tool
+public_extra:
+  - Browser view
 ---
 
 # Complete ARIA relationships (`7.13`)
@@ -51,12 +53,10 @@ Composite widgets (menus, listboxes, tabs, grids) require specific child/parent 
 
 **Counter-evidence:** Pixel-based agents (OpenAI computer use, Gemini Computer Use, Anthropic desktop computer use) fill forms from visual layout and do not require programmatic labels at all [openai-computer-use-guide, gemini-computer-use-docs, anthropic-computer-use-tool]. Adoption data shows agents already cope with widespread absence. Only about 35% of mobile inputs get their accessible name from a <label> [web-almanac-2025-accessibility], yet agentic form-filling demonstrably works across the live web. Placeholder text, nearby text and CSS position all provide fallback signal, and Anthropic's find is explicitly a fuzzy natural-language matcher rather than an exact accessible-name lookup. No public benchmark isolates label presence against form-fill success rate, so the effect size is undocumented even though the mechanism is airtight. Score presence of an accessible name from any accname-recognised source, not the literal <label for> element.
 
-## Limits
+## Browser view
 
-### Browser snapshot evidence
+Anthropic's `read_page` returns "the page's accessibility tree as text with each element tagged with a reference such as [ref_2]" (verified 2026-10-20). A role such as `listbox` or `combobox` needs its required children, parent or attributes before the tree exposes a usable control. Without them the agent reads a widget with no options or no state. A supplied browser snapshot is the rendered DOM those tools read, so the browser view runs this audit on it.
 
-Browser agents read the rendered page as an accessibility tree. Anthropic's `read_page` returns "the page's accessibility tree as text", Playwright MCP "uses accessibility snapshots instead of screenshots", and Chrome DevTools MCP `take_snapshot` is "based on the a11y tree" (verified 2026-10-20). A supplied browser snapshot is that rendered DOM, so the browser view reuses this audit on it.
+The browser view runs on each complete, unredacted, non-loading capture that carries readable text and whose accessibility rule pass completed. The pass runs the audit's rules over the capture HTML with page scripts off and no resource loading. A pass with no results records missing evidence instead of a verdict. The finding is informative with weight 0. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. A truncated, redacted or still-loading capture records missing evidence. Existing implementation limits still apply.
 
-The snapshot path runs this audit on each complete, unredacted, non-loading capture that carries readable text. It runs the same accessibility rule pass over the capture HTML, with page scripts off and no resource loading. If that pass yields no results, the capture records missing evidence instead of a verdict. It reports the original static verdict as an unscored browser finding with weight 0. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. A truncated, redacted or still-loading capture records missing evidence. Existing implementation limits still apply.
-
-The review and limits appear in [Browser-rendered snapshot assessment](../../../architecture/browser-snapshots.md#supported-audit-inventory). The eligibility record lives in `packages/core/src/snapshot-eligibility.ts`. The crawler grade, tier and weight stay unchanged.
+The review appears in [Browser-rendered snapshot assessment](../../../architecture/browser-snapshots.md#supported-audit-inventory). The eligibility record lives in `packages/core/src/snapshot-eligibility.ts`. The crawler grade, tier and weight stay unchanged.

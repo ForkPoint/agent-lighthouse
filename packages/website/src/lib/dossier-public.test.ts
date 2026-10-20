@@ -661,10 +661,8 @@ describe("publicDossier", () => {
         // since 2026-10-19: `mcp-tool-annotation-coverage` publishes its own.
         // 162 since the same day: five UA-parity dossiers gained a Limits
         // section on what a User-Agent probe can prove (`ai-crawler-edge-parity`
-        // already published one from its counter-evidence). 163 since
-        // 2026-10-20: 26 dossiers gained a browser-snapshot Limits section;
-        // 25 already published Limits from their counter-evidence.
-        Limits: 163,
+        // already published one from its counter-evidence).
+        Limits: 162,
         // Every scored audit publishes its grade reasoning; the shortfall is
         // in the informative and experimental tiers, which the bar exempts.
         // 199 since 2026-10-18 (9.0.0): the new audits, and the obsolete and
@@ -680,6 +678,40 @@ describe("publicDossier", () => {
         // 2026-10-19: `mcp-tool-annotation-coverage`.
         "Example finding": 84,
       });
+    });
+
+    // A dossier's own Limits section turns promotion off, so a browser-view
+    // note must sit under its own heading or it would displace the
+    // counter-evidence the page publishes as Limits.
+    it("keeps promoted counter-evidence in Limits beside a Browser view section", () => {
+      const withNote = ids.filter((id) => /^## Browser view$/m.test(read(id)));
+      expect(withNote.length).toBeGreaterThan(0);
+      for (const id of withNote) {
+        const full = read(id);
+        expect(full, `${id}: public_extra`).toMatch(
+          /^public_extra:\n(?: {2}- .+\n)*? {2}- Browser view$/m,
+        );
+        const without = full.split(/^## Browser view$/m)[0];
+        const before = publicDossier(without);
+        const after = publicDossier(full, { publicExtra: ["Browser view"] });
+        expect(after.published, id).toContain("Browser view");
+        expect(after.published.includes("Limits"), id).toBe(
+          before.published.includes("Limits"),
+        );
+        const limits = (markdown: string) =>
+          markdown.split(/^## Limits$/m)[1]?.split(/^## /m)[0] ?? "";
+        expect(limits(after.markdown), id).toBe(limits(before.markdown));
+      }
+      // One pinned example: the landmark audit's counter-evidence stays public.
+      const { markdown } = publicDossier(
+        read("operability-safety/aria-landmarks"),
+        {
+          publicExtra: ["Browser view"],
+        },
+      );
+      expect(markdown.split(/^## Limits$/m)[1].split(/^## /m)[0]).toContain(
+        "Landmarks are one path among several",
+      );
     });
   });
 });

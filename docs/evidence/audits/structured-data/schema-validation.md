@@ -12,6 +12,8 @@ sources:
   - google-intro-structured-data
   - webdatacommons-2024-stats
   - searchviu-schema-ai-fetch-test
+public_extra:
+  - Browser view
 ---
 
 # schema-validation (`3.2`)
@@ -41,9 +43,9 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Counter-evidence:** The spec does **not** require `@type`. JSON-LD 1.1 §9.2 defines a node object purely by the absence of `@value`/`@list`/`@set`; `@type` is optional and a typeless nested map is a legitimate property value that conforming processors read as such. Google supports Microdata on equal terms, where `<div itemscope itemprop="offers">` without `itemtype` is idiomatic and valid. The audit's assertion that blocks missing `@type` are "silently ignored by every schema consumer, including Google, ChatGPT plugins, and RAG pipelines" is therefore false for nested nodes — the graded mechanism holds only for top-level entity blocks. The "RAG pipelines" half of the claim is separately unsupported: in a controlled fetch test a price present only in JSON-LD was retrieved by 0 of 5 systems (ChatGPT, Claude, Gemini, Perplexity, Google AI Mode) — https://www.searchviu.com/en/schema-markup-and-ai-in-2025-what-chatgpt-claude-perplexity-gemini-really-see/ (verified 2026-08-21)
 
-## Limits
+## Browser view
 
-### Browser snapshot evidence
+No browser-agent tool reviewed documents reading structured data. The browser view therefore runs only the existing context and type checks over the blocks in the captured DOM, and claims nothing about crawler delivery or rich results.
 
 The snapshot path reuses this audit on each complete, unredacted, non-loading DOM capture that carries readable text. It reports the original static verdict as an unscored browser finding. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. The source and page URL accompany every finding. Existing implementation limits still apply.
 

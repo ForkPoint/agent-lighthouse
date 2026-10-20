@@ -45,6 +45,8 @@ sources:
   - mozilla-readability-source
   - google-ai-features-docs
   - anthropic-computer-use-tool
+public_extra:
+  - Browser view
 ---
 
 # Landmarks are uniquely identifiable (`7.4`, `7.3`)
@@ -89,12 +91,10 @@ Standard `A11yBackedAudit` aggregation over the one rule it wires (`landmark-uni
 - `stripStyles()` discards stylesheets before jsdom. The desktop and mobile `<nav>` pair a responsive theme ships still counts as two visible same-role landmarks. The fix is a rule-engine visibility model, or a downgrade to `warn` for that pair.
 - Violation counts and stable path-based selectors belong to `A11yBackedAudit`'s reporting shape, shared by every rule-backed audit.
 
-## Limits
+## Browser view
 
-### Browser snapshot evidence
+Playwright MCP "uses accessibility snapshots instead of screenshots", with refs "assigned to every node the accessibility tree exposes" (verified 2026-10-20). Landmark regions such as main, navigation and region are nodes in that snapshot. Two landmarks of the same role with no distinguishing name are two identical nodes. A supplied browser snapshot is the rendered DOM those tools read, so the browser view runs this audit on it.
 
-Browser agents read the rendered page as an accessibility tree. Anthropic's `read_page` returns "the page's accessibility tree as text", Playwright MCP "uses accessibility snapshots instead of screenshots", and Chrome DevTools MCP `take_snapshot` is "based on the a11y tree" (verified 2026-10-20). A supplied browser snapshot is that rendered DOM, so the browser view reuses this audit on it.
+The browser view runs on each complete, unredacted, non-loading capture that carries readable text and whose accessibility rule pass completed. The pass runs the audit's rules over the capture HTML with page scripts off and no resource loading. A pass with no results records missing evidence instead of a verdict. The finding is informative with weight 0. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. A truncated, redacted or still-loading capture records missing evidence. Existing implementation limits still apply.
 
-The snapshot path runs this audit on each complete, unredacted, non-loading capture that carries readable text. It runs the same accessibility rule pass over the capture HTML, with page scripts off and no resource loading. If that pass yields no results, the capture records missing evidence instead of a verdict. It reports the original static verdict as an unscored browser finding with weight 0. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. A truncated, redacted or still-loading capture records missing evidence. Existing implementation limits still apply.
-
-The review and limits appear in [Browser-rendered snapshot assessment](../../../architecture/browser-snapshots.md#supported-audit-inventory). The eligibility record lives in `packages/core/src/snapshot-eligibility.ts`. The crawler grade, tier and weight stay unchanged.
+The review appears in [Browser-rendered snapshot assessment](../../../architecture/browser-snapshots.md#supported-audit-inventory). The eligibility record lives in `packages/core/src/snapshot-eligibility.ts`. The crawler grade, tier and weight stay unchanged.

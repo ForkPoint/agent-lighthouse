@@ -14,6 +14,8 @@ sources:
   - playwright-mcp-repo
   - chrome-devtools-mcp-tools
   - axe-duplicate-id-aria
+public_extra:
+  - Browser view
 ---
 
 # Unique IDs for ARIA references (`7.14`)
@@ -44,12 +46,10 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Counter-evidence:** Deque frames the effect as the second instance being _overlooked_ rather than misresolved. The harm materialises only when a duplicated id is actually the target of an ARIA reference or a `for` attribute. A duplicated id that nothing references changes nothing in the accessibility tree. Duplicate ids from repeated third-party embeds are true positives the site owner cannot fix. Independently of the signal's grade, this audit as wired can essentially never report the failure: `reviewOnFail` turns it into an incomplete result, which another page's pass then overrides.
 
-## Limits
+## Browser view
 
-### Browser snapshot evidence
+Anthropic's `find` searches "for elements matching a natural-language description such as 'search field' or 'add to cart button'", and `form_input` will "Set a form element's value directly" on the element it returns (verified 2026-10-20). A `for`, `aria-labelledby` or `aria-describedby` reference to a duplicated id resolves to the first element with that id, so the name `find` matches against can belong to the wrong control. A supplied browser snapshot is the rendered DOM those tools read, so the browser view runs this audit on it.
 
-Browser agents read the rendered page as an accessibility tree. Anthropic's `read_page` returns "the page's accessibility tree as text", Playwright MCP "uses accessibility snapshots instead of screenshots", and Chrome DevTools MCP `take_snapshot` is "based on the a11y tree" (verified 2026-10-20). A supplied browser snapshot is that rendered DOM, so the browser view reuses this audit on it.
+The browser view runs on each complete, unredacted, non-loading capture that carries readable text and whose accessibility rule pass completed. The pass runs the audit's rules over the capture HTML with page scripts off and no resource loading. A pass with no results records missing evidence instead of a verdict. The finding is informative with weight 0. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. A truncated, redacted or still-loading capture records missing evidence. Existing implementation limits still apply.
 
-The snapshot path runs this audit on each complete, unredacted, non-loading capture that carries readable text. It runs the same accessibility rule pass over the capture HTML, with page scripts off and no resource loading. If that pass yields no results, the capture records missing evidence instead of a verdict. It reports the original static verdict as an unscored browser finding with weight 0. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. A truncated, redacted or still-loading capture records missing evidence. Existing implementation limits still apply.
-
-The review and limits appear in [Browser-rendered snapshot assessment](../../../architecture/browser-snapshots.md#supported-audit-inventory). The eligibility record lives in `packages/core/src/snapshot-eligibility.ts`. The crawler grade, tier and weight stay unchanged.
+The review appears in [Browser-rendered snapshot assessment](../../../architecture/browser-snapshots.md#supported-audit-inventory). The eligibility record lives in `packages/core/src/snapshot-eligibility.ts`. The crawler grade, tier and weight stay unchanged.

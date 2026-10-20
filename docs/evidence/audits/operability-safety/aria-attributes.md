@@ -13,6 +13,8 @@ sources:
   - chrome-devtools-mcp-tools
   - axe-aria-valid-attr-value
   - w3c-accname-11
+public_extra:
+  - Browser view
 ---
 
 # Valid ARIA attributes (`7.12`)
@@ -44,12 +46,10 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Counter-evidence:** The four bundled rules are not equally load-bearing for an agent: `aria-prohibited-attr` (e.g. an `aria-label` on a plain `<div>`) has no effect on any state the agent acts upon, while `aria-valid-attr-value` on `aria-expanded`/`aria-checked` does. No vendor agent doc names ARIA attribute validity specifically; the proven consumer path is the browser's accessibility tree, which the agent tools then serialise. The audit's idref checks also resolve against static HTML, so hydration-deferred targets are flagged although a real browser resolves them.
 
-## Limits
+## Browser view
 
-### Browser snapshot evidence
+Anthropic's `read_page` returns "the page's accessibility tree as text with each element tagged with a reference such as [ref_2]" (verified 2026-10-20). WAI-ARIA attributes set the states and properties of the nodes in that tree. An unknown, disallowed or malformed attribute is dropped or misread, so the tree the agent receives differs from what the markup intends. A supplied browser snapshot is the rendered DOM those tools read, so the browser view runs this audit on it.
 
-Browser agents read the rendered page as an accessibility tree. Anthropic's `read_page` returns "the page's accessibility tree as text", Playwright MCP "uses accessibility snapshots instead of screenshots", and Chrome DevTools MCP `take_snapshot` is "based on the a11y tree" (verified 2026-10-20). A supplied browser snapshot is that rendered DOM, so the browser view reuses this audit on it.
+The browser view runs on each complete, unredacted, non-loading capture that carries readable text and whose accessibility rule pass completed. The pass runs the audit's rules over the capture HTML with page scripts off and no resource loading. A pass with no results records missing evidence instead of a verdict. The finding is informative with weight 0. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. A truncated, redacted or still-loading capture records missing evidence. Existing implementation limits still apply.
 
-The snapshot path runs this audit on each complete, unredacted, non-loading capture that carries readable text. It runs the same accessibility rule pass over the capture HTML, with page scripts off and no resource loading. If that pass yields no results, the capture records missing evidence instead of a verdict. It reports the original static verdict as an unscored browser finding with weight 0. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. A truncated, redacted or still-loading capture records missing evidence. Existing implementation limits still apply.
-
-The review and limits appear in [Browser-rendered snapshot assessment](../../../architecture/browser-snapshots.md#supported-audit-inventory). The eligibility record lives in `packages/core/src/snapshot-eligibility.ts`. The crawler grade, tier and weight stay unchanged.
+The review appears in [Browser-rendered snapshot assessment](../../../architecture/browser-snapshots.md#supported-audit-inventory). The eligibility record lives in `packages/core/src/snapshot-eligibility.ts`. The crawler grade, tier and weight stay unchanged.
