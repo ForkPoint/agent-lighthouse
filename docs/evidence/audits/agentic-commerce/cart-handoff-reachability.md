@@ -6,7 +6,7 @@ slug: cart-handoff-reachability
 evidence_grade: B
 tier: scored
 disposition: "new in v2 — graduated from proposal 2026-08-23"
-reviewed: 2026-10-19
+reviewed: 2026-10-20
 graduated: 2026-08-23
 sources:
   - acp-openapi-cart
@@ -18,6 +18,9 @@ sources:
   - s4
   - google-verify-requests
   - cloudflare-fake-bot-rules
+  - cloudflare-challenge-bad-bots
+  - cloudflare-super-bot-fight-mode
+  - cloudflare-field-cf-client-bot
 ---
 
 # Cart Handoff Reachability
@@ -30,7 +33,7 @@ Tests whether the storefront cart is reachable without an account and without a 
 
 The audit reads the platform's cart paths with a browser User-Agent and with ChatGPT-User. A Shopify store gets `/cart`, WooCommerce `/cart` and `/checkout`, BigCommerce `/cart.php`, Magento `/checkout/cart`. An unrecognised store gets `/cart` and `/checkout`. Every request is a GET. Nothing is added to a cart.
 
-It fails on a 403 or 429, a redirect to a login path, a challenge page in place of the cart, or a challenge widget on a document with almost no readable text. It warns when the cart renders nothing without JavaScript. A path that robots.txt disallows for ChatGPT-User is not fetched.
+It fails on a 403 or 429 to the browser, a redirect to a login path, a challenge page in place of the cart, or a challenge widget on a document with almost no readable text. A 403, a 429, a challenge page or a challenge widget that only the ChatGPT-User request gets, while the browser gets the cart, warns: the request comes from the scanner's address, so it is never the verified agent. It also warns when the cart renders nothing without JavaScript. A path that robots.txt disallows for ChatGPT-User is not fetched.
 
 The ACP `continue_url` itself is not probed. The Cart API returns it only from an authenticated `POST /carts`, which a read-only scan cannot make.
 
@@ -59,15 +62,19 @@ Falsifiable claim: ACP 2026-04-17 adds a seller-hosted Cart API whose response c
 - Real bots are told apart by network or signature, not by the string. Cloudflare grants verified status to a bot that "declares who it is deterministically, through a cryptographic Web Bot Auth signature, a published IP list with a stable user-agent, or reverse DNS" ([Cloudflare verified bots policy](https://developers.cloudflare.com/bots/concepts/bot/verified-bots/policy/) (verified 2026-10-19)). OpenAI publishes one IP-range file per bot, for example https://openai.com/gptbot.json and https://openai.com/chatgpt-user.json ([OpenAI crawlers and user agents](https://developers.openai.com/api/docs/bots) (verified 2026-10-19)). Google, whose crawlers this audit does not probe, illustrates the same rule: it documents a reverse-DNS check, or a match against its published IP ranges ([Verifying Google crawlers and fetchers](https://developers.google.com/crawling/docs/crawlers-fetchers/verify-google-requests) (verified 2026-10-19)). The scanner can present none of these.
 - A CDN block of a request naming ChatGPT-User is ambiguous evidence. Without a signature, a published IP list or reverse DNS, the request is by definition not the verified bot ([Cloudflare verified bots policy](https://developers.cloudflare.com/bots/concepts/bot/verified-bots/policy/) (verified 2026-10-19)), so an edge may treat it as unknown automated traffic. Cloudflare does ship managed rules that flag an unverified request naming Googlebot or Bingbot as a fake bot ([Cloudflare fake bot managed rules](https://developers.cloudflare.com/waf/troubleshooting/fake-bot-managed-rules/) (verified 2026-10-19)). It documents no such rule for AI crawlers, and the scanner never sends either of those names. The analogy shows the mechanism exists. It is not evidence about the bots probed here. A refusal is consistent with the real bot being refused too. It does not prove it.
 - A pass does not prove access either. A rule keyed on the verified bot's identity rather than its string can refuse the real bot and still let the probe through.
-- The account-wall, challenge-page and challenge-widget checks read the ChatGPT-User response whenever it is a 200, and the browser response otherwise. A 200 challenge served only to the unverified ChatGPT-User request therefore fails, even when the browser got the cart. Each finding names whose response it read; see Deferred.
+- An edge can answer the two differently by design. Cloudflare's own example rules do exactly this: `(cf.bot_management.verified_bot)` skips all remaining custom rules, so "Known good bots ... bypass all custom rules", and `(cf.bot_management.score lt 30 and not cf.bot_management.verified_bot)` blocks other automated traffic ([Cloudflare Challenge bad bots](https://developers.cloudflare.com/waf/custom-rules/use-cases/challenge-bad-bots/) (verified 2026-10-20)). Super Bot Fight Mode likewise gives "Definitely automated traffic", "Likely automated traffic" and "Verified bots" separate responses ([Cloudflare Super Bot Fight Mode](https://developers.cloudflare.com/bots/get-started/super-bot-fight-mode/) (verified 2026-10-20)). Its rules can read `cf.client.bot`, which "Indicates whether the request originated from a known good bot or crawler" ([Cloudflare cf.client.bot](https://developers.cloudflare.com/ruleset-engine/rules-language/fields/reference/cf.client.bot/) (verified 2026-10-20)).
+- For these reasons a refusal or a challenge that only the ChatGPT-User request gets warns. A 403 or 429 to it is compared only when the browser got a 2xx. The challenge-page and challenge-widget checks read the ChatGPT-User response whenever it is a 200, and warn when the browser response on the same path carries no such wall. A wall the browser gets too still fails. The mechanism's walls are a login redirect and a challenge on the checkout document, and both stand for every buyer when the browser hits them.
+- The account-wall check reads the same response and still fails when only the ChatGPT-User request is redirected to a login path. A login redirect is an account policy, not a documented way to treat unverified traffic.
 
 ## Example failure
 
-A store's /cart renders fine but /checkout issues a 302 to /account/login?checkout_url=... because guest checkout is disabled. Feed data, policy links and structured markup all score perfectly; the agent walks the buyer to a login form for an account they do not have and the purchase dies at the last click. Variant: Cloudflare Turnstile is mounted on the checkout document only, so every other page in the audit passes cleanly.
+A store's /cart renders fine but /checkout issues a 302 to /account/login?checkout_url=... because guest checkout is disabled. Feed data, policy links and structured markup all score perfectly; the agent walks the buyer to a login form for an account they do not have and the purchase dies at the last click. Variant: Cloudflare Turnstile is mounted on the checkout document only, so every other page in the audit passes cleanly. A Turnstile document served only to the request naming ChatGPT-User, while a browser gets the cart, warns instead: an edge may challenge the unverified request and admit the real agent.
 
 ## Scoring
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
+
+A login redirect, a 403 or 429 to the browser, or a challenge the browser gets as well fails at High. A refusal or challenge only the ChatGPT-User request gets warns, as does a JavaScript-only cart. A fingerprinted store with no answering cart path fails.
 
 ## Implementation deviations
 
@@ -96,6 +103,7 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 - The browser baseline is a Mac Chrome UA on the current Stable major, 155 (https://chromiumdash.appspot.com/fetch_releases?channel=Stable&platform=Mac&num=1, verified 2026-10-19). It was Chrome 140 before 2026-10-19.
 - Since 2026-10-19 the probe strings are read from the bot registry (`packages/core/src/bot-registry.ts`) rather than kept in the gatherer. The strings this audit sends are unchanged.
 - Since 2026-10-19 messages, titles and `details` strings say how the site answers a request whose User-Agent names a bot, never that the bot itself is blocked or sees a page. The verdicts did not change.
+- Before 2026-10-20 a 403 or 429 to the ChatGPT-User request failed, also where the browser got no cart at all, and so did a 200 challenge served only to it. Since 2026-10-20 both warn, and the refusal is compared only against a browser 2xx. A store with no cart for the browser either is judged on the browser answer alone. The warnings go first in `details.warnings`, before any JavaScript-only warning. When the audit fails on something else, the message counts them as ambiguous.
 
 ## Deferred
 
@@ -104,13 +112,6 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 - A store that shows the cart to anonymous buyers but demands an account at
   the payment step reads as reachable.
 - Edge blocks keyed on IP rather than UA are invisible to a UA-string probe.
-- **A 403 or 429 to the ChatGPT-User User-Agent still fails.** It can be how the
-  edge treats an unverified look-alike (Limits). The finding now says the cart
-  refused that User-Agent from the scanner's address. Moving it to a warning
-  needs the dossier revised first. Not changed in the 2026-10-19 wording patch.
-- **A challenge served only to the ChatGPT-User User-Agent fails.** The walls
-  are read from that response when it is a 200. A bot-management product that
-  answers the unverified request with a 200 challenge page, while the browser
-  gets the cart, fails as "answers a request naming ChatGPT-User with … instead
-  of the cart". Reading walls from the browser document instead would move
-  verdicts, so it needs its own change.
+- **A login redirect served only to the ChatGPT-User request still fails.** No
+  source documents it as impersonation defence. If one appears, it can warn the
+  way an agent-only challenge does.

@@ -145,7 +145,7 @@
       "category": "access-crawl-control",
       "slug": "ai-crawler-edge-parity",
       "title": "Requests naming an AI crawler get the same edge response as a browser",
-      "purpose": "Fetches the homepage, sampled content URLs and /llms.txt once as a browser and once per published AI crawler User-Agent, then classifies every difference: Cloudflare challenge, pay-per-crawl 402, proof-of-work wall, rate limit, opaque 403, or a 200 carrying a fraction of the text. Reports per crawler and per URL, and scores a difference only where robots.txt admits that crawler. The probes come from the scanner's address, so they show how the site answers a request that names the crawler, not what the real crawler, verified by IP range or signature, receives.",
+      "purpose": "Fetches the homepage, sampled content URLs and /llms.txt once as a browser and once per published AI crawler User-Agent, then classifies every difference: Cloudflare challenge, pay-per-crawl 402, proof-of-work wall, rate limit, opaque 403, or a 200 carrying a fraction of the text. Reports per crawler and per URL, and scores a difference only where robots.txt admits that crawler: a pay-per-crawl price or a reduced page fails, while a challenge or another refusal warns, because an edge can refuse an unverified request naming the crawler and still admit the real one. The probes come from the scanner's address, so they show how the site answers a request that names the crawler, not what the real crawler, verified by IP range or signature, receives.",
       "features": [
         "cloudflare",
         "crawlers",
@@ -342,7 +342,7 @@
       "category": "access-crawl-control",
       "slug": "bot-content-delta-declared",
       "title": "Content served to AI crawler User-Agents matches the browser, or is declared",
-      "purpose": "Fetches sampled content URLs as a browser and with the GPTBot, ClaudeBot and PerplexityBot User-Agents, then measures the difference two ways — main-text length ratio and 5-gram shingle similarity — because a stub and a rewritten page look identical on length alone. Where a difference exists, requires Google's restricted-content markup and checks that the declared cssSelector resolves against the served DOM.",
+      "purpose": "Fetches sampled content URLs as a browser and with the GPTBot, ClaudeBot and PerplexityBot User-Agents, then measures the difference two ways — main-text length ratio and 5-gram shingle similarity — because a stub and a rewritten page look identical on length alone. Where a difference exists, requires Google's restricted-content markup and checks that the declared cssSelector resolves against the served DOM. A delta an unrecognised control bot gets as well is bot management aimed at unidentified clients, not a page keyed on the crawler's name, and warns.",
       "features": [
         "cloaking",
         "crawlers",
@@ -2175,7 +2175,7 @@
       "category": "agentic-commerce",
       "slug": "agent-ua-commerce-parity",
       "title": "Commerce paths answer shopping-agent User-Agents the way they answer a browser",
-      "purpose": "Issues paired requests to the homepage, sampled product pages, the cart and the linked policy pages with a browser User-Agent and with the ChatGPT-User and OAI-SearchBot User-Agents, detecting WAF blocks, challenge interstitials and stub pages that a robots.txt-only audit cannot see. The probes come from the scanner's address, so they show how the site answers a request that names the agent, not what the real agent, arriving from OpenAI's published ranges, receives. Reads the OpenAI robots.txt tokens separately, so opting out of training while staying in search is reported as the deliberate posture it is.",
+      "purpose": "Issues paired requests to the homepage, sampled product pages, the cart and the linked policy pages with a browser User-Agent and with the ChatGPT-User and OAI-SearchBot User-Agents, detecting WAF blocks, challenge interstitials and stub pages that a robots.txt-only audit cannot see. A stub page or a pay-per-crawl price fails; a challenge or another refusal warns, because an edge can refuse an unverified request naming the agent and still admit the real one. The probes come from the scanner's address, so they show how the site answers a request that names the agent, not what the real agent, arriving from OpenAI's published ranges, receives. Reads the OpenAI robots.txt tokens separately, so opting out of training while staying in search is reported as the deliberate posture it is.",
       "features": [
         "chatgpt",
         "commerce",
@@ -2245,7 +2245,7 @@
       "category": "agentic-commerce",
       "slug": "cart-handoff-reachability",
       "title": "Cart Handoff Reachability",
-      "purpose": "Reads the storefront cart and checkout paths — the URL an agent hands a buyer to, whether through an ACP `continue_url` or a computer-use agent driving the storefront — with a browser User-Agent and with the ChatGPT-User User-Agent, and reports an account wall, a bot challenge on the checkout document, or a hard block. Read-only: every request is a GET, nothing is ever added to a cart.",
+      "purpose": "Reads the storefront cart and checkout paths — the URL an agent hands a buyer to, whether through an ACP `continue_url` or a computer-use agent driving the storefront — with a browser User-Agent and with the ChatGPT-User User-Agent, and reports an account wall, a bot challenge on the checkout document, or a hard block. A refusal or challenge only the ChatGPT-User request gets, while a browser gets the cart, warns: the request comes from the scanner's address, and an edge can refuse it while admitting the real agent. Read-only: every request is a GET, nothing is ever added to a cart.",
       "features": [
         "acp",
         "cart",

@@ -5345,7 +5345,7 @@
       "type": "vendor-doc",
       "publisher": "Cloudflare",
       "verified": "2026-10-19",
-      "keyFindings": "Two requirements for verified status: (1) \"Honest self-identification — it declares who it is deterministically, through a cryptographic Web Bot Auth signature, a published IP list with a stable user-agent, or reverse DNS.\" (2) \"Non-abusive behavior — it obeys robots.txt and crawl directives...\". Establishes that UA-string alone is never trusted, which is the source of the false-positive ambiguity when auditing edge blocks by UA spoofing. Re-checked 2026-10-19: unchanged. The bot \"declares who it is deterministically, through a cryptographic Web Bot Auth signature, a published IP list with a stable user-agent, or reverse DNS.\" Cited by the UA-parity audits' Limits: a request from the scanner's address that names a bot meets none of the three."
+      "keyFindings": "Two requirements for verified status: (1) \"Honest self-identification — it declares who it is deterministically, through a cryptographic Web Bot Auth signature, a published IP list with a stable user-agent, or reverse DNS.\" (2) \"Non-abusive behavior — it obeys robots.txt and crawl directives...\". The page does not say in words that a User-Agent string alone is never trusted; that is a reading: a User-Agent string alone meets none of the three declarations, which is the source of the false-positive ambiguity when auditing edge blocks by UA spoofing. Re-checked 2026-10-19: unchanged. The bot \"declares who it is deterministically, through a cryptographic Web Bot Auth signature, a published IP list with a stable user-agent, or reverse DNS.\" Cited by the UA-parity audits' Limits: a request from the scanner's address that names a bot meets none of the three."
     },
     {
       "id": "s5",
@@ -7231,8 +7231,48 @@
       "type": "vendor-doc",
       "publisher": "Cloudflare",
       "accessed": "2026-10-19",
-      "verified": "2026-10-19",
+      "verified": "2026-10-20",
       "keyFindings": "\"When an AI crawler tries to access content protected by pay per crawl, it receives a HTTP status code 402\" with a crawler-price header. \"To access this content, you must verify your AI crawler\": follow Web Bot Auth, the verified bots policy, and submit the bot. The companion Crawl pages page (https://developers.cloudflare.com/ai-crawl-control/features/pay-per-crawl/use-pay-per-crawl-as-ai-owner/crawl-pages/, verified 2026-10-19) says payment headers \"must be included in the signature-input header components\". An unsigned probe can read the 402 and its price; it cannot take the paid path."
+    },
+    {
+      "id": "cloudflare-super-bot-fight-mode",
+      "title": "Super Bot Fight Mode — Cloudflare",
+      "url": "https://developers.cloudflare.com/bots/get-started/super-bot-fight-mode/",
+      "type": "vendor-doc",
+      "publisher": "Cloudflare",
+      "accessed": "2026-10-20",
+      "verified": "2026-10-20",
+      "keyFindings": "The settings give each bot grouping its own response: \"Definitely automated traffic\", \"Likely automated traffic\" and \"Verified bots\" (\"For all bot groupings (Definitely automated traffic, Likely automated traffic, and Verified bots), set the value to Allow\" to disable it). A zone can therefore challenge or block automated traffic and allow verified bots. Cited by the UA-parity audits: a refusal of an unverified request naming a bot does not show what the verified bot gets."
+    },
+    {
+      "id": "cloudflare-field-cf-client-bot",
+      "title": "cf.client.bot field — Cloudflare Rules language",
+      "url": "https://developers.cloudflare.com/ruleset-engine/rules-language/fields/reference/cf.client.bot/",
+      "type": "vendor-doc",
+      "publisher": "Cloudflare",
+      "accessed": "2026-10-20",
+      "verified": "2026-10-20",
+      "keyFindings": "\"Indicates whether the request originated from a known good bot or crawler.\" A WAF rule can key on it, so one rule can refuse a request whose User-Agent names a bot and pass the verified bot."
+    },
+    {
+      "id": "anubis-bot-policies",
+      "title": "Anubis policy definitions",
+      "url": "https://github.com/TecharoHQ/anubis/blob/main/docs/docs/admin/policies.mdx",
+      "type": "vendor-doc",
+      "publisher": "Techaro",
+      "accessed": "2026-10-20",
+      "verified": "2026-10-20",
+      "keyFindings": "Bot rules match on user_agent_regex and remote_addresses, with actions ALLOW, DENY, CHALLENGE and WEIGH. \"you can allow a search engine to connect if and only if its IP address matches the ones they published\". DENY sends \"an error message that scrapers think is a success\". The published docs site answered the scanner with an Anubis deny page, so the source file in the vendor's repository is cited."
+    },
+    {
+      "id": "cloudflare-challenge-bad-bots",
+      "title": "Challenge bad bots — Cloudflare WAF custom rules",
+      "url": "https://developers.cloudflare.com/waf/custom-rules/use-cases/challenge-bad-bots/",
+      "type": "vendor-doc",
+      "publisher": "Cloudflare",
+      "accessed": "2026-10-20",
+      "verified": "2026-10-20",
+      "keyFindings": "Example custom rules. \"Skip verified bots\": `(cf.bot_management.verified_bot)`, action Skip all remaining custom rules — \"Known good bots (Googlebot, Bingbot, monitoring services) bypass all custom rules.\" \"Protect browser endpoints\": `(cf.bot_management.score lt 30 and not cf.bot_management.verified_bot)`, action Block. Also \"Challenge likely automated\": score 2-29, Managed Challenge. One zone refuses unverified automated traffic and admits verified bots, so a refusal of an unverified request naming a bot does not show what the verified bot gets. Primary cite for the UA-parity audits' Limits since 2026-10-20."
     }
   ]
 }

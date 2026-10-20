@@ -10,13 +10,22 @@ import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
 import { weightForGrade } from "#core/scorer";
 import type { CheckContext } from "#core/check-context";
-import { parseHtml, extractJsonLd, flattenJsonLd } from "#core/parser";
+import {
+  parseHtml,
+  extractJsonLd,
+  flattenJsonLd,
+  getMainContentText,
+} from "#core/parser";
+import { DomWorkLimitError, parseBoundedHtml } from "#core/dom-work";
 import { siteSitemapTree, sampleEntries } from "#core/gatherers/sitemap";
 import {
   AI_CRAWLER_UAS,
   sharedUaProbes,
   type UaProbe,
   BlockClass,
+  probeChallenge,
+  responseChallenge,
+  sharedControlProbe,
 } from "#core/gatherers/ua-parity";
 import { BotToken } from "#core/bot-registry";
 import {
@@ -42,6 +51,8 @@ const LENGTH_FLOOR = 0.6;
 const JACCARD_FLOOR = 0.7;
 /** Above this share, the crawler is being served a variant of its own. */
 const LONGER_CEILING = 1.25;
+/** How close in length the control page must be to the crawler page to count as the same page. */
+const CONTROL_LENGTH_MATCH = 0.8;
 /** Words per shingle. */
 const SHINGLE_N = 5;
 /** How many findings a message lists before it summarises. */
@@ -167,12 +178,58 @@ function labelFor(token: string): string {
  * never got a page, and access-crawl-control/ai-crawler-edge-parity reports it.
  */
 function usable(probe: UaProbe): boolean {
+  // A 200 that carries a challenge is a refusal, not a page variant.
+  if (probeChallenge(probe) !== undefined) return false;
   return (
-    (probe.blockClass === BlockClass.Ok || probe.blockClass === "soft-block") &&
+    (probe.blockClass === BlockClass.Ok ||
+      probe.blockClass === BlockClass.SoftBlock) &&
     probe.probeStatus >= 200 &&
     probe.probeStatus < 300 &&
     probe.baselineText.length > 0
   );
+}
+
+/**
+ * Whether the unrecognised control bot got the same reduced page as the probe.
+ *
+ * A site that serves an unknown bot the same reduced page it serves a crawler
+ * name is running bot management aimed at unidentified clients. That page is
+ * not keyed on the crawler's name, and the real crawler, verified by address or
+ * signature, may be served the full page, so the delta is not a cloaking
+ * finding. "The same" is checked against the crawler's page, not only against
+ * the browser's: the control text must itself fall short of the browser text,
+ * be within CONTROL_LENGTH_MATCH of the crawler text's length either way (80%
+ * to 125%), and share its
+ * shingles at JACCARD_FLOOR. A control that got some other reduction, such as a
+ * challenge or an empty shell, shows nothing about the crawler's page. A
+ * missing, refused or over-limit control arm shows no bot management either,
+ * and the crawler comparison stands, as in agent-ua-content-divergence-diff.
+ */
+async function controlSharesReduction(
+  ctx: CheckContext,
+  probe: UaProbe,
+): Promise<boolean> {
+  const control = await sharedControlProbe(ctx, probe.url);
+  if (!control || control.status < 200 || control.status >= 300) return false;
+  if (responseChallenge(control, probe.baselineBody)) return false;
+  let text: string;
+  try {
+    text = getMainContentText(parseBoundedHtml(control.body));
+  } catch (error) {
+    if (error instanceof DomWorkLimitError) return false;
+    throw error;
+  }
+  const reduced =
+    text.length / probe.baselineText.length < LENGTH_FLOOR ||
+    jaccard(shingles(probe.baselineText), shingles(text)) < JACCARD_FLOOR;
+  const longer = Math.max(text.length, probe.probeText.length);
+  const sameLength =
+    longer === 0 ||
+    Math.min(text.length, probe.probeText.length) / longer >=
+      CONTROL_LENGTH_MATCH;
+  const samePage =
+    jaccard(shingles(probe.probeText), shingles(text)) >= JACCARD_FLOOR;
+  return reduced && sameLength && samePage;
 }
 
 const EXPECTED =
@@ -204,7 +261,7 @@ export class BotContentDeltaDeclaredAudit extends Audit {
     failureTitle:
       "Requests naming an AI crawler get different content with nothing declaring it",
     description:
-      "Fetches sampled content URLs as a browser and with the GPTBot, ClaudeBot and PerplexityBot User-Agents, then measures the difference two ways — main-text length ratio and 5-gram shingle similarity — because a stub and a rewritten page look identical on length alone. Where a difference exists, requires Google's restricted-content markup and checks that the declared cssSelector resolves against the served DOM.",
+      "Fetches sampled content URLs as a browser and with the GPTBot, ClaudeBot and PerplexityBot User-Agents, then measures the difference two ways — main-text length ratio and 5-gram shingle similarity — because a stub and a rewritten page look identical on length alone. Where a difference exists, requires Google's restricted-content markup and checks that the declared cssSelector resolves against the served DOM. A delta an unrecognised control bot gets as well is bot management aimed at unidentified clients, not a page keyed on the crawler's name, and warns.",
     scoreDisplayMode: ScoreDisplayMode.Ternary,
     weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
     evidenceGrade: EvidenceGrade.A,
@@ -257,6 +314,8 @@ export class BotContentDeltaDeclaredAudit extends Audit {
     }
 
     const findings: string[] = [];
+    // Deltas the unrecognised control bot got as well: bot management.
+    const botManagement: string[] = [];
     let declared = 0;
 
     for (const probe of comparable) {
@@ -278,21 +337,33 @@ export class BotContentDeltaDeclaredAudit extends Audit {
 
       const declaration_ = declaration(probe.baselineBody);
       if (!declaration_.declared) {
+        // Fetched only for an undeclared delta, so a site with no delta pays
+        // no extra request. A declaration whose selector matches nothing is a
+        // finding about the markup, whoever got the reduced page, so the
+        // control arm does not reach it.
+        if (await controlSharesReduction(ctx, probe)) {
+          botManagement.push(`${label} at ${probe.url} (${metrics})`);
+          continue;
+        }
         findings.push(
           `A request naming ${label} gets different content at ${probe.url} (${metrics}) and nothing declares it: the browser response carries no CreativeWork with isAccessibleForFree:false and a hasPart WebPageElement cssSelector`,
         );
         continue;
       }
-      if (!declaration_.resolves) {
-        findings.push(
-          `A request naming ${label} gets different content at ${probe.url} (${metrics}) and the declared cssSelector "${declaration_.selector}" matches zero elements in the served DOM, so the declaration is a silent no-op`,
-        );
+      if (declaration_.resolves) {
+        declared += 1;
         continue;
       }
-      declared += 1;
+      findings.push(
+        `A request naming ${label} gets different content at ${probe.url} (${metrics}) and the declared cssSelector "${declaration_.selector}" matches zero elements in the served DOM, so the declaration is a silent no-op`,
+      );
     }
 
-    const found = `${urls.length} URL(s) compared against ${TOKENS.length} crawler User-Agent(s) from the scanner's address; ${comparable.length} comparable probe(s); ${findings.length} finding(s); ${declared} declared delta(s)`;
+    const found = `${urls.length} URL(s) compared against ${TOKENS.length} crawler User-Agent(s) from the scanner's address; ${comparable.length} comparable probe(s); ${findings.length} finding(s); ${declared} declared delta(s); ${botManagement.length} delta(s) the unrecognised control User-Agent got too`;
+    const shared =
+      botManagement.length > 0
+        ? `The unrecognised control User-Agent got the same reduced page (${Math.round(CONTROL_LENGTH_MATCH * 100)}% to ${Math.round(100 / CONTROL_LENGTH_MATCH)}% of its length, shingle similarity at least ${JACCARD_FLOOR.toFixed(2)}) as requests naming ${botManagement.slice(0, MAX_SHOWN).join("; ")}${botManagement.length > MAX_SHOWN ? ` (${botManagement.length - MAX_SHOWN} more)` : ""}. That is bot management aimed at unidentified clients, not a page keyed on the crawler's name, and the real crawler, verified by IP range or signature, may be served the full page.`
+        : "";
 
     if (findings.length > 0) {
       const shown = findings.slice(0, MAX_SHOWN).join("; ");
@@ -300,7 +371,21 @@ export class BotContentDeltaDeclaredAudit extends Audit {
         findings.length > MAX_SHOWN
           ? ` (${findings.length - MAX_SHOWN} more)`
           : "";
-      return this.fail(`${shown}${more}.`, EXPECTED, found, CheckPriority.High);
+      return this.fail(
+        `${shown}${more}.${shared ? ` ${shared}` : ""}`,
+        EXPECTED,
+        found,
+        CheckPriority.High,
+      );
+    }
+
+    if (shared) {
+      return this.warn(
+        `${shared} Confirm against the edge logs how the published crawler addresses are served before treating it as cloaking.`,
+        EXPECTED,
+        found,
+        CheckPriority.Medium,
+      );
     }
 
     return this.pass(

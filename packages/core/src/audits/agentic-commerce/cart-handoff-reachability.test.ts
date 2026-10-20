@@ -182,10 +182,9 @@ describe("CartHandoffReachabilityAudit", () => {
     );
   });
 
-  // Recorded under the dossier's Deferred: walls are read from the
-  // ChatGPT-User response when it is a 200, so a challenge served only to
-  // that User-Agent fails even though the browser got the cart.
-  it("reads the wall from the ChatGPT-User response when it is a 200", async () => {
+  // A challenge served only to the unverified ChatGPT-User request, while the
+  // browser got the cart, can be impersonation defence, so it warns.
+  it("warns on a challenge page served only to the ChatGPT-User request", async () => {
     const { result } = run({
       markup: SHOPIFY,
       paths: { "/cart": {} },
@@ -197,25 +196,87 @@ describe("CartHandoffReachabilityAudit", () => {
       },
     });
     const r = await result;
-    expect(r.status).toBe(CheckStatus.Fail);
-    expect(strings(r, "failures")[0]).toMatch(
-      /^\/cart answers a request naming ChatGPT-User with /,
+    expect(r.status).toBe(CheckStatus.Warn);
+    expect(strings(r, "failures")).toEqual([]);
+    expect(r.message).toBe(
+      "/cart answers a request naming ChatGPT-User with Cloudflare Turnstile / Managed Challenge instead of the cart (Cloudflare bot challenge detected), so that request never reaches the cart document. A browser got the cart. That can be the edge's defence against an unverified request naming the agent; the real agent, from OpenAI's published ranges, may be answered differently",
     );
   });
 
-  it("fails a 403 under ChatGPT-User and names the user agent", async () => {
+  it("warns on a challenge widget served only to the ChatGPT-User request", async () => {
+    const { result } = run({
+      markup: SHOPIFY,
+      paths: { "/cart": {} },
+      agentPaths: {
+        "/cart": {
+          body: '<html><body><div class="cf-turnstile" data-sitekey="0x0000"></div><script src="https://challenges.cloudflare.com/turnstile/v0/api.js"></script></body></html>',
+        },
+      },
+    });
+    const r = await result;
+    expect(r.status).toBe(CheckStatus.Warn);
+    expect(r.message).toBe(
+      "/cart mounts Cloudflare Turnstile on the document served to a request naming ChatGPT-User, which has no readable cart content, so the challenge is the page that request has to read. A browser got the cart. That can be the edge's defence against an unverified request naming the agent; the real agent, from OpenAI's published ranges, may be answered differently",
+    );
+  });
+
+  // The probe is not the verified agent, so a refusal of it warns, the way an
+  // opaque 403 warns in edge parity.
+  it("warns on a 403 under ChatGPT-User and names the user agent", async () => {
     const { result } = run({
       markup: SHOPIFY,
       paths: { "/cart": {} },
       agentPaths: { "/cart": { status: 403, body: "" } },
     });
     const r = await result;
-    expect(r.status).toBe(CheckStatus.Fail);
-    expect(strings(r, "failures")[0]).toContain("ChatGPT-User");
-    expect(strings(r, "failures")[0]).toContain("403");
-    expect(strings(r, "failures")[0]).toBe(
-      "/cart answers 403 to a request naming ChatGPT-User from the scanner's address, so the cart refuses that User-Agent outright; the real agent, from OpenAI's published ranges, may be answered differently",
+    expect(r.status).toBe(CheckStatus.Warn);
+    expect(strings(r, "failures")).toEqual([]);
+    expect(r.message).toBe(
+      "/cart answers 403 to a request naming ChatGPT-User from the scanner's address, while a browser got 200. That can be the edge's defence against an unverified request naming the agent; the real agent, from OpenAI's published ranges, may be answered differently",
     );
+    expect(strings(r, "warnings")[0]).toBe(r.message);
+  });
+
+  // A failure beside an agent-only refusal counts the refusal, as edge and
+  // commerce parity do.
+  it("notes ambiguous agent-only findings beside a failure", async () => {
+    const { result } = run({
+      paths: {
+        "/cart": {},
+        "/checkout": {
+          finalUrl:
+            "https://example.com/account/login?checkout_url=%2Fcheckout",
+        },
+      },
+      agentPaths: { "/cart": { status: 403, body: "" } },
+    });
+    const r = await result;
+    expect(r.status).toBe(CheckStatus.Fail);
+    expect(r.message).toBe(
+      "/checkout ends at /account/login for a request naming ChatGPT-User, an account wall on the buy path: a shopper with no account cannot get past it. 1 further finding(s) only the ChatGPT-User request got are ambiguous and listed in details.warnings",
+    );
+  });
+
+  it("warns on a 429 under ChatGPT-User", async () => {
+    const { result } = run({
+      markup: SHOPIFY,
+      paths: { "/cart": {} },
+      agentPaths: { "/cart": { status: 429, body: "" } },
+    });
+    const r = await result;
+    expect(r.status).toBe(CheckStatus.Warn);
+    expect(r.message).toMatch(
+      /^\/cart answers 429 to a request naming ChatGPT-User from the scanner's address, while a browser got 200\. /,
+    );
+  });
+
+  // Compared only against a cart the browser could read: with no cart for the
+  // browser either, the refusal shows no difference.
+  it("does not compare a ChatGPT-User refusal where the browser got no cart", async () => {
+    const { result } = run({
+      agentPaths: { "/cart": { status: 403, body: "" } },
+    });
+    expect((await result).status).toBe(CheckStatus.NotApplicable);
   });
 
   it("fails a 429 under the browser user agent", async () => {
