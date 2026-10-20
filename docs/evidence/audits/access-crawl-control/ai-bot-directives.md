@@ -126,3 +126,14 @@ That is also the disposition of YouBot inside this audit. **YouBot's own contrib
 - **A 5xx robots.txt.** RFC 9309 §2.3.1.4 tells a crawler to assume a complete
   disallow when robots.txt is unreachable. This audit reports any non-200 as
   not applicable and does not grade that case.
+- **Diffbot's scoring.** The bot registry
+  (`packages/core/src/bot-registry.ts`) now records Diffbot's crawler page,
+  https://www.diffbot.com/docs/crawl/faq/robots-txt (verified 2026-10-19). It
+  names the `Diffbot` and `Diffbot-User` tokens and says crawls "adhere to a
+  site's robots.txt instructions" by default. This audit still reports Diffbot
+  as informational. Scoring it would fail sites that block it, so the change
+  needs its own review against that page.
+- **Bytespider and cohere-ai stay informational.** The registry marks both
+  `documented: false`: no operator page names either token. Under the
+  evidence rule they cannot move a score, which is already how this audit
+  treats them. They stay in the table so a site still sees its stance.

@@ -110,6 +110,9 @@ describe("AgentUaContentDivergenceDiffAudit", () => {
   it("passes when every UA is served the same main content", async () => {
     const result = await audit.audit(site({}));
     expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.message).toMatch(
+      /^All \d+ responses to a User-Agent naming an AI crawler match the browser response\.$/,
+    );
   });
 
   it("fails an agent UA served half the words, and shows the diff", async () => {
@@ -119,6 +122,9 @@ describe("AgentUaContentDivergenceDiffAudit", () => {
     );
     expect(result.status).toBe(CheckStatus.Fail);
     expect(result.found).toContain("kilo");
+    expect(result.message).toBe(
+      "8 of 8 responses to a User-Agent naming an AI crawler differ from the browser response. The probes come from the scanner's address, so this is how the site answers the User-Agent, not what the verified crawler receives.",
+    );
   });
 
   // 17 of 20 shared -> 0.85 exactly, the floor, which passes.
@@ -183,6 +189,9 @@ describe("AgentUaContentDivergenceDiffAudit", () => {
     );
     expect(result.status).toBe(CheckStatus.Pass);
     expect(result.found).toContain("bot management");
+    expect(result.found).toMatch(
+      /requests naming \S.* got a reduced page the unrecognised control User-Agent got too — bot management, not UA branching/,
+    );
   });
 
   it("passes when the only difference is a cache-varying timestamp", async () => {

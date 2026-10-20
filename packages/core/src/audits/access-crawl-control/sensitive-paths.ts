@@ -3,6 +3,7 @@ import { Audit } from "#core/audit";
 import type { CheckContext } from "#core/check-context";
 import { parseRobotsTxt, isPathAllowed } from "./_robots-txt-helpers";
 import { weightForGrade } from "#core/scorer";
+import { BotToken } from "#core/bot-registry";
 import { siteSitemapTree } from "#core/gatherers/sitemap";
 import {
   AuditTier,
@@ -29,15 +30,19 @@ import {
  * construction. `isPathAllowed` applies RFC 9309 group selection (a
  * bot-specific group wins, otherwise the `*` group) and longest-match
  * arbitration, so this never re-implements matching.
+ *
+ * The tokens are bot registry rows. PerplexityBot is a search crawler, not a
+ * training one; it belongs here because the set is about crawlers that honour
+ * path rules, and Perplexity recommends robots.txt as its control.
  */
-const AI_CRAWLER_TOKENS = [
-  "GPTBot",
-  "ClaudeBot",
-  "Applebot-Extended",
-  "meta-externalagent",
-  "Google-Extended",
-  "PerplexityBot",
-] as const;
+const AI_CRAWLER_TOKENS: readonly BotToken[] = [
+  BotToken.GPTBot,
+  BotToken.ClaudeBot,
+  BotToken.ApplebotExtended,
+  BotToken.MetaExternalAgent,
+  BotToken.GoogleExtended,
+  BotToken.PerplexityBot,
+];
 
 interface LowValueFamily {
   /** Human-readable family name, used in the report. */

@@ -6,7 +6,7 @@ slug: cart-handoff-reachability
 evidence_grade: B
 tier: scored
 disposition: "new in v2 — graduated from proposal 2026-08-23"
-reviewed: 2026-08-20
+reviewed: 2026-10-19
 graduated: 2026-08-23
 sources:
   - acp-openapi-cart
@@ -14,6 +14,10 @@ sources:
   - s18
   - openai-searchbot-ips
   - acp-architecture
+  - chromium-dash-stable
+  - s4
+  - google-verify-requests
+  - cloudflare-fake-bot-rules
 ---
 
 # Cart Handoff Reachability
@@ -49,6 +53,14 @@ Falsifiable claim: ACP 2026-04-17 adds a seller-hosted Cart API whose response c
 - **[ACP Concepts: Architecture](https://agenticcommerce.dev/docs/concepts/architecture)** — Agentic Commerce Protocol (spec, URL verified 2026-08-20)
   - Four roles: Buyer, Agent, Seller (merchant of record, implements Checkout API), Payment Provider (tokenizes credentials with allowance constraints). A negative result worth stating: the architecture documents no seller discovery mechanism — no registry, no .well-known URL, no automatic endpoint discovery. Seller onboarding is out-of-band/manual. This means any 'ACP endpoint discovery' audit check would be speculative today, and endpoint conformance testing must accept an operator-supplied base URL.
 
+## Limits
+
+- Every probe leaves the scanner's own address with ChatGPT-User in the User-Agent. It shows how the site answers a request that names ChatGPT-User. It does not show what the real ChatGPT-User receives.
+- Real bots are told apart by network or signature, not by the string. Cloudflare grants verified status to a bot that "declares who it is deterministically, through a cryptographic Web Bot Auth signature, a published IP list with a stable user-agent, or reverse DNS" ([Cloudflare verified bots policy](https://developers.cloudflare.com/bots/concepts/bot/verified-bots/policy/) (verified 2026-10-19)). OpenAI publishes one IP-range file per bot, for example https://openai.com/gptbot.json and https://openai.com/chatgpt-user.json ([OpenAI crawlers and user agents](https://developers.openai.com/api/docs/bots) (verified 2026-10-19)). Google, whose crawlers this audit does not probe, illustrates the same rule: it documents a reverse-DNS check, or a match against its published IP ranges ([Verifying Google crawlers and fetchers](https://developers.google.com/crawling/docs/crawlers-fetchers/verify-google-requests) (verified 2026-10-19)). The scanner can present none of these.
+- A CDN block of a request naming ChatGPT-User is ambiguous evidence. Without a signature, a published IP list or reverse DNS, the request is by definition not the verified bot ([Cloudflare verified bots policy](https://developers.cloudflare.com/bots/concepts/bot/verified-bots/policy/) (verified 2026-10-19)), so an edge may treat it as unknown automated traffic. Cloudflare does ship managed rules that flag an unverified request naming Googlebot or Bingbot as a fake bot ([Cloudflare fake bot managed rules](https://developers.cloudflare.com/waf/troubleshooting/fake-bot-managed-rules/) (verified 2026-10-19)). It documents no such rule for AI crawlers, and the scanner never sends either of those names. The analogy shows the mechanism exists. It is not evidence about the bots probed here. A refusal is consistent with the real bot being refused too. It does not prove it.
+- A pass does not prove access either. A rule keyed on the verified bot's identity rather than its string can refuse the real bot and still let the probe through.
+- The account-wall, challenge-page and challenge-widget checks read the ChatGPT-User response whenever it is a 200, and the browser response otherwise. A 200 challenge served only to the unverified ChatGPT-User request therefore fails, even when the browser got the cart. Each finding names whose response it read; see Deferred.
+
 ## Example failure
 
 A store's /cart renders fine but /checkout issues a 302 to /account/login?checkout_url=... because guest checkout is disabled. Feed data, policy links and structured markup all score perfectly; the agent walks the buyer to a login form for an account they do not have and the purchase dies at the last click. Variant: Cloudflare Turnstile is mounted on the checkout document only, so every other page in the audit passes cleanly.
@@ -80,6 +92,10 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
   `detectWafProtection` verdict reading the response as a challenge page fails.
   So does a widget mounted on a document under 200 characters of visible text.
   A widget on a readable cart passes, because it guards a form on the page.
+- ChatGPT-User is sent as the full string OpenAI documents (https://developers.openai.com/api/docs/bots, verified 2026-10-19).
+- The browser baseline is a Mac Chrome UA on the current Stable major, 155 (https://chromiumdash.appspot.com/fetch_releases?channel=Stable&platform=Mac&num=1, verified 2026-10-19). It was Chrome 140 before 2026-10-19.
+- Since 2026-10-19 the probe strings are read from the bot registry (`packages/core/src/bot-registry.ts`) rather than kept in the gatherer. The strings this audit sends are unchanged.
+- Since 2026-10-19 messages, titles and `details` strings say how the site answers a request whose User-Agent names a bot, never that the bot itself is blocked or sees a page. The verdicts did not change.
 
 ## Deferred
 
@@ -88,3 +104,13 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 - A store that shows the cart to anonymous buyers but demands an account at
   the payment step reads as reachable.
 - Edge blocks keyed on IP rather than UA are invisible to a UA-string probe.
+- **A 403 or 429 to the ChatGPT-User User-Agent still fails.** It can be how the
+  edge treats an unverified look-alike (Limits). The finding now says the cart
+  refused that User-Agent from the scanner's address. Moving it to a warning
+  needs the dossier revised first. Not changed in the 2026-10-19 wording patch.
+- **A challenge served only to the ChatGPT-User User-Agent fails.** The walls
+  are read from that response when it is a 200. A bot-management product that
+  answers the unverified request with a 200 challenge page, while the browser
+  gets the cart, fails as "answers a request naming ChatGPT-User with … instead
+  of the cart". Reading walls from the browser document instead would move
+  verdicts, so it needs its own change.

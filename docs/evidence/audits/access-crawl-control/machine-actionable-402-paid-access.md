@@ -6,13 +6,24 @@ slug: machine-actionable-402-paid-access
 evidence_grade: B
 tier: scored
 disposition: "new in v2 — graduated from proposal 2026-08-23"
-reviewed: 2026-08-20
+reviewed: 2026-10-19
 graduated: 2026-08-23
 sources:
+  - duckduckgo-duckassistbot
+  - meta-crawlers
+  - amazonbot-docs
+  - mistral-robots-docs
   - s5
   - s6
   - s19
   - s12
+  - s18
+  - anthropic-crawlers
+  - perplexity-crawlers-doc
+  - chromium-dash-stable
+  - s4
+  - google-verify-requests
+  - cloudflare-pay-per-crawl-verify
 ---
 
 # Machine-actionable 402 paid-access response
@@ -38,6 +49,13 @@ Every deployed paid-crawl scheme puts the price in a machine-readable slot, neve
 - **[RSL 1.0 Standard Specification](https://rslstandard.org/rsl)** — RSL Collective (spec, URL verified 2026-08-20)
   - robots.txt directive `License: https://example.com/license.xml` — "The value MUST be an absolute URI"; may be global or inside a User-agent group; multiple allowed. HTTP discovery: `Link: <https://example.com/license.xml>; rel="license"; type="application/rsl+xml"`. HTML: `<link rel="license" type="application/rsl+xml" href="...">` or inline `<script type="application/rsl+xml">`. no default/well-known location is mandated. XML: root `<rsl xmlns="https://rslstandard.org/rsl" max-age>`, `<content url required, server, encrypted>`, `<license>`, `<permits|prohibits type="usage|user|geo">`, `<payment type="purchase|subscription|crawl|use|attribution|free">`, `<amount currency=ISO4217>`, `<standard>`, `<copyright type contactEmail contactUrl>`, `<legal type="warranty|disclaimer|attestation|contact|proof">`.
 
+## Limits
+
+- Every probe leaves the scanner's own address with an AI crawler's name in the User-Agent. It shows how the site answers a request that names the AI crawler. It does not show what the real crawler receives.
+- Real bots are told apart by network or signature, not by the string. Cloudflare grants verified status to a bot that "declares who it is deterministically, through a cryptographic Web Bot Auth signature, a published IP list with a stable user-agent, or reverse DNS" ([Cloudflare verified bots policy](https://developers.cloudflare.com/bots/concepts/bot/verified-bots/policy/) (verified 2026-10-19)). OpenAI publishes one IP-range file per bot, for example https://openai.com/gptbot.json and https://openai.com/chatgpt-user.json ([OpenAI crawlers and user agents](https://developers.openai.com/api/docs/bots) (verified 2026-10-19)). Google, whose crawlers this audit does not probe, illustrates the same rule: it documents a reverse-DNS check, or a match against its published IP ranges ([Verifying Google crawlers and fetchers](https://developers.google.com/crawling/docs/crawlers-fetchers/verify-google-requests) (verified 2026-10-19)). The scanner can present none of these.
+- The probe carries no Web Bot Auth signature, so it can only read the challenge. Cloudflare answers pay-per-crawl content with a 402 and says "To access this content, you must verify your AI crawler" ([Cloudflare pay per crawl: Verify your AI crawler](https://developers.cloudflare.com/ai-crawl-control/features/pay-per-crawl/use-pay-per-crawl-as-ai-owner/verify-ai-crawler/) (verified 2026-10-19)), and that payment headers "must be included in the `signature-input` header components" ([Cloudflare pay per crawl: Crawl pages](https://developers.cloudflare.com/ai-crawl-control/features/pay-per-crawl/use-pay-per-crawl-as-ai-owner/crawl-pages/) (verified 2026-10-19)). The audit grades the 402 and its price headers. It never takes the paid path.
+- A 402 to a spoofed User-Agent is still a 402 the site chose to send. What a verified crawler would be offered on the same URL is not observed.
+
 ## Example failure
 
 A publisher enables a paid-crawl rule at their edge, but the rule is a generic custom response: `HTTP/1.1 402 Payment Required`, `content-type: text/html`, body 'Access to this content requires a licence. Contact sales@example.com.' No `crawler-price`, no `PAYMENT-REQUIRED`, no RSL link. Every crawler willing to pay treats it as an unrecoverable error and removes the URL from its frontier; the publisher earns nothing and loses the citation.
@@ -53,6 +71,13 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 - RSL is read from inline `<script type="application/rsl+xml">` blocks, not fetched. `access-crawl-control/rsl-licensing-terms-conformance` fetches the licence document. An advertised but unread licence is reported as such.
 - A `Cache-Control` that lets a shared cache store the 402 is a warning, not a failure.
 - No 402 anywhere is not applicable, so free sites are not penalised.
+- OAI-SearchBot is sent as `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36; compatible; OAI-SearchBot/1.4; +https://openai.com/searchbot`, the example OpenAI gives (https://developers.openai.com/api/docs/bots, verified 2026-10-19). Before 2026-10-19 the probe sent a bare `OAI-SearchBot/1.0` string that OpenAI does not document. GPTBot and ChatGPT-User match the same page.
+- PerplexityBot is sent as the full string Perplexity documents (https://docs.perplexity.ai/docs/resources/perplexity-crawlers, verified 2026-10-19).
+- The ClaudeBot and Claude-User strings are observed, not vendor-documented. Anthropic's crawler page names both tokens but publishes no User-Agent string (https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler, verified 2026-10-19). A finding for either reports how the site answers a request that carries that observed string.
+- Since 2026-10-19 the probe set is read from the bot registry (`packages/core/src/bot-registry.ts`): every documented row with a literal User-Agent string. That added two user-triggered fetchers. Perplexity-User is sent as `Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Perplexity-User/1.0; +https://perplexity.ai/perplexity-user)`; Perplexity says it "supports user actions within Perplexity" (https://docs.perplexity.ai/docs/resources/perplexity-crawlers, verified 2026-10-19). MistralAI-User is sent as `Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; MistralAI-User/1.0; +https://docs.mistral.ai/robots)`, which Mistral labels the full user-agent string of the fetcher that answers a user's question in Vibe (https://docs.mistral.ai/robots, verified 2026-10-19). Both strings are copied verbatim. A block of either now counts the same way a ChatGPT-User block already did. Each costs one request per probed URL.
+- The other documented user-triggered fetchers are not probed, because no literal string exists. Amazon's Amzn-User string carries a `Chrome/W.X.Y.Z` placeholder (https://developer.amazon.com/amazonbot, verified 2026-10-19). Meta says its log entries "will be similar to" `meta-externalfetcher/1.1 (+/documentation/sharing/webmasters/web-crawlers)` (https://developers.facebook.com/docs/sharing/webmasters/web-crawlers/, verified 2026-10-19). Filling in either would invent a string. DuckAssistBot is not probed: DuckDuckGo does not say its fetches are user-triggered.
+- The browser baseline is a Mac Chrome UA on the current Stable major, 155 (https://chromiumdash.appspot.com/fetch_releases?channel=Stable&platform=Mac&num=1, verified 2026-10-19). It was Chrome 140 before 2026-10-19.
+- Since 2026-10-19 messages, titles and `details` strings say how the site answers a request whose User-Agent names a bot, never that the bot itself is blocked or sees a page. The verdicts did not change.
 
 ## Deferred
 

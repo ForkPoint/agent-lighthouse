@@ -4,6 +4,7 @@
 
 import type { RobotsGroup, RobotsRule } from "#core/gatherers/robots";
 import { isPathAllowed, matchesUserAgent } from "#core/gatherers/robots";
+import { type BotEntry, BotPurpose, botsByPurpose } from "#core/bot-registry";
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -55,27 +56,6 @@ export function isAllowed(
 }
 
 /**
- * Check 2.3 needs to look at both "anthropic-ai" and "ClaudeBot" user-agents.
- */
-export function isAnthropicAllowed(groups: RobotsGroup[]): {
-  explicitly: boolean;
-  allowed: boolean;
-} {
-  const result1 = isAllowed(groups, "anthropic-ai");
-  const result2 = isAllowed(groups, "ClaudeBot");
-
-  // If both have explicit rules, pass if either alias is allowed
-  if (result1.explicitly && result2.explicitly) {
-    return { explicitly: true, allowed: result1.allowed || result2.allowed };
-  }
-  if (result1.explicitly) return result1;
-  if (result2.explicitly) return result2;
-
-  // Neither is explicit — fall back (both return the same wildcard result)
-  return result1;
-}
-
-/**
  * Checks whether specific sensitive paths are disallowed for the wildcard
  * user-agent. Returns an object with the paths that are and aren't protected.
  */
@@ -113,7 +93,7 @@ export interface CrawlerBot {
   botName: string;
   displayName: string;
   category: CrawlerPurpose;
-  /** Optional alias bot names to also check (e.g. ClaudeBot for anthropic-ai) */
+  /** Optional alias bot names to also check. No current row needs one. */
   aliases?: string[];
   /**
    * True for a usage-control token such as Google-Extended: robots.txt rules
@@ -122,110 +102,41 @@ export interface CrawlerBot {
   controlToken?: boolean;
 }
 
-export const TRAINING_CRAWLERS: CrawlerBot[] = [
-  {
-    botName: "GPTBot",
-    displayName: "GPTBot",
-    category: CrawlerPurpose.Training,
-  },
-  {
-    botName: "Google-Extended",
-    displayName: "Google-Extended",
-    category: CrawlerPurpose.Training,
-  },
-  {
-    botName: "anthropic-ai",
-    displayName: "anthropic-ai / ClaudeBot",
-    category: CrawlerPurpose.Training,
-    aliases: ["ClaudeBot"],
-  },
-  {
-    botName: "PerplexityBot",
-    displayName: "PerplexityBot",
-    category: CrawlerPurpose.Training,
-  },
-  {
-    botName: "Applebot-Extended",
-    displayName: "Applebot-Extended",
-    category: CrawlerPurpose.Training,
-  },
-  { botName: "CCBot", displayName: "CCBot", category: CrawlerPurpose.Training },
-  {
-    botName: "Meta-ExternalAgent",
-    displayName: "Meta-ExternalAgent",
-    category: CrawlerPurpose.Training,
-  },
-  {
-    botName: "Amazonbot",
-    displayName: "Amazonbot",
-    category: CrawlerPurpose.Training,
-  },
-  {
-    botName: "Bytespider",
-    displayName: "Bytespider",
-    category: CrawlerPurpose.Training,
-  },
-  {
-    botName: "cohere-ai",
-    displayName: "cohere-ai",
-    category: CrawlerPurpose.Training,
-  },
-  {
-    botName: "YouBot",
-    displayName: "YouBot",
-    category: CrawlerPurpose.Training,
-  },
-  {
-    botName: "Diffbot",
-    displayName: "Diffbot",
-    category: CrawlerPurpose.Training,
-  },
-  {
-    botName: "AI2Bot",
-    displayName: "AI2Bot",
-    category: CrawlerPurpose.Training,
-  },
-];
+/** A registry row as one of the two robots.txt crawler tables shows it. */
+function asCrawler(bot: BotEntry, category: CrawlerPurpose): CrawlerBot {
+  const row: CrawlerBot = {
+    botName: bot.token,
+    displayName: bot.token,
+    category,
+  };
+  if (bot.controlToken) row.controlToken = true;
+  return row;
+}
 
-export const REALTIME_CRAWLERS: CrawlerBot[] = [
-  {
-    botName: "ChatGPT-User",
-    displayName: "ChatGPT-User",
-    category: CrawlerPurpose.Realtime,
-  },
-  {
-    botName: "Claude-User",
-    displayName: "Claude-User",
-    category: CrawlerPurpose.Realtime,
-  },
-  {
-    botName: "OAI-SearchBot",
-    displayName: "OAI-SearchBot",
-    category: CrawlerPurpose.Realtime,
-  },
-  {
-    botName: "Meta-ExternalFetcher",
-    displayName: "Meta-ExternalFetcher",
-    category: CrawlerPurpose.Realtime,
-  },
-  {
-    botName: "Bravebot",
-    displayName: "Bravebot",
-    category: CrawlerPurpose.Realtime,
-  },
-  {
-    botName: "DuckAssistBot",
-    displayName: "DuckAssistBot",
-    category: CrawlerPurpose.Realtime,
-  },
-  {
-    botName: "MistralAI-User",
-    displayName: "MistralAI-User",
-    category: CrawlerPurpose.Realtime,
-  },
-  {
-    botName: "Claude-SearchBot",
-    displayName: "Claude-SearchBot",
-    category: CrawlerPurpose.Realtime,
-  },
-];
+/**
+ * Robots.txt product tokens of crawlers whose operator says the content they
+ * fetch may train AI models, read from the bot registry
+ * (`packages/core/src/bot-registry.ts`).
+ *
+ * Only documented rows count. Bytespider and cohere-ai have no operator page,
+ * so under the evidence rule a directive naming them claims nothing about a
+ * documented consumer and they are not read here (see the agent-governance
+ * dossier). PerplexityBot, YouBot and Diffbot are not here either: their
+ * operators document them as search crawlers, not training crawlers.
+ */
+export const TRAINING_CRAWLERS: CrawlerBot[] = botsByPurpose(
+  BotPurpose.Training,
+).map((bot) => asCrawler(bot, CrawlerPurpose.Training));
+
+/**
+ * Robots.txt product tokens of search crawlers and user-triggered fetchers
+ * that serve live answers, read from the bot registry: every documented row
+ * whose purpose is an AI search index or a user-requested fetch.
+ *
+ * `Bravebot` is not in the registry: Brave documents that its crawler "does
+ * not advertise a differentiated user agent" and follows the Googlebot rules.
+ */
+export const REALTIME_CRAWLERS: CrawlerBot[] = botsByPurpose(
+  BotPurpose.AiSearch,
+  BotPurpose.UserFetch,
+).map((bot) => asCrawler(bot, CrawlerPurpose.Realtime));

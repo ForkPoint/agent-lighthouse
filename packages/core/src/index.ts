@@ -30,6 +30,14 @@ export {
 } from "./gatherers/ua-parity";
 export type { UaProbe, BlockClass } from "./gatherers/ua-parity";
 export {
+  BOT_REGISTRY,
+  BotPurpose,
+  BotToken,
+  botEntry,
+  botsByPurpose,
+} from "./bot-registry";
+export type { BotEntry, ProbeUserAgent } from "./bot-registry";
+export {
   collectSitemapEntries,
   sampleEntries,
   isW3CDateTime,

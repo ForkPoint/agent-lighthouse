@@ -6,7 +6,7 @@ slug: ai-usage-signal-coherence-across-channels
 evidence_grade: B
 tier: scored
 disposition: "new in v2 — graduated from proposal 2026-08-23"
-reviewed: 2026-08-20
+reviewed: 2026-10-19
 graduated: 2026-08-23
 sources:
   - s7
@@ -15,6 +15,11 @@ sources:
   - s11
   - s12
   - w3c-tdmrep-final-report
+  - anthropic-crawlers
+  - perplexity-crawlers-doc
+  - mistral-robots-docs
+  - youbot-docs
+  - diffbot-robots-txt
 ---
 
 # AI usage signal coherence across channels
@@ -69,6 +74,8 @@ A site that publishes no AI-usage signal in any channel is not applicable: with 
 - Path scopes overlap by prefix: two declarations are compared when either prefix contains the other.
 - `Content-Signal` maps into the same category space (`ai-train` to `train-ai`, `search`, `ai-input`). A line inside a named group binds only that group.
 - A `Content-Signal` block above every directive the operator wrote is reported as an edge override, with its own remedy.
+- A robots.txt root block counts as a `train-ai` denial only for tokens whose operator says the crawler collects training data: the `TRAINING_CRAWLERS` table in `_robots-txt-helpers.ts`. Since 2026-10-19 that table names `ClaudeBot`, the token Anthropic documents (https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler, verified 2026-10-19), instead of the undocumented `anthropic-ai`. It adds `MistralAI-Training` (https://docs.mistral.ai/robots, verified 2026-10-19). It drops PerplexityBot, which "is not used to crawl content for AI foundation models" (https://docs.perplexity.ai/docs/resources/perplexity-crawlers, verified 2026-10-19). It drops YouBot, documented as a search crawler (https://you.com/docs/youbot, verified 2026-10-19). It drops Diffbot, which "does not crawl pages for training generative AI foundation models" (https://www.diffbot.com/docs/crawl/faq/robots-txt, verified 2026-10-19). A block of one of those three is no longer read as a training denial.
+- The `TRAINING_CRAWLERS` table is read from the bot registry, `packages/core/src/bot-registry.ts`, since 2026-10-19. The registry counts only rows an operator page documents. `Bytespider` and `cohere-ai` have no operator page, so a block of either is no longer read as a `train-ai` denial. The scenario this closes: `User-agent: Bytespider` / `Disallow: /` beside `Content-Usage: train-ai=y` used to fail on a contradiction no operator documents. A test pins the pass.
 - Silence is not applicable. No source documents a cost for declaring nothing. Notes such as a non-array `tdmrep.json` still ride in `details.notes`.
 
 ## Deferred

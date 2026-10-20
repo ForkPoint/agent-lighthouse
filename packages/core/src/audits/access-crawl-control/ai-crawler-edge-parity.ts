@@ -6,6 +6,11 @@
 // on its own. A site can publish "Allow: /" for PerplexityBot and still answer
 // every request carrying that UA with a challenge. The operator reads only the
 // first of those two, which is why this failure is invisible from the inside.
+//
+// What a probe shows: how the site answers a request from the scanner's own
+// address whose User-Agent names the crawler. Real crawlers are verified by
+// published IP range or Web Bot Auth signature, which the scanner cannot
+// present, so no message here says what the real crawler receives.
 import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
 import { weightForGrade } from "#core/scorer";
@@ -39,8 +44,10 @@ const MAX_NAMED = 4;
  * Block classes that are decidable from the response alone.
  *
  * A challenge header, a crawler price and a proof-of-work interstitial each say
- * what they are; a truncated 200 is measurable. None of them can be explained by
- * the scanner's own missing source IP.
+ * what they are; a truncated 200 is measurable. Each still describes the answer
+ * to a request that names the crawler from the scanner's address. A challenge
+ * can also be how the edge treats an unverified look-alike, which the dossier
+ * records under Deferred rather than scoring differently today.
  */
 const HARD: Partial<Record<BlockClass, (probe: UaProbe) => string>> = {
   "cf-challenge": (probe) => `Cloudflare challenge (${probe.evidence})`,
@@ -56,6 +63,13 @@ const HARD: Partial<Record<BlockClass, (probe: UaProbe) => string>> = {
  */
 const AMBIGUITY =
   "The scanner sends the published crawler User-Agent without the matching source IP, so an opaque 403 or 429 cannot be told apart from correct impersonation defence — confirm against the edge logs before changing anything.";
+
+/**
+ * Appended to every finding: the probe reports how the site answers the
+ * User-Agent, not what the verified crawler receives.
+ */
+const SCOPE =
+  "These probes come from the scanner's address without the crawler's published IP range or Web Bot Auth signature, so they show how the site answers a request that names the crawler, not what the real crawler receives.";
 
 function labelFor(token: string): string {
   return AI_CRAWLER_UAS.find((agent) => agent.token === token)?.label ?? token;
@@ -96,7 +110,7 @@ function lines(
 ): string[] {
   return [...groups.values()].map(
     ({ url, cause, labels }) =>
-      `${labels.length} crawler(s) (${nameList(labels)}) at ${url}: ${cause}`,
+      `${labels.length} crawler User-Agent(s) (${nameList(labels)}) at ${url}: ${cause}`,
   );
 }
 
@@ -106,7 +120,7 @@ function isBlocked(probe: UaProbe): boolean {
 }
 
 const EXPECTED =
-  "every AI crawler robots.txt admits gets the same response from the edge that a browser gets, on the homepage, on sampled content URLs and on /llms.txt";
+  "a request whose User-Agent names an AI crawler robots.txt admits gets the same response from the edge that a browser gets, on the homepage, on sampled content URLs and on /llms.txt";
 
 const SAMPLE = `# Cloudflare: allow the verified AI crawlers you admit in robots.txt
 # Security > Bots > Verified bots, or a WAF skip rule:
@@ -120,10 +134,12 @@ export class AiCrawlerEdgeParityAudit extends Audit {
   static override meta: AuditMeta = {
     id: "access-crawl-control/ai-crawler-edge-parity",
     category: "access-crawl-control",
-    title: "AI crawlers get the same response from the edge that browsers get",
-    failureTitle: "The edge blocks AI crawlers that robots.txt admits",
+    title:
+      "Requests naming an AI crawler get the same edge response as a browser",
+    failureTitle:
+      "The edge answers differently when the User-Agent names an AI crawler robots.txt admits",
     description:
-      "Fetches the homepage, sampled content URLs and /llms.txt once as a browser and once per published AI crawler User-Agent, then classifies every difference: Cloudflare challenge, pay-per-crawl 402, proof-of-work wall, rate limit, opaque 403, or a 200 carrying a fraction of the text. Reports per crawler and per URL, and scores a block only where robots.txt said the crawler was welcome.",
+      "Fetches the homepage, sampled content URLs and /llms.txt once as a browser and once per published AI crawler User-Agent, then classifies every difference: Cloudflare challenge, pay-per-crawl 402, proof-of-work wall, rate limit, opaque 403, or a 200 carrying a fraction of the text. Reports per crawler and per URL, and scores a difference only where robots.txt admits that crawler. The probes come from the scanner's address, so they show how the site answers a request that names the crawler, not what the real crawler, verified by IP range or signature, receives.",
     scoreDisplayMode: ScoreDisplayMode.Ternary,
     weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
     evidenceGrade: EvidenceGrade.A,
@@ -140,7 +156,7 @@ export class AiCrawlerEdgeParityAudit extends Audit {
     defaultPriority: CheckPriority.Critical,
     guidance: {
       impact:
-        'robots.txt (RFC 9309) is advisory metadata parsed by the crawler; the edge access decision is enforced independently by the WAF. A site can therefore publish "User-agent: PerplexityBot / Allow: /" and return a non-200 to every request carrying that user agent, and the operator — who reads their own robots.txt — believes they are open while the crawler never sees a byte. Falsifiable: fetch URL U with a browser UA and with crawler UA C; if robots.txt permits C for U and the C request is not 2xx while the browser request is 200, the two policy layers contradict each other. Cloudflare makes one branch deterministic — a challenge always carries cf-mitigated: challenge — and a 200 whose main-content text is under 40% of the baseline is a block wearing a 200.',
+        'robots.txt (RFC 9309) is advisory metadata parsed by the crawler; the edge access decision is enforced independently by the WAF. A site can therefore publish "User-agent: PerplexityBot / Allow: /" and return a non-200 to every request carrying that user agent, and the operator — who reads their own robots.txt — believes they are open while the edge refuses every request that names the crawler. Falsifiable: fetch URL U with a browser UA and with crawler UA C; if robots.txt permits C for U and the C request is not 2xx while the browser request is 200, the two policy layers contradict each other. Cloudflare makes one branch deterministic — a challenge always carries cf-mitigated: challenge — and a 200 whose main-content text is under 40% of the baseline is a block wearing a 200.',
       fix: "Decide the policy once, and make the edge say what robots.txt says. On Cloudflare, add the AI crawlers you admit to the verified-bot allowance (Security > Bots) or a WAF skip rule so managed challenges, bot fight mode and rate limiting do not apply to them; on other CDNs, allowlist the published crawler IP ranges. Then verify from outside with curl -A using each published User-Agent, because the dashboard shows the rule, not the answer. Where you mean to block a crawler, say so in robots.txt too — a consistent no is a legitimate posture, and this audit scores it as one.",
       code: SAMPLE,
       effort: FixEffort.Complex,
@@ -199,8 +215,15 @@ export class AiCrawlerEdgeParityAudit extends Audit {
     >();
     const consistent: string[] = [];
     const perCrawler = new Map<string, { blocked: number; probed: number }>();
+    // URLs where the browser itself got a non-2xx. The mechanism compares a
+    // crawler answer against a browser 200, so these show no difference.
+    const unreadable = new Set<string>();
 
     for (const probe of probes) {
+      if (probe.baselineStatus < 200 || probe.baselineStatus >= 300) {
+        unreadable.add(probe.url);
+        continue;
+      }
       const label = labelFor(probe.token);
       const entry = perCrawler.get(label) ?? { blocked: 0, probed: 0 };
       entry.probed += 1;
@@ -241,10 +264,14 @@ export class AiCrawlerEdgeParityAudit extends Audit {
     const summary = [...perCrawler.entries()]
       .map(
         ([label, entry]) =>
-          `${label}: ${entry.blocked}/${entry.probed} blocked`,
+          `${label}: ${entry.blocked}/${entry.probed} answered differently`,
       )
       .join("; ");
-    const found = `${urls.length} URL(s) probed with ${tokens.length} crawler UA(s); ${summary}`;
+    const skipped =
+      unreadable.size > 0
+        ? `; ${unreadable.size} URL(s) not compared, because the browser got a non-2xx there too: ${[...unreadable].slice(0, MAX_SHOWN).join(", ")}`
+        : "";
+    const found = `${urls.length} URL(s) probed with ${tokens.length} crawler UA(s) from the scanner's address; ${summary}${skipped}`;
 
     const hard = lines(hardGroups);
     const ambiguous = lines(ambiguousGroups);
@@ -258,7 +285,7 @@ export class AiCrawlerEdgeParityAudit extends Audit {
           ? ` ${ambiguous.length} further finding(s) are ambiguous. ${AMBIGUITY}`
           : "";
       return this.fail(
-        `robots.txt admits these crawlers and the edge does not: ${shown}${more}.${note}`,
+        `robots.txt admits these crawlers, and the edge answers differently when the User-Agent names them: ${shown}${more}.${note} ${SCOPE}`,
         EXPECTED,
         found,
         CheckPriority.Critical,
@@ -267,7 +294,7 @@ export class AiCrawlerEdgeParityAudit extends Audit {
 
     if (ambiguous.length > 0) {
       return this.warn(
-        `${ambiguous.slice(0, MAX_SHOWN).join("; ")}. ${AMBIGUITY}`,
+        `When the User-Agent names these crawlers, the edge answers differently: ${ambiguous.slice(0, MAX_SHOWN).join("; ")}. ${AMBIGUITY}`,
         EXPECTED,
         found,
         CheckPriority.Medium,
@@ -276,10 +303,10 @@ export class AiCrawlerEdgeParityAudit extends Audit {
 
     const consistentNote =
       consistent.length > 0
-        ? ` ${consistent.length} probe(s) were refused to crawlers robots.txt also turns away, which is a consistent posture rather than a defect.`
+        ? ` ${consistent.length} probe(s) naming crawlers robots.txt also turns away were refused, which is a consistent posture rather than a defect.`
         : "";
     return this.pass(
-      `Every crawler robots.txt admits got the same response a browser got across ${urls.length} URL(s).${consistentNote}`,
+      `Every request naming a crawler robots.txt admits got the same response a browser got across ${urls.length} URL(s).${consistentNote}`,
       EXPECTED,
       found,
     );

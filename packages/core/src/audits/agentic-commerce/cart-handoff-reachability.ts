@@ -12,6 +12,7 @@ import {
   BASELINE_UA,
   sharedUaFetch,
 } from "#core/gatherers/ua-parity";
+import { BotToken } from "#core/bot-registry";
 import { parseRobots, isPathAllowed } from "#core/gatherers/robots";
 import { detectWafProtection } from "#core/waf-detector";
 import {
@@ -49,10 +50,18 @@ const CHALLENGE = [
   { label: "a data-sitekey widget", pattern: /data-sitekey\s*=/i },
 ];
 
-/** The shopper's agent: the UA that matters on a buy path. */
-const AGENT_TOKEN = "chatgpt-user";
+/**
+ * The shopper's agent: the UA that matters on a buy path. The request comes
+ * from the scanner's address, not OpenAI's published ranges, so a finding says
+ * how the cart answers a request that names ChatGPT-User, not what the real
+ * agent receives.
+ */
+const AGENT_TOKEN = BotToken.ChatGPTUser.toLowerCase();
 /** Text this short means the document rendered nothing without JavaScript. */
 const MIN_TEXT = 200;
+
+/** The baseline label in findings. */
+const BROWSER = "a browser";
 
 const AGENT_UA =
   AI_CRAWLER_UAS.find((agent) => agent.token === AGENT_TOKEN)?.ua ??
@@ -90,7 +99,7 @@ export class CartHandoffReachabilityAudit extends Audit {
     title: "Cart Handoff Reachability",
     failureTitle: "Cart Handoff Reachability",
     description:
-      "Reads the storefront cart and checkout paths — the URL an agent hands a buyer to, whether through an ACP `continue_url` or a computer-use agent driving the storefront — as a browser and as ChatGPT-User, and reports an account wall, a bot challenge on the checkout document, or a hard block. Read-only: every request is a GET, nothing is ever added to a cart.",
+      "Reads the storefront cart and checkout paths — the URL an agent hands a buyer to, whether through an ACP `continue_url` or a computer-use agent driving the storefront — with a browser User-Agent and with the ChatGPT-User User-Agent, and reports an account wall, a bot challenge on the checkout document, or a hard block. Read-only: every request is a GET, nothing is ever added to a cart.",
     scoreDisplayMode: ScoreDisplayMode.Ternary,
     tier: AuditTier.Scored,
     evidenceGrade: EvidenceGrade.B,
@@ -150,14 +159,17 @@ export class CartHandoffReachabilityAudit extends Audit {
       if (!browser && !agent) continue;
 
       const seen: Array<[string, FetchResult | undefined]> = [
-        ["a browser", browser],
-        ["ChatGPT-User", agent],
+        [BROWSER, browser],
+        ["a request naming ChatGPT-User", agent],
       ];
       const statuses = seen
         .filter(
           (entry): entry is [string, FetchResult] => entry[1] !== undefined,
         )
-        .map(([label, result]) => `${label} ${result.status}`);
+        .map(
+          ([label, result]) =>
+            `${label === BROWSER ? "a browser" : "ChatGPT-User UA"} ${result.status}`,
+        );
       if (statuses.length > 0)
         reachable.push(`${path}: ${statuses.join(", ")}`);
 
@@ -165,7 +177,9 @@ export class CartHandoffReachabilityAudit extends Audit {
         if (!result) continue;
         if (result.status === 403 || result.status === 429) {
           failures.push(
-            `${path} answers ${result.status} to ${label}, so the handoff is blocked outright`,
+            label !== BROWSER
+              ? `${path} answers ${result.status} to ${label} from the scanner's address, so the cart refuses that User-Agent outright; the real agent, from OpenAI's published ranges, may be answered differently`
+              : `${path} answers ${result.status} to ${label}, so the handoff is blocked outright`,
           );
         }
       }
@@ -173,6 +187,10 @@ export class CartHandoffReachabilityAudit extends Audit {
       const document = agent && agent.status === 200 ? agent : browser;
       if (!document || document.status === 404) continue;
       answered += 1;
+      // The checks below read the ChatGPT-User response whenever it is a 200,
+      // so each finding names whose response it read.
+      const reader =
+        document === agent ? "a request naming ChatGPT-User" : "a browser";
 
       const finalPath = (() => {
         try {
@@ -183,7 +201,7 @@ export class CartHandoffReachabilityAudit extends Audit {
       })();
       if (LOGIN_PATH.test(finalPath)) {
         failures.push(
-          `${path} ends at ${finalPath}, an account wall on the buy path: a shopper with no account cannot get past it`,
+          `${path} ends at ${finalPath} for ${reader}, an account wall on the buy path: a shopper with no account cannot get past it`,
         );
         continue;
       }
@@ -197,7 +215,7 @@ export class CartHandoffReachabilityAudit extends Audit {
           : null;
       if (wall?.isBlocked && !wall.isRateLimit) {
         failures.push(
-          `${path} answers with ${wall.name} instead of the cart (${wall.reason}), so an agent never reaches the document`,
+          `${path} answers ${reader} with ${wall.name} instead of the cart (${wall.reason}), so that request never reaches the cart document`,
         );
         continue;
       }
@@ -208,7 +226,7 @@ export class CartHandoffReachabilityAudit extends Audit {
       const challenge = challengeIn(document.body);
       if (challenge && textLength(document.body) < MIN_TEXT) {
         failures.push(
-          `${path} mounts ${challenge} on a document with no readable cart content, so the challenge is the page an agent has to read`,
+          `${path} mounts ${challenge} on the document served to ${reader}, which has no readable cart content, so the challenge is the page that request has to read`,
         );
         continue;
       }
@@ -244,7 +262,7 @@ export class CartHandoffReachabilityAudit extends Audit {
     };
     const found = [
       `platform ${platform ?? "unknown"}`,
-      `${probed} path(s) probed as a browser and as ChatGPT-User`,
+      `${probed} path(s) probed with a browser and a ChatGPT-User User-Agent`,
       `${answered} answering`,
       disallowed.length > 0
         ? `${disallowed.length} disallowed by robots.txt`

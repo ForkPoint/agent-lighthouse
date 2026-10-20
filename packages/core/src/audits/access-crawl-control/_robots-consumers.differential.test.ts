@@ -77,10 +77,10 @@ const FIXTURES: Fixture[] = [
   },
   {
     name: "mixed-case-tokens",
-    body: "user-agent: gptbot\ndisallow: /\n\nUser-Agent: ANTHROPIC-AI\nAllow: /",
+    body: "user-agent: gptbot\ndisallow: /\n\nUser-Agent: CLAUDEBOT\nAllow: /",
   },
   {
-    name: "anthropic-alias-only",
+    name: "claudebot-only",
     body: "User-agent: ClaudeBot\nDisallow: /\n\nUser-agent: *\nAllow: /",
   },
   {
@@ -244,6 +244,21 @@ describe("robots.txt consumers — shared-gatherer differential", () => {
 // move from `warn` to `pass`; the four with no readable robots.txt move from
 // `warn` to `na`; the three that block a scored bot stay `fail`. No other
 // audit's rows moved.
+// Regenerated deliberately (2026-10-19): the crawler tables in
+// `_robots-txt-helpers.ts` now follow the vendors' crawler pages. Anthropic's
+// row is `ClaudeBot` alone, so `anthropic-ai` no longer counts as a training
+// crawler (`mixed-case-tokens`, `claudebot-only`). YouBot moved from the
+// training table to the live table, because You.com documents it as its search
+// crawler: `youbot-blocked` moves from `warn` to `pass`, and
+// `youbot-and-ai2bot-explicit` keeps `warn` with a message that no longer says
+// live agents are unnamed. Only agent-governance rows moved.
+// Regenerated deliberately (2026-10-19, review of the crawler-table change):
+// the `anthropic-alias-only` fixture is renamed `claudebot-only`, since its
+// body names ClaudeBot. `mixed-case-tokens` now writes `CLAUDEBOT` instead of
+// `ANTHROPIC-AI`, so case-folding is tested on the Anthropic row again. Its
+// agent-governance row now counts ClaudeBot beside GPTBot, and its
+// anthropic-ai row reads ClaudeBot's own group. The thin-both warning on
+// `youbot-and-ai2bot-explicit` now names the thin side. No other rows moved.
 const BASELINE: Record<string, Record<string, Row>> = {
   "no-blanket-block": {
     missing: {
@@ -336,7 +351,7 @@ const BASELINE: Record<string, Record<string, Row>> = {
       priority: CheckPriority.Critical,
       details: "{}",
     },
-    "anthropic-alias-only": {
+    "claudebot-only": {
       status: CheckStatus.Pass,
       score: 1,
       message: "No blanket Disallow: / found for User-agent: *.",
@@ -506,20 +521,20 @@ const BASELINE: Record<string, Record<string, Row>> = {
       score: 0.5,
       message:
         "Only training crawlers are explicitly governed in robots.txt \u2014 no rules for live conversational agents.",
-      found: "Training: GPTBot, anthropic-ai / ClaudeBot; Realtime: none",
+      found: "Training: GPTBot, ClaudeBot; Realtime: none",
       priority: CheckPriority.Medium,
       details:
-        '{"trainingAgents":["GPTBot","anthropic-ai / ClaudeBot"],"realtimeAgents":[],"hasCatchAll":false}',
+        '{"trainingAgents":["GPTBot","ClaudeBot"],"realtimeAgents":[],"hasCatchAll":false}',
     },
-    "anthropic-alias-only": {
+    "claudebot-only": {
       status: CheckStatus.Warn,
       score: 0.5,
       message:
         "Only training crawlers are explicitly governed in robots.txt \u2014 no rules for live conversational agents.",
-      found: "Training: anthropic-ai / ClaudeBot; Realtime: none",
+      found: "Training: ClaudeBot; Realtime: none",
       priority: CheckPriority.Medium,
       details:
-        '{"trainingAgents":["anthropic-ai / ClaudeBot"],"realtimeAgents":[],"hasCatchAll":true}',
+        '{"trainingAgents":["ClaudeBot"],"realtimeAgents":[],"hasCatchAll":true}',
     },
     "comments-and-crlf": {
       status: CheckStatus.NotApplicable,
@@ -581,21 +596,21 @@ const BASELINE: Record<string, Record<string, Row>> = {
       status: CheckStatus.Warn,
       score: 0.5,
       message:
-        "Only training crawlers are explicitly governed in robots.txt \u2014 no rules for live conversational agents.",
-      found: "Training: YouBot, AI2Bot; Realtime: none",
+        "robots.txt names both training crawlers and live conversational agents under the same policy, but only 1 training crawler and 1 live conversational agent, too few to separate the two.",
+      found: "Training: AI2Bot; Realtime: YouBot",
       priority: CheckPriority.Medium,
       details:
-        '{"trainingAgents":["YouBot","AI2Bot"],"realtimeAgents":[],"hasCatchAll":true}',
+        '{"trainingAgents":["AI2Bot"],"realtimeAgents":["YouBot"],"hasCatchAll":true}',
     },
     "youbot-blocked": {
-      status: CheckStatus.Warn,
-      score: 0.5,
+      status: CheckStatus.Pass,
+      score: 1,
       message:
-        "Only training crawlers are explicitly governed in robots.txt \u2014 no rules for live conversational agents.",
-      found: "Training: YouBot, AI2Bot; Realtime: none",
+        "Granular agentic governance: 1 training crawler(s) and 1 live agent(s) explicitly named with different policies.",
+      found: "Training: AI2Bot; Realtime: YouBot",
       priority: CheckPriority.Medium,
       details:
-        '{"trainingAgents":["YouBot","AI2Bot"],"realtimeAgents":[],"hasCatchAll":false}',
+        '{"trainingAgents":["AI2Bot"],"realtimeAgents":["YouBot"],"hasCatchAll":false}',
     },
   },
   "crawl-delay": {
@@ -687,7 +702,7 @@ const BASELINE: Record<string, Record<string, Row>> = {
       priority: CheckPriority.High,
       details: "{}",
     },
-    "anthropic-alias-only": {
+    "claudebot-only": {
       status: CheckStatus.NotApplicable,
       score: 0,
       message: "robots.txt sets no Crawl-delay, so there is nothing to judge.",
@@ -804,7 +819,7 @@ const BASELINE: Record<string, Record<string, Row>> = {
       message:
         "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
-        "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
+        "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — Diffbot says its crawls follow robots.txt by default; not scored pending review against its crawler page)",
       priority: CheckPriority.Medium,
       details: "{}",
     },
@@ -814,7 +829,7 @@ const BASELINE: Record<string, Record<string, Row>> = {
       message:
         "YouBot, AI2Bot are blocked by robots.txt — the documented consumer path is closed.",
       found:
-        "YouBot: blocked (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: blocked (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: blocked (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: blocked (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: blocked (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
+        "YouBot: blocked (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: blocked (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: blocked (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: blocked (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: blocked (informational — Diffbot says its crawls follow robots.txt by default; not scored pending review against its crawler page)",
       priority: CheckPriority.Medium,
       details: "{}",
     },
@@ -824,7 +839,7 @@ const BASELINE: Record<string, Record<string, Row>> = {
       message:
         "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
-        "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
+        "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — Diffbot says its crawls follow robots.txt by default; not scored pending review against its crawler page)",
       priority: CheckPriority.Medium,
       details: "{}",
     },
@@ -834,7 +849,7 @@ const BASELINE: Record<string, Record<string, Row>> = {
       message:
         "YouBot, AI2Bot are blocked by robots.txt — the documented consumer path is closed.",
       found:
-        "YouBot: blocked (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: blocked (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: blocked (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: blocked (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: blocked (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
+        "YouBot: blocked (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: blocked (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: blocked (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: blocked (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: blocked (informational — Diffbot says its crawls follow robots.txt by default; not scored pending review against its crawler page)",
       priority: CheckPriority.Medium,
       details: "{}",
     },
@@ -844,7 +859,7 @@ const BASELINE: Record<string, Record<string, Row>> = {
       message:
         "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
-        "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
+        "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — Diffbot says its crawls follow robots.txt by default; not scored pending review against its crawler page)",
       priority: CheckPriority.Medium,
       details: "{}",
     },
@@ -854,7 +869,7 @@ const BASELINE: Record<string, Record<string, Row>> = {
       message:
         "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
-        "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
+        "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — Diffbot says its crawls follow robots.txt by default; not scored pending review against its crawler page)",
       priority: CheckPriority.Medium,
       details: "{}",
     },
@@ -864,17 +879,17 @@ const BASELINE: Record<string, Record<string, Row>> = {
       message:
         "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group and robots.txt has no catch-all group, so nothing restricts them.",
       found:
-        "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
+        "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — Diffbot says its crawls follow robots.txt by default; not scored pending review against its crawler page)",
       priority: CheckPriority.Medium,
       details: "{}",
     },
-    "anthropic-alias-only": {
+    "claudebot-only": {
       status: CheckStatus.Pass,
       score: 1,
       message:
         "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
-        "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
+        "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — Diffbot says its crawls follow robots.txt by default; not scored pending review against its crawler page)",
       priority: CheckPriority.Medium,
       details: "{}",
     },
@@ -884,7 +899,7 @@ const BASELINE: Record<string, Record<string, Row>> = {
       message:
         "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
-        "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
+        "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — Diffbot says its crawls follow robots.txt by default; not scored pending review against its crawler page)",
       priority: CheckPriority.Medium,
       details: "{}",
     },
@@ -894,7 +909,7 @@ const BASELINE: Record<string, Record<string, Row>> = {
       message:
         "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
-        "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
+        "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — Diffbot says its crawls follow robots.txt by default; not scored pending review against its crawler page)",
       priority: CheckPriority.Medium,
       details: "{}",
     },
@@ -904,7 +919,7 @@ const BASELINE: Record<string, Record<string, Row>> = {
       message:
         "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
-        "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
+        "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — Diffbot says its crawls follow robots.txt by default; not scored pending review against its crawler page)",
       priority: CheckPriority.Medium,
       details: "{}",
     },
@@ -914,7 +929,7 @@ const BASELINE: Record<string, Record<string, Row>> = {
       message:
         "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
-        "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
+        "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — Diffbot says its crawls follow robots.txt by default; not scored pending review against its crawler page)",
       priority: CheckPriority.Medium,
       details: "{}",
     },
@@ -924,7 +939,7 @@ const BASELINE: Record<string, Record<string, Row>> = {
       message:
         "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
-        "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
+        "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — Diffbot says its crawls follow robots.txt by default; not scored pending review against its crawler page)",
       priority: CheckPriority.Medium,
       details: "{}",
     },
@@ -934,7 +949,7 @@ const BASELINE: Record<string, Record<string, Row>> = {
       message:
         "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
-        "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
+        "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — Diffbot says its crawls follow robots.txt by default; not scored pending review against its crawler page)",
       priority: CheckPriority.Medium,
       details: "{}",
     },
@@ -943,7 +958,7 @@ const BASELINE: Record<string, Record<string, Row>> = {
       score: 1,
       message: "YouBot and AI2Bot are allowed by their own robots.txt groups.",
       found:
-        "YouBot: explicitly allowed (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: explicitly allowed (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
+        "YouBot: explicitly allowed (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: explicitly allowed (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — Diffbot says its crawls follow robots.txt by default; not scored pending review against its crawler page)",
       priority: CheckPriority.Medium,
       details: "{}",
     },
@@ -953,7 +968,7 @@ const BASELINE: Record<string, Record<string, Row>> = {
       message:
         "YouBot is blocked by robots.txt — the documented consumer path is closed.",
       found:
-        "YouBot: blocked (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: explicitly allowed (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
+        "YouBot: blocked (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: explicitly allowed (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — Diffbot says its crawls follow robots.txt by default; not scored pending review against its crawler page)",
       priority: CheckPriority.Medium,
       details: "{}",
     },
@@ -1053,7 +1068,7 @@ const BASELINE: Record<string, Record<string, Row>> = {
       priority: CheckPriority.High,
       details: "{}",
     },
-    "anthropic-alias-only": {
+    "claudebot-only": {
       status: CheckStatus.Pass,
       score: 1,
       message:
@@ -1233,15 +1248,13 @@ const BASELINE: Record<string, Record<string, Row>> = {
     "mixed-case-tokens": {
       status: CheckStatus.Pass,
       score: 1,
-      message:
-        "ClaudeBot is allowed. No group in robots.txt applies to it, so nothing restricts its crawl.",
-      found:
-        "No group applies to ClaudeBot · legacy anthropic-ai group present — Anthropic's current crawler documentation names only ClaudeBot, Claude-User and Claude-SearchBot, so this group is not a documented Anthropic access control and does not affect this result.",
+      message: "ClaudeBot is allowed by its own robots.txt group.",
+      found: "User-agent: ClaudeBot group permits /",
       priority: CheckPriority.Medium,
       details:
-        '{"namedGroup":false,"hasCatchAll":false,"allowed":true,"legacyTokens":["anthropic-ai"]}',
+        '{"namedGroup":true,"hasCatchAll":false,"allowed":true,"legacyTokens":[]}',
     },
-    "anthropic-alias-only": {
+    "claudebot-only": {
       status: CheckStatus.Fail,
       score: 0,
       message:
@@ -1443,7 +1456,7 @@ const BASELINE: Record<string, Record<string, Row>> = {
       priority: CheckPriority.Low,
       details: "{}",
     },
-    "anthropic-alias-only": {
+    "claudebot-only": {
       status: CheckStatus.Fail,
       score: 0,
       message:

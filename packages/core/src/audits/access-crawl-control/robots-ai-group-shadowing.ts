@@ -8,6 +8,7 @@
 import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
 import { weightForGrade } from "#core/scorer";
+import { BOT_REGISTRY, BotPurpose } from "#core/bot-registry";
 import type { CheckContext } from "#core/check-context";
 import {
   parseRobots,
@@ -26,32 +27,17 @@ import {
   ScoreDisplayMode,
 } from "#core/types";
 
-/** AI product tokens whose named group, if present, voids the wildcard. */
-const AI_TOKENS: readonly string[] = [
-  "gptbot",
-  "oai-searchbot",
-  "chatgpt-user",
-  "oai-adsbot",
-  "claudebot",
-  "claude-user",
-  "claude-searchbot",
-  "perplexitybot",
-  "perplexity-user",
-  "google-extended",
-  "applebot-extended",
-  "ccbot",
-  "bytespider",
-  "amazonbot",
-  "meta-externalagent",
-  "meta-externalfetcher",
-  "bravebot",
-  "duckassistbot",
-  "cohere-ai",
-  "mistralai-user",
-  "diffbot",
-  "ai2bot",
-  "youbot",
-];
+/**
+ * AI product tokens whose named group, if present, voids the wildcard: every
+ * documented bot registry row except the classic search engines. The
+ * mechanism is RFC 9309's and holds for any token; the population is limited
+ * to tokens an operator documents, so a finding always names a real reader.
+ * Bytespider and cohere-ai have no operator page, and Bravebot is not a token
+ * Brave uses, so none of the three is read.
+ */
+const AI_TOKENS: readonly string[] = BOT_REGISTRY.filter(
+  (bot) => bot.documented && bot.purpose !== BotPurpose.Search,
+).map((bot) => bot.token.toLowerCase());
 
 /** How many probe paths to evaluate per token. */
 const MAX_PROBES = 200;

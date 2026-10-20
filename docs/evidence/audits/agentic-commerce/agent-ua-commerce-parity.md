@@ -6,12 +6,16 @@ slug: agent-ua-commerce-parity
 evidence_grade: A
 tier: scored
 disposition: "new in v2 — graduated from proposal 2026-08-22"
-reviewed: 2026-08-20
+reviewed: 2026-10-19
 graduated: 2026-08-22
 sources:
   - s18
   - openai-searchbot-ips
   - acp-security
+  - chromium-dash-stable
+  - s4
+  - google-verify-requests
+  - cloudflare-fake-bot-rules
 ---
 
 # Agent User-Agent Fetch Parity on Commerce Paths
@@ -37,9 +41,17 @@ Falsifiable claim: OpenAI operates four separately-tokened agents with separatel
 - **[ACP Concepts: Security](https://agenticcommerce.dev/docs/concepts/security)** — Agentic Commerce Protocol (spec, URL verified 2026-08-20)
   - All ACP endpoints use HTTPS and send/receive JSON. Bearer-token authentication between agent and seller; sellers retrieve tokens through the agent's application. Mandatory headers: Authorization: Bearer <token>, Content-Type: application/json, Accept: application/json.
 
+## Limits
+
+- Every probe leaves the scanner's own address with an OpenAI agent's name in the User-Agent. It shows how the site answers a request that names the OpenAI agent. It does not show what the real OpenAI agent receives.
+- Real bots are told apart by network or signature, not by the string. Cloudflare grants verified status to a bot that "declares who it is deterministically, through a cryptographic Web Bot Auth signature, a published IP list with a stable user-agent, or reverse DNS" ([Cloudflare verified bots policy](https://developers.cloudflare.com/bots/concepts/bot/verified-bots/policy/) (verified 2026-10-19)). OpenAI publishes one IP-range file per bot, for example https://openai.com/gptbot.json and https://openai.com/chatgpt-user.json ([OpenAI crawlers and user agents](https://developers.openai.com/api/docs/bots) (verified 2026-10-19)). Google, whose crawlers this audit does not probe, illustrates the same rule: it documents a reverse-DNS check, or a match against its published IP ranges ([Verifying Google crawlers and fetchers](https://developers.google.com/crawling/docs/crawlers-fetchers/verify-google-requests) (verified 2026-10-19)). The scanner can present none of these.
+- A CDN block of a request naming an OpenAI agent is ambiguous evidence. Without a signature, a published IP list or reverse DNS, the request is by definition not the verified bot ([Cloudflare verified bots policy](https://developers.cloudflare.com/bots/concepts/bot/verified-bots/policy/) (verified 2026-10-19)), so an edge may treat it as unknown automated traffic. Cloudflare does ship managed rules that flag an unverified request naming Googlebot or Bingbot as a fake bot ([Cloudflare fake bot managed rules](https://developers.cloudflare.com/waf/troubleshooting/fake-bot-managed-rules/) (verified 2026-10-19)). It documents no such rule for AI crawlers, and the scanner never sends either of those names. The analogy shows the mechanism exists. It is not evidence about the bots probed here. A refusal is consistent with the real bot being refused too. It does not prove it.
+- A pass does not prove access either. A rule keyed on the verified bot's identity rather than its string can refuse the real bot and still let the probe through.
+- OpenAI tells merchants to allowlist its published ranges, and this audit's fix says the same. A merchant who follows that advice admits the real agent and may still refuse the probe.
+
 ## Example failure
 
-A merchant sets `User-agent: * / Allow: /` and passes every robots.txt audit, but its Cloudflare Bot Fight Mode returns a 403 'Just a moment...' interstitial to ChatGPT-User. The site scores 100 on competitor AI-readiness tools while ChatGPT literally cannot open any product page. Second pattern: robots.txt blocks GPTBot only, but the WAF rule was written against a substring match on 'GPT' and therefore also blocks nothing visible in robots.txt while silently 429ing OAI-SearchBot.
+A merchant sets `User-agent: * / Allow: /` and passes every robots.txt audit, but its Cloudflare Bot Fight Mode returns a 403 'Just a moment...' interstitial to ChatGPT-User. The site scores 100 on competitor AI-readiness tools while every request that names ChatGPT-User is refused on the product pages. If the rule keys on the string, the real agent is refused too. Second pattern: robots.txt blocks GPTBot only, but the WAF rule was written against a substring match on 'GPT' and therefore also blocks nothing visible in robots.txt while silently 429ing OAI-SearchBot.
 
 ## Scoring
 
@@ -61,6 +73,10 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 - One reason per probe, in fixed order: challenge-body marker, blocking
   status, status-class mismatch, text ratio under 0.6. A target yields at most
   one finding per agent.
+- OAI-SearchBot is sent as `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36; compatible; OAI-SearchBot/1.4; +https://openai.com/searchbot`, the example OpenAI gives (https://developers.openai.com/api/docs/bots, verified 2026-10-19). Before 2026-10-19 the probe sent a bare `OAI-SearchBot/1.0` string that OpenAI does not document. GPTBot and ChatGPT-User match the same page.
+- The browser baseline is a Mac Chrome UA on the current Stable major, 155 (https://chromiumdash.appspot.com/fetch_releases?channel=Stable&platform=Mac&num=1, verified 2026-10-19). It was Chrome 140 before 2026-10-19.
+- Since 2026-10-19 the probe strings are read from the bot registry (`packages/core/src/bot-registry.ts`) rather than kept in the gatherer. The strings this audit sends are unchanged.
+- Since 2026-10-19 messages, titles and `details` strings say how the site answers a request whose User-Agent names a bot, never that the bot itself is blocked or sees a page. The verdicts did not change.
 
 ## Deferred
 
@@ -69,3 +85,9 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 - OAI-AdsBot probing, for sites that run paid placements into ChatGPT.
 - Diffing the published CIDR ranges against observed edge behaviour. That
   needs the scan to run from a known address.
+- **An opaque block on a spoofed User-Agent still fails.** A 403, 429 or 503, or a
+  challenge marker in the body, fails at Critical priority. Each is ambiguous for
+  a probe that arrives without OpenAI's addresses (Limits). The mechanism above
+  names these answers as the failure and nothing here grades a warning, so
+  moving them needs the dossier revised first. Not changed in the 2026-10-19
+  wording patch.

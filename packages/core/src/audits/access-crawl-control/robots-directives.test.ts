@@ -124,6 +124,18 @@ describe("MetaRobotsNotBlockingAudit", () => {
     expect((result.found ?? "").toLowerCase()).toContain("gptbot");
   });
 
+  // Anthropic's crawler page names ClaudeBot, Claude-User and Claude-SearchBot
+  // only, so the bot registry has no anthropic-ai row and the name binds nothing.
+  it("ignores a noindex addressed to the undocumented anthropic-ai name", () => {
+    const ctx = mockCheckContext([
+      mockPageContext(
+        "https://example.com/",
+        doc('<meta name="anthropic-ai" content="noindex">'),
+      ),
+    ]);
+    expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
+  });
+
   // extractMetaTags is last-wins; real crawlers apply the most restrictive tag.
   it("fails when a restrictive robots tag is followed by a permissive one", () => {
     const ctx = mockCheckContext([

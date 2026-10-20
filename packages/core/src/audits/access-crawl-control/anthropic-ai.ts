@@ -67,7 +67,7 @@ export class AnthropicAudit extends CrawlerBotAudit {
    * Scores one live token's access state, not a two-token composite.
    *
    * The shipped rule combined `anthropic-ai` and `ClaudeBot` through
-   * `isAnthropicAllowed`, which returns `allowed: a || b` when both are
+   * a since-removed `isAnthropicAllowed` helper, which returned `allowed: a || b` when both were
    * explicit. This dossier's own research grades the legacy token C with
    * "Consumers: none-known" and instructs that its presence be treated as
    * "harmless legacy cruft — never as evidence a site has configured Anthropic

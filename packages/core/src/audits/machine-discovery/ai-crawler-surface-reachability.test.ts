@@ -124,6 +124,17 @@ describe("AiCrawlerSurfaceReachabilityAudit", () => {
     expect(result.message).toContain("ClaudeBot");
   });
 
+  // No operator documents Bytespider, so the panel no longer reads it.
+  it("does not judge a Bytespider group", async () => {
+    const result = await run({
+      robots:
+        "User-agent: *\nAllow: /\nSitemap: https://example.com/sitemap.xml\n\nUser-agent: Bytespider\nDisallow: /docs\n",
+      urls: ALL_URLS,
+    });
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.found).toContain("16 crawlers checked");
+  });
+
   it("reports the per-crawler coverage in the output", async () => {
     const result = await run({
       robots:
