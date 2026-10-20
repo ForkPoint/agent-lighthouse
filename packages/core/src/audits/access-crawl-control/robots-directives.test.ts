@@ -104,24 +104,137 @@ describe("MetaRobotsNotBlockingAudit", () => {
     expect(audit.audit(mockCheckContext([page])).status).toBe(CheckStatus.Pass);
   });
 
-  it("still counts an X-Robots-Tag scoped to an AI crawler", () => {
+  // No AI crawler operator documents reading a robots directive addressed to
+  // its own name, so the header form is named in the message and never scored.
+  it("names but does not score an X-Robots-Tag scoped to an AI crawler", () => {
     const page = mockPageContext("https://example.com/", doc(""));
     page.fetchResult.headers["x-robots-tag"] = "gptbot: noindex";
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.found).toContain("gptbot");
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.message).toBe(
+      "No scanned non-utility page carries a blocking or snippet-suppressing robots directive. 1 non-utility page(s) carry a blocking or snippet-suppressing directive under a name no crawler operator documents reading (X-Robots-Tag (gptbot)); those directives are not scored.",
+    );
   });
 
-  it("fails on a bot-specific noindex meta tag", () => {
+  // A bot prefix scopes every directive after it until the next prefix
+  // (Google's example: `otherbot: noindex, nofollow`), so neither header
+  // reaches the generic rule.
+  it.each(["gptbot: noindex, nosnippet", "claudebot: nosnippet, noindex"])(
+    "carries the bot prefix across every directive in %s",
+    (header) => {
+      const page = mockPageContext("https://example.com/", doc(""));
+      page.fetchResult.headers["x-robots-tag"] = header;
+      const result = audit.audit(mockCheckContext([page]));
+      expect(result.status).toBe(CheckStatus.Pass);
+      expect(result.message).toContain("those directives are not scored.");
+    },
+  );
+
+  it("scopes a later directive to a documented prefix, not the generic rule", () => {
+    const page = mockPageContext("https://example.com/", doc(""));
+    page.fetchResult.headers["x-robots-tag"] = "googlebot: nosnippet, noindex";
+    const result = audit.audit(mockCheckContext([page]));
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.found).toBe(
+      "https://example.com/ — noindex via X-Robots-Tag (googlebot)",
+    );
+  });
+
+  it("does not read the time half of a comma-split unavailable_after as a bot", () => {
+    const page = mockPageContext("https://example.com/", doc(""));
+    page.fetchResult.headers["x-robots-tag"] =
+      "unavailable_after: 25 Jun 2010, 15:00:00 PST, noindex";
+    const result = audit.audit(mockCheckContext([page]));
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.found).toBe(
+      "https://example.com/ — noindex via X-Robots-Tag",
+    );
+  });
+
+  it("ignores every directive after an unknown prefix", () => {
+    const page = mockPageContext("https://example.com/", doc(""));
+    page.fetchResult.headers["x-robots-tag"] = "yandexbot: nosnippet, noindex";
+    const result = audit.audit(mockCheckContext([page]));
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.message).toBe(
+      "No scanned non-utility page carries a blocking or snippet-suppressing robots directive.",
+    );
+  });
+
+  it("does not name a permissive directive under an undocumented name", () => {
     const ctx = mockCheckContext([
       mockPageContext(
         "https://example.com/",
-        doc('<meta name="GPTBot" content="noindex">'),
+        doc('<meta name="GPTBot" content="index, follow">'),
+      ),
+    ]);
+    expect(audit.audit(ctx).message).toBe(
+      "No scanned non-utility page carries a blocking or snippet-suppressing robots directive.",
+    );
+  });
+
+  // OpenAI, Anthropic, Perplexity and Common Crawl document robots.txt only.
+  it.each([
+    "GPTBot",
+    "OAI-SearchBot",
+    "ChatGPT-User",
+    "ClaudeBot",
+    "Claude-SearchBot",
+    "Claude-User",
+    "PerplexityBot",
+    "CCBot",
+    "Google-Extended",
+    "Applebot-Extended",
+    "msnbot",
+  ])("names but does not score a noindex meta tag addressed to %s", (name) => {
+    const ctx = mockCheckContext([
+      mockPageContext(
+        "https://example.com/",
+        doc(`<meta name="${name}" content="noindex, nosnippet">`),
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Fail);
-    expect((result.found ?? "").toLowerCase()).toContain("gptbot");
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.message).toBe(
+      `No scanned non-utility page carries a blocking or snippet-suppressing robots directive. 1 non-utility page(s) carry a blocking or snippet-suppressing directive under a name no crawler operator documents reading (meta name="${name.toLowerCase()}"); those directives are not scored.`,
+    );
+  });
+
+  // Google: "Google supports two user agent tokens in the robots meta tag";
+  // Bing: name="bingbot"; Apple: name="applebot".
+  it.each(["googlebot", "googlebot-news", "bingbot", "applebot"])(
+    "fails on a noindex meta tag addressed to the documented name %s",
+    (name) => {
+      const ctx = mockCheckContext([
+        mockPageContext(
+          "https://example.com/",
+          doc(`<meta name="${name}" content="noindex">`),
+        ),
+      ]);
+      const result = audit.audit(ctx);
+      expect(result.status).toBe(CheckStatus.Fail);
+      expect(result.found).toContain(`meta name="${name}"`);
+    },
+  );
+
+  it("still scores a documented directive beside an undocumented one", () => {
+    const ctx = mockCheckContext([
+      mockPageContext(
+        "https://example.com/",
+        doc(
+          '<meta name="GPTBot" content="noindex"><meta name="robots" content="nosnippet">',
+        ),
+      ),
+    ]);
+    const result = audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.found).toBe(
+      'https://example.com/ — nosnippet via meta name="robots"',
+    );
+    // The set-aside tag is named on a warn too, where the reader needs it most.
+    expect(result.message).toBe(
+      '1 non-utility page(s) allow indexing but forbid quoting (nosnippet / noarchive / max-snippet:0). 1 non-utility page(s) carry a blocking or snippet-suppressing directive under a name no crawler operator documents reading (meta name="gptbot"); those directives are not scored.',
+    );
   });
 
   // Anthropic's crawler page names ClaudeBot, Claude-User and Claude-SearchBot
@@ -133,7 +246,9 @@ describe("MetaRobotsNotBlockingAudit", () => {
         doc('<meta name="anthropic-ai" content="noindex">'),
       ),
     ]);
-    expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
+    const result = audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.message).not.toContain("anthropic-ai");
   });
 
   // extractMetaTags is last-wins; real crawlers apply the most restrictive tag.

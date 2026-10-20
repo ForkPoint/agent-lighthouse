@@ -14,6 +14,12 @@ sources:
   - perplexity-bots-docs
   - bing-chat-controls-2023
   - bing-robots-meta-tags
+  - bing-crawlers
+  - google-common-crawlers
+  - apple-applebot-docs
+  - openai-bots
+  - anthropic-crawler-docs
+  - commoncrawl-ccbot
 ---
 
 # robots-directives (`2.25`, `1.13`, `4.20`)
@@ -24,8 +30,10 @@ sources:
 
 Every robots directive that applies to a scanned page, from both transports and from every directive-carrying meta name:
 
-- `<meta name="robots">` **and** the per-bot forms (`googlebot`, `google-extended`, `gptbot`, `oai-searchbot`, `claudebot`, `applebot-extended`, `bingbot`, `perplexitybot`, …), read off the DOM so _all_ tags count rather than the last one;
-- the `X-Robots-Tag` response header, including the per-bot `X-Robots-Tag: googlebot: noindex` form.
+- `<meta name="robots">` **and** the per-bot names an operator documents reading: `googlebot` and `googlebot-news` (Google), `bingbot` (Bing) and `applebot` (Apple). Tags are read off the DOM, so _all_ tags count rather than the last one;
+- the `X-Robots-Tag` response header, including the per-bot `X-Robots-Tag: googlebot: noindex` form, scoped to the same names.
+
+Blocking or snippet-suppressing directives addressed to a name no operator documents reading (`gptbot`, `oai-searchbot`, `chatgpt-user`, `claudebot`, `claude-searchbot`, `claude-user`, `perplexitybot`, `ccbot`, `google-extended`, `applebot-extended`, `msnbot`) are named in the message and never scored. A bot prefix in the header scopes every directive after it.
 
 Values are tokenized on commas and compared token-wise, so `none` is recognised as noindex+nofollow and `noindexifembedded` is not mistaken for a full block.
 
@@ -35,6 +43,7 @@ Values are tokenized on commas and compared token-wise, so `none` is recognised 
 | a non-utility page carries `nosnippet`, `max-snippet:0`, or `noarchive` without `nocache` | `warn`, priority `medium` — indexed but unquotable                    |
 | a non-utility page carries `nocache` (alone or with `noarchive`)                          | `pass`, naming it — Bing still shows URL, title and snippet           |
 | only utility routes (cart, login, search, account, …) carry `noindex`                     | `pass`, naming them                                                   |
+| a directive sits only under an undocumented per-bot name (e.g. `gptbot`)                  | verdict unaffected; the message names the tag                         |
 | no directive blocks or suppresses                                                         | `pass`                                                                |
 | no pages scanned                                                                          | `na`                                                                  |
 
@@ -56,6 +65,15 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Counter-evidence:** `noindex` gates _index-derived_ surfaces only. User-initiated fetchers are unaffected: OpenAI documents that for `ChatGPT-User` "Because these actions are initiated by a user, robots.txt rules may not apply" (https://developers.openai.com/api/docs/bots), and Perplexity documents that `Perplexity-User` "Generally ignores robots.txt rules" (https://docs.perplexity.ai/guides/bots) — both verified 2026-08-21. A noindexed page can therefore still be fetched and quoted live in a chat answer, so the audit's failure language ("blocking AI crawlers") overstates the effect for the conversational-agent path. The snippet controls are only partly instrumented. The audit reads `nosnippet` and `max-snippet:0` and warns on them, because Google documents that they keep content out of AI Overviews and AI Mode (https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag, verified 2026-10-17). Google ignores `noarchive` and `nocache`; Bing reads both, and its two sources treat them differently. Bing's robots meta tag reference says `noarchive` means "Do not link in Chat and Copilot", and `nocache` means "Display only URL/Snippet/Title in Chat or Copilot". It adds: "If content has both NOCACHE and NOARCHIVE tags, we will treat it as NOCACHE." (https://www.bing.com/webmasters/help/robots-meta-tags-and-attributes-that-bing-supports-5198d240, verified 2026-10-17). The 2023 announcement says the same in other words: "Content tagged NOARCHIVE will not be included in Bing Chat answers, not be linked to in the answers", while "Content with the NOCACHE tag may be included in Bing Chat answers. We will only display URL/Snippet/Title in the answer" (https://blogs.bing.com/webmaster/september-2023/Announcing-new-options-for-webmasters-to-control-usage-of-their-content-in-Bing-Chat, verified 2026-10-17). So `noarchive` alone keeps a page out of Copilot answers, and the audit warns on it. `nocache` limits what Copilot shows but still links and quotes the page's snippet, so it does not forbid quoting. The audit names a `nocache` page in its pass message and does not warn. A page carrying both is treated as `nocache`, as Bing does. Until 2026-10-17 the audit warned on `nocache` as if it forbade quoting; no source supported that. It does not read element-level `data-nosnippet`, and it does not judge a positive `max-snippet` limit, which narrows rather than removes what an AI answer may quote.
 
+**Per-bot meta names (verified 2026-10-20).** Only a name the crawler's operator documents reading can change a verdict.
+
+- Google: "Google supports two user agent tokens in the robots meta tag; other values are ignored" — `googlebot` and `googlebot-news`. The page does not mention Google-Extended — https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag (verified 2026-10-20). Google's crawler page calls Google-Extended "a standalone product token" with a robots.txt group, and says it "doesn't have a separate HTTP request user agent string" — https://developers.google.com/search/docs/crawling-indexing/google-common-crawlers (verified 2026-10-20).
+- Bing: "you can replace the generic name="robots" with name="bingbot" to limit the meta tag to only apply to Bing" — https://www.bing.com/webmasters/help/robots-meta-tags-and-attributes-that-bing-supports-5198d240 (verified 2026-10-20). Neither that page nor Bing's crawler list names `msnbot` — https://www.bing.com/webmasters/help/which-crawlers-does-bing-use-8c184ec0 (verified 2026-10-20).
+- Apple: "Applebot supports robots meta tags in HTML documents", with the example `<meta name="applebot" content="nosnippet">` and `X-Robots-Tag: applebot: nosnippet`. Applebot-Extended is a robots.txt rule only, and "does not crawl webpages" — https://support.apple.com/en-us/119829 (verified 2026-10-20).
+- OpenAI, Anthropic, Perplexity and Common Crawl document robots.txt controls and no robots meta tag or `X-Robots-Tag` — https://developers.openai.com/api/docs/bots, https://support.claude.com/en/articles/8896518, https://docs.perplexity.ai/guides/bots, https://commoncrawl.org/ccbot (all verified 2026-10-20).
+
+So `<meta name="GPTBot" content="noindex">` and its kind bind no documented consumer. The audit names them in its message and does not score them. The grade stays A: it rests on the generic `robots` name and the header, which Google, Bing and Apple document.
+
 ## Implementation deviations
 
 - Every scanned page is read, from both transports. Per-bot meta names and the per-bot `X-Robots-Tag` form pass the same crawler allowlist, so a bot-scoped directive binds only that bot.
@@ -66,8 +84,9 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - `defaultPriority` is `high`. `critical` is emitted per result, only when the homepage is among the blocked pages.
 - `requires` omits `rendered-body` and `sample-adequate`. Meta tags and the `X-Robots-Tag` header arrive whether or not the body renders.
 - The audit cannot see whether robots.txt blocks the page. Google says `noindex` only works on a page robots.txt does not block.
-- Since 2026-10-19 the per-bot meta names are bot registry tokens (`packages/core/src/bot-registry.ts`), plus Google's `googlebot-news` and Bing's `msnbot`, which have no registry row. `anthropic-ai` was dropped. Anthropic's crawler page names ClaudeBot, Claude-User and Claude-SearchBot and no other token (https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler, verified 2026-10-19). A `noindex` addressed only to `anthropic-ai` therefore no longer fails a page. A test pins it.
-
-## Deferred
-
-- The crawler pages of OpenAI, Anthropic, Perplexity and Common Crawl document no per-bot robots meta tag such as `<meta name="GPTBot">`. Google, Bing and Apple document their own names. The AI names were kept as they stood, minus `anthropic-ai`, because narrowing them moves verdicts and needs its own review. The registry now prevents a name no operator documents from being added.
+- Since 2026-10-19 the per-bot meta names are bot registry tokens (`packages/core/src/bot-registry.ts`), plus `googlebot-news` and `msnbot`, which have no registry row. `anthropic-ai` was dropped. Anthropic's crawler page names ClaudeBot, Claude-User and Claude-SearchBot and no other token (https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler, verified 2026-10-19). A `noindex` addressed only to `anthropic-ai` is ignored. A test pins it.
+- A bot prefix in `X-Robots-Tag` scopes every directive after it until the next prefix, as in Google's example `otherbot: noindex, nofollow`. Repeated field lines arrive combined with ", " (RFC 9110 §5.3), so an unprefixed directive from a later line is attributed to the last named bot. Until 2026-10-20 only the first directive after a prefix was scoped, so `gptbot: noindex, nosnippet` warned on the `nosnippet`.
+- Google allows a header prefix for any of its crawlers, but only `googlebot` and `googlebot-news` are read. A prefix such as `googlebot-image:` is ignored, which can miss a finding but never invents one. Bing documents the header form of its tags but no `bingbot:` prefix as such; the prefix is read as the header form of the documented `bingbot` meta name.
+- A header prefix must start with a letter, so the time half of a comma-split `unavailable_after` date (`25 Jun 2010, 15:00:00 PST`) is not read as a bot, and the directive after it keeps its scope.
+- The name lists live in `packages/core/src/robots-meta-names.ts`, shared with `answer-readiness/snippet-gate-coverage`.
+- Since 2026-10-20 only `robots`, `googlebot`, `googlebot-news`, `bingbot` and `applebot` are scored. The AI crawler names, `google-extended`, `applebot-extended` and `msnbot` are still read, so the message can name a blocking or snippet-suppressing tag that binds no documented consumer. The note appears on pass, warn and fail alike. Until 2026-10-20 a `noindex` under `gptbot` failed the page, and a `nosnippet` under it warned. No source supported either.

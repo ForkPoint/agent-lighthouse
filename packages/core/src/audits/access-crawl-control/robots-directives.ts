@@ -2,7 +2,12 @@ import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
 import type { CheckContext, PageContext } from "#core/check-context";
 import { weightForGrade } from "#core/scorer";
-import { BotToken } from "#core/bot-registry";
+import {
+  DOCUMENTED_ROBOTS_NAMES,
+  GENERIC_ROBOTS_NAME,
+  UNDOCUMENTED_ROBOTS_NAMES,
+  parseXRobotsTag,
+} from "#core/robots-meta-names";
 import {
   AuditTier,
   CheckPriority,
@@ -11,41 +16,6 @@ import {
   FixEffort,
   ScoreDisplayMode,
 } from "#core/types";
-
-/**
- * Meta names that carry robots directives. `robots` is the generic form; the
- * rest are the per-crawler forms an AI-readiness tool cannot afford to miss —
- * `<meta name="GPTBot" content="noindex">` was invisible to all three v1
- * audits (reviews 1.13, 2.25, 4.20).
- *
- * The per-crawler names are bot registry tokens, so a name no operator
- * documents cannot be added here. `anthropic-ai` was dropped for that reason:
- * Anthropic's crawler page names ClaudeBot, Claude-User and Claude-SearchBot
- * and nothing else. `googlebot-news` and `msnbot` are Google's and Bing's
- * secondary meta names, with no registry row of their own.
- */
-const PER_CRAWLER_META_NAMES: readonly BotToken[] = [
-  BotToken.Googlebot,
-  BotToken.GoogleExtended,
-  BotToken.Bingbot,
-  BotToken.Applebot,
-  BotToken.ApplebotExtended,
-  BotToken.GPTBot,
-  BotToken.OAISearchBot,
-  BotToken.ChatGPTUser,
-  BotToken.ClaudeBot,
-  BotToken.ClaudeSearchBot,
-  BotToken.ClaudeUser,
-  BotToken.PerplexityBot,
-  BotToken.CCBot,
-];
-
-const DIRECTIVE_META_NAMES = new Set([
-  "robots",
-  "googlebot-news",
-  "msnbot",
-  ...PER_CRAWLER_META_NAMES.map((token) => token.toLowerCase()),
-]);
 
 /** Directives that remove the page from an index. `none` == noindex + nofollow. */
 const BLOCKING_TOKENS = new Set(["noindex", "none"]);
@@ -67,14 +37,6 @@ const SUPPRESSING_TOKENS = new Set(["nosnippet", "noarchive"]);
 const LIMITING_TOKEN = "nocache";
 const OVERRIDDEN_BY_LIMITING = "noarchive";
 
-/** Directives whose value follows a colon, so a colon here is not a bot prefix. */
-const VALUED_DIRECTIVES = new Set([
-  "max-snippet",
-  "max-image-preview",
-  "max-video-preview",
-  "unavailable_after",
-]);
-
 /**
  * Routes where `noindex` is the correct configuration. v1's 2.25 failed the
  * whole site at high priority when a crawl happened to include /cart or
@@ -90,6 +52,8 @@ interface Directive {
   token: string;
   /** Where it was read from, for the `found` string. */
   source: string;
+  /** False when the meta name or header prefix is one no operator documents. */
+  documented: boolean;
 }
 
 /** Split a directive list into normalized, lower-cased tokens. */
@@ -126,32 +90,31 @@ function directivesFor(page: PageContext): Directive[] {
 
   $("meta[name]").each((_, el) => {
     const name = ($(el).attr("name") ?? "").trim().toLowerCase();
-    if (!DIRECTIVE_META_NAMES.has(name)) return;
+    const documented = DOCUMENTED_ROBOTS_NAMES.has(name);
+    if (!documented && !UNDOCUMENTED_ROBOTS_NAMES.has(name)) return;
     const content = $(el).attr("content") ?? "";
     for (const token of tokenize(content)) {
-      found.push({ token, source: `meta name="${name}"` });
+      found.push({ token, source: `meta name="${name}"`, documented });
     }
   });
 
   // `X-Robots-Tag: noindex` and the per-bot form `X-Robots-Tag: googlebot: noindex`.
-  const header = page.fetchResult.headers["x-robots-tag"] ?? "";
-  for (const part of tokenize(header)) {
-    const colon = part.indexOf(":");
-    const prefix = colon === -1 ? "" : part.slice(0, colon);
-    if (colon !== -1 && !VALUED_DIRECTIVES.has(prefix)) {
-      // A bot-scoped header binds only that crawler. The allowlist is the same
-      // one the meta transport uses, so `X-Robots-Tag: yandexbot: noindex` is
-      // ignored exactly as `<meta name="yandexbot" content="noindex">` is —
-      // v1 1.13 read the whole header as a blanket noindex and over-reported.
-      if (DIRECTIVE_META_NAMES.has(prefix)) {
-        found.push({
-          token: part.slice(colon + 1).trim(),
-          source: `X-Robots-Tag (${prefix})`,
-        });
-      }
-      continue;
-    }
-    found.push({ token: part, source: "X-Robots-Tag" });
+  // A bot prefix scopes every directive after it until the next prefix, so
+  // `gptbot: noindex, nosnippet` binds gptbot twice. The name sets are the
+  // same ones the meta transport uses, so `X-Robots-Tag: yandexbot: noindex`
+  // is ignored exactly as `<meta name="yandexbot" content="noindex">` is —
+  // v1 1.13 read the whole header as a blanket noindex and over-reported.
+  for (const { name, token } of parseXRobotsTag(
+    page.fetchResult.headers["x-robots-tag"],
+  )) {
+    const generic = name === GENERIC_ROBOTS_NAME;
+    const documented = DOCUMENTED_ROBOTS_NAMES.has(name);
+    if (!documented && !UNDOCUMENTED_ROBOTS_NAMES.has(name)) continue;
+    found.push({
+      token,
+      source: generic ? "X-Robots-Tag" : `X-Robots-Tag (${name})`,
+      documented,
+    });
   }
 
   return found;
@@ -173,6 +136,8 @@ interface PageVerdict {
   suppressing: Directive[];
   /** `nocache`: still linked and quoted by snippet, so named but not scored. */
   limiting: Directive[];
+  /** Directives under a name no operator documents: named, never scored. */
+  undocumented: Directive[];
 }
 
 function describe(verdict: PageVerdict, directives: Directive[]): string {
@@ -222,7 +187,8 @@ export class MetaRobotsNotBlockingAudit extends Audit {
     }
 
     const verdicts: PageVerdict[] = ctx.pages.map((page) => {
-      const directives = directivesFor(page);
+      const all = directivesFor(page);
+      const directives = all.filter((d) => d.documented);
       const limiting = directives.filter((d) => d.token === LIMITING_TOKEN);
       return {
         url: page.url,
@@ -236,6 +202,13 @@ export class MetaRobotsNotBlockingAudit extends Audit {
             !(limiting.length > 0 && d.token === OVERRIDDEN_BY_LIMITING),
         ),
         limiting,
+        // Only a directive that would have blocked or suppressed is worth
+        // naming; an `index, follow` under `gptbot` changes nothing either way.
+        undocumented: all.filter(
+          (d) =>
+            !d.documented &&
+            (BLOCKING_TOKENS.has(d.token) || suppressesSnippets(d.token)),
+        ),
       };
     });
 
@@ -250,12 +223,25 @@ export class MetaRobotsNotBlockingAudit extends Audit {
         v.suppressing.length > 0 && v.blocking.length === 0 && !v.isUtility,
     );
 
+    const unreadPages = verdicts.filter(
+      (v) => v.undocumented.length > 0 && !v.isUtility,
+    );
+    const unreadNames = [
+      ...new Set(
+        unreadPages.flatMap((v) => v.undocumented.map((d) => d.source)),
+      ),
+    ];
+    const undocumentedNote =
+      unreadPages.length > 0
+        ? ` ${unreadPages.length} non-utility page(s) carry a blocking or snippet-suppressing directive under a name no crawler operator documents reading (${unreadNames.join(", ")}); those directives are not scored.`
+        : "";
+
     if (blockedContent.length > 0) {
       const homepageBlocked = blockedContent.some((v) => v.isHomepage);
       return this.fail(
         `${blockedContent.length} non-utility page(s) carry a blocking robots directive${
           homepageBlocked ? ", including the homepage" : ""
-        }.`,
+        }.${undocumentedNote}`,
         "No blocking robots directive on non-utility pages",
         blockedContent.map((v) => describe(v, v.blocking)).join(" | "),
         {
@@ -272,7 +258,7 @@ export class MetaRobotsNotBlockingAudit extends Audit {
 
     if (suppressedContent.length > 0) {
       return this.warn(
-        `${suppressedContent.length} non-utility page(s) allow indexing but forbid quoting (nosnippet / noarchive / max-snippet:0).`,
+        `${suppressedContent.length} non-utility page(s) allow indexing but forbid quoting (nosnippet / noarchive / max-snippet:0).${undocumentedNote}`,
         "No blocking robots directive on non-utility pages",
         suppressedContent.map((v) => describe(v, v.suppressing)).join(" | "),
         {
@@ -298,7 +284,7 @@ export class MetaRobotsNotBlockingAudit extends Audit {
         : "";
 
     return this.pass(
-      `No scanned non-utility page carries a blocking or snippet-suppressing robots directive.${limitingNote}${utilityNote}`,
+      `No scanned non-utility page carries a blocking or snippet-suppressing robots directive.${limitingNote}${utilityNote}${undocumentedNote}`,
       "No blocking robots directive on non-utility pages",
       `Checked ${ctx.pages.length} page(s) — meta robots, per-bot meta tags and X-Robots-Tag`,
     );
