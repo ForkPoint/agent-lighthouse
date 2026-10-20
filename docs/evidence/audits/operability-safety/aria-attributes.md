@@ -13,6 +13,7 @@ sources:
   - chrome-devtools-mcp-tools
   - axe-aria-valid-attr-value
   - w3c-accname-11
+  - anthropic-browser-use-tool
 public_extra:
   - Browser view
 ---

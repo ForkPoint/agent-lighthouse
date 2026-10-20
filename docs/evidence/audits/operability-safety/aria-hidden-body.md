@@ -12,6 +12,8 @@ sources:
   - playwright-mcp-repo
   - chrome-devtools-mcp-tools
   - axe-aria-hidden-body
+  - playwright-mcp-snapshots
+  - chrome-devtools-mcp-tool-reference
 public_extra:
   - Browser view
 ---

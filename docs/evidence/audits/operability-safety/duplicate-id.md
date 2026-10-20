@@ -14,6 +14,7 @@ sources:
   - playwright-mcp-repo
   - chrome-devtools-mcp-tools
   - axe-duplicate-id-aria
+  - anthropic-browser-use-tool
 public_extra:
   - Browser view
 ---

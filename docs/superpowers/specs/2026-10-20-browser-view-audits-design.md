@@ -177,3 +177,13 @@ limit also become missing evidence, never a verdict.
 A browser score, computed styles, shadow roots and frames, action traces,
 and the remaining audits. Each later addition needs the same four-part
 review.
+
+## Deferred
+
+- `stripStyles` closes a `<style>` block only at an exact `</style>`. Browsers
+  also accept `</style >` and `</style\n>`. On such input the strip runs on to
+  the next exact close and removes the markup between them from the a11y
+  pass. The old regexes behaved the same, and the equivalence tests pin that
+  behaviour. Accepting `/<\/style\s*>/i` is a separate verdict change.
+- The jsdom a11y pass is not cancelled while it waits for an
+  `A11Y_CONCURRENCY` slot.

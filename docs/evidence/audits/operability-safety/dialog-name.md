@@ -13,6 +13,8 @@ sources:
   - w3c-accname-11
   - aria-apg-dialog-modal
   - axe-aria-dialog-name
+  - playwright-mcp-snapshots
+  - chrome-devtools-mcp-tool-reference
 public_extra:
   - Browser view
 ---

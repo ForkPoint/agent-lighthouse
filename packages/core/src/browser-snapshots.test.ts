@@ -1,5 +1,5 @@
 import http from "node:http";
-import https from "node:https";
+import net from "node:net";
 import { parseHtml } from "./parser";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { FetchResult } from "./fetcher";
@@ -555,12 +555,31 @@ describe("browser snapshot scan boundary", () => {
       CheckStatus.Pass,
     );
   });
-  it("opens no socket while assessing a capture", async () => {
-    const httpSpy = vi.spyOn(http, "request");
-    const httpsSpy = vi.spyOn(https, "request");
+  it("loads no capture resource, proven against a live local server", async () => {
+    // jsdom fetches through undici, which never calls http.request, and the a11y
+    // pass closes its window before a started load can arrive. So two probes:
+    // a real local server that records requests, and a spy on socket connects.
+    let hits = 0;
+    const server = http.createServer((_req, res) => {
+      hits++;
+      res.end("");
+    });
+    await new Promise<void>((resolve) =>
+      server.listen(0, "127.0.0.1", resolve),
+    );
+    const { port } = server.address() as net.AddressInfo;
+    const connects: unknown[][] = [];
+    const real = net.Socket.prototype.connect;
+    const spy = vi
+      .spyOn(net.Socket.prototype, "connect")
+      .mockImplementation(function (this: net.Socket, ...args: unknown[]) {
+        connects.push(args);
+        return real.apply(this, args as never);
+      });
+    const local = `http://127.0.0.1:${port}`;
     const loaded = html.replace(
       "</main>",
-      `</main><link rel="stylesheet" href="https://example.test/a.css"><iframe src="https://example.test/f"></iframe><script src="https://example.test/s.js"></script>`,
+      `</main><link rel="preload" as="style" href="${local}/preload.css"><iframe src="${local}/frame"></iframe><script src="${local}/s.js"></script><img src="${local}/i.png" alt="Local">`,
     );
     try {
       const report = await runScan(url, {
@@ -568,14 +587,18 @@ describe("browser snapshot scan boundary", () => {
         snapshots: input(snapshot({ html: loaded })),
       });
       expect(report.browserAssessment?.findings.length).toBeGreaterThan(0);
-      // The crawler fetcher is mocked, so any socket would come from jsdom.
-      expect(httpSpy).not.toHaveBeenCalled();
-      expect(httpsSpy).not.toHaveBeenCalled();
+      // Give any request jsdom started time to arrive before counting.
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      expect(hits).toBe(0);
+      expect(
+        connects.filter((args) => JSON.stringify(args).includes(String(port))),
+      ).toEqual([]);
     } finally {
-      httpSpy.mockRestore();
-      httpsSpy.mockRestore();
+      spy.mockRestore();
+      await new Promise((resolve) => server.close(resolve));
     }
   });
+
   it("leaves a scored crawl's score unchanged by failing browser findings", async () => {
     state.body = html;
     const failing = `<html><body><p>${text}</p><div role="notarole"><button></button></div><input id="x"><input id="x"></body></html>`;

@@ -29,6 +29,7 @@ sources:
   - google-ai-features-trust
   - vercel-ai-crawler-study
   - google-ai-features-docs
+  - anthropic-browser-use-tool
 public_extra:
   - Browser view
 ---
