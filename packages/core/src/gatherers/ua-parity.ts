@@ -160,6 +160,27 @@ export function probeChallenge(probe: UaProbe): string | undefined {
     : undefined;
 }
 
+/**
+ * The same challenge reading as `probeChallenge`, for a raw response such as
+ * the control arm's: a `cf-mitigated` challenge header, an Anubis page, or a
+ * challenge marker that `baselineBody` does not carry.
+ */
+export function responseChallenge(
+  result: FetchResult,
+  baselineBody: string,
+): string | undefined {
+  const cfMitigated = result.headers["cf-mitigated"];
+  if (cfMitigated && cfMitigated.toLowerCase().includes("challenge")) {
+    return `Cloudflare challenge (cf-mitigated: ${cfMitigated})`;
+  }
+  const anubis = ANUBIS_MARKERS.find((m) => result.body.includes(m));
+  if (anubis) return `proof-of-work wall (body contains "${anubis}")`;
+  const marker = challengeMarker(result.body, baselineBody);
+  return marker
+    ? `challenge page (HTTP ${result.status}, body contains "${marker}")`
+    : undefined;
+}
+
 function mainText(body: string): string {
   if (!body.trim()) return "";
   return getMainContentText(parseBoundedHtml(body));

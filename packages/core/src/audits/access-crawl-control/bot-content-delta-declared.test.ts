@@ -310,7 +310,7 @@ describe("BotContentDeltaDeclaredAudit", () => {
     });
     expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toBe(
-      "The unrecognised control User-Agent got the same reduced page (at least 80% of its length, shingle similarity at least 0.70) as requests naming GPTBot at https://example.com/blog/resoling (20% of the browser text, shingle similarity 0.21); ClaudeBot at https://example.com/blog/resoling (20% of the browser text, shingle similarity 0.21); PerplexityBot at https://example.com/blog/resoling (20% of the browser text, shingle similarity 0.21). That is bot management aimed at unidentified clients, not a page keyed on the crawler's name, and the real crawler, verified by IP range or signature, may be served the full page. Confirm against the edge logs how the published crawler addresses are served before treating it as cloaking.",
+      "The unrecognised control User-Agent got the same reduced page (80% to 125% of its length, shingle similarity at least 0.70) as requests naming GPTBot at https://example.com/blog/resoling (20% of the browser text, shingle similarity 0.21); ClaudeBot at https://example.com/blog/resoling (20% of the browser text, shingle similarity 0.21); PerplexityBot at https://example.com/blog/resoling (20% of the browser text, shingle similarity 0.21). That is bot management aimed at unidentified clients, not a page keyed on the crawler's name, and the real crawler, verified by IP range or signature, may be served the full page. Confirm against the edge logs how the published crawler addresses are served before treating it as cloaking.",
     );
     expect(result.found).toContain(
       "3 delta(s) the unrecognised control User-Agent got too",
@@ -331,6 +331,24 @@ describe("BotContentDeltaDeclaredAudit", () => {
     expect(result.message).toMatch(
       /^A request naming GPTBot gets different content at .+ and nothing declares it/,
     );
+    expect(result.message).not.toContain("control User-Agent");
+  });
+
+  // A control page that is a challenge is a refusal, not bot-management
+  // evidence, even when its readable text matches the crawler's stub.
+  it.each([
+    ["a challenge marker", '<div id="px-captcha"></div>'],
+    [
+      "an Anubis page",
+      '<script src="/.within.website/x/cmd/anubis/static/js/main.mjs"></script>',
+    ],
+  ])("still fails when the control page carries %s", async (_label, extra) => {
+    const result = await run({
+      browser: page(FULL_TEXT),
+      bot: page(STUB_TEXT),
+      control: page(STUB_TEXT).replace("</body>", `${extra}</body>`),
+    });
+    expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).not.toContain("control User-Agent");
   });
 

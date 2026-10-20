@@ -23,8 +23,8 @@ import {
   sharedUaProbes,
   type UaProbe,
   BlockClass,
-  challengeMarker,
   probeChallenge,
+  responseChallenge,
   sharedControlProbe,
 } from "#core/gatherers/ua-parity";
 import { BotToken } from "#core/bot-registry";
@@ -198,7 +198,8 @@ function usable(probe: UaProbe): boolean {
  * signature, may be served the full page, so the delta is not a cloaking
  * finding. "The same" is checked against the crawler's page, not only against
  * the browser's: the control text must itself fall short of the browser text,
- * be within CONTROL_LENGTH_MATCH of the crawler text's length, and share its
+ * be within CONTROL_LENGTH_MATCH of the crawler text's length either way (80%
+ * to 125%), and share its
  * shingles at JACCARD_FLOOR. A control that got some other reduction, such as a
  * challenge or an empty shell, shows nothing about the crawler's page. A
  * missing, refused or over-limit control arm shows no bot management either,
@@ -210,7 +211,7 @@ async function controlSharesReduction(
 ): Promise<boolean> {
   const control = await sharedControlProbe(ctx, probe.url);
   if (!control || control.status < 200 || control.status >= 300) return false;
-  if (challengeMarker(control.body, probe.baselineBody)) return false;
+  if (responseChallenge(control, probe.baselineBody)) return false;
   let text: string;
   try {
     text = getMainContentText(parseBoundedHtml(control.body));
@@ -361,7 +362,7 @@ export class BotContentDeltaDeclaredAudit extends Audit {
     const found = `${urls.length} URL(s) compared against ${TOKENS.length} crawler User-Agent(s) from the scanner's address; ${comparable.length} comparable probe(s); ${findings.length} finding(s); ${declared} declared delta(s); ${botManagement.length} delta(s) the unrecognised control User-Agent got too`;
     const shared =
       botManagement.length > 0
-        ? `The unrecognised control User-Agent got the same reduced page (at least ${Math.round(CONTROL_LENGTH_MATCH * 100)}% of its length, shingle similarity at least ${JACCARD_FLOOR.toFixed(2)}) as requests naming ${botManagement.slice(0, MAX_SHOWN).join("; ")}${botManagement.length > MAX_SHOWN ? ` (${botManagement.length - MAX_SHOWN} more)` : ""}. That is bot management aimed at unidentified clients, not a page keyed on the crawler's name, and the real crawler, verified by IP range or signature, may be served the full page.`
+        ? `The unrecognised control User-Agent got the same reduced page (${Math.round(CONTROL_LENGTH_MATCH * 100)}% to ${Math.round(100 / CONTROL_LENGTH_MATCH)}% of its length, shingle similarity at least ${JACCARD_FLOOR.toFixed(2)}) as requests naming ${botManagement.slice(0, MAX_SHOWN).join("; ")}${botManagement.length > MAX_SHOWN ? ` (${botManagement.length - MAX_SHOWN} more)` : ""}. That is bot management aimed at unidentified clients, not a page keyed on the crawler's name, and the real crawler, verified by IP range or signature, may be served the full page.`
         : "";
 
     if (findings.length > 0) {
