@@ -569,12 +569,16 @@ describe("browser snapshot scan boundary", () => {
     );
     const { port } = server.address() as net.AddressInfo;
     const connects: unknown[][] = [];
-    const real = net.Socket.prototype.connect;
+    // Called with the socket as `this` below, so it is never used unbound.
+    const real = Reflect.get(net.Socket.prototype, "connect") as (
+      this: net.Socket,
+      ...args: unknown[]
+    ) => net.Socket;
     const spy = vi
       .spyOn(net.Socket.prototype, "connect")
       .mockImplementation(function (this: net.Socket, ...args: unknown[]) {
         connects.push(args);
-        return real.apply(this, args as never);
+        return real.apply(this, args);
       });
     const local = `http://127.0.0.1:${port}`;
     const loaded = html.replace(
