@@ -42,6 +42,11 @@ jobs:
       - name: Check published type declarations
         run: pnpm check:package-types
 
+      # The CLI and the MCP bin load core's CommonJS bundle; unit tests run
+      # the sources. This compares the two bundles audit by audit.
+      - name: Check core's CJS and ESM bundles agree
+        run: pnpm check:bundle-parity
+
       - name: Smoke-test the installed packages
         run: pnpm smoke:packages
 

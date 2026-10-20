@@ -23,6 +23,7 @@
     "knip": "knip",
     "check:retired-names": "node --import tsx scripts/check-retired-names.ts",
     "check:package-types": "node scripts/check-package-types.mjs",
+    "check:bundle-parity": "node scripts/check-bundle-parity.mjs",
     "smoke:packages": "node scripts/smoke-packages.mjs",
     "build:audit-map": "node --import tsx scripts/build-audit-map.ts",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",

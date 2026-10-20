@@ -38,7 +38,7 @@ export interface A11yAuditSpec {
 
 /** Base class: aggregates this audit's a11y rules across all scanned pages. */
 abstract class A11yBackedAudit extends Audit {
-  protected abstract rules: string[];
+  protected abstract get rules(): readonly string[];
 
   audit(ctx: CheckContext): AuditResult {
     const meta = (this.constructor as typeof Audit).meta;
@@ -122,10 +122,22 @@ export function defineA11yAudit(spec: A11yAuditSpec): {
 } {
   /* v8 ignore next */
   for (const r of spec.rules) if (!A11Y_RULES.includes(r)) A11Y_RULES.push(r);
-  return class extends A11yBackedAudit {
-    static override meta = spec.meta;
-    protected rules = spec.rules;
-  };
+  const { meta, rules } = spec;
+  // A named class whose rules come from a getter, not an instance field.
+  // tsup's CommonJS output lowers instance fields into a prototype method that
+  // the constructor reaches through one module-scope variable, reassigned on
+  // every call here. An anonymous class expression with `rules = spec.rules`
+  // therefore gave every audit the rules of the last one defined, in the CJS
+  // build only. A getter is a plain method closing over this call's `rules`,
+  // so no transform can share it. `scripts/check-bundle-parity.mjs` compares
+  // the two builds.
+  class DefinedA11yAudit extends A11yBackedAudit {
+    static override meta = meta;
+    protected override get rules(): readonly string[] {
+      return rules;
+    }
+  }
+  return DefinedA11yAudit;
 }
 
 // 7.22 (deprecated <marquee>/<blink> elements) was sunset — grade D, no

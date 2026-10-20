@@ -52,6 +52,7 @@ pnpm check:enums        # no string literal where an enum constant exists
 pnpm knip               # no unused file, export or dependency
 pnpm check:retired-names # user docs name no retired page type
 pnpm check:package-types # published .d.ts resolve like the JS (after build)
+pnpm check:bundle-parity # core's CJS and ESM bundles build the same audits (after build)
 pnpm changeset          # one per user-visible change
 ```
 
@@ -231,13 +232,13 @@ Write for a reader, not for a researcher:
 
 ## Before you commit
 
-All twelve, in order:
+All thirteen, in order:
 
 ```bash
-pnpm build && pnpm test && pnpm typecheck && pnpm lint && pnpm check:dossiers && pnpm check:audit-boundaries && pnpm check:requires && pnpm check:audit-map && pnpm check:enums && pnpm knip && pnpm check:retired-names && pnpm check:package-types
+pnpm build && pnpm test && pnpm typecheck && pnpm lint && pnpm check:dossiers && pnpm check:audit-boundaries && pnpm check:requires && pnpm check:audit-map && pnpm check:enums && pnpm knip && pnpm check:retired-names && pnpm check:package-types && pnpm check:bundle-parity
 ```
 
-`check:dossiers`, `check:requires`, `check:package-types` and the type-aware
+`check:dossiers`, `check:requires`, `check:package-types`, `check:bundle-parity` and the type-aware
 `lint` read the _built_ packages, so `pnpm build` has to run first. Watch for stale build artifacts: an untracked `.js` or `.d.ts` under
 `packages/*/src/` shadows its source in vitest and turns a red suite green.
 
