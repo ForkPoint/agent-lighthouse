@@ -1,5 +1,12 @@
 # @forkpoint/agent-lighthouse-website
 
+## 0.0.25
+
+### Patch Changes
+
+- Updated dependencies [7c55327]
+  - @forkpoint/agent-lighthouse-core@9.2.0
+
 ## 0.0.24
 
 ### Patch Changes
