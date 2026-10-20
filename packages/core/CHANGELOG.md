@@ -1,5 +1,34 @@
 # @forkpoint/agent-lighthouse-core
 
+## 9.1.0
+
+### Minor Changes
+
+- f182e70: Add a bot registry: one table of AI and search bot tokens, each copied from its operator's crawler page (verified 2026-10-19), with purpose, User-Agent strings, IP list URL and Web Bot Auth status. It is exported as `BOT_REGISTRY`, with `BotToken`, `BotPurpose`, `botEntry` and `botsByPurpose`. The UA probe set, the robots.txt training and live crawler tables, and the token lists of robots-ai-group-shadowing, robots-directives, sensitive-paths, ai-crawler-surface-reachability, ai-bot-directives and trust-txt-reciprocity-coherence now read from it. The weekly source watch now watches every crawler page it cites.
+
+  The UA-parity audits (ai-crawler-edge-parity, agent-ua-content-divergence-diff, machine-actionable-402-paid-access) also probe Perplexity-User and MistralAI-User, the two user-triggered fetchers whose vendors publish a literal User-Agent string. That adds up to two requests per probed URL. Their verdicts can move: a site whose edge answers either new User-Agent with a challenge or a non-2xx other than an opaque 403 or 429 (those only warn), while robots.txt admits it, can now fail ai-crawler-edge-parity, and a different page or an unreadable 402 served to either can now fail agent-ua-content-divergence-diff or machine-actionable-402-paid-access. `AI_CRAWLER_UAS` rows gain an `observed` flag, true for the ClaudeBot and Claude-User strings, which Anthropic does not publish.
+
+  Some verdicts move. Bytespider and cohere-ai have no operator documentation, so agent-governance, ai-usage-signal-coherence-across-channels, robots-ai-group-shadowing and ai-crawler-surface-reachability no longer count them; ai-bot-directives still lists them for information. robots-ai-group-shadowing stops reading Bravebot and starts reading the documented Meta-WebIndexer, Amzn-SearchBot, Amzn-User, MistralAI-Training, MistralAI-Index, Google-CloudVertexBot and Diffbot-User tokens. robots-directives no longer reads a `<meta name="anthropic-ai">` tag. ai-bot-directives' Diffbot note no longer says Diffbot publishes no compliance statement. No audit id, tier, grade or weight changes.
+
+- 5ccff8e: Add page detection to the task server. `POST /detect` reports a page's type, apart from a scan, from either a URL the server fetches once or a browser snapshot the client sends. The server keeps the payload in memory for 10 minutes, and `POST /tasks` with the returned `detectionId` scans that page without fetching the detected response again. `DELETE /detect/:id` drops a payload sooner. `POST /tasks` also accepts a plain `snapshot`. The new repeatable `serve --allow-origin <origin>` flag lets a browser extension call the server with CORS. Scan reports gain an optional `pageIdentity` field that records the detection a scan started from; a detected type stays `detected` and never changes scoring. Core adds `detectPage`, `PayloadOrigin`, and the `targetPage` and `pageIdentity` scan options.
+
+  The fetcher now stops reading a response body once it holds enough for the 5 MB it keeps, instead of buffering the whole body first; the kept text is unchanged.
+
+### Patch Changes
+
+- 4b769cd: Bot facts now follow the vendors' own crawler pages (re-checked 2026-10-19).
+
+  - The UA-parity probes send OAI-SearchBot as the string OpenAI documents (`… Chrome/131.0.0.0 Safari/537.36; compatible; OAI-SearchBot/1.4; +https://openai.com/searchbot`), not a bare `OAI-SearchBot/1.0`. The browser baseline moves from Chrome 140 to the current Stable major, 155. The ClaudeBot and Claude-User strings are kept and are now recorded as observed: Anthropic publishes no User-Agent string.
+  - The robots.txt crawler tables read by `access-crawl-control/agent-governance` and `access-crawl-control/ai-usage-signal-coherence-across-channels` changed. Anthropic's training crawler is `ClaudeBot`; the undocumented `anthropic-ai` token no longer counts. PerplexityBot and YouBot are search crawlers, not training crawlers, and Diffbot is neither. `Bravebot` is dropped, because Brave documents no distinct user agent. The documented tokens Perplexity-User, Meta-WebIndexer, Amzn-SearchBot, Amzn-User, MistralAI-Index and MistralAI-Training are added.
+  - Some sites' verdicts move. A robots.txt that names only `anthropic-ai` no longer counts as naming a training crawler. A PerplexityBot, YouBot or Diffbot block no longer reads as a training opt-out. A site that blocks one of the newly listed training tokens, or names one of the new live tokens, can now be credited for it.
+  - `agent-governance` no longer says a category has no rules when both are named but too thinly to count. The warning names the side that is too thin.
+  - The `no-bot-detection` fix text lists ClaudeBot and Perplexity-User. It no longer lists `anthropic-ai`, `Bravebot` or `Google-Extended`, none of which is a user agent a vendor sends.
+  - The unused `isAnthropicAllowed` helper is removed. It was never part of the public API.
+
+- e44348d: UA parity audits now say what a User-Agent probe can prove. The scanner sends each bot's User-Agent from its own address, without the bot's published IP range or Web Bot Auth signature. A finding therefore reports how the site answers a request that names the bot, never that the real bot is blocked or sees a page. Reworded messages, titles and `details` strings in `access-crawl-control/ai-crawler-edge-parity`, `operability-safety/agent-ua-content-divergence-diff`, `access-crawl-control/bot-content-delta-declared`, `agentic-commerce/agent-ua-commerce-parity`, `agentic-commerce/cart-handoff-reachability` and `access-crawl-control/machine-actionable-402-paid-access`. Each dossier gains a Limits section citing Cloudflare's verified-bot policy, OpenAI's per-bot IP lists and, as an illustration, Google's reverse-DNS verification.
+
+  One verdict is corrected: `access-crawl-control/ai-crawler-edge-parity` no longer fails a URL where the browser itself got a non-2xx, such as a stale sitemap URL that answers 404 to everyone. Its dossier already required the browser request to be 200. Such URLs are now named in `found` as not compared. No id, tier, grade, weight or schema changed.
+
 ## 9.0.0
 
 ### Major Changes
