@@ -21,6 +21,9 @@ sources:
   - s18
   - anthropic-crawler-docs
   - perplexity-crawlers-docs
+  - google-robots-meta-tag
+  - bing-robots-meta-tags
+  - openai-bots
 ---
 
 # no-nofollow (`1.14`)
@@ -48,9 +51,8 @@ by the result schema.
 
 ## Limits
 
-The current predicate still uses substring matching for `nofollow`. It does not
-recognize `none`, resolve named-bot directives, or exempt legitimate utility
-pages. These limits remain pending. The finding asks for a policy review, not
+The audit reads `nofollow` only under a name an operator documents reading. It
+does not recognize `none` or exempt legitimate utility pages. These limits remain pending. The finding asks for a policy review, not
 removal of every intentional restriction. Metadata and response headers remain
 checkable when the page body has no readable text.
 
@@ -68,13 +70,16 @@ checkable when the page body has no readable text.
 
 ## Implementation deviations
 
+- Since 2026-10-20 the audit reads `nofollow` as a whole token, only under the names `robots`, `googlebot`, `googlebot-news`, `bingbot` and `applebot`, in a meta tag or as an `X-Robots-Tag` prefix. The list and the header parser live in `packages/core/src/robots-meta-names.ts`, shared with `robots-directives` and `snippet-gate-coverage`. Google: "Google supports two user agent tokens in the robots meta tag; other values are ignored" (https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag, verified 2026-10-20). Bing: `name="bingbot"` (https://www.bing.com/webmasters/help/robots-meta-tags-and-attributes-that-bing-supports-5198d240, verified 2026-10-20). Apple: `name="applebot"` and `X-Robots-Tag: applebot:` (https://support.apple.com/en-us/119829, verified 2026-10-20). OpenAI, Anthropic and Perplexity document robots.txt only (https://developers.openai.com/api/docs/bots, verified 2026-10-20).
+- A header `bot:` prefix scopes every directive after it until the next prefix. Until 2026-10-20 a substring match read `X-Robots-Tag: gptbot: nofollow` as a nofollow for every crawler. That page now passes, as does one with `<meta name="gptbot" content="nofollow">`.
+- Meta tags are read off the DOM, not the last-wins `page.meta`, so a `nofollow` followed by a permissive `robots` tag still counts. A `nofollow` addressed to `googlebot`, `bingbot` or `applebot` in a meta tag now counts too; before, only `name="robots"` was read.
+
 - `requires` is `origin-reachable` and `unblocked-fetches` only. The audit reads `<meta name="robots">` and the `X-Robots-Tag` header, which a page whose body renders nothing still serves whole. The exemption is recorded in `scripts/lib/requires-analysis.ts`.
 - The title and guidance describe a page-level directive and its documented Applebot consumer, not individual links or site-wide invisibility.
 
 ## Deferred
 
-- Replace substring matching with directive-aware parsing, including `none` and
-  bot-specific scope.
+- Recognise `none` as nofollow. Bot-specific scope was resolved on 2026-10-20.
 - Establish utility/indexable-page eligibility from supported purpose evidence.
   Preserve intentional restrictions. Whole-sample severity stays as it is until
   that population review has its own tests and evidence.

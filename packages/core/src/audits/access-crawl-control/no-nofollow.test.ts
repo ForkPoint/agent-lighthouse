@@ -82,6 +82,65 @@ describe("NoNofollowAudit", () => {
     expect(result.found).toContain("+1 more");
   });
 
+  const page = (head: string, header?: string) => {
+    const ctx = mockPageContext(
+      "https://example.com/",
+      `<html><head>${head}</head><body>Hi</body></html>`,
+    );
+    if (header) ctx.fetchResult.headers["x-robots-tag"] = header;
+    return ctx;
+  };
+  const FAIL_MESSAGE = "All 1 scanned page(s) have nofollow directives.";
+  const PASS_MESSAGE = "No scanned pages have nofollow directives.";
+
+  // No AI crawler operator documents reading a robots directive addressed to
+  // its own name, so a gptbot-scoped nofollow binds no documented consumer.
+  it.each([
+    ["", "gptbot: nofollow"],
+    ["", "claudebot: noindex, nofollow"],
+    ["", "yandexbot: nofollow"],
+    ['<meta name="GPTBot" content="nofollow">', undefined],
+    ['<meta name="google-extended" content="nofollow">', undefined],
+    ['<meta name="msnbot" content="nofollow">', undefined],
+  ])(
+    "does not count an undocumented name as nofollow (%s %s)",
+    (head, header) => {
+      const result = audit.audit(mockCheckContext([page(head, header)]));
+      expect(result.status).toBe(CheckStatus.Pass);
+      expect(result.message).toBe(PASS_MESSAGE);
+    },
+  );
+
+  // Google, Bing and Apple document these names; Apple: "nofollow: Applebot
+  // won't follow any links on the page".
+  it.each([
+    ['<meta name="robots" content="index, nofollow">', undefined],
+    ['<meta name="applebot" content="nofollow">', undefined],
+    ['<meta name="googlebot" content="nofollow">', undefined],
+    ["", "nofollow"],
+    ["", "applebot: nofollow"],
+    ["", "googlebot: noindex, nofollow"],
+  ])("counts nofollow under a documented name (%s %s)", (head, header) => {
+    const result = audit.audit(mockCheckContext([page(head, header)]));
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toBe(FAIL_MESSAGE);
+    expect(result.found).toBe(
+      "1/1 pages have nofollow. Nofollow on: https://example.com/",
+    );
+  });
+
+  // page.meta is last-wins; a later permissive tag does not cancel nofollow.
+  it("counts nofollow when a later robots tag is permissive", () => {
+    const result = audit.audit(
+      mockCheckContext([
+        page(
+          '<meta name="robots" content="nofollow"><meta name="robots" content="index, follow">',
+        ),
+      ]),
+    );
+    expect(result.message).toBe(FAIL_MESSAGE);
+  });
+
   // The scan may hold a readable page that is not this site's — a broker's
   // parking page, a foreign interstitial. Attribution is the gate's decision,
   // and the runner has to honour it rather than run this audit anyway.

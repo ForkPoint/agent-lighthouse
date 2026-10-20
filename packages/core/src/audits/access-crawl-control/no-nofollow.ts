@@ -1,7 +1,11 @@
 import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
-import type { CheckContext } from "#core/check-context";
+import type { CheckContext, PageContext } from "#core/check-context";
 import { weightForGrade } from "#core/scorer";
+import {
+  DOCUMENTED_ROBOTS_NAMES,
+  parseXRobotsTag,
+} from "#core/robots-meta-names";
 import {
   AuditTier,
   CheckPriority,
@@ -10,6 +14,35 @@ import {
   FixEffort,
   ScoreDisplayMode,
 } from "#core/types";
+
+const NOFOLLOW = "nofollow";
+
+/**
+ * True when a robots meta tag or `X-Robots-Tag` directive under a name an
+ * operator documents reading carries `nofollow`.
+ *
+ * Meta tags are read off the DOM, so every tag counts rather than the last
+ * one. A header `bot:` prefix scopes every directive after it, so
+ * `X-Robots-Tag: gptbot: nofollow` binds only a crawler that documents no
+ * such reading, and does not count as nofollow for every crawler.
+ */
+function hasNofollow(page: PageContext): boolean {
+  const $ = page.$;
+  let found = false;
+  $("meta[name]").each((_, el) => {
+    if (found) return;
+    const name = ($(el).attr("name") ?? "").trim().toLowerCase();
+    if (!DOCUMENTED_ROBOTS_NAMES.has(name)) return;
+    found = ($(el).attr("content") ?? "")
+      .split(",")
+      .some((token) => token.trim().toLowerCase() === NOFOLLOW);
+  });
+  if (found) return true;
+  return parseXRobotsTag(page.fetchResult.headers["x-robots-tag"]).some(
+    ({ name, token }) =>
+      DOCUMENTED_ROBOTS_NAMES.has(name) && token === NOFOLLOW,
+  );
+}
 
 export class NoNofollowAudit extends Audit {
   static override meta: AuditMeta = {
@@ -52,19 +85,7 @@ export class NoNofollowAudit extends Audit {
     const pagesWithNofollow: string[] = [];
 
     for (const page of ctx.pages) {
-      // Check meta robots tag for nofollow
-      const metaRobots = (page.meta["robots"] ?? "").toLowerCase();
-      const hasMetaNofollow = metaRobots.includes("nofollow");
-
-      // Check X-Robots-Tag header for nofollow
-      const xRobotsTag = (
-        page.fetchResult.headers["x-robots-tag"] ?? ""
-      ).toLowerCase();
-      const hasHeaderNofollow = xRobotsTag.includes("nofollow");
-
-      if (hasMetaNofollow || hasHeaderNofollow) {
-        pagesWithNofollow.push(page.url);
-      }
+      if (hasNofollow(page)) pagesWithNofollow.push(page.url);
     }
 
     pagesWithNofollow.sort();

@@ -64,5 +64,6 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 
 ## Deferred
 
+- The `## Evidence` section cites the MCP Specification Tools page. That source is about MCP tool listing, not snippet controls, so it is likely misplaced. It is left as it stands until a dossier review replaces it.
 - `unavailable_after` is parsed and reported but not evaluated against the current date.
 - Per-bot `max-snippet` budgets are reported. The truncation comparison uses the generic rule only.
