@@ -10,15 +10,15 @@
     "typecheck": "astro check"
   },
   "dependencies": {
-    "@astrojs/markdown-satteri": "0.4.2",
+    "@astrojs/markdown-satteri": "0.4.4",
     "@forkpoint/agent-lighthouse-core": "workspace:*",
-    "astro": "^7.3.5"
+    "astro": "^7.4.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
     "@tailwindcss/vite": "^4.3.3",
     "@types/jsdom": "^30.0.0",
-    "jsdom": "^30.1.1",
+    "jsdom": "^30.1.3",
     "pagefind": "^1.5.2",
     "tailwindcss": "^4.3.3",
     "typescript": "npm:@typescript/typescript6@^6.0.2"
