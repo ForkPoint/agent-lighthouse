@@ -1,20 +1,67 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createServer, type Server } from "node:http";
 import { connect, type AddressInfo } from "node:net";
+import { createHash } from "node:crypto";
 import {
+  CaptureSource,
+  ClassificationConfidence,
+  DOM_WORK_LIMITS,
+  DocumentState,
   isSafeUrl,
+  PageType,
+  PageTypeSource,
+  PayloadOrigin,
   PhaseId,
+  type BrowserSnapshot,
+  type FetchResult,
   type ScanOptions,
   type ScanReport,
 } from "@forkpoint/agent-lighthouse-core";
 import { createTaskServer, type TaskServer } from "./http";
 import { TaskStatus } from "./task-types";
+import {
+  DETECT_FETCH_TIMEOUT_MS,
+  MAX_PAYLOAD_BODY_BYTES,
+  MAX_READING_TASK_BODIES,
+  MAX_RUNNING_DETECTS,
+} from "./limits";
+import { detectUrl } from "./detect";
+
+// The page fetch of a URL detection answers from this map; nothing reaches
+// the network. A URL in `hold` waits until `releaseFetches()`.
+const net = vi.hoisted(() => ({
+  pages: new Map<string, Partial<FetchResult>>(),
+  calls: [] as string[],
+  held: [] as (() => void)[],
+  hold: new Set<string>(),
+}));
+const releaseFetches = () => net.held.splice(0).forEach((go) => go());
 
 vi.mock("@forkpoint/agent-lighthouse-core", async (importOriginal) => ({
   ...(await importOriginal<
     typeof import("@forkpoint/agent-lighthouse-core")
   >()),
   isSafeUrl: vi.fn(async (url: string) => !url.includes("127.0.0.1")),
+  createFetcher: () => ({
+    fetch: async ({ url }: { url: string }): Promise<FetchResult> => {
+      net.calls.push(url);
+      if (net.hold.has(url))
+        await new Promise<void>((resolve) => net.held.push(resolve));
+      return {
+        url,
+        finalUrl: url,
+        status: 200,
+        headers: { "content-type": "text/html" },
+        body: "",
+        ttfbMs: 0,
+        totalMs: 0,
+        contentType: "text/html",
+        contentLength: 0,
+        ...net.pages.get(url),
+      };
+    },
+    summary: () => ({ requests: 0, statuses: {}, failures: {}, open: [] }),
+  }),
 }));
 
 const stamp = { fraction: 0, elapsedMs: 0 };
@@ -34,12 +81,19 @@ const scan = vi.fn((_url: string, o?: ScanOptions) => {
   });
 });
 
+const EXTENSION = "chrome-extension://abcdefghijklmnop";
+
 let http: Server;
 let tasks: TaskServer;
 let base: string;
 
 beforeEach(async () => {
-  tasks = createTaskServer({ scan, token: "s3cret", page: "<p>page</p>" });
+  tasks = createTaskServer({
+    scan,
+    token: "s3cret",
+    page: "<p>page</p>",
+    allowedOrigins: [EXTENSION],
+  });
   http = createServer((req, res) => tasks.handle(req, res));
   await new Promise<void>((r) => http.listen(0, "127.0.0.1", r));
   base = `http://127.0.0.1:${(http.address() as AddressInfo).port}`;
@@ -48,6 +102,10 @@ beforeEach(async () => {
 afterEach(async () => {
   tasks.close();
   release();
+  releaseFetches();
+  net.pages.clear();
+  net.calls.length = 0;
+  net.hold.clear();
   await new Promise((r) => http.close(r));
 });
 
@@ -55,16 +113,20 @@ const post = (
   body: unknown,
   token = "s3cret",
   extra: Record<string, string> = {},
+  path = "/tasks",
 ) =>
-  fetch(`${base}/tasks`, {
+  fetch(`${base}${path}`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
       authorization: `Bearer ${token}`,
       ...extra,
     },
-    body: JSON.stringify(body),
+    body: typeof body === "string" ? body : JSON.stringify(body),
   });
+
+const detect = (body: unknown, extra: Record<string, string> = {}) =>
+  post(body, "s3cret", extra, "/detect");
 
 /** Reads SSE frames until `stop` returns true. */
 async function readFrames(
@@ -239,5 +301,496 @@ describe("task routes", () => {
       "https://u:p@shop.test/",
       expect.anything(),
     );
+  });
+});
+
+const PRODUCT_HTML = `<html><head><meta property="og:type" content="product"></head><body><main><h1>Blue mug</h1><p>A mug.</p></main></body></html>`;
+const sha = (html: string) => createHash("sha256").update(html).digest("hex");
+
+function capture(overrides: Partial<BrowserSnapshot> = {}): BrowserSnapshot {
+  return {
+    requestedUrl: "https://shop.test/p/1",
+    capturedUrl: "https://shop.test/p/1",
+    html: PRODUCT_HTML,
+    capturedAt: "2026-10-19T10:00:00Z",
+    captureSource: CaptureSource.CurrentTab,
+    collector: { name: "extension", version: "1.0" },
+    documentState: DocumentState.Complete,
+    truncation: { truncated: false },
+    redaction: { redacted: false, fields: [] },
+    ...overrides,
+  };
+}
+
+describe("POST /detect", () => {
+  it("detects a fetched URL with one request and keeps the payload", async () => {
+    net.pages.set("https://shop.test/p/1", { body: PRODUCT_HTML });
+    const res = await detect({ url: "https://shop.test/p/1" });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toMatchObject({
+      url: "https://shop.test/p/1",
+      type: PageType.Product,
+      confidence: ClassificationConfidence.Strong,
+      payloadSha256: sha(PRODUCT_HTML),
+      origin: PayloadOrigin.Fetched,
+      partial: false,
+    });
+    expect(body.detectionId).toMatch(/^d_[0-9a-f]{32}$/);
+    expect(net.calls).toEqual(["https://shop.test/p/1"]);
+  });
+
+  it("reports a gateway's target without following it", async () => {
+    net.pages.set("https://shop.test/", {
+      body: `<html><head><meta http-equiv="refresh" content="0;url=/en/"></head><body></body></html>`,
+    });
+    const body = await (await detect({ url: "https://shop.test/" })).json();
+    expect(body.gatewayTarget).toBe("https://shop.test/en/");
+    expect(net.calls).toEqual(["https://shop.test/"]);
+  });
+
+  it("detects a supplied snapshot without a fetch", async () => {
+    const res = await detect({ snapshot: capture() });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({
+      type: PageType.Product,
+      origin: PayloadOrigin.Supplied,
+      partial: false,
+      payloadSha256: sha(PRODUCT_HTML),
+    });
+    expect(net.calls).toEqual([]);
+  });
+
+  it.each([
+    ["truncated", { truncation: { truncated: true } }],
+    ["redacted", { redaction: { redacted: true, fields: ["email"] } }],
+    ["loading", { documentState: DocumentState.Loading }],
+  ])("treats a %s snapshot as partial", async (_name, overrides) => {
+    const body = await (await detect({ snapshot: capture(overrides) })).json();
+    expect(body.partial).toBe(true);
+    expect(body.confidence).toBe(ClassificationConfidence.Hint);
+  });
+
+  it("refuses a missing or wrong token", async () => {
+    const res = await post(
+      { url: "https://shop.test/" },
+      "wrong",
+      {},
+      "/detect",
+    );
+    expect(res.status).toBe(401);
+  });
+
+  it("refuses a foreign Origin and accepts an allowed one with CORS headers", async () => {
+    const foreign = await detect(
+      { snapshot: capture() },
+      { origin: "https://evil.example" },
+    );
+    expect(foreign.status).toBe(403);
+    const allowed = await detect(
+      { snapshot: capture() },
+      { origin: EXTENSION },
+    );
+    expect(allowed.status).toBe(200);
+    expect(allowed.headers.get("access-control-allow-origin")).toBe(EXTENSION);
+    expect(allowed.headers.get("access-control-expose-headers")).toBe(
+      "Retry-After",
+    );
+    expect(allowed.headers.get("vary")).toBe("Origin");
+  });
+
+  it("puts CORS headers on a GET and on a stream for an allowed origin", async () => {
+    const { taskId } = await (await post({ url: "https://shop.test/" })).json();
+    const get = await fetch(`${base}/tasks/${taskId}`, {
+      headers: { origin: EXTENSION },
+    });
+    expect(get.headers.get("access-control-allow-origin")).toBe(EXTENSION);
+    const stream = await fetch(`${base}/tasks/${taskId}/stream`, {
+      headers: { origin: EXTENSION },
+    });
+    expect(stream.headers.get("content-type")).toContain("text/event-stream");
+    expect(stream.headers.get("access-control-allow-origin")).toBe(EXTENSION);
+    expect(stream.headers.get("vary")).toBe("Origin");
+    await stream.body?.cancel();
+    const plain = await fetch(`${base}/tasks/${taskId}`);
+    expect(plain.headers.get("access-control-allow-origin")).toBeNull();
+  });
+
+  it("refuses a body not declared as JSON", async () => {
+    const res = await detect(
+      { snapshot: capture() },
+      { "content-type": "text/plain" },
+    );
+    expect(res.status).toBe(415);
+  });
+
+  it("refuses a body over the payload limit", async () => {
+    const res = await detect("x".repeat(MAX_PAYLOAD_BODY_BYTES + 1));
+    expect(res.status).toBe(413);
+  });
+
+  it("refuses a chunked body over the limit that declares no length", async () => {
+    const chunk = new TextEncoder().encode("x".repeat(256 * 1024));
+    let sent = 0;
+    const body = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        if (sent > MAX_PAYLOAD_BODY_BYTES) return controller.close();
+        sent += chunk.length;
+        controller.enqueue(chunk);
+      },
+    });
+    const res = await fetch(`${base}/detect`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: "Bearer s3cret",
+      },
+      body,
+      duplex: "half",
+    } as RequestInit);
+    expect(res.status).toBe(413);
+  });
+
+  it("answers 413 before 401 for a declared length over the limit", async () => {
+    const res = await post(
+      "x".repeat(MAX_PAYLOAD_BODY_BYTES + 1),
+      "wrong",
+      {},
+      "/detect",
+    );
+    expect(res.status).toBe(413);
+  });
+
+  it("refuses both url and snapshot, or neither", async () => {
+    expect(
+      (await detect({ url: "https://shop.test/", snapshot: capture() })).status,
+    ).toBe(400);
+    expect((await detect({})).status).toBe(400);
+    expect((await detect("not json")).status).toBe(400);
+  });
+
+  it("answers 400 with the first schema error for a bad snapshot", async () => {
+    const res = await detect({
+      snapshot: capture({ capturedUrl: "https://other.test/" }),
+    });
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toBe("invalid_snapshot");
+    expect(body.message).toContain("Captured URL does not match");
+  });
+
+  it("refuses an unsafe URL", async () => {
+    const res = await detect({ url: "http://127.0.0.1/" });
+    expect(res.status).toBe(400);
+    expect((await res.json()).message).toBe("unsafe URL");
+    expect(net.calls).toEqual([]);
+  });
+
+  it("answers 502 with the fetch error text", async () => {
+    net.pages.set("https://down.test/", {
+      status: 0,
+      error: "connect ECONNREFUSED 203.0.113.1:443 (ECONNREFUSED)",
+    });
+    const res = await detect({ url: "https://down.test/" });
+    expect(res.status).toBe(502);
+    expect(await res.json()).toEqual({
+      error: "fetch_failed",
+      message: "ECONNREFUSED",
+    });
+  });
+
+  it("answers a redirect into private space as an unsafe URL", async () => {
+    net.pages.set("https://hop.test/", {
+      status: 0,
+      error: "redirect-refused",
+    });
+    const res = await detect({ url: "https://hop.test/" });
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe("unsafe_url");
+  });
+
+  it("puts the DNS check inside the detection deadline", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.mocked(isSafeUrl).mockImplementationOnce(() => new Promise(() => {}));
+      const pending = detectUrl(
+        new URL("https://dns.test/"),
+        "https://dns.test/",
+      );
+      const outcome = expect(pending).rejects.toMatchObject({
+        status: 502,
+        message: "timeout",
+      });
+      await vi.advanceTimersByTimeAsync(DETECT_FETCH_TIMEOUT_MS);
+      await outcome;
+      expect(net.calls).toEqual([]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("answers 422 for a page that is not HTML", async () => {
+    net.pages.set("https://shop.test/a.json", {
+      body: "{}",
+      contentType: "application/json",
+      headers: { "content-type": "application/json" },
+    });
+    const res = await detect({ url: "https://shop.test/a.json" });
+    expect(res.status).toBe(422);
+    expect((await res.json()).message).toBe("not an HTML page");
+  });
+
+  it("answers 422 for a page that answers an HTTP error", async () => {
+    net.pages.set("https://shop.test/gone", { status: 404, body: "<p>no</p>" });
+    const res = await detect({ url: "https://shop.test/gone" });
+    expect(res.status).toBe(422);
+    expect((await res.json()).message).toBe("page returned HTTP 404");
+  });
+
+  it("answers 422 for a page over the DOM work limits", async () => {
+    const res = await detect({
+      snapshot: capture({
+        html: "<div>".repeat(DOM_WORK_LIMITS.maxDepth + 5),
+      }),
+    });
+    expect(res.status).toBe(422);
+    expect((await res.json()).message).toBe("page too deep to assess");
+  });
+
+  it("answers 429 with Retry-After once the detect cap is full", async () => {
+    net.hold.add("https://slow.test/");
+    const slow = Array.from({ length: MAX_RUNNING_DETECTS }, () =>
+      detect({ url: "https://slow.test/" }),
+    );
+    await vi.waitFor(() => expect(net.held).toHaveLength(MAX_RUNNING_DETECTS));
+    const refused = await detect({ snapshot: capture() });
+    expect(refused.status).toBe(429);
+    expect(refused.headers.get("retry-after")).toBe("1");
+    releaseFetches();
+    for (const res of await Promise.all(slow)) expect(res.status).toBe(200);
+    expect((await detect({ snapshot: capture() })).status).toBe(200);
+  });
+});
+
+describe("DELETE /detect/:id", () => {
+  it("removes an entry, with the token", async () => {
+    const { detectionId } = await (
+      await detect({ snapshot: capture() })
+    ).json();
+    const del = (token: string) =>
+      fetch(`${base}/detect/${detectionId}`, {
+        method: "DELETE",
+        headers: { authorization: `Bearer ${token}` },
+      });
+    expect((await del("wrong")).status).toBe(401);
+    expect((await del("s3cret")).status).toBe(204);
+    expect((await del("s3cret")).status).toBe(404);
+  });
+});
+
+describe("CORS preflight", () => {
+  const preflight = (origin: string) =>
+    fetch(`${base}/detect`, {
+      method: "OPTIONS",
+      headers: {
+        origin,
+        "access-control-request-method": "POST",
+        "access-control-request-headers": "authorization, content-type",
+      },
+    });
+
+  it("answers an allowed origin with 204 and the exact CORS headers", async () => {
+    const res = await preflight(EXTENSION);
+    expect(res.status).toBe(204);
+    expect(res.headers.get("access-control-allow-origin")).toBe(EXTENSION);
+    expect(res.headers.get("access-control-allow-headers")).toBe(
+      "Authorization, Content-Type",
+    );
+    expect(res.headers.get("access-control-allow-methods")).toBe(
+      "GET, POST, DELETE",
+    );
+    expect(res.headers.get("vary")).toBe("Origin");
+  });
+
+  it("refuses any other origin with 403", async () => {
+    const res = await preflight("https://evil.example");
+    expect(res.status).toBe(403);
+    expect(res.headers.get("access-control-allow-origin")).toBeNull();
+    // Exact match only: a prefix of an allowed origin is another origin.
+    expect((await preflight(`${EXTENSION}x`)).status).toBe(403);
+  });
+});
+
+describe("body limits", () => {
+  const big = { url: "https://shop.test/", pad: "x".repeat(100 * 1024) };
+
+  it("lets POST /detect and POST /tasks carry more than 16 KiB", async () => {
+    expect((await detect(big)).status).toBe(200);
+    expect((await post(big)).status).toBe(202);
+  });
+
+  it("keeps 16 KiB on every other route", async () => {
+    const { taskId } = await (await post({ url: "https://shop.test/" })).json();
+    const res = await fetch(`${base}/tasks/${taskId}`, {
+      method: "DELETE",
+      headers: { authorization: "Bearer s3cret" },
+      body: JSON.stringify(big),
+    });
+    expect(res.status).toBe(413);
+  });
+});
+
+describe("POST /tasks with detectionId", () => {
+  const lastOptions = () => scan.mock.calls.at(-1)![1]!;
+
+  it("scans the stored target with the stored response and its identity", async () => {
+    net.pages.set("https://shop.test/p/1", { body: PRODUCT_HTML });
+    const { detectionId } = await (
+      await detect({ url: "https://shop.test/p/1" })
+    ).json();
+    scan.mockClear();
+    const res = await post({ detectionId });
+    expect(res.status).toBe(202);
+    expect((await res.json()).snapshot.url).toBe("https://shop.test/p/1");
+    expect(scan.mock.calls[0]![0]).toBe("https://shop.test/p/1");
+    const options = lastOptions();
+    expect(options.targetPage?.body).toBe(PRODUCT_HTML);
+    expect(options.snapshots).toBeUndefined();
+    // A detected type is never handed over as a declared one.
+    expect(options.pageType).toBeUndefined();
+    expect(options.pageIdentity).toEqual({
+      type: PageType.Product,
+      source: PageTypeSource.Detected,
+      detectionId,
+      payloadSha256: sha(PRODUCT_HTML),
+      origin: PayloadOrigin.Fetched,
+    });
+  });
+
+  it("feeds a supplied payload to the scan as its snapshot", async () => {
+    const { detectionId } = await (
+      await detect({ snapshot: capture() })
+    ).json();
+    scan.mockClear();
+    expect((await post({ detectionId })).status).toBe(202);
+    const options = lastOptions();
+    expect(options.snapshots).toEqual({ version: 1, pages: [capture()] });
+    expect(options.targetPage).toBeUndefined();
+    expect(options.pageIdentity?.origin).toBe(PayloadOrigin.Supplied);
+  });
+
+  it("keeps the entry, so a failed start can retry", async () => {
+    const { detectionId } = await (
+      await detect({ snapshot: capture() })
+    ).json();
+    expect((await post({ detectionId })).status).toBe(202);
+    expect((await post({ detectionId })).status).toBe(202);
+  });
+
+  it("refuses a detectionId sent with url or snapshot", async () => {
+    const { detectionId } = await (
+      await detect({ snapshot: capture() })
+    ).json();
+    expect(
+      (await post({ detectionId, url: "https://shop.test/p/1" })).status,
+    ).toBe(400);
+    expect((await post({ detectionId, snapshot: capture() })).status).toBe(400);
+  });
+
+  it("answers 400 for a detectionId that is not a string", async () => {
+    expect((await post({ detectionId: 42 })).status).toBe(400);
+  });
+
+  it("applies the scan cap to a detectionId", async () => {
+    const { detectionId } = await (
+      await detect({ snapshot: capture() })
+    ).json();
+    for (let i = 0; i < 4; i++)
+      expect((await post({ url: `https://s${i}.test/` })).status).toBe(202);
+    expect((await post({ detectionId })).status).toBe(429);
+  });
+
+  it("bounds the POST /tasks bodies read at once", async () => {
+    const port = (http.address() as AddressInfo).port;
+    // Each socket sends its headers and part of a body, then waits.
+    const sockets = Array.from({ length: MAX_READING_TASK_BODIES }, () => {
+      const socket = connect(port, "127.0.0.1");
+      socket.on("error", () => {});
+      socket.write(
+        "POST /tasks HTTP/1.1\r\nHost: x\r\nAuthorization: Bearer s3cret\r\n" +
+          "Content-Type: application/json\r\nContent-Length: 1000\r\n\r\n{",
+      );
+      return socket;
+    });
+    try {
+      await vi.waitFor(async () => {
+        const res = await post({ url: "https://shop.test/" });
+        expect(res.status).toBe(429);
+        expect(res.headers.get("retry-after")).toBe("1");
+      });
+    } finally {
+      for (const socket of sockets) socket.destroy();
+    }
+    await vi.waitFor(async () =>
+      expect((await post({ url: "https://shop.test/" })).status).toBe(202),
+    );
+  });
+
+  it("answers 404 for an unknown or expired detectionId", async () => {
+    const res = await post({ detectionId: "d_unknown" });
+    expect(res.status).toBe(404);
+    expect((await res.json()).message).toBe(
+      "detection expired; detect again or send the payload",
+    );
+  });
+});
+
+describe("POST /tasks with a plain snapshot", () => {
+  it("scans the snapshot's URL with the snapshot", async () => {
+    scan.mockClear();
+    const res = await post({ snapshot: capture() });
+    expect(res.status).toBe(202);
+    expect(scan.mock.calls[0]![0]).toBe("https://shop.test/p/1");
+    expect(scan.mock.calls[0]![1]!.snapshots?.pages).toHaveLength(1);
+    expect(scan.mock.calls[0]![1]!.pageIdentity).toBeUndefined();
+  });
+
+  it("refuses a snapshot of another page than the url", async () => {
+    expect(
+      (await post({ url: "https://shop.test/other", snapshot: capture() }))
+        .status,
+    ).toBe(400);
+    expect(
+      (await post({ snapshot: capture({ capturedAt: "yesterday" }) })).status,
+    ).toBe(400);
+  });
+});
+
+describe("a payload the store refuses", () => {
+  it("answers 413 and hands out no detectionId", async () => {
+    const refusing = createTaskServer({
+      payloads: {
+        put: () => undefined,
+        get: () => undefined,
+        delete: () => false,
+      },
+    });
+    const server = createServer((req, res) => refusing.handle(req, res));
+    await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
+    try {
+      const port = (server.address() as AddressInfo).port;
+      const res = await fetch(`http://127.0.0.1:${port}/detect`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ snapshot: capture() }),
+      });
+      expect(res.status).toBe(413);
+      const body = await res.json();
+      expect(body.error).toBe("payload_too_large");
+      expect(body.detectionId).toBeUndefined();
+    } finally {
+      refusing.close();
+      await new Promise((r) => server.close(r));
+    }
   });
 });

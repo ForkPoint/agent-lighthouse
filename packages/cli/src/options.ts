@@ -365,11 +365,15 @@ export function resolveCommand(args: string[]): {
     : { action: CliCommand.Audit, url };
 }
 
+/** `scheme://host[:port]`, as a browser sends it in `Origin`. */
+const BARE_ORIGIN =
+  /^[a-z][a-z0-9+.-]*:\/\/(?:\[[0-9a-f:.]+\]|[^/?#@\s:[\]]+)(?::\d{1,5})?$/;
+
 /** Flags of `agent-lighthouse serve`. The token may come from `AL_SERVER_TOKEN`. */
 export function parseServeOptions(
   args: string[],
   env: NodeJS.ProcessEnv = process.env,
-): { port: number; host: string; token?: string } {
+): { port: number; host: string; token?: string; allowedOrigins?: string[] } {
   // A flag that is present must carry a value: a silent fallback would start
   // the server without the auth or bind address the operator asked for.
   const value = (flag: string) => {
@@ -384,10 +388,32 @@ export function parseServeOptions(
   if (!Number.isInteger(port) || port < 0 || port > 65_535)
     throw new Error(`Invalid --port: ${rawPort}`);
   const token = value("--token") ?? env["AL_SERVER_TOKEN"];
+  // Repeatable, so every occurrence is read; getArgValue returns the first.
+  const allowedOrigins: string[] = [];
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i]!;
+    let origin: string | undefined;
+    if (arg.startsWith("--allow-origin=")) origin = arg.slice(15);
+    else if (arg === "--allow-origin") {
+      const next = args[i + 1];
+      origin = next?.startsWith("-") ? undefined : next;
+      if (origin !== undefined) i++;
+    } else continue;
+    if (!origin) throw new Error("Missing value for --allow-origin");
+    // Compared to the Origin header byte for byte, so it must have that
+    // header's shape: no path, no trailing slash, no credentials. `null` is
+    // the origin of sandboxed and file pages, which any page can claim.
+    if (origin === "null" || !BARE_ORIGIN.test(origin))
+      throw new Error(
+        `Invalid --allow-origin: ${origin}. Expected scheme://host[:port] with no path or trailing slash, such as chrome-extension://<id>.`,
+      );
+    allowedOrigins.push(origin);
+  }
   return {
     port,
     host: value("--host") ?? "127.0.0.1",
     ...(token !== undefined && token !== "" && { token }),
+    ...(allowedOrigins.length > 0 && { allowedOrigins }),
   };
 }
 

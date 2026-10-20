@@ -45,4 +45,26 @@ describe("startServer", () => {
       await server.close();
     }
   });
+
+  it("answers a preflight from an allowed origin only", async () => {
+    const server = await startServer({
+      port: 0,
+      allowedOrigins: ["chrome-extension://abc"],
+    });
+    try {
+      const preflight = (origin: string) =>
+        fetch(new URL("/detect", server.url), {
+          method: "OPTIONS",
+          headers: { origin, "access-control-request-method": "POST" },
+        });
+      const allowed = await preflight("chrome-extension://abc");
+      expect(allowed.status).toBe(204);
+      expect(allowed.headers.get("access-control-allow-origin")).toBe(
+        "chrome-extension://abc",
+      );
+      expect((await preflight("chrome-extension://xyz")).status).toBe(403);
+    } finally {
+      await server.close();
+    }
+  });
 });

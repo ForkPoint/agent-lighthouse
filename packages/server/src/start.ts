@@ -12,6 +12,8 @@ export interface StartServerOptions {
   port?: number;
   host?: string;
   token?: string;
+  /** Foreign origins allowed to call the server; see TaskServerOptions. */
+  allowedOrigins?: string[];
 }
 
 export async function startServer(
@@ -30,6 +32,9 @@ export async function startServer(
   const { port } = http.address() as AddressInfo;
   tasks = createTaskServer({
     ...(options.token !== undefined && { token: options.token }),
+    ...(options.allowedOrigins !== undefined && {
+      allowedOrigins: options.allowedOrigins,
+    }),
     // On loopback only local names are valid; any other Host is a rebinding
     // page. On another address the operator's DNS names are unknown here.
     ...(isLoopback(host) && {

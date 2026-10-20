@@ -1,6 +1,6 @@
 import { parseBoundedHtml } from "./dom-work";
 import type { DomPageContext } from "./check-context";
-import type { PageType } from "./contracts";
+import type { PageClassification, PageType } from "./contracts";
 import {
   extractJsonLd,
   extractMicrodata,
@@ -20,7 +20,7 @@ export function parsePageContext(
   html: string,
   forcedType?: PageType,
   maxAncestorSteps?: number,
-): DomPageContext {
+): DomPageContext & { classification: PageClassification } {
   const $ = parseBoundedHtml(html, maxAncestorSteps);
   const jsonLd = extractJsonLd($);
   const structuredData = [...jsonLd, ...extractMicrodata($), ...extractRdfa($)];

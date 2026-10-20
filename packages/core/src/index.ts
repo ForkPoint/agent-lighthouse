@@ -154,3 +154,5 @@ export {
   SNAPSHOT_EVIDENCE_LIMITS,
 } from "./snapshot-eligibility";
 export type { DomPageContext } from "./check-context";
+export { detectPage } from "./detect-page";
+export { DomWorkLimitError } from "./dom-work";

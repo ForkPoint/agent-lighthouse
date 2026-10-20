@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { DomWorkLimitError } from "./dom-work";
 import { SnapshotScanOptionsSchema, snapshotUrlKey } from "./schemas";
-import type { BrowserSnapshots } from "./contracts";
+import type { BrowserSnapshots, ScanPageIdentity } from "./contracts";
 import { parsePageContext } from "./page-context";
 import { assessBrowserSnapshots } from "./browser-snapshots";
 import type { Dispatcher } from "undici";
@@ -165,6 +165,20 @@ export interface ScanOptions {
    * it again.
    */
   robotsTxt?: FetchResult | undefined;
+  /**
+   * The target's own response, as the caller already fetched it, used instead
+   * of fetching the target again. It must be a real HTTP response for `url`:
+   * its status, headers and redirect chain are read as the scan's own. One
+   * whose `url` names another page is ignored. Every other request, gateway
+   * pages included, is sent as usual.
+   */
+  targetPage?: FetchResult | undefined;
+  /**
+   * The page detection the caller started this scan from. Copied to
+   * `report.pageIdentity` as a record; it does not set the page type, so a
+   * detected type keeps its detected source.
+   */
+  pageIdentity?: ScanPageIdentity | undefined;
 }
 
 // Cap how many pages get the jsdom-based a11y pass. Accessibility issues are
@@ -249,6 +263,29 @@ async function fetchPageWithRetry(
 }
 
 // ── Main Scan ──────────────────────────────────────────────────
+
+/**
+ * The caller's target response, when it is a response for `url`. URLs compare
+ * without credentials, fragment or trailing slash, as snapshots associate. A
+ * response for another page is ignored, and the target is fetched as usual:
+ * reading it as the target would judge the wrong page.
+ */
+function reusableTargetPage(
+  url: string,
+  page: FetchResult | undefined,
+): FetchResult | undefined {
+  if (!page) return undefined;
+  try {
+    if (snapshotUrlKey(page.url) === snapshotUrlKey(url)) return page;
+  } catch {
+    // An unparseable URL is never the target.
+  }
+  log.debug(
+    { [LogField.Url]: splitCredentials(url).url, given: page.url },
+    "Ignoring a target response for another URL",
+  );
+  return undefined;
+}
 
 /** A URL without its fragment and trailing slash, to tell two URLs of one page. */
 function samePageKey(pageUrl: string): string {
@@ -529,12 +566,9 @@ async function scanWithinBudget(
   signal?.throwIfAborted();
 
   tracker.phaseStart(PhaseId.FetchPages, 1 + overrideUrls.length);
-  const pageResult = await fetchPageWithRetry(
-    fetcher,
-    url,
-    fetchSignal,
-    signal,
-  );
+  const reused = reusableTargetPage(url, options?.targetPage);
+  const pageResult =
+    reused ?? (await fetchPageWithRetry(fetcher, url, fetchSignal, signal));
   tracker.unitDone(displayUrl);
 
   if (!originHomepageResult && (url === `${baseUrl}/` || url === baseUrl)) {
@@ -1100,6 +1134,9 @@ async function scanWithinBudget(
     ...(productFields !== undefined && { productFields }),
     originEvidence: originCondition,
     conditions,
+    ...(options?.pageIdentity !== undefined && {
+      pageIdentity: options.pageIdentity,
+    }),
   };
 
   // Snapshot execution has its own contexts, caches, evidence gates and denominator.

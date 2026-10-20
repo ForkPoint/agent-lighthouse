@@ -85,6 +85,49 @@ export interface PageClassification {
   signals: string[];
 }
 
+/** Where a page payload came from: a fetch by the server, or a client capture. */
+export const PayloadOrigin = {
+  Fetched: "fetched",
+  Supplied: "supplied",
+} as const;
+
+export type PayloadOrigin = (typeof PayloadOrigin)[keyof typeof PayloadOrigin];
+
+/** One page's HTML, as page detection and a later scan read it. */
+export interface PagePayload {
+  url: string;
+  html: string;
+  origin: PayloadOrigin;
+  /** SHA-256 of the HTML, computed by the server, never taken from the client. */
+  sha256: string;
+}
+
+/** What page detection found in one payload. Detection fetches nothing. */
+export interface PageIdentity {
+  url: string;
+  type: PageType;
+  confidence: PageClassification["confidence"];
+  signals: string[];
+  payloadSha256: string;
+  origin: PayloadOrigin;
+  /** True for a truncated, redacted or still-loading capture. */
+  partial: boolean;
+  /** Set when the page is a gateway. Detection does not follow it. */
+  gatewayTarget?: string;
+}
+
+/**
+ * The detected identity a scan received with its target payload. Information
+ * only: the source stays `detected`, so it never changes how a type scores.
+ */
+export interface ScanPageIdentity {
+  type: PageType;
+  source: PageTypeSource;
+  detectionId?: string;
+  payloadSha256: string;
+  origin: PayloadOrigin;
+}
+
 /**
  * A user-supplied page to scan with an explicit type.
  */
@@ -509,6 +552,8 @@ export interface ScanReport {
   conditions?: ScanConditions;
   /** Client-supplied DOM findings; never part of crawler scoring. */
   browserAssessment?: BrowserAssessment;
+  /** The page detection this scan was started from, when it had one. */
+  pageIdentity?: ScanPageIdentity;
 }
 
 export interface ScanConditions {

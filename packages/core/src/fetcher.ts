@@ -266,6 +266,32 @@ export function mergeHeaders(
   return out;
 }
 
+/**
+ * Raw bytes a text response may read; see the decode in `issue`. The extra 3
+ * bytes cover a leading BOM, which TextDecoder strips without yielding a unit.
+ */
+const TEXT_READ_CAP_BYTES = 3 * MAX_RESPONSE_BODY_BYTES + 3;
+
+/**
+ * Reads at most `cap` bytes of a response body, then stops. Leaving the loop
+ * early destroys the stream, which aborts the rest of the download, so an
+ * endless or huge body never sits in memory whole.
+ */
+async function readCapped(
+  body: AsyncIterable<Uint8Array>,
+  cap: number,
+): Promise<Uint8Array> {
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for await (const chunk of body) {
+    const room = cap - size;
+    chunks.push(chunk.byteLength > room ? chunk.subarray(0, room) : chunk);
+    size += Math.min(chunk.byteLength, room);
+    if (size >= cap) break;
+  }
+  return new Uint8Array(Buffer.concat(chunks, size));
+}
+
 export function createFetcher(fetcherOptions: FetcherOptions = {}) {
   const dispatcher = fetcherOptions.dispatcher ?? noRedirectAgent;
   const pending = new Set<{ url: string; since: number }>();
@@ -497,13 +523,16 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
         // For OPTIONS requests, consume and discard the body
         await response.body.dump();
       } else if (binary) {
-        const buffer = new Uint8Array(await response.body.arrayBuffer());
-        bytes =
-          buffer.byteLength > MAX_RESPONSE_BODY_BYTES
-            ? buffer.subarray(0, MAX_RESPONSE_BODY_BYTES)
-            : buffer;
+        bytes = await readCapped(response.body, MAX_RESPONSE_BODY_BYTES);
       } else {
-        body = await response.body.text();
+        // The body is cut to MAX_RESPONSE_BODY_BYTES UTF-16 units below. One
+        // unit takes at most 3 UTF-8 bytes, so 3x that many bytes decode to the
+        // same first units as the whole body would: the verdicts do not move,
+        // and a body of any size costs at most this much to read.
+        // TextDecoder strips a BOM and replaces invalid bytes as `text()` did.
+        body = new TextDecoder().decode(
+          await readCapped(response.body, TEXT_READ_CAP_BYTES),
+        );
       }
       const totalMs = performance.now() - start;
 
