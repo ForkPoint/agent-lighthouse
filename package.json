@@ -40,16 +40,16 @@
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
     "@changesets/cli": "^3.0.3",
-    "@types/node": "^22.10.5",
-    "@vitest/coverage-v8": "5.0.3",
-    "knip": "6.39.0",
-    "oxlint": "^1.86.0",
+    "@types/node": "^22.20.5",
+    "@vitest/coverage-v8": "5.0.5",
+    "knip": "6.41.0",
+    "oxlint": "^1.88.0",
     "oxlint-tsgolint": "^7.0.2004",
-    "prettier": "^3.9.9",
+    "prettier": "^3.9.10",
     "tsx": "^4.23.15",
     "typescript": "~7.0.2",
     "typescript-api": "npm:typescript@6.0.3",
-    "vitest": "^5.0.3"
+    "vitest": "^5.0.5"
   },
   "packageManager": "pnpm@10.34.6",
   "overrides": {
