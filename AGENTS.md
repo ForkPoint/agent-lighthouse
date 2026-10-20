@@ -255,6 +255,8 @@ consumer of the output can rely on, not whether a verdict moved:
   disagreed with its own dossier is brought into line, a false finding is
   removed, a message is reworded. The id, tier, grade, weight and schema stay
   the same; some sites' scores move because they were wrong before.
+  An audit's `title` is display text, not an identifier: rewording it is a
+  `patch`. Consumers key on the id. Name each changed title in the changeset.
 
 A verdict correction is a `patch` only when the dossier already supports the
 new behaviour. If the fix needs a new source or a changed grade, the dossier
