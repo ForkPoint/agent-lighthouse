@@ -1,5 +1,20 @@
 # @forkpoint/agent-lighthouse
 
+## 9.1.1
+
+### Patch Changes
+
+- 553713d: Accessibility audits returned another audit's result when run from the CLI or MCP server; scores in operability-safety change.
+
+  Fix the accessibility audits in core's CommonJS build. Up to 9.1.0, every audit built on the shared accessibility rule engine evaluated the rule of `operability-safety/presentation-conflict` instead of its own. That affected 16 audits, among them `label`, `accessible-names`, `aria-roles`, `aria-attributes`, `document-title` and `frame-title`. The CommonJS build is the one the `agent-lighthouse` CLI, the `agent-lighthouse-mcp` server and any `require()` of the packages load. In those, each of the 16 audits reported the verdict of the presentation-role check, and its `expected` text named that rule. The ESM build (`import`) was correct. Audit ids, tiers, grades and weights are unchanged. Sites scanned through the CLI or the MCP server may see these audits, and their operability-safety score, change to what their own rules find.
+
+- Updated dependencies [553713d]
+- Updated dependencies [d78c3a1]
+- Updated dependencies [88dce89]
+  - @forkpoint/agent-lighthouse-core@9.1.1
+  - @forkpoint/agent-lighthouse-report@9.1.1
+  - @forkpoint/agent-lighthouse-server@9.1.1
+
 ## 9.1.0
 
 ### Minor Changes
