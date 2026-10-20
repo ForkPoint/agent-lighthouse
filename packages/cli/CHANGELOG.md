@@ -1,5 +1,14 @@
 # @forkpoint/agent-lighthouse
 
+## 9.2.1
+
+### Patch Changes
+
+- Updated dependencies [bd056c3]
+  - @forkpoint/agent-lighthouse-core@9.2.1
+  - @forkpoint/agent-lighthouse-server@9.2.1
+  - @forkpoint/agent-lighthouse-report@9.2.1
+
 ## 9.2.0
 
 ### Patch Changes
