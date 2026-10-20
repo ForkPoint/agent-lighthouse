@@ -104,24 +104,72 @@ describe("MetaRobotsNotBlockingAudit", () => {
     expect(audit.audit(mockCheckContext([page])).status).toBe(CheckStatus.Pass);
   });
 
-  it("still counts an X-Robots-Tag scoped to an AI crawler", () => {
+  // No AI crawler operator documents reading a robots directive addressed to
+  // its own name, so the header form is named in the message and never scored.
+  it("names but does not score an X-Robots-Tag scoped to an AI crawler", () => {
     const page = mockPageContext("https://example.com/", doc(""));
     page.fetchResult.headers["x-robots-tag"] = "gptbot: noindex";
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.found).toContain("gptbot");
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.message).toContain("X-Robots-Tag (gptbot)");
+    expect(result.message).toContain("not scored");
   });
 
-  it("fails on a bot-specific noindex meta tag", () => {
+  // OpenAI, Anthropic, Perplexity and Common Crawl document robots.txt only.
+  it.each([
+    "GPTBot",
+    "OAI-SearchBot",
+    "ChatGPT-User",
+    "ClaudeBot",
+    "Claude-SearchBot",
+    "Claude-User",
+    "PerplexityBot",
+    "CCBot",
+    "Google-Extended",
+    "Applebot-Extended",
+    "msnbot",
+  ])("names but does not score a noindex meta tag addressed to %s", (name) => {
     const ctx = mockCheckContext([
       mockPageContext(
         "https://example.com/",
-        doc('<meta name="GPTBot" content="noindex">'),
+        doc(`<meta name="${name}" content="noindex, nosnippet">`),
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Fail);
-    expect((result.found ?? "").toLowerCase()).toContain("gptbot");
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.message).toContain(`meta name="${name.toLowerCase()}"`);
+    expect(result.message).toContain("not scored");
+  });
+
+  // Google: "Google supports two user agent tokens in the robots meta tag";
+  // Bing: name="bingbot"; Apple: name="applebot".
+  it.each(["googlebot", "googlebot-news", "bingbot", "applebot"])(
+    "fails on a noindex meta tag addressed to the documented name %s",
+    (name) => {
+      const ctx = mockCheckContext([
+        mockPageContext(
+          "https://example.com/",
+          doc(`<meta name="${name}" content="noindex">`),
+        ),
+      ]);
+      const result = audit.audit(ctx);
+      expect(result.status).toBe(CheckStatus.Fail);
+      expect(result.found).toContain(`meta name="${name}"`);
+    },
+  );
+
+  it("still scores a documented directive beside an undocumented one", () => {
+    const ctx = mockCheckContext([
+      mockPageContext(
+        "https://example.com/",
+        doc(
+          '<meta name="GPTBot" content="noindex"><meta name="robots" content="nosnippet">',
+        ),
+      ),
+    ]);
+    const result = audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.found).not.toContain("gptbot");
   });
 
   // Anthropic's crawler page names ClaudeBot, Claude-User and Claude-SearchBot
@@ -133,7 +181,9 @@ describe("MetaRobotsNotBlockingAudit", () => {
         doc('<meta name="anthropic-ai" content="noindex">'),
       ),
     ]);
-    expect(audit.audit(ctx).status).toBe(CheckStatus.Pass);
+    const result = audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.message).not.toContain("anthropic-ai");
   });
 
   // extractMetaTags is last-wins; real crawlers apply the most restrictive tag.

@@ -13,38 +13,47 @@ import {
 } from "#core/types";
 
 /**
- * Meta names that carry robots directives. `robots` is the generic form; the
- * rest are the per-crawler forms an AI-readiness tool cannot afford to miss —
- * `<meta name="GPTBot" content="noindex">` was invisible to all three v1
- * audits (reviews 1.13, 2.25, 4.20).
+ * Meta names whose robots directives a crawler operator documents honouring.
+ * `robots` is the generic form. The per-crawler names are the ones the
+ * operator's own page tells site owners to put in the `name` attribute:
  *
- * The per-crawler names are bot registry tokens, so a name no operator
- * documents cannot be added here. `anthropic-ai` was dropped for that reason:
- * Anthropic's crawler page names ClaudeBot, Claude-User and Claude-SearchBot
- * and nothing else. `googlebot-news` and `msnbot` are Google's and Bing's
- * secondary meta names, with no registry row of their own.
+ * - Google: "Google supports two user agent tokens in the robots meta tag;
+ *   other values are ignored" — `googlebot` and `googlebot-news`.
+ * - Bing: "you can replace the generic name=\"robots\" with name=\"bingbot\"".
+ * - Apple: `<meta name="applebot" ...>`, and `X-Robots-Tag: applebot: ...`.
+ *
+ * The same names scope the `X-Robots-Tag` header. Only these move a verdict.
  */
-const PER_CRAWLER_META_NAMES: readonly BotToken[] = [
-  BotToken.Googlebot,
-  BotToken.GoogleExtended,
-  BotToken.Bingbot,
-  BotToken.Applebot,
-  BotToken.ApplebotExtended,
-  BotToken.GPTBot,
-  BotToken.OAISearchBot,
-  BotToken.ChatGPTUser,
-  BotToken.ClaudeBot,
-  BotToken.ClaudeSearchBot,
-  BotToken.ClaudeUser,
-  BotToken.PerplexityBot,
-  BotToken.CCBot,
-];
-
-const DIRECTIVE_META_NAMES = new Set([
+const DOCUMENTED_META_NAMES = new Set<string>([
   "robots",
+  BotToken.Googlebot.toLowerCase(),
   "googlebot-news",
+  BotToken.Bingbot.toLowerCase(),
+  BotToken.Applebot.toLowerCase(),
+]);
+
+/**
+ * Per-crawler names sites put in robots meta tags that no operator documents
+ * reading there. OpenAI, Anthropic, Perplexity and Common Crawl document
+ * robots.txt only; Google-Extended and Applebot-Extended are robots.txt
+ * product tokens; Bing's robots meta page names `bingbot`, not `msnbot`. A
+ * directive under one of these names is reported in the pass message and
+ * never scored.
+ */
+const UNDOCUMENTED_META_NAMES = new Set<string>([
+  ...[
+    BotToken.GoogleExtended,
+    BotToken.ApplebotExtended,
+    BotToken.GPTBot,
+    BotToken.OAISearchBot,
+    BotToken.ChatGPTUser,
+    BotToken.ClaudeBot,
+    BotToken.ClaudeSearchBot,
+    BotToken.ClaudeUser,
+    BotToken.PerplexityBot,
+    BotToken.CCBot,
+  ].map((token) => token.toLowerCase()),
   "msnbot",
-  ...PER_CRAWLER_META_NAMES.map((token) => token.toLowerCase()),
 ]);
 
 /** Directives that remove the page from an index. `none` == noindex + nofollow. */
@@ -90,6 +99,8 @@ interface Directive {
   token: string;
   /** Where it was read from, for the `found` string. */
   source: string;
+  /** False when the meta name or header prefix is one no operator documents. */
+  documented: boolean;
 }
 
 /** Split a directive list into normalized, lower-cased tokens. */
@@ -126,10 +137,11 @@ function directivesFor(page: PageContext): Directive[] {
 
   $("meta[name]").each((_, el) => {
     const name = ($(el).attr("name") ?? "").trim().toLowerCase();
-    if (!DIRECTIVE_META_NAMES.has(name)) return;
+    const documented = DOCUMENTED_META_NAMES.has(name);
+    if (!documented && !UNDOCUMENTED_META_NAMES.has(name)) return;
     const content = $(el).attr("content") ?? "";
     for (const token of tokenize(content)) {
-      found.push({ token, source: `meta name="${name}"` });
+      found.push({ token, source: `meta name="${name}"`, documented });
     }
   });
 
@@ -139,19 +151,21 @@ function directivesFor(page: PageContext): Directive[] {
     const colon = part.indexOf(":");
     const prefix = colon === -1 ? "" : part.slice(0, colon);
     if (colon !== -1 && !VALUED_DIRECTIVES.has(prefix)) {
-      // A bot-scoped header binds only that crawler. The allowlist is the same
-      // one the meta transport uses, so `X-Robots-Tag: yandexbot: noindex` is
-      // ignored exactly as `<meta name="yandexbot" content="noindex">` is —
+      // A bot-scoped header binds only that crawler. The name sets are the
+      // same ones the meta transport uses, so `X-Robots-Tag: yandexbot: noindex`
+      // is ignored exactly as `<meta name="yandexbot" content="noindex">` is —
       // v1 1.13 read the whole header as a blanket noindex and over-reported.
-      if (DIRECTIVE_META_NAMES.has(prefix)) {
+      const documented = DOCUMENTED_META_NAMES.has(prefix);
+      if (documented || UNDOCUMENTED_META_NAMES.has(prefix)) {
         found.push({
           token: part.slice(colon + 1).trim(),
           source: `X-Robots-Tag (${prefix})`,
+          documented,
         });
       }
       continue;
     }
-    found.push({ token: part, source: "X-Robots-Tag" });
+    found.push({ token: part, source: "X-Robots-Tag", documented: true });
   }
 
   return found;
@@ -173,6 +187,8 @@ interface PageVerdict {
   suppressing: Directive[];
   /** `nocache`: still linked and quoted by snippet, so named but not scored. */
   limiting: Directive[];
+  /** Directives under a name no operator documents: named, never scored. */
+  undocumented: Directive[];
 }
 
 function describe(verdict: PageVerdict, directives: Directive[]): string {
@@ -222,7 +238,8 @@ export class MetaRobotsNotBlockingAudit extends Audit {
     }
 
     const verdicts: PageVerdict[] = ctx.pages.map((page) => {
-      const directives = directivesFor(page);
+      const all = directivesFor(page);
+      const directives = all.filter((d) => d.documented);
       const limiting = directives.filter((d) => d.token === LIMITING_TOKEN);
       return {
         url: page.url,
@@ -236,6 +253,7 @@ export class MetaRobotsNotBlockingAudit extends Audit {
             !(limiting.length > 0 && d.token === OVERRIDDEN_BY_LIMITING),
         ),
         limiting,
+        undocumented: all.filter((d) => !d.documented),
       };
     });
 
@@ -297,8 +315,19 @@ export class MetaRobotsNotBlockingAudit extends Audit {
         ? ` ${limitedContent.length} non-utility page(s) carry nocache, which Bing documents as still showing the URL, title and snippet in Copilot answers.`
         : "";
 
+    const unreadPages = verdicts.filter((v) => v.undocumented.length > 0);
+    const unreadNames = [
+      ...new Set(
+        unreadPages.flatMap((v) => v.undocumented.map((d) => d.source)),
+      ),
+    ];
+    const undocumentedNote =
+      unreadPages.length > 0
+        ? ` ${unreadPages.length} page(s) carry robots directives under names no crawler operator documents reading (${unreadNames.join(", ")}); they are not scored.`
+        : "";
+
     return this.pass(
-      `No scanned non-utility page carries a blocking or snippet-suppressing robots directive.${limitingNote}${utilityNote}`,
+      `No scanned non-utility page carries a blocking or snippet-suppressing robots directive.${limitingNote}${utilityNote}${undocumentedNote}`,
       "No blocking robots directive on non-utility pages",
       `Checked ${ctx.pages.length} page(s) — meta robots, per-bot meta tags and X-Robots-Tag`,
     );
