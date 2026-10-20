@@ -109,6 +109,25 @@ const ANUBIS_MARKERS = [
   "Protected by Anubis",
 ];
 
+/**
+ * Body markers left by the common bot-challenge products: Cloudflare's
+ * interstitial, Imperva, PerimeterX and Akamai. A response carrying one is a
+ * challenge, whatever its status, rather than the page.
+ */
+const CHALLENGE_BODY_MARKERS = [
+  "Just a moment...",
+  "cf-chl-",
+  "__cf_chl",
+  "_Incapsula_",
+  "px-captcha",
+  "/akam/",
+];
+
+/** The first bot-challenge marker in a response body, or undefined. */
+export function challengeMarker(body: string): string | undefined {
+  return CHALLENGE_BODY_MARKERS.find((marker) => body.includes(marker));
+}
+
 function mainText(body: string): string {
   if (!body.trim()) return "";
   return getMainContentText(parseBoundedHtml(body));

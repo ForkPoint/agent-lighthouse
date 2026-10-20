@@ -22,6 +22,7 @@ import {
   sharedUaProbes,
   type UaProbe,
   BlockClass,
+  challengeMarker,
 } from "#core/gatherers/ua-parity";
 import {
   AuditTier,
@@ -41,28 +42,54 @@ const MAX_SHOWN = 5;
 const MAX_NAMED = 4;
 
 /**
- * Block classes that are decidable from the response alone.
+ * How one differing probe is reported: a finding the site's own answer decides,
+ * or one an unverified request can trigger on its own.
  *
- * A challenge header, a crawler price and a proof-of-work interstitial each say
- * what they are; a truncated 200 is measurable. Each still describes the answer
- * to a request that names the crawler from the scanner's address. A challenge
- * can also be how the edge treats an unverified look-alike, which the dossier
- * records under Deferred rather than scoring differently today.
+ * Only two answers say something about the site rather than about the probe. A
+ * pay-per-crawl 402 states a price, and Cloudflare documents that 402 as the
+ * answer any crawler gets until it verifies and pays. A 200 carrying a fraction
+ * of the text, with no challenge in it, is a different page body. Everything
+ * else is a refusal: a challenge, a proof-of-work wall, a 403, a 429 or another
+ * non-2xx. Cloudflare's Super Bot Fight Mode sets verified bots apart from
+ * automated traffic, and Anubis can admit a crawler only from its published
+ * addresses, so an edge can refuse the probe and still admit the real crawler.
  */
-const HARD: Partial<Record<BlockClass, (probe: UaProbe) => string>> = {
-  "cf-challenge": (probe) => `Cloudflare challenge (${probe.evidence})`,
-  "pay-per-crawl": (probe) => `pay-per-crawl (${probe.evidence})`,
-  "anubis-pow": (probe) => `proof-of-work wall (${probe.evidence})`,
-  "soft-block": (probe) => `soft block — ${probe.evidence}`,
-};
+function causeOf(probe: UaProbe): { hard: boolean; cause: string } {
+  if (probe.blockClass === BlockClass.PayPerCrawl) {
+    return { hard: true, cause: `pay-per-crawl (${probe.evidence})` };
+  }
+  if (probe.blockClass === BlockClass.SoftBlock) {
+    const marker = challengeMarker(probe.probeBody);
+    return marker
+      ? {
+          hard: false,
+          cause: `challenge page (HTTP 200, body contains "${marker}")`,
+        }
+      : { hard: true, cause: `soft block — ${probe.evidence}` };
+  }
+  if (probe.blockClass === BlockClass.CfChallenge) {
+    return { hard: false, cause: `Cloudflare challenge (${probe.evidence})` };
+  }
+  if (probe.blockClass === BlockClass.AnubisPow) {
+    return { hard: false, cause: `proof-of-work wall (${probe.evidence})` };
+  }
+  if (probe.blockClass === BlockClass.Ok) {
+    return {
+      hard: false,
+      cause: `HTTP ${probe.probeStatus} where a browser got ${probe.baselineStatus}`,
+    };
+  }
+  // An opaque 403, a rate limit and a transport error.
+  return { hard: false, cause: `${probe.blockClass} (${probe.evidence})` };
+}
 
 /**
- * The honesty constraint. Cloudflare and Akamai deliberately block UA-spoofed AI
- * bots arriving from unpublished addresses, so an opaque 403 cannot be told
- * apart from correct impersonation defence.
+ * The honesty constraint. The probe is by definition not the verified crawler,
+ * and an edge can answer the two differently, so a refusal of the probe does
+ * not show what the real crawler gets.
  */
 const AMBIGUITY =
-  "The scanner sends the published crawler User-Agent without the matching source IP, so an opaque 403 or 429 cannot be told apart from correct impersonation defence — confirm against the edge logs before changing anything.";
+  "The scanner sends the crawler User-Agent from its own address, without the crawler's published IP range or Web Bot Auth signature, so a challenge, a 403, a 429 or another refusal can be the edge's defence against an unverified request naming the crawler, and the real crawler may be answered differently. Confirm against the edge logs before changing anything.";
 
 /**
  * Appended to every finding: the probe reports how the site answers the
@@ -139,7 +166,7 @@ export class AiCrawlerEdgeParityAudit extends Audit {
     failureTitle:
       "The edge answers differently when the User-Agent names an AI crawler robots.txt admits",
     description:
-      "Fetches the homepage, sampled content URLs and /llms.txt once as a browser and once per published AI crawler User-Agent, then classifies every difference: Cloudflare challenge, pay-per-crawl 402, proof-of-work wall, rate limit, opaque 403, or a 200 carrying a fraction of the text. Reports per crawler and per URL, and scores a difference only where robots.txt admits that crawler. The probes come from the scanner's address, so they show how the site answers a request that names the crawler, not what the real crawler, verified by IP range or signature, receives.",
+      "Fetches the homepage, sampled content URLs and /llms.txt once as a browser and once per published AI crawler User-Agent, then classifies every difference: Cloudflare challenge, pay-per-crawl 402, proof-of-work wall, rate limit, opaque 403, or a 200 carrying a fraction of the text. Reports per crawler and per URL, and scores a difference only where robots.txt admits that crawler: a pay-per-crawl price or a reduced page fails, while a challenge or another refusal warns, because an edge can refuse an unverified request naming the crawler and still admit the real one. The probes come from the scanner's address, so they show how the site answers a request that names the crawler, not what the real crawler, verified by IP range or signature, receives.",
     scoreDisplayMode: ScoreDisplayMode.Ternary,
     weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
     evidenceGrade: EvidenceGrade.A,
@@ -241,24 +268,8 @@ export class AiCrawlerEdgeParityAudit extends Audit {
         continue;
       }
 
-      const describe = HARD[probe.blockClass];
-      if (describe) {
-        group(hardGroups, probe.url, describe(probe), label);
-      } else if (probe.blockClass === BlockClass.Ok) {
-        group(
-          hardGroups,
-          probe.url,
-          `HTTP ${probe.probeStatus} where a browser got ${probe.baselineStatus}`,
-          label,
-        );
-      } else {
-        group(
-          ambiguousGroups,
-          probe.url,
-          `${probe.blockClass} (${probe.evidence})`,
-          label,
-        );
-      }
+      const { hard, cause } = causeOf(probe);
+      group(hard ? hardGroups : ambiguousGroups, probe.url, cause, label);
     }
 
     const summary = [...perCrawler.entries()]

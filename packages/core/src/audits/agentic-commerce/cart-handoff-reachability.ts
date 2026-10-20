@@ -89,6 +89,26 @@ export function challengeIn(html: string): string | undefined {
   return CHALLENGE.find((entry) => entry.pattern.test(html))?.label;
 }
 
+/**
+ * Why an answer only the ChatGPT-User request got warns. The request is by
+ * definition not the verified agent, and an edge can answer the two
+ * differently.
+ */
+const AMBIGUITY =
+  "That can be the edge's defence against an unverified request naming the agent; the real agent, from OpenAI's published ranges, may be answered differently";
+
+/** True when the shared detector reads this 2xx response as a challenge page. */
+function isWall(url: string, result: FetchResult): boolean {
+  if (result.status < 200 || result.status >= 300) return false;
+  const wall = detectWafProtection(url, result, {}, 1);
+  return Boolean(wall?.isBlocked && !wall.isRateLimit);
+}
+
+/** True when a challenge widget is the whole document. */
+function isWidgetWall(html: string): boolean {
+  return challengeIn(html) !== undefined && textLength(html) < MIN_TEXT;
+}
+
 const EXPECTED =
   "The cart and checkout paths answer a shopping agent without an account wall and without a bot challenge";
 
@@ -99,7 +119,7 @@ export class CartHandoffReachabilityAudit extends Audit {
     title: "Cart Handoff Reachability",
     failureTitle: "Cart Handoff Reachability",
     description:
-      "Reads the storefront cart and checkout paths — the URL an agent hands a buyer to, whether through an ACP `continue_url` or a computer-use agent driving the storefront — with a browser User-Agent and with the ChatGPT-User User-Agent, and reports an account wall, a bot challenge on the checkout document, or a hard block. Read-only: every request is a GET, nothing is ever added to a cart.",
+      "Reads the storefront cart and checkout paths — the URL an agent hands a buyer to, whether through an ACP `continue_url` or a computer-use agent driving the storefront — with a browser User-Agent and with the ChatGPT-User User-Agent, and reports an account wall, a bot challenge on the checkout document, or a hard block. A refusal or challenge only the ChatGPT-User request gets, while a browser gets the cart, warns: the request comes from the scanner's address, and an edge can refuse it while admitting the real agent. Read-only: every request is a GET, nothing is ever added to a cart.",
     scoreDisplayMode: ScoreDisplayMode.Ternary,
     tier: AuditTier.Scored,
     evidenceGrade: EvidenceGrade.B,
@@ -138,6 +158,9 @@ export class CartHandoffReachabilityAudit extends Audit {
 
     const failures: string[] = [];
     const warnings: string[] = [];
+    // Answers only the unverified ChatGPT-User request got. Reported before the
+    // JavaScript warnings, never scored as failures.
+    const ambiguous: string[] = [];
     const disallowed: string[] = [];
     const reachable: string[] = [];
     let answered = 0;
@@ -173,15 +196,24 @@ export class CartHandoffReachabilityAudit extends Audit {
       if (statuses.length > 0)
         reachable.push(`${path}: ${statuses.join(", ")}`);
 
-      for (const [label, result] of seen) {
-        if (!result) continue;
-        if (result.status === 403 || result.status === 429) {
-          failures.push(
-            label !== BROWSER
-              ? `${path} answers ${result.status} to ${label} from the scanner's address, so the cart refuses that User-Agent outright; the real agent, from OpenAI's published ranges, may be answered differently`
-              : `${path} answers ${result.status} to ${label}, so the handoff is blocked outright`,
-          );
-        }
+      const browserOk =
+        browser !== undefined && browser.status >= 200 && browser.status < 300;
+      if (browser && (browser.status === 403 || browser.status === 429)) {
+        failures.push(
+          `${path} answers ${browser.status} to ${BROWSER}, so the handoff is blocked outright`,
+        );
+      }
+      // The ChatGPT-User request is not the verified agent, and an edge can
+      // refuse it while it admits the real one, so its refusal warns. It is
+      // compared only against a cart the browser could read.
+      if (
+        agent &&
+        browserOk &&
+        (agent.status === 403 || agent.status === 429)
+      ) {
+        ambiguous.push(
+          `${path} answers ${agent.status} to a request naming ChatGPT-User from the scanner's address, while a browser got ${browser.status}. ${AMBIGUITY}`,
+        );
       }
 
       const document = agent && agent.status === 200 ? agent : browser;
@@ -191,6 +223,13 @@ export class CartHandoffReachabilityAudit extends Audit {
       // so each finding names whose response it read.
       const reader =
         document === agent ? "a request naming ChatGPT-User" : "a browser";
+      // A wall in the ChatGPT-User response that the browser response does not
+      // carry is served to the unverified request only, so it warns.
+      const agentOnly = (blocked: (result: FetchResult) => boolean): boolean =>
+        document === agent &&
+        browser !== undefined &&
+        browserOk &&
+        !blocked(browser);
 
       const finalPath = (() => {
         try {
@@ -214,9 +253,12 @@ export class CartHandoffReachabilityAudit extends Audit {
           ? detectWafProtection(url, document, {}, 1)
           : null;
       if (wall?.isBlocked && !wall.isRateLimit) {
-        failures.push(
-          `${path} answers ${reader} with ${wall.name} instead of the cart (${wall.reason}), so that request never reaches the cart document`,
-        );
+        const message = `${path} answers ${reader} with ${wall.name} instead of the cart (${wall.reason}), so that request never reaches the cart document`;
+        if (agentOnly((result) => isWall(url, result))) {
+          ambiguous.push(`${message}. A browser got the cart. ${AMBIGUITY}`);
+        } else {
+          failures.push(message);
+        }
         continue;
       }
 
@@ -225,9 +267,12 @@ export class CartHandoffReachabilityAudit extends Audit {
       // with nothing else to read stands between the agent and the cart.
       const challenge = challengeIn(document.body);
       if (challenge && textLength(document.body) < MIN_TEXT) {
-        failures.push(
-          `${path} mounts ${challenge} on the document served to ${reader}, which has no readable cart content, so the challenge is the page that request has to read`,
-        );
+        const message = `${path} mounts ${challenge} on the document served to ${reader}, which has no readable cart content, so the challenge is the page that request has to read`;
+        if (agentOnly((result) => isWidgetWall(result.body))) {
+          ambiguous.push(`${message}. A browser got the cart. ${AMBIGUITY}`);
+        } else {
+          failures.push(message);
+        }
         continue;
       }
 
@@ -238,7 +283,7 @@ export class CartHandoffReachabilityAudit extends Audit {
       }
     }
 
-    if (answered === 0 && failures.length === 0) {
+    if (answered === 0 && failures.length === 0 && ambiguous.length === 0) {
       if (!platform) {
         return this.notApplicable(
           `No storefront platform was fingerprinted and neither ${GENERIC.join(" nor ")} answers, so there is no cart surface to reach.`,
@@ -258,7 +303,7 @@ export class CartHandoffReachabilityAudit extends Audit {
       disallowedByRobots: disallowed,
       reachable: reachable.slice(0, 6),
       failures: failures.slice(0, 6),
-      warnings: warnings.slice(0, 6),
+      warnings: [...ambiguous, ...warnings].slice(0, 6),
     };
     const found = [
       `platform ${platform ?? "unknown"}`,
@@ -277,6 +322,19 @@ export class CartHandoffReachabilityAudit extends Audit {
           EXPECTED,
           found,
           "Let an unauthenticated shopper reach the cart, and keep bot challenges off the cart and checkout documents.",
+        ),
+        displayValue,
+        details,
+      };
+    }
+
+    if (ambiguous.length > 0) {
+      return {
+        ...this.warn(
+          ambiguous[0]!,
+          EXPECTED,
+          found,
+          "Confirm in the edge logs how requests from OpenAI's published ChatGPT-User ranges are answered on the cart, and allowlist those ranges rather than the User-Agent string.",
         ),
         displayValue,
         details,

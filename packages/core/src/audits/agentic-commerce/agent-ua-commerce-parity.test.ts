@@ -105,20 +105,37 @@ describe("AgentUaCommerceParityAudit", () => {
     );
   });
 
-  it("fails when a commerce path answers the agent UA with 403 and the browser with 200", async () => {
+  // The probe is not the verified agent, and an edge can refuse it while it
+  // admits the real one, so an opaque 403 warns, as it does in edge parity.
+  it("warns when a commerce path answers the agent UA with 403 and the browser with 200", async () => {
     const result = await run({
       robots: ALLOW_ALL,
       probe: (url) => (url === PDP_URL ? mockFetchResult("", 403) : undefined),
     });
-    expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.message).toContain("403");
-    expect(result.message).toMatch(/^A request naming \S+ gets HTTP 403 /);
-    expect(result.message).toContain(
-      "These probes come from the scanner's address, not OpenAI's published ranges, so they show how the site answers a request that names the agent, not what the real agent receives.",
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.message).toBe(
+      "A request naming ChatGPT-User gets HTTP 403 where a browser got 200 at https://example.com/products/alpine-resole-kit; A request naming OAI-SearchBot gets HTTP 403 where a browser got 200 at https://example.com/products/alpine-resole-kit. These probes come from the scanner's address, not OpenAI's published ranges, so they show how the site answers a request that names the agent, not what the real agent receives. A challenge, a 403, a 429 or another refusal can be the edge's defence against an unverified request naming the agent, and the real agent, from OpenAI's published ranges, may be answered differently. Confirm against the edge logs before changing anything. Allowlist the published address ranges from https://openai.com/searchbot.json and https://openai.com/chatgpt-user.json rather than trusting the User-Agent string.",
     );
   });
 
-  it("fails on a challenge interstitial and names the fingerprint", async () => {
+  it.each([429, 503, 404])(
+    "warns on HTTP %i to the agent UA where the browser got 200",
+    async (status) => {
+      const result = await run({
+        robots: ALLOW_ALL,
+        probe: (url) =>
+          url === PDP_URL ? mockFetchResult("", status) : undefined,
+      });
+      expect(result.status).toBe(CheckStatus.Warn);
+      expect(result.message).toMatch(
+        new RegExp(
+          `^A request naming ChatGPT-User gets HTTP ${status} where a browser got 200 at ${PDP_URL}; `,
+        ),
+      );
+    },
+  );
+
+  it("warns on a challenge interstitial and names the fingerprint", async () => {
     const result = await run({
       robots: ALLOW_ALL,
       probe: () =>
@@ -128,8 +145,10 @@ describe("AgentUaCommerceParityAudit", () => {
           "text/html",
         ),
     });
-    expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.message).toContain("Just a moment...");
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.message).toBe(
+      'A request naming ChatGPT-User gets a bot challenge (body contains "Just a moment...") at https://example.com/; A request naming OAI-SearchBot gets a bot challenge (body contains "Just a moment...") at https://example.com/; A request naming ChatGPT-User gets a bot challenge (body contains "Just a moment...") at https://example.com/; A request naming OAI-SearchBot gets a bot challenge (body contains "Just a moment...") at https://example.com/ (8 more). These probes come from the scanner\'s address, not OpenAI\'s published ranges, so they show how the site answers a request that names the agent, not what the real agent receives. A challenge, a 403, a 429 or another refusal can be the edge\'s defence against an unverified request naming the agent, and the real agent, from OpenAI\'s published ranges, may be answered differently. Confirm against the edge logs before changing anything. Allowlist the published address ranges from https://openai.com/searchbot.json and https://openai.com/chatgpt-user.json rather than trusting the User-Agent string.',
+    );
   });
 
   // A stub page carries a price the agent will quote and a page it cannot act on.
@@ -140,7 +159,41 @@ describe("AgentUaCommerceParityAudit", () => {
         url === PDP_URL ? mockFetchResult(THIN, 200, "text/html") : undefined,
     });
     expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.message).toContain("%");
+    expect(result.message).toBe(
+      "A request naming ChatGPT-User gets 1% of the text a browser got — a stub, not the page at https://example.com/products/alpine-resole-kit; A request naming OAI-SearchBot gets 1% of the text a browser got — a stub, not the page at https://example.com/products/alpine-resole-kit. These probes come from the scanner's address, not OpenAI's published ranges, so they show how the site answers a request that names the agent, not what the real agent receives. Allowlist the published address ranges from https://openai.com/searchbot.json and https://openai.com/chatgpt-user.json rather than trusting the User-Agent string.",
+    );
+  });
+
+  // The price is the site's own statement, as in edge parity.
+  it("fails on a pay-per-crawl price", async () => {
+    const result = await run({
+      robots: ALLOW_ALL,
+      probe: (url) => {
+        if (url !== PDP_URL) return undefined;
+        const res = mockFetchResult("", 402);
+        res.headers["crawler-price"] = "USD 0.01";
+        return res;
+      },
+    });
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toMatch(
+      /^A request naming ChatGPT-User gets a pay-per-crawl price \(402 with crawler-price: USD 0\.01\) at /,
+    );
+  });
+
+  it("fails on a stub and notes a refusal beside it as ambiguous", async () => {
+    const result = await run({
+      robots: ALLOW_ALL,
+      probe: (url) => {
+        if (url === PDP_URL) return mockFetchResult(THIN, 200, "text/html");
+        if (url.endsWith("/terms")) return mockFetchResult("", 403);
+        return undefined;
+      },
+    });
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toBe(
+      "A request naming ChatGPT-User gets 1% of the text a browser got — a stub, not the page at https://example.com/products/alpine-resole-kit; A request naming OAI-SearchBot gets 1% of the text a browser got — a stub, not the page at https://example.com/products/alpine-resole-kit. 2 further finding(s) are ambiguous. A challenge, a 403, a 429 or another refusal can be the edge's defence against an unverified request naming the agent, and the real agent, from OpenAI's published ranges, may be answered differently. Confirm against the edge logs before changing anything. These probes come from the scanner's address, not OpenAI's published ranges, so they show how the site answers a request that names the agent, not what the real agent receives. Allowlist the published address ranges from https://openai.com/searchbot.json and https://openai.com/chatgpt-user.json rather than trusting the User-Agent string.",
+    );
   });
 
   // Opting out of training while staying in search is a policy, not a defect.
@@ -179,7 +232,7 @@ describe("AgentUaCommerceParityAudit", () => {
       probe: (url) =>
         url.endsWith("/terms") ? mockFetchResult("", 403) : undefined,
     });
-    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toContain("/terms");
   });
 

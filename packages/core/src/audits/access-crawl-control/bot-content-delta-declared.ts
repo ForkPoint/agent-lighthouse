@@ -10,13 +10,21 @@ import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
 import { weightForGrade } from "#core/scorer";
 import type { CheckContext } from "#core/check-context";
-import { parseHtml, extractJsonLd, flattenJsonLd } from "#core/parser";
+import {
+  parseHtml,
+  extractJsonLd,
+  flattenJsonLd,
+  getMainContentText,
+} from "#core/parser";
+import { DomWorkLimitError, parseBoundedHtml } from "#core/dom-work";
 import { siteSitemapTree, sampleEntries } from "#core/gatherers/sitemap";
 import {
   AI_CRAWLER_UAS,
   sharedUaProbes,
   type UaProbe,
   BlockClass,
+  challengeMarker,
+  sharedControlProbe,
 } from "#core/gatherers/ua-parity";
 import { BotToken } from "#core/bot-registry";
 import {
@@ -167,12 +175,48 @@ function labelFor(token: string): string {
  * never got a page, and access-crawl-control/ai-crawler-edge-parity reports it.
  */
 function usable(probe: UaProbe): boolean {
+  // A thin 200 that carries a challenge is a refusal, not a page variant.
+  if (
+    probe.blockClass === BlockClass.SoftBlock &&
+    challengeMarker(probe.probeBody) !== undefined
+  ) {
+    return false;
+  }
   return (
-    (probe.blockClass === BlockClass.Ok || probe.blockClass === "soft-block") &&
+    (probe.blockClass === BlockClass.Ok ||
+      probe.blockClass === BlockClass.SoftBlock) &&
     probe.probeStatus >= 200 &&
     probe.probeStatus < 300 &&
     probe.baselineText.length > 0
   );
+}
+
+/**
+ * Whether the unrecognised control bot got the same reduction as the probe.
+ *
+ * A site that serves an unknown bot the reduced page too is running bot
+ * management aimed at unidentified clients. The page is not keyed on the
+ * crawler's name, and the real crawler, verified by address or signature, may
+ * be served the full page, so the delta is not a cloaking finding. A missing,
+ * refused or over-limit control arm shows no bot management, and the crawler
+ * comparison stands on its own, as in agent-ua-content-divergence-diff.
+ */
+async function controlReduced(
+  ctx: CheckContext,
+  probe: UaProbe,
+): Promise<boolean> {
+  const control = await sharedControlProbe(ctx, probe.url);
+  if (!control || control.status < 200 || control.status >= 300) return false;
+  let text: string;
+  try {
+    text = getMainContentText(parseBoundedHtml(control.body));
+  } catch (error) {
+    if (error instanceof DomWorkLimitError) return false;
+    throw error;
+  }
+  const ratio = text.length / probe.baselineText.length;
+  const similarity = jaccard(shingles(probe.baselineText), shingles(text));
+  return ratio < LENGTH_FLOOR || similarity < JACCARD_FLOOR;
 }
 
 const EXPECTED =
@@ -204,7 +248,7 @@ export class BotContentDeltaDeclaredAudit extends Audit {
     failureTitle:
       "Requests naming an AI crawler get different content with nothing declaring it",
     description:
-      "Fetches sampled content URLs as a browser and with the GPTBot, ClaudeBot and PerplexityBot User-Agents, then measures the difference two ways — main-text length ratio and 5-gram shingle similarity — because a stub and a rewritten page look identical on length alone. Where a difference exists, requires Google's restricted-content markup and checks that the declared cssSelector resolves against the served DOM.",
+      "Fetches sampled content URLs as a browser and with the GPTBot, ClaudeBot and PerplexityBot User-Agents, then measures the difference two ways — main-text length ratio and 5-gram shingle similarity — because a stub and a rewritten page look identical on length alone. Where a difference exists, requires Google's restricted-content markup and checks that the declared cssSelector resolves against the served DOM. A delta an unrecognised control bot gets as well is bot management aimed at unidentified clients, not a page keyed on the crawler's name, and warns.",
     scoreDisplayMode: ScoreDisplayMode.Ternary,
     weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
     evidenceGrade: EvidenceGrade.A,
@@ -257,6 +301,8 @@ export class BotContentDeltaDeclaredAudit extends Audit {
     }
 
     const findings: string[] = [];
+    // Deltas the unrecognised control bot got as well: bot management.
+    const botManagement: string[] = [];
     let declared = 0;
 
     for (const probe of comparable) {
@@ -277,22 +323,33 @@ export class BotContentDeltaDeclaredAudit extends Audit {
       if (ratio >= LENGTH_FLOOR && similarity >= JACCARD_FLOOR) continue;
 
       const declaration_ = declaration(probe.baselineBody);
+      if (declaration_.declared && declaration_.resolves) {
+        declared += 1;
+        continue;
+      }
+      // Fetched only for a delta that would otherwise be a finding, so a site
+      // with no delta pays no extra request.
+      if (await controlReduced(ctx, probe)) {
+        botManagement.push(`${label} at ${probe.url} (${metrics})`);
+        continue;
+      }
       if (!declaration_.declared) {
         findings.push(
           `A request naming ${label} gets different content at ${probe.url} (${metrics}) and nothing declares it: the browser response carries no CreativeWork with isAccessibleForFree:false and a hasPart WebPageElement cssSelector`,
         );
         continue;
       }
-      if (!declaration_.resolves) {
-        findings.push(
-          `A request naming ${label} gets different content at ${probe.url} (${metrics}) and the declared cssSelector "${declaration_.selector}" matches zero elements in the served DOM, so the declaration is a silent no-op`,
-        );
-        continue;
-      }
-      declared += 1;
+      // Declared, but the selector resolves to nothing.
+      findings.push(
+        `A request naming ${label} gets different content at ${probe.url} (${metrics}) and the declared cssSelector "${declaration_.selector}" matches zero elements in the served DOM, so the declaration is a silent no-op`,
+      );
     }
 
-    const found = `${urls.length} URL(s) compared against ${TOKENS.length} crawler User-Agent(s) from the scanner's address; ${comparable.length} comparable probe(s); ${findings.length} finding(s); ${declared} declared delta(s)`;
+    const found = `${urls.length} URL(s) compared against ${TOKENS.length} crawler User-Agent(s) from the scanner's address; ${comparable.length} comparable probe(s); ${findings.length} finding(s); ${declared} declared delta(s); ${botManagement.length} delta(s) the unrecognised control User-Agent got too`;
+    const shared =
+      botManagement.length > 0
+        ? `The unrecognised control User-Agent got the same reduced page as requests naming ${botManagement.slice(0, MAX_SHOWN).join("; ")}${botManagement.length > MAX_SHOWN ? ` (${botManagement.length - MAX_SHOWN} more)` : ""}. That is bot management aimed at unidentified clients, not a page keyed on the crawler's name, and the real crawler, verified by IP range or signature, may be served the full page.`
+        : "";
 
     if (findings.length > 0) {
       const shown = findings.slice(0, MAX_SHOWN).join("; ");
@@ -300,7 +357,21 @@ export class BotContentDeltaDeclaredAudit extends Audit {
         findings.length > MAX_SHOWN
           ? ` (${findings.length - MAX_SHOWN} more)`
           : "";
-      return this.fail(`${shown}${more}.`, EXPECTED, found, CheckPriority.High);
+      return this.fail(
+        `${shown}${more}.${shared ? ` ${shared}` : ""}`,
+        EXPECTED,
+        found,
+        CheckPriority.High,
+      );
+    }
+
+    if (shared) {
+      return this.warn(
+        `${shared} Confirm against the edge logs how the published crawler addresses are served before treating it as cloaking.`,
+        EXPECTED,
+        found,
+        CheckPriority.Medium,
+      );
     }
 
     return this.pass(

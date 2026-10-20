@@ -6,7 +6,7 @@ import {
   mockFetchResult,
 } from "#core/__tests__/test-utils";
 import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
-import { BASELINE_UA } from "#core/gatherers/ua-parity";
+import { BASELINE_UA, CONTROL_UA } from "#core/gatherers/ua-parity";
 import type { FetchOptions, FetchResult } from "#core/fetcher";
 import { CheckStatus } from "#core/types";
 
@@ -76,6 +76,10 @@ function run(
     botStatus?: number;
     /** Sitemap URLs; one blog post by default. */
     urls?: string[];
+    /** Body the unrecognised control bot gets. Defaults to the browser body. */
+    control?: string;
+    /** Collects every User-Agent the audit sends. */
+    seen?: string[];
   } = {},
 ) {
   const audit = new BotContentDeltaDeclaredAudit();
@@ -90,6 +94,14 @@ function run(
       return options.sitemap === false
         ? mockFetchResult("", 404)
         : mockFetchResult(xml, 200, "application/xml");
+    }
+    options.seen?.push(o.userAgent ?? "");
+    if (o.userAgent === CONTROL_UA) {
+      return mockFetchResult(
+        options.control ?? options.browser ?? page(FULL_TEXT),
+        200,
+        "text/html",
+      );
     }
     const isBrowser = o.userAgent === BASELINE_UA;
     const body = isBrowser
@@ -286,6 +298,51 @@ describe("BotContentDeltaDeclaredAudit", () => {
     expect(result.status).toBe(CheckStatus.Fail);
     // Three URLs times three crawlers: nine findings, four shown.
     expect(result.message).toContain("(5 more)");
+  });
+
+  // The control bot is the only way to tell a page keyed on the crawler's name
+  // from bot management aimed at every unidentified client.
+  it("warns, not fails, when the unrecognised control bot gets the same stub", async () => {
+    const result = await run({
+      browser: page(FULL_TEXT),
+      bot: page(STUB_TEXT),
+      control: page(STUB_TEXT),
+    });
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.message).toBe(
+      "The unrecognised control User-Agent got the same reduced page as requests naming GPTBot at https://example.com/blog/resoling (20% of the browser text, shingle similarity 0.21); ClaudeBot at https://example.com/blog/resoling (20% of the browser text, shingle similarity 0.21); PerplexityBot at https://example.com/blog/resoling (20% of the browser text, shingle similarity 0.21). That is bot management aimed at unidentified clients, not a page keyed on the crawler's name, and the real crawler, verified by IP range or signature, may be served the full page. Confirm against the edge logs how the published crawler addresses are served before treating it as cloaking.",
+    );
+    expect(result.found).toContain(
+      "3 delta(s) the unrecognised control User-Agent got too",
+    );
+  });
+
+  it("still fails a stub the control bot does not get", async () => {
+    const result = await run({
+      browser: page(FULL_TEXT),
+      bot: page(STUB_TEXT),
+      control: page(FULL_TEXT),
+    });
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toBe(
+      "A request naming GPTBot gets different content at https://example.com/blog/resoling (20% of the browser text, shingle similarity 0.21) and nothing declares it: the browser response carries no CreativeWork with isAccessibleForFree:false and a hasPart WebPageElement cssSelector; A request naming ClaudeBot gets different content at https://example.com/blog/resoling (20% of the browser text, shingle similarity 0.21) and nothing declares it: the browser response carries no CreativeWork with isAccessibleForFree:false and a hasPart WebPageElement cssSelector; A request naming PerplexityBot gets different content at https://example.com/blog/resoling (20% of the browser text, shingle similarity 0.21) and nothing declares it: the browser response carries no CreativeWork with isAccessibleForFree:false and a hasPart WebPageElement cssSelector.",
+    );
+  });
+
+  // A thin 200 carrying a challenge is a refusal, which edge parity reports.
+  it("does not compare a thin 200 that is a challenge page", async () => {
+    const result = await run({
+      browser: page(FULL_TEXT),
+      bot: "<html><head><title>Just a moment...</title></head><body><main><p>Checking.</p></main></body></html>",
+    });
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+  });
+
+  // No delta, no control request.
+  it("sends no control request when every probe matches the browser", async () => {
+    const seen: string[] = [];
+    await run({ seen });
+    expect(seen).not.toContain(CONTROL_UA);
   });
 
   it("reports the crawler, the URL and both metrics", async () => {
