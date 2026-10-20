@@ -196,6 +196,25 @@ describe("AgentGovernanceAudit", () => {
     expect(result.details?.["realtimeAgents"]).toEqual([]);
   });
 
+  it("does not count Bytespider or cohere-ai, which no operator documents", () => {
+    const robots = [
+      "User-agent: Bytespider",
+      "Disallow: /",
+      "",
+      "User-agent: cohere-ai",
+      "Disallow: /",
+      "",
+      "User-agent: *",
+      "Allow: /",
+    ].join("\n");
+    const ctx = mockCheckContext([], {
+      "/robots.txt": mockFetchResult(robots, 200),
+    });
+    const result = audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.details?.["trainingAgents"]).toEqual([]);
+  });
+
   it("does not say a category is unnamed when both are named too thinly", () => {
     const robots = [
       "User-agent: GPTBot",

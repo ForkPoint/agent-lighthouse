@@ -2,6 +2,7 @@ import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
 import type { CheckContext, PageContext } from "#core/check-context";
 import { weightForGrade } from "#core/scorer";
+import { BotToken } from "#core/bot-registry";
 import {
   AuditTier,
   CheckPriority,
@@ -16,25 +17,34 @@ import {
  * rest are the per-crawler forms an AI-readiness tool cannot afford to miss —
  * `<meta name="GPTBot" content="noindex">` was invisible to all three v1
  * audits (reviews 1.13, 2.25, 4.20).
+ *
+ * The per-crawler names are bot registry tokens, so a name no operator
+ * documents cannot be added here. `anthropic-ai` was dropped for that reason:
+ * Anthropic's crawler page names ClaudeBot, Claude-User and Claude-SearchBot
+ * and nothing else. `googlebot-news` and `msnbot` are Google's and Bing's
+ * secondary meta names, with no registry row of their own.
  */
+const PER_CRAWLER_META_NAMES: readonly BotToken[] = [
+  BotToken.Googlebot,
+  BotToken.GoogleExtended,
+  BotToken.Bingbot,
+  BotToken.Applebot,
+  BotToken.ApplebotExtended,
+  BotToken.GPTBot,
+  BotToken.OAISearchBot,
+  BotToken.ChatGPTUser,
+  BotToken.ClaudeBot,
+  BotToken.ClaudeSearchBot,
+  BotToken.ClaudeUser,
+  BotToken.PerplexityBot,
+  BotToken.CCBot,
+];
+
 const DIRECTIVE_META_NAMES = new Set([
   "robots",
-  "googlebot",
   "googlebot-news",
-  "google-extended",
-  "bingbot",
   "msnbot",
-  "applebot",
-  "applebot-extended",
-  "gptbot",
-  "oai-searchbot",
-  "chatgpt-user",
-  "claudebot",
-  "claude-searchbot",
-  "claude-user",
-  "anthropic-ai",
-  "perplexitybot",
-  "ccbot",
+  ...PER_CRAWLER_META_NAMES.map((token) => token.toLowerCase()),
 ]);
 
 /** Directives that remove the page from an index. `none` == noindex + nofollow. */

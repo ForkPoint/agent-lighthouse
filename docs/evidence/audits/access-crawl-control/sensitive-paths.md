@@ -17,6 +17,7 @@ sources:
   - anthropic-crawlers
   - s18
   - perplexity-bots-docs
+  - perplexity-crawlers-doc
   - google-common-crawlers
 ---
 
@@ -73,6 +74,7 @@ A warn or fail carries the `Disallow` lines that would make the audit pass.
 - No observed family is not applicable.
 - Matching uses `isPathAllowed` from the shared RFC 9309 gatherer. A test pins that an empty `Disallow:` protects nothing.
 - Coverage is judged per bot over six tokens: GPTBot, ClaudeBot, Applebot-Extended, meta-externalagent, Google-Extended and PerplexityBot. A rule for one bot does not cover the others.
+- The six tokens are bot registry rows (`packages/core/src/bot-registry.ts`) since 2026-10-19, so a token no operator documents cannot join them. The set is unchanged. PerplexityBot is a search crawler, not a training crawler (https://docs.perplexity.ai/docs/resources/perplexity-crawlers, verified 2026-10-19). It stays because the set is about crawlers that honour path rules, not about training.
 - A root-level blanket block of all six is not applicable here. `access-crawl-control/no-blanket-block` owns that finding.
 - A 200 robots.txt whose body starts with `<` is treated as no robots.txt.
 - A missing robots.txt fails when low-value families were observed. A dedicated warn would score deleting robots.txt better than serving an empty one.

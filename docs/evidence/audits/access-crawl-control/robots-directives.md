@@ -66,3 +66,8 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - `defaultPriority` is `high`. `critical` is emitted per result, only when the homepage is among the blocked pages.
 - `requires` omits `rendered-body` and `sample-adequate`. Meta tags and the `X-Robots-Tag` header arrive whether or not the body renders.
 - The audit cannot see whether robots.txt blocks the page. Google says `noindex` only works on a page robots.txt does not block.
+- Since 2026-10-19 the per-bot meta names are bot registry tokens (`packages/core/src/bot-registry.ts`), plus Google's `googlebot-news` and Bing's `msnbot`, which have no registry row. `anthropic-ai` was dropped. Anthropic's crawler page names ClaudeBot, Claude-User and Claude-SearchBot and no other token (https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler, verified 2026-10-19). A `noindex` addressed only to `anthropic-ai` therefore no longer fails a page. A test pins it.
+
+## Deferred
+
+- The crawler pages of OpenAI, Anthropic, Perplexity and Common Crawl document no per-bot robots meta tag such as `<meta name="GPTBot">`. Google, Bing and Apple document their own names. The AI names were kept as they stood, minus `anthropic-ai`, because narrowing them moves verdicts and needs its own review. The registry now prevents a name no operator documents from being added.

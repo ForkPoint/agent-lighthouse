@@ -6,6 +6,7 @@ import { probeRsl } from "#core/gatherers/rsl";
 import { parseRobots, isPathAllowed } from "#core/gatherers/robots";
 import { detailLines } from "#core/detail-lines";
 import { weightForGrade } from "#core/scorer";
+import { BotToken } from "#core/bot-registry";
 import {
   AuditTier,
   CheckPriority,
@@ -38,7 +39,11 @@ const KNOWN_ATTRIBUTES = new Set([
 const MAX_ASSOCIATIONS = 3;
 
 /** The AI crawlers whose robots.txt treatment states the same policy. */
-const AI_CRAWLERS = ["GPTBot", "ClaudeBot", "PerplexityBot"];
+const AI_CRAWLERS: readonly BotToken[] = [
+  BotToken.GPTBot,
+  BotToken.ClaudeBot,
+  BotToken.PerplexityBot,
+];
 
 export interface TrustTxtEntry {
   name: string;

@@ -306,15 +306,36 @@ describe("AI_CRAWLER_UAS", () => {
     expect(AI_CRAWLER_UAS.map((u) => u.token)).not.toContain("google-extended");
   });
 
-  it("covers the six probeable AI crawlers", () => {
+  it("covers the eight probeable AI crawlers", () => {
     expect(AI_CRAWLER_UAS.map((u) => u.token).sort()).toEqual([
       "chatgpt-user",
       "claude-user",
       "claudebot",
       "gptbot",
+      "mistralai-user",
       "oai-searchbot",
+      "perplexity-user",
       "perplexitybot",
     ]);
+  });
+
+  // Perplexity's and Mistral's crawler pages (verified 2026-10-19) each give a
+  // full user-agent string for their user-triggered fetcher.
+  it("sends the Perplexity-User and MistralAI-User strings the vendors document", () => {
+    expect(AI_CRAWLER_UAS.find((u) => u.token === "perplexity-user")?.ua).toBe(
+      "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Perplexity-User/1.0; +https://perplexity.ai/perplexity-user)",
+    );
+    expect(AI_CRAWLER_UAS.find((u) => u.token === "mistralai-user")?.ua).toBe(
+      "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; MistralAI-User/1.0; +https://docs.mistral.ai/robots)",
+    );
+  });
+
+  it("marks only the Anthropic strings as observed", () => {
+    expect(
+      AI_CRAWLER_UAS.filter((u) => u.observed)
+        .map((u) => u.token)
+        .sort(),
+    ).toEqual(["claude-user", "claudebot"]);
   });
 
   // OpenAI's bots page (verified 2026-10-19) gives OAI-SearchBot/1.4 behind a

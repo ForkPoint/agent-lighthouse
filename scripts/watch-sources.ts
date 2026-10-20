@@ -1,8 +1,9 @@
 /**
  * Weekly source watch.
  *
- * Re-checks every URL in docs/evidence/sources.json and every item in
- * docs/evidence/watchlist.json, compares the result with the previous run's
+ * Re-checks every URL in docs/evidence/sources.json, every item in
+ * docs/evidence/watchlist.json and every operator page the bot registry
+ * (packages/core/src/bot-registry.ts) cites, compares the result with the previous run's
  * state, and writes a Markdown report that maps each changed source to the
  * audits whose dossiers cite it. It also diffs the IANA well-known URIs
  * registry.
@@ -23,7 +24,9 @@
 import { readFileSync, readdirSync, writeFileSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
+import { BOT_REGISTRY } from "#core/bot-registry";
 import {
+  botRegistryWatchItems,
   diffIana,
   diffSnapshot,
   formatReport,
@@ -283,6 +286,10 @@ async function main(): Promise<void> {
   const watchlist = JSON.parse(
     readFileSync(join(root, "docs/evidence/watchlist.json"), "utf8"),
   ) as { items: WatchItem[]; ianaPaths: WatchIanaPath[] };
+  const watchItems = [
+    ...watchlist.items,
+    ...botRegistryWatchItems(BOT_REGISTRY, watchlist.items),
+  ];
 
   let sources = registry.sources.filter(
     (s) => typeof s.url === "string" && s.url,
@@ -302,7 +309,7 @@ async function main(): Promise<void> {
   const [sourceSnaps, watchSnaps, ianaCsv] = await Promise.all([
     snapshotAll(sources),
     // A sampled run skips the watchlist so a local test stays small.
-    snapshotAll(sampled ? [] : watchlist.items),
+    snapshotAll(sampled ? [] : watchItems),
     fetchWithRetry(IANA_CSV)
       .then((res) => (res.ok ? res.text() : null))
       .catch(() => null),
@@ -365,7 +372,7 @@ async function main(): Promise<void> {
         changes: sourceDiff.get(s.id) ?? [],
         audits: citing.get(s.id) ?? [],
       })),
-    watchChanges: watchlist.items
+    watchChanges: watchItems
       .filter((i) => watchDiff.has(i.id))
       .map((item) => ({ item, changes: watchDiff.get(item.id) ?? [] })),
     ianaChanges,

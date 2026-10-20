@@ -931,8 +931,8 @@
       "url": "https://support.apple.com/en-us/119829",
       "type": "vendor-doc",
       "publisher": "Apple",
-      "verified": "2026-08-21",
-      "keyFindings": "Strongest single AI-specific head-tag source. \"Applebot supports robots meta tags in HTML documents.\" Directives: noindex (\"won't appear in Spotlight or Siri Suggestions\"); nosnippet (\"Applebot won't generate a description or web answer for the page. Any suggestions to visit this URL will only include the page's title. Apple will not use data tagged nosnippet as additional context and up-to-date content when AI models are used to generate output for display in Apple products and services\"); nofollow; none; all. Supports the applebot-specific meta name and X-Robots-Tag. Ranking factors listed are engagement, relevancy, links, location, webpage design characteristics — no head-tag factors named."
+      "verified": "2026-10-19",
+      "keyFindings": "Strongest single AI-specific head-tag source. \"Applebot supports robots meta tags in HTML documents.\" Directives: noindex (\"won't appear in Spotlight or Siri Suggestions\"); nosnippet (\"Applebot won't generate a description or web answer for the page. Any suggestions to visit this URL will only include the page's title. Apple will not use data tagged nosnippet as additional context and up-to-date content when AI models are used to generate output for display in Apple products and services\"); nofollow; none; all. Supports the applebot-specific meta name and X-Robots-Tag. Ranking factors listed are engagement, relevancy, links, location, webpage design characteristics — no head-tag factors named. Re-checked 2026-10-19: 'Applebot-Extended does not crawl webpages.' Applebot data 'may also be used to help train Apple foundation models'. IP list https://search.developer.apple.com/applebot.json; reverse DNS *.applebot.apple.com. Read by the bot registry."
     },
     {
       "id": "apple-applebot-training-privacy",
@@ -1706,8 +1706,8 @@
       "url": "https://commoncrawl.org/ccbot",
       "type": "vendor-doc",
       "publisher": "Common Crawl Foundation",
-      "verified": "2026-08-20",
-      "keyFindings": "UA: 'CCBot/2.0 (https://commoncrawl.org/faq/)'. Canonical block snippet published by the operator: 'User-agent: CCBot' / 'Disallow: /'. Warns of spoofed CCBot traffic and recommends reverse-DNS verification against published IP ranges. Page does not state crawl-delay support, and does not itself frame the corpus as AI training data (though C4/RefinedWeb/Dolma derive from it — see consent-in-crisis-arxiv)."
+      "verified": "2026-10-19",
+      "keyFindings": "UA: 'CCBot/2.0 (https://commoncrawl.org/faq/)'. Canonical block snippet published by the operator: 'User-agent: CCBot' / 'Disallow: /'. Warns of spoofed CCBot traffic and recommends reverse-DNS verification against published IP ranges. Page does not state crawl-delay support, and does not itself frame the corpus as AI training data (though C4/RefinedWeb/Dolma derive from it — see consent-in-crisis-arxiv). Re-checked 2026-10-19: UA 'CCBot/2.0 (https://commoncrawl.org/faq/)'; IP list https://index.commoncrawl.org/ccbot.json. Read by the bot registry."
     },
     {
       "id": "conductor",
@@ -2306,8 +2306,8 @@
       "url": "https://developers.google.com/search/docs/crawling-indexing/google-common-crawlers",
       "type": "vendor-doc",
       "publisher": "Google",
-      "verified": "2026-08-21",
-      "keyFindings": "Google-Extended is 'a standalone product token that web publishers can use to manage whether content Google crawls from their sites may be used for training future generations of Gemini models that power Gemini Apps and Vertex AI API for Gemini and for grounding ... in Gemini Apps and Grounding with Google Search on Vertex AI'. It 'does not impact a site's inclusion in Google Search nor is it used as a ranking signal.' Also documents Google-CloudVertexBot (owner-requested Vertex AI Agent builds) and GoogleOther (generic/R&D one-off crawls)."
+      "verified": "2026-10-19",
+      "keyFindings": "Google-Extended is 'a standalone product token that web publishers can use to manage whether content Google crawls from their sites may be used for training future generations of Gemini models that power Gemini Apps and Vertex AI API for Gemini and for grounding ... in Gemini Apps and Grounding with Google Search on Vertex AI'. It 'does not impact a site's inclusion in Google Search nor is it used as a ranking signal.' Also documents Google-CloudVertexBot (owner-requested Vertex AI Agent builds) and GoogleOther (generic/R&D one-off crawls). Re-checked 2026-10-19 at https://developers.google.com/crawling/docs/crawlers-fetchers/google-common-crawlers (this URL 301s there): 'Google-Extended doesn't have a separate HTTP request user agent string.' Googlebot's IP list is common-crawlers.json. Google-CloudVertexBot is listed by substring only. Read by the bot registry."
     },
     {
       "id": "google-consolidate-duplicate-urls",
@@ -6626,7 +6626,7 @@
       "type": "vendor-doc",
       "publisher": "You.com",
       "verified": "2026-10-19",
-      "keyFindings": "docs.you.com/youbot 301s here. UA: 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; YouBot/1.0; +https://docs.you.com/youbot; env:prod) Chrome/X.X.X.X Safari/537.36'. 'YouBot fully respects robots.txt directives, including user-agent specific rules and crawl-delay settings' — one of the few vendors explicitly claiming crawl-delay support. Canonical block: 'User-agent: YouBot' / 'Disallow: /'. robots.txt is cached ~30 minutes. Re-checked 2026-10-19: 'YouBot is the web crawler that powers the You.com search engine.' The page makes no statement about AI model training."
+      "keyFindings": "docs.you.com/youbot 301s here. UA: 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; YouBot/1.0; +https://docs.you.com/youbot; env:prod) Chrome/X.X.X.X Safari/537.36'. 'YouBot fully respects robots.txt directives, including user-agent specific rules and crawl-delay settings' — one of the few vendors explicitly claiming crawl-delay support. Canonical block: 'User-agent: YouBot' / 'Disallow: /'. robots.txt is cached ~30 minutes. Re-checked 2026-10-19: 'YouBot is the web crawler that powers the You.com search engine.' The page makes no statement about AI model training. Re-checked 2026-10-19 for the bot registry: 'YouBot uses Cloudflare's Web Bot Auth standard for authentication'. The page names one range in prose, 68.67.112.0/24, and links no IP list."
     },
     {
       "id": "zyppy-ai-citation-factors",
@@ -7194,6 +7194,15 @@
       "publisher": "Google (Chromium project)",
       "verified": "2026-10-19",
       "keyFindings": "Current Chrome Stable for Mac on 2026-10-19 is version '155.0.8059.85'. Used only to keep the browser baseline User-Agent of the UA-parity probes on the current Stable major."
+    },
+    {
+      "id": "bing-crawlers",
+      "title": "Which crawlers does Bing use?",
+      "url": "https://www.bing.com/webmasters/help/which-crawlers-does-bing-use-8c184ec0",
+      "type": "vendor-doc",
+      "publisher": "Microsoft",
+      "verified": "2026-10-19",
+      "keyFindings": "Rendered in a browser 2026-10-19 (the page is script-built). 'Bingbot is our standard crawler and handles most of our crawling needs each day.' UA strings include 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm) Chrome/W.X.Y.Z Safari/537.36' and 'Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)'. 'User agent strings are easy to spoof'; verification is through the Verify Bingbot tool. The page links no IP list. Read by the bot registry."
     }
   ]
 }
