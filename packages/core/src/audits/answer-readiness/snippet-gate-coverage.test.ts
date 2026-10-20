@@ -113,7 +113,7 @@ describe("SnippetGateCoverageAudit", () => {
         "Snippets are permitted for every AI-relevant crawler, and no answer span is suppressed.",
       );
       expect(result.found).toBe(
-        `0 snippet finding(s); no snippet directives; not evaluated, no operator documents the name: ${listed}; data-nosnippet 0.0% of main content`,
+        `0 snippet finding(s); no snippet directives; not evaluated, outside the documented robots names: ${listed}; data-nosnippet 0.0% of main content`,
       );
     },
   );
@@ -127,7 +127,38 @@ describe("SnippetGateCoverageAudit", () => {
     );
     expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toBe(
-      "Snippets are blocked for applebot by applebot meta nosnippet, so the page is not eligible to be shown with a snippet.",
+      "Applebot is told not to snippet the page by applebot meta nosnippet: Apple documents that it then generates no description or web answer and does not use the content as context for AI-generated output.",
+    );
+  });
+
+  // Apple documents noindex only for Spotlight and Siri Suggestions, and does
+  // not list max-snippet, so neither gates Applebot here.
+  it.each(["noindex", "max-snippet:0"])(
+    "does not gate on applebot %s",
+    (token) => {
+      const result = run(
+        `<main><h1>Resoling</h1><p>${LONG_ANSWER}</p>${FILLER}</main>`,
+        `<meta name="applebot" content="${token}">`,
+      );
+      expect(result.status).toBe(CheckStatus.Pass);
+      expect(result.message).toBe(
+        "Snippets are permitted for every AI-relevant crawler, and no answer span is suppressed.",
+      );
+    },
+  );
+
+  it("does not read the time half of a comma-split unavailable_after as a bot", () => {
+    const result = run(
+      `<main><h1>Resoling</h1><p>${LONG_ANSWER}</p>${FILLER}</main>`,
+      "",
+      {
+        "x-robots-tag":
+          "unavailable_after: 25 Jun 2010, 15:00:00 PST, nosnippet",
+      },
+    );
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toBe(
+      "Snippets are blocked for every crawler, googlebot, bingbot by X-Robots-Tag nosnippet, so the page is not eligible to be shown with a snippet.",
     );
   });
 
@@ -140,6 +171,12 @@ describe("SnippetGateCoverageAudit", () => {
       { "x-robots-tag": "gptbot: noindex, nosnippet" },
     );
     expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.message).toBe(
+      "Snippets are permitted for every AI-relevant crawler, and no answer span is suppressed.",
+    );
+    expect(result.found).toBe(
+      "0 snippet finding(s); no snippet directives; not evaluated, outside the documented robots names: X-Robots-Tag gptbot noindex; X-Robots-Tag gptbot nosnippet; data-nosnippet 0.0% of main content",
+    );
   });
 
   // Regression pin for the fetcher fix: repeated field lines arrive combined

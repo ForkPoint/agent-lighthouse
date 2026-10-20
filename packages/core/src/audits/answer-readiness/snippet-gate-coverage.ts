@@ -85,14 +85,28 @@ function parseHeader(page: PageContext): Directive[] {
   );
 }
 
+const APPLEBOT = "applebot";
+/**
+ * What Apple documents as keeping a page out of its AI answers. `nosnippet`:
+ * "Apple will not use data tagged nosnippet as additional context and
+ * up-to-date content when AI models are used to generate output"; `none`:
+ * "Applebot won't index, snippet, or follow links on the page". Apple's
+ * `noindex` is documented only as keeping the page out of Spotlight and Siri
+ * Suggestions, and Apple does not list `max-snippet`, so neither gates here.
+ */
+const APPLE_BLOCKING = new Set(["nosnippet", "none"]);
+
 /** The most restrictive snippet permission a named crawler ends up with. */
 function resolve(directives: Directive[], bot: string) {
   const mine = directives.filter((d) => d.bot === "*" || d.bot === bot);
+  const apple = bot === APPLEBOT;
+  const blocking = apple ? APPLE_BLOCKING : BLOCKING;
   let blocked: Directive | undefined;
   let maxSnippet = Number.POSITIVE_INFINITY;
   let maxSnippetSource: Directive | undefined;
   for (const directive of mine) {
-    if (BLOCKING.has(directive.token)) blocked ??= directive;
+    if (blocking.has(directive.token)) blocked ??= directive;
+    if (apple) continue;
     const budget = /^max-snippet\s*:\s*(-?\d+)$/.exec(directive.token);
     if (budget) {
       const value = Number(budget[1]);
@@ -344,26 +358,37 @@ export class SnippetGateCoverageAudit extends Audit {
     const unevaluated =
       a.unevaluated.length === 0
         ? ""
-        : `; not evaluated, no operator documents the name: ${a.unevaluated
+        : `; not evaluated, outside the documented robots names: ${a.unevaluated
             .map((d) => `${d.source} ${d.bot} ${d.token}`)
             .join("; ")}`;
     const pct = `${(a.coverage * 100).toFixed(1)}%`;
 
     const findings: string[] = [];
     if (a.blockedBots.length > 0) {
-      const bots = a.blockedBots
-        .map((b) => (b.bot === "*" ? "every crawler" : b.bot))
-        .join(", ");
-      const why = a.blockedBots[0]!.why;
-      const token =
+      const describeWhy = (why: Directive | string) =>
         typeof why === "string" ? why : `${why.source} ${why.token}`;
+      const others = a.blockedBots.filter((b) => b.bot !== APPLEBOT);
+      const apple = a.blockedBots.find((b) => b.bot === APPLEBOT);
+      const sentences: string[] = [];
+      if (others.length > 0) {
+        const bots = others
+          .map((b) => (b.bot === "*" ? "every crawler" : b.bot))
+          .join(", ");
+        sentences.push(
+          `Snippets are blocked for ${bots} by ${describeWhy(others[0]!.why)}, so the page is not eligible to be shown with a snippet.`,
+        );
+      }
+      if (apple) {
+        // Apple's own wording, not Google's eligibility language.
+        sentences.push(
+          `Applebot is told not to snippet the page by ${describeWhy(apple.why)}: Apple documents that it then generates no description or web answer and does not use the content as context for AI-generated output.`,
+        );
+      }
       // Marking answers up and then forbidding snippets is one mistake, not two.
       const markupClause = a.markupType
         ? ` The page also publishes ${a.markupType} markup, so it is marked up to be quoted and forbidden from being quoted in the same response.`
         : "";
-      findings.push(
-        `Snippets are blocked for ${bots} by ${token}, so the page is not eligible to be shown with a snippet.${markupClause}`,
-      );
+      findings.push(`${sentences.join(" ")}${markupClause}`);
     }
     if (a.coverage > COVERAGE_FLOOR) {
       findings.push(

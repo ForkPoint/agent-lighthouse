@@ -99,7 +99,9 @@ export function parseXRobotsTag(raw: string | undefined): HeaderDirective[] {
   for (const segment of raw.split(",")) {
     const trimmed = segment.trim().toLowerCase();
     if (!trimmed) continue;
-    const prefixed = /^([a-z0-9._-]+)\s*:\s*(.+)$/.exec(trimmed);
+    // A prefix starts with a letter, so the time half of a comma-split date
+    // (`unavailable_after: 25 Jun 2010, 15:00:00 PST`) is not read as a bot.
+    const prefixed = /^([a-z][a-z0-9._-]*)\s*:\s*(.+)$/.exec(trimmed);
     if (prefixed && !VALUED_DIRECTIVES.has(prefixed[1]!)) {
       name = prefixed[1]!;
       out.push({ name, token: normalizeToken(prefixed[2]!) });

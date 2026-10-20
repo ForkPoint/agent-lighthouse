@@ -140,6 +140,17 @@ describe("MetaRobotsNotBlockingAudit", () => {
     );
   });
 
+  it("does not read the time half of a comma-split unavailable_after as a bot", () => {
+    const page = mockPageContext("https://example.com/", doc(""));
+    page.fetchResult.headers["x-robots-tag"] =
+      "unavailable_after: 25 Jun 2010, 15:00:00 PST, noindex";
+    const result = audit.audit(mockCheckContext([page]));
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.found).toBe(
+      "https://example.com/ — noindex via X-Robots-Tag",
+    );
+  });
+
   it("ignores every directive after an unknown prefix", () => {
     const page = mockPageContext("https://example.com/", doc(""));
     page.fetchResult.headers["x-robots-tag"] = "yandexbot: nosnippet, noindex";
