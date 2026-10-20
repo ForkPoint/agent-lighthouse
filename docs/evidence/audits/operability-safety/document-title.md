@@ -40,3 +40,13 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - Agent tool-chains address pages as tabs. Playwright MCP `browser_tabs` will "List, create, close, or select a browser tab", and chrome-devtools-mcp `list_pages` will "Get a list of pages open in the browser". On that surface a document's title is the only identifier a human or a model can read — https://github.com/microsoft/playwright-mcp and https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/tool-reference.md (both verified 2026-08-21)
 
 **Counter-evidence:** Neither Playwright MCP nor Chrome DevTools MCP documents the page title as part of the accessibility snapshot the model reasons over. A tree-driven agent can therefore complete tasks on an untitled page. The documented dependence is on identification and citation surfaces, not on action. The check is also presence-only. A site shipping the same generic title on every page — the actual disambiguation failure — passes. And JS-assigned titles in a CSR SPA fail here, while every real consumer that executes JS sees a title.
+
+## Limits
+
+### Browser snapshot evidence
+
+Browser agents read the rendered page as an accessibility tree. Anthropic's `read_page` returns "the page's accessibility tree as text", Playwright MCP "uses accessibility snapshots instead of screenshots", and Chrome DevTools MCP `take_snapshot` is "based on the a11y tree" (verified 2026-10-20). A supplied browser snapshot is that rendered DOM, so the browser view reuses this audit on it.
+
+The snapshot path runs this audit on each complete, unredacted, non-loading capture that carries readable text. It runs the same accessibility rule pass over the capture HTML, with page scripts off and no resource loading. If that pass yields no results, the capture records missing evidence instead of a verdict. It reports the original static verdict as an unscored browser finding with weight 0. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. A truncated, redacted or still-loading capture records missing evidence. Existing implementation limits still apply.
+
+The review and limits appear in [Browser-rendered snapshot assessment](../../../architecture/browser-snapshots.md#supported-audit-inventory). The eligibility record lives in `packages/core/src/snapshot-eligibility.ts`. The crawler grade, tier and weight stay unchanged.

@@ -95,6 +95,7 @@ Informative (weight 0). It reports coverage and never moves a score.
   address" and still owe the token.
 - Browser snapshots run this audit on complete, unredacted, non-loading
   captures, like the credential audit. The finding is informative with weight 0.
+  The eligibility record is in `packages/core/src/snapshot-eligibility.ts`.
 
 ## Deferred
 

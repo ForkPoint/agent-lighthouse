@@ -661,8 +661,10 @@ describe("publicDossier", () => {
         // since 2026-10-19: `mcp-tool-annotation-coverage` publishes its own.
         // 162 since the same day: five UA-parity dossiers gained a Limits
         // section on what a User-Agent probe can prove (`ai-crawler-edge-parity`
-        // already published one from its counter-evidence).
-        Limits: 162,
+        // already published one from its counter-evidence). 163 since
+        // 2026-10-20: 26 dossiers gained a browser-snapshot Limits section;
+        // 25 already published Limits from their counter-evidence.
+        Limits: 163,
         // Every scored audit publishes its grade reasoning; the shortfall is
         // in the informative and experimental tiers, which the bar exempts.
         // 199 since 2026-10-18 (9.0.0): the new audits, and the obsolete and

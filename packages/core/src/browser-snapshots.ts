@@ -17,6 +17,8 @@ import type { ScanConfig } from "./audit-config";
 import type { CheckContext, PageContext } from "./check-context";
 import type { ScanOptions } from "./orchestrator";
 import { runAudits } from "./audit-runner";
+import { A11Y_RULES } from "./audits/operability-safety";
+import { runA11yForHtml } from "./audits/operability-safety/runner";
 import { DomWorkLimitError } from "./dom-work";
 import { parsePageContext } from "./page-context";
 import { buildSnapshotEvidence } from "./scan-evidence";
@@ -177,6 +179,20 @@ async function assessCapture(
       );
     },
   };
+  // The same jsdom rule pass the HTTP path runs. Scripts stay off ("outside-only")
+  // and jsdom loads no subresources, so the capture cannot execute or fetch.
+  // Skipped when no selected audit reads its results.
+  const needsA11y = eligibleAuditIds.some(
+    (id) => SNAPSHOT_AUDITS[id]?.a11yRules,
+  );
+  const a11yResults = needsA11y
+    ? await runA11yForHtml(html, pageUrl, A11Y_RULES)
+    : {};
+  signal?.throwIfAborted();
+  // An empty map means the pass failed. Left unset, a11y-backed audits would read
+  // "not applicable" and count as assessed; they record missing evidence below.
+  const a11yRan = Object.keys(a11yResults).length > 0;
+  if (a11yRan) page.a11yResults = a11yResults;
   const ctx: CheckContext = {
     evidenceSource: EvidenceSource.BrowserSnapshot,
     pages: [page],
@@ -196,6 +212,15 @@ async function assessCapture(
   const assessed = await runAudits(ctx, browserConfig);
   signal?.throwIfAborted();
   for (const check of assessed.checks) {
+    if (!a11yRan && SNAPSHOT_AUDITS[check.id]?.a11yRules) {
+      result.missingEvidence.push({
+        auditId: check.id,
+        pageUrl,
+        reason:
+          "The accessibility rule pass produced no results for this capture.",
+      });
+      continue;
+    }
     if (
       check.tags?.some((tag) =>
         [

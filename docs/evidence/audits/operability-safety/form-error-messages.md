@@ -68,3 +68,13 @@ The audit does not see live validation errors. A GET returns the page before any
 - Ids are collected into a set per page, so no attribute value can malform a selector.
 - `hidden`, `submit`, `button`, `reset` and `image` inputs are excluded.
 - `aria-attributes` validates that a present reference resolves, and `label` covers naming. This audit asks only whether constrained fields carry a reference at all.
+
+## Limits
+
+### Browser snapshot evidence
+
+Browser agents read the rendered page as an accessibility tree. Anthropic's `read_page` returns "the page's accessibility tree as text", Playwright MCP "uses accessibility snapshots instead of screenshots", and Chrome DevTools MCP `take_snapshot` is "based on the a11y tree" (verified 2026-10-20). A supplied browser snapshot is that rendered DOM, so the browser view reuses this audit on it.
+
+The snapshot path runs this audit on each complete, unredacted, non-loading capture that carries readable text. It reads the parsed capture DOM only. It reports the original static verdict as an unscored browser finding with weight 0. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. A truncated, redacted or still-loading capture records missing evidence. Existing implementation limits still apply.
+
+The review and limits appear in [Browser-rendered snapshot assessment](../../../architecture/browser-snapshots.md#supported-audit-inventory). The eligibility record lives in `packages/core/src/snapshot-eligibility.ts`. The crawler grade, tier and weight stay unchanged.

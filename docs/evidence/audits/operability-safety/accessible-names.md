@@ -55,3 +55,13 @@ AI browser agents identify clickable elements by their accessible name in the ac
 
 - Controls inside a container hidden by an external stylesheet are still checked. The runner strips stylesheets before building the document, for event-loop cost, so the engine sees no stylesheet `display:none`.
 - The stylesheet scanner in `gatherers/css-rules.ts` resolves no specificity and no media queries. Skipping on its answer would also skip a desktop menu hidden at the base and shown at desktop width, which an agent does see. Exact resolution waits for the headless tier.
+
+## Limits
+
+### Browser snapshot evidence
+
+Browser agents read the rendered page as an accessibility tree. Anthropic's `read_page` returns "the page's accessibility tree as text", Playwright MCP "uses accessibility snapshots instead of screenshots", and Chrome DevTools MCP `take_snapshot` is "based on the a11y tree" (verified 2026-10-20). A supplied browser snapshot is that rendered DOM, so the browser view reuses this audit on it.
+
+The snapshot path runs this audit on each complete, unredacted, non-loading capture that carries readable text. It runs the same accessibility rule pass over the capture HTML, with page scripts off and no resource loading. If that pass yields no results, the capture records missing evidence instead of a verdict. It reports the original static verdict as an unscored browser finding with weight 0. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. A truncated, redacted or still-loading capture records missing evidence. Existing implementation limits still apply.
+
+The review and limits appear in [Browser-rendered snapshot assessment](../../../architecture/browser-snapshots.md#supported-audit-inventory). The eligibility record lives in `packages/core/src/snapshot-eligibility.ts`. The crawler grade, tier and weight stay unchanged.

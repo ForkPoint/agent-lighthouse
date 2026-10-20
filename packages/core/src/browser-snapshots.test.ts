@@ -25,6 +25,8 @@ import { parsePageContext } from "./page-context";
 import type { CheckContext, PageContext } from "./check-context";
 import { PageType } from "./contracts";
 import { defaultOriginCache } from "./origin-cache";
+import { SNAPSHOT_AUDITS } from "./snapshot-eligibility";
+import { runA11yForHtml } from "./audits/operability-safety/runner";
 
 const state = vi.hoisted(() => ({
   body: "<html><body><div id='app'></div></body></html>",
@@ -54,9 +56,11 @@ vi.mock("./fetcher", async (original) => ({
     },
   }),
 }));
-vi.mock("./audits/operability-safety/runner", () => ({
-  runA11yForHtml: async () => ({}),
-}));
+vi.mock("./audits/operability-safety/runner", async (original) => {
+  const actual =
+    await original<typeof import("./audits/operability-safety/runner")>();
+  return { ...actual, runA11yForHtml: vi.fn(actual.runA11yForHtml) };
+});
 vi.mock("./audit-runner", async (original) => {
   const actual = await original<typeof import("./audit-runner")>();
   return { ...actual, runAudits: vi.fn(actual.runAudits) };
@@ -87,6 +91,15 @@ const options = {
   timeoutMs: 0,
   bypassOriginCache: true,
 };
+/** Reviewed snapshot audits inside the categories this suite scans. */
+const selectedSnapshotAudits = Object.keys(SNAPSHOT_AUDITS).filter((id) =>
+  options.categories.includes(id.split("/")[0]!),
+);
+/** Eligible audits whose page-type gate the fixture page does not meet. */
+const PAGE_GATED = [
+  "content-extraction/article-element",
+  "content-extraction/aside-element",
+];
 const check = (report: Awaited<ReturnType<typeof runScan>>, id: string) =>
   report.categories.flatMap((c) => c.checks).find((c) => c.id === id);
 const browserCheck = (
@@ -95,6 +108,7 @@ const browserCheck = (
 ) => report.browserAssessment?.findings.find((f) => f.check.id === id)?.check;
 beforeEach(() => {
   vi.mocked(runAudits).mockClear();
+  vi.mocked(runA11yForHtml).mockClear();
   state.status = 200;
   state.body = "<html><body><div id='app'></div></body></html>";
   state.calls = [];
@@ -117,8 +131,18 @@ describe("browser snapshot scan boundary", () => {
     expect(
       browserCheck(browser, "content-extraction/image-alt-text")?.status,
     ).toBe(CheckStatus.Pass);
-    expect(browser.browserAssessment?.coverage.assessed).toBe(7);
-    expect(browser.browserAssessment?.score).toBeNull();
+    const assessment = browser.browserAssessment!;
+    expect(assessment.coverage.eligibleAuditIds).toHaveLength(
+      selectedSnapshotAudits.length,
+    );
+    // Only page-purpose gates (article and aside landmarks) leave this page unassessed.
+    expect(assessment.missingEvidence.map((m) => m.auditId).sort()).toEqual(
+      PAGE_GATED,
+    );
+    expect(assessment.coverage.assessed).toBe(
+      selectedSnapshotAudits.length - PAGE_GATED.length,
+    );
+    expect(assessment.score).toBeNull();
   });
   it("finds added structured data only in the browser population", async () => {
     state.body = `<html><body><p>${text}</p></body></html>`;
@@ -194,11 +218,12 @@ describe("browser snapshot scan boundary", () => {
     expect(report.browserAssessment?.limits.join(" ")).toContain(
       "action success",
     );
-    expect(
-      report.browserAssessment?.findings.some((f) =>
-        f.check.id.includes("actionability"),
-      ),
-    ).toBe(false);
+    const actionability = report.browserAssessment?.findings.find(
+      (f) => f.check.id === "operability-safety/form-actionability",
+    );
+    expect(actionability?.check.description).toContain(
+      "no filling or submission execution",
+    );
   });
   it("keeps current-tab access separate from fresh-browser claims", async () => {
     const report = await runScan(url, { ...options, snapshots: input() });
@@ -357,7 +382,10 @@ describe("browser snapshot scan boundary", () => {
       [url, CheckStatus.Pass],
       [other, CheckStatus.Fail],
     ]);
-    expect(report.browserAssessment!.coverage.assessed).toBe(14);
+    const { coverage, findings, missingEvidence } = report.browserAssessment!;
+    expect(coverage.eligible).toBe(2 * selectedSnapshotAudits.length);
+    expect(coverage.assessed).toBe(findings.length);
+    expect(coverage.assessed + missingEvidence.length).toBe(coverage.eligible);
   });
   it("keeps HTTP-only gates closed even when a caller disables per-audit gates", () => {
     const page: PageContext = {
@@ -411,12 +439,13 @@ describe("browser snapshot scan boundary", () => {
       },
     }).finally(() => vi.mocked(runAudits).mockImplementation(actual.runAudits));
     const assessment = report.browserAssessment!;
-    expect(assessment.findings).toHaveLength(7);
+    const assessable = selectedSnapshotAudits.length - PAGE_GATED.length;
+    expect(assessment.findings).toHaveLength(assessable);
     expect(assessment.findings.every((f) => f.pageUrl === url)).toBe(true);
-    expect(assessment.coverage.assessed).toBe(7);
+    expect(assessment.coverage.assessed).toBe(assessable);
     expect(
       assessment.missingEvidence.filter((m) => m.pageUrl === other),
-    ).toHaveLength(7);
+    ).toHaveLength(selectedSnapshotAudits.length);
   });
   it("reads deeply nested snapshot text in linear time", () => {
     const depth = 8000;
@@ -460,7 +489,92 @@ describe("browser snapshot scan boundary", () => {
         m.reason.includes(`deeper than ${DOM_WORK_LIMITS.maxDepth}`),
       ),
     ).toBe(true);
-    expect(assessment.missingEvidence).toHaveLength(7);
+    expect(assessment.missingEvidence).toHaveLength(
+      selectedSnapshotAudits.length,
+    );
+  });
+  it("judges a JS-rendered page's DOM in the browser view only", async () => {
+    // The served HTML is an empty shell; the capture is the page a browser agent reads.
+    const rendered = `<html lang="en"><head><title>Rendered page</title></head><body><header><nav><a href="/">Home</a></nav></header><main><h1>Rendered page</h1><p>${text}</p><form><label for="q">Search</label><input id="q" name="q" type="search"><button>Go</button></form></main><footer>Footer</footer></body></html>`;
+    const plain = await runScan(url, options);
+    const report = await runScan(url, {
+      ...options,
+      snapshots: input(snapshot({ html: rendered })),
+    });
+    expect(report.categories).toEqual(plain.categories);
+    expect(report.overallScore).toBe(plain.overallScore);
+    for (const id of [
+      "content-extraction/main-element",
+      "content-extraction/single-h1",
+      "operability-safety/aria-landmarks",
+      "operability-safety/document-title",
+      "operability-safety/label",
+    ]) {
+      expect(browserCheck(report, id)?.status, id).toBe(CheckStatus.Pass);
+      expect(browserCheck(report, id)?.weight, id).toBe(0);
+      expect(check(report, id)?.status, id).not.toBe(CheckStatus.Pass);
+    }
+  });
+  it("records missing evidence, not a verdict, when the a11y pass yields nothing", async () => {
+    vi.mocked(runA11yForHtml).mockImplementation(async () => ({}));
+    const report = await runScan(url, {
+      ...options,
+      snapshots: input(),
+    }).finally(() => vi.mocked(runA11yForHtml).mockReset());
+    const { findings, missingEvidence } = report.browserAssessment!;
+    const a11yIds = Object.entries(SNAPSHOT_AUDITS)
+      .filter(([, entry]) => entry.a11yRules)
+      .map(([id]) => id);
+    expect(a11yIds.length).toBeGreaterThan(0);
+    for (const id of a11yIds) {
+      expect(
+        findings.some((f) => f.check.id === id),
+        id,
+      ).toBe(false);
+      expect(
+        missingEvidence.find((m) => m.auditId === id)?.reason,
+        id,
+      ).toContain("accessibility rule pass produced no results");
+    }
+    expect(
+      browserCheck(report, "operability-safety/aria-landmarks"),
+    ).toBeDefined();
+  });
+  it("runs the a11y pass without page scripts", async () => {
+    const titled = html.replace(
+      "<head>",
+      `<head><title>Captured title</title><script>document.title = "";</script>`,
+    );
+    const report = await runScan(url, {
+      ...options,
+      snapshots: input(snapshot({ html: titled })),
+    });
+    expect(
+      browserCheck(report, "operability-safety/document-title")?.status,
+    ).toBe(CheckStatus.Pass);
+  });
+  it("runs no rule pass and gives no verdict on a partial capture", async () => {
+    for (const partial of [
+      snapshot({ truncation: { truncated: true, originalBytes: 10_000_000 } }),
+      snapshot({ redaction: { redacted: true, fields: ["email"] } }),
+      snapshot({ documentState: DocumentState.Loading }),
+    ]) {
+      vi.mocked(runA11yForHtml).mockClear();
+      const report = await runScan(url, {
+        ...options,
+        snapshots: input(partial),
+      });
+      const assessment = report.browserAssessment!;
+      expect(assessment.findings).toHaveLength(0);
+      expect(assessment.missingEvidence).toHaveLength(
+        selectedSnapshotAudits.length,
+      );
+      expect(
+        vi
+          .mocked(runA11yForHtml)
+          .mock.calls.some(([source]) => source === partial.html),
+      ).toBe(false);
+    }
   });
   it("leaves URL-only output free of browser claims", async () => {
     const report = await runScan(url, options);

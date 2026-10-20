@@ -41,3 +41,13 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - axe rule: "Document content is not accessible to assistive technology if `<body aria-hidden="true">`" (impact: critical) — https://dequeuniversity.com/rules/axe/4.10/aria-hidden-body (verified 2026-08-21)
 
 **Counter-evidence:** Screenshot/pixel-driven agents (computer-use style) are unaffected — they never consult the accessibility tree, so the failure is total for tree-based agents and invisible to vision-based ones. The condition is also vanishingly rare in static HTML. Its realistic occurrence is a modal library setting `aria-hidden` on the root at open time, which happens only after JS runs — and this pipeline never observes that. A high grade for the signal therefore coexists with a near-zero hit rate for the audit as implemented.
+
+## Limits
+
+### Browser snapshot evidence
+
+Browser agents read the rendered page as an accessibility tree. Anthropic's `read_page` returns "the page's accessibility tree as text", Playwright MCP "uses accessibility snapshots instead of screenshots", and Chrome DevTools MCP `take_snapshot` is "based on the a11y tree" (verified 2026-10-20). A supplied browser snapshot is that rendered DOM, so the browser view reuses this audit on it.
+
+The snapshot path runs this audit on each complete, unredacted, non-loading capture that carries readable text. It runs the same accessibility rule pass over the capture HTML, with page scripts off and no resource loading. If that pass yields no results, the capture records missing evidence instead of a verdict. It reports the original static verdict as an unscored browser finding with weight 0. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. A truncated, redacted or still-loading capture records missing evidence. Existing implementation limits still apply.
+
+The review and limits appear in [Browser-rendered snapshot assessment](../../../architecture/browser-snapshots.md#supported-audit-inventory). The eligibility record lives in `packages/core/src/snapshot-eligibility.ts`. The crawler grade, tier and weight stay unchanged.

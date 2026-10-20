@@ -43,3 +43,13 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - axe rule: the id "must be unique to prevent the second instance from being overlooked by assistive technology"; "only the first instance gets acted upon by client-side scripting" (impact: critical) — https://dequeuniversity.com/rules/axe/4.10/duplicate-id-aria (verified 2026-08-21)
 
 **Counter-evidence:** Deque frames the effect as the second instance being _overlooked_ rather than misresolved. The harm materialises only when a duplicated id is actually the target of an ARIA reference or a `for` attribute. A duplicated id that nothing references changes nothing in the accessibility tree. Duplicate ids from repeated third-party embeds are true positives the site owner cannot fix. Independently of the signal's grade, this audit as wired can essentially never report the failure: `reviewOnFail` turns it into an incomplete result, which another page's pass then overrides.
+
+## Limits
+
+### Browser snapshot evidence
+
+Browser agents read the rendered page as an accessibility tree. Anthropic's `read_page` returns "the page's accessibility tree as text", Playwright MCP "uses accessibility snapshots instead of screenshots", and Chrome DevTools MCP `take_snapshot` is "based on the a11y tree" (verified 2026-10-20). A supplied browser snapshot is that rendered DOM, so the browser view reuses this audit on it.
+
+The snapshot path runs this audit on each complete, unredacted, non-loading capture that carries readable text. It runs the same accessibility rule pass over the capture HTML, with page scripts off and no resource loading. If that pass yields no results, the capture records missing evidence instead of a verdict. It reports the original static verdict as an unscored browser finding with weight 0. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. A truncated, redacted or still-loading capture records missing evidence. Existing implementation limits still apply.
+
+The review and limits appear in [Browser-rendered snapshot assessment](../../../architecture/browser-snapshots.md#supported-audit-inventory). The eligibility record lives in `packages/core/src/snapshot-eligibility.ts`. The crawler grade, tier and weight stay unchanged.
