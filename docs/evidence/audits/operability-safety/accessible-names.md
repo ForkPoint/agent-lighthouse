@@ -29,6 +29,8 @@ sources:
   - openai-computer-use-guide
   - gemini-computer-use-docs
   - anthropic-cu-tool
+public_extra:
+  - Browser view
 ---
 
 # Buttons and links have accessible names (`7.7`)
@@ -55,3 +57,11 @@ AI browser agents identify clickable elements by their accessible name in the ac
 
 - Controls inside a container hidden by an external stylesheet are still checked. The runner strips stylesheets before building the document, for event-loop cost, so the engine sees no stylesheet `display:none`.
 - The stylesheet scanner in `gatherers/css-rules.ts` resolves no specificity and no media queries. Skipping on its answer would also skip a desktop menu hidden at the base and shown at desktop width, which an agent does see. Exact resolution waits for the headless tier.
+
+## Browser view
+
+Anthropic's `find` searches "for elements matching a natural-language description such as 'search field' or 'add to cart button'", and `form_input` will "Set a form element's value directly" on the element it returns (verified 2026-10-20). The accessible name of a button or link is the text that description is matched against. An unnamed button or link is a node `find` cannot match by purpose. A supplied browser snapshot is the rendered DOM those tools read, so the browser view runs this audit on it.
+
+The browser view runs on each complete, unredacted, non-loading capture that carries readable text and whose accessibility rule pass completed. The pass runs the audit's rules over the capture HTML with page scripts off and no resource loading. A pass with no results records missing evidence instead of a verdict. The finding is informative with weight 0. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. A truncated, redacted or still-loading capture records missing evidence. Existing implementation limits still apply.
+
+The review appears in [Browser-rendered snapshot assessment](../../../architecture/browser-snapshots.md#supported-audit-inventory). The eligibility record lives in `packages/core/src/snapshot-eligibility.ts`. The crawler grade, tier and weight stay unchanged.

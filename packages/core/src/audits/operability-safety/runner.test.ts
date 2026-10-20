@@ -113,4 +113,32 @@ describe("stripStyles", () => {
     );
     expect(out).toBe("t");
   });
+
+  it("matches the earlier patterns on edge cases", () => {
+    // Unclosed blocks and tags stay; names must end at a word boundary.
+    expect(stripStyles("<STYLE>x</Style>a")).toBe("a");
+    expect(stripStyles("<styles>x</style>a")).toBe("<styles>x</style>a");
+    expect(stripStyles("<style>never closed")).toBe("<style>never closed");
+    expect(stripStyles("a<style>x</style>b<style>y")).toBe("ab<style>y");
+    expect(stripStyles("<link rel=stylesheet href=a>b")).toBe("b");
+    expect(stripStyles("<LINK REL = 'stylesheet'>b")).toBe("b");
+    expect(stripStyles("<link rel=stylesheets>b")).toBe(
+      "<link rel=stylesheets>b",
+    );
+    expect(stripStyles("<linked rel=stylesheet>b")).toBe(
+      "<linked rel=stylesheet>b",
+    );
+    expect(stripStyles("<link rel=stylesheet")).toBe("<link rel=stylesheet");
+  });
+
+  it("stays linear on adversarial unclosed tags", () => {
+    const size = 2 * 1024 * 1024;
+    for (const unit of ["<style>", "<style ", "<link ", "<link rel=x>"]) {
+      const input = unit.repeat(Math.ceil(size / unit.length));
+      const started = performance.now();
+      stripStyles(input);
+      // The quadratic regexes took minutes on this size.
+      expect(performance.now() - started, unit).toBeLessThan(2000);
+    }
+  });
 });

@@ -679,5 +679,39 @@ describe("publicDossier", () => {
         "Example finding": 84,
       });
     });
+
+    // A dossier's own Limits section turns promotion off, so a browser-view
+    // note must sit under its own heading or it would displace the
+    // counter-evidence the page publishes as Limits.
+    it("keeps promoted counter-evidence in Limits beside a Browser view section", () => {
+      const withNote = ids.filter((id) => /^## Browser view$/m.test(read(id)));
+      expect(withNote.length).toBeGreaterThan(0);
+      for (const id of withNote) {
+        const full = read(id);
+        expect(full, `${id}: public_extra`).toMatch(
+          /^public_extra:\n(?: {2}- .+\n)*? {2}- Browser view$/m,
+        );
+        const without = full.split(/^## Browser view$/m)[0];
+        const before = publicDossier(without);
+        const after = publicDossier(full, { publicExtra: ["Browser view"] });
+        expect(after.published, id).toContain("Browser view");
+        expect(after.published.includes("Limits"), id).toBe(
+          before.published.includes("Limits"),
+        );
+        const limits = (markdown: string) =>
+          markdown.split(/^## Limits$/m)[1]?.split(/^## /m)[0] ?? "";
+        expect(limits(after.markdown), id).toBe(limits(before.markdown));
+      }
+      // One pinned example: the landmark audit's counter-evidence stays public.
+      const { markdown } = publicDossier(
+        read("operability-safety/aria-landmarks"),
+        {
+          publicExtra: ["Browser view"],
+        },
+      );
+      expect(markdown.split(/^## Limits$/m)[1].split(/^## /m)[0]).toContain(
+        "Landmarks are one path among several",
+      );
+    });
   });
 });

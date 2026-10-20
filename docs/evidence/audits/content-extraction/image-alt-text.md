@@ -29,6 +29,9 @@ sources:
   - google-ai-features-trust
   - vercel-ai-crawler-study
   - google-ai-features-docs
+  - anthropic-browser-use-tool
+public_extra:
+  - Browser view
 ---
 
 # image-alt-text (`6.15`)
@@ -60,9 +63,9 @@ A multimodal agent that fetches the image bytes can caption it without a text al
 - Images inside a container hidden by an external stylesheet are still counted. The audit reads no CSS, and the stylesheet scanner resolves no specificity or media queries. Exact resolution waits for the headless tier.
 - A junk-alt test (such as `alt="IMG_2024.jpg"`). No cited source defines one, so it needs its own research.
 
-## Limits
+## Browser view
 
-### Browser snapshot evidence
+Anthropic's `read_page` returns "the page's accessibility tree as text with each element tagged with a reference such as [ref_2]" (verified 2026-10-20). An image's alt text, ARIA label or title is its accessible name in that tree. An image without one is an unnamed node.
 
 The snapshot path reuses this audit on each complete, unredacted, non-loading DOM capture that carries readable text. It reports the original static verdict as an unscored browser finding. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. The source and page URL accompany every finding. Existing implementation limits still apply.
 

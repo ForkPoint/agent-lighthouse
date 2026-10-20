@@ -13,6 +13,9 @@ sources:
   - chrome-devtools-mcp-tools
   - axe-aria-valid-attr-value
   - w3c-accname-11
+  - anthropic-browser-use-tool
+public_extra:
+  - Browser view
 ---
 
 # Valid ARIA attributes (`7.12`)
@@ -43,3 +46,11 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - Accessible Name and Description Computation 1.1 (W3C Recommendation, 18 December 2018) governs the idref-based `aria-labelledby`/`aria-describedby` values this audit validates — https://www.w3.org/TR/accname-1.1/ (verified 2026-08-21)
 
 **Counter-evidence:** The four bundled rules are not equally load-bearing for an agent: `aria-prohibited-attr` (e.g. an `aria-label` on a plain `<div>`) has no effect on any state the agent acts upon, while `aria-valid-attr-value` on `aria-expanded`/`aria-checked` does. No vendor agent doc names ARIA attribute validity specifically; the proven consumer path is the browser's accessibility tree, which the agent tools then serialise. The audit's idref checks also resolve against static HTML, so hydration-deferred targets are flagged although a real browser resolves them.
+
+## Browser view
+
+Anthropic's `read_page` returns "the page's accessibility tree as text with each element tagged with a reference such as [ref_2]" (verified 2026-10-20). WAI-ARIA attributes set the states and properties of the nodes in that tree. An unknown, disallowed or malformed attribute is dropped or misread, so the tree the agent receives differs from what the markup intends. A supplied browser snapshot is the rendered DOM those tools read, so the browser view runs this audit on it.
+
+The browser view runs on each complete, unredacted, non-loading capture that carries readable text and whose accessibility rule pass completed. The pass runs the audit's rules over the capture HTML with page scripts off and no resource loading. A pass with no results records missing evidence instead of a verdict. The finding is informative with weight 0. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. A truncated, redacted or still-loading capture records missing evidence. Existing implementation limits still apply.
+
+The review appears in [Browser-rendered snapshot assessment](../../../architecture/browser-snapshots.md#supported-audit-inventory). The eligibility record lives in `packages/core/src/snapshot-eligibility.ts`. The crawler grade, tier and weight stay unchanged.

@@ -34,6 +34,8 @@ sources:
   - apple-app-search-web-markup
   - microsoft-ads-ai-search-optimization
   - google-merchant-automated-feeds
+public_extra:
+  - Browser view
 ---
 
 # json-ld-present (`3.1`)
@@ -56,9 +58,9 @@ AI agents rely on JSON-LD structured data to understand what your site offers, w
 
 **Counter-evidence:** Google's own AI docs are unambiguous. "Structured data isn't required for generative AI search, and there's no special schema.org markup you need to add." (google-ai-optimization-guide). And: "You don't need to create new machine readable files, AI text files, or markup to appear in these features" (google-ai-features-doc); the optimization guide words it as "machine readable files, AI text files, markup, or Markdown to appear in Google Search". Google's agent-facing guidance (web-dev-agent-friendly-sites) never mentions schema.org, naming screenshots, DOM and the accessibility tree instead. The largest AI-visibility correlation study (75k brands) did not even measure schema as a factor (ahrefs-brand-visibility-correlations). The widely-repeated "53% of AI-cited pages have schema, ~3x the rate of uncited pages" statistic is confounded — the Ahrefs authors attribute it to site quality, not markup. Note the honest limit on the null result: Ahrefs sampled only pages already receiving 100+ AI Overview citations, so it cannot rule out an effect on first-time discovery, parsing or indexing.
 
-## Limits
+## Browser view
 
-### Browser snapshot evidence
+This entry is a documented exception: it shipped before the browser-agent rule, and no browser-agent consumer is claimed. The browser view claims one fact only: a parsed JSON-LD block is present in the captured DOM. It makes no delivery, rich-result or citation claim for any crawler.
 
 The snapshot path reuses this audit on each complete, unredacted, non-loading DOM capture that carries readable text. It reports the original static verdict as an unscored browser finding. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. The source and page URL accompany every finding. Existing implementation limits still apply.
 

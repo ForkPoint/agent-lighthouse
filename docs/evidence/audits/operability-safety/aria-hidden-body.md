@@ -12,6 +12,10 @@ sources:
   - playwright-mcp-repo
   - chrome-devtools-mcp-tools
   - axe-aria-hidden-body
+  - playwright-mcp-snapshots
+  - chrome-devtools-mcp-tool-reference
+public_extra:
+  - Browser view
 ---
 
 # Page exposed to the accessibility tree (`7.10`)
@@ -41,3 +45,11 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - axe rule: "Document content is not accessible to assistive technology if `<body aria-hidden="true">`" (impact: critical) — https://dequeuniversity.com/rules/axe/4.10/aria-hidden-body (verified 2026-08-21)
 
 **Counter-evidence:** Screenshot/pixel-driven agents (computer-use style) are unaffected — they never consult the accessibility tree, so the failure is total for tree-based agents and invisible to vision-based ones. The condition is also vanishingly rare in static HTML. Its realistic occurrence is a modal library setting `aria-hidden` on the root at open time, which happens only after JS runs — and this pipeline never observes that. A high grade for the signal therefore coexists with a near-zero hit rate for the audit as implemented.
+
+## Browser view
+
+Playwright MCP "uses accessibility snapshots instead of screenshots", with refs "assigned to every node the accessibility tree exposes" (verified 2026-10-20). Chrome DevTools MCP `take_snapshot` takes "a text snapshot of the target page based on the a11y tree" (verified 2026-10-20). `aria-hidden="true"` on `<body>` removes the whole page from that tree, so both snapshots describe an empty page. A supplied browser snapshot is the rendered DOM those tools read, so the browser view runs this audit on it.
+
+The browser view runs on each complete, unredacted, non-loading capture that carries readable text and whose accessibility rule pass completed. The pass runs the audit's rules over the capture HTML with page scripts off and no resource loading. A pass with no results records missing evidence instead of a verdict. The finding is informative with weight 0. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. A truncated, redacted or still-loading capture records missing evidence. Existing implementation limits still apply.
+
+The review appears in [Browser-rendered snapshot assessment](../../../architecture/browser-snapshots.md#supported-audit-inventory). The eligibility record lives in `packages/core/src/snapshot-eligibility.ts`. The crawler grade, tier and weight stay unchanged.

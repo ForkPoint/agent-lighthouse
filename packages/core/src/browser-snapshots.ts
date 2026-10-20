@@ -6,6 +6,7 @@ import type {
 import {
   DOM_WORK_LIMITS,
   DocumentState,
+  EvidenceKey,
   EvidenceSource,
   ScoreDisplayMode,
   TAG_SCAN_ERROR,
@@ -17,6 +18,8 @@ import type { ScanConfig } from "./audit-config";
 import type { CheckContext, PageContext } from "./check-context";
 import type { ScanOptions } from "./orchestrator";
 import { runAudits } from "./audit-runner";
+import { A11Y_RULES } from "./audits/operability-safety";
+import { runA11yForHtml } from "./audits/operability-safety/runner";
 import { DomWorkLimitError } from "./dom-work";
 import { parsePageContext } from "./page-context";
 import { buildSnapshotEvidence } from "./scan-evidence";
@@ -177,6 +180,22 @@ async function assessCapture(
       );
     },
   };
+  const evidence = buildSnapshotEvidence([page]);
+  // The same jsdom rule pass the HTTP path runs. Scripts stay off ("outside-only")
+  // and jsdom loads no subresources, so the capture cannot execute or fetch.
+  // Skipped when no selected audit reads its results, and on a capture without
+  // readable text, where every eligible audit is gated off anyway.
+  const needsA11y =
+    evidence.met[EvidenceKey.RenderedBody] &&
+    eligibleAuditIds.some((id) => SNAPSHOT_AUDITS[id]?.a11yRules);
+  const a11yResults = needsA11y
+    ? await runA11yForHtml(html, pageUrl, A11Y_RULES)
+    : {};
+  signal?.throwIfAborted();
+  // An empty map means the pass failed. Left unset, a11y-backed audits would read
+  // "not applicable" and count as assessed; they record missing evidence below.
+  const a11yRan = Object.keys(a11yResults).length > 0;
+  if (a11yRan) page.a11yResults = a11yResults;
   const ctx: CheckContext = {
     evidenceSource: EvidenceSource.BrowserSnapshot,
     pages: [page],
@@ -184,7 +203,7 @@ async function assessCapture(
     domain: new URL(pageUrl).hostname,
     baseUrl: new URL(pageUrl).origin,
     targetUrl: pageUrl,
-    evidence: buildSnapshotEvidence([page]),
+    evidence,
     // A distinct owner per capture keeps gatherer state out of HTTP and other captures.
     cacheOwner: {},
     fetch: () => {
@@ -210,6 +229,16 @@ async function assessCapture(
         auditId: check.id,
         pageUrl,
         reason: check.explanation || "Required evidence is unavailable.",
+      });
+      continue;
+    }
+    // Checked after the gates, so a gated capture keeps its own reason.
+    if (!a11yRan && SNAPSHOT_AUDITS[check.id]?.a11yRules) {
+      result.missingEvidence.push({
+        auditId: check.id,
+        pageUrl,
+        reason:
+          "The accessibility rule pass produced no results for this capture.",
       });
       continue;
     }

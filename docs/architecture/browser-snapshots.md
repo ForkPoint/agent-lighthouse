@@ -1,6 +1,8 @@
 # Browser-rendered snapshot assessment
 
-A caller can hand the scan HTML that a browser rendered. Seven reviewed audits then run on that DOM, and the report shows their findings apart from the crawler score. The engine includes no browser collector. The [task server](../server.md#page-detection) accepts captures over HTTP.
+A caller can hand the scan HTML that a browser rendered. Twenty-one reviewed audits then run on that DOM, and the report shows their findings apart from the crawler score. The engine includes no browser collector. The [task server](../server.md#page-detection) accepts captures over HTTP.
+
+The report keeps two views. The crawler view, `overallScore` and `categories`, describes HTTP evidence: what a crawler that runs no JavaScript receives. A gated page still reports as blocked there. The browser view, `browserAssessment`, describes what an agent driving a real browser reads from the supplied DOM. A snapshot never changes the crawler view.
 
 ## Public contract
 
@@ -63,6 +65,7 @@ The crawler path is unchanged: fetch, parse, `buildScanEvidence`, `planAudits`, 
 - A snapshot context cannot fetch. Reading `PageContext.fetchResult` or calling fetch throws, so an accidental HTTP read fails closed.
 - Snapshot evidence keeps `origin-reachable` and `unblocked-fetches` false. Its readability gate drops content the static visibility helper treats as hidden.
 - An audit runs only if its id is in `SNAPSHOT_AUDITS` (`packages/core/src/snapshot-eligibility.ts`), even with `enforceEvidenceGate: false`. Every eligible audit needs readable snapshot text, so a consent wall or empty shell proves nothing.
+- Audits that read accessibility rule results get the same jsdom rule pass the HTTP path runs, over the capture HTML. Page scripts stay off and no subresource loads. It runs only on a capture with readable text. If it yields no results, those audits record missing evidence for the capture, never `notApplicable`. `<style>` blocks and stylesheet links are removed first by a linear scan.
 - Ineligible audits are listed once per assessment under `notEligible`.
 - A failure in one capture becomes missing evidence for that capture only. Other captures and the crawler report stand.
 - Caller cancellation also ends snapshot work. A blocked crawl or exhausted budget neither adds nor removes DOM evidence.
@@ -77,6 +80,13 @@ HTTP pages and captures share `DOM_WORK_LIMITS`, checked before extraction and c
 
 Each row names an existing audit; its dossier is `docs/evidence/audits/<id>.md`.
 
+An audit joins only after a four-part review, recorded in `docs/superpowers/specs/2026-10-20-browser-view-audits-design.md`:
+
+1. It reads the DOM only: never status, headers, redirects, robots policy, timing, root files or another fetch.
+2. It judges one page. Site-wide ratios and sample checks stay out.
+3. Its dossier's own grade reasoning rests on a tool that reads a rendered page: the Anthropic browser use tool, Playwright MCP or Chrome DevTools MCP. The dossier's `## Browser view` section quotes that tool for this audit's signal. A crawler, extractor, search-feature or RAG consumer does not qualify, nor does grade C or D evidence.
+4. Its static verdict means the same on a capture. Computed style, script execution and the original HTTP body rule an audit out.
+
 | Audit ID                                             | DOM evidence                                                                                   | Gate and limits                                                                                                                                                                  |
 | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `content-extraction/image-alt-text`                  | Image names from alt, ARIA labels/references, and title                                        | Complete unredacted DOM. Existing decorative and direct ARIA-hidden exclusions apply. Ancestor hiding and computed accessibility-tree coverage remain limited.                   |
@@ -86,6 +96,20 @@ Each row names an existing audit; its dossier is `docs/evidence/audits/<id>.md`.
 | `structured-data/schema-validation`                  | Existing context/type checks on parsed JSON-LD, Microdata, and RDFa                            | Complete unredacted DOM. This is the existing heuristic, not complete JSON-LD validation. Nested-node and absence limitations remain.                                            |
 | `operability-safety/form-autofill-token-coverage`    | Serialized labels, field identities, types, autocomplete tokens, constraints, and error wiring | Complete unredacted DOM. No input filling, current value, constraint execution, event handling, or submission proof.                                                             |
 | `operability-safety/profile-autofill-token-coverage` | Serialized labels, field identities, types, autocomplete tokens, constraints, and error wiring | Complete unredacted DOM. No input filling, current value, constraint execution, event handling, or submission proof.                                                             |
+| `operability-safety/aria-landmarks`                  | Landmark elements and roles                                                                    | Readable static DOM. Not a computed accessibility tree.                                                                                                                          |
+| `operability-safety/form-actionability`              | Controls, labels and autocomplete tokens                                                       | Readable static DOM. No filling, submission or live form state.                                                                                                                  |
+| `operability-safety/native-control-substitution`     | Native and custom control markup                                                               | Readable static DOM. No widget is opened or operated.                                                                                                                            |
+| `operability-safety/accessible-names`                | Accessibility rules over the serialized DOM                                                    | Readable static DOM and a completed rule pass. Not a computed accessibility tree; no action runs.                                                                                |
+| `operability-safety/aria-attributes`                 | Accessibility rules over the serialized DOM                                                    | Readable static DOM and a completed rule pass. Not a computed accessibility tree; no action runs.                                                                                |
+| `operability-safety/aria-hidden-body`                | Accessibility rules over the serialized DOM                                                    | Readable static DOM and a completed rule pass. Not a computed accessibility tree; no action runs.                                                                                |
+| `operability-safety/aria-relationships`              | Accessibility rules over the serialized DOM                                                    | Readable static DOM and a completed rule pass. Not a computed accessibility tree; no action runs.                                                                                |
+| `operability-safety/aria-roles`                      | Accessibility rules over the serialized DOM                                                    | Readable static DOM and a completed rule pass. Not a computed accessibility tree; no action runs.                                                                                |
+| `operability-safety/dialog-name`                     | Accessibility rules over the serialized DOM                                                    | Readable static DOM and a completed rule pass. Not a computed accessibility tree; no action runs.                                                                                |
+| `operability-safety/duplicate-id`                    | Accessibility rules over the serialized DOM                                                    | Readable static DOM and a completed rule pass. Not a computed accessibility tree; no action runs.                                                                                |
+| `operability-safety/label`                           | Accessibility rules over the serialized DOM                                                    | Readable static DOM and a completed rule pass. Not a computed accessibility tree; no action runs.                                                                                |
+| `operability-safety/landmark-unique`                 | Accessibility rules over the serialized DOM                                                    | Readable static DOM and a completed rule pass. Not a computed accessibility tree; no action runs.                                                                                |
+| `operability-safety/nested-interactive`              | Accessibility rules over the serialized DOM                                                    | Readable static DOM and a completed rule pass. Not a computed accessibility tree; no action runs.                                                                                |
+| `operability-safety/presentation-conflict`           | Accessibility rules over the serialized DOM                                                    | Readable static DOM and a completed rule pass. Not a computed accessibility tree; no action runs.                                                                                |
 
 Grades, tiers and crawler weights are unchanged. Every browser finding is informative, with weight 0. `content-extraction/server-rendered` always uses the real HTTP response; headers, status, redirects, robots policy and actions never come from a snapshot. Other audits are reported as lacking a reviewed snapshot contract, which is not a claim they can never support one. Adding an audit takes a source and dossier review, an inventory entry, and tests for its evidence limits.
 
@@ -116,7 +140,7 @@ interface BrowserAssessment {
 }
 ```
 
-- There is no browser score. Seven static checks cannot measure agent task success.
+- There is no browser score. Static checks cannot measure agent task success, and no source calibrates a browser population or denominator.
 - Unsupported audits stay out of the coverage denominator. Truncated, redacted and loading captures count as eligible but unassessed, as do unreadable pages, page-purpose gates and audit errors.
 - JSON, `ScanReportSchema`, `hydrateReport` and `buildReportView` keep the assessment. HTML, Markdown and terminal reports show it in its own section.
 - Report text from a snapshot is escaped (HTML, Markdown) or stripped of control characters (terminal). Snapshot scripts and handlers never run.

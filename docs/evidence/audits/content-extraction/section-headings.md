@@ -29,6 +29,8 @@ sources:
   - google-ai-features-trust
   - mozilla-readability-source
   - google-ai-features-docs
+public_extra:
+  - Browser view
 ---
 
 # section-headings (`6.7`)
@@ -63,9 +65,9 @@ AI agents use section headings to build a topic map of your page for retrieval-a
 - First-child heading test. A heading at any depth is accepted.
 - Label validation. A whitespace-only `aria-label` and an `aria-labelledby` pointing at a missing id are accepted.
 
-## Limits
+## Browser view
 
-### Browser snapshot evidence
+Playwright MCP "uses accessibility snapshots instead of screenshots", and its snapshot examples list headings with their level and name (verified 2026-10-20). A section's heading is how that snapshot labels the section for the agent.
 
 The snapshot path reuses this audit on each complete, unredacted, non-loading DOM capture that carries readable text. It reports the original static verdict as an unscored browser finding. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. The source and page URL accompany every finding. Existing implementation limits still apply.
 

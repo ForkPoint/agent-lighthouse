@@ -110,7 +110,10 @@ scan targets the detected URL and reuses the stored payload:
   page is fetched and classified as usual.
 - A supplied payload runs as the scan's browser snapshot, as a plain
   `snapshot` would. The crawler still reads the target over HTTP, because no
-  status code, header or redirect may come from a snapshot.
+  status code, header or redirect may come from a snapshot. The result's
+  `browserAssessment` holds the browser view: the reviewed DOM audits run on
+  the capture, unscored, apart from the crawler score. See
+  [browser snapshots](architecture/browser-snapshots.md#supported-audit-inventory).
 
 The report gains `pageIdentity`:
 
