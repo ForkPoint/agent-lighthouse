@@ -1,6 +1,6 @@
 {
   "name": "@forkpoint/agent-lighthouse-server",
-  "version": "9.1.0",
+  "version": "9.1.1",
   "description": "HTTP server that runs Agent Lighthouse scans as tasks and streams live progress over Server-Sent Events",
   "author": "ForkPoint",
   "license": "Apache-2.0",
