@@ -1570,8 +1570,8 @@
       "url": "https://developers.cloudflare.com/bots/additional-configurations/block-ai-bots",
       "type": "vendor-doc",
       "publisher": "Cloudflare",
-      "verified": "2026-08-21",
-      "keyFindings": "Groups AI bot controls as Search, Agent and Training categories, making the training/realtime split an operational reality rather than a taxonomy invented for this audit."
+      "verified": "2026-10-19",
+      "keyFindings": "Groups AI bot controls as Search, Agent and Training categories, making the training/realtime split an operational reality rather than a taxonomy invented for this audit. Re-checked 2026-10-19: \"Each blocking option will block Verified bots classified with that behavior, plus additional unverified bots that fall under these classifications.\" A block seen by a spoofed AI-bot User-Agent is consistent with the real bot being blocked, but does not prove it. Re-checked 2026-10-19: the legacy setting is labelled \"Block AI bots [Deprecating on September 15, 2026]\"; it \"blocks verified bots that are classified as crawling for the purpose of AI training\" and \"excludes mixed-purpose bots that are used both for Training and for Search.\""
     },
     {
       "id": "cloudflare-content-independence-day",
@@ -5344,8 +5344,8 @@
       "url": "https://developers.cloudflare.com/bots/concepts/bot/verified-bots/policy/",
       "type": "vendor-doc",
       "publisher": "Cloudflare",
-      "verified": "2026-08-20",
-      "keyFindings": "Two requirements for verified status: (1) \"Honest self-identification — it declares who it is deterministically, through a cryptographic Web Bot Auth signature, a published IP list with a stable user-agent, or reverse DNS.\" (2) \"Non-abusive behavior — it obeys robots.txt and crawl directives...\". Establishes that UA-string alone is never trusted, which is the source of the false-positive ambiguity when auditing edge blocks by UA spoofing."
+      "verified": "2026-10-19",
+      "keyFindings": "Two requirements for verified status: (1) \"Honest self-identification — it declares who it is deterministically, through a cryptographic Web Bot Auth signature, a published IP list with a stable user-agent, or reverse DNS.\" (2) \"Non-abusive behavior — it obeys robots.txt and crawl directives...\". Establishes that UA-string alone is never trusted, which is the source of the false-positive ambiguity when auditing edge blocks by UA spoofing. Re-checked 2026-10-19: unchanged. The bot \"declares who it is deterministically, through a cryptographic Web Bot Auth signature, a published IP list with a stable user-agent, or reverse DNS.\" Cited by the UA-parity audits' Limits: a request from the scanner's address that names a bot meets none of the three."
     },
     {
       "id": "s5",
@@ -7203,6 +7203,36 @@
       "publisher": "Microsoft",
       "verified": "2026-10-19",
       "keyFindings": "Rendered in a browser 2026-10-19 (the page is script-built). 'Bingbot is our standard crawler and handles most of our crawling needs each day.' UA strings include 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm) Chrome/W.X.Y.Z Safari/537.36' and 'Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)'. 'User agent strings are easy to spoof'; verification is through the Verify Bingbot tool. The page links no IP list. Read by the bot registry."
+    },
+    {
+      "id": "cloudflare-fake-bot-rules",
+      "title": "Fake bot managed rules — Cloudflare WAF troubleshooting",
+      "url": "https://developers.cloudflare.com/waf/troubleshooting/fake-bot-managed-rules/",
+      "type": "vendor-doc",
+      "publisher": "Cloudflare",
+      "accessed": "2026-10-19",
+      "verified": "2026-10-19",
+      "keyFindings": "The Managed Ruleset has \"rules that detect requests impersonating well-known bots such as Googlebot and Bingbot\". \"If the User-Agent matches a known bot but the source cannot be verified, the rule flags the request as a fake bot.\" Rules: \"Anomaly:Header:User-Agent - Fake Google Bot\" and \"Anomaly:Header:User-Agent - Fake Bing or MSN Bot\". \"Third-party uptime monitors or automated testing tools that set a bot-like User-Agent header may also be flagged.\" The page covers Googlebot and Bingbot only and names no AI crawler. The UA-parity audits cite it as an analogy, not as evidence about the AI bots they probe."
+    },
+    {
+      "id": "google-verify-requests",
+      "title": "Verifying Google crawlers and fetchers",
+      "url": "https://developers.google.com/crawling/docs/crawlers-fetchers/verify-google-requests",
+      "type": "vendor-doc",
+      "publisher": "Google",
+      "accessed": "2026-10-19",
+      "verified": "2026-10-19",
+      "keyFindings": "Two documented ways to verify a request is from Google. Reverse DNS: \"Run a reverse DNS lookup on the accessing IP address\", check the domain is googlebot.com, google.com or googleusercontent.com, then run a forward lookup and check it matches the original IP. Or match \"the crawler's IP address to the lists of Google crawlers' and fetchers' IP ranges\", published as JSON files. Identity is a property of the source address, not of the User-Agent string."
+    },
+    {
+      "id": "cloudflare-pay-per-crawl-verify",
+      "title": "Pay per crawl — Verify your AI crawler and Crawl pages",
+      "url": "https://developers.cloudflare.com/ai-crawl-control/features/pay-per-crawl/use-pay-per-crawl-as-ai-owner/verify-ai-crawler/",
+      "type": "vendor-doc",
+      "publisher": "Cloudflare",
+      "accessed": "2026-10-19",
+      "verified": "2026-10-19",
+      "keyFindings": "\"When an AI crawler tries to access content protected by pay per crawl, it receives a HTTP status code 402\" with a crawler-price header. \"To access this content, you must verify your AI crawler\": follow Web Bot Auth, the verified bots policy, and submit the bot. The companion Crawl pages page (https://developers.cloudflare.com/ai-crawl-control/features/pay-per-crawl/use-pay-per-crawl-as-ai-owner/crawl-pages/, verified 2026-10-19) says payment headers \"must be included in the signature-input header components\". An unsigned probe can read the 402 and its price; it cannot take the paid path."
     }
   ]
 }

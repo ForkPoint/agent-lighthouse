@@ -176,7 +176,7 @@ function usable(probe: UaProbe): boolean {
 }
 
 const EXPECTED =
-  "AI crawlers receive the same main content a browser receives, or the difference is declared with isAccessibleForFree:false and a hasPart WebPageElement whose cssSelector resolves in the served DOM";
+  "Requests naming an AI crawler receive the same main content a browser receives, or the difference is declared with isAccessibleForFree:false and a hasPart WebPageElement whose cssSelector resolves in the served DOM";
 
 const SAMPLE = `<script type="application/ld+json">
 {
@@ -199,10 +199,12 @@ export class BotContentDeltaDeclaredAudit extends Audit {
   static override meta: AuditMeta = {
     id: "access-crawl-control/bot-content-delta-declared",
     category: "access-crawl-control",
-    title: "Content served to AI crawlers matches the browser, or is declared",
-    failureTitle: "AI crawlers get different content with nothing declaring it",
+    title:
+      "Content served to AI crawler User-Agents matches the browser, or is declared",
+    failureTitle:
+      "Requests naming an AI crawler get different content with nothing declaring it",
     description:
-      "Fetches sampled content URLs as a browser and as GPTBot, ClaudeBot and PerplexityBot, then measures the difference two ways — main-text length ratio and 5-gram shingle similarity — because a stub and a rewritten page look identical on length alone. Where a difference exists, requires Google's restricted-content markup and checks that the declared cssSelector resolves against the served DOM.",
+      "Fetches sampled content URLs as a browser and with the GPTBot, ClaudeBot and PerplexityBot User-Agents, then measures the difference two ways — main-text length ratio and 5-gram shingle similarity — because a stub and a rewritten page look identical on length alone. Where a difference exists, requires Google's restricted-content markup and checks that the declared cssSelector resolves against the served DOM.",
     scoreDisplayMode: ScoreDisplayMode.Ternary,
     weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
     evidenceGrade: EvidenceGrade.A,
@@ -248,7 +250,7 @@ export class BotContentDeltaDeclaredAudit extends Audit {
 
     if (comparable.length === 0) {
       return this.notApplicable(
-        "No crawler probe returned a readable page to compare against the browser response; access-crawl-control/ai-crawler-edge-parity reports blocked crawlers.",
+        "No crawler probe returned a readable page to compare against the browser response; access-crawl-control/ai-crawler-edge-parity reports how the edge answers those User-Agents.",
         EXPECTED,
         `${probes.length} probe(s), none comparable`,
       );
@@ -268,7 +270,7 @@ export class BotContentDeltaDeclaredAudit extends Audit {
 
       if (ratio > LONGER_CEILING) {
         findings.push(
-          `${label} receives a longer page than the browser at ${probe.url} (${metrics}) — a bot-only variant`,
+          `A request naming ${label} receives a longer page than the browser at ${probe.url} (${metrics}) — a bot-only variant`,
         );
       }
 
@@ -277,20 +279,20 @@ export class BotContentDeltaDeclaredAudit extends Audit {
       const declaration_ = declaration(probe.baselineBody);
       if (!declaration_.declared) {
         findings.push(
-          `${label} gets different content at ${probe.url} (${metrics}) and nothing declares it: the browser response carries no CreativeWork with isAccessibleForFree:false and a hasPart WebPageElement cssSelector`,
+          `A request naming ${label} gets different content at ${probe.url} (${metrics}) and nothing declares it: the browser response carries no CreativeWork with isAccessibleForFree:false and a hasPart WebPageElement cssSelector`,
         );
         continue;
       }
       if (!declaration_.resolves) {
         findings.push(
-          `${label} gets different content at ${probe.url} (${metrics}) and the declared cssSelector "${declaration_.selector}" matches zero elements in the served DOM, so the declaration is a silent no-op`,
+          `A request naming ${label} gets different content at ${probe.url} (${metrics}) and the declared cssSelector "${declaration_.selector}" matches zero elements in the served DOM, so the declaration is a silent no-op`,
         );
         continue;
       }
       declared += 1;
     }
 
-    const found = `${urls.length} URL(s) compared against ${TOKENS.length} crawler(s); ${comparable.length} comparable probe(s); ${findings.length} finding(s); ${declared} declared delta(s)`;
+    const found = `${urls.length} URL(s) compared against ${TOKENS.length} crawler User-Agent(s) from the scanner's address; ${comparable.length} comparable probe(s); ${findings.length} finding(s); ${declared} declared delta(s)`;
 
     if (findings.length > 0) {
       const shown = findings.slice(0, MAX_SHOWN).join("; ");
@@ -303,8 +305,8 @@ export class BotContentDeltaDeclaredAudit extends Audit {
 
     return this.pass(
       declared > 0
-        ? `Every difference between the crawler and browser responses is declared with restricted-content markup whose cssSelector resolves (${declared} of ${comparable.length} probe(s)).`
-        : `All ${comparable.length} crawler probe(s) received the same main content a browser received.`,
+        ? `Every difference between the crawler-UA and browser responses is declared with restricted-content markup whose cssSelector resolves (${declared} of ${comparable.length} probe(s)).`
+        : `All ${comparable.length} crawler-UA probe(s) received the same main content a browser received.`,
       EXPECTED,
       found,
     );

@@ -177,6 +177,30 @@ describe("CartHandoffReachabilityAudit", () => {
     const r = await result;
     expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures")[0]).toContain("Managed Challenge");
+    expect(strings(r, "failures")[0]).toMatch(
+      /^\/cart answers a request naming ChatGPT-User with .+ instead of the cart \(.+\), so that request never reaches the cart document$/,
+    );
+  });
+
+  // Recorded under the dossier's Deferred: walls are read from the
+  // ChatGPT-User response when it is a 200, so a challenge served only to
+  // that User-Agent fails even though the browser got the cart.
+  it("reads the wall from the ChatGPT-User response when it is a 200", async () => {
+    const { result } = run({
+      markup: SHOPIFY,
+      paths: { "/cart": {} },
+      agentPaths: {
+        "/cart": {
+          headers: { server: "cloudflare" },
+          body: '<html><head><title>Just a moment...</title></head><body><script src="/cdn-cgi/challenge-platform/h/b/orchestrate/chl_page/v1"></script></body></html>',
+        },
+      },
+    });
+    const r = await result;
+    expect(r.status).toBe(CheckStatus.Fail);
+    expect(strings(r, "failures")[0]).toMatch(
+      /^\/cart answers a request naming ChatGPT-User with /,
+    );
   });
 
   it("fails a 403 under ChatGPT-User and names the user agent", async () => {
@@ -189,6 +213,9 @@ describe("CartHandoffReachabilityAudit", () => {
     expect(r.status).toBe(CheckStatus.Fail);
     expect(strings(r, "failures")[0]).toContain("ChatGPT-User");
     expect(strings(r, "failures")[0]).toContain("403");
+    expect(strings(r, "failures")[0]).toBe(
+      "/cart answers 403 to a request naming ChatGPT-User from the scanner's address, so the cart refuses that User-Agent outright; the real agent, from OpenAI's published ranges, may be answered differently",
+    );
   });
 
   it("fails a 429 under the browser user agent", async () => {

@@ -29,6 +29,9 @@ sources:
   - anthropic-crawlers
   - perplexity-crawlers-doc
   - chromium-dash-stable
+  - google-verify-requests
+  - cloudflare-fake-bot-rules
+  - cloudflare-block-ai-bots
 ---
 
 # AI crawler edge-response parity
@@ -37,7 +40,7 @@ sources:
 
 ## What it checks
 
-Detects the single most common and most invisible AI-visibility failure: robots.txt grants an AI crawler access, but the CDN/WAF in front of the origin answers that crawler with a challenge, a 403, a 402, or a proof-of-work interstitial. The site owner reads their own robots.txt and believes they are open; the crawler never sees a byte.
+Detects the single most common and most invisible AI-visibility failure: robots.txt grants an AI crawler access, but the CDN/WAF in front of the origin answers that crawler with a challenge, a 403, a 402, or a proof-of-work interstitial. The site owner reads their own robots.txt and believes they are open; the edge refuses every request that names the crawler.
 
 ## Claimed mechanism (falsifiable)
 
@@ -66,11 +69,19 @@ This signal moved here from `https-enabled` on 2026-10-18.
 
 **Evidence:** Fully documented vendor behaviour at large scale. Cloudflare began blocking AI crawlers by default for new domains on 1 July 2025, making permission the default posture across a very large share of the web. It has since announced that from 15 September 2026 new domains will block 'Training' and 'Agent' class bots by default on ad-displaying pages while leaving 'Search' allowed, and has extended managed robots.txt with a `use` signal (immediate / reference / full). Pay-per-crawl operationalises the gate in HTTP. Crawlers 'either present payment intent via request headers for successful HTTP 200 access, or receive an HTTP 402 Payment Required response with pricing', at a minimum of $0.001 per crawl. Critically, an existing WAF or Bot Management block rule overrides pay-per-crawl's charge behaviour, and silently converts a monetizable crawl into a hard block. Adoption context: of 3,816 top-10k domains with robots.txt, ~14% carried AI-bot directives; GPTBot was the most-disallowed at 312 domains. Verification is moving to cryptography — Cloudflare's Web Bot Auth implements RFC 9421 HTTP Message Signatures with Signature-Input / Signature / Signature-Agent headers and a JWKS key directory at /.well-known/http-message-signatures-directory.
 
-**Counter-evidence:** Two caveats that shape how this must be audited. (1) User-Agent-based probing is unreliable in both directions: Cloudflare documented Perplexity using a Chrome-impersonating stealth crawler on unlisted IPs across rotating ASNs at 3–6M requests/day to evade no-crawl directives, and conversely malicious scrapers routinely spoof GPTBot. An audit that merely sets a UA header measures the WAF's UA rules, not real agent access — genuine verification requires the vendors' published IP ranges (openai.com/gptbot.json, claude.com/crawling/bots.json, perplexity.com/perplexitybot.json) or Web Bot Auth signatures. (2) Blocking is often a deliberate, rational business decision, not a defect. Cloudflare's crawl-to-refer data puts Anthropic at about 71,000 crawls per HTML referral in the June 2025 window, with the caveat that Claude's native app sends no Referer. That makes uncompensated crawl a real cost. The audit should REPORT the gate neutrally as 'AI agents are blocked here' rather than scoring it as a failure, since the site owner may have chosen it.
+**Counter-evidence:** Two caveats that shape how this must be audited. (1) User-Agent-based probing is unreliable in both directions: Cloudflare documented Perplexity using a Chrome-impersonating stealth crawler on unlisted IPs across rotating ASNs at 3–6M requests/day to evade no-crawl directives, and conversely malicious scrapers routinely spoof GPTBot. An audit that merely sets a UA header measures the WAF's UA rules, not real agent access — genuine verification requires the vendors' published IP ranges (openai.com/gptbot.json, claude.com/crawling/bots.json, perplexity.com/perplexitybot.json) or Web Bot Auth signatures. (2) Blocking is often a deliberate, rational business decision, not a defect. Cloudflare's crawl-to-refer data puts Anthropic at about 71,000 crawls per HTML referral in the June 2025 window, with the caveat that Claude's native app sends no Referer. That makes uncompensated crawl a real cost. The audit should report the gate neutrally, as 'the edge answers requests that name this agent differently', rather than scoring it as a failure, since the site owner may have chosen it.
+
+## Limits
+
+- Every probe leaves the scanner's own address with an AI crawler's name in the User-Agent. It shows how the site answers a request that names the AI crawler. It does not show what the real crawler receives.
+- Real bots are told apart by network or signature, not by the string. Cloudflare grants verified status to a bot that "declares who it is deterministically, through a cryptographic Web Bot Auth signature, a published IP list with a stable user-agent, or reverse DNS" ([Cloudflare verified bots policy](https://developers.cloudflare.com/bots/concepts/bot/verified-bots/policy/) (verified 2026-10-19)). OpenAI publishes one IP-range file per bot, for example https://openai.com/gptbot.json and https://openai.com/chatgpt-user.json ([OpenAI crawlers and user agents](https://developers.openai.com/api/docs/bots) (verified 2026-10-19)). Google, whose crawlers this audit does not probe, illustrates the same rule: it documents a reverse-DNS check, or a match against its published IP ranges ([Verifying Google crawlers and fetchers](https://developers.google.com/crawling/docs/crawlers-fetchers/verify-google-requests) (verified 2026-10-19)). The scanner can present none of these.
+- A CDN block of a request naming an AI crawler is ambiguous evidence. Without a signature, a published IP list or reverse DNS, the request is by definition not the verified bot ([Cloudflare verified bots policy](https://developers.cloudflare.com/bots/concepts/bot/verified-bots/policy/) (verified 2026-10-19)), so an edge may treat it as unknown automated traffic. Cloudflare does ship managed rules that flag an unverified request naming Googlebot or Bingbot as a fake bot ([Cloudflare fake bot managed rules](https://developers.cloudflare.com/waf/troubleshooting/fake-bot-managed-rules/) (verified 2026-10-19)). It documents no such rule for AI crawlers, and the scanner never sends either of those names. The analogy shows the mechanism exists. It is not evidence about the bots probed here. A refusal is consistent with the real bot being refused too. It does not prove it. GPTBot, which this audit probes, is a training crawler. Cloudflare's legacy Block AI bots setting, labelled "Deprecating on September 15, 2026", "blocks verified bots that are classified as crawling for the purpose of AI training" "plus additional unverified bots that fall under these classifications", and "excludes mixed-purpose bots" ([Cloudflare Block AI bots](https://developers.cloudflare.com/bots/additional-configurations/block-ai-bots/) (verified 2026-10-19)).
+- A pass does not prove access either. A rule keyed on the verified bot's identity rather than its string can refuse the real bot and still let the probe through.
+- An opaque 403 or 429 is already a warning for that reason. A Cloudflare challenge, a pay-per-crawl 402, a proof-of-work wall, a soft block and a generic non-2xx where a browser got 200 still fail; see Deferred.
 
 ## Example failure
 
-robots.txt contains `User-agent: PerplexityBot` / `Allow: /`. `GET /pricing` with a Chrome UA returns 200 and 4,100 chars of main text; the identical request with `PerplexityBot` returns 403 with `cf-mitigated: challenge` and `content-type: text/html`. Perplexity can never quote the pricing page, and nothing in the site's own configuration reveals this.
+robots.txt contains `User-agent: PerplexityBot` / `Allow: /`. `GET /pricing` with a Chrome UA returns 200 and 4,100 chars of main text; the identical request with `PerplexityBot` returns 403 with `cf-mitigated: challenge` and `content-type: text/html`. The site answers a request that names PerplexityBot with a challenge, and nothing in its own configuration reveals this. Whether the real PerplexityBot, arriving from its published addresses, gets the same answer depends on whether the rule keys on the string or on verified identity.
 
 ## Scoring
 
@@ -84,6 +95,7 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 - `Google-Extended` is not probed. It is a robots.txt token with no user agent of its own.
 - Findings are grouped by URL and cause, not listed per crawler.
 - A generic non-2xx where a browser gets 200 is a hard finding, quoting both statuses.
+- A URL where the browser itself got a non-2xx is not compared. It is named in `found`. Before 2026-10-19 a stale URL that answered 404 to everyone failed as "HTTP 404 where a browser got 404", which the mechanism above rules out: it needs the browser request to be 200.
 - An opaque 403 or 429 is a warning, never a failure. The scanner sends the crawler User-Agent without the matching source IP, so it cannot tell a block from impersonation defence.
 - OAI-SearchBot is sent as `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36; compatible; OAI-SearchBot/1.4; +https://openai.com/searchbot`, the example OpenAI gives (https://developers.openai.com/api/docs/bots, verified 2026-10-19). Before 2026-10-19 the probe sent a bare `OAI-SearchBot/1.0` string that OpenAI does not document. GPTBot and ChatGPT-User match the same page.
 - PerplexityBot is sent as the full string Perplexity documents (https://docs.perplexity.ai/docs/resources/perplexity-crawlers, verified 2026-10-19).
@@ -91,6 +103,7 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 - Since 2026-10-19 the probe set is read from the bot registry (`packages/core/src/bot-registry.ts`): every documented row with a literal User-Agent string. That added two user-triggered fetchers. Perplexity-User is sent as `Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Perplexity-User/1.0; +https://perplexity.ai/perplexity-user)`; Perplexity says it "supports user actions within Perplexity" (https://docs.perplexity.ai/docs/resources/perplexity-crawlers, verified 2026-10-19). MistralAI-User is sent as `Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; MistralAI-User/1.0; +https://docs.mistral.ai/robots)`, which Mistral labels the full user-agent string of the fetcher that answers a user's question in Vibe (https://docs.mistral.ai/robots, verified 2026-10-19). Both strings are copied verbatim. A block of either now counts the same way a ChatGPT-User block already did. Each costs one request per probed URL.
 - The other documented user-triggered fetchers are not probed, because no literal string exists. Amazon's Amzn-User string carries a `Chrome/W.X.Y.Z` placeholder (https://developer.amazon.com/amazonbot, verified 2026-10-19). Meta says its log entries "will be similar to" `meta-externalfetcher/1.1 (+/documentation/sharing/webmasters/web-crawlers)` (https://developers.facebook.com/docs/sharing/webmasters/web-crawlers/, verified 2026-10-19). Filling in either would invent a string. DuckAssistBot is not probed: DuckDuckGo does not say its fetches are user-triggered.
 - The browser baseline is a Mac Chrome UA on the current Stable major, 155 (https://chromiumdash.appspot.com/fetch_releases?channel=Stable&platform=Mac&num=1, verified 2026-10-19). It was Chrome 140 before 2026-10-19.
+- Since 2026-10-19 messages, titles and `details` strings say how the site answers a request whose User-Agent names a bot, never that the bot itself is blocked or sees a page. The verdicts did not change.
 
 ## Deferred
 
@@ -102,6 +115,17 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 - **The soft-block threshold is fixed at 40% of the baseline main-content
   text.** A page that legitimately serves less to a crawler reads as a soft
   block.
+- **A challenge on a spoofed User-Agent still fails.** A `cf-mitigated: challenge`
+  answer, and a generic non-2xx where a browser gets 200, fail today. Both can be
+  how the edge treats an unverified look-alike (Limits). The grade-A signal in
+  this dossier treats a challenge as decidable from the response alone, so
+  moving it to a warning needs that reasoning revised first. Not changed in
+  the 2026-10-19 wording patch.
+- **The other hard classes also still fail on a spoofed User-Agent.** A
+  pay-per-crawl 402, a proof-of-work wall and a soft block (a 200 under 40% of
+  the browser text) each fail. Each is still the answer to a request from the
+  scanner's address, not to the verified crawler. The same revision would
+  decide them.
 
 ## Review history
 

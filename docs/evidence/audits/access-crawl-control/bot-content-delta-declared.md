@@ -15,6 +15,9 @@ sources:
   - anthropic-crawlers
   - perplexity-crawlers-doc
   - chromium-dash-stable
+  - s4
+  - google-verify-requests
+  - cloudflare-block-ai-bots
 ---
 
 # Bot-specific content delta declared, not cloaked
@@ -36,6 +39,13 @@ Google states that `isAccessibleForFree: false` with `hasPart`/`cssSelector` mar
 - **[OpenAI crawlers and user agents](https://developers.openai.com/api/docs/bots)** — OpenAI (vendor-doc, URL verified 2026-08-20)
   - Exact UA strings and published IP-range JSONs (re-verified 2026-10-19). OAI-SearchBot (`Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) … Chrome/131.0.0.0 Safari/537.36; compatible; OAI-SearchBot/1.4; +https://openai.com/searchbot`) → https://openai.com/searchbot.json. GPTBot (…compatible; GPTBot/1.4; +https://openai.com/gptbot) → https://openai.com/gptbot.json. ChatGPT-User (…compatible; ChatGPT-User/1.0; +https://openai.com/bot) → https://openai.com/chatgpt-user.json. OAI-AdsBot → https://openai.com/adsbot.json. All four JSON endpoints return HTTP 200 (curl-verified). No mention of Web Bot Auth. Note Google-Extended has no UA at all, so it cannot be probed by request.
 
+## Limits
+
+- Every probe leaves the scanner's own address with an AI crawler's name in the User-Agent. It shows how the site answers a request that names the AI crawler. It does not show what the real crawler receives.
+- Real bots are told apart by network or signature, not by the string. Cloudflare grants verified status to a bot that "declares who it is deterministically, through a cryptographic Web Bot Auth signature, a published IP list with a stable user-agent, or reverse DNS" ([Cloudflare verified bots policy](https://developers.cloudflare.com/bots/concepts/bot/verified-bots/policy/) (verified 2026-10-19)). OpenAI publishes one IP-range file per bot, for example https://openai.com/gptbot.json and https://openai.com/chatgpt-user.json ([OpenAI crawlers and user agents](https://developers.openai.com/api/docs/bots) (verified 2026-10-19)). Google, whose crawlers this audit does not probe, illustrates the same rule: it documents a reverse-DNS check, or a match against its published IP ranges ([Verifying Google crawlers and fetchers](https://developers.google.com/crawling/docs/crawlers-fetchers/verify-google-requests) (verified 2026-10-19)). The scanner can present none of these.
+- The delta this audit reports is UA-keyed. A site that serves the real crawler by verified identity can give it a different page than the probe gets.
+- There is no control User-Agent here. A thinner 200 served to an unverified look-alike reads the same as one served to the crawler by name. For GPTBot, a training crawler, Cloudflare's legacy Block AI bots setting, labelled "Deprecating on September 15, 2026", covers "additional unverified bots" as well as verified training bots ([Cloudflare Block AI bots](https://developers.cloudflare.com/bots/additional-configurations/block-ai-bots/) (verified 2026-10-19)); see Deferred.
+
 ## Example failure
 
 An article renders 6,200 chars of body text to Chrome. The same URL fetched as `GPTBot/1.4` returns 200 with 480 chars — headline, dek, and a subscribe prompt — and the page's JSON-LD NewsArticle omits `isAccessibleForFree` entirely. The site reads as cloaking to Google's spam policy, and ChatGPT/Perplexity ingest and cite the 480-char stub as if it were the article.
@@ -56,6 +66,7 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 - The ClaudeBot string is observed, not vendor-documented. Anthropic's crawler page names the token but publishes no User-Agent string (https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler, verified 2026-10-19). A finding for it reports how the site answers a request that carries that observed string.
 - The browser baseline is a Mac Chrome UA on the current Stable major, 155 (https://chromiumdash.appspot.com/fetch_releases?channel=Stable&platform=Mac&num=1, verified 2026-10-19). It was Chrome 140 before 2026-10-19.
 - Since 2026-10-19 the probe strings are read from the bot registry (`packages/core/src/bot-registry.ts`) rather than kept in the gatherer. The strings this audit sends are unchanged.
+- Since 2026-10-19 messages, titles and `details` strings say how the site answers a request whose User-Agent names a bot, never that the bot itself is blocked or sees a page. The verdicts did not change.
 
 ## Deferred
 
@@ -69,3 +80,8 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 - **The inverse case is reported, not diagnosed.** Bot text materially longer
   than browser text is flagged. Telling keyword stuffing from an expanded print
   view needs a human.
+- **No control arm.** A truncated 200 (`soft-block`) is compared as content. Where
+  it is bot management aimed at unverified clients, the audit still fails it as an
+  undeclared delta. The control probe that `agent-ua-content-divergence-diff`
+  uses would separate the two; adding it costs one request per URL and changes
+  verdicts, so it waits for its own change.

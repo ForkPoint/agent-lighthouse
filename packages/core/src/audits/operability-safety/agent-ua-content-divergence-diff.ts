@@ -116,9 +116,10 @@ export class AgentUaContentDivergenceDiffAudit extends Audit {
     id: "operability-safety/agent-ua-content-divergence-diff",
     category: "operability-safety",
     title: "Agent-UA Content Divergence Diff",
-    failureTitle: "AI crawlers are served different content from browsers",
+    failureTitle:
+      "Requests naming an AI crawler are served different content from browsers",
     description:
-      "Compares the main content, and the JSON-LD, that each AI-crawler User-Agent receives against the same URL fetched as Chrome, and reports where they diverge. An unrecognised control bot is probed too, so bot management is told apart from deliberate agent-specific branching, and a crawler that is simply blocked is reported without lowering the score.",
+      "Compares the main content, and the JSON-LD, that a request naming each AI crawler in its User-Agent receives against the same URL fetched as Chrome, and reports where they diverge. An unrecognised control bot is probed too, so bot management is told apart from deliberate agent-specific branching, and a crawler User-Agent that is simply refused is reported without lowering the score. The probes come from the scanner's address, so they show how the site answers the User-Agent, not what the real crawler, verified by IP range or signature, receives.",
     scoreDisplayMode: ScoreDisplayMode.Ternary,
     tier: AuditTier.Scored,
     evidenceGrade: EvidenceGrade.B,
@@ -303,7 +304,7 @@ Disallow: /members/`,
         ? `control response over the DOM work limits, bot management not checked: ${controlOverLimit.join(", ")}`
         : "",
       noise.length > 0
-        ? `${noise.join(", ")} saw a reduced page the unrecognised control bot saw too — bot management, not UA branching`
+        ? `requests naming ${noise.join(", ")} got a reduced page the unrecognised control User-Agent got too — bot management, not UA branching`
         : "",
     ].filter(Boolean);
 
@@ -316,10 +317,10 @@ Disallow: /members/`,
       );
       return {
         ...this.fail(
-          `${divergences.length} of ${assessed} crawler responses differ from the browser response.`,
+          `${divergences.length} of ${assessed} responses to a User-Agent naming an AI crawler differ from the browser response. The probes come from the scanner's address, so this is how the site answers the User-Agent, not what the verified crawler receives.`,
           expected,
           [...lines, ...notes].join(" | "),
-          `Serve one document to every User-Agent; ${worst.token} currently gets a different page.`,
+          `Serve one document to every User-Agent; a request naming ${worst.token} currently gets a different page.`,
         ),
         details: {
           comparableProbes: assessed,
@@ -334,11 +335,12 @@ Disallow: /members/`,
 
     return {
       ...this.pass(
-        `All ${assessed} crawler responses match the browser response.`,
+        `All ${assessed} responses to a User-Agent naming an AI crawler match the browser response.`,
         expected,
-        [`${assessed} crawler responses match the browser copy`, ...notes].join(
-          "; ",
-        ),
+        [
+          `${assessed} crawler-UA responses match the browser copy`,
+          ...notes,
+        ].join("; "),
       ),
       details: {
         comparableProbes: assessed,
