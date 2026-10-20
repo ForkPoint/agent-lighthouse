@@ -111,8 +111,9 @@ const ANUBIS_MARKERS = [
 
 /**
  * Body markers left by the common bot-challenge products: Cloudflare's
- * interstitial, Imperva, PerimeterX and Akamai. A response carrying one is a
- * challenge, whatever its status, rather than the page.
+ * interstitial, Imperva, PerimeterX and Akamai. Akamai and Imperva also inject
+ * their script paths into ordinary pages, so a marker counts only where the
+ * browser response does not carry it too; see `challengeMarker`.
  */
 const CHALLENGE_BODY_MARKERS = [
   "Just a moment...",
@@ -123,9 +124,40 @@ const CHALLENGE_BODY_MARKERS = [
   "/akam/",
 ];
 
-/** The first bot-challenge marker in a response body, or undefined. */
-export function challengeMarker(body: string): string | undefined {
-  return CHALLENGE_BODY_MARKERS.find((marker) => body.includes(marker));
+/**
+ * The first bot-challenge marker in `body` that `baselineBody` does not carry,
+ * or undefined. A marker the browser got as well is part of the site's normal
+ * page, not a challenge served in its place.
+ */
+export function challengeMarker(
+  body: string,
+  baselineBody: string,
+): string | undefined {
+  return CHALLENGE_BODY_MARKERS.find(
+    (marker) => body.includes(marker) && !baselineBody.includes(marker),
+  );
+}
+
+/**
+ * The challenge a probe was answered with, described for a finding, or
+ * undefined when the probe got no challenge.
+ *
+ * One reading for every UA-parity audit: a Cloudflare challenge header, an
+ * Anubis proof-of-work page (served with HTTP 200 by default), or a challenge
+ * marker the browser response does not carry. A challenge is a refusal an edge
+ * can give an unverified request while it admits the verified bot.
+ */
+export function probeChallenge(probe: UaProbe): string | undefined {
+  if (probe.blockClass === BlockClass.CfChallenge) {
+    return `Cloudflare challenge (${probe.evidence})`;
+  }
+  if (probe.blockClass === BlockClass.AnubisPow) {
+    return `proof-of-work wall (${probe.evidence})`;
+  }
+  const marker = challengeMarker(probe.probeBody, probe.baselineBody);
+  return marker
+    ? `challenge page (HTTP ${probe.probeStatus}, body contains "${marker}")`
+    : undefined;
 }
 
 function mainText(body: string): string {

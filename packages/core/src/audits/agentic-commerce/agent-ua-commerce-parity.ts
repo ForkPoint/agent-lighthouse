@@ -19,7 +19,7 @@ import {
   sharedUaProbes,
   type UaProbe,
   BlockClass,
-  challengeMarker,
+  probeChallenge,
 } from "#core/gatherers/ua-parity";
 import { BotToken } from "#core/bot-registry";
 import { resolvePolicyLinks } from "./acp-policy-link-surface";
@@ -81,19 +81,15 @@ function pathOf(url: string): string {
  * `hard` marks the answers that say something about the site rather than the
  * probe, read the same way `access-crawl-control/ai-crawler-edge-parity` reads
  * them: a pay-per-crawl price, and a stub page with no challenge in it. A
- * challenge, a 403, a 429, a 503 or any other non-2xx is a refusal an edge can
- * give an unverified request while it admits the verified agent.
+ * challenge (read by the shared `probeChallenge`, so an Anubis wall served with
+ * HTTP 200 counts), a 403, a 429, a 503 or any other non-2xx is a refusal an
+ * edge can give an unverified request while it admits the verified agent.
  */
 function reasonFor(
   probe: UaProbe,
 ): { hard: boolean; text: string } | undefined {
-  const marker = challengeMarker(probe.probeBody);
-  if (marker) {
-    return {
-      hard: false,
-      text: `a bot challenge (body contains "${marker}")`,
-    };
-  }
+  const challenge = probeChallenge(probe);
+  if (challenge) return { hard: false, text: `a ${challenge}` };
   if (probe.blockClass === BlockClass.PayPerCrawl) {
     return { hard: true, text: `a pay-per-crawl price (${probe.evidence})` };
   }
@@ -168,14 +164,35 @@ export class AgentUaCommerceParityAudit extends Audit {
   };
 
   async audit(ctx: CheckContext): Promise<AuditResult> {
-    const pdps = ctx.pages.slice(0, MAX_PDPS).map((page) => page.url);
+    const homeUrl = `${ctx.baseUrl}/`;
+    // One key per URL, so the homepage and a trailing-slash variant of it are
+    // probed and reported once.
+    const keyOf = (url: string): string => url.replace(/\/+$/, "");
+    // The homepage is always a target, so the two sampled pages are the first
+    // two other scanned pages.
+    const pdps: string[] = [];
+    for (const page of ctx.pages) {
+      if (pdps.length >= MAX_PDPS) break;
+      const key = keyOf(page.url);
+      if (key === keyOf(homeUrl) || pdps.some((url) => keyOf(url) === key))
+        continue;
+      pdps.push(page.url);
+    }
+    // A scan of the homepage alone samples the homepage, so its robots.txt
+    // rules still count as a commerce path.
+    const first = ctx.pages[0];
+    if (pdps.length === 0 && first) pdps.push(first.url);
     const cartUrl = `${ctx.baseUrl}/cart`;
     const policies = resolvePolicyLinks(ctx);
 
-    const targets = [`${ctx.baseUrl}/`, ...pdps, cartUrl];
+    const targets: string[] = [];
+    const add = (url: string | undefined): void => {
+      if (url && !targets.some((target) => keyOf(target) === keyOf(url)))
+        targets.push(url);
+    };
+    for (const url of [homeUrl, ...pdps, cartUrl]) add(url);
     for (const type of ["terms_of_use", "privacy_policy"] as const) {
-      const url = policies.get(type);
-      if (url && !targets.includes(url)) targets.push(url);
+      add(policies.get(type));
     }
 
     const probes = await sharedUaProbes(ctx, targets, TOKENS);
@@ -185,7 +202,7 @@ export class AgentUaCommerceParityAudit extends Audit {
     );
     const cartReachable = comparable.some((probe) => probe.url === cartUrl);
 
-    if (pdps.length === 0 && !cartReachable) {
+    if (ctx.pages.length === 0 && !cartReachable) {
       return this.notApplicable(
         "No product page was scanned and /cart does not answer, so there is no commerce path to probe.",
         EXPECTED,

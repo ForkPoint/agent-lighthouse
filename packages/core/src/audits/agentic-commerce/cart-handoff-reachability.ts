@@ -316,9 +316,15 @@ export class CartHandoffReachabilityAudit extends Audit {
     const displayValue = `${answered}/${paths.length} cart path(s) reachable`;
 
     if (failures.length > 0) {
+      // Answers only the ChatGPT-User request got are counted beside the
+      // failure, as edge parity and commerce parity count theirs.
+      const note =
+        ambiguous.length > 0
+          ? `. ${ambiguous.length} further finding(s) only the ChatGPT-User request got are ambiguous and listed in details.warnings`
+          : "";
       return {
         ...this.fail(
-          failures[0]!,
+          `${failures[0]!}${note}`,
           EXPECTED,
           found,
           "Let an unauthenticated shopper reach the cart, and keep bot challenges off the cart and checkout documents.",

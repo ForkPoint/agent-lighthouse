@@ -310,10 +310,64 @@ describe("BotContentDeltaDeclaredAudit", () => {
     });
     expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toBe(
-      "The unrecognised control User-Agent got the same reduced page as requests naming GPTBot at https://example.com/blog/resoling (20% of the browser text, shingle similarity 0.21); ClaudeBot at https://example.com/blog/resoling (20% of the browser text, shingle similarity 0.21); PerplexityBot at https://example.com/blog/resoling (20% of the browser text, shingle similarity 0.21). That is bot management aimed at unidentified clients, not a page keyed on the crawler's name, and the real crawler, verified by IP range or signature, may be served the full page. Confirm against the edge logs how the published crawler addresses are served before treating it as cloaking.",
+      "The unrecognised control User-Agent got the same reduced page (at least 80% of its length, shingle similarity at least 0.70) as requests naming GPTBot at https://example.com/blog/resoling (20% of the browser text, shingle similarity 0.21); ClaudeBot at https://example.com/blog/resoling (20% of the browser text, shingle similarity 0.21); PerplexityBot at https://example.com/blog/resoling (20% of the browser text, shingle similarity 0.21). That is bot management aimed at unidentified clients, not a page keyed on the crawler's name, and the real crawler, verified by IP range or signature, may be served the full page. Confirm against the edge logs how the published crawler addresses are served before treating it as cloaking.",
     );
     expect(result.found).toContain(
       "3 delta(s) the unrecognised control User-Agent got too",
+    );
+  });
+
+  // The control arm counts only when it got the crawler's reduced page, not
+  // some other reduction such as a challenge or an empty shell.
+  it("still fails when the control bot gets a different reduced page", async () => {
+    const result = await run({
+      browser: page(FULL_TEXT),
+      bot: page(STUB_TEXT),
+      control: page(
+        "Access to this page has been restricted for automated clients. Please enable JavaScript and cookies to continue browsing.",
+      ),
+    });
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toMatch(
+      /^A request naming GPTBot gets different content at .+ and nothing declares it/,
+    );
+    expect(result.message).not.toContain("control User-Agent");
+  });
+
+  it("still fails when the control bot gets an empty shell", async () => {
+    const result = await run({
+      browser: page(FULL_TEXT),
+      bot: page(STUB_TEXT),
+      control: '<html><body><div id="root"></div></body></html>',
+    });
+    expect(result.status).toBe(CheckStatus.Fail);
+  });
+
+  // A declared selector that matches nothing is a finding about the markup,
+  // whoever got the reduced page.
+  it("fails a no-op declaration even when the control bot shares the stub", async () => {
+    const result = await run({
+      browser: page(FULL_TEXT, { jsonLd: PAYWALL_MARKUP }),
+      bot: page(STUB_TEXT),
+      control: page(STUB_TEXT),
+    });
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain(
+      'the declared cssSelector ".paywalled-body" matches zero elements in the served DOM',
+    );
+  });
+
+  // A bot-manager script on the normal page is not a challenge, so the stub
+  // is compared.
+  it("compares a stub when both pages carry the same bot-manager script", async () => {
+    const akam = '<script src="/akam/13/7e3f1a"></script>';
+    const result = await run({
+      browser: page(FULL_TEXT).replace("</body>", `${akam}</body>`),
+      bot: page(STUB_TEXT).replace("</body>", `${akam}</body>`),
+    });
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toMatch(
+      /^A request naming GPTBot gets different content/,
     );
   });
 

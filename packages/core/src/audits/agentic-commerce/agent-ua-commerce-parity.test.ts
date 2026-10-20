@@ -50,6 +50,10 @@ interface RunOptions {
   cart?: boolean;
   /** Whether the scanned pages include a product page. */
   product?: boolean;
+  /** A second scanned product page. */
+  secondProduct?: string;
+  /** The body the browser gets. Defaults to BODY. */
+  browserBody?: string;
 }
 
 function run(options: RunOptions = {}) {
@@ -60,6 +64,9 @@ function run(options: RunOptions = {}) {
       : [
           mockPageContext("https://example.com/", HOME),
           mockPageContext(PDP_URL, PDP, 1),
+          ...(options.secondProduct
+            ? [mockPageContext(options.secondProduct, PDP, 1)]
+            : []),
         ];
 
   const rootFiles: Record<string, FetchResult> = {};
@@ -75,10 +82,11 @@ function run(options: RunOptions = {}) {
     const path = new URL(o.url).pathname;
     if (path === "/cart" && options.cart === false)
       return mockFetchResult("", 404);
+    const browserBody = options.browserBody ?? BODY;
     if (o.userAgent === BASELINE_UA)
-      return mockFetchResult(BODY, 200, "text/html");
+      return mockFetchResult(browserBody, 200, "text/html");
     const override = options.probe?.(o.url);
-    return override ?? mockFetchResult(BODY, 200, "text/html");
+    return override ?? mockFetchResult(browserBody, 200, "text/html");
   };
   return audit.audit(ctx);
 }
@@ -147,8 +155,76 @@ describe("AgentUaCommerceParityAudit", () => {
     });
     expect(result.status).toBe(CheckStatus.Warn);
     expect(result.message).toBe(
-      'A request naming ChatGPT-User gets a bot challenge (body contains "Just a moment...") at https://example.com/; A request naming OAI-SearchBot gets a bot challenge (body contains "Just a moment...") at https://example.com/; A request naming ChatGPT-User gets a bot challenge (body contains "Just a moment...") at https://example.com/; A request naming OAI-SearchBot gets a bot challenge (body contains "Just a moment...") at https://example.com/ (8 more). These probes come from the scanner\'s address, not OpenAI\'s published ranges, so they show how the site answers a request that names the agent, not what the real agent receives. A challenge, a 403, a 429 or another refusal can be the edge\'s defence against an unverified request naming the agent, and the real agent, from OpenAI\'s published ranges, may be answered differently. Confirm against the edge logs before changing anything. Allowlist the published address ranges from https://openai.com/searchbot.json and https://openai.com/chatgpt-user.json rather than trusting the User-Agent string.',
+      'A request naming ChatGPT-User gets a challenge page (HTTP 200, body contains "Just a moment...") at https://example.com/; A request naming OAI-SearchBot gets a challenge page (HTTP 200, body contains "Just a moment...") at https://example.com/; A request naming ChatGPT-User gets a challenge page (HTTP 200, body contains "Just a moment...") at https://example.com/products/alpine-resole-kit; A request naming OAI-SearchBot gets a challenge page (HTTP 200, body contains "Just a moment...") at https://example.com/products/alpine-resole-kit (6 more). These probes come from the scanner\'s address, not OpenAI\'s published ranges, so they show how the site answers a request that names the agent, not what the real agent receives. A challenge, a 403, a 429 or another refusal can be the edge\'s defence against an unverified request naming the agent, and the real agent, from OpenAI\'s published ranges, may be answered differently. Confirm against the edge logs before changing anything. Allowlist the published address ranges from https://openai.com/searchbot.json and https://openai.com/chatgpt-user.json rather than trusting the User-Agent string.',
     );
+  });
+
+  // Anubis serves its proof-of-work page with HTTP 200 by default. The shared
+  // classifier reads it as a challenge here exactly as edge parity does.
+  it("warns on an Anubis proof-of-work page served with HTTP 200", async () => {
+    const result = await run({
+      robots: ALLOW_ALL,
+      probe: (url) =>
+        url === PDP_URL
+          ? mockFetchResult(
+              '<html><body><script src="/.within.website/x/cmd/anubis/static/js/main.mjs"></script></body></html>',
+              200,
+              "text/html",
+            )
+          : undefined,
+    });
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.message).toBe(
+      "A request naming ChatGPT-User gets a proof-of-work wall (body contains \"/.within.website/x/cmd/anubis/\") at https://example.com/products/alpine-resole-kit; A request naming OAI-SearchBot gets a proof-of-work wall (body contains \"/.within.website/x/cmd/anubis/\") at https://example.com/products/alpine-resole-kit. These probes come from the scanner's address, not OpenAI's published ranges, so they show how the site answers a request that names the agent, not what the real agent receives. A challenge, a 403, a 429 or another refusal can be the edge's defence against an unverified request naming the agent, and the real agent, from OpenAI's published ranges, may be answered differently. Confirm against the edge logs before changing anything. Allowlist the published address ranges from https://openai.com/searchbot.json and https://openai.com/chatgpt-user.json rather than trusting the User-Agent string.",
+    );
+  });
+
+  // A bot-manager script on the normal page is not a challenge.
+  it("fails a real stub on a page whose browser body carries the same bot-manager script", async () => {
+    const akam = '<script src="/akam/13/7e3f1a"></script>';
+    const result = await run({
+      robots: ALLOW_ALL,
+      browserBody: BODY.replace("</body>", `${akam}</body>`),
+      probe: (url) =>
+        url === PDP_URL
+          ? mockFetchResult(
+              THIN.replace("</body>", `${akam}</body>`),
+              200,
+              "text/html",
+            )
+          : undefined,
+    });
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toMatch(
+      /^A request naming ChatGPT-User gets 1% of the text a browser got — a stub, not the page at /,
+    );
+    expect(result.message).not.toContain("challenge");
+  });
+
+  it("passes identical bodies that both carry a bot-manager script", async () => {
+    const result = await run({
+      robots: ALLOW_ALL,
+      browserBody: BODY.replace(
+        "</body>",
+        '<script src="/_Incapsula_Resource?SWJIYLWA=719d34d3"></script></body>',
+      ),
+    });
+    expect(result.status).toBe(CheckStatus.Pass);
+  });
+
+  // The homepage is always a target, so it is probed and reported once, and
+  // the sampled pages are the next scanned pages.
+  it("probes the homepage once and samples a second product page", async () => {
+    const second = "https://example.com/products/trail-laces";
+    const result = await run({
+      robots: ALLOW_ALL,
+      secondProduct: second,
+      probe: (url) =>
+        url === second ? mockFetchResult(THIN, 200, "text/html") : undefined,
+    });
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain(second);
+    expect(result.found).toMatch(/^6 commerce target\(s\) probed/);
   });
 
   // A stub page carries a price the agent will quote and a page it cannot act on.

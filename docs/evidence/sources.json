@@ -5345,7 +5345,7 @@
       "type": "vendor-doc",
       "publisher": "Cloudflare",
       "verified": "2026-10-19",
-      "keyFindings": "Two requirements for verified status: (1) \"Honest self-identification — it declares who it is deterministically, through a cryptographic Web Bot Auth signature, a published IP list with a stable user-agent, or reverse DNS.\" (2) \"Non-abusive behavior — it obeys robots.txt and crawl directives...\". Establishes that UA-string alone is never trusted, which is the source of the false-positive ambiguity when auditing edge blocks by UA spoofing. Re-checked 2026-10-19: unchanged. The bot \"declares who it is deterministically, through a cryptographic Web Bot Auth signature, a published IP list with a stable user-agent, or reverse DNS.\" Cited by the UA-parity audits' Limits: a request from the scanner's address that names a bot meets none of the three."
+      "keyFindings": "Two requirements for verified status: (1) \"Honest self-identification — it declares who it is deterministically, through a cryptographic Web Bot Auth signature, a published IP list with a stable user-agent, or reverse DNS.\" (2) \"Non-abusive behavior — it obeys robots.txt and crawl directives...\". The page does not say this in words; the reading is that a UA string alone meets none of the three declarations, which is the source of the false-positive ambiguity when auditing edge blocks by UA spoofing. Re-checked 2026-10-19: unchanged. The bot \"declares who it is deterministically, through a cryptographic Web Bot Auth signature, a published IP list with a stable user-agent, or reverse DNS.\" Cited by the UA-parity audits' Limits: a request from the scanner's address that names a bot meets none of the three."
     },
     {
       "id": "s5",
@@ -7263,6 +7263,16 @@
       "accessed": "2026-10-20",
       "verified": "2026-10-20",
       "keyFindings": "Bot rules match on user_agent_regex and remote_addresses, with actions ALLOW, DENY, CHALLENGE and WEIGH. \"you can allow a search engine to connect if and only if its IP address matches the ones they published\". DENY sends \"an error message that scrapers think is a success\". The published docs site answered the scanner with an Anubis deny page, so the source file in the vendor's repository is cited."
+    },
+    {
+      "id": "cloudflare-challenge-bad-bots",
+      "title": "Challenge bad bots — Cloudflare WAF custom rules",
+      "url": "https://developers.cloudflare.com/waf/custom-rules/use-cases/challenge-bad-bots/",
+      "type": "vendor-doc",
+      "publisher": "Cloudflare",
+      "accessed": "2026-10-20",
+      "verified": "2026-10-20",
+      "keyFindings": "Example custom rules. \"Skip verified bots\": `(cf.bot_management.verified_bot)`, action Skip all remaining custom rules — \"Known good bots (Googlebot, Bingbot, monitoring services) bypass all custom rules.\" \"Protect browser endpoints\": `(cf.bot_management.score lt 30 and not cf.bot_management.verified_bot)`, action Block. Also \"Challenge likely automated\": score 2-29, Managed Challenge. One zone refuses unverified automated traffic and admits verified bots, so a refusal of an unverified request naming a bot does not show what the verified bot gets. Primary cite for the UA-parity audits' Limits since 2026-10-20."
     }
   ]
 }

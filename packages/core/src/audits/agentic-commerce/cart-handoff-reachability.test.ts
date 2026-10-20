@@ -237,6 +237,26 @@ describe("CartHandoffReachabilityAudit", () => {
     expect(strings(r, "warnings")[0]).toBe(r.message);
   });
 
+  // A failure beside an agent-only refusal counts the refusal, as edge and
+  // commerce parity do.
+  it("notes ambiguous agent-only findings beside a failure", async () => {
+    const { result } = run({
+      paths: {
+        "/cart": {},
+        "/checkout": {
+          finalUrl:
+            "https://example.com/account/login?checkout_url=%2Fcheckout",
+        },
+      },
+      agentPaths: { "/cart": { status: 403, body: "" } },
+    });
+    const r = await result;
+    expect(r.status).toBe(CheckStatus.Fail);
+    expect(r.message).toBe(
+      "/checkout ends at /account/login for a request naming ChatGPT-User, an account wall on the buy path: a shopper with no account cannot get past it. 1 further finding(s) only the ChatGPT-User request got are ambiguous and listed in details.warnings",
+    );
+  });
+
   it("warns on a 429 under ChatGPT-User", async () => {
     const { result } = run({
       markup: SHOPIFY,

@@ -16,6 +16,7 @@ sources:
   - s4
   - google-verify-requests
   - cloudflare-fake-bot-rules
+  - cloudflare-challenge-bad-bots
   - cloudflare-super-bot-fight-mode
   - cloudflare-field-cf-client-bot
   - cloudflare-pay-per-crawl-verify
@@ -29,7 +30,7 @@ sources:
 
 Issues paired live requests with a browser User-Agent and with two OpenAI agent User-Agents: ChatGPT-User and OAI-SearchBot. These are the two agents a purchase depends on. GPTBot is a training crawler and is read from robots.txt only. OAI-AdsBot visits only pages submitted as ads, so it is not probed.
 
-The targets are the homepage, the first two scanned pages, `/cart`, and the linked terms and privacy pages. The two sampled pages are not filtered by page type. A probe fails on under 60% of the browser's text, or on a pay-per-crawl 402 with a price. It warns on a bot-challenge marker in the body, or on any non-2xx where the browser got a 2xx: 403, 429, 503 and the rest. The probe comes from the scanner's address, so it is never the verified agent, and an edge can refuse it while admitting the real one. robots.txt is also read: a rule that disallows either agent on a sampled page or the cart fails the audit. These blocks live at the WAF or CDN edge, where a robots.txt-only audit cannot see them.
+The targets are the homepage, the first two other scanned pages, `/cart`, and the linked terms and privacy pages. The two sampled pages are not filtered by page type. A probe fails on under 60% of the browser's text, or on a pay-per-crawl 402 with a price. It warns on a bot challenge (a challenge marker the browser response does not carry, a Cloudflare challenge header, or an Anubis proof-of-work page), or on any non-2xx where the browser got a 2xx: 403, 429, 503 and the rest. The probe comes from the scanner's address, so it is never the verified agent, and an edge can refuse it while admitting the real one. robots.txt is also read: a rule that disallows either agent on a sampled page or the cart fails the audit. These blocks live at the WAF or CDN edge, where a robots.txt-only audit cannot see them.
 
 ## Claimed mechanism (falsifiable)
 
@@ -53,8 +54,8 @@ What a scan can observe is narrower than the claim. The scanner's request names 
 - A CDN block of a request naming an OpenAI agent is ambiguous evidence. Without a signature, a published IP list or reverse DNS, the request is by definition not the verified bot ([Cloudflare verified bots policy](https://developers.cloudflare.com/bots/concepts/bot/verified-bots/policy/) (verified 2026-10-19)), so an edge may treat it as unknown automated traffic. Cloudflare does ship managed rules that flag an unverified request naming Googlebot or Bingbot as a fake bot ([Cloudflare fake bot managed rules](https://developers.cloudflare.com/waf/troubleshooting/fake-bot-managed-rules/) (verified 2026-10-19)). It documents no such rule for AI crawlers, and the scanner never sends either of those names. The analogy shows the mechanism exists. It is not evidence about the bots probed here. A refusal is consistent with the real bot being refused too. It does not prove it.
 - A pass does not prove access either. A rule keyed on the verified bot's identity rather than its string can refuse the real bot and still let the probe through.
 - OpenAI tells merchants to allowlist its published ranges, and this audit's fix says the same. A merchant who follows that advice admits the real agent and may still refuse the probe.
-- An edge can answer the two differently by design. Cloudflare's Super Bot Fight Mode gives "Definitely automated traffic", "Likely automated traffic" and "Verified bots" separate responses ([Cloudflare Super Bot Fight Mode](https://developers.cloudflare.com/bots/get-started/super-bot-fight-mode/) (verified 2026-10-20)). Its rules can read `cf.client.bot`, which "Indicates whether the request originated from a known good bot or crawler" ([Cloudflare cf.client.bot](https://developers.cloudflare.com/ruleset-engine/rules-language/fields/reference/cf.client.bot/) (verified 2026-10-20)).
-- For these reasons a challenge marker, and any non-2xx where a browser got a 2xx, warn rather than fail. This matches `access-crawl-control/ai-crawler-edge-parity`. Two probe answers still fail. A stub under 60% of the browser text, with no challenge marker, is a different page body. A pay-per-crawl 402 carries the site's price, and Cloudflare documents that 402 as what a crawler gets until it verifies and pays ([Cloudflare pay per crawl: Verify your AI crawler](https://developers.cloudflare.com/ai-crawl-control/features/pay-per-crawl/use-pay-per-crawl-as-ai-owner/verify-ai-crawler/) (verified 2026-10-20)).
+- An edge can answer the two differently by design. Cloudflare's own example rules do exactly this: `(cf.bot_management.verified_bot)` skips all remaining custom rules, so "Known good bots ... bypass all custom rules", and `(cf.bot_management.score lt 30 and not cf.bot_management.verified_bot)` blocks other automated traffic ([Cloudflare Challenge bad bots](https://developers.cloudflare.com/waf/custom-rules/use-cases/challenge-bad-bots/) (verified 2026-10-20)). Super Bot Fight Mode likewise gives "Definitely automated traffic", "Likely automated traffic" and "Verified bots" separate responses ([Cloudflare Super Bot Fight Mode](https://developers.cloudflare.com/bots/get-started/super-bot-fight-mode/) (verified 2026-10-20)). Its rules can read `cf.client.bot`, which "Indicates whether the request originated from a known good bot or crawler" ([Cloudflare cf.client.bot](https://developers.cloudflare.com/ruleset-engine/rules-language/fields/reference/cf.client.bot/) (verified 2026-10-20)).
+- For these reasons a challenge marker, and any non-2xx where a browser got a 2xx, warn rather than fail. This matches `access-crawl-control/ai-crawler-edge-parity`. Two probe answers still fail. A stub under 60% of the browser text, with no challenge marker, is a different page body. A pay-per-crawl 402 carries the site's price. Cloudflare says a crawler on content protected by pay per crawl "receives a HTTP status code 402" with the cost in a header, and that "To access this content, you must verify your AI crawler" ([Cloudflare pay per crawl: Verify your AI crawler](https://developers.cloudflare.com/ai-crawl-control/features/pay-per-crawl/use-pay-per-crawl-as-ai-owner/verify-ai-crawler/) (verified 2026-10-20)).
 
 ## Example failure
 
@@ -71,7 +72,12 @@ A robots.txt rule that disallows either agent on a commerce path, a stub page, o
 - Probes go through the shared `sharedUaProbes` cache in
   `packages/core/src/gatherers/ua-parity.ts`. Each (URL, User-Agent) pair is
   fetched at most once per scan.
-- The sampled product pages are the first two scanned pages. The audit does
+- The sampled product pages are the first two scanned pages other than the
+  homepage, which is always a target of its own. Before 2026-10-20 the first
+  two scanned pages were taken as they came, so the homepage was probed and
+  reported twice and only one other page was sampled. Targets are now deduped
+  by URL, ignoring a trailing slash. A scan of the homepage alone samples the
+  homepage, so its robots.txt rules still count. The audit does
   not filter them by page type.
 - OAI-SearchBot and ChatGPT-User are probed. GPTBot is read from robots.txt
   only. OAI-AdsBot is out of scope: ad landing-page validation is not on the
@@ -88,8 +94,13 @@ A robots.txt rule that disallows either agent on a commerce path, a stub page, o
   opaque 403. Since 2026-10-20 they warn at Medium, and a fail that carries a
   stub beside them counts them as ambiguous. A priced 402 is read from the
   shared `pay-per-crawl` block class and fails, as it does in edge parity. The
-  challenge markers moved to `challengeMarker` in
-  `packages/core/src/gatherers/ua-parity.ts` so both audits read one list.
+  challenge reading moved to `probeChallenge` in
+  `packages/core/src/gatherers/ua-parity.ts`, so both audits share one
+  classifier: a `cf-mitigated` challenge, an Anubis page (served with HTTP
+  200 by default), or a challenge marker in the probe body that the browser
+  body does not carry. Akamai and Imperva inject `/akam/` and
+  `_Incapsula_` script paths into ordinary pages; before this, every probe on
+  such a store read as a challenge.
 - OAI-SearchBot is sent as `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36; compatible; OAI-SearchBot/1.4; +https://openai.com/searchbot`, the example OpenAI gives (https://developers.openai.com/api/docs/bots, verified 2026-10-19). Before 2026-10-19 the probe sent a bare `OAI-SearchBot/1.0` string that OpenAI does not document. GPTBot and ChatGPT-User match the same page.
 - The browser baseline is a Mac Chrome UA on the current Stable major, 155 (https://chromiumdash.appspot.com/fetch_releases?channel=Stable&platform=Mac&num=1, verified 2026-10-19). It was Chrome 140 before 2026-10-19.
 - Since 2026-10-19 the probe strings are read from the bot registry (`packages/core/src/bot-registry.ts`) rather than kept in the gatherer. The strings this audit sends are unchanged.

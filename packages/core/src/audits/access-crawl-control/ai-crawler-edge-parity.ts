@@ -22,7 +22,7 @@ import {
   sharedUaProbes,
   type UaProbe,
   BlockClass,
-  challengeMarker,
+  probeChallenge,
 } from "#core/gatherers/ua-parity";
 import {
   AuditTier,
@@ -46,32 +46,22 @@ const MAX_NAMED = 4;
  * or one an unverified request can trigger on its own.
  *
  * Only two answers say something about the site rather than about the probe. A
- * pay-per-crawl 402 states a price, and Cloudflare documents that 402 as the
- * answer any crawler gets until it verifies and pays. A 200 carrying a fraction
- * of the text, with no challenge in it, is a different page body. Everything
- * else is a refusal: a challenge, a proof-of-work wall, a 403, a 429 or another
- * non-2xx. Cloudflare's Super Bot Fight Mode sets verified bots apart from
+ * pay-per-crawl 402 states the site's price, and Cloudflare says access to
+ * such content requires a verified crawler. A 200 carrying a fraction of the
+ * text, with no challenge in it, is a different page body. Everything else is a
+ * refusal: a challenge, a proof-of-work wall, a 403, a 429 or another non-2xx.
+ * Cloudflare's "Challenge bad bots" rules skip verified bots and block other
  * automated traffic, and Anubis can admit a crawler only from its published
  * addresses, so an edge can refuse the probe and still admit the real crawler.
  */
 function causeOf(probe: UaProbe): { hard: boolean; cause: string } {
+  const challenge = probeChallenge(probe);
+  if (challenge) return { hard: false, cause: challenge };
   if (probe.blockClass === BlockClass.PayPerCrawl) {
     return { hard: true, cause: `pay-per-crawl (${probe.evidence})` };
   }
   if (probe.blockClass === BlockClass.SoftBlock) {
-    const marker = challengeMarker(probe.probeBody);
-    return marker
-      ? {
-          hard: false,
-          cause: `challenge page (HTTP 200, body contains "${marker}")`,
-        }
-      : { hard: true, cause: `soft block — ${probe.evidence}` };
-  }
-  if (probe.blockClass === BlockClass.CfChallenge) {
-    return { hard: false, cause: `Cloudflare challenge (${probe.evidence})` };
-  }
-  if (probe.blockClass === BlockClass.AnubisPow) {
-    return { hard: false, cause: `proof-of-work wall (${probe.evidence})` };
+    return { hard: true, cause: `soft block — ${probe.evidence}` };
   }
   if (probe.blockClass === BlockClass.Ok) {
     return {
