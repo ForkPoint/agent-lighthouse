@@ -5,7 +5,7 @@ import { join, resolve } from "node:path";
  * All registered audit source file paths under `packages/core/src/audits`.
  *
  * Canonical filesystem scanner shared by contract test suites and CI scripts
- * (such as `scripts/check-requires.ts`).
+ * (such as `scripts/audits/check-requires.ts`).
  */
 export function auditSourceFiles(repoRoot = process.cwd()): string[] {
   const base = resolve(repoRoot, "packages/core/src/audits");
@@ -64,10 +64,10 @@ export function auditSources(): Map<string, string> {
 /**
  * Whether an audit's source reads the sampled pages itself.
  *
- * The same test `scripts/lib/requires-analysis.mjs` makes at build time to
+ * The same test `scripts/lib/requires-analysis.ts` makes at build time to
  * decide that an audit needs `rendered-body`. Reading it here lets the shell
  * contract find the audits that were let off that key by a `GATE_EXEMPTIONS`
- * entry, without importing an untyped `.mjs` into a `tsc`-checked test.
+ * entry, without coupling this test helper to the build-time analysis script.
  */
 export function readsPagesDirectly(source: string): boolean {
   return /\bctx\.pages\b/.test(source);

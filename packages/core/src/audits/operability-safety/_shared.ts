@@ -129,7 +129,7 @@ export function defineA11yAudit(spec: A11yAuditSpec): {
   // every call here. An anonymous class expression with `rules = spec.rules`
   // therefore gave every audit the rules of the last one defined, in the CJS
   // build only. A getter is a plain method closing over this call's `rules`,
-  // so no transform can share it. `scripts/check-bundle-parity.mjs` compares
+  // so no transform can share it. `scripts/packages/check-bundle-parity.mjs` compares
   // the two builds.
   class DefinedA11yAudit extends A11yBackedAudit {
     static override meta = meta;
@@ -148,7 +148,7 @@ export const base = {
   /**
    * Every audit built on this base reads the sampled pages through
    * `A11yBackedAudit`, so they all carry the same requirement set. Declared
-   * once here; `scripts/check-requires.mjs` resolves it for each audit that
+   * once here; `scripts/audits/check-requires.ts` resolves it for each audit that
    * spreads `base`.
    */
   requires: [

@@ -3,7 +3,7 @@ name: Audit Review Sweep
 on:
   schedule:
     # Run on the 1st of every month at 04:00 UTC
-    - cron: '0 4 1 * *'
+    - cron: "0 4 1 * *"
   workflow_dispatch:
 
 permissions:
@@ -23,14 +23,14 @@ jobs:
 
       - name: Run audit evidence freshness sweep
         run: |
-          node scripts/sweep-audit-reviews.mjs --markdown > sweep-report.md
+          node scripts/evidence/sweep-audit-reviews.mjs --markdown > sweep-report.md
           cat sweep-report.md
 
       - name: Open or update rolling sweep issue
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          OVERDUE_COUNT=$(node scripts/sweep-audit-reviews.mjs --json | grep -o '"overdueCount": [0-9]*' | awk '{print $2}')
+          OVERDUE_COUNT=$(node scripts/evidence/sweep-audit-reviews.mjs --json | grep -o '"overdueCount": [0-9]*' | awk '{print $2}')
           echo "Overdue count: $OVERDUE_COUNT"
 
           # Look for an existing open sweep issue

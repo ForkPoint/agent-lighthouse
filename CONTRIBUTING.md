@@ -63,6 +63,19 @@ pnpm check:audit-map    # Verify audit map agreement
 pnpm changeset          # Generate a changeset for user-visible changes
 ```
 
+### Script folders
+
+Repository commands live in these folders:
+
+- `scripts/audits/`: audit index generation and audit correctness guards.
+- `scripts/quality/`: enum and documentation checks.
+- `scripts/packages/`: packed-package, declaration, and bundle checks.
+- `scripts/evidence/`: evidence review dates and source monitoring.
+- `scripts/plugins/`: plugin release-version synchronization.
+- `scripts/lib/`: shared helpers and their tests.
+
+Cross-package integration tests live in `tests/integration/`. Use the root package commands to run the tools. Knip discovers command entry points from package scripts and workflows; do not add a broad entry glob that makes every helper look like a command.
+
 > **Tests**: The suite uses fixed inputs and mocked services. Tests must not depend on public website responses. CI must not run public website scans. Do not add external site inventories or captured website datasets.
 
 ---
@@ -124,7 +137,7 @@ JavaScript only; `tsc -p tsconfig.build.json` emits declaration files afterward.
 The website alone aliases `typescript` to Microsoft's `@typescript/typescript6`
 package for Astro's JavaScript compiler API. It uses `astro check` for type checks.
 TypeScript 7 is pinned to a patch range (`~7.0.2`) because
-`scripts/check-audit-boundaries.mjs` uses its `unstable` API, which a minor
+`scripts/audits/check-audit-boundaries.mjs` uses its `unstable` API, which a minor
 release may change.
 
 Oxlint keeps correctness and suspicious checks as errors. The migration removes

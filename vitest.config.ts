@@ -5,7 +5,11 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
-    include: ["packages/**/*.{test,spec}.ts", "scripts/**/*.test.ts"],
+    include: [
+      "packages/**/*.{test,spec}.ts",
+      "scripts/**/*.test.ts",
+      "tests/**/*.test.ts",
+    ],
     // Allow bounded DOM and orchestrator checks time on small CI runners.
     testTimeout: 30_000,
     // Tests exercise failure paths on purpose; the fetcher's warn lines about

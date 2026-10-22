@@ -7,5 +7,5 @@
       "@forkpoint/agent-lighthouse-mcp": ["./packages/mcp/src/index.ts"]
     }
   },
-  "include": ["scripts/**/*"]
+  "include": ["scripts/**/*", "tests/**/*"]
 }

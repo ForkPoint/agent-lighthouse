@@ -9,7 +9,7 @@ describe("agent-lighthouse plugin version", () => {
   it("matches packages/cli/package.json", () => {
     const script = resolve(
       __dirname,
-      "../../../scripts/sync-skill-version.mjs",
+      "../../../scripts/plugins/sync-skill-version.mjs",
     );
     const run = spawnSync(process.execPath, [script, "--check"], {
       encoding: "utf8",

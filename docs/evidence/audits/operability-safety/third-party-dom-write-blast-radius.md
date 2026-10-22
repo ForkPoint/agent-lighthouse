@@ -53,7 +53,7 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 - Origins are grouped by eTLD+1 with a short suffix list, not a bundled Public Suffix List. `cdn.vendor.com` and `static.vendor.com` count as one origin.
 - A cross-origin frame under 50 pixels in either declared direction is a beacon and is not reported.
 - The `found` line always ends with "runtime-injected tags not counted".
-- `requires` is `origin-reachable` and `unblocked-fetches` only. Every origin the served HTML names is counted even when the body does not render. An empty census on a page with no readable text returns `notApplicable`: a JS shell's vendors arrive at runtime. The exemption is recorded in `scripts/lib/requires-analysis.mjs`.
+- `requires` is `origin-reachable` and `unblocked-fetches` only. Every origin the served HTML names is counted even when the body does not render. An empty census on a page with no readable text returns `notApplicable`: a JS shell's vendors arrive at runtime. The exemption is recorded in `scripts/lib/requires-analysis.ts`.
 - Messages call each counted origin "a separate host", not "a separate company". A registrable domain is a host, not proof of an owner.
 
 ## Deferred

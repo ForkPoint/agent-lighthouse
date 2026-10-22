@@ -33,7 +33,7 @@ import {
   declaredRequires,
   expectedRequires,
   inheritedBaseSource,
-} from "./lib/requires-analysis";
+} from "../lib/requires-analysis";
 
 async function main() {
   const repoRoot = process.cwd();

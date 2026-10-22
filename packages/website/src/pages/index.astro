@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import ScanHelpForm from '../components/ScanHelpForm.astro';
 import { categoryList } from '../lib/registry';
 import { benefits } from '../lib/product-copy';
 import { categoryPath, docPath, withBase } from '../lib/routes';
@@ -78,6 +79,7 @@ const h2 = 'text-2xl font-bold tracking-tight text-ink';
         <div class={panel}><p class="eyebrow">Another way to scan</p><h3 class="mt-4 text-2xl font-bold text-ink">Prefer to scan online?</h3><p class="mt-4 text-sm leading-relaxed text-body">Check your website with Agentic Storefront. Run an AI readiness scan in your browser without terminal setup.</p><a class="secondary-action mt-6" href="https://audit.agenticstorefront.com">Try Agentic Storefront <span aria-hidden="true">↗</span></a><p class="mt-4 text-xs text-muted">An optional online alternative to running Agent Lighthouse yourself.</p></div>
       </div>
     </section>
+    <ScanHelpForm />
     <section aria-labelledby="categories-heading" class="space-y-5">
       <h2 id="categories-heading" class={h2}>Explore what the scan checks</h2>
       <p class="text-sm text-muted">Go deeper into a topic. Each check explains what it measures and when it applies.</p>

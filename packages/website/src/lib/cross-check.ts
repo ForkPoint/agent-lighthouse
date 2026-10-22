@@ -1,7 +1,7 @@
 /**
  * Fail the build when the registry and the dossier set disagree.
  *
- * `scripts/check-dossiers.mjs` enforces the same rule in CI. It runs again
+ * `scripts/audits/check-dossiers.mjs` enforces the same rule in CI. It runs again
  * here because this is the moment a page is about to be generated: a missing
  * dossier would ship an audit with no evidence, and an orphan dossier would
  * ship a page for an audit nobody can run.

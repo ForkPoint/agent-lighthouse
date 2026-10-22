@@ -10,7 +10,7 @@ import { RuleStatus } from "./engine/rules";
 /**
  * Up to 9.1.0 the CommonJS bundle gave every audit made by `defineA11yAudit`
  * the rules of the last one defined (see the comment in `defineA11yAudit`).
- * These tests pin the contract at the source; `scripts/check-bundle-parity.mjs`
+ * These tests pin the contract at the source; `scripts/packages/check-bundle-parity.mjs`
  * pins it in the built bundles, where the bug lived.
  */
 describe("defineA11yAudit", () => {

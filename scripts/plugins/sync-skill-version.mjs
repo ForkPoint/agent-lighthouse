@@ -8,7 +8,10 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const root = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../..",
+);
 const pluginDir = path.join(root, "plugins/agent-lighthouse");
 
 const cliVersion = JSON.parse(
@@ -54,7 +57,7 @@ for (const { file, pattern } of targets) {
 if (check && drifted.length > 0) {
   console.error(
     `[sync-skill-version] not at CLI ${cliVersion}: ${drifted.join(", ")}\n` +
-      "Run `node scripts/sync-skill-version.mjs` to update them.",
+      "Run `node scripts/plugins/sync-skill-version.mjs` to update them.",
   );
   process.exit(1);
 }

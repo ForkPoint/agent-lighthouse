@@ -39,7 +39,7 @@ import { existsSync } from "node:fs";
 import { relative, resolve } from "node:path";
 import ts from "typescript-api";
 
-const root = resolve(__dirname, "..");
+const root = resolve(__dirname, "../..");
 const asJson = process.argv.includes("--json");
 
 const PROJECTS = [
@@ -93,7 +93,7 @@ const ALLOWED_UNIONS: Array<{ file: string; owner: string; reason: string }> = [
     reason: "GitHub URL path segments (`blob`, `tree`), not a domain value.",
   },
   {
-    file: "scripts/build-audit-map.ts",
+    file: "scripts/audits/build-audit-map.ts",
     owner: "status",
     reason:
       "Mirrors the shape of `migration-map.json`, a file format this script reads.",

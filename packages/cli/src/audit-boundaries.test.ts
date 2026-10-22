@@ -16,10 +16,10 @@ const root = resolve(__dirname, "../../..");
 it("keeps the native parser boundary check strict without flagging inert text", () => {
   const fixture = mkdtempSync(join(tmpdir(), "agent-lighthouse-boundaries-"));
   try {
-    mkdirSync(join(fixture, "scripts"));
+    mkdirSync(join(fixture, "scripts/audits"), { recursive: true });
     cpSync(
-      join(root, "scripts/check-audit-boundaries.mjs"),
-      join(fixture, "scripts/check-audit-boundaries.mjs"),
+      join(root, "scripts/audits/check-audit-boundaries.mjs"),
+      join(fixture, "scripts/audits/check-audit-boundaries.mjs"),
     );
     symlinkSync(
       join(root, "node_modules"),
@@ -43,7 +43,7 @@ const example = "fetch()";
     const run = () =>
       spawnSync(
         process.execPath,
-        [join(fixture, "scripts/check-audit-boundaries.mjs")],
+        [join(fixture, "scripts/audits/check-audit-boundaries.mjs")],
         { cwd: fixture, encoding: "utf8", timeout: 20_000 },
       );
     const safe = run();

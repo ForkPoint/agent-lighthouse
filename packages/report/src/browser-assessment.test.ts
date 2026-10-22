@@ -155,4 +155,49 @@ describe("browser assessment report surfaces", () => {
     expect(output).toContain("1/2");
     expect(output).not.toContain("\u001b");
   });
+  it.each([CheckStatus.Fail, CheckStatus.Warn, CheckStatus.Pass])(
+    "shows fixes only for failed or warning findings: %s",
+    (status) => {
+      const assessment = report().browserAssessment!;
+      const finding = assessment.findings[0]!;
+      finding.captureSource = CaptureSource.FreshBrowser;
+      finding.check.status = status;
+      finding.check.fix = "Add the missing markup.";
+      const output = formatBrowserAssessment(assessment);
+      expect(output).toContain("Fresh browser / browser-snapshot:");
+      expect(output.includes("Fix: Add the missing markup.")).toBe(
+        status === CheckStatus.Fail || status === CheckStatus.Warn,
+      );
+    },
+  );
+
+  it("uses display text and then a clear fallback when explanations are absent", () => {
+    const assessment = report().browserAssessment!;
+    const check = assessment.findings[0]!.check;
+    check.displayValue = "Readable markup";
+    expect(formatBrowserAssessment(assessment)).not.toContain(
+      "Readable markup",
+    );
+    delete check.explanation;
+    expect(formatBrowserAssessment(assessment)).toContain("Readable markup");
+    delete check.displayValue;
+    expect(formatBrowserAssessment(assessment)).toContain("No explanation.");
+  });
+
+  it("keeps redaction fields on one line and names grouped exclusions", () => {
+    const assessment = report().browserAssessment!;
+    assessment.captures[0]!.redaction = {
+      redacted: true,
+      fields: ["account\nemail", "session\u2028token"],
+    };
+    assessment.missingEvidence = [];
+    assessment.notEligible[0]!.auditIds.push("access-crawl-control/robots-txt");
+    const output = formatBrowserAssessment(assessment);
+    expect(output).toContain("redacted: true (account email, session token)");
+    expect(output).not.toContain("Missing evidence:");
+    expect(output).toContain("Not eligible for snapshot evidence (2 audits):");
+    expect(output).toContain(
+      "content-extraction/server-rendered, access-crawl-control/robots-txt",
+    );
+  });
 });

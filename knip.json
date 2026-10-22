@@ -8,8 +8,7 @@
   },
   "workspaces": {
     ".": {
-      "entry": ["scripts/*.{ts,mjs}"],
-      "project": ["scripts/**/*.{ts,mjs}"]
+      "project": ["scripts/**/*.{ts,mjs}", "tests/**/*.ts"]
     },
     "packages/core": {
       "ignore": ["src/audits/proposed/**"]

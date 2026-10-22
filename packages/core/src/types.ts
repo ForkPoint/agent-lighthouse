@@ -108,7 +108,7 @@ export interface AuditMeta {
    * Which classes of scan evidence this audit needs to say anything true.
    *
    * Declared per audit rather than inferred at runtime, and checked against
-   * what the source actually reads by `scripts/check-requires.mjs`. An audit
+   * what the source actually reads by `scripts/audits/check-requires.ts`. An audit
    * that reads the sampled pages — directly or through a page-fed gatherer —
    * needs all four keys; one that reads only root files needs the origin to
    * have answered. The deliberate disagreements are the audits whose subject

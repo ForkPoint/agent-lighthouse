@@ -11,7 +11,7 @@ import {
   // The directive must sit on the line before the module specifier, which is
   // where TypeScript reports the missing declaration for the .mjs script.
   // @ts-expect-error - testing the .mjs script exports
-} from "../../../../scripts/sweep-audit-reviews.mjs";
+} from "../../../../scripts/evidence/sweep-audit-reviews.mjs";
 import { EvidenceGrade } from "#core/types";
 
 describe("Phase 6: Audit Review Sweep (Law 10: Warrant Expires)", () => {

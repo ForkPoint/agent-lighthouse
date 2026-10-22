@@ -7,7 +7,7 @@ import * as ts from "typescript/unstable/ast/is";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const auditsDir = path.resolve(__dirname, "../packages/core/src/audits");
+const auditsDir = path.resolve(__dirname, "../../packages/core/src/audits");
 
 function findAuditSources(dir) {
   const out = [];

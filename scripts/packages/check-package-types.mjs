@@ -29,7 +29,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const PACKAGES = ["core", "report", "mcp", "server", "cli"];
 const IGNORED_RESOLUTIONS = new Set(["node10"]);
 const IGNORED_KINDS = new Set(["FalseCJS"]);

@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { defaultConfig } from "#core/audit-config";
 
-const root = resolve(__dirname, "..");
+const root = resolve(__dirname, "../..");
 const index = JSON.parse(
   readFileSync(resolve(root, "docs/evidence/audit-map.json"), "utf8"),
 );

@@ -1,5 +1,5 @@
 {
-  "$comment": "Read by scripts/watch-sources.ts. `items` are pages and repos watched every week beside the sources in sources.json, because a change there can move a grade even when no dossier cites the page yet. `ianaPaths` are well-known suffixes that were researched and not built (or are unregistered claims); the watch reports when one is registered, changes status, or is modified in the IANA registry, so the decision can be revisited.",
+  "$comment": "Read by scripts/evidence/watch-sources.ts. `items` are pages and repos watched every week beside the sources in sources.json, because a change there can move a grade even when no dossier cites the page yet. `ianaPaths` are well-known suffixes that were researched and not built (or are unregistered claims); the watch reports when one is registered, changes status, or is modified in the IANA registry, so the decision can be revisited.",
   "items": [
     {
       "id": "iana-well-known-registry",

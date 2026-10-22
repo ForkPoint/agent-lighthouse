@@ -17,10 +17,10 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { defaultConfig } from "#core/audit-config";
-import { auditIndexFields } from "./audit-index";
+import { auditIndexFields } from "../lib/audit-index";
 import { AuditTier, EvidenceGrade } from "#core/types";
 
-const REPO_ROOT = path.resolve(__dirname, "..");
+const REPO_ROOT = path.resolve(__dirname, "../..");
 const AUDIT_MAP_JSON_PATH = path.resolve(
   REPO_ROOT,
   "docs/evidence/audit-map.json",

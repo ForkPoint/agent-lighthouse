@@ -14,7 +14,7 @@
  * exits 1.
  *
  * Usage:
- *   node --import tsx scripts/watch-sources.ts \
+ *   node --import tsx scripts/evidence/watch-sources.ts \
  *     [--state prev.json] [--out next.json] [--markdown report.md] \
  *     [--limit N] [--ids id1,id2]
  *
@@ -47,9 +47,9 @@ import {
   type WatchIanaPath,
   type WatchItem,
   type WatchState,
-} from "./lib/source-watch";
+} from "../lib/source-watch";
 
-const root = resolve(__dirname, "..");
+const root = resolve(__dirname, "../..");
 const USER_AGENT =
   "AgentLighthouseSourceWatch/1.0 (+https://github.com/ForkPoint/agent-lighthouse)";
 const TIMEOUT_MS = 20_000;

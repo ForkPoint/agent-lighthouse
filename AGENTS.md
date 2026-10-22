@@ -69,7 +69,7 @@ Every audit is three things that must agree:
 2. `packages/core/src/audits/<category>/<slug>.test.ts` — its tests
 3. `docs/evidence/audits/<category>/<slug>.md` — its evidence dossier
 
-`scripts/check-dossiers.mjs` proves the agreement in both directions: every
+`scripts/audits/check-dossiers.mjs` proves the agreement in both directions: every
 registered audit has a dossier whose `evidence_grade` and `slug` match its
 meta, every `sources:` id resolves, and no dossier is left behind after its
 audit is removed. A removed audit's record moves to `docs/evidence/sunset/`;
@@ -226,7 +226,7 @@ Write for a reader, not for a researcher:
   (`as const` array with `(typeof LIST)[number]`) when the code iterates the
   set. Tagged-union discriminants and `Pick`/`Omit`/`Record` key lists pass.
   Exempt files and kept unions are listed with a reason in
-  `scripts/check-enums.ts`.
+  `scripts/quality/check-enums.ts`.
 
 ## Before you commit
 

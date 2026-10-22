@@ -5,7 +5,7 @@
  * the `verified` date. Third-party bot lists are not a source. Audits select
  * their population from this table instead of keeping their own token lists,
  * so a token the operator retires, or a purpose it restates, changes in one
- * place. `scripts/watch-sources.ts` watches every `docUrl` weekly.
+ * place. `scripts/evidence/watch-sources.ts` watches every `docUrl` weekly.
  *
  * Two rows carry `documented: false`: Bytespider and cohere-ai. No operator
  * page names them, so no scored audit counts them. They stay in the table only

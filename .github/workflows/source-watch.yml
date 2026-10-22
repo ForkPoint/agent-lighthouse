@@ -55,7 +55,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -o pipefail
-          node --import tsx scripts/watch-sources.ts \
+          node --import tsx scripts/evidence/watch-sources.ts \
             --state .source-watch-prev/state.json \
             --out .source-watch/state.json \
             --markdown .source-watch/report.md | tee .source-watch/summary.json

@@ -56,12 +56,13 @@ beforeEach(() => {
 // Exercise each public declaration path against the same scan evidence.
 describe("v7 client page scope parity", () => {
   it("gives SDK, CLI flag/config, and MCP declarations the same findings and score", async () => {
-    const { parseCliOptions } = await import("../packages/cli/src/options.js");
+    const { parseCliOptions } =
+      await import("../../packages/cli/src/options.js");
     const { pageOptions, buildAuditSummary } =
-      await import("../packages/mcp/src/tool.js");
-    const { auditWebsite } = await import("../packages/mcp/src/index.js");
+      await import("../../packages/mcp/src/tool.js");
+    const { auditWebsite } = await import("../../packages/mcp/src/index.js");
     const { buildReportView } =
-      await import("../packages/report/src/view-model.js");
+      await import("../../packages/report/src/view-model.js");
     const url = "https://example.com/story";
     const other = "https://example.com/other";
     const html = `<html><head><meta property="og:type" content="article"></head><body><main><h1>Story</h1><p>${"Article facts and useful detail. ".repeat(60)}</p><a href="/other">Other</a></main></body></html>`;

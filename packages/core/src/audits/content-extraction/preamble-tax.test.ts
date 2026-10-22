@@ -112,6 +112,40 @@ describe("PreambleTaxTokensBeforeTheFirstContentTokenAudit", () => {
     expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
+  it("locates prose with encoded punctuation and nonbreaking spaces", () => {
+    const result = audit.audit(
+      page(
+        "",
+        `<main><p>${"Coffee &amp; tea &lt; hot &gt; cold &quot;cup&quot; &#39;mug&#39; &apos;warm&apos; &nbsp; ".repeat(
+          30,
+        )}</p></main>`,
+      ),
+    );
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.details?.["largestNodeTokens"]).toBe(0);
+  });
+
+  it("counts a leading comment and keeps it as the largest preamble node", () => {
+    const result = audit.audit(
+      page(
+        `\n<!--${"build metadata ".repeat(400)}-->\n<style>p{color:red}</style>`,
+        `<main><p>${prose(30)}</p></main>`,
+      ),
+    );
+    expect(result.details?.["largestNode"]).toBe("comment");
+    expect(result.details?.["largestNodeLine"]).toBe(2);
+    expect(Number(result.details?.["largestNodeTokens"])).toBeGreaterThan(400);
+  });
+
+  it.each(["<!--unclosed", "<style>unclosed", "<unfinished"])(
+    "declines an offset when the raw document ends with %s",
+    (body) => {
+      const ctx = page("", `<main><p>${prose(30)}</p></main>`);
+      ctx.pages[0]!.fetchResult.body = body;
+      expect(audit.audit(ctx).status).toBe(CheckStatus.NotApplicable);
+    },
+  );
+
   it("registers as a scored grade-B audit", () => {
     const { meta } = PreambleTaxTokensBeforeTheFirstContentTokenAudit;
     expect(meta.evidenceGrade).toBe(EvidenceGrade.B);

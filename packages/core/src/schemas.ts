@@ -148,7 +148,7 @@ export const AuditMetaSchema = z
     tier: AuditTierSchema,
     dossier: z.string().min(1).max(500),
     // What the audit needs the scan to have obtained. Checked against the
-    // source by `scripts/check-requires.mjs`, not enforced here beyond shape.
+    // source by `scripts/audits/check-requires.ts`, not enforced here beyond shape.
     requires: z.array(EvidenceKeySchema).optional(),
   })
   .superRefine((meta, ctx) => {
