@@ -413,7 +413,7 @@ describe("classification evidence", () => {
     expect(
       evidence(
         "/shirts",
-        '<div class="filter"></div><nav class="pagination"></nav>',
+        '<div class="product-card">Shirt</div><div class="product-card">Top</div><div class="filter"></div><nav class="pagination"></nav>',
       ),
     ).toMatchObject({
       type: "category",

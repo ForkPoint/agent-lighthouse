@@ -1,6 +1,9 @@
+import type { Cheerio, CheerioAPI } from "cheerio";
+import type { Element } from "domhandler";
 import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
 import type { CheckContext } from "#core/check-context";
+import { hiddenFromReaders, readerText } from "#core/dom-visibility";
 import { weightForGrade } from "#core/scorer";
 import { flattenJsonLd } from "#core/parser";
 import {
@@ -9,7 +12,6 @@ import {
   EvidenceGrade,
   EvidenceKey,
   FixEffort,
-  PageType,
   ScoreDisplayMode,
 } from "#core/types";
 
@@ -20,13 +22,63 @@ function matchesType(schema: Record<string, unknown>, type: string): boolean {
   return false;
 }
 
-function urlDepth(url: string): number {
-  try {
-    const pathname = new URL(url).pathname;
-    return pathname.split("/").filter(Boolean).length;
-  } catch {
-    return 0;
-  }
+const BREADCRUMB_TOKEN = /(?:^|[^a-z])breadcrumbs?(?:[^a-z]|$)/i;
+// State and toggle classes name a breadcrumb feature, not a trail:
+// `has-breadcrumbs`, `no-breadcrumbs`, `breadcrumbs-disabled`.
+const STATE_TOKEN =
+  /^(?:has|no|show|hide|with|without)[-_]|[-_](?:disabled|hidden|off|none|on|enabled|active)$/i;
+
+/** Whether an element's class, id or label names a breadcrumb trail. */
+function breadcrumbHint(node: Cheerio<Element>): boolean {
+  const tokens = [
+    ...(node.attr("class") ?? "").split(/\s+/),
+    node.attr("id") ?? "",
+  ].filter((token) => BREADCRUMB_TOKEN.test(token) && !STATE_TOKEN.test(token));
+  return (
+    tokens.length > 0 || BREADCRUMB_TOKEN.test(node.attr("aria-label") ?? "")
+  );
+}
+
+/** Separator glyphs between breadcrumb steps; not a step by themselves. */
+const SEPARATORS = /[\s/\\>»›→|·•:,.\-–—]+/g;
+
+/**
+ * Whether a candidate holds a breadcrumb trail of its own: two visible list
+ * items, or two steps counting the current page. The current page is an
+ * `aria-current` marker or plain text beside the links, as in
+ * `<a href="/">Home</a> / Product`. A link needs a target, not text: a home
+ * step is often an icon. A page wrapper that holds main content or a site
+ * banner is not a trail.
+ */
+function isTrail($: CheerioAPI, el: Element): boolean {
+  const node = $(el);
+  if (
+    node.find(
+      'main, header, article, [role="main"], [role="banner"], [role="article"]',
+    ).length
+  )
+    return false;
+  const links = node
+    .find("a[href]")
+    .toArray()
+    .filter(
+      (link) => !hiddenFromReaders($, link) && $(link).attr("href")?.trim(),
+    );
+  if (!links.length) return false;
+  const items = node
+    .find("li")
+    .toArray()
+    .filter(
+      (item) =>
+        !hiddenFromReaders($, item) &&
+        ($(item).text().trim() || $(item).find("a[href]").length > 0),
+    );
+  if (items.length >= 2) return true;
+  const targets = new Set(links.map((link) => $(link).attr("href")));
+  let text = readerText($, el);
+  for (const link of links) text = text.replace(readerText($, link), " ");
+  const currentStep = text.replace(SEPARATORS, "").length > 0;
+  return targets.size + Number(currentStep) >= 2;
 }
 
 export class BreadcrumbSchemaAudit extends Audit {
@@ -36,7 +88,7 @@ export class BreadcrumbSchemaAudit extends Audit {
     title: "BreadcrumbList schema",
     failureTitle: "BreadcrumbList schema",
     description:
-      "AI agents use BreadcrumbList to understand your site hierarchy and navigate between parent/child pages. Without breadcrumbs, agents cannot infer where a page sits in your content tree, making it harder to provide contextual answers that reference related pages.",
+      "Google Search uses BreadcrumbList to categorize a page and may display its breadcrumb trail. This check looks for markup where a visible trail or existing BreadcrumbList establishes the feature.",
     scoreDisplayMode: ScoreDisplayMode.Ternary,
     weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
     evidenceGrade: EvidenceGrade.A,
@@ -48,17 +100,11 @@ export class BreadcrumbSchemaAudit extends Audit {
       EvidenceKey.RenderedBody,
       EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: [
-      PageType.Category,
-      PageType.Product,
-      PageType.General,
-      PageType.Article,
-    ],
     defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
-        "Without BreadcrumbList schema, AI agents cannot infer where a page sits in your site hierarchy. This prevents agents from navigating between parent and child pages and from providing contextual answers that reference related pages in your content tree.",
-      fix: "Add BreadcrumbList JSON-LD to every page with URL depth greater than 1. Each ListItem should include position, name, and item (the URL).",
+        "Google documents breadcrumb markup as a search presentation feature. It recommends typical user paths rather than URL depth; this check does not claim AI navigation or answer-quality effects.",
+      fix: "Describe an existing breadcrumb trail with BreadcrumbList markup. Include position and name for each ListItem, plus item URLs except where Google allows omission for the final item. Do not invent a hierarchy from the URL.",
       code: `{
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
@@ -75,85 +121,46 @@ export class BreadcrumbSchemaAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    const deepPages = ctx.pages.filter((p) => urlDepth(p.url) > 1);
-
-    if (deepPages.length === 0) {
-      return this.warn(
-        "No pages with URL depth > 1 found to evaluate breadcrumbs.",
-        "BreadcrumbList schema on pages with URL depth > 1.",
-        "No deep pages detected.",
-        {
-          priority: CheckPriority.Low,
-          description:
-            "AI agents use BreadcrumbList to understand site hierarchy and navigate between related pages. If your site has pages nested beyond the root level, add BreadcrumbList JSON-LD to help agents map your content structure.",
-          code: `{
-  "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  "itemListElement": [
-    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://yoursite.com/" },
-    { "@type": "ListItem", "position": 2, "name": "Category", "item": "https://yoursite.com/category/" }
-  ]
-}`,
-        },
+    let relevant = 0;
+    let marked = 0;
+    for (const page of ctx.pages) {
+      const schemas = flattenJsonLd(page.structuredData ?? page.jsonLd);
+      const hasSchema = schemas.some((schema) =>
+        matchesType(schema as Record<string, unknown>, "BreadcrumbList"),
       );
+      const $ = page.$;
+      const hinted = $(
+        'nav, ol, ul, div, section, p, span, [role="navigation"]',
+      )
+        .toArray()
+        .filter((el) => breadcrumbHint($(el)) && !hiddenFromReaders($, el));
+      // A hinted wrapper can hold the trail inside a plain <nav>; that nav is
+      // assessed on its own as well as through the wrapper.
+      const candidates = new Set([
+        ...hinted,
+        ...hinted.flatMap((el) =>
+          $(el).find('nav, [role="navigation"]').toArray(),
+        ),
+      ]);
+      const hasTrail = [...candidates].some((el) => isTrail($, el));
+      if (!hasSchema && !hasTrail) continue;
+      relevant++;
+      if (hasSchema) marked++;
     }
-
-    const pagesWithBreadcrumb = deepPages.filter((p) => {
-      const schemas = flattenJsonLd(p.structuredData ?? p.jsonLd);
-      return schemas.some((s) =>
-        matchesType(s as Record<string, unknown>, "BreadcrumbList"),
+    const expected = "BreadcrumbList markup for an observed breadcrumb trail";
+    if (!relevant)
+      return this.notApplicable(
+        "No breadcrumb trail or BreadcrumbList detected; URL depth alone does not establish a hierarchy.",
+        expected,
+        "No relevant pages",
       );
-    });
-
-    const allHave = pagesWithBreadcrumb.length === deepPages.length;
-    const someHave = pagesWithBreadcrumb.length > 0;
-
-    if (allHave) {
-      return this.pass(
-        `BreadcrumbList schema present on all ${deepPages.length} deep page(s).`,
-        "BreadcrumbList schema on pages with URL depth > 1.",
-        `${pagesWithBreadcrumb.length}/${deepPages.length} deep pages have BreadcrumbList`,
-      );
-    }
-
-    if (someHave) {
-      return this.warn(
-        `BreadcrumbList schema found on ${pagesWithBreadcrumb.length} of ${deepPages.length} deep page(s).`,
-        "BreadcrumbList schema on pages with URL depth > 1.",
-        `${pagesWithBreadcrumb.length}/${deepPages.length} deep pages have BreadcrumbList`,
-        {
-          priority: CheckPriority.Medium,
-          description:
-            "AI agents use BreadcrumbList to understand your site hierarchy and navigate between parent/child pages. Without breadcrumbs, agents cannot infer where a page sits in your content tree, making it harder to provide contextual answers that reference related pages.",
-          code: `{
-  "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  "itemListElement": [
-    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://yoursite.com/" },
-    { "@type": "ListItem", "position": 2, "name": "Category", "item": "https://yoursite.com/category/" }
-  ]
-}`,
-        },
-      );
-    }
-
+    const found = `${marked}/${relevant} breadcrumb-bearing pages have BreadcrumbList`;
+    if (marked === relevant) return this.pass(found, expected, found);
+    if (marked) return this.warn(found, expected, found);
     return this.fail(
-      `No BreadcrumbList schema found on ${deepPages.length} deep page(s).`,
-      "BreadcrumbList schema on pages with URL depth > 1.",
-      `${pagesWithBreadcrumb.length}/${deepPages.length} deep pages have BreadcrumbList`,
-      {
-        priority: CheckPriority.Medium,
-        description:
-          "AI agents use BreadcrumbList to understand your site hierarchy and navigate between parent/child pages. Without breadcrumbs, agents cannot infer where a page sits in your content tree, making it harder to provide contextual answers that reference related pages.",
-        code: `{
-  "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  "itemListElement": [
-    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://yoursite.com/" },
-    { "@type": "ListItem", "position": 2, "name": "Category", "item": "https://yoursite.com/category/" }
-  ]
-}`,
-      },
+      "No BreadcrumbList markup found for observed breadcrumb trails.",
+      expected,
+      found,
     );
   }
 }

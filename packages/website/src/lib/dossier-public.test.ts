@@ -676,7 +676,8 @@ describe("publicDossier", () => {
         // publish an example finding, and the section is named "Example
         // finding" because warn-only and obsolete audits never fail. 84 since
         // 2026-10-19: `mcp-tool-annotation-coverage`.
-        "Example finding": 84,
+        // 85 since 2026-10-21: service-schema now explains optional absence.
+        "Example finding": 85,
       });
     });
 

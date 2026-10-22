@@ -12,8 +12,7 @@
     },
     "brand-amartfurniture-com-au-blog-listing": {
       "expected": "general",
-      "knownMismatch": true,
-      "why": "The captured main contains an Amart Blog index with article summaries and Read more links. It is not a product listing. The classifier currently reports category."
+      "why": "The page is the captured blog index with article summaries and Read more links. It is not a product listing. Pagination and editorial filters do not establish commerce."
     },
     "brand-amartfurniture-com-au-homepage": {
       "expected": "homepage",

@@ -1,6 +1,11 @@
+import type { CheerioAPI } from "cheerio";
+import type { Element } from "domhandler";
 import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
 import type { CheckContext, PageContext } from "#core/check-context";
+import { inPageChrome } from "#core/page-chrome";
+import { hiddenFromReaders } from "#core/dom-visibility";
+import { PRODUCT_CARD_SELECTOR } from "#core/parser";
 import { weightForGrade } from "#core/scorer";
 import {
   AuditTier,
@@ -8,7 +13,6 @@ import {
   EvidenceGrade,
   EvidenceKey,
   FixEffort,
-  PageType,
   ScoreDisplayMode,
 } from "#core/types";
 
@@ -20,25 +24,95 @@ import {
  * matches `sidebar|skyscraper|supplemental|related` and its negative
  * class-weight regex penalises `sidebar`. Matching them here is how the audit
  * decides a page *has* supplementary content in the first place.
+ *
+ * A hint word followed by `-tag`, `-badge` and similar names a badge. One
+ * followed by `-bar`, `-strip`, `-banner` or `-ticker` names a site-wide
+ * announcement strip: page banner content, whose home is the `<header>`,
+ * not content tangential to the main flow that `<aside>` describes.
  */
 const SUPPLEMENTARY_HINT =
-  /(?:^|[^a-z])(sidebar|side-bar|sidenav|side-nav|supplemental|complementary|secondary|related|recirc|promo|callout|pullquote|pull-quote|newsletter|subscribe-box|advert|ad-slot|sponsored|widget)(?:[^a-z]|$)/i;
+  /(?:^|[^a-z])(sidebar|side-bar|supplemental|complementary|related|recirc|promo|newsletter|subscribe-box|advert|ad-slot|sponsored)(?![-_](?:tag|badge|label|price|code|icon|bar|strip|banner|ticker)(?:[^a-z]|$))(?:[^a-z]|$)/i;
+
+/**
+ * Hint words that name a position rather than a role. A product template's
+ * buy box is often a `sidebar`; a `related` or `promo` block is supplementary
+ * whatever it holds.
+ */
+const POSITIONAL_HINT = /(?:^|[^a-z])side-?bar(?:[^a-z]|$)/i;
 
 /** An `<aside>` or an explicit `role="complementary"` — the marked forms. */
 const MARKED_SELECTOR = 'aside, [role="complementary"]';
 
 /** Elements that can stand in for `<aside>` when authors reach for a `<div>`. */
-const CANDIDATE_SELECTOR = "div, section, ul, nav";
+const CANDIDATE_SELECTOR = "div, section, ul";
+
+/**
+ * Purchase controls mark a block as primary content. Product templates often
+ * name the buy box `sidebar` or `product-sidebar`; that block must not be
+ * asked to become an `<aside>`, which extractors delete.
+ */
+const PURCHASE_CONTROL =
+  '[itemprop="offers"], [itemprop="price"], form[action*="cart" i], input[name="quantity"], input[name="qty"], [name="add-to-cart"]';
+const PURCHASE_LABEL =
+  /\b(?:add to (?:cart|bag|basket|trolley)|buy (?:now|it now)|proceed to checkout)\b|^checkout$/i;
+
+/**
+ * Whether a positionally named block is one product's buy box. Buttons, cart
+ * forms and quantity fields repeat inside a single buy box (a sticky copy of
+ * "Add to cart", an installment form, mobile and desktop quantity fields), so
+ * only repeated product identity — two cards or two offers — marks a rail.
+ */
+function isBuyBox($: CheerioAPI, el: Element): boolean {
+  const node = $(el);
+  if (
+    !POSITIONAL_HINT.test(
+      `${node.attr("class") ?? ""} ${node.attr("id") ?? ""}`,
+    )
+  )
+    return false;
+  const visible = (selector: string) =>
+    node
+      .find(selector)
+      .add(node.filter(selector))
+      .toArray()
+      .filter((match) => !hiddenFromReaders($, match));
+  const outermost = (selector: string) =>
+    visible(selector).filter(
+      (match) => match === el || !$(match).parentsUntil(el).is(selector),
+    ).length;
+  if (
+    outermost(PRODUCT_CARD_SELECTOR) > 1 ||
+    outermost('[itemprop="offers"]') > 1
+  )
+    return false;
+  return (
+    visible(PURCHASE_CONTROL).length > 0 ||
+    visible('button, input[type="submit"], input[type="button"]').some(
+      (button) =>
+        PURCHASE_LABEL.test(
+          `${$(button).text()} ${$(button).attr("value") ?? ""}`
+            .replace(/\s+/g, " ")
+            .trim(),
+        ),
+    )
+  );
+}
 
 interface PageFindings {
   /** Supplementary blocks an extractor can recognise by element or role. */
   readonly marked: string[];
-  /** Supplementary blocks that are invisible to extractors and a11y trees. */
+  /** Likely supplementary blocks without an explicit complementary landmark. */
   readonly unmarked: string[];
 }
 
+/**
+ * A short label for a finding: the tag plus the class or id token that made
+ * the block a candidate, so a theme wrapper's first token such as
+ * `shopify-section` does not hide the `promo-bar` behind it.
+ */
 function describe(tag: string, attrs: string): string {
-  const token = attrs.trim().split(/\s+/)[0] ?? "";
+  const tokens = attrs.trim().split(/\s+/).filter(Boolean);
+  const token = tokens.find((t) => SUPPLEMENTARY_HINT.test(t)) ?? tokens[0];
   return token ? `<${tag} ${token}>` : `<${tag}>`;
 }
 
@@ -52,6 +126,7 @@ function findSupplementary(page: PageContext): PageFindings {
   // is not counted twice.
   $(MARKED_SELECTOR).each((_, el) => {
     const node = $(el);
+    if (hiddenFromReaders($, el) || inPageChrome($, el)) return;
     if (node.parents(MARKED_SELECTOR).length > 0) return;
     marked.push(
       describe(
@@ -63,21 +138,38 @@ function findSupplementary(page: PageContext): PageFindings {
 
   $(CANDIDATE_SELECTOR).each((_, el) => {
     const node = $(el);
+    // The class hint rejects almost every container, so it runs before the
+    // ancestor walks below.
     const attrs = `${node.attr("class") ?? ""} ${node.attr("id") ?? ""}`;
     if (!SUPPLEMENTARY_HINT.test(attrs)) return;
+    if (node.is('[role="main"]')) return;
+    if (hiddenFromReaders($, el) || inPageChrome($, el)) return;
+    // A sectioning header holds that section's introductory content: its
+    // title, date and badges such as a product's promo tag. That is primary
+    // content, unlike a section footer, which often carries related links.
+    if (node.closest("header").length > 0) return;
+    // A sale badge or quick-add block inside a product card belongs to that
+    // card, not beside the page's content.
+    if (node.parents(PRODUCT_CARD_SELECTOR).length > 0) return;
+    if (isBuyBox($, el)) return;
 
     // Inside a marked landmark the block is already handled — Readability and
     // trafilatura drop the whole subtree.
     if (node.closest(MARKED_SELECTOR).length > 0) return;
 
     // Only report the outermost container of a nested promo/sidebar stack.
+    // A primary container (main role or buy box) was excluded above, so it
+    // cannot stand in for the blocks nested inside it.
     const nestedInHint = node
       .parents(CANDIDATE_SELECTOR)
       .toArray()
-      .some((a) =>
-        SUPPLEMENTARY_HINT.test(
-          `${$(a).attr("class") ?? ""} ${$(a).attr("id") ?? ""}`,
-        ),
+      .some(
+        (a) =>
+          !$(a).is('[role="main"]') &&
+          SUPPLEMENTARY_HINT.test(
+            `${$(a).attr("class") ?? ""} ${$(a).attr("id") ?? ""}`,
+          ) &&
+          !isBuyBox($, a),
       );
     if (nestedInHint) return;
 
@@ -90,7 +182,7 @@ function findSupplementary(page: PageContext): PageFindings {
 }
 
 const EXPECTED =
-  'Every sidebar / promo / related-links block on an article or general page is wrapped in <aside> (or carries role="complementary")';
+  'Every sidebar / promo / related-links block on a sampled page is wrapped in <aside> (or carries role="complementary")';
 
 export class AsideElementAudit extends Audit {
   static override meta: AuditMeta = {
@@ -99,7 +191,7 @@ export class AsideElementAudit extends Audit {
     title: "<aside> for supplementary content",
     failureTitle: "<aside> for supplementary content",
     description:
-      "Mozilla Readability and trafilatura delete <aside> subtrees before extraction, and Chromium exposes <aside> as a complementary landmark in the accessibility tree agents read. Wrapping sidebars, promos and related-links blocks in <aside> is what keeps them out of the text an LLM ingests; a sidebar left in a bare <div> is extracted as if it were article body.",
+      "Mozilla Readability and trafilatura delete <aside> subtrees before extraction, and Chromium exposes <aside> as a complementary landmark in the accessibility tree agents read. Explicit complementary landmarks help separate supplementary content from the main text. Bare containers depend on extractor heuristics.",
     scoreDisplayMode: ScoreDisplayMode.Ternary,
     weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
     evidenceGrade: EvidenceGrade.B,
@@ -111,11 +203,10 @@ export class AsideElementAudit extends Audit {
       EvidenceKey.RenderedBody,
       EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: [PageType.General, PageType.Article],
     defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
-        'Mozilla Readability removes every <aside> from extracted article content (`this._clean(articleContent, "aside")`) and trafilatura lists "aside" first in its MANUALLY_CLEANED tag list, so supplementary blocks marked this way never reach the model. Firefox Reader Mode, Jina Reader and a long tail of LLM/agent tools run on Readability. Chromium additionally exposes <aside> as a `complementary` landmark, which is what Anthropic\'s browser-use `read_page` returns. A sidebar left in a bare <div> is invisible to all three paths and gets extracted as if it were part of your article.',
+        'Mozilla Readability removes every <aside> from extracted article content (`this._clean(articleContent, "aside")`) and trafilatura lists "aside" first in its MANUALLY_CLEANED tag list, so supplementary blocks marked this way never reach the model. Firefox Reader Mode, Jina Reader and a long tail of LLM/agent tools run on Readability. Chromium additionally exposes <aside> as a `complementary` landmark, which is what Anthropic\'s browser-use `read_page` returns. A sidebar in a bare <div> lacks that explicit landmark; extractors may still remove it using class names or text density.',
       fix: 'Wrap sidebar, promo, advert and related-links containers in <aside> (or give them role="complementary"). Because Readability and trafilatura discard that subtree entirely, never put citable facts — author bios, specifications, key figures — inside an <aside>; those belong in the main article body.',
       code: '<article>\n  <p>Citable article body stays here.</p>\n</article>\n<aside>\n  <h3>Related Resources</h3>\n  <ul>\n    <li><a href="/related-topic">Related Topic</a></li>\n  </ul>\n</aside>',
       effort: FixEffort.Easy,
@@ -126,9 +217,8 @@ export class AsideElementAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    // The meta declares article and general pages, so only article and general pages are evaluated —
-    // the v1 code looped every page and reported a denominator that mixed
-    // page types.
+    // Supplementary content can occur on any page type. Only pages with
+    // visible supplementary candidates contribute to the denominator.
     const pages = ctx.pages;
 
     let marked = 0;
@@ -151,7 +241,7 @@ export class AsideElementAudit extends Audit {
     // stands. v1 warned at it, which asked authors to invent a sidebar.
     if (evaluated === 0) {
       return this.notApplicable(
-        "No article or general page carries a sidebar, promo or related-links block, so there is nothing to mark up as supplementary.",
+        "No sampled page carries a sidebar, promo or related-links block, so there is nothing to mark up as supplementary.",
         EXPECTED,
         "No supplementary content detected",
       );
@@ -161,7 +251,7 @@ export class AsideElementAudit extends Audit {
 
     if (unmarked.length === 0) {
       return this.pass(
-        `All ${marked} supplementary block(s) across ${evaluated} article or general page(s) are marked with <aside> or role="complementary".`,
+        `All ${marked} supplementary block(s) across ${evaluated} relevant page(s) are marked with <aside> or role="complementary".`,
         EXPECTED,
         `${marked} marked supplementary block(s), 0 unmarked`,
       );
@@ -175,7 +265,7 @@ export class AsideElementAudit extends Audit {
         {
           priority: CheckPriority.Low,
           description:
-            "Some sidebar/promo blocks are wrapped in <aside> and some are not. The unwrapped ones survive Readability and trafilatura extraction and are fed to the model as article body, diluting the page. Wrap them in <aside> too — but keep citable facts out, because that subtree is discarded.",
+            "Some sidebar/promo blocks are wrapped in <aside> and some are not. The unwrapped ones rely on extractor heuristics and may enter the main text. Wrap them in <aside> too — but keep citable facts out, because that subtree is discarded.",
           code: '<aside class="sidebar">\n  <h3>Related Resources</h3>\n  <ul><li><a href="/related">Related page</a></li></ul>\n</aside>',
         },
         firstGapUrl,
@@ -189,7 +279,7 @@ export class AsideElementAudit extends Audit {
       {
         priority: CheckPriority.Low,
         description:
-          "Sidebar, promo and related-links containers on your article and general pages are plain <div>s. Readability and trafilatura cannot tell them from article body, so promos and tangential links are extracted into the text an LLM reads and summarises, and accessibility-tree agents see an undifferentiated generic node instead of a complementary landmark.",
+          "Likely sidebar, promo and related-links containers lack explicit complementary landmarks. Readability and trafilatura may remove them through other heuristics, but the markup does not identify their supplementary role. Confirm that each block is supplementary before changing it; keep primary content outside <aside>.",
         code: '<article>\n  <p>Citable article body stays here.</p>\n</article>\n<aside class="sidebar">\n  <h3>Related Resources</h3>\n  <ul><li><a href="/related">Related page</a></li></ul>\n</aside>',
       },
       firstGapUrl,

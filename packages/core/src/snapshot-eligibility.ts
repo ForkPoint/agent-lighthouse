@@ -28,7 +28,7 @@ const dom = (evidence: string): SnapshotAuditEntry => ({
 /**
  * Reviewed individually against each source and dossier. No category implies eligibility.
  * An entry needs DOM-only evidence, a one-page verdict, and a dossier whose grade rests on
- * a browser-agent consumer (docs/superpowers/specs/2026-10-20-browser-view-audits-design.md).
+ * a browser-agent consumer (docs/architecture/browser-snapshots.md#supported-audit-inventory).
  * Every entry keeps the readable-text gate its crawler path has: a consent wall,
  * error page or empty shell captured as "complete" must not prove absence.
  */

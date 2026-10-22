@@ -1,121 +1,240 @@
 import { describe, it, expect } from "vitest";
 import { BreadcrumbSchemaAudit } from "./breadcrumb-schema";
-import { mockPageContext, mockCheckContext } from "#core/__tests__/test-utils";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
 import { CheckStatus } from "#core/types";
-
-const ld = (obj: unknown) =>
-  `<script type="application/ld+json">${JSON.stringify(obj)}</script>`;
-const page = (url: string, head = "") =>
-  mockPageContext(url, `<html><head>${head}</head><body></body></html>`, 1);
-
-const breadcrumb = {
-  "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  itemListElement: [
-    {
-      "@type": "ListItem",
-      position: 1,
-      name: "Home",
-      item: "https://example.com/",
-    },
-    {
-      "@type": "ListItem",
-      position: 2,
-      name: "Cat",
-      item: "https://example.com/cat/",
-    },
-  ],
-};
 
 describe("BreadcrumbSchemaAudit", () => {
   const audit = new BreadcrumbSchemaAudit();
+  it("returns not applicable on an empty sample", () => {
+    expect(audit.audit(mockCheckContext([])).status).toBe(
+      CheckStatus.NotApplicable,
+    );
+  });
+  it("no hierarchy despite deep URL", () => {
+    const page = mockPageContext(
+      "https://example.com/deep/content/page",
+      "<html><body><main><p>Contact our team.</p></main></body></html>",
+      1,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe(
+      CheckStatus.NotApplicable,
+    );
+  });
+  it("visible trail without schema", () => {
+    const page = mockPageContext(
+      "https://example.com/deep/content/page",
+      '<html><body><nav aria-label="Breadcrumb"><ol><li><a href="/">Home</a></li><li aria-current="page">Current</li></ol></nav></body></html>',
+      1,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe(CheckStatus.Fail);
+  });
+  it("single breadcrumb link", () => {
+    const page = mockPageContext(
+      "https://example.com/deep/content/page",
+      '<html><body><nav aria-label="Breadcrumb"><a href="/">Home</a></nav></body></html>',
+      1,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe(
+      CheckStatus.NotApplicable,
+    );
+  });
+  it("hidden trail", () => {
+    const page = mockPageContext(
+      "https://example.com/deep/content/page",
+      '<html><body><nav hidden aria-label="Breadcrumb"><a href="/">Home</a><span aria-current="page">Current</span></nav></body></html>',
+      1,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe(
+      CheckStatus.NotApplicable,
+    );
+  });
+  it("existing markup", () => {
+    const page = mockPageContext(
+      "https://example.com/deep/content/page",
+      '<html><body><script type="application/ld+json">{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://example.com/"},{"@type":"ListItem","position":2,"name":"Current"}]}</script></body></html>',
+      1,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe(CheckStatus.Pass);
+  });
+});
 
-  it("warns (low) when there are no pages with URL depth > 1", () => {
-    const ctx = mockCheckContext([page("https://example.com/about")]); // depth 1
-    const result = audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Warn);
-    expect(result.message).toContain("No pages with URL depth > 1");
+describe("breadcrumb representations", () => {
+  const node = {
+    "@type": ["BreadcrumbList", "ItemList"],
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: "https://example.com/",
+      },
+      { "@type": "ListItem", position: 2, name: "Here" },
+    ],
+  };
+  it.each([node, [node], { "@graph": [node] }])(
+    "reads structured data regardless of URL depth: %j",
+    (data) => {
+      const p = mockPageContext(
+        "https://example.com/",
+        `<script type="application/ld+json">${JSON.stringify(data)}</script>`,
+      );
+      expect(
+        new BreadcrumbSchemaAudit().audit(mockCheckContext([p])).status,
+      ).toBe(CheckStatus.Pass);
+    },
+  );
+  it("reads gathered microdata as well as JSON-LD", () => {
+    const p = mockPageContext("https://example.com/flat", "<p>Page</p>");
+    p.structuredData = [node];
+    expect(
+      new BreadcrumbSchemaAudit().audit(mockCheckContext([p])).status,
+    ).toBe(CheckStatus.Pass);
+  });
+});
+
+describe("review regressions", () => {
+  it("ignores page wrapper breadcrumb classes", () => {
+    const page = mockPageContext(
+      "https://example.com/page",
+      '<html><body><div class="site has-breadcrumbs"><nav><ul><li><a href="/">Home</a></li><li><a href="/shop">Shop</a></li></ul></nav></div></body></html>',
+    );
+    expect(
+      new BreadcrumbSchemaAudit().audit(mockCheckContext([page])).status,
+    ).toBe(CheckStatus.NotApplicable);
+  });
+  it("ignores disabled breadcrumb wrappers", () => {
+    const page = mockPageContext(
+      "https://example.com/page",
+      '<html><body><div class="breadcrumbs-disabled"><nav><ul><li><a href="/">Home</a></li><li>Shop</li></ul></nav></div></body></html>',
+    );
+    expect(
+      new BreadcrumbSchemaAudit().audit(mockCheckContext([page])).status,
+    ).toBe(CheckStatus.NotApplicable);
+  });
+  // A hinted list with two items and a link is a trail by this audit's
+  // definition; an inner hinted fragment that is not a trail does not hide it.
+  it("counts a hinted list beside a hinted fragment", () => {
+    const page = mockPageContext(
+      "https://example.com/page",
+      '<html><body><div class="breadcrumbs"><ul><li><a href="/shop">Shop</a></li><li>Menu</li></ul><div class="breadcrumb"><a href="/">Home</a></div></div></body></html>',
+    );
+    expect(
+      new BreadcrumbSchemaAudit().audit(mockCheckContext([page])).status,
+    ).toBe(CheckStatus.Fail);
+  });
+  it("keeps real nested trails", () => {
+    const page = mockPageContext(
+      "https://example.com/page",
+      '<html><body><div class="breadcrumbs"><nav aria-label="Breadcrumb"><ol><li><a href="/">Home</a></li><li>Here</li></ol></nav></div></body></html>',
+    );
+    expect(
+      new BreadcrumbSchemaAudit().audit(mockCheckContext([page])).status,
+    ).toBe(CheckStatus.Fail);
+  });
+});
+
+describe("BreadcrumbSchemaAudit trail shapes", () => {
+  const TRAIL =
+    '<li><a href="/">Home</a></li><li><a href="/c">Cat</a></li><li aria-current="page">Here</li>';
+  const audit = new BreadcrumbSchemaAudit();
+  const status = (body: string) =>
+    audit.audit(
+      mockCheckContext([
+        mockPageContext(
+          "https://example.com/c/item",
+          `<html><body>${body}<main><p>Body.</p></main></body></html>`,
+          1,
+        ),
+      ]),
+    ).status;
+
+  it.each([
+    [
+      "a hinted wrapper around a plain nav",
+      '<div class="breadcrumbs"><nav><ol>%T</ol></nav></div>',
+    ],
+    [
+      "hinted link wrappers inside a hinted list",
+      '<ol class="breadcrumbs"><li><div class="breadcrumbs__link"><a href="/">Home</a></div></li><li><div class="breadcrumbs__link"><a href="/c">Cat</a></div></li></ol>',
+    ],
+    [
+      "a mobile back link beside the trail",
+      '<div class="breadcrumbs"><div class="breadcrumbs-mobile"><a href="/c">Back</a></div><ol>%T</ol></div>',
+    ],
+    [
+      "a hidden hinted child",
+      '<nav class="breadcrumb"><div class="breadcrumb-mobile" hidden></div><ol>%T</ol></nav>',
+    ],
+    [
+      "a navigation role inside a hinted container",
+      '<div class="breadcrumb-container"><div role="navigation"><ol>%T</ol></div></div>',
+    ],
+  ])("finds the trail in %s", (_, body) => {
+    expect(status(body.replace("%T", TRAIL))).toBe(CheckStatus.Fail);
   });
 
-  it("passes when all deep pages have BreadcrumbList", () => {
-    const ctx = mockCheckContext([
-      page("https://example.com/cat/sub", ld(breadcrumb)),
-    ]);
-    const result = audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Pass);
-    expect(result.message).toContain("present on all 1 deep page(s)");
+  it.each([
+    [
+      "a disabled-state wrapper",
+      '<div class="layout breadcrumbs-disabled"><div class="menu"><ul><li><a href="/a">A</a></li><li><a href="/b">B</a></li></ul></div></div>',
+    ],
+    [
+      "a disabled-state menu",
+      '<ul class="menu breadcrumbs-disabled"><li><a href="/a">A</a></li><li><a href="/b">B</a></li></ul>',
+    ],
+    [
+      "a has-breadcrumbs page wrapper",
+      '<div class="site has-breadcrumbs"><ul><li><a href="/a">A</a></li><li><a href="/b">B</a></li></ul></div>',
+    ],
+  ])("ignores %s", (_, body) => {
+    expect(status(body)).toBe(CheckStatus.NotApplicable);
+  });
+});
+
+describe("BreadcrumbSchemaAudit trail shapes from review", () => {
+  const audit = new BreadcrumbSchemaAudit();
+  const status = (body: string) =>
+    audit.audit(
+      mockCheckContext([
+        mockPageContext(
+          "https://example.com/c/item",
+          `<html><body>${body}<main><p>Body.</p></main></body></html>`,
+          1,
+        ),
+      ]),
+    ).status;
+
+  it.each([
+    [
+      "a one-link trail with a text current step",
+      '<nav class="woocommerce-breadcrumb"><a href="/">Home</a> / Product</nav>',
+    ],
+    [
+      "an icon-only home link",
+      '<nav aria-label="Breadcrumb"><ol><li><a href="/"><svg></svg></a></li><li><a href="/c">Cat</a></li></ol></nav>',
+    ],
+    [
+      "a section wrapper",
+      '<section class="breadcrumbs"><a href="/">Home</a> › <a href="/c">Cat</a> › Here</section>',
+    ],
+    [
+      "a paragraph wrapper",
+      '<p id="breadcrumbs"><a href="/">Home</a> » <span>Here</span></p>',
+    ],
+  ])("finds the trail in %s", (_, body) => {
+    expect(status(body)).toBe(CheckStatus.Fail);
   });
 
-  it("detects BreadcrumbList inside @graph", () => {
-    const ctx = mockCheckContext([
-      page(
-        "https://example.com/cat/sub",
-        ld({ "@context": "https://schema.org", "@graph": [breadcrumb] }),
-      ),
-    ]);
-    const result = audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Pass);
-  });
-
-  it("detects BreadcrumbList in a top-level `[{...}]` array (Shopify-style)", () => {
-    const ctx = mockCheckContext([
-      page("https://example.com/cat/sub", ld([breadcrumb])),
-    ]);
-    const result = audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Pass);
-  });
-
-  it("fails when no deep page has BreadcrumbList", () => {
-    const ctx = mockCheckContext([page("https://example.com/cat/sub")]);
-    const result = audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.message).toContain("No BreadcrumbList schema found");
-  });
-
-  it("warns when only some deep pages have BreadcrumbList", () => {
-    const ctx = mockCheckContext([
-      page("https://example.com/cat/sub", ld(breadcrumb)),
-      page("https://example.com/cat/other"),
-    ]);
-    const result = audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Warn);
-    expect(result.found).toBe("1/2 deep pages have BreadcrumbList");
-  });
-
-  it("handles a page with an invalid URL gracefully (urlDepth catch block)", () => {
-    // Manually override url to a non-parseable value so urlDepth hits its
-    // catch block and returns 0. The other deep page (with BreadcrumbList) still
-    // drives the result to pass.
-    const validDeepPage = page("https://example.com/cat/sub", ld(breadcrumb));
-    const invalidUrlPage = {
-      ...page("https://example.com/cat/item"),
-      url: "not-a-url",
-    };
-    const ctx = mockCheckContext([validDeepPage, invalidUrlPage]);
-    const result = audit.audit(ctx);
-    // Only the valid deep page counts; it has BreadcrumbList → pass
-    expect(result.status).toBe(CheckStatus.Pass);
-  });
-
-  it("detects BreadcrumbList with array @type (Array.isArray branch in matchesType)", () => {
-    const ctx = mockCheckContext([
-      page(
-        "https://example.com/cat/sub",
-        ld({
-          "@context": "https://schema.org",
-          "@type": ["BreadcrumbList", "ItemList"],
-          itemListElement: [
-            {
-              "@type": "ListItem",
-              position: 1,
-              name: "Home",
-              item: "https://example.com/",
-            },
-          ],
-        }),
-      ),
-    ]);
-    const result = audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Pass);
+  it.each([
+    [
+      "a lone home link with a separator",
+      '<nav class="breadcrumb"><a href="/">Home</a> /</nav>',
+    ],
+    [
+      "a lone icon link",
+      '<nav class="breadcrumb"><a href="/"><svg></svg></a></nav>',
+    ],
+  ])("ignores %s", (_, body) => {
+    expect(status(body)).toBe(CheckStatus.NotApplicable);
   });
 });

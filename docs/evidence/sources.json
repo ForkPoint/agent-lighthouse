@@ -7273,6 +7273,46 @@
       "accessed": "2026-10-20",
       "verified": "2026-10-20",
       "keyFindings": "Example custom rules. \"Skip verified bots\": `(cf.bot_management.verified_bot)`, action Skip all remaining custom rules — \"Known good bots (Googlebot, Bingbot, monitoring services) bypass all custom rules.\" \"Protect browser endpoints\": `(cf.bot_management.score lt 30 and not cf.bot_management.verified_bot)`, action Block. Also \"Challenge likely automated\": score 2-29, Managed Challenge. One zone refuses unverified automated traffic and admits verified bots, so a refusal of an unverified request naming a bot does not show what the verified bot gets. Primary cite for the UA-parity audits' Limits since 2026-10-20."
+    },
+    {
+      "id": "schema-service",
+      "title": "Service — Schema.org",
+      "url": "https://schema.org/Service",
+      "publisher": "Schema.org",
+      "type": "spec",
+      "accessed": "2026-10-21",
+      "verified": "2026-10-21",
+      "keyFindings": "Defines Service and provider; reports 1M–10M domains in August 2026. Vocabulary adoption does not document a consumer requirement for name and provider."
+    },
+    {
+      "id": "schema-professional-service",
+      "title": "ProfessionalService — Schema.org",
+      "url": "https://schema.org/ProfessionalService",
+      "publisher": "Schema.org",
+      "type": "spec",
+      "accessed": "2026-10-21",
+      "verified": "2026-10-21",
+      "keyFindings": "Deprecated LocalBusiness type, distinct from Service. Kept for compatibility by the existing audit, not recommended for new markup."
+    },
+    {
+      "id": "google-service-site-office-hours",
+      "title": "January 2023 Google SEO office hours — service websites",
+      "url": "https://developers.google.com/search/help/office-hours/2023/january",
+      "publisher": "Google Search Central",
+      "type": "vendor-doc",
+      "accessed": "2026-10-21",
+      "verified": "2026-10-21",
+      "keyFindings": "For a service business with invalid Product markup, recommends LocalBusiness. Does not establish a Service name/provider requirement."
+    },
+    {
+      "id": "whatwg-html-dl",
+      "title": "HTML Standard — the dl element",
+      "url": "https://html.spec.whatwg.org/multipage/grouping-content.html#the-dl-element",
+      "publisher": "WHATWG",
+      "type": "spec",
+      "accessed": "2026-10-21",
+      "verified": "2026-10-21",
+      "keyFindings": "A description list is a set of name-value groups. Uses include terms and definitions, metadata, and questions and answers. dl/dt/dd presence or value length alone does not establish definitional intent."
     }
   ]
 }

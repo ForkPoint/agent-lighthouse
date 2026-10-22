@@ -4,8 +4,8 @@ category: content-extraction
 source_file: packages/core/src/audits/content-extraction/code-language.ts
 slug: code-language
 evidence_grade: C
-disposition: "keep — fix required"
-reviewed: 2026-08-21
+disposition: "kept — feature scope corrected 2026-10-21"
+reviewed: 2026-10-21
 sources:
   - whatwg-code-element
   - turndown-commonmark-rules
@@ -14,17 +14,15 @@ sources:
 
 # code-language (`6.10`)
 
-> semantic-html · source `code-language.ts` · review verdict **fix** · evidence grade **C** · disposition: **keep — fix required**
+> semantic-html · source `code-language.ts` · evidence grade **C** · tier **informative** · weight **0**
 
 ## What it checks
 
-The v7 runner includes `article` and `general` pages in this check's existing page population. This preserves coverage when the old catch-all classification becomes unknown. The audit body still owns its existing feature and artifact guards. This scope change does not establish a new consumer path.
+The audit selects `<code>` elements inside `<pre>` across all sampled page types. Each selected element needs a complete, nonempty `language-*` class token to count as annotated. Inline code and plain `<pre>` text do not enter the denominator. No matching blocks returns `notApplicable`.
 
-AI agents use language annotations on code blocks to apply the correct syntax understanding and provide accurate code explanations. Without them, agents must guess the programming language, which can lead to incorrect interpretations in AI-generated code answers.
+## Why it matters
 
-## Evidence
-
-_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
+Language classes give some HTML-to-Markdown converters a label to preserve in fenced code output. They do not prove better AI explanations. This check remains informative and contributes no score weight.
 
 ## Evidence (2026-08-21)
 
@@ -40,6 +38,23 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Counter-evidence:** No AI vendor documentation states that any agent reads code-block language classes, and no published study measures a change in AI answer quality attributable to them. The causal step from "fence is labeled" to "agent explains the code correctly" is untested. Modern LLMs also identify programming languages from source text without an annotation. The convention is also not the only one in use. The HTML Standard itself concedes "there is no formal way". Shiki's `data-language` on `<pre>`, GitHub-style `lang-*` and Prism's class-on-`<pre>` are all in live use. Turndown's `language-` regex on `node.firstChild` matches none of them. That weakens the practical reach of the one traceable consumer path as much as it weakens the audit's detector.
 
+## How it scores
+
+All selected blocks annotated: pass. More than half, but not all: warn. Half or fewer: fail. No selected blocks: not applicable. These are informative verdicts with weight 0; the thresholds do not measure AI answer quality.
+
 ## Implementation deviations
 
-- The audit runs on article and general pages. That list keeps the old general-content population. It is not the final feature-based gate.
+- Hidden code elements do not contribute. Each `<pre>` counts as one block, assessed by its first visible `<code>`. Turndown fences a `<pre>` once and labels the fence from that element, so further `<code>` children do not change the result.
+
+- Common scope replaces the article/general list. Code-block presence selects the population. Runner tests cover all five page types, both declared and detected provenance, absent code and mixed readable/unread samples.
+- Empty `language-` tokens and embedded strings such as `not-language-python` no longer count. The audit checks the complete class convention rather than copying Turndown's permissive substring regex.
+- The detector deliberately checks only classes on the code element. Classes on `<pre>`, `lang-*` and `data-language` remain outside this convention. Tests pin these boundaries; a finding does not mean those annotations fail in their own consumers.
+- The existing `pre code` descendant selector remains broader than Turndown's first-child requirement. This is a convention check, not a conversion simulation. It does not validate language identifiers or compare the claimed language with the code.
+
+## Deferred
+
+- Add other annotation conventions only with their consumer evidence and explicit output semantics. No new scored consumer path is established here.
+
+## Review history
+
+2026-10-21: Rechecked [Turndown's fenced-code rule](https://raw.githubusercontent.com/mixmark-io/turndown/master/src/commonmark-rules.js) (verified 2026-10-21). It reads the class on the first code child when fenced output is enabled. It requires a nonempty suffix to emit a language label. This supports the absence and empty-token corrections without changing the grade or tier.

@@ -1,5 +1,12 @@
+import type { Element } from "domhandler";
 import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
+import {
+  hiddenFromReaders,
+  readerHidingMarker,
+  readerText,
+} from "#core/dom-visibility";
+import { inReaderContent } from "#core/page-chrome";
 import { weightForGrade } from "#core/scorer";
 import type { CheckContext } from "#core/check-context";
 import {
@@ -8,9 +15,20 @@ import {
   EvidenceGrade,
   EvidenceKey,
   FixEffort,
-  PageType,
   ScoreDisplayMode,
 } from "#core/types";
+
+// "vs" and "versus" must sit between two terms. A bare upper-case "VS" is
+// left out: "Setting up VS Code" names a product.
+// "Compare-at" is a product-page price label, and a heading that is only
+// "Compare" labels a widget, not a comparison.
+const COMPARISON_WORD = /vs|versus|compar/i;
+
+function comparisonIntent(text: string): boolean {
+  if (/\S\s+(?:[vV]s\.?|VS\.|[vV]ersus|VERSUS)\s+\S/.test(text)) return true;
+  if (/^compare$/i.test(text)) return false;
+  return /\bcompar(?:e|es|ed|ing|ison|isons)\b(?!-at\b)/i.test(text);
+}
 
 export class ComparisonTablesAudit extends Audit {
   static override meta: AuditMeta = {
@@ -19,7 +37,7 @@ export class ComparisonTablesAudit extends Audit {
     title: "Comparison tables present",
     failureTitle: "Comparison tables present",
     description:
-      "AI answer engines extract structured table data to generate comparison answers. Add HTML tables to your content where appropriate.",
+      "Reports semantic tables on pages with explicit comparison headings or captions. This is an unscored structure check, not a prediction of answer-engine citations.",
     scoreDisplayMode: ScoreDisplayMode.Informative,
     weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
     evidenceGrade: EvidenceGrade.C,
@@ -31,16 +49,10 @@ export class ComparisonTablesAudit extends Audit {
       EvidenceKey.RenderedBody,
       EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: [
-      PageType.Category,
-      PageType.Product,
-      PageType.General,
-      PageType.Article,
-    ],
     defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
-        'AI answer engines extract structured table data to generate comparison answers for queries like "What is the difference between X and Y?" Without HTML tables, your comparison content is harder for agents to parse and less likely to appear as a structured answer.',
+        "Tables can express aligned comparison data. No documented AI consumer requires them, and prose can also convey comparisons. This check does not predict citation rates.",
       fix: "Add HTML <table> elements with proper <thead> and <th> headers for any comparative content on your pages. Ensure each column has a descriptive header.",
       code: "<table>\n  <thead>\n    <tr><th>Feature</th><th>Plan A</th><th>Plan B</th></tr>\n  </thead>\n  <tbody>\n    <tr><td>Price</td><td>$10/mo</td><td>$20/mo</td></tr>\n    <tr><td>Storage</td><td>10 GB</td><td>50 GB</td></tr>\n  </tbody>\n</table>",
       effort: FixEffort.Easy,
@@ -49,53 +61,67 @@ export class ComparisonTablesAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    const page = ctx.pages[0];
-    if (!page) {
-      return this.fail(
-        "No pages scanned.",
-        "<table> elements with comparison data",
-        "No pages scanned",
-        {
-          priority: CheckPriority.Low,
-          description: ComparisonTablesAudit.meta.description,
-          code: "<table>\n  <thead><tr><th>Feature</th><th>Plan A</th><th>Plan B</th></tr></thead>\n  <tbody><tr><td>Price</td><td>$10</td><td>$20</td></tr></tbody>\n</table>",
-        },
+    let relevant = 0;
+    let marked = 0;
+    for (const page of ctx.pages) {
+      const $ = page.$;
+      // Headings in a sidebar or the site footer describe a widget, not the
+      // page. A loose test on the raw text runs before the ancestor walks;
+      // `.text()` fuses words across a line break, so it cannot decide.
+      const intent = $("h1, h2, h3, caption")
+        .toArray()
+        .some(
+          (el) =>
+            COMPARISON_WORD.test($(el).text()) &&
+            inReaderContent($, el) &&
+            comparisonIntent(readerText($, el).replace(/\s+/g, " ").trim()),
+        );
+      if (!intent) continue;
+      relevant++;
+      // A row inside a visible table is hidden only by its own markers or an
+      // ancestor below the table, and a cell only by its own markers.
+      const visibleCells = (row: Element, tag: string) =>
+        $(row)
+          .children(tag)
+          .toArray()
+          .filter((cell) => !readerHidingMarker($(cell), tag)).length;
+      const hasTable = $("table")
+        .toArray()
+        .some((el) => {
+          if (
+            $(el).is('[role="presentation"], [role="none"]') ||
+            !inReaderContent($, el)
+          )
+            return false;
+          const rows = $(el)
+            .find("tr")
+            .toArray()
+            .filter(
+              (row) =>
+                $(row).closest("table")[0] === el && !hiddenFromReaders($, row),
+            );
+          return (
+            rows.some((row) => visibleCells(row, "th") >= 2) &&
+            rows.some((row) => visibleCells(row, "td") >= 2)
+          );
+        });
+      if (hasTable) marked++;
+    }
+    const expected =
+      "A semantic data table on pages with explicit comparison intent";
+    if (!relevant)
+      return this.notApplicable(
+        "No explicit comparison content detected.",
+        expected,
+        "No relevant pages",
       );
-    }
-
-    let tableCount = 0;
-    let pageWithTable: string | undefined;
-
-    for (const p of ctx.pages) {
-      const tables = p.$("table").length;
-      if (tables > 0) {
-        tableCount += tables;
-        if (!pageWithTable) {
-          pageWithTable = p.url;
-        }
-      }
-    }
-
-    if (tableCount > 0) {
-      return this.pass(
-        `Found ${tableCount} table(s) across scanned pages.`,
-        "<table> elements with comparison data",
-        `${tableCount} table(s)`,
-        pageWithTable,
-      );
-    }
-
+    const found = `${marked}/${relevant} comparison pages have data tables`;
+    if (marked === relevant) return this.pass(found, expected, found);
+    if (marked) return this.warn(found, expected, found);
     return this.fail(
-      "No comparison tables found on any scanned page.",
-      "<table> elements with comparison data",
-      "Not found",
-      {
-        priority: CheckPriority.Low,
-        description:
-          'AI answer engines extract HTML tables to generate structured comparison answers ("What is the difference between X and Y?"). Properly structured tables with <thead> and <th> are directly rendered in AI-generated responses, giving your content prime visibility in comparison queries.',
-        code: "<table>\n  <thead><tr><th>Feature</th><th>Plan A</th><th>Plan B</th></tr></thead>\n  <tbody><tr><td>Price</td><td>$10</td><td>$20</td></tr></tbody>\n</table>",
-      },
-      page.url,
+      "No data tables found on comparison pages.",
+      expected,
+      found,
     );
   }
 }

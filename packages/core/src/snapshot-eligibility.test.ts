@@ -16,7 +16,7 @@ const source = (id: string) =>
 
 // The browser view may only claim a DOM fact for an audit whose proven consumer
 // reads a rendered page. These tests pin the four-part review of the design note
-// (docs/superpowers/specs/2026-10-20-browser-view-audits-design.md).
+// (docs/architecture/browser-snapshots.md#supported-audit-inventory).
 /**
  * Entries reviewed before the four-part rule, each in its own dossier. The grade C
  * profile check is a static field-token fact with the same limits as its grade B
