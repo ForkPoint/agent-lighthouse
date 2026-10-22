@@ -131,3 +131,45 @@ describe("ComparisonTablesAudit intent wording", () => {
     },
   );
 });
+
+describe("ComparisonTablesAudit review follow-ups", () => {
+  const audit = new ComparisonTablesAudit();
+  const status = (body: string) =>
+    audit.audit(
+      mockCheckContext([
+        mockPageContext(
+          "https://example.com/page",
+          `<html><body>${body}</body></html>`,
+          1,
+        ),
+      ]),
+    ).status;
+
+  it("ignores a comparison heading in a sidebar", () => {
+    expect(
+      status(
+        "<aside><h3>Comparison guides</h3></aside><main><h1>Contact</h1><p>Body.</p></main>",
+      ),
+    ).toBe(CheckStatus.NotApplicable);
+  });
+  it("ignores a comparison heading in a complementary region", () => {
+    expect(
+      status(
+        '<div role="complementary"><h3>Compare plans</h3></div><main><h1>Contact</h1></main>',
+      ),
+    ).toBe(CheckStatus.NotApplicable);
+  });
+  it.each(["How X compares to Y", "Compared with Postgres"])(
+    "reads %j as comparison intent",
+    (heading) => {
+      expect(status(`<main><h2>${heading}</h2><p>Body.</p></main>`)).toBe(
+        CheckStatus.Fail,
+      );
+    },
+  );
+  it("reads a heading split by a line break", () => {
+    expect(status("<main><h2>iPhone vs<br>Pixel</h2><p>Body.</p></main>")).toBe(
+      CheckStatus.Fail,
+    );
+  });
+});

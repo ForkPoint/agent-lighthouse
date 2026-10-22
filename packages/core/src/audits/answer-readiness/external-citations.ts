@@ -1,7 +1,6 @@
 import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
-import { hiddenFromReaders } from "#core/dom-visibility";
-import { inPageChrome } from "#core/page-chrome";
+import { inReaderContent } from "#core/page-chrome";
 import { weightForGrade } from "#core/scorer";
 import type { CheckContext } from "#core/check-context";
 import {
@@ -67,33 +66,31 @@ export class ExternalCitationsAudit extends Audit {
   audit(ctx: CheckContext): AuditResult {
     const links = new Set<string>();
     let relevant = 0;
+    const host = ctx.domain.toLowerCase().replace(/^www\./, "");
     for (const page of ctx.pages) {
       const $ = page.$;
       const pageLinks = new Set<string>();
       $("a[href]").each((_, el) => {
-        if (
-          hiddenFromReaders($, el) ||
-          inPageChrome($, el) ||
-          $(el).closest('aside, [role="complementary"]').length
-        )
-          return;
         const href = $(el).attr("href")?.trim();
         if (!href) return;
+        let url: URL;
         try {
-          const url = new URL(href, page.url);
-          const host = ctx.domain.toLowerCase().replace(/^www\./, "");
-          if (
-            !["http:", "https:"].includes(url.protocol) ||
-            isShareLink(url) ||
-            url.hostname === host ||
-            url.hostname.endsWith(`.${host}`)
-          )
-            return;
-          url.hash = "";
-          pageLinks.add(url.href);
+          url = new URL(href, page.url);
         } catch {
           // Invalid links do not establish an external reference.
+          return;
         }
+        // Most links are internal; test the URL before the ancestor walks.
+        if (
+          !["http:", "https:"].includes(url.protocol) ||
+          isShareLink(url) ||
+          url.hostname === host ||
+          url.hostname.endsWith(`.${host}`)
+        )
+          return;
+        if (!inReaderContent($, el)) return;
+        url.hash = "";
+        pageLinks.add(url.href);
       });
       if (pageLinks.size) relevant++;
       for (const link of pageLinks) links.add(link);

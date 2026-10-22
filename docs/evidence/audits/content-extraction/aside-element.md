@@ -82,6 +82,7 @@ The existing grade B, scored tier and weight 0.6 remain unchanged. The wider pag
 - The purchase test covers the candidate itself as well as its descendants. A buy box excluded as primary content does not suppress a separate supplementary block nested inside it.
 - Candidates inside any `<header>` are skipped. A section header holds introductory content such as the title, date or a promo badge, which is primary. Section footers are still assessed, because they often carry related links.
 - The buy-box exemption applies only to positional `sidebar`/`side-bar` names. Inside one buy box, buttons, cart forms and quantity fields repeat legitimately: a sticky copy of "Add to cart", an installment form, mobile and desktop quantity fields. Only repeated product identity, two outermost product cards or two offers, marks a rail. Checkout labels must say only "Checkout" or include "proceed to checkout".
+- A finding names the class or id token that made the block a candidate, so a theme wrapper's first token such as `shopify-section` does not hide the `promo-bar` behind it. The class hint runs before the visibility and chrome walks, which rejects almost every container cheaply.
 - Badge-shaped class names such as `promo-tag` and blocks inside a product card are not candidates. The captured furniture-retailer homepage previously failed on sale badges inside its product cards; it is now not applicable.
 
 ## Deferred

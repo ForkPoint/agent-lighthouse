@@ -12,7 +12,7 @@
 import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
 import { readerText } from "#core/dom-visibility";
-import { inPageChrome } from "#core/page-chrome";
+import { inReaderContent } from "#core/page-chrome";
 import { weightForGrade } from "#core/scorer";
 import type { CheckContext, PageContext } from "#core/check-context";
 import {
@@ -136,11 +136,7 @@ function contentTexts(page: PageContext, selector: string): string[] {
   const $ = page.$;
   return $(selector)
     .toArray()
-    .filter(
-      (el) =>
-        !inPageChrome($, el) &&
-        $(el).closest('aside, [role="complementary"]').length === 0,
-    )
+    .filter((el) => inReaderContent($, el))
     .map((el) => collapse(readerText($, el)))
     .filter(Boolean);
 }

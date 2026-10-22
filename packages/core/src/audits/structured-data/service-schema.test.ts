@@ -403,3 +403,31 @@ it.each(Object.values(PageType))(
     expect(result.scoreDisplayMode).toBe(ScoreDisplayMode.Informative);
   },
 );
+
+describe("ServiceSchemaAudit ProfessionalService fields", () => {
+  it("does not ask ProfessionalService for a provider it cannot carry", () => {
+    const ctx = mockCheckContext([
+      page(
+        ld({
+          "@context": "https://schema.org",
+          "@type": "ProfessionalService",
+          name: "Acme Legal",
+          address: "1 Main St",
+        }),
+      ),
+    ]);
+    expect(new ServiceSchemaAudit().audit(ctx).status).toBe(CheckStatus.Pass);
+  });
+  it("still asks a plain Service for its provider", () => {
+    const ctx = mockCheckContext([
+      page(
+        ld({
+          "@context": "https://schema.org",
+          "@type": "Service",
+          name: "Consulting",
+        }),
+      ),
+    ]);
+    expect(new ServiceSchemaAudit().audit(ctx).status).toBe(CheckStatus.Warn);
+  });
+});

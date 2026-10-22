@@ -439,3 +439,17 @@ describe("AsideElementAudit buy box and card shapes", () => {
     ).toBe(CheckStatus.Fail);
   });
 });
+
+describe("AsideElementAudit finding labels", () => {
+  it("names the hint token, not the first class token", () => {
+    const page = mockPageContext(
+      "https://example.com/",
+      '<html><body><div class="shopify-section shopify-section-x__promo-bar"><div class="promo-bar">Free shipping</div></div><main><p>Body.</p></main></body></html>',
+      1,
+    );
+    const result = new AsideElementAudit().audit(mockCheckContext([page]));
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.found).toContain("promo-bar");
+    expect(result.found).not.toContain("<div shopify-section>");
+  });
+});

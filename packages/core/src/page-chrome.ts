@@ -1,5 +1,9 @@
 import type { CheerioAPI } from "cheerio";
 import type { AnyNode } from "domhandler";
+import { hiddenFromReaders } from "#core/dom-visibility";
+
+/** Supplementary regions extractors drop before the main text is read. */
+const SUPPLEMENTARY = 'aside, [role="complementary"]';
 
 /** Landmarks that are site chrome wherever they sit. */
 const ALWAYS_CHROME =
@@ -27,4 +31,21 @@ export function inPageChrome($: CheerioAPI, el: AnyNode): boolean {
     .add(node.filter("header, footer"))
     .toArray()
     .some((region) => $(region).parents(SECTIONING).length === 0);
+}
+
+/**
+ * Whether an element is part of what a reader gets as the page's own
+ * content: visible, outside site chrome, and outside a supplementary region.
+ * A footer "Glossary" heading, a sidebar "Comparison guides" widget or a
+ * "Recent posts" date list would otherwise mark every page on the site.
+ *
+ * Callers with a cheap text or attribute test should run it first; the three
+ * checks here walk the element's ancestors.
+ */
+export function inReaderContent($: CheerioAPI, el: AnyNode): boolean {
+  return (
+    !hiddenFromReaders($, el) &&
+    !inPageChrome($, el) &&
+    $(el).closest(SUPPLEMENTARY).length === 0
+  );
 }

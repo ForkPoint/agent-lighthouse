@@ -65,7 +65,9 @@ requirement for this audit's `name`/`provider` pair.
 
 The review establishes no scored consumer path. It does not prove that no
 consumer exists anywhere. `name` and `provider` are coverage conventions,
-not mandatory Schema.org properties. The check keeps its existing truthy-value
+not mandatory Schema.org properties. ProfessionalService is a LocalBusiness
+subtype with no `provider` property, so it is asked for `name` only; a node
+typed as both is treated as a Service. The check keeps its existing truthy-value
 and best-covered-node tests; it is not schema validation.
 
 ## How it scores

@@ -36,11 +36,20 @@ function allSchemas(ctx: CheckContext): object[] {
   return ctx.pages.flatMap((p) => flattenJsonLd(p.structuredData ?? p.jsonLd));
 }
 
-/** Coverage fields, not mandatory Schema.org properties or consumer requirements. */
-const REQUIRED_PROPS = ["name", "provider"] as const;
+/**
+ * Coverage fields, not mandatory Schema.org properties or consumer
+ * requirements. ProfessionalService is a LocalBusiness subtype: it is itself
+ * the provider and defines no `provider` property, so only a Service node is
+ * asked for one.
+ */
+const SERVICE_PROPS = ["name", "provider"] as const;
+const PROFESSIONAL_SERVICE_PROPS = ["name"] as const;
 
 function missingProps(node: Record<string, unknown>): string[] {
-  return REQUIRED_PROPS.filter((prop) => !node[prop]);
+  const props = matchesAnyType(node, ["Service"])
+    ? SERVICE_PROPS
+    : PROFESSIONAL_SERVICE_PROPS;
+  return props.filter((prop) => !node[prop]);
 }
 
 export class ServiceSchemaAudit extends Audit {

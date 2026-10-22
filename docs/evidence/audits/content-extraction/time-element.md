@@ -48,7 +48,7 @@ The check remains C/informative with weight 0. It reports time markup, not AI fr
 
 ## Limits
 
-Date detection is deliberately limited, not a multilingual date parser. The verdict counts pages, not every date on a page. Explicit datetime values receive a nonempty-presence check, not full syntax/calendar validation. Text-only time values recognize a limited set of machine forms; additional HTML time syntaxes remain deferred.
+Date detection is deliberately limited, not a multilingual date parser. It reads dates in time, paragraph, span, link, list, table-cell, heading, caption, address and blockquote elements, and in a `<div>` with no block children. The verdict counts pages, not every date on a page. Explicit datetime values receive a nonempty-presence check, not full syntax/calendar validation. Text-only time values recognize a limited set of machine forms; additional HTML time syntaxes remain deferred.
 
 ## Implementation deviations
 
@@ -56,7 +56,10 @@ Date detection is deliberately limited, not a multilingual date parser. The verd
 
 - The 2026-10-21 correction replaces broad page-type filtering with independent feature selection. Runner tests cover all five types and both provenance modes. Mixed samples exclude unrelated and unread pages.
 - Dates in site chrome do not select a page. Site chrome is navigation plus a `<header>` or `<footer>` outside article, aside, main, nav and section (or their explicit ARIA roles), which is the HTML-AAM banner and contentinfo scope. A header or footer inside an article is content: post dates, titles and sources often sit there.
-- Text is read through the shared `readerText` helper: hidden descendants of a visible element (`hidden`, inline `display:none` or `visibility:hidden`, `aria-hidden`) are pruned before matching.
+- Text is read through the shared `readerText` helper: hidden descendants of a visible element (`hidden`, inline `display:none` or `visibility:hidden`, `aria-hidden`) are pruned before matching. Block boundaries become spaces, so a date split across two cells or lines still reads as one date.
+- Dates inside `aside` or `role="complementary"` do not select a page: a "Recent posts" widget would otherwise make every page date-bearing.
+- An ISO date may run straight into a time (`2024-03-15T10:00Z`); only a digit after the day is refused.
+- A hiding marker on `<html>` or `<body>` does not hide the page. Themes serve `<body style="visibility:hidden">` and reveal it on load; Readability removes the hidden body and rebuilds it from its children, so the text still reaches that reader.
 
 ## Deferred
 

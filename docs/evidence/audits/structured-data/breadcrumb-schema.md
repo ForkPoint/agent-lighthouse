@@ -49,7 +49,7 @@ This remains a markup-presence check, not full validation of ListItem fields, po
 
 ## Implementation deviations
 
-- Every visible breadcrumb-labelled candidate is assessed on its own steps, and a plain `<nav>` or `role="navigation"` inside one is assessed too. Candidates containing main, header or article regions are page wrappers, not trails. State and toggle classes such as `has-breadcrumbs`, `no-breadcrumbs` or `breadcrumbs-disabled` do not label a trail.
+- Every visible breadcrumb-labelled candidate (`nav`, `ol`, `ul`, `div`, `section`, `p`, `span` or `role="navigation"`) is assessed on its own steps, and a plain `<nav>` or `role="navigation"` inside one is assessed too. A trail is two list items, or two steps counting the current page: an `aria-current` marker or plain text beside the links, as in `Home / Product`. A link needs a target, not text, because a home step is often an icon. A lone link, with or without a separator glyph, is not a trail. Candidates containing main, header or article regions are page wrappers, not trails. State and toggle classes such as `has-breadcrumbs`, `no-breadcrumbs` or `breadcrumbs-disabled` do not label a trail.
 
 - The 2026-10-21 correction replaces broad page-type filtering with independent feature selection. Runner tests cover all five types and both provenance modes. Mixed samples exclude unrelated and unread pages.
 

@@ -3,7 +3,7 @@ import type { Element } from "domhandler";
 import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
 import type { CheckContext } from "#core/check-context";
-import { hiddenFromReaders } from "#core/dom-visibility";
+import { hiddenFromReaders, readerText } from "#core/dom-visibility";
 import { weightForGrade } from "#core/scorer";
 import { flattenJsonLd } from "#core/parser";
 import {
@@ -39,10 +39,16 @@ function breadcrumbHint(node: Cheerio<Element>): boolean {
   );
 }
 
+/** Separator glyphs between breadcrumb steps; not a step by themselves. */
+const SEPARATORS = /[\s/\\>»›→|·•:,.\-–—]+/g;
+
 /**
  * Whether a candidate holds a breadcrumb trail of its own: two visible list
- * items, or two distinct targets counting a current-page marker. A page
- * wrapper that holds main content or a site banner is not a trail.
+ * items, or two steps counting the current page. The current page is an
+ * `aria-current` marker or plain text beside the links, as in
+ * `<a href="/">Home</a> / Product`. A link needs a target, not text: a home
+ * step is often an icon. A page wrapper that holds main content or a site
+ * banner is not a trail.
  */
 function isTrail($: CheerioAPI, el: Element): boolean {
   const node = $(el);
@@ -56,28 +62,23 @@ function isTrail($: CheerioAPI, el: Element): boolean {
     .find("a[href]")
     .toArray()
     .filter(
-      (link) =>
-        !hiddenFromReaders($, link) &&
-        $(link).text().trim() &&
-        $(link).attr("href")?.trim(),
+      (link) => !hiddenFromReaders($, link) && $(link).attr("href")?.trim(),
     );
   if (!links.length) return false;
   const items = node
     .find("li")
     .toArray()
-    .filter((item) => !hiddenFromReaders($, item) && $(item).text().trim());
-  if (items.length >= 2) return true;
-  const targets = new Set(links.map((link) => $(link).attr("href")));
-  const current = node
-    .find('[aria-current="page"]')
-    .toArray()
-    .some(
+    .filter(
       (item) =>
         !hiddenFromReaders($, item) &&
-        $(item).text().trim() &&
-        !$(item).is("a[href]"),
+        ($(item).text().trim() || $(item).find("a[href]").length > 0),
     );
-  return targets.size + Number(current) >= 2;
+  if (items.length >= 2) return true;
+  const targets = new Set(links.map((link) => $(link).attr("href")));
+  let text = readerText($, el);
+  for (const link of links) text = text.replace(readerText($, link), " ");
+  const currentStep = text.replace(SEPARATORS, "").length > 0;
+  return targets.size + Number(currentStep) >= 2;
 }
 
 export class BreadcrumbSchemaAudit extends Audit {
@@ -128,7 +129,9 @@ export class BreadcrumbSchemaAudit extends Audit {
         matchesType(schema as Record<string, unknown>, "BreadcrumbList"),
       );
       const $ = page.$;
-      const hinted = $('nav, ol, ul, div, [role="navigation"]')
+      const hinted = $(
+        'nav, ol, ul, div, section, p, span, [role="navigation"]',
+      )
         .toArray()
         .filter((el) => breadcrumbHint($(el)) && !hiddenFromReaders($, el));
       // A hinted wrapper can hold the trail inside a plain <nav>; that nav is

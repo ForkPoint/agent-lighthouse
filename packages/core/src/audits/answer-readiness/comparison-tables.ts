@@ -1,7 +1,12 @@
+import type { Element } from "domhandler";
 import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
-import { hiddenFromReaders, readerText } from "#core/dom-visibility";
-import { inPageChrome } from "#core/page-chrome";
+import {
+  hiddenFromReaders,
+  readerHidingMarker,
+  readerText,
+} from "#core/dom-visibility";
+import { inReaderContent } from "#core/page-chrome";
 import { weightForGrade } from "#core/scorer";
 import type { CheckContext } from "#core/check-context";
 import {
@@ -17,10 +22,12 @@ import {
 // left out: "Setting up VS Code" names a product.
 // "Compare-at" is a product-page price label, and a heading that is only
 // "Compare" labels a widget, not a comparison.
+const COMPARISON_WORD = /vs|versus|compar/i;
+
 function comparisonIntent(text: string): boolean {
   if (/\S\s+(?:[vV]s\.?|VS\.|[vV]ersus|VERSUS)\s+\S/.test(text)) return true;
   if (/^compare$/i.test(text)) return false;
-  return /\bcompar(?:e|ing|ison|isons)\b(?!-at\b)/i.test(text);
+  return /\bcompar(?:e|es|ed|ing|ison|isons)\b(?!-at\b)/i.test(text);
 }
 
 export class ComparisonTablesAudit extends Audit {
@@ -58,40 +65,44 @@ export class ComparisonTablesAudit extends Audit {
     let marked = 0;
     for (const page of ctx.pages) {
       const $ = page.$;
-      const visible = (el: Parameters<typeof hiddenFromReaders>[1]) =>
-        !hiddenFromReaders($, el) && !inPageChrome($, el);
+      // Headings in a sidebar or the site footer describe a widget, not the
+      // page. A loose test on the raw text runs before the ancestor walks;
+      // `.text()` fuses words across a line break, so it cannot decide.
       const intent = $("h1, h2, h3, caption")
         .toArray()
         .some(
           (el) =>
-            visible(el) &&
+            COMPARISON_WORD.test($(el).text()) &&
+            inReaderContent($, el) &&
             comparisonIntent(readerText($, el).replace(/\s+/g, " ").trim()),
         );
       if (!intent) continue;
       relevant++;
+      // A row inside a visible table is hidden only by its own markers or an
+      // ancestor below the table, and a cell only by its own markers.
+      const visibleCells = (row: Element, tag: string) =>
+        $(row)
+          .children(tag)
+          .toArray()
+          .filter((cell) => !readerHidingMarker($(cell), tag)).length;
       const hasTable = $("table")
         .toArray()
         .some((el) => {
-          if (!visible(el) || $(el).is('[role="presentation"], [role="none"]'))
+          if (
+            $(el).is('[role="presentation"], [role="none"]') ||
+            !inReaderContent($, el)
+          )
             return false;
-          const table = $(el);
-          const rows = table
+          const rows = $(el)
             .find("tr")
             .toArray()
-            .filter((row) => $(row).closest("table")[0] === el && visible(row));
+            .filter(
+              (row) =>
+                $(row).closest("table")[0] === el && !hiddenFromReaders($, row),
+            );
           return (
-            rows.some(
-              (row) =>
-                $(row)
-                  .children("th")
-                  .filter((_, cell) => visible(cell)).length >= 2,
-            ) &&
-            rows.some(
-              (row) =>
-                $(row)
-                  .children("td")
-                  .filter((_, cell) => visible(cell)).length >= 2,
-            )
+            rows.some((row) => visibleCells(row, "th") >= 2) &&
+            rows.some((row) => visibleCells(row, "td") >= 2)
           );
         });
       if (hasTable) marked++;

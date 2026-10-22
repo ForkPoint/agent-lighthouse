@@ -152,3 +152,20 @@ describe("UniqueDataAudit marketing claims", () => {
     expect(audit.audit(mockCheckContext([page])).status).toBe(CheckStatus.Pass);
   });
 });
+
+describe("UniqueDataAudit plural context words", () => {
+  const audit = new UniqueDataAudit();
+  it.each([
+    "Studies show 40% of buyers agreed.",
+    "Our surveys found 73% of participants agreed.",
+    "Independent benchmarks put throughput at 1,200 requests.",
+    "Researchers measured a 12% drop.",
+  ])("counts %j", (text) => {
+    const page = mockPageContext(
+      "https://example.com/report",
+      `<html><body><main><p>${text}</p></main></body></html>`,
+      1,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe(CheckStatus.Pass);
+  });
+});

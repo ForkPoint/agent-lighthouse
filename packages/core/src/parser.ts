@@ -891,10 +891,17 @@ const LISTING_SCHEMA_TYPES = [
   "OfferCatalog",
   "ProductCollection",
 ];
-const PRODUCT_CARD_SELECTOR =
-  '[class*="product-card"], [class*="product-item"], [class*="product-tile"], [data-product-id], [class*="product-grid"] > *, [class*="product-list"] > *';
-const PRODUCT_GRID_SELECTOR =
-  '[class*="product-grid"], [class*="products-grid"], [class*="product-list"], [class*="products-list"]';
+/** One product's card in a listing or rail. Shared with the aside audit. */
+export const PRODUCT_CARD_SELECTOR =
+  '[class*="product-card"], [class*="product-item"], [class*="product-tile"], [data-product-id]';
+/** Cards plus the direct children of a grid, however a theme names them. */
+const LISTING_CARD_SELECTOR = `${PRODUCT_CARD_SELECTOR}, [class*="product-grid"] > *, [class*="product-list"] > *`;
+/**
+ * A whole class token that names a product results container. A substring
+ * test would also match `product-list__title` or `product-listing-links`.
+ */
+const PRODUCT_GRID_TOKEN =
+  /^products?-(?:grid|list)(?:[-_]{1,2}(?:container|wrapper|inner|items))?$/i;
 const ADD_TO_CART_SELECTOR =
   '[class*="add-to-cart"], [id*="add-to-cart"], button:contains("Add to Cart"), button:contains("Add to Bag"), [data-action="add-to-cart"]';
 
@@ -923,7 +930,7 @@ function inSecondaryRegion($: CheerioAPI, el: Element): boolean {
 
 /** Outermost card matches: a card's parts often repeat the card class. */
 function outermostCards($: CheerioAPI): Element[] {
-  const matches = $(PRODUCT_CARD_SELECTOR).toArray();
+  const matches = $(LISTING_CARD_SELECTOR).toArray();
   const set = new Set(matches);
   return matches.filter(
     (el) =>
@@ -1057,10 +1064,20 @@ function categorySignals(
       .length > 0;
 
   // A client-rendered listing serves its grid container empty; the container
-  // still names product results, which an editorial index does not.
-  const hasProductGrid = $(PRODUCT_GRID_SELECTOR)
+  // still names product results, which an editorial index does not. A menu
+  // or footer list with that name holds links, and a rendered grid holds
+  // cards, which the card count above already covers.
+  const hasProductGrid = $('[class*="product"]')
     .toArray()
-    .some((el) => !inSecondaryRegion($, el));
+    .some(
+      (el) =>
+        ($(el).attr("class") ?? "")
+          .split(/\s+/)
+          .some((token) => PRODUCT_GRID_TOKEN.test(token)) &&
+        !inSecondaryRegion($, el) &&
+        $(el).closest("nav, header, footer").length === 0 &&
+        $(el).find("a[href]").length === 0,
+    );
 
   if (
     (productCards.length >= 2 || hasProductGrid) &&

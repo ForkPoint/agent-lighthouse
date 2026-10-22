@@ -1662,3 +1662,30 @@ describe("parser — value-rule and attribute-absent branches", () => {
     expect(extractNavLinks($)).toEqual(["/ok"]);
   });
 });
+
+describe("pagination-filter hint and product containers", () => {
+  it("does not read a header menu named product-list as a listing grid", () => {
+    const $ = parseHtml(
+      '<header><ul class="product-list"><li><a href="/a">A</a></li></ul></header><main><h1>Stories</h1><nav class="pagination"></nav><div class="filter"></div></main>',
+    );
+    expect(detectPageType("https://x.com/stories", $, [], {}, false)).toBe(
+      PageType.General,
+    );
+  });
+  it("does not read a product-list__title substring as a grid", () => {
+    const $ = parseHtml(
+      '<main><h2 class="product-list__title">Picks</h2><nav class="pagination"></nav><div class="filter"></div></main>',
+    );
+    expect(detectPageType("https://x.com/stories", $, [], {}, false)).toBe(
+      PageType.General,
+    );
+  });
+  it("does not read a footer link list named products-list as a grid", () => {
+    const $ = parseHtml(
+      '<main><h1>Stories</h1><nav class="pagination"></nav><div class="filter"></div></main><footer><ul class="products-list"><li><a href="/a">A</a></li></ul></footer>',
+    );
+    expect(detectPageType("https://x.com/stories", $, [], {}, false)).toBe(
+      PageType.General,
+    );
+  });
+});

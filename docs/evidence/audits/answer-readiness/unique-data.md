@@ -19,7 +19,7 @@ sources:
 
 ## What it checks
 
-Reports numeric figures in visible paragraphs with an English research or measurement cue: survey, study, research, benchmark, respondents, participants, sampled or measured. Prices are removed before matching. Percentages, grouped thousands and selected population/measurement units can then count. Site-level navigation, header and footer regions, asides and their equivalent ARIA landmarks do not contribute. An observed contextual figure yields an informative pass; absence returns NA.
+Reports numeric figures in visible paragraphs with an English research or measurement cue: survey, study, research, benchmark and their plural or agent forms (surveys, studies, researchers, benchmarks), respondents, participants, sampled or measured. Prices are removed before matching. Percentages, grouped thousands and selected population/measurement units can then count. Site-level navigation, header and footer regions, asides and their equivalent ARIA landmarks do not contribute. An observed contextual figure yields an informative pass; absence returns NA.
 
 ## Why it matters
 

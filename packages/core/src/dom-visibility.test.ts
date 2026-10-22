@@ -211,3 +211,51 @@ describe("readerText", () => {
     expect(text(html)).toBe(expected);
   });
 });
+
+describe("document-level hiding markers", () => {
+  // A theme hides <body> inline until its script reveals it. Readability
+  // removes the hidden body and then rebuilds it from the detached children,
+  // so the text still reaches the reader; the a11y tree reflects the revealed
+  // page. Neither html nor body counts as a hiding ancestor.
+  it.each([
+    '<html><body style="visibility:hidden"><p id="t">a</p></body></html>',
+    '<html><body style="display:none"><p id="t">a</p></body></html>',
+    '<html><body hidden><p id="t">a</p></body></html>',
+    '<html style="visibility:hidden"><body><p id="t">a</p></body></html>',
+  ])("ignores %s", (html) => {
+    const $ = cheerio.load(html);
+    const el = $("#t")[0]!;
+    expect(hiddenFromReaders($, el)).toBe(false);
+    expect(notRendered($, el)).toBe(false);
+    expect(readerText($, el)).toBe("a");
+  });
+  it("still honours a hidden wrapper below body", () => {
+    const $ = cheerio.load(
+      '<html><body style="visibility:hidden"><div hidden><p id="t">a</p></div></body></html>',
+    );
+    expect(hiddenFromReaders($, $("#t")[0]!)).toBe(true);
+  });
+});
+
+describe("readerText word boundaries", () => {
+  const text = (html: string) => {
+    const $ = cheerio.load(html);
+    return readerText($, $("#t")[0]!).replace(/\s+/g, " ").trim();
+  };
+  it.each([
+    ['<h2 id="t">iPhone vs<br>Pixel</h2>', "iPhone vs Pixel"],
+    ['<ul id="t"><li>Survey</li><li>40%</li></ul>', "Survey 40%"],
+    ['<div id="t"><p>a</p><p>b</p></div>', "a b"],
+    [
+      '<table><tr><td id="t"><div>March 3,</div><div>2024</div></td></tr></table>',
+      "March 3, 2024",
+    ],
+    ['<p id="t">un<em>believ</em>able</p>', "unbelievable"],
+    [
+      '<p id="t">A <a href="/x">link</a>, then <strong>bold</strong>.</p>',
+      "A link, then bold.",
+    ],
+  ])("reads %s as %j", (html, expected) => {
+    expect(text(html)).toBe(expected);
+  });
+});

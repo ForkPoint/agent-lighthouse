@@ -5,6 +5,7 @@ import { Audit } from "#core/audit";
 import type { CheckContext, PageContext } from "#core/check-context";
 import { inPageChrome } from "#core/page-chrome";
 import { hiddenFromReaders } from "#core/dom-visibility";
+import { PRODUCT_CARD_SELECTOR } from "#core/parser";
 import { weightForGrade } from "#core/scorer";
 import {
   AuditTier,
@@ -33,10 +34,6 @@ const SUPPLEMENTARY_HINT =
  * whatever it holds.
  */
 const POSITIONAL_HINT = /(?:^|[^a-z])side-?bar(?:[^a-z]|$)/i;
-
-/** One product's card in a listing or rail. */
-const PRODUCT_CARD =
-  '[class*="product-card"], [class*="product-item"], [class*="product-tile"], [data-product-id]';
 
 /** An `<aside>` or an explicit `role="complementary"` — the marked forms. */
 const MARKED_SELECTOR = 'aside, [role="complementary"]';
@@ -78,7 +75,10 @@ function isBuyBox($: CheerioAPI, el: Element): boolean {
     visible(selector).filter(
       (match) => match === el || !$(match).parentsUntil(el).is(selector),
     ).length;
-  if (outermost(PRODUCT_CARD) > 1 || outermost('[itemprop="offers"]') > 1)
+  if (
+    outermost(PRODUCT_CARD_SELECTOR) > 1 ||
+    outermost('[itemprop="offers"]') > 1
+  )
     return false;
   return (
     visible(PURCHASE_CONTROL).length > 0 ||
@@ -100,8 +100,14 @@ interface PageFindings {
   readonly unmarked: string[];
 }
 
+/**
+ * A short label for a finding: the tag plus the class or id token that made
+ * the block a candidate, so a theme wrapper's first token such as
+ * `shopify-section` does not hide the `promo-bar` behind it.
+ */
 function describe(tag: string, attrs: string): string {
-  const token = attrs.trim().split(/\s+/)[0] ?? "";
+  const tokens = attrs.trim().split(/\s+/).filter(Boolean);
+  const token = tokens.find((t) => SUPPLEMENTARY_HINT.test(t)) ?? tokens[0];
   return token ? `<${tag} ${token}>` : `<${tag}>`;
 }
 
@@ -127,17 +133,19 @@ function findSupplementary(page: PageContext): PageFindings {
 
   $(CANDIDATE_SELECTOR).each((_, el) => {
     const node = $(el);
+    // The class hint rejects almost every container, so it runs before the
+    // ancestor walks below.
+    const attrs = `${node.attr("class") ?? ""} ${node.attr("id") ?? ""}`;
+    if (!SUPPLEMENTARY_HINT.test(attrs)) return;
+    if (node.is('[role="main"]')) return;
     if (hiddenFromReaders($, el) || inPageChrome($, el)) return;
     // A sectioning header holds that section's introductory content: its
     // title, date and badges such as a product's promo tag. That is primary
     // content, unlike a section footer, which often carries related links.
     if (node.closest("header").length > 0) return;
-    if (node.is('[role="main"]')) return;
-    const attrs = `${node.attr("class") ?? ""} ${node.attr("id") ?? ""}`;
-    if (!SUPPLEMENTARY_HINT.test(attrs)) return;
     // A sale badge or quick-add block inside a product card belongs to that
     // card, not beside the page's content.
-    if (node.parents(PRODUCT_CARD).length > 0) return;
+    if (node.parents(PRODUCT_CARD_SELECTOR).length > 0) return;
     if (isBuyBox($, el)) return;
 
     // Inside a marked landmark the block is already handled — Readability and

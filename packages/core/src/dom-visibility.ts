@@ -137,11 +137,21 @@ export function styleHidesFromReaders(style: string): boolean {
 
 type Marker = ($n: ReturnType<CheerioAPI>, tag: string) => boolean | undefined;
 
+/**
+ * The document roots never hide their content. A theme that serves
+ * `<body style="visibility:hidden">` reveals it once its script runs, so the
+ * rendered page and its accessibility tree show everything. Readability
+ * removes the hidden body and then rebuilds it from the detached children
+ * without scoring them, so the text still reaches that reader too. Treating
+ * the root as hidden would silence every content audit on such a site.
+ */
+const DOCUMENT_ROOTS = new Set(["html", "body"]);
+
 function anyAncestor($: CheerioAPI, el: AnyNode, hides: Marker): boolean {
   let node: AnyNode | null = el;
   while (node) {
     const tag = (node as { tagName?: string }).tagName?.toLowerCase();
-    if (tag && hides($(node), tag)) return true;
+    if (tag && !DOCUMENT_ROOTS.has(tag) && hides($(node), tag)) return true;
     node = node.parent as AnyNode | null;
   }
   return false;
@@ -173,7 +183,8 @@ function unrenderedMarker($n: ReturnType<CheerioAPI>, tag: string): boolean {
 function visibilityHidden($: CheerioAPI, el: AnyNode): boolean {
   let node: AnyNode | null = el;
   while (node) {
-    if ((node as { tagName?: string }).tagName) {
+    const tag = (node as { tagName?: string }).tagName?.toLowerCase();
+    if (tag && !DOCUMENT_ROOTS.has(tag)) {
       const value = declaredValue(
         $(node).attr("style") ?? "",
         HidingProperty.Visibility,
@@ -221,10 +232,46 @@ export function hiddenFromReaders($: CheerioAPI, el: AnyNode): boolean {
 const NON_TEXT_TAGS = new Set(["script", "style", "noscript", "template"]);
 
 /**
+ * Phrasing elements whose text runs on with the text around them, so
+ * `un<em>believ</em>able` stays one word. Every other element, and `<br>`,
+ * starts a new run: a reader renders `<li>Survey</li><li>40%</li>` as two
+ * words, and `.text()` would fuse them into one.
+ */
+const INLINE_TAGS = new Set([
+  "a",
+  "abbr",
+  "b",
+  "bdi",
+  "bdo",
+  "cite",
+  "code",
+  "data",
+  "del",
+  "dfn",
+  "em",
+  "i",
+  "ins",
+  "kbd",
+  "mark",
+  "q",
+  "s",
+  "samp",
+  "small",
+  "span",
+  "strong",
+  "sub",
+  "sup",
+  "time",
+  "u",
+  "var",
+]);
+
+/**
  * The text a reader gets from an element: empty when the element is hidden
  * from readers, and otherwise its text with every hidden or non-text subtree
  * pruned. A visible parent does not make each descendant visible, so a
- * pattern matched against `.text()` would read hidden children too.
+ * pattern matched against `.text()` would read hidden children too. Block
+ * boundaries and line breaks become a space; callers collapse whitespace.
  */
 export function readerText($: CheerioAPI, el: AnyNode): string {
   if (hiddenFromReaders($, el)) return "";
@@ -238,7 +285,10 @@ export function readerText($: CheerioAPI, el: AnyNode): string {
       if (!isTag(child)) continue;
       const tag = child.tagName.toLowerCase();
       if (NON_TEXT_TAGS.has(tag) || readerHidingMarker($(child), tag)) continue;
+      const inline = INLINE_TAGS.has(tag);
+      if (!inline) parts.push(" ");
       walk(child);
+      if (!inline) parts.push(" ");
     }
   };
   walk(el);

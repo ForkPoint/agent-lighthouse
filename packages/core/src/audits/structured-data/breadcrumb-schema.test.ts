@@ -190,3 +190,51 @@ describe("BreadcrumbSchemaAudit trail shapes", () => {
     expect(status(body)).toBe(CheckStatus.NotApplicable);
   });
 });
+
+describe("BreadcrumbSchemaAudit trail shapes from review", () => {
+  const audit = new BreadcrumbSchemaAudit();
+  const status = (body: string) =>
+    audit.audit(
+      mockCheckContext([
+        mockPageContext(
+          "https://example.com/c/item",
+          `<html><body>${body}<main><p>Body.</p></main></body></html>`,
+          1,
+        ),
+      ]),
+    ).status;
+
+  it.each([
+    [
+      "a one-link trail with a text current step",
+      '<nav class="woocommerce-breadcrumb"><a href="/">Home</a> / Product</nav>',
+    ],
+    [
+      "an icon-only home link",
+      '<nav aria-label="Breadcrumb"><ol><li><a href="/"><svg></svg></a></li><li><a href="/c">Cat</a></li></ol></nav>',
+    ],
+    [
+      "a section wrapper",
+      '<section class="breadcrumbs"><a href="/">Home</a> › <a href="/c">Cat</a> › Here</section>',
+    ],
+    [
+      "a paragraph wrapper",
+      '<p id="breadcrumbs"><a href="/">Home</a> » <span>Here</span></p>',
+    ],
+  ])("finds the trail in %s", (_, body) => {
+    expect(status(body)).toBe(CheckStatus.Fail);
+  });
+
+  it.each([
+    [
+      "a lone home link with a separator",
+      '<nav class="breadcrumb"><a href="/">Home</a> /</nav>',
+    ],
+    [
+      "a lone icon link",
+      '<nav class="breadcrumb"><a href="/"><svg></svg></a></nav>',
+    ],
+  ])("ignores %s", (_, body) => {
+    expect(status(body)).toBe(CheckStatus.NotApplicable);
+  });
+});

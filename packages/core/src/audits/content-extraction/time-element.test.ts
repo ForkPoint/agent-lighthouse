@@ -166,3 +166,44 @@ it("stops reading candidates once the page has time markup", () => {
     spy.mockRestore();
   }
 });
+
+describe("TimeElementAudit review follow-ups", () => {
+  const audit = new TimeElementAudit();
+  const status = (body: string) =>
+    audit.audit(
+      mockCheckContext([
+        mockPageContext(
+          "https://example.com/page",
+          `<html><body>${body}</body></html>`,
+          1,
+        ),
+      ]),
+    ).status;
+
+  it("ignores dates in a sidebar", () => {
+    expect(
+      status(
+        "<aside><ul><li>Recent: March 3, 2024</li></ul></aside><main><p>Contact us.</p></main>",
+      ),
+    ).toBe(CheckStatus.NotApplicable);
+  });
+  it.each([
+    ["a div", '<main><div class="post-date">March 3, 2024</div></main>'],
+    [
+      "a table cell",
+      "<main><table><tr><td>March 3, 2024</td></tr></table></main>",
+    ],
+    ["a heading", "<main><h2>Changelog March 3, 2024</h2></main>"],
+    ["an ISO datetime", "<main><p>Updated 2024-03-15T10:00Z</p></main>"],
+  ])("finds a date in %s", (_, body) => {
+    expect(status(body)).toBe(CheckStatus.Fail);
+  });
+  it("reads time markup under a body a theme hides until load", () => {
+    const page = mockPageContext(
+      "https://example.com/page",
+      '<html><body style="visibility: hidden;"><main><time datetime="2025-01-15">January 15, 2025</time></main></body></html>',
+      1,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe(CheckStatus.Pass);
+  });
+});

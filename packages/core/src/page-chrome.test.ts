@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import * as cheerio from "cheerio";
-import { inPageChrome } from "./page-chrome";
+import { inPageChrome, inReaderContent } from "./page-chrome";
 
 function chrome(html: string): boolean {
   const $ = cheerio.load(html);
@@ -52,3 +52,32 @@ it.each(["main", "article", "complementary", "region"])(
     expect(inPageChrome($, $("h1")[0]!)).toBe(false);
   },
 );
+
+describe("inReaderContent", () => {
+  const content = (html: string): boolean => {
+    const $ = cheerio.load(html);
+    return inReaderContent($, $("#t")[0]!);
+  };
+  it.each([
+    ["main content", '<main><p id="t">x</p></main>'],
+    [
+      "an article footer",
+      '<article><footer><a id="t">x</a></footer></article>',
+    ],
+  ])("counts %s", (_, html) => {
+    expect(content(html)).toBe(true);
+  });
+  it.each([
+    ["an aside", '<aside><p id="t">x</p></aside>'],
+    ["a complementary role", '<div role="complementary"><p id="t">x</p></div>'],
+    ["the page footer", '<footer><p id="t">x</p></footer>'],
+    ["navigation", '<nav><a id="t">x</a></nav>'],
+    ["hidden text", '<main><p id="t" hidden>x</p></main>'],
+    [
+      "an inline-hidden ancestor",
+      '<main><div style="display:none"><p id="t">x</p></div></main>',
+    ],
+  ])("excludes %s", (_, html) => {
+    expect(content(html)).toBe(false);
+  });
+});

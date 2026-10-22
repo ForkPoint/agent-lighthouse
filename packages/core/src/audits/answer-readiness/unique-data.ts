@@ -2,8 +2,8 @@ import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
 import { weightForGrade } from "#core/scorer";
 import type { CheckContext } from "#core/check-context";
-import { hiddenFromReaders, readerText } from "#core/dom-visibility";
-import { inPageChrome } from "#core/page-chrome";
+import { readerText } from "#core/dom-visibility";
+import { inReaderContent } from "#core/page-chrome";
 import {
   AuditTier,
   CheckPriority,
@@ -16,7 +16,7 @@ import {
 // Conservative English research context. Numeric matches alone, especially
 // prices and discounts, do not prove statistics or originality.
 const CONTEXT =
-  /\b(?:survey|study|research|benchmark|respondents|participants|sampled|measured)\b/i;
+  /\b(?:surveys?|stud(?:y|ies)|research(?:ers)?|benchmarks?|respondents|participants|sampled|measured)\b/i;
 // Marketing claims reuse the percent sign: "100% satisfaction guaranteed",
 // "30% off", "100% cotton". A figure followed by one of these words is a
 // claim about the offer, not a measurement.
@@ -62,12 +62,10 @@ export class UniqueDataAudit extends Audit {
       const $ = page.$;
       let observed = false;
       $("p").each((_, el) => {
-        if (
-          hiddenFromReaders($, el) ||
-          inPageChrome($, el) ||
-          $(el).closest('aside, [role="complementary"]').length
-        )
-          return;
+        // The raw text is tested first so only paragraphs with a research
+        // word pay for the ancestor walks.
+        if (!CONTEXT.test($(el).text())) return;
+        if (!inReaderContent($, el)) return;
         const text = readerText($, el).replace(/\s+/g, " ").trim();
         if (!CONTEXT.test(text)) return;
         const withoutPrices = text.replace(

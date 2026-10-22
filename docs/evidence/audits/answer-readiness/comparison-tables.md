@@ -28,7 +28,7 @@ sources:
 
 ## What it checks
 
-Visible headings or captions containing compare, comparing, comparison, versus or vs establish comparison intent on every page type. An ordinary table, price or product classification does not establish that intent. Relevant pages need a visible table with a header row of at least two header cells and a data row of at least two data cells. Presentation tables do not count. All relevant pages covered: pass; some: warn; none: fail; no relevant pages: NA.
+Visible headings or captions containing compare, compares, compared, comparing, comparison, versus or vs establish comparison intent on every page type. An ordinary table, price or product classification does not establish that intent. Relevant pages need a visible table with a header row of at least two header cells and a data row of at least two data cells. Presentation tables do not count. All relevant pages covered: pass; some: warn; none: fail; no relevant pages: NA.
 
 ## Why it matters
 
@@ -53,8 +53,8 @@ Intent detection covers explicit English headings and captions only. Prose compa
 - Comparison keywords use a word boundary, so punctuation such as a comma after "comparison" still selects the page. "vs" or "versus" must sit between two terms, and a bare upper-case "VS" is not read as "versus", so "Setting up VS Code" does not qualify. "Compare-at" price labels and a heading that is only "Compare" do not establish intent.
 
 - The 2026-10-21 correction replaces broad page-type filtering with independent feature selection. Runner tests cover all five types and both provenance modes. Mixed samples exclude unrelated and unread pages.
-- Headings, captions and tables in site chrome are ignored. Site chrome is navigation plus a `<header>` or `<footer>` outside article, aside, main, nav and section (or their explicit ARIA roles), which is the HTML-AAM banner and contentinfo scope. A header or footer inside an article is content: post dates, titles and sources often sit there.
-- Text is read through the shared `readerText` helper: hidden descendants of a visible element (`hidden`, inline `display:none` or `visibility:hidden`, `aria-hidden`) are pruned before matching.
+- Headings, captions and tables in site chrome, in an `aside` or in a `role="complementary"` region are ignored: a sidebar "Comparison guides" widget would otherwise make every page relevant. Site chrome is navigation plus a `<header>` or `<footer>` outside article, aside, main, nav and section (or their explicit ARIA roles), which is the HTML-AAM banner and contentinfo scope. A header or footer inside an article is content: post dates, titles and sources often sit there.
+- Text is read through the shared `readerText` helper: hidden descendants of a visible element (`hidden`, inline `display:none` or `visibility:hidden`, `aria-hidden`) are pruned before matching. Block boundaries and `<br>` become spaces, so "iPhone vs<br>Pixel" still reads as a comparison.
 
 ## Deferred
 
