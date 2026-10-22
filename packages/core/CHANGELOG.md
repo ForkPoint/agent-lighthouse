@@ -1,5 +1,40 @@
 # @forkpoint/agent-lighthouse-core
 
+## 10.0.0
+
+### Major Changes
+
+- 80adba8: Correct the remaining five broad audit scopes using observed features across all page types.
+
+  - `external-citations` and `unique-data` change from grade B/scored (weight 0.6 each) to grade C/informative (weight 0). Remove the unsupported two-link and three-number thresholds. Their titles become "External content links" and "Statistics in research context". They report observations and return not applicable when none exists; they do not judge authority, originality or AI answer quality.
+  - `time-element` selects date-bearing content independently of time markup. Its title becomes "Machine-readable time markup". No dates returns not applicable; mixed page coverage warns. Machine-readable text can satisfy the convention when datetime is absent.
+  - `comparison-tables` selects explicit comparison headings or captions rather than all pages or arbitrary tables. Ordinary prose returns not applicable; mixed comparison-page coverage warns.
+  - `breadcrumb-schema` selects observed breadcrumb trails or existing markup instead of URL depth. Flat URLs can qualify; deep URLs without hierarchy return not applicable. Its grade A and weight 1 remain unchanged.
+
+  `time-element`, `comparison-tables`, `external-citations` and `unique-data` ignore only site-level chrome: a header or footer inside an article, such as a post header carrying its date, counts as content. `unique-data` no longer counts bare durations such as "24 hours" as figures.
+
+  Keep all audit IDs. Preserve the historical study evidence in the dossiers and document detector limits. Consumers must account for the two removed score contributions and revised verdict populations.
+
+  Exclude page wrappers from breadcrumb trails and share-action URLs from external content links. Recognize punctuated comparison headings, US dates and abbreviated English months. Stop date checks once a page has qualifying time markup. Respect explicit sectioning ARIA roles when deciding whether headers and footers are site chrome. `unique-data` drops figures followed by offer words such as "100% satisfaction guaranteed" or "30% off". Breadcrumb detection assesses each labelled trail on its own steps, including a plain nav inside a labelled wrapper, and ignores state classes such as `breadcrumbs-disabled`. More share services are excluded from external content links. "VS Code", "Compare-at" price labels and a bare "Compare" heading no longer establish comparison intent, while "compares" and "compared" do. `comparison-tables` and `time-element` ignore headings and dates inside `aside` or `role="complementary"` regions, as the other rescoped audits already did. `time-element` also reads dates in headings, table cells, links and leaf `div` elements, and accepts an ISO date that runs into a time. `unique-data` accepts plural research words such as "studies" and "surveys". Breadcrumb trails are recognised in `section`, `p` and `span` wrappers, with an icon-only home link, and as one link followed by a text step such as "Home / Product".
+
+- 80adba8: Move `structured-data/service-schema` from grade A/scored to grade C/informative (weight 0). The former Product/Offer evidence does not establish a Service consumer requirement. Existing markup selects the population on every page type; absent optional markup is not applicable. Preserve existing present-node coverage checks without claiming an agent benefit. A ProfessionalService node is asked for `name` only: it is a LocalBusiness subtype with no `provider` property.
+
+### Patch Changes
+
+- 80adba8: Apply the informative code-language check to code blocks on every page type. Return not applicable when no blocks exist. Require a complete, nonempty language-* class token. Keep grade C and weight 0. Clarify the supported annotation convention and remove unsupported claims about AI answer quality.
+
+  Ignore hidden code elements. Count each `<pre>` once, by its first visible `<code>`, as Turndown does.
+
+- 80adba8: Apply `answer-readiness/direct-definitions` to definitional content on every page type. Select pages through explicit `dfn` markup or definitional titles/headings, not a generic description list: product specification lists no longer create definition findings. Hidden headings, headings in site chrome or asides, and picture-quality phrases such as "high definition" do not establish intent. Keep grade C, informative display, weight 0, and the existing definition coverage verdicts. Mixed samples exclude unrelated and unread pages from the definition ratio.
+
+  Exclude trailing display-quality adjectives and hi-definition headings from definitional intent. Respect headers inside explicit sectioning ARIA roles. "HD", "UHD" and "4K" next to "definition" also do not establish intent.
+
+- 80adba8: Require primary product cards before pagination and filters can suggest a product category. Editorial indexes, such as a captured furniture-retailer blog index, no longer receive a category hint from generic navigation controls alone. On such a page `operability-safety/url-addressable-state-and-pagination-fallback` now reports not applicable instead of pass, because the page is no longer classified as a category. A client-rendered listing whose served HTML has an empty product grid container still receives the hint. The container must carry a whole `product-grid` or `product-list` class token, sit outside navigation, header and footer, and hold no links, so a mega menu or footer list with that name does not qualify.
+- 80adba8: A hiding marker on `<html>` or `<body>` no longer hides the page from the visibility helpers. Themes serve `<body style="visibility: hidden">` and reveal it on load; Readability removes the hidden body and rebuilds it from its children, so the text still reaches that reader. Audits that read visible text, among them `time-element`, `breadcrumb-schema`, `external-citations`, `fake-headings`, `semantic-lists` and `extractor-survival-recall`, now report on such pages instead of returning not applicable. Visible text also keeps a space at block boundaries and line breaks, so words from adjacent cells, list items or lines no longer fuse.
+- 80adba8: Assess supplementary-content markup across all page types. Ignore hidden blocks, existing site-level navigation/header/footer containers, primary main containers and ambiguous widget or callout names. Skip candidates that hold one purchase-control group, such as a product buy box named `sidebar`. Keep the existing grade, tier and weight. Clarify that extractors can remove unmarked blocks through heuristics; missing aside markup does not prove extraction failure.
+
+  Keep repeated quick-add product rails eligible for supplementary markup. Distinguish exact checkout controls from newsletter prose. Assess blocks in article-scoped footers; skip blocks in any header, which holds introductory content such as a product promo badge. A buy box with a sale and original price, or with both add-to-cart and buy-it-now buttons, stays exempt. Apply the buy-box exemption only to `sidebar` names, so a sticky add-to-cart copy, an installment form or a second quantity field no longer turns a buy box into a rail. Skip badge classes such as `promo-tag` and blocks inside product cards. Skip announcement strips such as `promo-bar`, `promo-strip` and `newsletter-banner`, which are page banner content.
+
 ## 9.2.1
 
 ### Patch Changes
