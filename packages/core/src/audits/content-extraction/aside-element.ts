@@ -24,9 +24,14 @@ import {
  * matches `sidebar|skyscraper|supplemental|related` and its negative
  * class-weight regex penalises `sidebar`. Matching them here is how the audit
  * decides a page *has* supplementary content in the first place.
+ *
+ * A hint word followed by `-tag`, `-badge` and similar names a badge. One
+ * followed by `-bar`, `-strip`, `-banner` or `-ticker` names a site-wide
+ * announcement strip: page banner content, whose home is the `<header>`,
+ * not content tangential to the main flow that `<aside>` describes.
  */
 const SUPPLEMENTARY_HINT =
-  /(?:^|[^a-z])(sidebar|side-bar|supplemental|complementary|related|recirc|promo|newsletter|subscribe-box|advert|ad-slot|sponsored)(?![-_](?:tag|badge|label|price|code|icon)(?:[^a-z]|$))(?:[^a-z]|$)/i;
+  /(?:^|[^a-z])(sidebar|side-bar|supplemental|complementary|related|recirc|promo|newsletter|subscribe-box|advert|ad-slot|sponsored)(?![-_](?:tag|badge|label|price|code|icon|bar|strip|banner|ticker)(?:[^a-z]|$))(?:[^a-z]|$)/i;
 
 /**
  * Hint words that name a position rather than a role. A product template's

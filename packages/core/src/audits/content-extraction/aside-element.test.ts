@@ -444,12 +444,38 @@ describe("AsideElementAudit finding labels", () => {
   it("names the hint token, not the first class token", () => {
     const page = mockPageContext(
       "https://example.com/",
-      '<html><body><div class="shopify-section shopify-section-x__promo-bar"><div class="promo-bar">Free shipping</div></div><main><p>Body.</p></main></body></html>',
+      '<html><body><div class="shopify-section shopify-section-x__related"><div class="related">More stories</div></div><main><p>Body.</p></main></body></html>',
       1,
     );
     const result = new AsideElementAudit().audit(mockCheckContext([page]));
     expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.found).toContain("promo-bar");
+    expect(result.found).toContain("related");
     expect(result.found).not.toContain("<div shopify-section>");
+  });
+});
+
+describe("AsideElementAudit announcement strips", () => {
+  const status = (body: string) =>
+    new AsideElementAudit().audit(
+      mockCheckContext([
+        mockPageContext(
+          "https://example.com/",
+          `<html><body>${body}<main><p>Body.</p></main></body></html>`,
+          1,
+        ),
+      ]),
+    ).status;
+  it.each([
+    '<div class="shopify-section x__promo-bar"><div class="promo-bar">Free shipping</div></div>',
+    '<div class="promo-strip">Sale ends Sunday</div>',
+    '<div class="newsletter-banner">Join us</div>',
+    '<div class="promo-ticker">New arrivals</div>',
+  ])("does not ask %s to become an aside", (body) => {
+    expect(status(body)).toBe(CheckStatus.NotApplicable);
+  });
+  it("still reports a promo block", () => {
+    expect(status('<div class="promo">Related offers</div>')).toBe(
+      CheckStatus.Fail,
+    );
   });
 });
