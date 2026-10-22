@@ -5,51 +5,129 @@ import { CheckStatus } from "#core/types";
 
 describe("ComparisonTablesAudit", () => {
   const audit = new ComparisonTablesAudit();
-
-  it("passes when a table is present", () => {
+  it("returns not applicable on an empty sample", () => {
+    expect(audit.audit(mockCheckContext([])).status).toBe(
+      CheckStatus.NotApplicable,
+    );
+  });
+  it("ordinary prose", () => {
     const page = mockPageContext(
-      "https://example.com",
-      `<html><body><main>
-        <table><thead><tr><th>Feature</th><th>A</th><th>B</th></tr></thead>
-        <tbody><tr><td>Price</td><td>$10</td><td>$20</td></tr></tbody></table>
-      </main></body></html>`,
+      "https://example.com/deep/content/page",
+      "<html><body><main><p>Contact our team.</p></main></body></html>",
+      1,
     );
-    const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe(CheckStatus.Pass);
-    expect(result.message).toContain("1 table");
+    expect(audit.audit(mockCheckContext([page])).status).toBe(
+      CheckStatus.NotApplicable,
+    );
   });
-
-  it("fails when no table is present", () => {
+  it("plain table not comparison", () => {
     const page = mockPageContext(
-      "https://example.com",
-      "<html><body><main><p>No tables here.</p></main></body></html>",
+      "https://example.com/deep/content/page",
+      "<html><body><main><table><tr><th>Time</th><th>Event</th></tr><tr><td>9</td><td>Meet</td></tr></table></main></body></html>",
+      1,
     );
-    const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.message).toContain("No comparison tables");
+    expect(audit.audit(mockCheckContext([page])).status).toBe(
+      CheckStatus.NotApplicable,
+    );
   });
+  it("prose comparison", () => {
+    const page = mockPageContext(
+      "https://example.com/deep/content/page",
+      "<html><body><main><h1>A versus B</h1><p>A is faster. B costs less.</p></main></body></html>",
+      1,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe(CheckStatus.Fail);
+  });
+  it("marked comparison", () => {
+    const page = mockPageContext(
+      "https://example.com/deep/content/page",
+      "<html><body><main><h1>A versus B</h1><table><tr><th>A</th><th>B</th></tr><tr><td>10</td><td>20</td></tr></table></main></body></html>",
+      1,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe(CheckStatus.Pass);
+  });
+  it("layout table", () => {
+    const page = mockPageContext(
+      "https://example.com/deep/content/page",
+      '<html><body><main><h1>A versus B</h1><table role="presentation"><tr><td>A</td><td>B</td></tr></table></main></body></html>',
+      1,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe(CheckStatus.Fail);
+  });
+  it("hidden comparison", () => {
+    const page = mockPageContext(
+      "https://example.com/deep/content/page",
+      "<html><body><main><h1 hidden>A versus B</h1><p>Contact</p></main></body></html>",
+      1,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe(
+      CheckStatus.NotApplicable,
+    );
+  });
+});
 
-  it("fails when no pages were scanned", () => {
-    const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.message).toContain("No pages scanned");
+describe("ComparisonTablesAudit site chrome", () => {
+  const audit = new ComparisonTablesAudit();
+  it("reads a comparison heading in an article header", () => {
+    const page = mockPageContext(
+      "https://example.com/blog/a-vs-b",
+      '<html><body><main><article><header class="entry-header"><h1>A vs B</h1></header><p>A is faster.</p></article></main></body></html>',
+      1,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe(CheckStatus.Fail);
   });
+});
 
-  it("counts tables across multiple pages and only records the first page url", () => {
-    const page1 = mockPageContext(
-      "https://example.com/page1",
-      `<html><body><main>
-        <table><thead><tr><th>A</th></tr></thead><tbody><tr><td>1</td></tr></tbody></table>
-      </main></body></html>`,
+describe("ComparisonTablesAudit hidden text", () => {
+  const audit = new ComparisonTablesAudit();
+  it("ignores hidden comparison text inside a visible heading", () => {
+    const page = mockPageContext(
+      "https://example.com/blog/post",
+      '<html><body><main><h1>Our news <span style="display:none">A versus B</span></h1><p>Body.</p></main></body></html>',
+      1,
     );
-    const page2 = mockPageContext(
-      "https://example.com/page2",
-      `<html><body><main>
-        <table><thead><tr><th>B</th></tr></thead><tbody><tr><td>2</td></tr></tbody></table>
-      </main></body></html>`,
+    expect(audit.audit(mockCheckContext([page])).status).toBe(
+      CheckStatus.NotApplicable,
     );
-    const result = audit.audit(mockCheckContext([page1, page2]));
-    expect(result.status).toBe(CheckStatus.Pass);
-    expect(result.message).toContain("2 table");
   });
+});
+
+describe("review regressions", () => {
+  it("recognizes punctuation after comparison", () => {
+    const page = mockPageContext(
+      "https://example.com/page",
+      "<html><body><h1>Plan comparison, explained</h1></body></html>",
+    );
+    expect(
+      new ComparisonTablesAudit().audit(mockCheckContext([page])).status,
+    ).toBe(CheckStatus.Fail);
+  });
+});
+
+describe("ComparisonTablesAudit intent wording", () => {
+  const audit = new ComparisonTablesAudit();
+  const status = (heading: string) =>
+    audit.audit(
+      mockCheckContext([
+        mockPageContext(
+          "https://example.com/page",
+          `<html><body><main><h2>${heading}</h2><p>Body.</p></main></body></html>`,
+          1,
+        ),
+      ]),
+    ).status;
+
+  it.each(["Setting up VS Code", "Compare-at price $50", "Compare"])(
+    "does not read %j as comparison intent",
+    (heading) => {
+      expect(status(heading)).toBe(CheckStatus.NotApplicable);
+    },
+  );
+
+  it.each(["A vs. B", "Plan comparison, explained", "Compare plans"])(
+    "reads %j as comparison intent",
+    (heading) => {
+      expect(status(heading)).toBe(CheckStatus.Fail);
+    },
+  );
 });

@@ -2,49 +2,41 @@ import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
 import { weightForGrade } from "#core/scorer";
 import type { CheckContext } from "#core/check-context";
-import { getMainContentText } from "#core/parser";
+import { hiddenFromReaders, readerText } from "#core/dom-visibility";
+import { inPageChrome } from "#core/page-chrome";
 import {
   AuditTier,
   CheckPriority,
   EvidenceGrade,
   EvidenceKey,
   FixEffort,
-  PageType,
   ScoreDisplayMode,
 } from "#core/types";
 
-// Match only unit/currency/percent/magnitude-anchored figures. A bare
-// `\d+\.\d+` matched shoe sizes, raw JS floats and phone-number fragments,
-// flooding the result with noise; requiring a %, a currency sign, a
-// thousands-separator or an "x" multiplier keeps genuinely citable statistics.
-//
-// A money amount reads both decimal conventions and the no-break spaces French
-// typography groups thousands with, so "$2,500", "£29.99", "1.200,50 €" and
-// "49,99 €" each count once. The sign may lead or trail.
-const AMOUNT = String.raw`\d+(?:[.,\u00a0\u202f]\d{3})*(?:[.,]\d{1,2})?`;
-const CURRENCY = "[$€£]";
-const STAT_PATTERN = new RegExp(
-  [
-    String.raw`\d+(?:[.,]\d+)?\s?%`,
-    `${CURRENCY}\\s?${AMOUNT}`,
-    `${AMOUNT}\\s?${CURRENCY}`,
-    String.raw`\b\d{1,3}(?:,\d{3})+\b`,
-    String.raw`\b\d+(?:\.\d+)?x\b`,
-  ].join("|"),
-);
+// Conservative English research context. Numeric matches alone, especially
+// prices and discounts, do not prove statistics or originality.
+const CONTEXT =
+  /\b(?:survey|study|research|benchmark|respondents|participants|sampled|measured)\b/i;
+// Marketing claims reuse the percent sign: "100% satisfaction guaranteed",
+// "30% off", "100% cotton". A figure followed by one of these words is a
+// claim about the offer, not a measurement.
+const CLAIM_AFTER =
+  /^\s*(?:satisfaction|guarantee[ds]?|money[- ]back|off|discount|cotton|wool|linen|natural|organic|recycled|pure|free)\b/i;
+const FIGURE =
+  /\b\d+(?:[.,]\d+)?\s?%|\b\d{1,3}(?:,\d{3})+\b|\b\d+(?:[.,]\d+)?\s+(?:respondents|participants|users|requests)\b/gi;
 
 export class UniqueDataAudit extends Audit {
   static override meta: AuditMeta = {
     id: "answer-readiness/unique-data",
     category: "answer-readiness",
-    title: "Unique data or statistics",
-    failureTitle: "Unique data or statistics",
+    title: "Statistics in research context",
+    failureTitle: "Statistics in research context",
     description:
-      "AI generative engines prioritize content with original, citable data points over vague claims. Include specific statistics and metrics.",
-    scoreDisplayMode: ScoreDisplayMode.Ternary,
-    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
-    evidenceGrade: EvidenceGrade.B,
-    tier: AuditTier.Scored,
+      "Reports numerical figures in paragraphs with explicit research or measurement context. This does not establish originality, accuracy or citation value.",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/answer-readiness/unique-data.md",
     requires: [
       EvidenceKey.OriginReachable,
@@ -52,14 +44,11 @@ export class UniqueDataAudit extends Audit {
       EvidenceKey.RenderedBody,
       EvidenceKey.SampleAdequate,
     ],
-    // The grade-B study measured statistics added to informational content.
-    // A storefront homepage or a product grid is outside that population.
-    applicablePageTypes: [PageType.General, PageType.Article],
     defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
-        "AI generative engines prioritize content with unique, citable data points because agents can quote exact figures in generated answers. Content without specific numbers reads as opinion rather than evidence, reducing its chances of being cited.",
-      fix: "Add specific statistics, percentages, dollar amounts, and measurable metrics to your content. Include original data from surveys, benchmarks, or internal metrics where possible.",
+        "Studies of adding relevant statistics do not validate counting arbitrary numbers or prices. This observation carries no score weight and does not prove original research.",
+      fix: "Report measured results when relevant. Include the source, population and method. Do not invent statistics or add numbers to meet a quota.",
       code: "<p>Results from our 2024 survey of 1,200 developers show that 73% prefer structured APIs, with an average integration time of 2.5 hours.</p>",
       effort: FixEffort.Easy,
       tags: ["content-quality", "data", "generative-engine"],
@@ -67,66 +56,48 @@ export class UniqueDataAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    const page = ctx.pages[0];
-    if (!page) {
-      return this.fail(
-        "No pages scanned.",
-        "Content has numbers, percentages, or original data points",
-        "No pages scanned",
-        {
-          priority: CheckPriority.Medium,
-          description:
-            "AI generative engines prioritize content with original, citable data points over vague claims. Include specific statistics and metrics.",
-          code: "<p>Our platform handles 50,000 requests/second with 99.9% uptime.</p>",
-        },
+    const figures = new Set<string>();
+    let relevant = 0;
+    for (const page of ctx.pages) {
+      const $ = page.$;
+      let observed = false;
+      $("p").each((_, el) => {
+        if (
+          hiddenFromReaders($, el) ||
+          inPageChrome($, el) ||
+          $(el).closest('aside, [role="complementary"]').length
+        )
+          return;
+        const text = readerText($, el).replace(/\s+/g, " ").trim();
+        if (!CONTEXT.test(text)) return;
+        const withoutPrices = text.replace(
+          /[$€£]\s?\d[\d.,\u00a0\u202f]*|\d[\d.,\u00a0\u202f]*\s?[$€£]/g,
+          "",
+        );
+        const matches = [...withoutPrices.matchAll(FIGURE)]
+          .filter(
+            (m) =>
+              !CLAIM_AFTER.test(withoutPrices.slice(m.index + m[0].length)),
+          )
+          .map((m) => m[0]);
+        if (!matches.length) return;
+        observed = true;
+        for (const match of matches) figures.add(match);
+      });
+      if (observed) relevant++;
+    }
+    const expected =
+      "Relevant measured statistics with context; no numeric quota or originality inference";
+    if (!relevant)
+      return this.notApplicable(
+        "No contextual research figures detected; no statistics obligation is established.",
+        expected,
+        "No contextual research figures",
       );
-    }
-
-    const allMatches: string[] = [];
-
-    for (const p of ctx.pages) {
-      const text = getMainContentText(p.$);
-      const matches = text.match(new RegExp(STAT_PATTERN.source, "g"));
-      if (matches) {
-        allMatches.push(...matches.slice(0, 10));
-      }
-    }
-
-    if (allMatches.length >= 3) {
-      return this.pass(
-        `Found ${allMatches.length} data points across scanned pages.`,
-        "Content has numbers, percentages, or original data points",
-        `Examples: ${[...new Set(allMatches)].slice(0, 5).join(", ")}`,
-        page.url,
-      );
-    }
-
-    if (allMatches.length > 0) {
-      return this.warn(
-        `Only ${allMatches.length} data point(s) found. Consider adding more statistics.`,
-        "Content has numbers, percentages, or original data points",
-        `Examples: ${allMatches.join(", ")}`,
-        {
-          priority: CheckPriority.Low,
-          description:
-            "AI generative engines prefer content with concrete, citable data over vague claims. Adding more statistics, percentages, and specific metrics makes your content more quotable in AI-generated answers, increasing the likelihood of being cited as a source.",
-          code: "<p>Our solution improves performance by 65%, reduces costs by $2,500/month, and serves 10,000+ daily users.</p>",
-        },
-        page.url,
-      );
-    }
-
-    return this.fail(
-      "No numbers, percentages, or data points found in content.",
-      "Content has numbers, percentages, or original data points",
-      "Not found",
-      {
-        priority: CheckPriority.Medium,
-        description:
-          "AI generative engines prioritize content with unique, citable data points because agents can quote exact figures in generated answers. Content without specific numbers reads as opinion rather than evidence, reducing its chances of being selected as a source in AI responses.",
-        code: "<p>Results from our 2024 survey of 1,200 developers show that 73% prefer structured APIs over unstructured endpoints.</p>",
-      },
-      page.url,
+    return this.pass(
+      `Observed numerical figures in research context on ${relevant} page(s). Originality and accuracy are not verified.`,
+      expected,
+      `Examples: ${[...figures].sort().slice(0, 5).join(", ")}`,
     );
   }
 }

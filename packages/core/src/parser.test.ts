@@ -1475,12 +1475,48 @@ describe("detectPageType", () => {
     );
   });
 
-  it("detects a category page from pagination + filter signals", () => {
+  it("detects a small product listing with pagination and filters", () => {
+    const $ = parseHtml(
+      '<main><div class="product-card">One</div><div class="product-card">Two</div><nav class="pagination"></nav><div class="filter"></div></main>',
+    );
+    expect(detectPageType("https://x.com/list-page", $, [], {}, false)).toBe(
+      PageType.Category,
+    );
+  });
+
+  it("does not use recommendation cards to classify an editorial index", () => {
+    const $ = parseHtml(
+      '<main><h1>Stories</h1><nav class="pagination"></nav><div class="filter"></div><aside><div class="product-card">One</div><div class="product-card">Two</div></aside></main>',
+    );
+    expect(detectPageType("https://x.com/stories", $, [], {}, false)).toBe(
+      PageType.General,
+    );
+  });
+
+  it("detects a client-rendered listing from its empty product grid", () => {
+    const $ = parseHtml(
+      '<main><div class="product-grid" data-src="/api/products"></div><nav class="pagination"></nav><div class="filter"></div></main>',
+    );
+    expect(detectPageType("https://x.com/list-page", $, [], {}, false)).toBe(
+      PageType.Category,
+    );
+  });
+
+  it("does not use a recommendation grid beside an editorial index", () => {
+    const $ = parseHtml(
+      '<main><h1>Stories</h1><nav class="pagination"></nav><div class="filter"></div><div class="related"><div class="product-grid"></div></div></main>',
+    );
+    expect(detectPageType("https://x.com/stories", $, [], {}, false)).toBe(
+      PageType.General,
+    );
+  });
+
+  it("does not treat pagination and filters alone as commerce", () => {
     const $ = parseHtml(
       '<html><body><nav class="pagination"></nav><div class="filter"></div></body></html>',
     );
     expect(detectPageType("https://x.com/list-page", $, [], {}, false)).toBe(
-      "category",
+      PageType.General,
     );
   });
 

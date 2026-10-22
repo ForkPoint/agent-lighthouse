@@ -80,7 +80,7 @@ HTTP pages and captures share `DOM_WORK_LIMITS`, checked before extraction and c
 
 Each row names an existing audit; its dossier is `docs/evidence/audits/<id>.md`.
 
-An audit joins only after a four-part review, recorded in `docs/superpowers/specs/2026-10-20-browser-view-audits-design.md`:
+An audit joins only after this four-part review:
 
 1. It reads the DOM only: never status, headers, redirects, robots policy, timing, root files or another fetch.
 2. It judges one page. Site-wide ratios and sample checks stay out.
@@ -112,6 +112,67 @@ An audit joins only after a four-part review, recorded in `docs/superpowers/spec
 | `operability-safety/presentation-conflict`           | Accessibility rules over the serialized DOM                                                    | Readable static DOM and a completed rule pass. Not a computed accessibility tree; no action runs.                                                                                |
 
 Grades, tiers and crawler weights are unchanged. Every browser finding is informative, with weight 0. `content-extraction/server-rendered` always uses the real HTTP response; headers, status, redirects, robots policy and actions never come from a snapshot. Other audits are reported as lacking a reviewed snapshot contract, which is not a claim they can never support one. Adding an audit takes a source and dossier review, an inventory entry, and tests for its evidence limits.
+
+## Browser eligibility review (2026-10-20)
+
+The grade reasoning rests on something other than a browser agent:
+
+- `content-extraction/main-element`, `header-footer`, `article-element`,
+  `aside-element`: the grade rests on trafilatura and Readability source, an
+  extractor population.
+- `content-extraction/single-h1`, `fake-headings`: the grade rests on
+  LangChain's HTML splitters, a RAG population.
+- `content-extraction/sequential-headings`: the dossier states that every
+  splitter and accessibility-tree snapshot examined tolerates a skipped
+  level. A browser-view finding would contradict it.
+- `operability-safety/document-title`: the grade rests on Google title links
+  and WCAG 2.4.2, a search-feature and standards path.
+- `content-extraction/data-tables`, `operability-safety/table-headers`: the
+  grade leans on Readability, and the re-fetched Playwright snapshot page does
+  not mention tables.
+- `operability-safety/autocomplete`: token validity serves browser autofill;
+  no browser-agent tool documents reading the token.
+- `operability-safety/form-error-messages`: no browser-agent tool documents
+  reading the error description wired by `aria-errormessage` or
+  `aria-describedby`.
+- `content-extraction/content-depth`: retrieval and embedding depth, a RAG
+  population.
+
+Grade C, or a crawler or search consumer:
+
+- `content-extraction/figure-figcaption`, `operability-safety/frame-title`,
+  `operability-safety/tabindex`: grade C.
+- `machine-discovery/in-content-links`: the documented consumer is a crawler.
+- `structured-data/*` beyond the two already eligible: search features.
+- `operability-safety/meta-refresh`: a redirect behaviour.
+
+Deferred, each a candidate for a later review against its dossier:
+
+- `agent-interfaces/webmcp-declarative-forms`: experimental tier, and
+  Chrome's attribute reading is a browser feature rather than an agent tool.
+- `operability-safety/drag-and-slider-dependency`: the grade rests partly on
+  a benchmark measurement, which needs its own reading.
+- `operability-safety/aria-layer-injection-scan`: a safety check whose
+  consumer claim needs separate review.
+
+Out by construction: audits on the `css-rules`, `extraction`,
+`text-metrics`, `tokens`, `feeds`, `media`, `mcp`, `openapi` or `security`
+gatherers. They need fetched artifacts, computed style or a site-wide sample.
+
+### Entries that predate the rule
+
+The first seven entries predate the current eligibility rule. Their individual dossiers record their review.
+
+Two are named exceptions to rule 3, by the user's decision on 2026-10-20.
+`structured-data/json-ld-present` and `structured-data/schema-validation`
+shipped before the rule and stay. No browser-agent consumer is claimed for
+either. `json-ld-present` claims presence in the captured DOM only.
+`schema-validation` claims only that the captured DOM's JSON-LD parses and
+matches schema.org types. `snapshot-eligibility.test.ts` lists both as
+named exceptions with this reason, and their `## Browser view` leads say so.
+
+`profile-autofill-token-coverage` is grade C and also predates the rule. It
+stays, exempted from the grade check in the same test.
 
 ## Output and scoring
 
@@ -179,6 +240,21 @@ const report = await runScan(url, { snapshots });
 // report.browserAssessment describes supplied static DOM evidence only.
 ```
 
+## Where the dossier note lives
+
+A dossier's own `## Limits` section turns off the website's promotion of
+`**Counter-evidence:**` into Limits. The browser-view note therefore lives
+under `## Browser view`, published through `public_extra`, and the real
+counter-evidence stays the public Limits. Five older dossiers that had put
+the note under Limits moved it the same way.
+
+## Validation
+
+`snapshot-eligibility.test.ts` pins the inventory and its named exceptions.
+`browser-snapshots.test.ts` checks capture limits, missing evidence, and the
+separation of browser findings from crawler scores. Both live in
+`packages/core/src/`.
+
 ## Limits of serialized HTML
 
 Serialized HTML cannot show computed appearance, a full accessibility tree, event handlers, frames, shadow roots, live form state, login independence or whether controls work. Absence from the HTML does not prove absence from a frame or shadow tree. A `fresh-browser` label does not authenticate capture conditions.
@@ -186,3 +262,11 @@ Serialized HTML cannot show computed appearance, a full accessibility tree, even
 ## Deferred
 
 Not built: snapshot contracts for the other audits, browser automation, computed styles, accessibility-tree input, shadow-root and frame capture, action traces, authenticated collector provenance, a freshness policy, a browser score, an extension collector, and durable snapshot storage. The task server keeps a detected capture in memory for 10 minutes only.
+
+- `stripStyles` closes a `<style>` block only at an exact `</style>`. Browsers
+  also accept `</style >` and `</style\n>`. On such input the strip runs on to
+  the next exact close and removes the markup between them from the a11y
+  pass. The old regexes behaved the same, and the equivalence tests pin that
+  behaviour. Accepting `/<\/style\s*>/i` is a separate verdict change.
+- The jsdom a11y pass is not cancelled while it waits for an
+  `A11Y_CONCURRENCY` slot.

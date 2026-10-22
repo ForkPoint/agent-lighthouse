@@ -5,7 +5,7 @@
 
 import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
-import type { CheckContext, PageContext } from "#core/check-context";
+import type { CheckContext } from "#core/check-context";
 import { weightForGrade } from "#core/scorer";
 import { flattenJsonLd } from "#core/parser";
 import {
@@ -14,11 +14,10 @@ import {
   EvidenceGrade,
   EvidenceKey,
   FixEffort,
-  PageType,
   ScoreDisplayMode,
 } from "#core/types";
 
-/** The two in-scope service shapes. Product types belong to 3.22 now. */
+/** Service plus the legacy ProfessionalService shape retained for compatibility. */
 const SERVICE_TYPES = ["Service", "ProfessionalService"];
 
 function matchesAnyType(
@@ -37,62 +36,7 @@ function allSchemas(ctx: CheckContext): object[] {
   return ctx.pages.flatMap((p) => flattenJsonLd(p.structuredData ?? p.jsonLd));
 }
 
-/**
- * A URL path that belongs to a services section. Deliberately anchored on path
- * segments: `/legal/terms-of-service` and `/help/customer-service` are store
- * chrome, not an offering, and must not drag every ecommerce site into scope.
- */
-const SERVICE_PATH_RE =
-  /(^|\/)(our-)?services?(\/|$)|(^|\/)what-we-do(\/|$)|(^|\/)solutions?(\/|$)|(^|\/)consulting(\/|$)/;
-
-/** Link text that names an offering rather than a support desk or a policy. */
-const SERVICE_TEXT_RE =
-  /\bour services\b|\bwhat we do\b|\bservices we offer\b|\bservice offerings\b/;
-
-function carriesServiceSchema(page: PageContext): boolean {
-  return flattenJsonLd(page.structuredData ?? page.jsonLd).some((s) =>
-    matchesAnyType(s as Record<string, unknown>, SERVICE_TYPES),
-  );
-}
-
-/** A link/CTA that points at a services section. */
-function hasServicesLink(page: PageContext): boolean {
-  let found = false;
-  page.$("a[href]").each((_, el) => {
-    if (found) return;
-    /* v8 ignore next */
-    const href = (page.$(el).attr("href") ?? "").toLowerCase();
-    const text = page.$(el).text().toLowerCase();
-    const path = href.split("?")[0]!.split("#")[0]!;
-    if (SERVICE_PATH_RE.test(path) || SERVICE_TEXT_RE.test(text)) {
-      found = true;
-    }
-  });
-  return found;
-}
-
-/**
- * Does this site offer services at all?
- *
- * The precondition, mirroring how `local-business-schema` gates on real
- * physical-location signals and `article-schema` on real article pages: a page
- * is in scope if it already carries Service markup (the strongest possible
- * evidence of intent), if its own URL sits in a services section, or if it
- * links to one. A pure product store matches none of the three and is `na` —
- * scoring a shop for missing Service markup measures nothing.
- */
-function hasServiceIntent(page: PageContext): boolean {
-  if (carriesServiceSchema(page)) return true;
-  if (SERVICE_PATH_RE.test(new URL(page.url).pathname.toLowerCase()))
-    return true;
-  return hasServicesLink(page);
-}
-
-/**
- * The properties a Service node must carry. `description` is deliberately not
- * here: schema.org does not require it and no consumer documents reading it,
- * so 3.8's required fix says to drop it from the required set.
- */
+/** Coverage fields, not mandatory Schema.org properties or consumer requirements. */
 const REQUIRED_PROPS = ["name", "provider"] as const;
 
 function missingProps(node: Record<string, unknown>): string[] {
@@ -106,11 +50,11 @@ export class ServiceSchemaAudit extends Audit {
     title: "Service schema",
     failureTitle: "Service schema",
     description:
-      "AI agents use Service schema to understand what you offer and who provides it. Without it, agents must infer your offerings from unstructured text, which leads to inaccurate or incomplete descriptions in AI-generated recommendations.",
-    scoreDisplayMode: ScoreDisplayMode.Ternary,
-    weight: weightForGrade(EvidenceGrade.A, AuditTier.Scored),
-    evidenceGrade: EvidenceGrade.A,
-    tier: AuditTier.Scored,
+      "Reports name and provider coverage in existing Service markup. No reviewed source documents an agent requirement for these fields; this check does not affect the score.",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/structured-data/service-schema.md",
     requires: [
       EvidenceKey.OriginReachable,
@@ -118,21 +62,11 @@ export class ServiceSchemaAudit extends Audit {
       EvidenceKey.RenderedBody,
       EvidenceKey.SampleAdequate,
     ],
-    // Where a service business publishes its offerings. NOT ['product'] —
-    // that was inherited from the pre-split audit and inverted this check:
-    // it skipped every service site (no product page in the scan) and ran only
-    // on stores, which do not emit Service markup. The runtime guard below
-    // carries the real precondition.
-    applicablePageTypes: [
-      PageType.Homepage,
-      PageType.General,
-      PageType.Article,
-    ],
     defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
-        "Without Service schema, AI agents must infer your offerings from unstructured text. This leads to inaccurate or incomplete descriptions in AI-generated recommendations, and your services may be entirely overlooked when agents compare options for users.",
-      fix: "Add Service (or ProfessionalService) JSON-LD to pages describing your offerings. Include name and provider (nested Organization) at minimum.",
+        "These optional fields describe a service and its provider. Their coverage is informational; no agent benefit is established.",
+      fix: "If you publish Service markup, describe the service with name and provider where applicable. These fields are not required for an agent-readiness score.",
       code: `{
   "@context": "https://schema.org",
   "@type": "Service",
@@ -150,33 +84,15 @@ export class ServiceSchemaAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    if (!ctx.pages.some(hasServiceIntent)) {
-      return this.notApplicable(
-        "No service offering detected (no Service markup, no services section, no link to one).",
-        "Service schema with name and provider on sites that offer services.",
-        "No service offering found.",
-      );
-    }
-
     const services = allSchemas(ctx).filter((s) =>
       matchesAnyType(s as Record<string, unknown>, SERVICE_TYPES),
     );
 
     if (services.length === 0) {
-      return this.fail(
-        "No Service schema found.",
-        "Service schema with name and provider.",
-        "None",
-        {
-          priority: CheckPriority.Medium,
-          description: ServiceSchemaAudit.meta.description,
-          code: `{
-  "@context": "https://schema.org",
-  "@type": "Service",
-  "name": "Service Name",
-  "provider": { "@type": "Organization", "name": "Your Company" }
-}`,
-        },
+      return this.notApplicable(
+        "No Service schema found; this optional markup is not required.",
+        "Name and provider coverage in existing Service markup.",
+        "No Service markup.",
       );
     }
 
@@ -201,7 +117,7 @@ export class ServiceSchemaAudit extends Audit {
       `Service schema missing ${best.join(", ")} (${services.length} total)`,
       {
         priority: CheckPriority.Medium,
-        description: `AI agents use Service schema properties to accurately describe your offerings to users. Missing properties (${best.join(", ")}) mean agents cannot fully represent your service in AI-generated recommendations. Add them to your existing schema.`,
+        description: `Existing markup omits ${best.join(", ")}. Add applicable descriptive fields if useful; this informational finding does not establish an agent requirement.`,
         code: `{
   "@type": "Service",
   "name": "Service Name",

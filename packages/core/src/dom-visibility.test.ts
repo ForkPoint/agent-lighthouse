@@ -4,6 +4,7 @@ import {
   declaredValue,
   hiddenFromReaders,
   notRendered,
+  readerText,
   styleHidesFromReaders,
   HidingProperty,
 } from "./dom-visibility";
@@ -188,5 +189,25 @@ describe("notRendered", () => {
         '<div style="visibility:hidden"><p id="t" style="visibility:visible">x</p></div>',
       ),
     ).toBe(true);
+  });
+});
+
+describe("readerText", () => {
+  const text = (html: string) => {
+    const $ = cheerio.load(html);
+    return readerText($, $("#t")[0]!);
+  };
+
+  it.each([
+    ['<p id="t">a <span hidden>b</span>c</p>', "a c"],
+    ['<p id="t">a <span style="display:none">b</span>c</p>', "a c"],
+    ['<p id="t">a <span style="visibility:hidden">b</span>c</p>', "a c"],
+    ['<p id="t">a <span aria-hidden="true">b</span>c</p>', "a c"],
+    ['<p id="t">a <script>b</script><style>b</style>c</p>', "a c"],
+    // Readers drop collapsed until-found content, like hiddenFromReaders.
+    ['<p id="t">a <span hidden="until-found">b</span>c</p>', "a c"],
+    ['<div hidden><p id="t">a</p></div>', ""],
+  ])("reads %s as %j", (html, expected) => {
+    expect(text(html)).toBe(expected);
   });
 });

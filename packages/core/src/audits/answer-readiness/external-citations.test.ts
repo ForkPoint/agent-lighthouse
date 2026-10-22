@@ -5,98 +5,131 @@ import { CheckStatus } from "#core/types";
 
 describe("ExternalCitationsAudit", () => {
   const audit = new ExternalCitationsAudit();
-
-  it("passes when a page has 2+ external links", () => {
+  it("returns not applicable on an empty sample", () => {
+    expect(audit.audit(mockCheckContext([])).status).toBe(
+      CheckStatus.NotApplicable,
+    );
+  });
+  it("no references", () => {
     const page = mockPageContext(
-      "https://example.com/blog/post",
-      `<html><body>
-        <a href="https://research.google/pubs">Research</a>
-        <a href="https://w3.org/standards">W3C</a>
-        <a href="/internal">Internal</a>
-      </body></html>`,
-    );
-    const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe(CheckStatus.Pass);
-    expect(result.message).toContain("2+ external links");
-  });
-
-  it("warns when a page has only 1 external link", () => {
-    const page = mockPageContext(
-      "https://example.com/blog/post",
-      `<html><body>
-        <a href="https://research.google/pubs">Research</a>
-        <a href="/internal">Internal</a>
-      </body></html>`,
-    );
-    const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe(CheckStatus.Warn);
-    expect(result.message).toContain("no page has 2+ external citations");
-  });
-
-  it("fails when no external links exist", () => {
-    const page = mockPageContext(
-      "https://example.com/blog/post",
-      `<html><body><a href="/internal">Internal</a></body></html>`,
-    );
-    const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.message).toContain("No external links found");
-  });
-
-  it("fails when no pages scanned", () => {
-    const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.message).toContain("No pages scanned");
-  });
-
-  it("skips anchors with empty href (covers early-return branch)", () => {
-    const page = mockPageContext(
-      "https://example.com/blog/post",
-      `<html><body>
-        <a href="">empty href anchor</a>
-        <a href="https://external1.com">External 1</a>
-        <a href="https://external2.com">External 2</a>
-      </body></html>`,
-    );
-    const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe(CheckStatus.Pass);
-  });
-
-  it("ignores invalid hrefs that cause URL parsing to throw", () => {
-    const page = mockPageContext(
-      "https://example.com/blog/post",
-      `<html><body>
-        <a href=":::invalid:::">Bad link</a>
-        <a href="https://external1.com">External 1</a>
-        <a href="https://external2.com">External 2</a>
-      </body></html>`,
-    );
-    const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe(CheckStatus.Pass);
-    expect(result.message).toContain("2+ external links");
-  });
-
-  it("stops adding to examples once 5 have been collected (covers examples >= 5 branch)", () => {
-    const page1 = mockPageContext(
-      "https://example.com/p1",
-      `<html><body>
-        <a href="https://a.com">A</a>
-        <a href="https://b.com">B</a>
-        <a href="https://c.com">C</a>
-        <a href="https://d.com">D</a>
-        <a href="https://e.com">E</a>
-      </body></html>`,
-    );
-    const page2 = mockPageContext(
-      "https://example.com/p2",
-      `<html><body>
-        <a href="https://f.com">F</a>
-        <a href="https://g.com">G</a>
-      </body></html>`,
+      "https://example.com/deep/content/page",
+      "<html><body><main><p>Contact our team.</p></main></body></html>",
       1,
     );
-    const result = audit.audit(mockCheckContext([page1, page2]));
-    expect(result.status).toBe(CheckStatus.Pass);
-    expect(result.message).toContain("external link");
+    expect(audit.audit(mockCheckContext([page])).status).toBe(
+      CheckStatus.NotApplicable,
+    );
+  });
+  it("one reference", () => {
+    const page = mockPageContext(
+      "https://example.com/deep/content/page",
+      '<html><body><main><p>See <a href="https://research.example/study">the study</a>.</p></main></body></html>',
+      1,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe(CheckStatus.Pass);
+  });
+  it("footer links", () => {
+    const page = mockPageContext(
+      "https://example.com/deep/content/page",
+      '<html><body><footer><a href="https://social.example/a">Social</a><a href="https://social.example/b">Social</a></footer></body></html>',
+      1,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe(
+      CheckStatus.NotApplicable,
+    );
+  });
+  it("hidden reference", () => {
+    const page = mockPageContext(
+      "https://example.com/deep/content/page",
+      '<html><body><main><a hidden href="https://research.example/study">Study</a></main></body></html>',
+      1,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe(
+      CheckStatus.NotApplicable,
+    );
+  });
+  it("internal links", () => {
+    const page = mockPageContext(
+      "https://example.com/deep/content/page",
+      '<html><body><main><a href="/internal">Internal</a><a href="https://shop.example.com">Shop</a></main></body></html>',
+      1,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe(
+      CheckStatus.NotApplicable,
+    );
+  });
+  it("invalid protocols", () => {
+    const page = mockPageContext(
+      "https://example.com/deep/content/page",
+      '<html><body><main><a href="mailto:a@other.com">Email</a><a href="http://[broken">Broken</a></main></body></html>',
+      1,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe(
+      CheckStatus.NotApplicable,
+    );
+  });
+});
+
+it("deduplicates the same reference without a quota", () => {
+  const p = mockPageContext(
+    "https://example.com/",
+    '<main><a href="https://research.example/study#one">One</a><a href="https://research.example/study#two">Two</a></main>',
+  );
+  const result = new ExternalCitationsAudit().audit(mockCheckContext([p]));
+  expect(result.status).toBe(CheckStatus.Pass);
+  expect(result.message).toContain("1 distinct");
+});
+
+describe("ExternalCitationsAudit site chrome", () => {
+  const audit = new ExternalCitationsAudit();
+  it("counts sources in an article footer", () => {
+    const page = mockPageContext(
+      "https://example.com/blog/post",
+      '<html><body><main><article><p>Body.</p><footer><a href="https://research.example/study">Source</a></footer></article></main></body></html>',
+      1,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe(CheckStatus.Pass);
+  });
+});
+
+describe("review regressions", () => {
+  it("ignores article sharing endpoints", () => {
+    const page = mockPageContext(
+      "https://example.com/page",
+      '<html><body><article><footer><a href="https://twitter.com/intent/tweet?url=x">Share</a><a href="https://www.facebook.com/sharer/sharer.php?u=x">Share</a></footer></article></body></html>',
+    );
+    expect(
+      new ExternalCitationsAudit().audit(mockCheckContext([page])).status,
+    ).toBe(CheckStatus.NotApplicable);
+  });
+  it("keeps social content links", () => {
+    const page = mockPageContext(
+      "https://example.com/page",
+      '<html><body><article><a href="https://twitter.com/example/status/123">Source post</a></article></body></html>',
+    );
+    expect(
+      new ExternalCitationsAudit().audit(mockCheckContext([page])).status,
+    ).toBe(CheckStatus.Pass);
+  });
+});
+
+describe("ExternalCitationsAudit share actions", () => {
+  const audit = new ExternalCitationsAudit();
+  it.each([
+    "https://www.pinterest.com/pin/create/button/?url=x",
+    "https://www.reddit.com/submit?url=x",
+    "https://wa.me/?text=x",
+    "https://api.whatsapp.com/send?text=x",
+    "https://t.me/share/url?url=x",
+    "https://twitter.com/share?url=x",
+  ])("does not count %s as a content link", (href) => {
+    const page = mockPageContext(
+      "https://example.com/blog/post",
+      `<html><body><main><p>Body <a href="${href}">Share</a></p></main></body></html>`,
+      1,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe(
+      CheckStatus.NotApplicable,
+    );
   });
 });

@@ -1,4 +1,5 @@
 import type { AuditMeta, AuditResult } from "#core/types";
+import { hiddenFromReaders } from "#core/dom-visibility";
 import { Audit } from "#core/audit";
 import type { CheckContext } from "#core/check-context";
 import { weightForGrade } from "#core/scorer";
@@ -8,7 +9,6 @@ import {
   EvidenceGrade,
   EvidenceKey,
   FixEffort,
-  PageType,
   ScoreDisplayMode,
 } from "#core/types";
 
@@ -19,7 +19,7 @@ export class CodeLanguageAudit extends Audit {
     title: "Code blocks have language annotations",
     failureTitle: "Code blocks have language annotations",
     description:
-      "AI agents use language annotations on code blocks to apply the correct syntax understanding and provide accurate code explanations. Without them, agents must guess the programming language, which can lead to incorrect interpretations in AI-generated code answers.",
+      "The language-* class convention labels code blocks. HTML-to-Markdown converters such as Turndown can preserve that label in fenced output. This informative check does not establish an effect on AI answer quality.",
     scoreDisplayMode: ScoreDisplayMode.Informative,
     weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
     evidenceGrade: EvidenceGrade.C,
@@ -31,12 +31,11 @@ export class CodeLanguageAudit extends Audit {
       EvidenceKey.RenderedBody,
       EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: [PageType.General, PageType.Article],
     defaultPriority: CheckPriority.Low,
     guidance: {
       impact:
-        "AI agents use language annotations on code blocks to apply correct syntax highlighting and interpretation. Without language classes, agents must guess the programming language, leading to incorrect code explanations and potentially dangerous misinterpretations in AI-generated technical answers.",
-      fix: 'Add a class attribute with a "language-" prefix to every <code> element inside <pre>. Use the standard language identifier (e.g., language-javascript, language-python, language-html). Most syntax highlighting libraries (Prism, Highlight.js) do this automatically.',
+        "Turndown can copy a language-* class from the code element into a Markdown fence label. This check measures that convention, not whether an AI agent interprets the code correctly. Other annotation conventions may work in other tools.",
+      fix: "For compatibility with this convention, add a nonempty language-* class to each <code> element inside <pre>, such as language-javascript or language-python. A class on <pre>, lang-* or data-language is a different convention and does not satisfy this check.",
       code: '<pre><code class="language-javascript">\nconst response = await fetch("/api/data");\nconst data = await response.json();\n</code></pre>',
       effort: FixEffort.Trivial,
       docsUrl: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/code",
@@ -50,24 +49,30 @@ export class CodeLanguageAudit extends Audit {
 
     for (const page of ctx.pages) {
       const $ = page.$;
-      $("pre code").each((_, el) => {
+      // Turndown fences a <pre> once and labels it from its first <code>, so
+      // assess one code element per block, not every <code> inside it.
+      $("pre").each((_, pre) => {
+        if (hiddenFromReaders($, pre)) return;
+        const el = $(pre)
+          .find("code")
+          .toArray()
+          .find((code) => !hiddenFromReaders($, code));
+        if (!el) return;
         totalCodeBlocks++;
         const classList = $(el).attr("class") ?? "";
-        if (classList.includes("language-")) annotatedBlocks++;
+        if (
+          classList.split(/\s+/).some((token) => /^language-\S+$/.test(token))
+        ) {
+          annotatedBlocks++;
+        }
       });
     }
 
     if (totalCodeBlocks === 0) {
-      return this.warn(
-        "No code blocks found — check may not apply to this site.",
-        '<pre><code> elements have class containing "language-"',
+      return this.notApplicable(
+        "No code blocks found, so there are no language annotations to assess.",
+        "Each <pre><code> element has a nonempty language-* class",
         "No <pre><code> elements",
-        {
-          priority: CheckPriority.Low,
-          description:
-            "AI agents use language annotations on code blocks to apply the correct syntax understanding and provide accurate code explanations. Without them, agents must guess the programming language, which can lead to incorrect interpretations in AI-generated code answers.",
-          code: '<pre><code class="language-javascript">\nconst result = await fetch("/api/data");\n</code></pre>',
-        },
       );
     }
 
@@ -77,7 +82,7 @@ export class CodeLanguageAudit extends Audit {
     if (allAnnotated) {
       return this.pass(
         `All ${totalCodeBlocks} code block(s) have language annotations.`,
-        'All <pre><code> elements have class containing "language-"',
+        "Each <pre><code> element has a nonempty language-* class",
         `${annotatedBlocks}/${totalCodeBlocks} annotated code blocks`,
       );
     }
@@ -85,12 +90,12 @@ export class CodeLanguageAudit extends Audit {
     if (majorityAnnotated) {
       return this.warn(
         `${annotatedBlocks}/${totalCodeBlocks} code block(s) have language annotations.`,
-        'All <pre><code> elements have class containing "language-"',
+        "Each <pre><code> element has a nonempty language-* class",
         `${annotatedBlocks}/${totalCodeBlocks} annotated code blocks`,
         {
           priority: CheckPriority.Low,
           description:
-            "AI agents use language annotations to apply correct syntax understanding when extracting and explaining code from your pages. Unannotated code blocks force agents to guess the language, which often produces incorrect interpretations.",
+            "Some code elements lack a nonempty language-* class. Turndown cannot derive a fence label from that convention on those elements. Other annotation conventions may work in other tools; this finding does not prove incorrect AI interpretation.",
           code: '<pre><code class="language-python">\nresult = requests.get("/api/data")\n</code></pre>',
         },
       );
@@ -98,12 +103,12 @@ export class CodeLanguageAudit extends Audit {
 
     return this.fail(
       `${annotatedBlocks}/${totalCodeBlocks} code block(s) have language annotations.`,
-      'All <pre><code> elements have class containing "language-"',
+      "Each <pre><code> element has a nonempty language-* class",
       `${annotatedBlocks}/${totalCodeBlocks} annotated code blocks`,
       {
         priority: CheckPriority.Low,
         description:
-          "AI agents use language annotations to apply correct syntax understanding when extracting and explaining code from your pages. Unannotated code blocks force agents to guess the language, which often produces incorrect interpretations.",
+          "Some code elements lack a nonempty language-* class. Turndown cannot derive a fence label from that convention on those elements. Other annotation conventions may work in other tools; this finding does not prove incorrect AI interpretation.",
         code: '<pre><code class="language-python">\nresult = requests.get("/api/data")\n</code></pre>',
       },
     );

@@ -1,11 +1,19 @@
 import { describe, it, expect } from "vitest";
 import { DirectDefinitionsAudit } from "./direct-definitions";
 import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { runAudits } from "#core/audit-runner";
+import { buildScanEvidence } from "#core/scan-evidence";
+import type { PageContext } from "#core/check-context";
+import type { ScanConfig } from "#core/audit-config";
+import { CheckResultSchema } from "#core/schemas";
 import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
 import {
   AuditTier,
   CheckStatus,
   EvidenceGrade,
+  PageType,
+  PageTypeSource,
+  CoverageProvenance,
   ScoreDisplayMode,
 } from "#core/types";
 
@@ -239,4 +247,288 @@ describe("DirectDefinitionsAudit", () => {
       expect(meta.scoreDisplayMode).toBe(ScoreDisplayMode.Informative);
     });
   });
+});
+
+const definition =
+  "<h1>Glossary</h1><dl><dt>RAG</dt><dd>Retrieval-augmented generation grounds generated answers in retrieved sources.</dd></dl>";
+const specification =
+  "<h1>Chair specifications</h1><dl><dt>Material</dt><dd>Solid oak with a durable hand-applied natural finish.</dd><dt>Weight</dt><dd>200g</dd></dl>";
+const runnerConfig: ScanConfig = {
+  categories: [{ id: "answer-readiness", name: "Answer", weight: 1 }],
+  audits: {
+    "answer-readiness": [
+      {
+        meta: DirectDefinitionsAudit.meta,
+        create: () => new DirectDefinitionsAudit(),
+      },
+    ],
+  },
+};
+const scopedPage = (
+  body: string,
+  type: PageType,
+  source: PageTypeSource,
+  name = "page",
+) => {
+  const p = page(
+    body + "<p>" + "Readable page content. ".repeat(60) + "</p>",
+    "en",
+    `https://example.com/${name}`,
+  );
+  p.pageType = type;
+  p.pageTypeSource = source;
+  return p;
+};
+const run = async (pages: PageContext[]) => {
+  const ctx = mockCheckContext(pages);
+  ctx.evidence = buildScanEvidence({
+    requestedUrl: pages[0]!.url,
+    homepageResult: pages[0]!.fetchResult,
+    pages,
+    rootFiles: {},
+    wafProtection: null,
+  });
+  return runAudits(ctx, runnerConfig);
+};
+
+describe("definition feature scope", () => {
+  it.each(Object.values(PageType))(
+    "ignores product-style name-value lists on %s",
+    (type) => {
+      const p = scopedPage(specification, type, PageTypeSource.Declared);
+      expect(
+        new DirectDefinitionsAudit().audit(mockCheckContext([p])).status,
+      ).toBe(CheckStatus.NotApplicable);
+    },
+  );
+
+  it("does not infer definitions from a bare short description list", () => {
+    expect(
+      new DirectDefinitionsAudit().audit(
+        mockCheckContext([page("<dl><dt>Weight</dt><dd>200g</dd></dl>")]),
+      ).status,
+    ).toBe(CheckStatus.NotApplicable);
+  });
+
+  for (const source of Object.values(PageTypeSource)) {
+    describe(source, () => {
+      it.each(Object.values(PageType))(
+        "assesses definitions on %s without adding score weight",
+        async (type) => {
+          const result = await run([scopedPage(definition, type, source)]);
+          const check = CheckResultSchema.parse(result.checks[0]);
+          expect(check.status).toBe(CheckStatus.Pass);
+          expect(check.scoreDisplayMode).toBe(ScoreDisplayMode.Informative);
+          expect(check.weight).toBe(0);
+          expect(check.coverage?.provenance).toBe(CoverageProvenance.All);
+          expect(result.categories[0]!.assessedMass).toBe(0);
+        },
+      );
+      it.each(Object.values(PageType))(
+        "leaves %s pages without definitions not applicable",
+        async (type) => {
+          const result = await run([
+            scopedPage("<h1>Contact us</h1>", type, source),
+          ]);
+          expect(result.checks[0]!.status).toBe(CheckStatus.NotApplicable);
+          expect(result.checks[0]!.tags).not.toContain("skipped:page-type");
+          expect(result.checks[0]!.coverage?.provenance).toBe(
+            CoverageProvenance.All,
+          );
+        },
+      );
+    });
+  }
+
+  it("counts only relevant readable pages across mixed types and provenance", async () => {
+    const marked = scopedPage(
+      definition,
+      PageType.Product,
+      PageTypeSource.Declared,
+      "marked",
+    );
+    const prose = scopedPage(
+      "<h1>What is chunking?</h1><p>Chunking is the process of splitting text into retrievable passages.</p>",
+      PageType.Homepage,
+      PageTypeSource.Detected,
+      "prose",
+    );
+    const irrelevant = scopedPage(
+      specification,
+      PageType.Category,
+      PageTypeSource.Detected,
+      "specs",
+    );
+    const unread = scopedPage(
+      "",
+      PageType.Article,
+      PageTypeSource.Declared,
+      "unread",
+    );
+    unread.$ = page("").$;
+    unread.fetchResult = { ...unread.fetchResult, body: "", status: 503 };
+    const result = await run([marked, irrelevant, unread, prose]);
+    const check = CheckResultSchema.parse(result.checks[0]);
+    expect(check.status).toBe(CheckStatus.Warn);
+    expect(check.displayValue).toContain("1 of 2");
+    expect(check.coverage?.unreadUrls).toEqual([unread.url]);
+    expect(check.coverage?.inputUrls).not.toContain(unread.url);
+    expect(check.advisoryResults).toBeUndefined();
+    expect(check.weight).toBe(0);
+  });
+});
+
+describe("DirectDefinitionsAudit intent noise", () => {
+  const audit = new DirectDefinitionsAudit();
+  it("ignores a glossary heading in the page footer", () => {
+    const result = audit.audit(
+      mockCheckContext([
+        mockPageContext(
+          "https://example.com/about",
+          '<html lang="en"><body><main><h1>About us</h1><p>We sell furniture.</p></main><footer><h3>Glossary</h3><a href="/glossary">Terms</a></footer></body></html>',
+        ),
+      ]),
+    );
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+  });
+
+  it("ignores a hidden definitional heading", () => {
+    const result = audit.audit(
+      mockCheckContext([page("<h2 hidden>What is X?</h2><p>Body.</p>")]),
+    );
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+  });
+
+  it.each([
+    ["en", "55-inch High Definition Smart TV"],
+    ["en", "Standard-definition webcam"],
+    ["es", "Televisor de alta definición"],
+    ["fr", "Téléviseur haute définition"],
+  ])("treats %s picture-quality wording as no intent", (lang, title) => {
+    const result = audit.audit(
+      mockCheckContext([
+        page(
+          `<h1>${title}</h1><dl><dt>Resolution</dt><dd>1920 by 1080 pixels with wide colour gamut support</dd></dl>`,
+          lang,
+          "https://example.com/products/tv",
+        ),
+      ]),
+    );
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+  });
+
+  it("still reads a definitions heading", () => {
+    const result = audit.audit(
+      mockCheckContext([
+        page(
+          "<h1>Definitions</h1><p>A widget is a small component that does one job.</p>",
+        ),
+      ]),
+    );
+    expect(result.status).not.toBe(CheckStatus.NotApplicable);
+  });
+});
+
+describe("DirectDefinitionsAudit visibility and scope", () => {
+  const audit = new DirectDefinitionsAudit();
+  it("ignores a footer <dfn> on a contact page", () => {
+    const result = audit.audit(
+      mockCheckContext([
+        mockPageContext(
+          "https://example.com/contact",
+          '<html lang="en"><body><main><h1>Contact</h1><p>Call us.</p></main><footer><dfn>ACME</dfn> is a trading name.</footer></body></html>',
+        ),
+      ]),
+    );
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+  });
+
+  it("does not count a hidden <dl> on a visible glossary", () => {
+    const result = audit.audit(
+      mockCheckContext([
+        page(
+          "<h1>Glossary</h1><dl hidden><dt>Widget</dt><dd>A small component that does exactly one job well.</dd></dl>",
+        ),
+      ]),
+    );
+    expect(result.status).toBe(CheckStatus.Warn);
+  });
+
+  it("ignores hidden text inside a visible heading", () => {
+    const result = audit.audit(
+      mockCheckContext([
+        page("<h1>About <span hidden>Glossary</span></h1><p>Body.</p>"),
+      ]),
+    );
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+  });
+});
+
+it("ignores display quality: definici\u00f3n est\u00e1ndar", () => {
+  const p = mockPageContext(
+    "https://example.com/page",
+    "<html lang=es><body><h1>definici\u00f3n est\u00e1ndar</h1></body></html>",
+  );
+  expect(new DirectDefinitionsAudit().audit(mockCheckContext([p])).status).toBe(
+    CheckStatus.NotApplicable,
+  );
+});
+
+it("ignores display quality: d\u00e9finition standard", () => {
+  const p = mockPageContext(
+    "https://example.com/page",
+    "<html lang=fr><body><h1>d\u00e9finition standard</h1></body></html>",
+  );
+  expect(new DirectDefinitionsAudit().audit(mockCheckContext([p])).status).toBe(
+    CheckStatus.NotApplicable,
+  );
+});
+
+it("ignores display quality: defini\u00e7\u00e3o padr\u00e3o", () => {
+  const p = mockPageContext(
+    "https://example.com/page",
+    "<html lang=pt><body><h1>defini\u00e7\u00e3o padr\u00e3o</h1></body></html>",
+  );
+  expect(new DirectDefinitionsAudit().audit(mockCheckContext([p])).status).toBe(
+    CheckStatus.NotApplicable,
+  );
+});
+
+it("ignores display quality: definizione standard", () => {
+  const p = mockPageContext(
+    "https://example.com/page",
+    "<html lang=it><body><h1>definizione standard</h1></body></html>",
+  );
+  expect(new DirectDefinitionsAudit().audit(mockCheckContext([p])).status).toBe(
+    CheckStatus.NotApplicable,
+  );
+});
+
+it("ignores display quality: Hi-Definition television", () => {
+  const p = mockPageContext(
+    "https://example.com/page",
+    "<html lang=en><body><h1>Hi-Definition television</h1></body></html>",
+  );
+  expect(new DirectDefinitionsAudit().audit(mockCheckContext([p])).status).toBe(
+    CheckStatus.NotApplicable,
+  );
+});
+
+describe("DirectDefinitionsAudit video-format wording", () => {
+  const audit = new DirectDefinitionsAudit();
+  it.each(["4K Ultra HD definition", "Definition HD 1080p"])(
+    "treats %j as no intent",
+    (title) => {
+      const result = audit.audit(
+        mockCheckContext([
+          page(
+            `<h1>${title}</h1><p>A bright panel.</p>`,
+            "en",
+            "https://example.com/products/tv",
+          ),
+        ]),
+      );
+      expect(result.status).toBe(CheckStatus.NotApplicable);
+    },
+  );
 });

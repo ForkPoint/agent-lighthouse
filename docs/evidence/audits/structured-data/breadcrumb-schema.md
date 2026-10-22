@@ -4,8 +4,8 @@ category: structured-data
 source_file: packages/core/src/audits/structured-data/breadcrumb-schema.ts
 slug: breadcrumb-schema
 evidence_grade: A
-disposition: "keep — fix required"
-reviewed: 2026-08-21
+disposition: "kept — feature scope corrected 2026-10-21"
+reviewed: 2026-10-21
 sources:
   - google-breadcrumb-structured-data
   - google-search-gallery
@@ -17,17 +17,17 @@ sources:
 
 # breadcrumb-schema (`3.5`)
 
-> structured-data · source `breadcrumb-schema.ts` · review verdict **fix** · evidence grade **A** · disposition: **keep — fix required**
+> structured-data · source `breadcrumb-schema.ts` · review verdict **corrected** · evidence grade **A** · disposition: **kept — feature scope corrected**
 
 ## What it checks
 
-The v7 runner includes `article` and `general` pages in this check's existing page population. This preserves coverage when the old catch-all classification becomes unknown. The audit body still owns its existing feature and artifact guards. This scope change does not establish a new consumer path.
+Common scope replaces the page-type list and URL-depth test. Existing BreadcrumbList markup or a visible breadcrumb-labelled container with at least two steps selects a page. The visible trail must include a link. Class, id and aria-label breadcrumb tokens are recognized; hidden trails and lone home links do not establish the feature. All relevant pages with markup pass; mixed coverage warns; observed trails without markup fail; no feature returns NA.
 
-AI agents use BreadcrumbList to understand your site hierarchy and navigate between parent/child pages. Without breadcrumbs, agents cannot infer where a page sits in your content tree, making it harder to provide contextual answers that reference related pages.
+## Why it matters
+
+Grade A and weight 1 remain tied to Google Search, not to an undocumented AI navigation path. [Google recommends typical user paths rather than mirroring URL structure](https://developers.google.com/search/docs/appearance/structured-data/breadcrumb) (verified 2026-10-21). A visible trail supplies independent evidence of hierarchy, including on a flat URL.
 
 ## Evidence
-
-_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
 
 ## Evidence (2026-08-21)
 
@@ -43,9 +43,16 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Counter-evidence:** The audit's stated mechanism — that AI agents use BreadcrumbList to "navigate between parent/child pages" — has no documented consumer; no LLM or assistant vendor names BreadcrumbList, and Apple's Applebot type list does not include it. Google's own guidance contradicts the audit's URL-depth applicability gate: "We recommend providing breadcrumbs that represent a typical user path to a page, instead of mirroring the URL structure." Google also disclaims any special schema requirement for AI Overviews and AI Mode — https://developers.google.com/search/docs/appearance/ai-features (verified 2026-08-21). A controlled fetch test found that data present only in JSON-LD was read by 0 of 5 AI systems on direct retrieval — https://www.searchviu.com/en/schema-markup-and-ai-in-2025-what-chatgpt-claude-perplexity-gemini-really-see/ (verified 2026-08-21)
 
+## Limits
+
+This remains a markup-presence check, not full validation of ListItem fields, positions, URL resolution or agreement with the visible trail. JSON-LD graphs, arrays, array types and gathered microdata/RDFa remain supported. A localized or custom trail without a breadcrumb token may remain undetected; arbitrary URL depth does not fill that gap.
+
+## Implementation deviations
+
+- Every visible breadcrumb-labelled candidate is assessed on its own steps, and a plain `<nav>` or `role="navigation"` inside one is assessed too. Candidates containing main, header or article regions are page wrappers, not trails. State and toggle classes such as `has-breadcrumbs`, `no-breadcrumbs` or `breadcrumbs-disabled` do not label a trail.
+
+- The 2026-10-21 correction replaces broad page-type filtering with independent feature selection. Runner tests cover all five types and both provenance modes. Mixed samples exclude unrelated and unread pages.
+
 ## Deferred
 
-- The category, product, general and article list is a broad list kept while
-  classification changes. Its review against the documented hierarchy
-  obligation is open in
-  `docs/architecture/audits.md#511-default-scope-and-page-type-restrictions`.
+- Broader language and layout recognition requires new fixtures. Do not infer missing obligations from page type alone.

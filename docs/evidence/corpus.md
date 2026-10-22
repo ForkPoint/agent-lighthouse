@@ -76,6 +76,6 @@ Crawl delays pace requests to an origin; they never turn an allowed path into a 
 
 `packages/core/test-data/corpus/real/` holds a small sample from this corpus, each response with a provenance record. `fixture-io.ts` verifies body hashes and replays the response-kind decision. The audit snapshot suite runs the registered audits on those frozen bytes, with no live root files, secondary pages or browser accessibility results. Its clock is pinned to 2026-10-09 for dated offers.
 
-`corpus/page-types.json` holds labels reviewed from the captured content, not from the classifier under test. A `knownMismatch` label runs as an expected failure; when the classifier is corrected, that case fails and the record must be updated. One such case is a blog index the classifier reports as a product category.
+`corpus/page-types.json` holds labels reviewed from the captured content, not from the classifier under test. A `knownMismatch` label runs as an expected failure; when the classifier is corrected, that case fails and the record must be updated. The captured furniture-retailer blog-index regression now passes as general: pagination and filters alone do not establish a product category.
 
 The earlier synthetic conformance suite and fixture-specific accessibility suite were removed with their inputs. This corpus does not claim their public-sector, bank, forum or documentation coverage. Focused audit unit tests remain.

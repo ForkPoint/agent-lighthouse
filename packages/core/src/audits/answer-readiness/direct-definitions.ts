@@ -11,6 +11,8 @@
 // Evidence dossier: docs/evidence/audits/answer-readiness/direct-definitions.md
 import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
+import { readerText } from "#core/dom-visibility";
+import { inPageChrome } from "#core/page-chrome";
 import { weightForGrade } from "#core/scorer";
 import type { CheckContext, PageContext } from "#core/check-context";
 import {
@@ -19,7 +21,6 @@ import {
   EvidenceGrade,
   EvidenceKey,
   FixEffort,
-  PageType,
   ScoreDisplayMode,
 } from "#core/types";
 
@@ -31,7 +32,7 @@ import {
  * prose, which extraction reads perfectly well even though it carries no
  * term/definition role.
  *
- * The structural signals (`<dfn>`, `<dl>`) need none of this and work in every
+ * The explicit `<dfn>` signal needs none of this and works in every
  * language; these tables exist only so the lexical fallbacks are not
  * English-only, which is what the required rework asks for.
  */
@@ -43,40 +44,43 @@ interface LanguageRules {
 const LANGUAGES: Record<string, LanguageRules> = {
   en: {
     intent:
-      /\bwhat (?:is|are)\b|\bdefinitions?\b|\bglossary\b|\bterminology\b|\bmeaning of\b/i,
+      /\bwhat (?:is|are)\b|(?<!\b(?:hi|high|standard|hd|uhd|4k)[- ])\bdefinitions?\b(?![- ](?:hd|uhd|4k)\b)|\bglossary\b|\bterminology\b|\bmeaning of\b/i,
     copula:
       /\b(?:is|are)\s+(?:a|an|the)\b|\brefers? to\b|\bis defined as\b|\bstands for\b/i,
   },
   es: {
     intent:
-      /\bqu[ée]\s+(?:es|son)\b|\bdefinici[óo]n\b|\bglosario\b|\bterminolog[íi]a\b/i,
+      /\bqu[ée]\s+(?:es|son)\b|(?<!\b(?:alta|est[áa]ndar)\s)\bdefinici[óo]n\b(?!\s+(?:alta|est[áa]ndar)\b)|\bglosario\b|\bterminolog[íi]a\b/i,
     copula:
       /\b(?:es|son)\s+(?:un|una|unos|unas|el|la|los|las)\b|\bse refiere a\b/i,
   },
   fr: {
     intent:
-      /\bqu['’]est-ce\s+qu|\bd[ée]finition\b|\bglossaire\b|\bterminologie\b/i,
+      /\bqu['’]est-ce\s+qu|(?<!\b(?:haute|standard)\s)\bd[ée]finition\b(?!\s+(?:haute|standard)\b)|\bglossaire\b|\bterminologie\b/i,
     copula: /\b(?:est|sont)\s+(?:un|une|des|le|la|les|l['’])|\bd[ée]signe\b/i,
   },
   de: {
-    intent: /\bwas\s+(?:ist|sind)\b|\bdefinition\b|\bglossar\b|\bbegriffe\b/i,
+    intent:
+      /\bwas\s+(?:ist|sind)\b|(?<!\b(?:hi|high|standard|hd|uhd|4k)[- ])\bdefinition\b(?![- ](?:hd|uhd|4k)\b)|\bglossar\b|\bbegriffe\b/i,
     copula: /\b(?:ist|sind)\s+(?:ein|eine|einer|der|die|das)\b|\bbezeichnet\b/i,
   },
   pt: {
     // No trailing \b after an accented vowel: JS word boundaries are ASCII-only,
     // so /é\b/ never matches. Same reason the Italian rule below ends on [èe].
-    intent: /\bo\s+que\s+(?:[ée]|s[ãa]o)|\bdefini[çc][ãa]o|\bgloss[áa]rio/i,
+    intent:
+      /\bo\s+que\s+(?:[ée]|s[ãa]o)|(?<!\b(?:alta|padr[ãa]o)\s)\bdefini[çc][ãa]o\b(?!\s+(?:alta|padr[ãa]o)\b)|\bgloss[áa]rio/i,
     copula:
       /\b(?:[ée]|s[ãa]o)\s+(?:um|uma|uns|umas|o|a|os|as)\b|\brefere-se a\b/i,
   },
   it: {
-    intent: /\b(?:che\s+)?cos['’]?\s*[èe]|\bdefinizione\b|\bglossario\b/i,
+    intent:
+      /\b(?:che\s+)?cos['’]?\s*[èe]|(?<!\b(?:alta|standard)\s)\bdefinizione\b(?!\s+(?:alta|standard)\b)|\bglossario\b/i,
     copula:
       /\b(?:[èe]|sono)\s+(?:un|uno|una|il|lo|la|i|gli|le)\b|\bsi riferisce a\b/i,
   },
   nl: {
     intent:
-      /\bwat\s+(?:is|zijn)\b|\bdefinitie\b|\bwoordenlijst\b|\bbegrippen\b/i,
+      /\bwat\s+(?:is|zijn)\b|(?<!\b(?:hoge|standaard)\s)\bdefinitie\b|\bwoordenlijst\b|\bbegrippen\b/i,
     copula: /\b(?:is|zijn)\s+(?:een|de|het)\b|\bverwijst naar\b/i,
   },
   ru: {
@@ -105,7 +109,8 @@ function languageOf(page: PageContext): LanguageRules {
 const collapse = (s: string): string => s.replace(/\s+/g, " ").trim();
 
 /**
- * Whether a string is a definition rather than a spec value.
+ * Whether text is substantive after the page has shown definitional intent.
+ * Length alone cannot distinguish a definition from a product specification.
  *
  * Two measures, because one of them is language-dependent: six whitespace-
  * separated words, OR twenty non-whitespace characters. The second is what
@@ -121,24 +126,36 @@ function isSubstantive(text: string): boolean {
   );
 }
 
+/**
+ * The visible text of each matching element in the page's own content.
+ * Elements in site chrome or asides are skipped: a footer "Glossary" block or
+ * a footer `<dfn>` would otherwise mark every page on the site. Hidden
+ * descendants are pruned from each element's text.
+ */
+function contentTexts(page: PageContext, selector: string): string[] {
+  const $ = page.$;
+  return $(selector)
+    .toArray()
+    .filter(
+      (el) =>
+        !inPageChrome($, el) &&
+        $(el).closest('aside, [role="complementary"]').length === 0,
+    )
+    .map((el) => collapse(readerText($, el)))
+    .filter(Boolean);
+}
+
 /** Headline text a definitional question would be written into. */
 function headingText(page: PageContext): string {
-  const parts = [
-    page.$("title").text(),
-    ...page.$("h1, h2, h3").map((_, el) => page.$(el).text()),
-  ];
-  return collapse(parts.join(" "));
+  return collapse(
+    [page.$("title").text(), ...contentTexts(page, "h1, h2, h3")].join(" "),
+  );
 }
 
 /** The opening prose of the page body, where a definition sentence would sit. */
 function openingProse(page: PageContext): string {
-  const body = page.$("main").length > 0 ? page.$("main") : page.$("body");
-  const paragraphs = body
-    .find("p")
-    .map((_, el) => collapse(page.$(el).text()))
-    .get()
-    .filter(Boolean);
-  return paragraphs.slice(0, 3).join(" ");
+  const scope = page.$("main").length > 0 ? "main p" : "body p";
+  return contentTexts(page, scope).slice(0, 3).join(" ");
 }
 
 const Coverage = {
@@ -159,8 +176,8 @@ interface Assessed {
 /**
  * Assess one page, or return undefined when it shows no definitional intent.
  *
- * Intent is structural first — a `<dfn>` or a `<dl>` IS the page declaring that
- * it defines something, in any language — and lexical second. Replacing the old
+ * Intent is explicit (`<dfn>`) or lexical. A `<dl>` can hold metadata or product
+ * specifications, so its presence cannot establish definitions. Replacing the old
  * `isArticleContentPage` gate with this one is what stops a /contact or
  * /privacy page from being the sole "article" and producing a site-level verdict
  * about definitions.
@@ -169,17 +186,16 @@ function assess(page: PageContext): Assessed | undefined {
   const rules = languageOf(page);
   const signals: string[] = [];
 
-  const dfnCount = page.$("dfn").length;
+  const dfnCount = contentTexts(page, "dfn").length;
   if (dfnCount > 0) signals.push(`<dfn> (${dfnCount})`);
 
-  let substantiveDd = 0;
-  page.$("dl dd").each((_, el) => {
-    if (isSubstantive(page.$(el).text())) substantiveDd++;
-  });
+  const substantiveDd = contentTexts(page, "dl dd").filter(
+    isSubstantive,
+  ).length;
   if (substantiveDd > 0)
     signals.push(`<dl> with substantive definitions (${substantiveDd})`);
 
-  const structuralIntent = dfnCount > 0 || page.$("dl dt").length > 0;
+  const structuralIntent = dfnCount > 0;
   const lexicalIntent = rules.intent.test(headingText(page));
   if (!structuralIntent && !lexicalIntent) return undefined;
 
@@ -221,7 +237,6 @@ export class DirectDefinitionsAudit extends Audit {
       EvidenceKey.RenderedBody,
       EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: [PageType.General, PageType.Article],
     // Never a defect, so never above the actionable items.
     defaultPriority: CheckPriority.Low,
     guidance: {
@@ -243,7 +258,7 @@ export class DirectDefinitionsAudit extends Audit {
 
     if (assessed.length === 0) {
       return this.notApplicable(
-        'No scanned page shows definitional intent — none asks "what is X?", indexes terminology, or carries definition markup — so there is nothing to pair.',
+        'No scanned page shows definitional intent — none asks "what is X?", indexes terminology, or marks a term with <dfn> — so there is nothing to pair.',
         EXPECTED,
         "No page with definitional intent",
       );

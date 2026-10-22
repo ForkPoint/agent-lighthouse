@@ -1,5 +1,7 @@
 import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
+import { hiddenFromReaders } from "#core/dom-visibility";
+import { inPageChrome } from "#core/page-chrome";
 import { weightForGrade } from "#core/scorer";
 import type { CheckContext } from "#core/check-context";
 import {
@@ -8,22 +10,42 @@ import {
   EvidenceGrade,
   EvidenceKey,
   FixEffort,
-  PageType,
   ScoreDisplayMode,
 } from "#core/types";
+
+/** Share actions are not links to source content. Match host and path only. */
+function isShareLink(url: URL): boolean {
+  const host = url.hostname.replace(/^(?:www\.|m\.)/, "");
+  return (
+    ((host === "twitter.com" || host === "x.com") &&
+      /^\/(?:intent\/(?:tweet|post)|share)\/?$/.test(url.pathname)) ||
+    (host === "pinterest.com" &&
+      /^\/pin\/create\/(?:button|link|bookmarklet)\/?$/.test(url.pathname)) ||
+    (host === "reddit.com" && /^\/submit\/?$/.test(url.pathname)) ||
+    host === "wa.me" ||
+    (host === "api.whatsapp.com" && /^\/send\/?$/.test(url.pathname)) ||
+    (host === "t.me" && /^\/share(?:\/url)?\/?$/.test(url.pathname)) ||
+    (host === "facebook.com" &&
+      /^\/(?:sharer(?:\/sharer\.php|\.php)?|dialog\/share)\/?$/.test(
+        url.pathname,
+      )) ||
+    (host === "linkedin.com" &&
+      /^\/(?:sharing\/share-offsite|shareArticle)\/?$/.test(url.pathname))
+  );
+}
 
 export class ExternalCitationsAudit extends Audit {
   static override meta: AuditMeta = {
     id: "answer-readiness/external-citations",
     category: "answer-readiness",
-    title: "External citations",
-    failureTitle: "External citations",
+    title: "External content links",
+    failureTitle: "External content links",
     description:
-      "Linking to authoritative sources signals expertise. AI RAG systems cross-reference your citations to validate claims and assess content quality.",
-    scoreDisplayMode: ScoreDisplayMode.Ternary,
-    weight: weightForGrade(EvidenceGrade.B, AuditTier.Scored),
-    evidenceGrade: EvidenceGrade.B,
-    tier: AuditTier.Scored,
+      "Reports external HTTP links in visible content. Their presence does not prove citation quality, authority or factual support.",
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    weight: weightForGrade(EvidenceGrade.C, AuditTier.Informative),
+    evidenceGrade: EvidenceGrade.C,
+    tier: AuditTier.Informative,
     dossier: "docs/evidence/audits/answer-readiness/external-citations.md",
     requires: [
       EvidenceKey.OriginReachable,
@@ -31,103 +53,63 @@ export class ExternalCitationsAudit extends Audit {
       EvidenceKey.RenderedBody,
       EvidenceKey.SampleAdequate,
     ],
-    applicablePageTypes: [PageType.General, PageType.Article],
     defaultPriority: CheckPriority.Medium,
     guidance: {
       impact:
-        "AI RAG systems cross-reference your outbound citations against their knowledge graph to validate claims. Pages without external references appear as unsourced opinion, receiving lower trust scores in AI-generated answers.",
-      fix: "Add at least 2 outbound links per article or general page to authoritative external sources that support your claims. Link to research papers, official documentation, or industry authorities.",
-      code: '<p>According to <a href="https://research.google/pubs/">Google Research</a>, this approach improves accuracy by 40%.\nSee also <a href="https://w3.org/standards">W3C standards</a>.</p>',
+        "Research on adding relevant citations does not establish a minimum outbound-link count. This observation does not validate claims or affect the score.",
+      fix: "Link to sources where they support factual claims. Review relevance and accuracy; do not add links to meet a numeric target.",
+      code: '<p>According to <a href="https://research.google/pubs/">Google Research</a>, the cited paper describes the method.\nSee also <a href="https://w3.org/standards">W3C standards</a>.</p>',
       effort: FixEffort.Easy,
       tags: ["trust", "e-e-a-t", "content-quality", "generative-engine"],
     },
   };
 
   audit(ctx: CheckContext): AuditResult {
-    const page = ctx.pages[0];
-    if (!page) {
-      return this.fail(
-        "No pages scanned.",
-        "At least 2 <a> tags pointing to external domains per article or general page",
-        "No pages scanned",
-        {
-          priority: CheckPriority.Medium,
-          description:
-            "Linking to authoritative sources signals expertise. AI RAG systems cross-reference your citations to validate claims and assess content quality.",
-          code: '<p>According to <a href="https://research.google/pubs/">Google Research</a>, this approach improves accuracy by 40%.</p>',
-        },
-      );
-    }
-
-    let pagesWithSufficientLinks = 0;
-    let totalExternalLinks = 0;
-    const examples: string[] = [];
-
-    for (const p of ctx.pages) {
-      const $ = p.$;
-      const externalLinks: string[] = [];
-
+    const links = new Set<string>();
+    let relevant = 0;
+    for (const page of ctx.pages) {
+      const $ = page.$;
+      const pageLinks = new Set<string>();
       $("a[href]").each((_, el) => {
-        const href = $(el).attr("href");
+        if (
+          hiddenFromReaders($, el) ||
+          inPageChrome($, el) ||
+          $(el).closest('aside, [role="complementary"]').length
+        )
+          return;
+        const href = $(el).attr("href")?.trim();
         if (!href) return;
         try {
-          const url = new URL(href, p.url);
+          const url = new URL(href, page.url);
+          const host = ctx.domain.toLowerCase().replace(/^www\./, "");
           if (
-            url.hostname !== ctx.domain &&
-            !url.hostname.endsWith(`.${ctx.domain}`) &&
-            (url.protocol === "http:" || url.protocol === "https:")
-          ) {
-            externalLinks.push(url.hostname);
-          }
+            !["http:", "https:"].includes(url.protocol) ||
+            isShareLink(url) ||
+            url.hostname === host ||
+            url.hostname.endsWith(`.${host}`)
+          )
+            return;
+          url.hash = "";
+          pageLinks.add(url.href);
         } catch {
-          // ignore invalid URLs
+          // Invalid links do not establish an external reference.
         }
       });
-
-      totalExternalLinks += externalLinks.length;
-      if (externalLinks.length >= 2) {
-        pagesWithSufficientLinks++;
-      }
-      if (examples.length < 5) {
-        examples.push(...externalLinks.slice(0, 5 - examples.length));
-      }
+      if (pageLinks.size) relevant++;
+      for (const link of pageLinks) links.add(link);
     }
-
-    if (pagesWithSufficientLinks > 0) {
-      return this.pass(
-        `Found ${totalExternalLinks} external link(s) across ${ctx.pages.length} page(s); ${pagesWithSufficientLinks} page(s) have 2+ external links.`,
-        "At least 2 <a> tags pointing to external domains per article or general page",
-        `External domains: ${[...new Set(examples)].join(", ")}`,
-        page.url,
+    const expected =
+      "External content links where the content calls for sources; no minimum count";
+    if (!links.size)
+      return this.notApplicable(
+        "No external content links detected; a citation obligation is not established.",
+        expected,
+        "No external content links",
       );
-    }
-
-    if (totalExternalLinks > 0) {
-      return this.warn(
-        `Found ${totalExternalLinks} external link(s) but no page has 2+ external citations.`,
-        "At least 2 <a> tags pointing to external domains per article or general page",
-        `External domains: ${[...new Set(examples)].join(", ")}`,
-        {
-          priority: CheckPriority.Medium,
-          description:
-            "Linking to authoritative sources signals expertise to AI systems. AI RAG systems cross-reference your outbound citations against their knowledge graph to validate claims. Pages with more external citations to authoritative domains receive higher trust scores in AI-generated recommendations.",
-          code: '<p>According to <a href="https://authoritative-source.com/study">this research</a>, the approach improves outcomes by 40%.</p>',
-        },
-        page.url,
-      );
-    }
-
-    return this.fail(
-      "No external links found on any scanned page.",
-      "At least 2 <a> tags pointing to external domains per article or general page",
-      "Not found",
-      {
-        priority: CheckPriority.Medium,
-        description:
-          "Linking to authoritative external sources signals well-researched expertise to AI systems. AI RAG systems cross-reference citations against their knowledge graph to validate your claims. Pages without external references appear as unsourced opinion, receiving lower trust scores in AI-generated answers.",
-        code: '<p>Research from <a href="https://authoritative-source.com">Source</a> confirms this approach.\nSee also <a href="https://another-authority.org/data">additional data</a>.</p>',
-      },
-      page.url,
+    return this.pass(
+      `Observed ${links.size} distinct external content link(s) on ${relevant} page(s). This does not establish source quality.`,
+      expected,
+      `Examples: ${[...links].sort().slice(0, 5).join(", ")}`,
     );
   }
 }

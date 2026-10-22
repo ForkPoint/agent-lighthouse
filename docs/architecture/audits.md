@@ -220,6 +220,30 @@ The 10 broad lists are review targets, not a pattern for new audits. Their dossi
 | `structured-data/howto-schema`        | general, article                    | Review the existing sequential-heading intent test and its absent-feature warning.                                                 |
 | `structured-data/service-schema`      | homepage, general, article          | The body already tests service intent. Confirm selection and aggregation across other types before removing the list.              |
 
+### 2026-10-21 scope review
+
+The table above is the dated 2026-10-17 inventory, not the current count.
+`howto-schema` has since moved to obsolete with no page-type list. This review
+checked the remaining nine source files against their dossiers.
+
+| Audit                | Review result                                                                                                                       | Required next proof                                                                                                                             |
+| :------------------- | :---------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `service-schema`     | Corrected to C/informative. Existing markup selects every page type; absence is NA.                                                 | A scored tier requires Service-specific consumer evidence.                                                                                      |
+| `direct-definitions` | Corrected to common scope. Explicit `<dfn>` or definitional headings select pages; generic description lists do not.                | Runner tests cover all five types, both provenance modes, absent definitions, and mixed readable/unread samples.                                |
+| `aside-element`      | Corrected to common scope. Visible supplementary blocks select pages; existing chrome and ambiguous generic tokens do not.          | Runner tests cover recommendations, absent features, five types, both provenance modes and mixed readable/unread samples.                       |
+| `code-language`      | Corrected to common scope. Code-block presence selects pages; no blocks returns NA.                                                 | Runner tests cover five types, both provenance modes and mixed samples; token and alternative-convention boundaries are pinned.                 |
+| `time-element`       | Corrected to common scope. Visible date text or time elements select pages; no dates returns NA.                                    | Tests cover plain dates, absent markup, mixed samples and machine-readable time text. Full date validation remains outside this presence check. |
+| `comparison-tables`  | Corrected to common scope. Explicit comparison headings/captions establish intent; ordinary tables do not.                          | Tests cover prose comparisons, semantic tables, layout tables and mixed populations. Detector limits remain in the dossier.                     |
+| `external-citations` | Corrected to C/informative. Visible external content links are observations, not a scored citation quota.                           | Restoring scoring requires proof for the implemented detector and obligation, not the study intervention alone.                                 |
+| `unique-data`        | Corrected to C/informative. Research-context figures are observations; prices and arbitrary count thresholds no longer earn points. | Originality and validity require evidence the lexical detector cannot supply.                                                                   |
+| `breadcrumb-schema`  | Corrected to common scope. Visible trails or existing markup establish the feature; URL depth does not.                             | Tests cover flat URLs, deep pages without hierarchy, mixed samples and structured-data representations.                                         |
+
+All nine reviewed broad lists are now removed. Feature guards select relevant
+content instead. This does not mean every heuristic is complete: the dossiers
+record language, layout, validity and provenance limits. External links and
+research-context figures remain unscored until evidence supports their actual
+detectors. The dated inventory above remains as the migration record.
+
 ### 5.1.3 Populations
 
 Every `PageContext` carries its `pageType` and a `pageTypeSource` of `declared` or `detected`. The target is declared by `--page-type`, each `ScanOptions.pages` URL by its entry, and everything the crawl found is detected. CLI config, SDK and MCP share these declarations, validated by `PageScopeOptionsSchema` before any fetch.

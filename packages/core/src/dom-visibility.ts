@@ -1,5 +1,5 @@
 import type { CheerioAPI } from "cheerio";
-import type { AnyNode } from "domhandler";
+import { isTag, isText, type AnyNode } from "domhandler";
 
 /** CSS-wide keywords every property accepts. */
 const GLOBAL_KEYWORDS = new Set([
@@ -215,6 +215,34 @@ export function notRendered($: CheerioAPI, el: AnyNode): boolean {
  */
 export function hiddenFromReaders($: CheerioAPI, el: AnyNode): boolean {
   return anyAncestor($, el, readerHidingMarker);
+}
+
+/** Elements whose text never reaches a reader. */
+const NON_TEXT_TAGS = new Set(["script", "style", "noscript", "template"]);
+
+/**
+ * The text a reader gets from an element: empty when the element is hidden
+ * from readers, and otherwise its text with every hidden or non-text subtree
+ * pruned. A visible parent does not make each descendant visible, so a
+ * pattern matched against `.text()` would read hidden children too.
+ */
+export function readerText($: CheerioAPI, el: AnyNode): string {
+  if (hiddenFromReaders($, el)) return "";
+  const parts: string[] = [];
+  const walk = (node: AnyNode): void => {
+    for (const child of (node as { children?: AnyNode[] }).children ?? []) {
+      if (isText(child)) {
+        parts.push(child.data);
+        continue;
+      }
+      if (!isTag(child)) continue;
+      const tag = child.tagName.toLowerCase();
+      if (NON_TEXT_TAGS.has(tag) || readerHidingMarker($(child), tag)) continue;
+      walk(child);
+    }
+  };
+  walk(el);
+  return parts.join("");
 }
 
 /**

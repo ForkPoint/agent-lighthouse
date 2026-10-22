@@ -98,6 +98,32 @@ limits, and runs no audit. The answer:
 - `payloadSha256` is the SHA-256 of the HTML, computed by the server. It is
   information only. Nothing compares it.
 
+### Core API and validation
+
+`detectPage(payload, { partial })` is exported by
+`@forkpoint/agent-lighthouse-core`. `PagePayload` carries `url`, `html`,
+`origin` and `sha256`. The caller supplies the hash; the HTTP server computes
+it from the payload instead of trusting a client hash. The function returns
+`PageIdentity` and performs no network requests or audits.
+
+Fetched payloads use the HTTP DOM work budget. Supplied payloads use the
+snapshot budget. A partial payload caps `strong` confidence to `hint`.
+`DomWorkLimitError` reports an input over the applicable budget.
+
+Implementation and regression checks:
+
+- `packages/core/src/detect-page.ts` and `detect-page.test.ts`: parser,
+  classifier, gateway and partial-input behavior.
+- `packages/server/src/payload-store.ts` and `payload-store.test.ts`:
+  expiry on reads, count and byte limits, and deletion.
+- `packages/server/src/detect-flow.test.ts`: payload reuse and report identity.
+- `packages/server/src/http.test.ts`: route errors, access rules and body limits.
+
+The repository provides the HTTP contract, not an extension collector or an
+MCP detection tool. The 16 KiB limit on routes that do not read a body checks
+the declared `Content-Length`. Malformed JSON is `400`; a non-JSON media type
+is `415`.
+
 ### Scanning a detected page
 
 `POST /tasks` with `{"detectionId": "d_…"}` scans the detected page. The

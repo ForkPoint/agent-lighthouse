@@ -2705,7 +2705,7 @@
       "category": "answer-readiness",
       "slug": "comparison-tables",
       "title": "Comparison tables present",
-      "purpose": "AI answer engines extract structured table data to generate comparison answers. Add HTML tables to your content where appropriate.",
+      "purpose": "Reports semantic tables on pages with explicit comparison headings or captions. This is an unscored structure check, not a prediction of answer-engine citations.",
       "features": [
         "answer-engine",
         "content-structure",
@@ -2714,13 +2714,8 @@
       "priority": "low",
       "enabledByDefault": true,
       "applicability": {
-        "pageTypeGate": "restricted",
-        "pageTypes": [
-          "article",
-          "category",
-          "general",
-          "product"
-        ]
+        "pageTypeGate": "unrestricted",
+        "pageTypes": []
       },
       "source": "packages/core/src/audits/answer-readiness/comparison-tables.ts",
       "test": "packages/core/src/audits/answer-readiness/comparison-tables.test.ts",
@@ -2891,11 +2886,8 @@
       "priority": "low",
       "enabledByDefault": true,
       "applicability": {
-        "pageTypeGate": "restricted",
-        "pageTypes": [
-          "article",
-          "general"
-        ]
+        "pageTypeGate": "unrestricted",
+        "pageTypes": []
       },
       "source": "packages/core/src/audits/answer-readiness/direct-definitions.ts",
       "test": "packages/core/src/audits/answer-readiness/direct-definitions.test.ts",
@@ -2918,8 +2910,8 @@
       "id": "answer-readiness/external-citations",
       "category": "answer-readiness",
       "slug": "external-citations",
-      "title": "External citations",
-      "purpose": "Linking to authoritative sources signals expertise. AI RAG systems cross-reference your citations to validate claims and assess content quality.",
+      "title": "External content links",
+      "purpose": "Reports external HTTP links in visible content. Their presence does not prove citation quality, authority or factual support.",
       "features": [
         "content-quality",
         "e-e-a-t",
@@ -2929,18 +2921,15 @@
       "priority": "medium",
       "enabledByDefault": true,
       "applicability": {
-        "pageTypeGate": "restricted",
-        "pageTypes": [
-          "article",
-          "general"
-        ]
+        "pageTypeGate": "unrestricted",
+        "pageTypes": []
       },
       "source": "packages/core/src/audits/answer-readiness/external-citations.ts",
       "test": "packages/core/src/audits/answer-readiness/external-citations.test.ts",
-      "tier": "scored",
-      "evidenceGrade": "B",
-      "weight": 0.6,
-      "scoreDisplayMode": "ternary",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
       "dossier": "docs/evidence/audits/answer-readiness/external-citations.md",
       "requires": [
         "origin-reachable",
@@ -3614,8 +3603,8 @@
       "id": "answer-readiness/unique-data",
       "category": "answer-readiness",
       "slug": "unique-data",
-      "title": "Unique data or statistics",
-      "purpose": "AI generative engines prioritize content with original, citable data points over vague claims. Include specific statistics and metrics.",
+      "title": "Statistics in research context",
+      "purpose": "Reports numerical figures in paragraphs with explicit research or measurement context. This does not establish originality, accuracy or citation value.",
       "features": [
         "content-quality",
         "data",
@@ -3624,18 +3613,15 @@
       "priority": "medium",
       "enabledByDefault": true,
       "applicability": {
-        "pageTypeGate": "restricted",
-        "pageTypes": [
-          "article",
-          "general"
-        ]
+        "pageTypeGate": "unrestricted",
+        "pageTypes": []
       },
       "source": "packages/core/src/audits/answer-readiness/unique-data.ts",
       "test": "packages/core/src/audits/answer-readiness/unique-data.test.ts",
-      "tier": "scored",
-      "evidenceGrade": "B",
-      "weight": 0.6,
-      "scoreDisplayMode": "ternary",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
       "dossier": "docs/evidence/audits/answer-readiness/unique-data.md",
       "requires": [
         "origin-reachable",
@@ -3723,7 +3709,7 @@
       "category": "content-extraction",
       "slug": "aside-element",
       "title": "<aside> for supplementary content",
-      "purpose": "Mozilla Readability and trafilatura delete <aside> subtrees before extraction, and Chromium exposes <aside> as a complementary landmark in the accessibility tree agents read. Wrapping sidebars, promos and related-links blocks in <aside> is what keeps them out of the text an LLM ingests; a sidebar left in a bare <div> is extracted as if it were article body.",
+      "purpose": "Mozilla Readability and trafilatura delete <aside> subtrees before extraction, and Chromium exposes <aside> as a complementary landmark in the accessibility tree agents read. Explicit complementary landmarks help separate supplementary content from the main text. Bare containers depend on extractor heuristics.",
       "features": [
         "aside",
         "content-extraction",
@@ -3734,11 +3720,8 @@
       "priority": "low",
       "enabledByDefault": true,
       "applicability": {
-        "pageTypeGate": "restricted",
-        "pageTypes": [
-          "article",
-          "general"
-        ]
+        "pageTypeGate": "unrestricted",
+        "pageTypes": []
       },
       "source": "packages/core/src/audits/content-extraction/aside-element.ts",
       "test": "packages/core/src/audits/content-extraction/aside-element.test.ts",
@@ -3795,7 +3778,7 @@
       "category": "content-extraction",
       "slug": "code-language",
       "title": "Code blocks have language annotations",
-      "purpose": "AI agents use language annotations on code blocks to apply the correct syntax understanding and provide accurate code explanations. Without them, agents must guess the programming language, which can lead to incorrect interpretations in AI-generated code answers.",
+      "purpose": "The language-* class convention labels code blocks. HTML-to-Markdown converters such as Turndown can preserve that label in fenced output. This informative check does not establish an effect on AI answer quality.",
       "features": [
         "code",
         "html",
@@ -3805,11 +3788,8 @@
       "priority": "low",
       "enabledByDefault": true,
       "applicability": {
-        "pageTypeGate": "restricted",
-        "pageTypes": [
-          "article",
-          "general"
-        ]
+        "pageTypeGate": "unrestricted",
+        "pageTypes": []
       },
       "source": "packages/core/src/audits/content-extraction/code-language.ts",
       "test": "packages/core/src/audits/content-extraction/code-language.test.ts",
@@ -4556,8 +4536,8 @@
       "id": "content-extraction/time-element",
       "category": "content-extraction",
       "slug": "time-element",
-      "title": "<time datetime=\"\"> used for dates",
-      "purpose": "AI agents use <time datetime> elements to reliably parse dates for freshness scoring and temporal reasoning. Without machine-readable dates, agents must regex-parse human-readable date formats, which frequently fails across locales and ambiguous formats like \"01/02/2025\".",
+      "title": "Machine-readable time markup",
+      "purpose": "Time markup can expose a machine-readable date or time. This informative check measures markup on date-bearing pages, not AI freshness scoring.",
       "features": [
         "dates",
         "html",
@@ -4567,11 +4547,8 @@
       "priority": "medium",
       "enabledByDefault": true,
       "applicability": {
-        "pageTypeGate": "restricted",
-        "pageTypes": [
-          "article",
-          "general"
-        ]
+        "pageTypeGate": "unrestricted",
+        "pageTypes": []
       },
       "source": "packages/core/src/audits/content-extraction/time-element.ts",
       "test": "packages/core/src/audits/content-extraction/time-element.test.ts",
@@ -7133,7 +7110,7 @@
       "category": "structured-data",
       "slug": "breadcrumb-schema",
       "title": "BreadcrumbList schema",
-      "purpose": "AI agents use BreadcrumbList to understand your site hierarchy and navigate between parent/child pages. Without breadcrumbs, agents cannot infer where a page sits in your content tree, making it harder to provide contextual answers that reference related pages.",
+      "purpose": "Google Search uses BreadcrumbList to categorize a page and may display its breadcrumb trail. This check looks for markup where a visible trail or existing BreadcrumbList establishes the feature.",
       "features": [
         "json-ld",
         "navigation",
@@ -7143,13 +7120,8 @@
       "priority": "medium",
       "enabledByDefault": true,
       "applicability": {
-        "pageTypeGate": "restricted",
-        "pageTypes": [
-          "article",
-          "category",
-          "general",
-          "product"
-        ]
+        "pageTypeGate": "unrestricted",
+        "pageTypes": []
       },
       "source": "packages/core/src/audits/structured-data/breadcrumb-schema.ts",
       "test": "packages/core/src/audits/structured-data/breadcrumb-schema.test.ts",
@@ -7461,7 +7433,7 @@
       "category": "structured-data",
       "slug": "service-schema",
       "title": "Service schema",
-      "purpose": "AI agents use Service schema to understand what you offer and who provides it. Without it, agents must infer your offerings from unstructured text, which leads to inaccurate or incomplete descriptions in AI-generated recommendations.",
+      "purpose": "Reports name and provider coverage in existing Service markup. No reviewed source documents an agent requirement for these fields; this check does not affect the score.",
       "features": [
         "json-ld",
         "schema",
@@ -7470,19 +7442,15 @@
       "priority": "medium",
       "enabledByDefault": true,
       "applicability": {
-        "pageTypeGate": "restricted",
-        "pageTypes": [
-          "article",
-          "general",
-          "homepage"
-        ]
+        "pageTypeGate": "unrestricted",
+        "pageTypes": []
       },
       "source": "packages/core/src/audits/structured-data/service-schema.ts",
       "test": "packages/core/src/audits/structured-data/service-schema.test.ts",
-      "tier": "scored",
-      "evidenceGrade": "A",
-      "weight": 1,
-      "scoreDisplayMode": "ternary",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
       "dossier": "docs/evidence/audits/structured-data/service-schema.md",
       "requires": [
         "origin-reachable",

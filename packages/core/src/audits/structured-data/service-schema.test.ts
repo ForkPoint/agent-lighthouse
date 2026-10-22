@@ -1,7 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { ServiceSchemaAudit } from "./service-schema";
 import { mockPageContext, mockCheckContext } from "#core/__tests__/test-utils";
-import { CheckStatus, PageType } from "#core/types";
+import {
+  AuditTier,
+  CheckStatus,
+  EvidenceGrade,
+  PageType,
+  ScoreDisplayMode,
+} from "#core/types";
 
 const ld = (obj: unknown) =>
   `<script type="application/ld+json">${JSON.stringify(obj)}</script>`;
@@ -27,7 +33,7 @@ describe("ServiceSchemaAudit", () => {
     expect(ServiceSchemaAudit.meta.id).toBe("structured-data/service-schema");
   });
 
-  it("fails when no Service schema is present", () => {
+  it("is not applicable when no Service schema is present", () => {
     const ctx = mockCheckContext([
       page(
         ld({
@@ -38,7 +44,7 @@ describe("ServiceSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("No Service schema found");
   });
 
@@ -140,8 +146,8 @@ describe("ServiceSchemaAudit", () => {
 
   // The narrowing: a Product node is the Product half's business now (3.22),
   // so this audit must not claim it — neither as a subject nor as evidence
-  // that "a Service exists". On a page that IS in scope (a services section),
-  // Product markup does not rescue a missing Service node.
+  // that "a Service exists". Even on a services URL,
+  // Product markup does not establish Service adoption.
   it("ignores Product schema entirely — that half moved to advanced-product-details", () => {
     const ctx = mockCheckContext([
       page(
@@ -158,7 +164,7 @@ describe("ServiceSchemaAudit", () => {
       ),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
     expect(result.message).toContain("No Service schema found");
   });
 
@@ -168,16 +174,9 @@ describe("ServiceSchemaAudit", () => {
   // it is for (no product page in the scan → skipped as an `na` stub), and on
   // ecommerce stores — the only sites it did run on — it was a guaranteed
   // `fail`, because stores do not emit Service markup.
-  describe("scoping: runs where Service markup is plausible, na elsewhere", () => {
-    it("declares the page types a service business actually publishes on", () => {
-      expect(ServiceSchemaAudit.meta.applicablePageTypes).toEqual([
-        PageType.Homepage,
-        PageType.General,
-        PageType.Article,
-      ]);
-      expect(ServiceSchemaAudit.meta.applicablePageTypes).not.toContain(
-        PageType.Product,
-      );
+  describe("scoping: evaluates existing markup, na elsewhere", () => {
+    it("uses markup presence on every page type", () => {
+      expect(ServiceSchemaAudit.meta.applicablePageTypes).toBeUndefined();
     });
 
     it("runs and passes on a service site that has Service markup", () => {
@@ -211,7 +210,7 @@ describe("ServiceSchemaAudit", () => {
       ]);
       const result = audit.audit(ctx);
       expect(result.status).toBe(CheckStatus.NotApplicable);
-      expect(result.message).toContain("No service offering detected");
+      expect(result.message).toContain("No Service schema found");
     });
 
     it("is na on a site with neither Service markup nor a services section", () => {
@@ -227,9 +226,7 @@ describe("ServiceSchemaAudit", () => {
       expect(audit.audit(ctx).status).toBe(CheckStatus.NotApplicable);
     });
 
-    // The audit must still be able to fail: a site that clearly sells services
-    // but publishes no Service markup is exactly what it exists to catch.
-    it("fails a site whose nav links to a services section but has no Service markup", () => {
+    it("does not require markup on a site whose nav links to a services section but has no Service markup", () => {
       const ctx = mockCheckContext([
         storePage(
           ld({
@@ -241,11 +238,11 @@ describe("ServiceSchemaAudit", () => {
         ),
       ]);
       const result = audit.audit(ctx);
-      expect(result.status).toBe(CheckStatus.Fail);
+      expect(result.status).toBe(CheckStatus.NotApplicable);
       expect(result.message).toContain("No Service schema found");
     });
 
-    it("treats link text as service intent even when the href is opaque", () => {
+    it("does not require markup from service link text", () => {
       const ctx = mockCheckContext([
         storePage(
           ld({
@@ -256,7 +253,7 @@ describe("ServiceSchemaAudit", () => {
           '<nav><a href="/p/9f2c">What we do</a></nav>',
         ),
       ]);
-      expect(audit.audit(ctx).status).toBe(CheckStatus.Fail);
+      expect(audit.audit(ctx).status).toBe(CheckStatus.NotApplicable);
     });
 
     // Service markup anywhere in the scan puts the site in scope regardless of
@@ -369,3 +366,40 @@ describe("ServiceSchemaAudit", () => {
     expect(result.found).toContain("2");
   });
 });
+
+describe("Service schema evidence contract", () => {
+  it("does not score an unproven Service consumer path", () => {
+    expect(ServiceSchemaAudit.meta.evidenceGrade).toBe(EvidenceGrade.C);
+    expect(ServiceSchemaAudit.meta.tier).toBe(AuditTier.Informative);
+    expect(ServiceSchemaAudit.meta.weight).toBe(0);
+    expect(ServiceSchemaAudit.meta.scoreDisplayMode).toBe(
+      ScoreDisplayMode.Informative,
+    );
+  });
+
+  it.each(Object.values(PageType))(
+    "does not require optional markup on %s pages",
+    (pageType) => {
+      const input = page("", '<a href="/services">Our services</a>');
+      input.pageType = pageType;
+      expect(
+        new ServiceSchemaAudit().audit(mockCheckContext([input])).status,
+      ).toBe(CheckStatus.NotApplicable);
+    },
+  );
+});
+
+it.each(Object.values(PageType))(
+  "keeps Service findings unscored on %s pages",
+  (pageType) => {
+    const input = page(ld({ "@type": "Service", name: "Consulting" }));
+    input.pageType = pageType;
+    const audit = new ServiceSchemaAudit();
+    const result = audit.toCheckResult(
+      audit.audit(mockCheckContext([storePage(""), input])),
+    );
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.weight).toBe(0);
+    expect(result.scoreDisplayMode).toBe(ScoreDisplayMode.Informative);
+  },
+);

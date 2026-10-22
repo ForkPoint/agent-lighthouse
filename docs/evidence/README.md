@@ -8,9 +8,14 @@ Agent Lighthouse scores websites on AI-agent readiness. Every audit here must ea
 | [audits/](./audits/README.md)       | One dossier per registered audit (221): what it checks, graded evidence with sources, disposition. Indexes the legacy v1 audits, linking out to `sunset/` or `merged/` for the ones that left |
 | [merged/](./merged/README.md)       | Dossiers of audits folded into another audit in v2 — kept as the record of why each signal moved                                                                                              |
 | [sunset/](./sunset/README.md)       | The 26 audits removed in v2 with the proof each signal is not a factor: rationale + full dossiers                                                                                             |
-| [proposals/](./proposals/README.md) | 83 proposed new checks with evidence dossiers                                                                                                                                                 |
-| [corpus.md](./corpus.md)            | What each of the 41 real-page fixtures in `packages/core/test-data/corpus/real/` is, and the shape it exists to cover                                                                         |
-| [sources.json](./sources.json)      | The single source registry (715 entries) every dossier cites — URLs verified at research time                                                                                                 |
+| [proposals/](./proposals/README.md) | 3 active proposals and 1 retired proposal; see the proposal index for prerequisites                                                                                                           |
+| [corpus.md](./corpus.md)            | The 684-domain brand corpus, capture provenance, coverage gaps and the offline regression sample                                                                                              |
+| [sources.json](./sources.json)      | The source registry every dossier cites — URLs verified at research time; see each record for its date                                                                                        |
+
+The generated [audit map](./audit-map.md) is the current audit inventory.
+The [architecture scope review](../architecture/audits.md#2026-10-21-scope-review)
+records the remaining population checks. The [browser snapshot contract](../architecture/browser-snapshots.md)
+and [task server contract](../server.md) describe the implemented browser and detection work.
 
 ## How this was produced
 

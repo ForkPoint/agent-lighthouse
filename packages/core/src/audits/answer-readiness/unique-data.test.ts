@@ -1,103 +1,154 @@
 import { describe, it, expect } from "vitest";
 import { UniqueDataAudit } from "./unique-data";
 import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
-import { scopeAudit } from "#core/audit-runner";
-import { CheckStatus, PageType } from "#core/types";
+import { CheckStatus } from "#core/types";
 
 describe("UniqueDataAudit", () => {
   const audit = new UniqueDataAudit();
-
-  it("passes with 3+ citable statistics (%/currency/grouped-thousands)", () => {
+  it("returns not applicable on an empty sample", () => {
+    expect(audit.audit(mockCheckContext([])).status).toBe(
+      CheckStatus.NotApplicable,
+    );
+  });
+  it("no statistics", () => {
     const page = mockPageContext(
-      "https://example.com/blog/post",
-      `<html><body><main><p>73% prefer it, it costs $2,500, and reaches 1,200 users.</p></main></body></html>`,
-    );
-    const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe(CheckStatus.Pass);
-    expect(result.message).toContain("data points");
-  });
-
-  it("warns with only 1-2 data points", () => {
-    const page = mockPageContext(
-      "https://example.com/blog/post",
-      `<html><body><main><p>Only 73% of users agreed.</p></main></body></html>`,
-    );
-    const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe(CheckStatus.Warn);
-    expect(result.message).toContain("data point");
-  });
-
-  it("fails when only bare decimals are present (tightened pattern)", () => {
-    const page = mockPageContext(
-      "https://example.com/blog/post",
-      `<html><body><main><p>Shoe size 9.5 and software version 2.0 are here.</p></main></body></html>`,
-    );
-    const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.message).toContain("No numbers, percentages, or data points");
-  });
-
-  it("fails when no pages scanned", () => {
-    const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.message).toContain("No pages scanned");
-  });
-
-  // Dossier required fix #6: the grade-B study measured article and general pages.
-  it("is scoped to article and general pages", () => {
-    expect(UniqueDataAudit.meta.applicablePageTypes).toEqual([
-      PageType.General,
-      PageType.Article,
-    ]);
-
-    const home = mockPageContext(
-      "https://example.com/",
-      "<html><body><main><p>New season. Shop now.</p></main></body></html>",
-    );
-    expect(scopeAudit(mockCheckContext([home]), UniqueDataAudit.meta)).toBe(
-      null,
-    );
-
-    const guide = mockPageContext(
-      "https://example.com/guides/sizing",
-      "<html><body><main><p>Our sizing guide.</p></main></body></html>",
+      "https://example.com/deep/content/page",
+      "<html><body><main><p>Contact our team.</p></main></body></html>",
       1,
     );
-    const scope = scopeAudit(
-      mockCheckContext([home, guide]),
-      UniqueDataAudit.meta,
+    expect(audit.audit(mockCheckContext([page])).status).toBe(
+      CheckStatus.NotApplicable,
     );
-    expect(scope?.pages.map((p) => p.url)).toEqual([
-      "https://example.com/guides/sizing",
-    ]);
   });
+  it("one contextual statistic", () => {
+    const page = mockPageContext(
+      "https://example.com/deep/content/page",
+      "<html><body><main><p>Our survey found that 73% of respondents agreed.</p></main></body></html>",
+      1,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe(CheckStatus.Pass);
+  });
+  it("prices only", () => {
+    const page = mockPageContext(
+      "https://example.com/deep/content/page",
+      "<html><body><main><p>Prices: $20, \u00a330 and 49,99 \u20ac.</p></main></body></html>",
+      1,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe(
+      CheckStatus.NotApplicable,
+    );
+  });
+  it("discount only", () => {
+    const page = mockPageContext(
+      "https://example.com/deep/content/page",
+      "<html><body><main><p>Save 30%, 40% or 50% today.</p></main></body></html>",
+      1,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe(
+      CheckStatus.NotApplicable,
+    );
+  });
+  it("versions only", () => {
+    const page = mockPageContext(
+      "https://example.com/deep/content/page",
+      "<html><body><main><p>Version 2.0 and size 9.5.</p></main></body></html>",
+      1,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe(
+      CheckStatus.NotApplicable,
+    );
+  });
+  it("hidden statistic", () => {
+    const page = mockPageContext(
+      "https://example.com/deep/content/page",
+      "<html><body><main><p hidden>Our survey found that 73% of respondents agreed.</p></main></body></html>",
+      1,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe(
+      CheckStatus.NotApplicable,
+    );
+  });
+  it("footer statistic", () => {
+    const page = mockPageContext(
+      "https://example.com/deep/content/page",
+      "<html><body><footer><p>Our survey found that 73% of respondents agreed.</p></footer></body></html>",
+      1,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe(
+      CheckStatus.NotApplicable,
+    );
+  });
+});
 
-  it("counts euro, pound and comma-decimal amounts", () => {
+it("does not turn research costs into statistics", () => {
+  const p = mockPageContext(
+    "https://example.com/",
+    "<main><p>The survey costs $2,500, £3,000 or 4.500,00 €.</p></main>",
+  );
+  expect(new UniqueDataAudit().audit(mockCheckContext([p])).status).toBe(
+    CheckStatus.NotApplicable,
+  );
+});
+it("reads comma-decimal percentages in explicit research context", () => {
+  const p = mockPageContext(
+    "https://example.com/",
+    "<main><p>The study measured 12,5 % of participants.</p></main>",
+  );
+  const result = new UniqueDataAudit().audit(mockCheckContext([p]));
+  expect(result.status).toBe(CheckStatus.Pass);
+  expect(result.found).toContain("12,5 %");
+});
+
+describe("UniqueDataAudit durations", () => {
+  const audit = new UniqueDataAudit();
+  it("does not count a response time as a statistic", () => {
+    const page = mockPageContext(
+      "https://example.com/support",
+      "<html><body><main><p>Our research team replies within 24 hours.</p></main></body></html>",
+      1,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe(
+      CheckStatus.NotApplicable,
+    );
+  });
+});
+
+describe("UniqueDataAudit hidden text", () => {
+  const audit = new UniqueDataAudit();
+  it("ignores an inline-hidden statistic", () => {
     const page = mockPageContext(
       "https://example.com/blog/post",
-      `<html><body><main><p>The kit costs 49,99 €, delivery is 4,50 € and the yearly plan is £29.99. Bulk orders start at 1.200,00 €.</p></main></body></html>`,
+      '<html><body><main><p>Our survey <span style="visibility:hidden">found 73% agreed</span>.</p></main></body></html>',
+      1,
     );
-    const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe(CheckStatus.Pass);
-    expect(result.found).toContain("49,99 €");
-    expect(result.found).toContain("£29.99");
+    expect(audit.audit(mockCheckContext([page])).status).toBe(
+      CheckStatus.NotApplicable,
+    );
   });
+});
 
-  it("reads a French comma-decimal percentage", () => {
+describe("UniqueDataAudit marketing claims", () => {
+  const audit = new UniqueDataAudit();
+  it.each([
+    "100% satisfaction guaranteed, backed by research.",
+    "Our research shows shoppers love 30% off sales.",
+    "Made from 100% organic cotton, tested in our research lab.",
+  ])("does not count %j as a statistic", (text) => {
     const page = mockPageContext(
-      "https://example.com/blog/post",
-      `<html><body><main><p>Le taux atteint 12,5 % cette année.</p></main></body></html>`,
+      "https://example.com/about",
+      `<html><body><main><p>${text}</p></main></body></html>`,
+      1,
     );
-    expect(audit.audit(mockCheckContext([page])).status).toBe(CheckStatus.Warn);
+    expect(audit.audit(mockCheckContext([page])).status).toBe(
+      CheckStatus.NotApplicable,
+    );
   });
-
-  // True positive: a comma decimal without a currency or % is not a statistic.
-  it("still fails bare comma decimals with no unit", () => {
+  it("still counts a measured percentage", () => {
     const page = mockPageContext(
-      "https://example.com/blog/post",
-      `<html><body><main><p>Shoe size 42,5 and software version 2,0 are here.</p></main></body></html>`,
+      "https://example.com/report",
+      "<html><body><main><p>Our survey found 73% of respondents agreed.</p></main></body></html>",
+      1,
     );
-    const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe(CheckStatus.Fail);
+    expect(audit.audit(mockCheckContext([page])).status).toBe(CheckStatus.Pass);
   });
 });

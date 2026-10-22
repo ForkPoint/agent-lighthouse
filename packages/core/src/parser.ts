@@ -893,6 +893,8 @@ const LISTING_SCHEMA_TYPES = [
 ];
 const PRODUCT_CARD_SELECTOR =
   '[class*="product-card"], [class*="product-item"], [class*="product-tile"], [data-product-id], [class*="product-grid"] > *, [class*="product-list"] > *';
+const PRODUCT_GRID_SELECTOR =
+  '[class*="product-grid"], [class*="products-grid"], [class*="product-list"], [class*="products-list"]';
 const ADD_TO_CART_SELECTOR =
   '[class*="add-to-cart"], [id*="add-to-cart"], button:contains("Add to Cart"), button:contains("Add to Bag"), [data-action="add-to-cart"]';
 
@@ -1037,12 +1039,14 @@ function categorySignals(
   }
 
   // HTML signals: product grid/list with multiple product cards
-  if (primaryProductCards($).length >= 3) {
+  const productCards = primaryProductCards($);
+  if (productCards.length >= 3) {
     signals.push("product-grid");
   }
 
-  // Pagination + multiple items suggests a listing. Carousel dots
-  // (`swiper-pagination`) page through a rail, not through results.
+  // Pagination and filters also occur on editorial indexes. Require multiple
+  // primary product cards before treating these controls as commerce evidence.
+  // Carousel dots page through a rail, not through results.
   const hasPagination = $(
     '[class*="pagination"], nav[aria-label*="pagination"], .pager, [class*="load-more"]',
   )
@@ -1052,7 +1056,17 @@ function categorySignals(
     $('[class*="filter"], [class*="facet"], [class*="sort-by"], [data-filter]')
       .length > 0;
 
-  if (hasPagination && hasFilterOrSort) {
+  // A client-rendered listing serves its grid container empty; the container
+  // still names product results, which an editorial index does not.
+  const hasProductGrid = $(PRODUCT_GRID_SELECTOR)
+    .toArray()
+    .some((el) => !inSecondaryRegion($, el));
+
+  if (
+    (productCards.length >= 2 || hasProductGrid) &&
+    hasPagination &&
+    hasFilterOrSort
+  ) {
     signals.push("pagination-filter-hint");
   }
 
