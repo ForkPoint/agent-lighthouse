@@ -1,5 +1,18 @@
 # @forkpoint/agent-lighthouse-website
 
+## 0.0.27
+
+### Patch Changes
+
+- Updated dependencies [80adba8]
+- Updated dependencies [80adba8]
+- Updated dependencies [80adba8]
+- Updated dependencies [80adba8]
+- Updated dependencies [80adba8]
+- Updated dependencies [80adba8]
+- Updated dependencies [80adba8]
+  - @forkpoint/agent-lighthouse-core@10.0.0
+
 ## 0.0.26
 
 ### Patch Changes

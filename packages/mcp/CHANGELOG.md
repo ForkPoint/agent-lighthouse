@@ -1,5 +1,19 @@
 # @forkpoint/agent-lighthouse-mcp
 
+## 10.0.0
+
+### Patch Changes
+
+- Updated dependencies [80adba8]
+- Updated dependencies [80adba8]
+- Updated dependencies [80adba8]
+- Updated dependencies [80adba8]
+- Updated dependencies [80adba8]
+- Updated dependencies [80adba8]
+- Updated dependencies [80adba8]
+  - @forkpoint/agent-lighthouse-core@10.0.0
+  - @forkpoint/agent-lighthouse-report@10.0.0
+
 ## 9.2.1
 
 ### Patch Changes
