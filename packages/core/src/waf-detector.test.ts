@@ -560,7 +560,7 @@ describe("detectWafProtection", () => {
       expect(waf).toBeNull();
     });
 
-    // The corpus case: an empty 202 and the header, nothing else. Before the
+    // The regression case: an empty 202 and the header, nothing else. Before the
     // header was read this fell through to a page with too little text.
     it("names an empty 202 challenge on a homepage the scan could not read", () => {
       const waf = onHomepage(
@@ -830,7 +830,7 @@ describe("detectWafProtection", () => {
     });
   });
 
-  describe("corpus edge cases & false positive prevention", () => {
+  describe("challenge edge cases & false positive prevention", () => {
     it("does not classify vercel.com prose containing attack-challenge-mode as Kasada", () => {
       const waf = onHomepage({
         status: 200,

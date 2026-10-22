@@ -57,7 +57,7 @@ Every check carries a public evidence dossier naming the agent or vendor documen
 
 Still worth capturing: a GitHub Actions PR comment, an MCP scan inside Claude or Cursor, and a before/after score.
 
-Related: [badge](badge.md) · [GitHub Action](github-action.md) · [benchmark](benchmark.md) · [scoring](scoring.md)
+Related: [badge](badge.md) · [GitHub Action](github-action.md) · [scoring](scoring.md)
 
 ## Launch drafts
 

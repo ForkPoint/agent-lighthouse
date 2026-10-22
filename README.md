@@ -161,7 +161,7 @@ Let Claude Desktop, Cursor or another MCP client run scans through the `audit_we
 
 Reports are standalone files: attach them to pull requests, send them to clients, or publish a before/after. Put the score in a README with a [badge](docs/badge.md). Share a public site's result through the [site score template](https://github.com/ForkPoint/agent-lighthouse/issues/new?template=site-score.yml).
 
-More: [media kit](docs/media-kit.md) (boilerplate, screenshots, logos) · [store benchmark](docs/benchmark.md) · [brand guide](packages/website/public/brand/BRAND.md) · [brand kit download](https://github.com/ForkPoint/agent-lighthouse/raw/refs/heads/main/packages/website/public/brand/agent-lighthouse-brand-kit.zip)
+More: [media kit](docs/media-kit.md) (boilerplate, screenshots, logos) · [brand guide](packages/website/public/brand/BRAND.md) · [brand kit download](https://github.com/ForkPoint/agent-lighthouse/raw/refs/heads/main/packages/website/public/brand/agent-lighthouse-brand-kit.zip)
 
 ---
 
@@ -172,7 +172,7 @@ git clone https://github.com/ForkPoint/agent-lighthouse.git
 cd agent-lighthouse
 pnpm install
 pnpm build
-pnpm test   # AL_SKIP_NETWORK=1 skips the live-site scans
+pnpm test   # deterministic tests with fixed inputs
 ```
 
 Contributor rules, including how to add an audit, are in [CLAUDE.md](CLAUDE.md).

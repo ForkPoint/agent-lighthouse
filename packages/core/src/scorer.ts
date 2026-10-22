@@ -176,15 +176,9 @@ export function calculateOverallScore(categories: CategoryResult[]): number {
  * The share of the registry's evidence mass the gate may remove before a scan
  * stops being scorable at all.
  *
- * Set from the calibration run (design §8.3.1), not guessed. Gating a category
- * drops its mass out of the denominator, which *raises* the score of a site
- * nobody could read — measured at +5 to +12, with a shell reaching 74 against
- * a real store's 51. Past this share the honest output is no number.
- *
- * Measured over 24 stores: every storefront that served readable pages gated
- * 0.000 of the mass, and the four shells and walls gated 0.616 to 0.691. No
- * store fell in between, so this number sits in the middle of a 62-point gap
- * and any value in (0.00, 0.61) would produce the same verdicts on that corpus.
+ * Gating removes checks from the scored population. When too much evidence
+ * is missing, remaining checks cannot support an overall verdict. Suppress
+ * that verdict rather than present a score for a mostly unread scan.
  */
 export const GATED_MASS_UNSCORED_THRESHOLD = 0.35;
 

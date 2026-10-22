@@ -77,7 +77,8 @@ describe.skipIf(!built)("the built search index", () => {
 
   it("gives every built page exactly one indexed region", () => {
     const pages = builtPages();
-    expect(pages).toHaveLength(auditList().length + 26);
+    expect(pages).toHaveLength(auditList().length + 25);
+    expect(pages.some((page) => page.route === "/docs/benchmark/")).toBe(false);
     for (const page of pages) {
       const declared = page.html.match(/data-pagefind-body/g) ?? [];
       expect(

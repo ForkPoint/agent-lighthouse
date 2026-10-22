@@ -83,10 +83,13 @@ Unlisted categories do not run and do not count. An unknown id exits 1.
 | `enforceEvidenceGate` | `boolean`                     | `true`   | `false` runs audits whose required evidence is missing. Diagnostic use only.       |
 | `dispatcher`          | undici `Dispatcher`           | default  | Dispatcher for every request the scan makes.                                       |
 | `maxConcurrent`       | `number`                      | no limit | Requests the scan may have in flight at once.                                      |
+| `requestScheduler`    | `RequestScheduler`            | none     | Shared pacing for every request and redirect hop. See below.                       |
 | `headers`             | `Record<string, string>`      | none     | Extra request headers on every fetch.                                              |
 | `bypassOriginCache`   | `boolean`                     | `false`  | Skip the shared origin evidence cache.                                             |
 | `originCache`         | `OriginCache`                 | shared   | A custom origin evidence cache.                                                    |
 | `robotsTxt`           | `FetchResult`                 | none     | A `robots.txt` response the caller already has, used instead of fetching it.       |
+
+`requestScheduler` lets several scans share one request queue per hostname. The scan calls `acquire(url, signal)` before each request and holds the returned release function until the response body is read. It calls `observe(url, status, retryAfter)` after each response. `answered(url)` tells whether any request to that hostname got an HTTP status. Queue time does not count toward the 10-second request timeout or the reported response timings, but it does count toward the scan budget. Callers supply the scheduler implementation. The package provides the hook, not a host pacing policy.
 
 ```ts
 import pino from "pino";

@@ -7,7 +7,7 @@ const published = new Set(["structured-data/service-schema"]);
 
 describe("resolveDocLink", () => {
   it("keeps reference links and public guide links on the same route", () => {
-    for (const slug of ["scoring", "badge", "benchmark"]) {
+    for (const slug of ["scoring", "badge"]) {
       expect(resolveDocLink(`docs/${slug}.md`, "", published)).toBe(
         `/agent-lighthouse/docs/${slug}/`,
       );

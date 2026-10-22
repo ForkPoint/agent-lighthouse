@@ -92,7 +92,7 @@ describe("openApiOperations", () => {
     expect(ops).toHaveLength(1);
   });
 
-  // These shapes reach the traversal from real documents and from the corpus,
+  // These fixed document shapes exercise the traversal,
   // and each one used to be pinned by a near-identical test in three separate
   // audit suites. They belong to the traversal, so they live with it.
   it.each([

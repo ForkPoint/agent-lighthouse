@@ -41,7 +41,6 @@ export function documentationNav(): DocNavEntry[] {
       "mcp",
       "readiness-skill",
       "ci",
-      "benchmark",
       "architecture",
     ].map((slug) => doc(slug, "Developer reference")),
   ];

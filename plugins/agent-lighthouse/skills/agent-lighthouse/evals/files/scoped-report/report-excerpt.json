@@ -1,0 +1,77 @@
+{
+  "fixtureNote": "Synthetic partial report for interpretation evaluation; not a complete ScanReport or live scan.",
+  "url": "https://north.example/",
+  "overallScore": null,
+  "scanValidity": {
+    "judgeable": false,
+    "unscoredReason": "The crawler received an access wall; browser DOM does not establish crawler access."
+  },
+  "categories": [
+    {
+      "id": "structured-data",
+      "score": 0,
+      "assessedMass": 0,
+      "checks": [
+        {
+          "id": "structured-data/product-schema",
+          "status": "na",
+          "tier": "scored",
+          "evidenceGrade": "A",
+          "weight": 1,
+          "coverage": {
+            "provenance": "declared",
+            "selectedUrls": ["https://north.example/shop/a"],
+            "inputUrls": [],
+            "unreadUrls": ["https://north.example/shop/a"]
+          },
+          "explanation": "Declared product page was unreadable.",
+          "advisoryResults": [
+            {
+              "id": "structured-data/product-schema",
+              "status": "fail",
+              "tier": "informative",
+              "scoreDisplayMode": "informative",
+              "pageUrl": "https://north.example/shop/b",
+              "coverage": {
+                "provenance": "detected",
+                "selectedUrls": ["https://north.example/shop/b"],
+                "inputUrls": ["https://north.example/shop/b"],
+                "unreadUrls": []
+              },
+              "explanation": "Detected product page has no Product schema."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "browserAssessment": {
+    "version": 1,
+    "evidenceSource": "browser-snapshot",
+    "score": null,
+    "unscoredReason": "Browser DOM findings have no crawler score.",
+    "findings": [
+      {
+        "pageUrl": "https://north.example/",
+        "check": {
+          "id": "content-extraction/image-alt-text",
+          "status": "pass"
+        }
+      }
+    ],
+    "coverage": {
+      "eligible": 21,
+      "assessed": 1
+    },
+    "missingEvidence": [
+      {
+        "auditId": "operability-safety/form-actionability",
+        "pageUrl": "https://north.example/contact",
+        "reason": "Capture was redacted."
+      }
+    ],
+    "limits": [
+      "No HTTP status, headers, crawler permission, or action execution evidence."
+    ]
+  }
+}

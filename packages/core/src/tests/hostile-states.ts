@@ -247,12 +247,9 @@ const blocked = state({
 /**
  * The same wall, served at HTTP 200.
  *
- * Copied from the two 200-status interstitials in the real corpus:
- * `stackoverflow-thread-wall.html.gz` and `ebay-com-category-wall.html.gz`
- * both carry `<title>Just a moment...</title>`, `<meta name="robots"
- * content="noindex,nofollow">` and a `cf-mitigated: challenge` header, and
- * their whole rendered body is one line asking the reader to enable
- * JavaScript.
+ * This fixed fixture carries a challenge title, noindex metadata, a
+ * `cf-mitigated: challenge` header, and a short body asking the reader to
+ * enable JavaScript.
  *
  * `blocked` answers 403, which denies `origin-reachable` and takes every
  * attribution guard with it. A managed challenge served at 200 `text/html`
@@ -264,9 +261,8 @@ const blocked = state({
  * served *through* the site's own edge, so the response-header rules and the
  * head fragment the site attaches to every response are still attached to this
  * one: a self-referential canonical, the site's AI-usage headers, its TDM
- * reservation. eBay's 200 wall in the corpus is that shape already — it is
- * eBay's own error template, carrying eBay's `<meta name="robots">`, eBay's
- * footer and eBay's links.
+ * reservation. A site-owned error template can carry its normal robots
+ * metadata, footer, and links while withholding the requested content.
  *
  * Every one of those signals is a declaration about a document the scan never
  * received. Reporting them as the site's is the same defect as reporting the

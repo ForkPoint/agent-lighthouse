@@ -36,7 +36,6 @@ describe("documentationNav", () => {
       "docs/mcp/",
       "docs/readiness-skill/",
       "docs/ci/",
-      "docs/benchmark/",
       "docs/architecture/",
     ]);
     expect([...new Set(nav.map((e) => e.group))]).toEqual([

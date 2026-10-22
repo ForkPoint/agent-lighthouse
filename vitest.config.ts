@@ -6,10 +6,7 @@ export default defineConfig({
     globals: true,
     environment: "node",
     include: ["packages/**/*.{test,spec}.ts", "scripts/**/*.test.ts"],
-    // The live-site verification suite holds worker slots for minutes while it
-    // fetches real sites. On a two-core CI runner that starves the mock-only
-    // suites, and orchestrator/corpus tests that finish in under a second
-    // locally were timing out at the 5s default.
+    // Allow bounded DOM and orchestrator checks time on small CI runners.
     testTimeout: 30_000,
     // Tests exercise failure paths on purpose; the fetcher's warn lines about
     // them are noise in a green run. `LOG_LEVEL=debug pnpm test` brings

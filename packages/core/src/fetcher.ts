@@ -1,3 +1,4 @@
+import type { RequestScheduler } from "./request-scheduler";
 import { request, Agent, type Dispatcher } from "undici";
 import dns from "node:dns/promises";
 import {
@@ -161,6 +162,8 @@ export interface FetcherSummary {
 }
 
 export interface FetcherOptions {
+  /** Shared request pacing across scans, including redirect hops. */
+  requestScheduler?: RequestScheduler;
   /**
    * undici dispatcher for every request this fetcher makes.
    *
@@ -356,19 +359,46 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
       binary = false,
     } = options;
 
-    // Per-request timeout, plus the caller's deadline if supplied — whichever
-    // fires first aborts the request.
-    const timeoutSignal = AbortSignal.timeout(timeout);
-    const signal = externalSignal
-      ? AbortSignal.any([timeoutSignal, externalSignal])
-      : timeoutSignal;
-
     // Pull any `user:pass@` out of the URL into an Authorization header, and use
     // the credential-free URL for the request, logs, and returned result.
     const { url: targetUrl, authHeader } = splitCredentials(url);
 
     const start = performance.now();
+    let queuedMs = 0;
+    let release: (() => void) | undefined;
     let ttfbMs = 0;
+    const elapsed = () => performance.now() - start - queuedMs;
+    const send = async (
+      target: string,
+      init: Parameters<typeof request>[1],
+    ) => {
+      const queuedAt = performance.now();
+      try {
+        if (fetcherOptions.requestScheduler) {
+          release = await fetcherOptions.requestScheduler.acquire(
+            target,
+            externalSignal,
+          );
+        }
+      } finally {
+        queuedMs += performance.now() - queuedAt;
+      }
+      externalSignal?.throwIfAborted();
+      const timeoutSignal = AbortSignal.timeout(
+        Math.max(0, Math.ceil(timeout - elapsed())),
+      );
+      const signal = externalSignal
+        ? AbortSignal.any([timeoutSignal, externalSignal])
+        : timeoutSignal;
+      const response = await request(target, { ...init, signal });
+      fetcherOptions.requestScheduler?.observe(
+        target,
+        response.statusCode,
+        response.headers["retry-after"],
+        { ownAgent: (userAgent ?? SCANNER_USER_AGENT) === SCANNER_USER_AGENT },
+      );
+      return response;
+    };
 
     try {
       // Header names are case-insensitive on the wire, so the layers merge
@@ -401,11 +431,10 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
       let currentMethod = method;
       let currentBody = requestBody;
 
-      let response = await request(currentUrl, {
+      let response = await send(currentUrl, {
         method: currentMethod,
         headers: reqHeaders,
         ...(currentBody !== undefined && { body: currentBody }),
-        signal,
         dispatcher,
       });
 
@@ -454,7 +483,7 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
             { [LogField.Url]: targetUrl, redirectTo: next },
             "Refusing redirect out of public address space",
           );
-          const refusedMs = performance.now() - start;
+          const refusedMs = elapsed();
           return {
             url: targetUrl,
             finalUrl: currentUrl,
@@ -470,6 +499,8 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
         }
 
         await response.body.dump();
+        release?.();
+        release = undefined;
         cookieJar.store(response.headers["set-cookie"], currentUrl);
 
         // 303 always continues as a GET without a body; 301 and 302 do the same
@@ -506,16 +537,15 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
           );
         }
 
-        response = await request(currentUrl, {
+        response = await send(currentUrl, {
           method: currentMethod,
           headers: hopHeaders,
           ...(currentBody !== undefined && { body: currentBody }),
-          signal,
           dispatcher,
         });
       }
 
-      ttfbMs = performance.now() - start;
+      ttfbMs = elapsed();
 
       let body = "";
       let bytes: Uint8Array | undefined;
@@ -534,7 +564,7 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
           await readCapped(response.body, TEXT_READ_CAP_BYTES),
         );
       }
-      const totalMs = performance.now() - start;
+      const totalMs = elapsed();
 
       tally.answered(response.statusCode);
       log.trace(
@@ -585,7 +615,7 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
         ...(redirectChain.length > 0 ? { redirectChain } : {}),
       };
     } catch (err) {
-      const totalMs = performance.now() - start;
+      const totalMs = elapsed();
       const message =
         err instanceof Error ? err.message : "Unknown fetch error";
       // Surface undici's underlying cause (ENOTFOUND, ECONNREFUSED, timeout, TLS…)
@@ -621,6 +651,8 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
         contentLength: 0,
         error: detail,
       };
+    } finally {
+      release?.();
     }
   }
 

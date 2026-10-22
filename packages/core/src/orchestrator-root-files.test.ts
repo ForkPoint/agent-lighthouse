@@ -18,6 +18,8 @@ const h = vi.hoisted(() => ({
   robotsError: "",
   /** How long /robots.txt takes to answer. */
   robotsDelayMs: 0,
+  /** Requests sent before the audits ran, or undefined before they run. */
+  auditsAt: undefined as number | undefined,
 }));
 
 const CONNECT_TIMEOUT =
@@ -83,7 +85,13 @@ vi.mock("./audits/operability-safety/runner", () => ({
 // audits get and fetch through it as an audit would.
 vi.mock("./audit-runner", async (importOriginal) => {
   const actual = await importOriginal<typeof import("./audit-runner")>();
-  return { ...actual, runAudits: vi.fn(actual.runAudits) };
+  return {
+    ...actual,
+    runAudits: vi.fn((...args: Parameters<typeof actual.runAudits>) => {
+      h.auditsAt ??= h.calls.length;
+      return actual.runAudits(...args);
+    }),
+  };
 });
 
 import { runScan } from "./orchestrator";
@@ -103,12 +111,14 @@ function auditContext(): CheckContext {
 }
 
 /**
- * Requests of the root-file phase: everything before the homepage request.
- * Audits fetch some root files again later, robots.txt among them.
+ * Root-file requests: everything sent before the audits ran, except the
+ * scanned page. Audits fetch some root files again later, robots.txt among
+ * them.
  */
 function rootPhase(): string[] {
-  const home = h.calls.indexOf(SITE);
-  return home === -1 ? [...h.calls] : h.calls.slice(0, home);
+  return h.calls
+    .slice(0, h.auditsAt ?? h.calls.length)
+    .filter((url) => url !== SITE);
 }
 
 /** robots.txt requests of the root-file phase. */
@@ -128,6 +138,7 @@ beforeEach(() => {
   h.deadHosts.clear();
   h.robotsError = "";
   h.robotsDelayMs = 0;
+  h.auditsAt = undefined;
   defaultOriginCache.clear();
   vi.mocked(runAudits).mockClear();
 });
@@ -150,6 +161,31 @@ describe("runScan — root files wait for robots.txt", () => {
     expect(robotsEnd).toBeGreaterThanOrEqual(0);
     expect(firstOther).toBeGreaterThan(robotsEnd);
     expect(otherRootFiles()).toContain(`${SITE}llms.txt`);
+  });
+
+  // The page is the scan's main evidence. Asked for second, it is in hand
+  // before a burst of probes for files most sites do not have can trip a
+  // firewall's scanner rule and close the host.
+  it("asks for the scanned page right after robots.txt, before the other root files", async () => {
+    h.map.set(SITE, result(SITE, 200, HOME));
+
+    await runScan(SITE);
+
+    expect(h.calls.slice(0, 2)).toEqual([`${SITE}robots.txt`, SITE]);
+    // Fetched once before the audits; they reuse it or ask again themselves.
+    expect(
+      h.calls.slice(0, h.auditsAt).filter((url) => url === SITE),
+    ).toHaveLength(1);
+    expect(otherRootFiles()).toContain(`${SITE}llms.txt`);
+  });
+
+  it("asks for a deep page right after robots.txt too", async () => {
+    const page = `${SITE}products/kettle`;
+    h.map.set(page, result(page, 200, HOME));
+
+    await runScan(page);
+
+    expect(h.calls.slice(0, 2)).toEqual([`${SITE}robots.txt`, page]);
   });
 
   it("hands the audits an unsent result for each root file when robots.txt cannot connect", async () => {

@@ -70,5 +70,17 @@
   {
     "query": "explain the difference between the A and B evidence grades in agent-lighthouse's policy.md and how weightForGrade uses them",
     "should_trigger": false
+  },
+  {
+    "query": "The crawler score is null but browserAssessment has passing DOM checks. Explain what each view proves and review the advisoryResults too.",
+    "should_trigger": true
+  },
+  {
+    "query": "Our Agent Lighthouse report warns about obsolete manifests. Should we add more files to fix these warnings?",
+    "should_trigger": true
+  },
+  {
+    "query": "Update plugins/agent-lighthouse with a new plugin manifest and skill evaluation cases.",
+    "should_trigger": false
   }
 ]

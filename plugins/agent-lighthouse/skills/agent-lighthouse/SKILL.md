@@ -1,6 +1,6 @@
 ---
 name: agent-lighthouse
-description: Assess and improve website agentic readiness — how well AI agents can discover, read, cite and act on a site — on any stack, using an Agent Lighthouse report plus source-code review. Use when a user asks to audit a site for AI agents or AI search, explain or fix Agent Lighthouse findings, make a site agent-ready, or check llms.txt, robots.txt rules for AI crawlers (GPTBot, ClaudeBot, PerplexityBot), structured data / JSON-LD, Markdown or text extraction, OpenAPI or MCP discovery, WebMCP actions, or agentic commerce. Accept a URL, report, or local project.
+description: Assess and improve website agentic readiness — how well AI agents can discover, read, cite and act on a site — on any stack, using an Agent Lighthouse report plus source-code review. Use when a user asks to audit a site for AI agents or AI search, explain or fix Agent Lighthouse findings, make a site agent-ready, or check llms.txt, robots.txt rules for AI crawlers (GPTBot, ClaudeBot, PerplexityBot), structured data / JSON-LD, Markdown or text extraction, OpenAPI or MCP discovery, WebMCP actions, or agentic commerce. Accept a URL, report, or local project. Not for Google Lighthouse performance audits or developing the Agent Lighthouse engine.
 ---
 
 # Agent Lighthouse agentic readiness
@@ -19,13 +19,13 @@ Infer the project, stack, package manager, and target URL from available files a
 
 Read [references/scan.md](references/scan.md) for official sources, pinned invocation, report checks, and local-only limits.
 
-Use a supplied report when it matches the requested site and task. Otherwise run Agent Lighthouse on the authorized reachable URL. Preserve the original JSON and HTML in a new run directory. Review validity, coverage, scan date, engine version, and options before interpreting the score.
+Use a supplied report when it matches the requested site and task. Otherwise run Agent Lighthouse on the authorized reachable URL. Preserve the original JSON and HTML in a new run directory. Review validity, coverage, scan date, engine version, and options before interpreting the score. Read [references/interpretation.md](references/interpretation.md) when a report has advisory populations, obsolete notices, missing evidence, or browser findings.
 
 When no usable URL or report exists, inspect the code now. State **code inspection only; no Agent Lighthouse score**. Do not scan placeholder domains or calculate a substitute score.
 
 ## 2. Inspect the implementation
 
-Read [references/code-review.md](references/code-review.md). Identify the routes, shared components, data sources, server handlers, and deployment settings that produce the audited behavior.
+Read [references/code-review.md](references/code-review.md) when source code is available. For a URL-only request, inspect public responses and state the source-access limit; do not block the scan on a missing checkout. Identify the routes, shared components, data sources, server handlers, and deployment settings that produce the audited behavior.
 
 Review the site beyond the scan's sample: route types, crawl policy, content output, discovery links, structured data, accessibility, forms, and real agent interfaces. Inspect relevant source and generated output; use browser or HTTP evidence where behavior requires it. Record the areas and pages you checked and what remains unreviewed. Never claim to have reviewed all code after sampling a few files.
 
@@ -40,7 +40,7 @@ Maintain a concise finding table. When a run directory exists, save it there as 
 
 Order work by access blockers, relevant scored failures, then other demonstrated usability or correctness defects. Review advisory findings against real site needs. Explain shared causes once when several findings point to one component.
 
-Preserve the engine's status, tier, evidence grade, and skipped/not-applicable reasons. Do not turn missing optional files into scored failures. Do not add interfaces or schema solely to increase a score. A static MCP description is not an MCP server. Content, product data, actions, and crawler permissions must match the site's real purpose and owner policy.
+Preserve the engine's status, tier, evidence grade, notices, and skipped/not-applicable reasons. Keep declared, detected, and browser evidence separate. Do not count nested findings as extra scored audits. Do not turn missing optional files into scored failures. Do not add interfaces or schema solely to increase a score. A static MCP description is not an MCP server. Content, product data, actions, and crawler permissions must match the site's real purpose and owner policy.
 
 ## 4. Implement when requested
 
@@ -56,6 +56,6 @@ Run checks appropriate to the changed behavior using the project's tools. Inspec
 
 After changes reach an authorized deployment, repeat the scan with the same version, target, page-type declaration, and options in a new directory. Compare findings and coverage, not only scores. Without deployment access, report **fixed locally; deployed rescan pending**. Do not rescan unchanged production and claim it validates local changes.
 
-When a valid deployed rescan exists, offer a CI gate based on it; [references/scan.md](references/scan.md) has the flags.
+When the user requests a CI gate, use a valid deployed baseline; [references/scan.md](references/scan.md) has the flags.
 
 Return the report paths, the findings table, key findings with code evidence, completed changes, checks run, coverage limits, and next required actions. Clearly distinguish engine-confirmed results, code observations, local fixes, deployed verification, and unresolved work. A high score does not guarantee citations, rankings, or completed actions.

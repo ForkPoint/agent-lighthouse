@@ -4,7 +4,9 @@
 
 Read repository instructions and worktree status. Identify the package manager, build/test commands, routing model, content source, server behavior, and hosting configuration. Use the files present; do not assume Node.js, a particular framework, or a static build.
 
-Check the report domain against site configuration. Identify the deployed revision when evidence is available. If the revision is unknown, state that source and deployment may differ. A present source file can still be absent from deployed output because of routing, build, cache, or hosting behavior.
+Check the report domain against site configuration. Identify the deployed revision when evidence is available. If the revision is unknown, state that source and deployment may differ. Check origin-root resources separately from project subpaths. Crawlers read `/robots.txt` at the origin root; `/project/robots.txt` does not control that origin. Trace base paths, generated asset URLs, canonical URLs, and sitemap discovery through the hosting setup. Name the owner action when the project cannot control the root.
+
+A present source file can still be absent from deployed output because of routing, build, cache, or hosting behavior.
 
 Build a bounded inventory of route types and shared owners. Inspect key routes and their shared dependencies. Expand the review when evidence points to a broader defect; list unreviewed areas instead of claiming exhaustive coverage.
 
@@ -33,7 +35,7 @@ Give additional findings a clear `code:` label and file/page evidence. Do not at
 
 ## Choose and verify fixes
 
-Use the existing implementation seam. Preserve business policy and intended access restrictions. Do not add invented reviews, prices, credentials, API routes, or MCP endpoints. Remove inaccurate declarations or fix their real implementation according to the user's request.
+Use the existing implementation seam. Preserve business policy and intended access restrictions. Do not add invented reviews, prices, credentials, API routes, or MCP endpoints. Keep absent optional artifacts distinct from present broken artifacts. An audit about an artifact's contents does not require a site to adopt that artifact. Read the finding's evidence and limits before adding a file. Remove inaccurate declarations or fix their real implementation according to the user's request.
 
 Verify each change at the layer it affects: focused regression tests, build output, browser interaction, or deployed HTTP/protocol behavior. Avoid production side effects during tests. Keep missing credentials, service access, or deployment authority visible as unresolved proof gaps.
 

@@ -9,7 +9,6 @@ Agent Lighthouse scores websites on AI-agent readiness. Every audit here must ea
 | [merged/](./merged/README.md)       | Dossiers of audits folded into another audit in v2 — kept as the record of why each signal moved                                                                                              |
 | [sunset/](./sunset/README.md)       | The 26 audits removed in v2 with the proof each signal is not a factor: rationale + full dossiers                                                                                             |
 | [proposals/](./proposals/README.md) | 3 active proposals and 1 retired proposal; see the proposal index for prerequisites                                                                                                           |
-| [corpus.md](./corpus.md)            | The 684-domain brand corpus, capture provenance, coverage gaps and the offline regression sample                                                                                              |
 | [sources.json](./sources.json)      | The source registry every dossier cites — URLs verified at research time; see each record for its date                                                                                        |
 
 The generated [audit map](./audit-map.md) is the current audit inventory.

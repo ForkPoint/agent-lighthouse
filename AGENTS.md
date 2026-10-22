@@ -56,9 +56,7 @@ pnpm check:bundle-parity # core's CJS and ESM bundles build the same audits (aft
 pnpm changeset          # one per user-visible change
 ```
 
-`pnpm test` includes `packages/core/src/__tests__/verify-scan-results.test.ts`,
-which scans live sites. Set `AL_SKIP_NETWORK=1` to skip it when you are
-offline; CI runs it for real.
+`pnpm test` runs deterministic unit and contract tests with fixed inputs and mocked services. Tests must not depend on public website responses. CI must not run public website scans. Do not add external site inventories or captured website datasets.
 
 Never run `npx tsc -b`. Never run vitest from inside a package directory — the
 config lives at the root.

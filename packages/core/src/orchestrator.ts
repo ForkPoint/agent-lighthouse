@@ -1,3 +1,4 @@
+import type { RequestScheduler } from "./request-scheduler";
 import { randomUUID } from "node:crypto";
 import { DomWorkLimitError } from "./dom-work";
 import { SnapshotScanOptionsSchema, snapshotUrlKey } from "./schemas";
@@ -148,6 +149,8 @@ export interface ScanOptions {
    * How many requests this scan may have in flight at once.
    */
   maxConcurrent?: number | undefined;
+  /** Shared pacing for each network request, including redirects. */
+  requestScheduler?: RequestScheduler | undefined;
   /**
    * Extra HTTP request headers to pass on all fetches.
    */
@@ -407,6 +410,9 @@ async function scanWithinBudget(
   });
   const start = performance.now();
   const fetcher = createFetcher({
+    ...(options?.requestScheduler !== undefined && {
+      requestScheduler: options.requestScheduler,
+    }),
     ...(options?.dispatcher !== undefined && {
       dispatcher: options.dispatcher,
     }),
@@ -496,6 +502,8 @@ async function scanWithinBudget(
   let originReadAt: string;
   // True when this scan read the origin itself and owes the cache a write.
   let originFresh = false;
+  const reused = reusableTargetPage(url, options?.targetPage);
+  let earlyPage: Promise<FetchResult> | undefined;
 
   if (cachedEvidence) {
     rootFiles = cachedEvidence.rootFiles;
@@ -526,6 +534,18 @@ async function scanWithinBudget(
       ? `${new URL(baseUrl).host} did not accept a connection: ${robots.error}`
       : undefined;
     if (refused) log.debug({ reason: refused }, "Root files not sent");
+
+    // The scanned page is the main evidence, so it is asked for next, before
+    // the other root files. Most sites have few of those files, and a run of
+    // 404s from one client is what firewall scanner rules look for; a host
+    // that closes on them should close after the page is in hand. With a
+    // per-host queue, requests leave in the order they are made.
+    if (!reused) {
+      earlyPage = fetchPageWithRetry(fetcher, url, fetchSignal, signal);
+      // Awaited in phase 2; this keeps a cancellation during the root files
+      // from surfacing as an unhandled rejection first.
+      earlyPage.catch(() => {});
+    }
 
     const rootResults = await Promise.all(
       rootFilePaths.map((path) => {
@@ -566,9 +586,10 @@ async function scanWithinBudget(
   signal?.throwIfAborted();
 
   tracker.phaseStart(PhaseId.FetchPages, 1 + overrideUrls.length);
-  const reused = reusableTargetPage(url, options?.targetPage);
   const pageResult =
-    reused ?? (await fetchPageWithRetry(fetcher, url, fetchSignal, signal));
+    reused ??
+    (await (earlyPage ??
+      fetchPageWithRetry(fetcher, url, fetchSignal, signal)));
   tracker.unitDone(displayUrl);
 
   if (!originHomepageResult && (url === `${baseUrl}/` || url === baseUrl)) {

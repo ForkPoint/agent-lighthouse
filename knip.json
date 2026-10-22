@@ -8,7 +8,7 @@
   },
   "workspaces": {
     ".": {
-      "entry": ["scripts/*.{ts,mjs}", "scripts/spike/*.ts"],
+      "entry": ["scripts/*.{ts,mjs}"],
       "project": ["scripts/**/*.{ts,mjs}"]
     },
     "packages/core": {

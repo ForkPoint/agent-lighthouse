@@ -635,7 +635,7 @@ describe("scan-evidence: how a failed homepage is described", () => {
     expect(reason).not.toMatch(/repeated/);
   });
 
-  // The corpus case: an empty 202 with the AWS header used to read as a page
+  // The regression case: an empty 202 with the AWS header used to read as a page
   // with too little text. It now names the wall.
   it("names AWS WAF for an empty 202 challenge", () => {
     const { wafProtection, reason } = describeFailure(

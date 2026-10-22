@@ -29,9 +29,8 @@ export const REQUEST_TIMEOUT_MS = 10_000;
 /**
  * Wall-clock budget for one scan. When it runs out, requests in flight are
  * aborted, no further request is sent, and every audit not yet started is
- * reported `na` tagged `skipped:scan-budget`. 180 s clears the 95th
- * percentile of the curated corpus (109 s on 2026-09-02) with margin; the
- * scans it cuts ran 5 to 17 minutes.
+ * reported `na` tagged `skipped:scan-budget`. Callers can override the
+ * 180-second default for their own workload.
  */
 export const SCAN_TIMEOUT_MS = 180_000;
 export const MAX_RESPONSE_BODY_BYTES = 5 * 1024 * 1024; // 5MB

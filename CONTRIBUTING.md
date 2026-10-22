@@ -63,13 +63,7 @@ pnpm check:audit-map    # Verify audit map agreement
 pnpm changeset          # Generate a changeset for user-visible changes
 ```
 
-> **Note on Tests**:
-> Some integration tests scan live sites. When working offline or on metered networks, you can skip live network scans by setting:
->
-> ```bash
-> export AL_SKIP_NETWORK=1
-> pnpm test
-> ```
+> **Tests**: The suite uses fixed inputs and mocked services. Tests must not depend on public website responses. CI must not run public website scans. Do not add external site inventories or captured website datasets.
 
 ---
 

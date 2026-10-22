@@ -126,12 +126,6 @@ export const DOC_SECTIONS: readonly DocSection[] = [
     referenceFile: "docs/badge.md",
   },
   {
-    slug: "benchmark",
-    title: "Compare scans",
-    file: "packages/website/src/content/benchmark.md",
-    referenceFile: "docs/benchmark.md",
-  },
-  {
     slug: "scoring",
     title: "Understand your score",
     file: "packages/website/src/content/scoring.md",

@@ -96,12 +96,9 @@ function reachedTheRequestedSite(
   const finalDomain = registrableOf(result.finalUrl || result.url);
   if (requestedDomain && requestedDomain === finalDomain) return { ok: true };
 
-  // A country storefront under a sibling ccTLD is the same site. Measured on
-  // the calibration corpus: `zalando.com` answers 302 to `www.zalando.bg` and
-  // `aboutyou.com` to `www.aboutyou.bg` — every request, from Bulgaria. The
-  // eTLD+1 rule alone would mark both unreachable and leave a real storefront
-  // unscored. Matching the registrable name across suffixes is a weaker signal
-  // than matching the domain, and it is the one these sites actually give.
+  // A country storefront can redirect to the same registrable name under
+  // another ccTLD. Matching that name preserves attribution across regional
+  // suffixes. It is a weaker signal than an exact registrable-domain match.
   const requestedName = registrableName(requestedUrl);
   if (
     requestedName &&
