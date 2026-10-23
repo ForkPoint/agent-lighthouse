@@ -1,5 +1,9 @@
 import { vi } from "vitest";
-import { SCANNER_USER_AGENT, MAX_RESPONSE_BODY_BYTES } from "./constants";
+import {
+  SCANNER_USER_AGENT,
+  MAX_RESPONSE_BODY_BYTES,
+  REQUEST_TIMEOUT_MS,
+} from "./constants";
 
 vi.mock("undici", () => {
   class Agent {
@@ -29,6 +33,7 @@ import {
   splitCredentials,
 } from "./fetcher";
 import { HttpMethod } from "./types";
+import type { RequestScheduler } from "./request-scheduler";
 
 const mockRequest = vi.mocked(request);
 const mockLookup = vi.mocked(dns.lookup);
@@ -1269,5 +1274,183 @@ describe("createFetcher — summary", () => {
     expect(done.open).toEqual([]);
     expect(done.requests).toBe(1);
     expect(done.statuses).toEqual({ "2xx": 1 });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// requestScheduler
+// ---------------------------------------------------------------------------
+
+describe("fetcher.fetch — requestScheduler", () => {
+  /** A scheduler that records every call and hands out countable releases. */
+  function recordingScheduler(waitMs = 0) {
+    const events: string[] = [];
+    const observe = vi.fn();
+    const scheduler: RequestScheduler = {
+      acquire: vi.fn(async (url: string) => {
+        events.push(`acquire ${url}`);
+        clock.now += waitMs;
+        return () => events.push(`release ${url}`);
+      }),
+      observe,
+    };
+    return { scheduler, events, observe };
+  }
+
+  // A clock the test moves by hand, so queue time is exact.
+  const clock = { now: 0 };
+
+  beforeEach(() => {
+    mockRequest.mockReset();
+    mockLookup.mockReset();
+    mockLookup.mockResolvedValue({ address: "93.184.216.34", family: 4 });
+    clock.now = 0;
+    vi.spyOn(performance, "now").mockImplementation(() => clock.now);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("acquires a slot per redirect hop and releases each exactly once", async () => {
+    mockRequest
+      .mockResolvedValueOnce(
+        mockResponse(301, "", { location: "/end" }) as never,
+      )
+      .mockResolvedValueOnce(mockResponse(200, "arrived") as never);
+    const { scheduler, events } = recordingScheduler();
+
+    const result = await createFetcher({ requestScheduler: scheduler }).fetch({
+      url: "https://example.com/start",
+    });
+
+    expect(result.status).toBe(200);
+    expect(events).toEqual([
+      "acquire https://example.com/start",
+      "release https://example.com/start",
+      "acquire https://example.com/end",
+      "release https://example.com/end",
+    ]);
+  });
+
+  it("holds the slot until the body has been read", async () => {
+    const response = mockResponse(200, "body");
+    const { scheduler, events } = recordingScheduler();
+    response.body.read.mockImplementation(async () => {
+      events.push("body read");
+      return Buffer.from("body", "utf8");
+    });
+    mockRequest.mockResolvedValueOnce(response as never);
+
+    await createFetcher({ requestScheduler: scheduler }).fetch({
+      url: "https://example.com/",
+    });
+
+    expect(events).toEqual([
+      "acquire https://example.com/",
+      "body read",
+      "release https://example.com/",
+    ]);
+  });
+
+  it("releases the slot when the request fails", async () => {
+    mockRequest.mockRejectedValueOnce(new Error("ECONNRESET"));
+    const { scheduler, events } = recordingScheduler();
+
+    const result = await createFetcher({ requestScheduler: scheduler }).fetch({
+      url: "https://example.com/",
+    });
+
+    expect(result.status).toBe(0);
+    expect(events).toEqual([
+      "acquire https://example.com/",
+      "release https://example.com/",
+    ]);
+  });
+
+  it("releases the slot when a redirect is refused", async () => {
+    mockRequest.mockResolvedValueOnce(
+      mockResponse(302, "", {
+        location: "http://169.254.169.254/latest/meta-data/",
+      }) as never,
+    );
+    const { scheduler, events } = recordingScheduler();
+
+    const result = await createFetcher({ requestScheduler: scheduler }).fetch({
+      url: "https://example.com/start",
+    });
+
+    expect(result.error).toBe("redirect-refused");
+    expect(events).toEqual([
+      "acquire https://example.com/start",
+      "release https://example.com/start",
+    ]);
+  });
+
+  it("returns an error result when acquire refuses the host", async () => {
+    const scheduler: RequestScheduler = {
+      acquire: vi.fn(async () => {
+        throw new Error("host stopped");
+      }),
+      observe: vi.fn(),
+    };
+
+    const result = await createFetcher({ requestScheduler: scheduler }).fetch({
+      url: "https://example.com/",
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.error).toContain("host stopped");
+    expect(mockRequest).not.toHaveBeenCalled();
+  });
+
+  it("reports each response with its status, Retry-After and agent", async () => {
+    mockRequest
+      .mockResolvedValueOnce(
+        mockResponse(429, "", { "retry-after": "30" }) as never,
+      )
+      .mockResolvedValueOnce(mockResponse(403, "") as never);
+    const { scheduler, observe } = recordingScheduler();
+    const fetcher = createFetcher({ requestScheduler: scheduler });
+
+    await fetcher.fetch({ url: "https://example.com/a" });
+    await fetcher.fetch({
+      url: "https://example.com/b",
+      userAgent: "GPTBot/1.0",
+    });
+
+    expect(observe).toHaveBeenNthCalledWith(
+      1,
+      "https://example.com/a",
+      429,
+      "30",
+      { ownAgent: true },
+    );
+    expect(observe).toHaveBeenNthCalledWith(
+      2,
+      "https://example.com/b",
+      403,
+      undefined,
+      { ownAgent: false },
+    );
+  });
+
+  it("keeps queue time out of the timings and the request timeout", async () => {
+    const timeout = vi.spyOn(AbortSignal, "timeout");
+    mockRequest.mockImplementationOnce(async () => {
+      clock.now += 40;
+      return mockResponse(200, "ok") as never;
+    });
+    // Queued longer than the whole 10-second request timeout.
+    const { scheduler } = recordingScheduler(15_000);
+
+    const result = await createFetcher({ requestScheduler: scheduler }).fetch({
+      url: "https://example.com/",
+    });
+
+    expect(result.status).toBe(200);
+    expect(result.ttfbMs).toBe(40);
+    expect(result.totalMs).toBe(40);
+    expect(timeout).toHaveBeenCalledWith(REQUEST_TIMEOUT_MS);
   });
 });

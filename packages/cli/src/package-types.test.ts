@@ -43,7 +43,7 @@ it("exposes usable declarations to ESM and CommonJS consumers without workspace 
       }
     }
     const consumer = `
-import { runScan, defineConfig, PageScopeOptionsSchema, ScannedPageSchema, PageAttemptSchema, type ScanOptions, type AuditCoverage } from "@forkpoint/agent-lighthouse-core";
+import { runScan, defineConfig, PageScopeOptionsSchema, ScannedPageSchema, PageAttemptSchema, type ScanOptions, type AuditCoverage, type RequestScheduler } from "@forkpoint/agent-lighthouse-core";
 import { getScoreTier, ScoreTier, isPageType, type ScanReport, type PageType } from "@forkpoint/agent-lighthouse-core/contracts";
 import { generateHtmlReport, buildReportView, formatPageScope, formatAuditScope } from "@forkpoint/agent-lighthouse-report";
 import { auditWebsite } from "@forkpoint/agent-lighthouse-mcp";
@@ -66,6 +66,11 @@ scan.then(report => {
   report.pageAttempts?.forEach(attempt => PageAttemptSchema.parse(attempt));
 });
 PageScopeOptionsSchema.parse(options);
+const requestScheduler: RequestScheduler = {
+  acquire: async () => () => {},
+  observe: (_url, _status, _retryAfter, request) => void request?.ownAgent,
+};
+void runScan("https://example.com", { requestScheduler });
 void auditWebsite("https://example.com", { pageType: "article", pages: options.pages });
 void defineConfig;
 const rawType: unknown = "article";

@@ -34,7 +34,8 @@ all dossiers. The index includes purpose, feature tags, current page-type scope,
 evidence requirements, scoring metadata and source/test/dossier paths, all read
 from audit metadata. `docs/evidence/audit-map.md` has field definitions and `jq`
 examples. Read the source and dossier before changing behavior. Regenerate with
-`pnpm build:audit-map`; CI runs `pnpm check:audit-map` to reject stale output.
+`pnpm build:audit-map`, which also rewrites the registry summary in
+`docs/scoring.md`; CI runs `pnpm check:audit-map` to reject stale output.
 Do not hand-edit generated active records.
 
 ## Commands
@@ -47,7 +48,7 @@ pnpm lint               # oxlint, type-aware
 pnpm check:dossiers     # registry <-> dossier agreement, both directions
 pnpm check:audit-boundaries # no audit makes its own network call
 pnpm check:requires     # each audit's `requires` matches what its source reads
-pnpm check:audit-map    # audit map <-> codebase & dossier agreement
+pnpm check:audit-map    # audit map and docs/scoring.md summary <-> codebase & dossier agreement
 pnpm check:enums        # no string literal where an enum constant exists
 pnpm knip               # no unused file, export or dependency
 pnpm check:retired-names # user docs name no retired page type

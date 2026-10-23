@@ -11,6 +11,4 @@ export interface RequestScheduler {
      */
     request?: { ownAgent: boolean },
   ): void;
-  /** Whether any request to this host's queue got an HTTP status. */
-  answered(url: string): boolean;
 }

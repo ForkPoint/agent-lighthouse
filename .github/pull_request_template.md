@@ -26,7 +26,7 @@ Fixes #(issue)
 Before submitting this PR, please ensure all applicable steps have been completed:
 
 - [ ] `pnpm build` completed successfully.
-- [ ] `pnpm test` passed locally (`AL_SKIP_NETWORK=1 pnpm test` if offline).
+- [ ] `pnpm test` passed locally.
 - [ ] `pnpm typecheck` passed with no TypeScript errors.
 - [ ] `pnpm lint` passed with oxlint.
 - [ ] `pnpm check:dossiers` passed (for any audit addition or modification).

@@ -5,6 +5,7 @@ export { PhaseId } from "./progress";
 export type { ScanEvent } from "./progress";
 export { createFetcher, isSafeUrl, boundedDispatcher } from "./fetcher";
 export type { FetchResult, FetchOptions, FetcherOptions } from "./fetcher";
+export type { RequestScheduler } from "./request-scheduler";
 export {
   classifyFetch,
   isRealFile,

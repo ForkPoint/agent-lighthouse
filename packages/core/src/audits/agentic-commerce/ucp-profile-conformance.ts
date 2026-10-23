@@ -180,14 +180,14 @@ class DeclarationCheck {
       if (!Array.isArray(instruments)) {
         this.problem(`${path}.instrument_schemas`, "must be an array");
       } else {
-        instruments.forEach((item, index) =>
-          this.uri(
-            { uri: item },
-            "uri",
-            `${path}.instrument_schemas[${index}]`,
-            true,
-          ),
-        );
+        instruments.forEach((item, index) => {
+          if (typeof item !== "string" || !isUri(item)) {
+            this.problem(
+              `${path}.instrument_schemas[${index}]`,
+              "must be an absolute URI",
+            );
+          }
+        });
       }
     } else {
       this.entity(value, path);
@@ -254,7 +254,7 @@ class DeclarationCheck {
       return;
     }
     for (const [name, entries] of Object.entries(value)) {
-      this.name(name, `${path} registry key`);
+      this.name(name, `${path} registry key ${JSON.stringify(name)}`);
       if (!Array.isArray(entries)) {
         this.problem(`${path}.${name}`, "must be an array");
         continue;
