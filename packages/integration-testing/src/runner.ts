@@ -126,9 +126,20 @@ export function prepareAcpSandbox(
   const token = tokenInput;
   if (config.completedSessionId?.includes(token))
     throw new Error("Invalid ACP sandbox configuration");
-  let pending: Promise<AcpProbeResult> | undefined;
+  // One probe per caller signal: callers sharing a signal share the run, and
+  // a caller with its own signal gets its own run, so its abort is honoured.
+  const pending = new WeakMap<AbortSignal, Promise<AcpProbeResult>>();
+  const runs = new Set<Promise<AcpProbeResult>>();
   const factory = (signal: AbortSignal) => {
-    return () => (pending ??= probe());
+    return () => {
+      let run = pending.get(signal);
+      if (!run) {
+        run = probe();
+        pending.set(signal, run);
+        runs.add(run);
+      }
+      return run;
+    };
     async function probe(): Promise<AcpProbeResult> {
       const { session, error } = getValidators();
       const result: AcpProbeResult = {
@@ -531,8 +542,9 @@ export function prepareAcpSandbox(
     }
   };
   return Object.assign(factory, {
+    /** Resolves once every probe started so far, cleanup included, has ended. */
     settled: async () => {
-      await pending;
+      await Promise.all(runs);
     },
   });
 }
