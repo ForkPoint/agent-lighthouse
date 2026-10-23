@@ -19,8 +19,11 @@ The installed binary is `agent-lighthouse`. Node.js 22.22.2+, 24.15.0+ or 26+ is
 ```
 agent-lighthouse <url> [options]
 agent-lighthouse audit <url> [options]
+agent-lighthouse --registry [--json]
 agent-lighthouse --help
 ```
+
+`--registry` prints what the installed version checks: the core version, the number of audits and categories, the count per tier, the registry mass, and the same per category. It runs no scan. Add `--json` for the `getRegistrySummary()` object.
 
 - The first two forms are the same scan.
 - Flags may come before or after the URL: `agent-lighthouse --timeout 30 https://example.com` works.

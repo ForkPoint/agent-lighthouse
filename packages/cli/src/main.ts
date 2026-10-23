@@ -15,7 +15,9 @@ import {
   LEGACY_PAGE_TYPES,
   LogLevel,
   LogFormat,
+  getRegistrySummary,
 } from "@forkpoint/agent-lighthouse-core";
+import { formatRegistrySummary } from "./registry";
 import { createProgressRenderer } from "./progress-renderer";
 import {
   parseCliOptions,
@@ -79,6 +81,7 @@ function usage(exitCode = 1): never {
   agent-lighthouse <url> [options]
   agent-lighthouse audit <url> [options]
   agent-lighthouse serve [--port <n>] [--host <addr>] [--token <t>] [--allow-origin <origin>]...
+  agent-lighthouse --registry [--json]
 
 Options:
   -c, --config <path>          Path to configuration file (e.g. agent-lighthouse.config.json)
@@ -116,6 +119,8 @@ Options:
                                NDJSON never interleaves with the terminal report on stdout;
                                all scanner logs (including error logs) are silenced to keep the
                                stream clean — audit errors still appear in the report itself.
+  --registry                   Print what this version's audit registry holds: audits, categories,
+                               tiers and registry mass. --json prints it as JSON. Runs no scan
   serve: --port <n>            Port for the task server [default: 8787]
   serve: --host <addr>         Address to bind [default: 127.0.0.1]
   serve: --token <t>           Require "Authorization: Bearer <t>" to start or cancel scans.
@@ -566,6 +571,15 @@ async function main() {
   const resolved = resolveCommand(args);
   if (resolved.action === CliCommand.Help) usage(0);
   if (resolved.action === CliCommand.Serve) return serve();
+  if (resolved.action === CliCommand.Registry) {
+    const summary = getRegistrySummary();
+    console.log(
+      args.includes("--json")
+        ? JSON.stringify(summary, null, 2)
+        : formatRegistrySummary(summary),
+    );
+    return;
+  }
   await audit(resolved.url);
 }
 

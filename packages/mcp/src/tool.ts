@@ -16,6 +16,14 @@ import { noticeKind } from "@forkpoint/agent-lighthouse-report";
  * JSON it gets back — both pure, and both pinned here.
  */
 
+/** Reports the installed registry; takes no input and makes no request. */
+export const REGISTRY_TOOL = {
+  name: "registry_summary",
+  description:
+    "Report what this Agent Lighthouse version checks: the core version, the number of audits and categories, the audit count per tier (scored, informative, experimental, obsolete), the registry mass, and the same per category. Runs no scan and makes no network request.",
+  inputSchema: { type: "object", properties: {} },
+} as const;
+
 export const AUDIT_TOOL = {
   name: "audit_website",
   description:

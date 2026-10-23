@@ -27,6 +27,10 @@ Ask your client to scan a public website address with Agent Lighthouse. Review t
 
 If the tool does not appear, check the client's server logs and confirm it can run `npx`. To check the scanner separately from your client, run the command in the [quickstart](./quickstart.md).
 
+## Ask what the server checks
+
+Takes no arguments and runs no scan. It returns the installed version's `getRegistrySummary()` as JSON: the core version, the number of audits and categories, the count per tier, the registry mass, and the same per category.
+
 ## Prefer to call it from code?
 
 Use the [SDK guide](./sdk.md) for a Node.js or TypeScript application. You do not need an MCP client for that route.

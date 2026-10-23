@@ -291,6 +291,19 @@ describe("resolveCommand", () => {
     expect(resolveCommand(["--help"])).toEqual({ action: "help" });
   });
 
+  it("prints the registry instead of scanning when --registry is given", () => {
+    expect(resolveCommand(["--registry"])).toEqual({
+      action: CliCommand.Registry,
+    });
+    expect(resolveCommand(["--registry", "--json"])).toEqual({
+      action: CliCommand.Registry,
+    });
+    // --help still wins, as it does over a URL.
+    expect(resolveCommand(["--registry", "--help"])).toEqual({
+      action: CliCommand.Help,
+    });
+  });
+
   it("takes the URL after an explicit audit subcommand", () => {
     expect(resolveCommand(["audit", "https://a.test"])).toEqual({
       action: "audit",
