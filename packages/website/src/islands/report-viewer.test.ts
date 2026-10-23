@@ -252,6 +252,12 @@ describe("v7 scope preview", () => {
       overallScore: 100,
       pageAttempts: [
         { url: "https://x.test/a", outcome: AttemptOutcome.Unread },
+        {
+          url: "https://x.test/b",
+          outcome: AttemptOutcome.Read,
+          status: 200,
+          finalUrl: "https://www.x.test/b",
+        },
       ],
       categories: [
         {
@@ -284,6 +290,9 @@ describe("v7 scope preview", () => {
     const lines = summarize(report).pageScopeText?.split("\n") ?? [];
     expect(lines).toContain(
       `Fetch: https://x.test/a — ${AttemptOutcome.Unread}, HTTP not recorded; not recorded (not recorded)`,
+    );
+    expect(lines).toContain(
+      `Fetch: https://x.test/b (redirected to https://www.x.test/b) — ${AttemptOutcome.Read}, HTTP 200; not recorded (not recorded)`,
     );
     expect(lines).toContain(
       `[old] ${CheckStatus.Warn} — Obsolete — not scored`,

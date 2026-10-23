@@ -107,7 +107,7 @@ Common checks use every eligible page. Type-specific checks use pages whose type
 - A declared page can move a score. A detected page cannot: its type-specific findings stay informative.
 - When a scan has both, one top-level result covers the declared pages. Detected findings sit in its `advisoryResults`, as informative. Only the top-level result is scored; never count nested results as extra audits.
 - Each result has `coverage`: `provenance` (`all`, `declared` or `detected`), `selectedUrls` (including failed fetches), `inputUrls` (pages handed to the audit), and `unreadUrls` (no readable text, or failed).
-- `pageAttempts` records each fetch and whether it parsed. `pagesScanned[].classification` records type, source, confidence and signals.
+- `pageAttempts` records each fetch, whether it parsed, and `finalUrl` when a redirect moved it to another page. `pagesScanned[].classification` records type, source, confidence and signals.
 - A field missing from a saved pre-v7 report means "not recorded", never zero coverage.
 
 ### Migration from 6.x

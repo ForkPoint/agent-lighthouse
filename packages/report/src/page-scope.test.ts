@@ -4,7 +4,7 @@ import { buildReportView } from "./view-model";
 import { generateHtmlReport } from "./html-generator";
 import { generateMarkdownSummary } from "./markdown-generator";
 import { hydrateReport } from "./hydrate";
-import { formatAuditScope } from "./page-scope";
+import { formatAuditScope, formatPageScope } from "./page-scope";
 import {
   AttemptOutcome,
   AuditTier,
@@ -113,6 +113,36 @@ function report(): ScanReport {
 }
 
 describe("page scope reports", () => {
+  it("names the URL that answered after a redirect", () => {
+    const text = formatPageScope({
+      pages: [],
+      audits: [],
+      attempts: [
+        {
+          url: "https://x.test",
+          pageType: PageType.Homepage,
+          source: PageTypeSource.Detected,
+          outcome: AttemptOutcome.Read,
+          status: 200,
+          finalUrl: "https://www.x.test/home",
+        },
+        {
+          url: unread,
+          pageType: PageType.Article,
+          source: PageTypeSource.Declared,
+          outcome: AttemptOutcome.Unread,
+          status: 503,
+        },
+      ],
+    });
+    expect(text).toContain(
+      `Fetch: https://x.test (redirected to https://www.x.test/home) — ${AttemptOutcome.Read}, HTTP 200; ${PageType.Homepage} (${PageTypeSource.Detected})`,
+    );
+    expect(text).toContain(
+      `Fetch: ${unread} — ${AttemptOutcome.Unread}, HTTP 503;`,
+    );
+  });
+
   it("retains both populations without changing counts, scores, or top fixes", () => {
     const view = buildReportView(report());
     expect(view.pageScope?.audits[0]?.assessments).toHaveLength(2);

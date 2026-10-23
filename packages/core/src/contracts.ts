@@ -344,6 +344,8 @@ export interface PageAttempt {
   source: PageTypeSource;
   outcome: AttemptOutcome;
   status: number;
+  /** The URL that answered, when redirects moved the request off `url`. */
+  finalUrl?: string;
 }
 
 export interface CheckResult {

@@ -295,6 +295,18 @@ function samePageKey(pageUrl: string): string {
   return pageUrl.replace(/#.*$/, "").replace(/\/$/, "");
 }
 
+/**
+ * The URL that answered a page request, when redirects moved it to another
+ * page. Credentials never reach the report, on either side of the comparison.
+ */
+function redirectedTo(requested: string, finalUrl: string): string | undefined {
+  if (!finalUrl) return undefined;
+  const answered = splitCredentials(finalUrl).url;
+  return samePageKey(answered) === samePageKey(splitCredentials(requested).url)
+    ? undefined
+    : answered;
+}
+
 export async function runScan(
   url: string,
   options?: ScanOptions,
@@ -780,12 +792,14 @@ async function scanWithinBudget(
         (forcedType
           ? declaredPageClassification(forcedType)
           : { type: PageType.General, source: PageTypeSource.Detected });
+      const finalUrl = redirectedTo(pageUrl, result.finalUrl);
       return {
         url: pageUrl,
         pageType: classification.type,
         source: classification.source,
         outcome: parsed ? AttemptOutcome.Read : AttemptOutcome.Unread,
         status: result.status,
+        ...(finalUrl && { finalUrl }),
       };
     })
     .sort((a, b) => compareCodePoints(a.url, b.url));
