@@ -189,7 +189,7 @@ async function assessCapture(
     evidence.met[EvidenceKey.RenderedBody] &&
     eligibleAuditIds.some((id) => SNAPSHOT_AUDITS[id]?.a11yRules);
   const a11yResults = needsA11y
-    ? await runA11yForHtml(html, pageUrl, A11Y_RULES)
+    ? await runA11yForHtml(html, pageUrl, A11Y_RULES, signal)
     : {};
   signal?.throwIfAborted();
   // An empty map means the pass failed. Left unset, a11y-backed audits would read

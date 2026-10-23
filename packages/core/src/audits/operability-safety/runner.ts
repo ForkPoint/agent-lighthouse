@@ -12,6 +12,7 @@
  * the jsdom window, so there is no heavyweight runtime to load per page.
  */
 import { JSDOM } from "jsdom";
+import { setImmediate as yieldForCancellation } from "node:timers/promises";
 import { LogField, logger } from "#core/logger";
 
 const log = logger.child({ [LogField.Component]: "a11y" });
@@ -43,17 +44,34 @@ const MAX_CONCURRENT_A11Y = Math.max(
 );
 let activeA11y = 0;
 const a11yQueue: Array<() => void> = [];
-async function acquire(): Promise<void> {
+async function acquire(signal?: AbortSignal): Promise<boolean> {
+  if (signal?.aborted) return false;
   if (activeA11y < MAX_CONCURRENT_A11Y) {
     activeA11y++;
-    return;
+    return true;
   }
-  await new Promise<void>((resolve) => a11yQueue.push(resolve));
-  activeA11y++;
+  return new Promise<boolean>((resolve) => {
+    const grant = () => {
+      signal?.removeEventListener("abort", cancel);
+      resolve(true);
+    };
+    const cancel = () => {
+      const index = a11yQueue.indexOf(grant);
+      if (index === -1) return;
+      a11yQueue.splice(index, 1);
+      signal?.removeEventListener("abort", cancel);
+      resolve(false);
+    };
+    a11yQueue.push(grant);
+    signal?.addEventListener("abort", cancel, { once: true });
+    if (signal?.aborted) cancel();
+  });
 }
 function release(): void {
-  activeA11y--;
-  a11yQueue.shift()?.();
+  const next = a11yQueue.shift();
+  // Transfer the reserved slot; a queued caller must not acquire it twice.
+  if (next) next();
+  else activeA11y--;
 }
 
 /**
@@ -87,7 +105,7 @@ function endsName(html: string, at: number): boolean {
 /** Remove `<style …>…</style>` blocks, matching tag names case-insensitively. */
 function stripStyleBlocks(html: string): string {
   const open = /<style/gi;
-  const close = /<\/style>/gi;
+  const close = /<\/style[\t\n\f\r ]*>/gi;
   let out = "";
   let kept = 0;
   let match: RegExpExecArray | null;
@@ -99,7 +117,7 @@ function stripStyleBlocks(html: string): string {
     if (tagEnd === -1) break;
     close.lastIndex = tagEnd + 1;
     const end = close.exec(html);
-    // No `</style>` left: no later block can close either.
+    // No valid style end tag left: no later block can close either.
     if (!end) break;
     out += html.slice(kept, start);
     kept = end.index + end[0].length;
@@ -135,15 +153,22 @@ function stripStylesheetLinks(html: string): string {
  * Run the given accessibility rule ids over one HTML document. Returns a map of
  * ruleId → {status, nodes}. Never throws — on any jsdom/internal failure it logs
  * and returns an empty map so the calling audits degrade to "not applicable".
+ * A canceled waiter returns an empty map without starting jsdom or logging a failure.
  */
 export async function runA11yForHtml(
   html: string,
   url: string,
   ruleIds: string[],
+  signal?: AbortSignal,
 ): Promise<A11yPageResult> {
-  await acquire();
+  if (!(await acquire(signal))) return {};
   let dom: JSDOM | undefined;
   try {
+    // A slot can be granted just before the owner cancels its work.
+    if (signal?.aborted) return {};
+    // Promise-only handoffs can drain the whole queue before abort events run.
+    await yieldForCancellation();
+    if (signal?.aborted) return {};
     dom = new JSDOM(stripStyles(html), {
       url,
       runScripts: "outside-only",

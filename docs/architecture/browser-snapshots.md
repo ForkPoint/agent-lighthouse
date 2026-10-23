@@ -255,6 +255,19 @@ the note under Limits moved it the same way.
 separation of browser findings from crawler scores. Both live in
 `packages/core/src/`.
 
+The accessibility runner also has focused regression tests in
+`audits/operability-safety/runner.test.ts` and `runner-cancellation.test.ts`.
+Style end tags accept HTML ASCII whitespace before `>`, so stripping a style
+block preserves following content. Non-HTML whitespace does not close a tag.
+The stripping passes retain their linear-time bound.
+
+The HTTP path supplies the combined caller and scan-budget signal to the
+accessibility queue. Snapshot assessment supplies its caller signal. A canceled
+waiter leaves the queue without constructing jsdom. A granted slot returns to
+the queue if cancellation arrives before processing. Each pass gives the event
+loop a turn before DOM construction so cancellation can arrive between pages.
+An already running synchronous DOM/rule pass is not preemptible.
+
 ## Limits of serialized HTML
 
 Serialized HTML cannot show computed appearance, a full accessibility tree, event handlers, frames, shadow roots, live form state, login independence or whether controls work. Absence from the HTML does not prove absence from a frame or shadow tree. A `fresh-browser` label does not authenticate capture conditions.
@@ -262,11 +275,3 @@ Serialized HTML cannot show computed appearance, a full accessibility tree, even
 ## Deferred
 
 Not built: snapshot contracts for the other audits, browser automation, computed styles, accessibility-tree input, shadow-root and frame capture, action traces, authenticated collector provenance, a freshness policy, a browser score, an extension collector, and durable snapshot storage. The task server keeps a detected capture in memory for 10 minutes only.
-
-- `stripStyles` closes a `<style>` block only at an exact `</style>`. Browsers
-  also accept `</style >` and `</style\n>`. On such input the strip runs on to
-  the next exact close and removes the markup between them from the a11y
-  pass. The old regexes behaved the same, and the equivalence tests pin that
-  behaviour. Accepting `/<\/style\s*>/i` is a separate verdict change.
-- The jsdom a11y pass is not cancelled while it waits for an
-  `A11Y_CONCURRENCY` slot.

@@ -114,6 +114,38 @@ describe("stripStyles", () => {
     expect(out).toBe("t");
   });
 
+  it.each([" ", "\t", "\n", "\r", "\f", "\r\n", " \n\t"])(
+    "preserves content after a style end tag with HTML whitespace %j",
+    (whitespace) => {
+      const content = '<button id="keep">Keep</button>';
+      expect(
+        stripStyles(
+          `<style>.a{color:red}</style${whitespace}>${content}<style>.b{color:blue}</style>`,
+        ),
+      ).toBe(content);
+    },
+  );
+
+  it.each(["\v", "\u00a0"])(
+    "does not mistake non-HTML whitespace %j for a style end delimiter",
+    (whitespace) => {
+      expect(
+        stripStyles(
+          `<style>.a{color:red}</style${whitespace}><button>Still raw style text</button></style>`,
+        ),
+      ).toBe("");
+    },
+  );
+
+  it("keeps accessibility findings after a whitespace style end tag", async () => {
+    const result = await runA11yForHtml(
+      '<style>.a{color:red}</style ><div role="notarole">Keep</div><style>.b{color:blue}</style>',
+      "https://style.test/",
+      ["aria-roles"],
+    );
+    expect(result["aria-roles"]?.status).toBe(CheckStatus.Fail);
+  });
+
   it("matches the earlier patterns on edge cases", () => {
     // Unclosed blocks and tags stay; names must end at a word boundary.
     expect(stripStyles("<STYLE>x</Style>a")).toBe("a");

@@ -727,6 +727,7 @@ async function scanWithinBudget(
             page.fetchResult.body,
             page.url,
             A11Y_RULES,
+            fetchSignal,
           );
         } catch {
           // jsdom failed on this page — audits degrade to na

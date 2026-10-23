@@ -541,6 +541,19 @@ describe("browser snapshot scan boundary", () => {
       browserCheck(report, "operability-safety/aria-landmarks"),
     ).toBeDefined();
   });
+
+  it("passes caller cancellation to the snapshot accessibility pass", async () => {
+    const controller = new AbortController();
+    await runScan(url, {
+      ...options,
+      signal: controller.signal,
+      snapshots: input(),
+    });
+    // The snapshot pass runs after the HTTP pass and receives its own caller signal.
+    expect(vi.mocked(runA11yForHtml).mock.calls.at(-1)?.[3]).toBe(
+      controller.signal,
+    );
+  });
   it("runs the a11y pass without page scripts", async () => {
     // Run as a script, this would remove the label and fail the label rule.
     const scripted = html.replace(

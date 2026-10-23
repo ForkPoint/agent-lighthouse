@@ -1691,6 +1691,22 @@ describe("runScan — DOM work limits", () => {
   const text = "Readable HTTP content with useful facts. ".repeat(20);
   const deepHtml = `<html><body>${"<div>".repeat(DOM_WORK_LIMITS.maxDepth + 10)}<p>${text}</p>${"</div>".repeat(DOM_WORK_LIMITS.maxDepth + 10)}</body></html>`;
 
+  it("passes combined caller and budget cancellation to accessibility work", async () => {
+    const controller = new AbortController();
+    set("https://example.com/", PRODUCT_HTML);
+    vi.mocked(runA11yForHtml).mockClear();
+    await runScan("https://example.com/", {
+      categories: ["operability-safety"],
+      signal: controller.signal,
+    });
+    const signals = vi.mocked(runA11yForHtml).mock.calls.map((call) => call[3]);
+    expect(signals.length).toBeGreaterThan(0);
+    expect(signals.every((signal) => signal instanceof AbortSignal)).toBe(true);
+    expect(signals.every((signal) => signal !== controller.signal)).toBe(true);
+    controller.abort();
+    expect(signals.every((signal) => signal?.aborted)).toBe(true);
+  });
+
   it("skips deep HTTP DOM analysis before a11y and keeps real HTTP evidence", async () => {
     const url = "https://example.com/";
     const response = ok(url, deepHtml);

@@ -37,6 +37,18 @@ describe("extraction", () => {
     expect(article?.source).toBe("readability");
   });
 
+  it.each([" ", "\n"])(
+    "extracts article text between a whitespace style end %j and a later style block",
+    (whitespace) => {
+      const html = `<html><head><title>Mugs</title></head><body><style>.a{color:red}</style${whitespace}><article><h1>Mugs</h1><p>${prose(20)}</p></article><style>.b{color:blue}</style></body></html>`;
+      const article = readabilityArticle(html, "https://example.com/");
+      expect(article).not.toBeNull();
+      expect(article?.text).toContain("Sentence number 0 explains the mug");
+      expect(article?.text).toContain("Sentence number 19 explains the mug");
+      expect(article?.source).toBe("readability");
+    },
+  );
+
   it("prefers main over article and strips chrome", () => {
     const html = `<html><body><main><p>Main copy.</p><nav>Nav copy.</nav></main><article><p>Article copy.</p></article></body></html>`;
     const extracted = semanticText(html);
