@@ -1057,29 +1057,3 @@ describe("serve", () => {
     );
   });
 });
-
-describe("ACP sandbox config forwarding", () => {
-  it("forwards copied validated configuration with an environment reference", () => {
-    const config = {
-      baseUrl: "https://sandbox.example/api",
-      sandboxAcknowledged: true as const,
-      tokenEnv: "ACP_TEST_TOKEN",
-      apiVersion: "2026-04-17" as const,
-      testItems: [{ id: "item_1" }],
-      currency: "usd",
-    };
-    const options = parseCliOptions([], "https://example.com/", {
-      acpSandbox: config,
-    });
-    expect(options.acpSandbox).toEqual(config);
-    expect(options.acpSandbox).not.toBe(config);
-    expect(options.invalidAcpSandbox).toBeUndefined();
-  });
-  it("returns a fixed error for invalid sandbox config", () => {
-    const options = parseCliOptions([], "https://example.com/", {
-      acpSandbox: { baseUrl: "secret-token" } as never,
-    });
-    expect(options.invalidAcpSandbox).toBe("Invalid ACP sandbox configuration");
-    expect(options.acpSandbox).toBeUndefined();
-  });
-});

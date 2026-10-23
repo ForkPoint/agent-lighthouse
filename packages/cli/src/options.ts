@@ -1,6 +1,4 @@
 import {
-  AcpSandboxConfigSchema,
-  type AcpSandboxConfig,
   CATEGORY_IDS,
   isPageType,
   PAGE_TYPES,
@@ -44,7 +42,6 @@ export const DEFAULT_TRACE_FILE = "agent-lighthouse-trace.ndjson";
 
 /** The subset of a config file that the flags override. */
 export interface FileConfig {
-  acpSandbox?: AcpSandboxConfig;
   snapshots?: BrowserSnapshots;
   url?: string;
   pageType?: PageType;
@@ -57,8 +54,6 @@ export interface FileConfig {
 }
 
 export interface CliOptions {
-  acpSandbox?: AcpSandboxConfig;
-  invalidAcpSandbox?: string;
   snapshots?: BrowserSnapshots;
   /** Validation message for a config `snapshots` block that failed its schema. */
   invalidSnapshots?: string;
@@ -195,10 +190,6 @@ export function parseCliOptions(
   positionalUrl: string | undefined,
   fileConfig: FileConfig = {},
 ): CliOptions {
-  const acp =
-    fileConfig.acpSandbox === undefined
-      ? undefined
-      : AcpSandboxConfigSchema.safeParse(fileConfig.acpSandbox);
   const categories = splitList(getArgValue(args, "", "--categories"));
   const logLevelArg = getArgValue(args, "", "--log-level");
   // Validate every occurrence before applying getArgValue's existing precedence.
@@ -253,10 +244,6 @@ export function parseCliOptions(
       fileTimeout >= 0);
 
   return {
-    ...(acp?.success ? { acpSandbox: acp.data } : {}),
-    ...(acp && !acp.success
-      ? { invalidAcpSandbox: "Invalid ACP sandbox configuration" }
-      : {}),
     url: resolveUrl(positionalUrl, fileConfig),
     configPath: getArgValue(args, "-c", "--config"),
     minScore,

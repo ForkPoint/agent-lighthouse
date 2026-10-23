@@ -32,6 +32,6 @@ These records are complete. They are not implementation tasks.
   check. The proposal never shipped, so it is not a sunset audit.
 
 - [ACP Endpoint Conformance Probe](./proposal-history/acp-endpoint-conformance-probe.md)
-  — graduated to the registered informative sandbox audit on 2026-10-23. The
-  [current dossier](../audits/agentic-commerce/acp-endpoint-conformance-probe.md)
-  owns the implemented behavior and limits.
+  — withdrawn on 2026-10-23 because it requires merchant credentials. The
+  [withdrawal record](../sunset/agentic-commerce/acp-endpoint-conformance-probe.md)
+  explains why it does not fit public-info-only scans.

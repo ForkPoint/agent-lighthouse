@@ -40,3 +40,10 @@ Consumers that keyed on these check ids should read [`packages/core/migration-ma
 | 10.12 | `generative-engine/pagination-links`      | [dossier](./generative-engine/pagination-links.md)      |
 
 The other 14 audits from the same delete-candidate batch were **not** sunset — nine were redeemed and kept, five stayed as informative. Their dossiers under [audits/](../audits/README.md) record the outcome.
+
+## Public-info scope withdrawal
+
+- [ACP sandbox checkout conformance](./agentic-commerce/acp-endpoint-conformance-probe.md)
+  — removed from the local registry on 2026-10-23. It required a merchant-issued
+  token and created test checkout sessions. The scanner must use only public
+  information. Public ACP checks and UCP profile validation remain.

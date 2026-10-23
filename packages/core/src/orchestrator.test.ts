@@ -6,9 +6,6 @@ import type { FetchResult } from "./fetcher";
 // Shared, test-controlled URL → FetchResult map. The fetcher mock looks each
 // requested URL up here, defaulting to a 404 so nothing escapes to the network.
 const h = vi.hoisted(() => ({
-  acpHandler: undefined as
-    | ((options: import("./fetcher").FetchOptions) => Promise<FetchResult>)
-    | undefined,
   map: new Map<string, FetchResult>(),
   calls: [] as string[],
   /** How long a mocked fetch takes to answer; the budget tests raise it. */
@@ -51,11 +48,8 @@ vi.mock("./fetcher", async (importOriginal) => {
     ...actual,
     isSafeUrl: async () => true,
     createFetcher: () => ({
-      fetch: async (options: import("./fetcher").FetchOptions) => {
-        const { url, signal } = options;
+      fetch: async ({ url, signal }: { url: string; signal?: AbortSignal }) => {
         h.calls.push(url);
-        if (url.startsWith("https://sandbox.example/") && h.acpHandler)
-          return h.acpHandler(options);
         const target = new URL(url);
         const connectFails =
           target.hostname === h.deadHost ||
@@ -128,7 +122,6 @@ const CONTENT_HTML = `<html><body><main><h1>Hello</h1><p>Some content here.</p><
 import { defaultOriginCache, computeOriginCacheKey } from "./origin-cache";
 import {
   AttemptOutcome,
-  HttpMethod,
   AuditTier,
   CheckPriority,
   CheckStatus,
@@ -143,7 +136,6 @@ import { PhaseId } from "./progress";
 import { captureLogs } from "./tests/capture-logs";
 
 beforeEach(() => {
-  h.acpHandler = undefined;
   h.map.clear();
   h.calls.length = 0;
   h.delayMs = 0;
@@ -1987,126 +1979,5 @@ describe("runScan — logging", () => {
     expect(calls.length).toBeGreaterThan(5);
     expect(calls.every((c) => c.fields["scan"] === "run-42")).toBe(true);
     expect(calls.at(-1)).toMatchObject({ level: "info", msg: "Scan finished" });
-  });
-});
-
-describe("runScan — explicit ACP sandbox adapter", () => {
-  const acpSandbox = {
-    baseUrl: "https://sandbox.example/api",
-    sandboxAcknowledged: true as const,
-    tokenEnv: "ACP_TEST_TOKEN",
-    apiVersion: "2026-04-17" as const,
-    testItems: [{ id: "item_1" }],
-    currency: "usd",
-  };
-  it("routes opt-in to the real probe and leaves normal scans read-only", async () => {
-    process.env["ACP_TEST_TOKEN"] = "fixture-secret";
-    set("https://example.com/", PRODUCT_HTML);
-    await runScan("https://example.com/", {
-      categories: ["agentic-commerce"],
-      enforceEvidenceGate: false,
-    });
-    expect(h.calls.some((url) => url.startsWith(acpSandbox.baseUrl))).toBe(
-      false,
-    );
-    h.calls.length = 0;
-    const report = await runScan("https://example.com/", {
-      acpSandbox,
-      categories: ["agentic-commerce"],
-      enforceEvidenceGate: false,
-    });
-    expect(h.calls).toContain(`${acpSandbox.baseUrl}/checkout_sessions`);
-    expect(JSON.stringify(report)).not.toContain("fixture-secret");
-    delete process.env["ACP_TEST_TOKEN"];
-  });
-  it("rejects missing tokens before website traffic", async () => {
-    delete process.env["ACP_TEST_TOKEN"];
-    await expect(
-      runScan("https://example.com/", { acpSandbox }),
-    ).rejects.toThrow("ACP sandbox token is missing or invalid");
-    expect(h.calls).toHaveLength(0);
-  });
-});
-
-describe("runScan ACP cancellation lifecycle", () => {
-  it("waits for independent cleanup after cancellation following creation", async () => {
-    process.env["ACP_TEST_TOKEN"] = "fixture-secret";
-    set("https://example.com/", PRODUCT_HTML);
-    const controller = new AbortController();
-    let releaseCleanup!: () => void;
-    const cleanupGate = new Promise<void>((resolve) => {
-      releaseCleanup = resolve;
-    });
-    let notifyCleanup!: () => void;
-    const cleanupStarted = new Promise<void>((resolve) => {
-      notifyCleanup = resolve;
-    });
-    const session = {
-      id: "cs_1",
-      status: "ready_for_payment",
-      currency: "usd",
-      line_items: [],
-      totals: [],
-      fulfillment_options: [],
-      messages: [],
-      links: [],
-      capabilities: {},
-    };
-    h.acpHandler = async ({ url, method, signal }) => {
-      if (url.endsWith("/cancel")) {
-        expect(signal?.aborted).toBe(false);
-        notifyCleanup();
-        await cleanupGate;
-        return {
-          ...notFound(url),
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({ ...session, status: "canceled" }),
-        };
-      }
-      if (method === HttpMethod.Post)
-        return {
-          ...notFound(url),
-          status: 201,
-          contentType: "application/json",
-          body: JSON.stringify(session),
-        };
-      controller.abort();
-      return abortedResult(url);
-    };
-    let settled = false;
-    const scan = runScan("https://example.com/", {
-      signal: controller.signal,
-      categories: ["agentic-commerce"],
-      enforceEvidenceGate: false,
-      acpSandbox: {
-        baseUrl: "https://sandbox.example/api",
-        sandboxAcknowledged: true,
-        tokenEnv: "ACP_TEST_TOKEN",
-        apiVersion: "2026-04-17",
-        testItems: [{ id: "item_1" }],
-        currency: "usd",
-      },
-    }).then(
-      () => {
-        settled = true;
-        return undefined;
-      },
-      () => {
-        settled = true;
-        return undefined;
-      },
-    );
-    try {
-      await cleanupStarted;
-      await new Promise<void>((resolve) => setTimeout(resolve, 20));
-      expect(settled).toBe(false);
-      releaseCleanup();
-      await scan;
-      expect(settled).toBe(true);
-    } finally {
-      releaseCleanup();
-      delete process.env["ACP_TEST_TOKEN"];
-    }
   });
 });

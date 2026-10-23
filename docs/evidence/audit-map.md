@@ -8,9 +8,9 @@ Current fields come from registry metadata. Evidence dossiers govern consumer cl
 
 ## Summary
 
-- **Total Registered Audits:** 223 across 8 categories
+- **Total Registered Audits:** 222 across 8 categories
 - **Historical v1 Legacy Audits:** 207 (182 carried forward, 25 sunset)
-- **Sunset Dossiers Preserved:** 26 under `docs/evidence/sunset/`
+- **Sunset Dossiers Preserved:** 27 under `docs/evidence/sunset/`
 - **Merged Dossiers Preserved:** 42 under `docs/evidence/merged/`
 
 ## Active Audits by Category
@@ -19,7 +19,7 @@ Current fields come from registry metadata. Evidence dossiers govern consumer cl
 | :--- | :--- |
 | `access-crawl-control` | 37 |
 | `agent-interfaces` | 27 |
-| `agentic-commerce` | 13 |
+| `agentic-commerce` | 12 |
 | `answer-readiness` | 33 |
 | `content-extraction` | 27 |
 | `machine-discovery` | 24 |

@@ -1,4 +1,3 @@
-import { captureLogs } from "./tests/capture-logs";
 import { vi } from "vitest";
 import { SCANNER_USER_AGENT, MAX_RESPONSE_BODY_BYTES } from "./constants";
 
@@ -1270,59 +1269,5 @@ describe("createFetcher — summary", () => {
     expect(done.open).toEqual([]);
     expect(done.requests).toBe(1);
     expect(done.statuses).toEqual({ "2xx": 1 });
-  });
-});
-
-describe("privateProbe fetcher diagnostics", () => {
-  beforeEach(() => {
-    mockRequest.mockReset();
-    mockLookup.mockReset();
-    mockLookup.mockResolvedValue({
-      address: "93.184.216.34",
-      family: 4,
-    });
-  });
-  it("suppresses URL and hostile thrown error logs and returns fixed error text", async () => {
-    const captured = captureLogs();
-    try {
-      mockRequest.mockRejectedValueOnce(
-        new Error("hostile secret-token https://merchant.example/private"),
-      );
-      const result = await createFetcher({ privateProbe: true }).fetch({
-        url: "https://merchant.example/private",
-        method: HttpMethod.Post,
-        headers: { Authorization: "Bearer secret-token" },
-        followRedirects: false,
-      });
-      expect(result.error).toBe("Private probe request failed");
-      expect(captured.lines).toEqual([]);
-      expect(JSON.stringify(result)).not.toContain("secret-token");
-    } finally {
-      captured.restore();
-    }
-  });
-  it("never follows a credentialed redirect and emits no request logs", async () => {
-    const captured = captureLogs();
-    try {
-      mockRequest.mockResolvedValueOnce(
-        mockResponse(302, "", {
-          location: "https://other.example/private",
-        }) as never,
-      );
-      const result = await createFetcher({ privateProbe: true }).fetch({
-        url: "https://merchant.example/private",
-        method: HttpMethod.Post,
-        headers: { Authorization: "Bearer secret-token" },
-        followRedirects: false,
-      });
-      expect(result.status).toBe(302);
-      expect(mockRequest).toHaveBeenCalledTimes(1);
-      expect(mockRequest.mock.calls[0]?.[1]?.headers).toMatchObject({
-        Authorization: "Bearer secret-token",
-      });
-      expect(captured.lines).toEqual([]);
-    } finally {
-      captured.restore();
-    }
   });
 });

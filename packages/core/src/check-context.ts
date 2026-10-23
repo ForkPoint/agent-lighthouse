@@ -46,8 +46,6 @@ export interface PageContext extends DomPageContext {
 }
 
 export interface CheckContext {
-  /** Private once-per-scan sandbox probe provider. Never serialized. */
-  acpSandboxProbe?: () => Promise<import("./gatherers/acp").AcpProbeResult>;
   /** Absent means the existing HTTP execution path. */
   evidenceSource?: import("./contracts").EvidenceSource;
 

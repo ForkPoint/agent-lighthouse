@@ -2,7 +2,7 @@
 check: acp-endpoint-conformance-probe
 title: "ACP Endpoint Conformance Probe"
 domain: agentic-commerce
-status: graduated
+status: withdrawn
 evidence_grade: A
 uniqueness: unique
 difficulty: operator-credential
@@ -14,9 +14,9 @@ consumers:
 
 # ACP Endpoint Conformance Probe
 
-> Historical proposal. The authenticated probe is now registered as
-> [agentic-commerce/acp-endpoint-conformance-probe](../../audits/agentic-commerce/acp-endpoint-conformance-probe.md).
-> That dossier defines current behavior; the text below records the original plan.
+> Historical proposal. The authenticated probe was withdrawn from
+> [agentic-commerce/acp-endpoint-conformance-probe](../../sunset/agentic-commerce/acp-endpoint-conformance-probe.md).
+> The scanner uses public information only. The text below records a rejected approach, not pending work.
 
 ## What it checks
 
@@ -24,9 +24,8 @@ For a merchant that runs Agentic Commerce Protocol (ACP) checkout endpoints, whe
 
 ## Priority
 
-ACP and UCP coverage is a product requirement. This authenticated ACP probe is
-the first remaining commerce proposal. Public-site ACP checks already ship;
-they do not establish checkout endpoint conformance. The
+Public-site ACP checks remain in scope. Authenticated checkout conformance
+requires merchant cooperation and is excluded from the anonymous scanner. The
 [proposal index](../../proposals/README.md#acp-and-ucp-coverage) records both protocols' scope.
 
 ## Prerequisites
@@ -130,3 +129,5 @@ Tier: **informative (weight 0)**. Grade A covers the authenticated tier, but its
 - 2026-10-23 — corrected the existing header transport and task-input description; added version selection, response-specific validation and sandbox prerequisites.
 
 - 2026-10-23 — graduated to a registered informative sandbox audit. Moved this proposal to research history; the registered dossier owns current behavior and limits.
+
+- 2026-10-23 — withdrawn after scope correction: the scanner uses public information only. Merchant credentials and checkout mutation probes are excluded.

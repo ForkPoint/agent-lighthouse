@@ -639,7 +639,7 @@ describe("publicDossier", () => {
       }
     });
 
-    // ACP sandbox and UCP declaration conformance each add all six sections.
+    // Public UCP declaration conformance adds all six sections.
     // The counts are pinned so that a corpus edit which quietly empties a
     // section, or a whitelist edit which quietly opens one, shows up here.
     it("publishes the expected number of each contract section", () => {
@@ -652,9 +652,9 @@ describe("publicDossier", () => {
       expect(counts).toEqual({
         // The page contract's first three are unconditional: every audit says
         // what it looks for, why that matters, and on whose evidence.
-        "What it checks": 223,
-        "Why it matters": 223,
-        Evidence: 223,
+        "What it checks": 222,
+        "Why it matters": 222,
+        Evidence: 222,
         // 149 since 2026-10-17: `mcp-registry-listing-ownership` gained its
         // counter-evidence when its sources were replaced. 151 since the same
         // day: both `c2pa-*` audits gained theirs the same way. 156 since
@@ -663,14 +663,14 @@ describe("publicDossier", () => {
         // 162 since the same day: five UA-parity dossiers gained a Limits
         // section on what a User-Agent probe can prove (`ai-crawler-edge-parity`
         // already published one from its counter-evidence).
-        Limits: 164,
+        Limits: 163,
         // Every scored audit publishes its grade reasoning; the shortfall is
         // in the informative and experimental tiers, which the bar exempts.
         // 199 since 2026-10-18 (9.0.0): the new audits, and the obsolete and
         // unconsumed rewrites, each state how they score.
         // 203: dossiers that write `## How it scores` directly now publish it.
         // 204 since 2026-10-19: `mcp-tool-annotation-coverage`.
-        "How it scores": 206,
+        "How it scores": 205,
         // 70 since 2026-08-29: the four `openapi-*` content audits gained one,
         // to publish that an absent OpenAPI document is not a failure. 83 since
         // 2026-10-18 (9.0.0): five new audits and eight obsolete-tier rewrites
@@ -678,7 +678,7 @@ describe("publicDossier", () => {
         // finding" because warn-only and obsolete audits never fail. 84 since
         // 2026-10-19: `mcp-tool-annotation-coverage`.
         // 85 since 2026-10-21: service-schema now explains optional absence.
-        "Example finding": 87,
+        "Example finding": 86,
       });
     });
 

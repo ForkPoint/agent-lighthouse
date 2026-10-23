@@ -19,7 +19,6 @@ export { AgentUaCommerceParityAudit } from "./agent-ua-commerce-parity";
 // New in 9.0.0: the /.well-known/ucp half of agent-interfaces/mcp-discovery,
 // moved here because Google reads it as a commerce profile.
 export { UcpProfileAudit } from "./ucp-profile";
-export { AcpEndpointConformanceProbeAudit } from "./acp-endpoint-conformance-probe";
 export { UcpProfileConformanceAudit } from "./ucp-profile-conformance";
 
 import { OfferSchemaAudit } from "./offer-schema";
@@ -33,7 +32,6 @@ import { LandedCostAndReturnsAudit } from "./landed-cost-and-returns";
 import { CheckoutOfferFieldMappingAudit } from "./checkout-offer-field-mapping";
 import { AgentUaCommerceParityAudit } from "./agent-ua-commerce-parity";
 import { UcpProfileAudit } from "./ucp-profile";
-import { AcpEndpointConformanceProbeAudit } from "./acp-endpoint-conformance-probe";
 import { UcpProfileConformanceAudit } from "./ucp-profile-conformance";
 
 /** Every audit that lives in the agentic-commerce category, in map order. */
@@ -49,6 +47,5 @@ export const AGENTIC_COMMERCE_AUDITS = [
   CartHandoffReachabilityAudit,
   OfferTruthConsistencyAudit,
   UcpProfileAudit,
-  AcpEndpointConformanceProbeAudit,
   UcpProfileConformanceAudit,
 ] as const;

@@ -10,8 +10,7 @@ in stub comments do not override the current dossiers.
 | [overlay-interception-hazard](./agent-operability/overlay-interception-hazard.ts)                                                | Browser execution and a validated persistent-interception method.   |
 | [behavior-annotation-coverage-and-claim-consistency](./mcp-server-quality/behavior-annotation-coverage-and-claim-consistency.ts) | Claim-consistency review only, with a model and measured precision. |
 
-ACP sandbox conformance is now registered as
-`agentic-commerce/acp-endpoint-conformance-probe`; its inert stub was removed.
+The credentialed ACP sandbox probe was withdrawn. It does not fit the public-info-only scanner. No ACP mutation probe remains pending here.
 
 MCP annotation coverage already ships as
 `agent-interfaces/mcp-tool-annotation-coverage` (grade A, informative).

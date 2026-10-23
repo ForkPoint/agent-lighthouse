@@ -162,8 +162,6 @@ export interface FetcherSummary {
 }
 
 export interface FetcherOptions {
-  /** Suppress request diagnostics for private credentialed probes. */
-  privateProbe?: boolean;
   /** Shared request pacing across scans, including redirect hops. */
   requestScheduler?: RequestScheduler;
   /**
@@ -420,15 +418,14 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
       }
 
       const ua = reqHeaders["User-Agent"];
-      if (!fetcherOptions.privateProbe)
-        log.trace(
-          {
-            [LogField.HttpMethod]: method,
-            [LogField.Url]: targetUrl,
-            [LogField.UserAgent]: ua,
-          },
-          "Request started",
-        );
+      log.trace(
+        {
+          [LogField.HttpMethod]: method,
+          [LogField.Url]: targetUrl,
+          [LogField.UserAgent]: ua,
+        },
+        "Request started",
+      );
 
       let currentUrl = targetUrl;
       let currentMethod = method;
@@ -482,11 +479,10 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
         gateArmed ??= await isSafeUrl(targetUrl);
         if (gateArmed && !(await isSafeUrl(next))) {
           await response.body.dump();
-          if (!fetcherOptions.privateProbe)
-            log.warn(
-              { [LogField.Url]: targetUrl, redirectTo: next },
-              "Refusing redirect out of public address space",
-            );
+          log.warn(
+            { [LogField.Url]: targetUrl, redirectTo: next },
+            "Refusing redirect out of public address space",
+          );
           const refusedMs = elapsed();
           return {
             url: targetUrl,
@@ -571,20 +567,19 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
       const totalMs = elapsed();
 
       tally.answered(response.statusCode);
-      if (!fetcherOptions.privateProbe)
-        log.trace(
-          {
-            [LogField.HttpMethod]: method,
-            [LogField.Url]: targetUrl,
-            ...(currentUrl !== targetUrl && { finalUrl: currentUrl }),
-            [LogField.HttpStatus]: response.statusCode,
-            [LogField.DurationMs]: Math.round(totalMs),
-            ttfbMs: Math.round(ttfbMs),
-            ...(hops > 0 && { hops }),
-            [LogField.UserAgent]: ua,
-          },
-          "Request finished",
-        );
+      log.trace(
+        {
+          [LogField.HttpMethod]: method,
+          [LogField.Url]: targetUrl,
+          ...(currentUrl !== targetUrl && { finalUrl: currentUrl }),
+          [LogField.HttpStatus]: response.statusCode,
+          [LogField.DurationMs]: Math.round(totalMs),
+          ttfbMs: Math.round(ttfbMs),
+          ...(hops > 0 && { hops }),
+          [LogField.UserAgent]: ua,
+        },
+        "Request finished",
+      );
 
       const truncatedBody =
         body.length > MAX_RESPONSE_BODY_BYTES
@@ -634,16 +629,15 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
       // A failed request is a result the audits read, not a scanner fault,
       // so it is a debug line; the scan logs one summary of all failures.
       tally.failed(code);
-      if (!fetcherOptions.privateProbe)
-        log.debug(
-          {
-            [LogField.HttpMethod]: method,
-            [LogField.Url]: targetUrl,
-            [LogField.Error]: { message: detail, ...(code && { code }) },
-            [LogField.DurationMs]: Math.round(totalMs),
-          },
-          "Request failed",
-        );
+      log.debug(
+        {
+          [LogField.HttpMethod]: method,
+          [LogField.Url]: targetUrl,
+          [LogField.Error]: { message: detail, ...(code && { code }) },
+          [LogField.DurationMs]: Math.round(totalMs),
+        },
+        "Request failed",
+      );
 
       return {
         url: targetUrl,
@@ -655,9 +649,7 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
         totalMs: Math.round(totalMs),
         contentType: "",
         contentLength: 0,
-        error: fetcherOptions.privateProbe
-          ? "Private probe request failed"
-          : detail,
+        error: detail,
       };
     } finally {
       release?.();

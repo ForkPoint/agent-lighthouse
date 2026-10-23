@@ -1,4 +1,3 @@
-import { prepareAcpSandbox } from "./gatherers/acp";
 import type { RequestScheduler } from "./request-scheduler";
 import { randomUUID } from "node:crypto";
 import { DomWorkLimitError } from "./dom-work";
@@ -84,7 +83,6 @@ import {
  * it: callers forward optional CLI flags and parsed MCP arguments as they are.
  */
 export interface ScanOptions {
-  acpSandbox?: import("./schemas").AcpSandboxConfig;
   /** Versioned, untrusted DOM snapshots associated with the target or declared pages. */
   snapshots?: BrowserSnapshots | undefined;
   onEvent?: ((event: ScanEvent) => void) | undefined;
@@ -301,17 +299,6 @@ export async function runScan(
   url: string,
   options?: ScanOptions,
 ): Promise<ScanReport> {
-  const acpRuntime =
-    options?.acpSandbox === undefined
-      ? undefined
-      : prepareAcpSandbox(options.acpSandbox, {
-          ...(options.dispatcher !== undefined
-            ? { dispatcher: options.dispatcher }
-            : {}),
-          ...(options.requestScheduler !== undefined
-            ? { requestScheduler: options.requestScheduler }
-            : {}),
-        });
   const input = SnapshotScanOptionsSchema.parse(options ?? {});
   if (input.snapshots) {
     const allowed = new Set(
@@ -351,16 +338,11 @@ export async function runScan(
             }, limitMs)
           : undefined;
       try {
-        const report = await scanWithinBudget(
-          url,
-          options,
-          {
-            signal: budget.signal,
-            limitMs,
-            scanId,
-          },
-          acpRuntime,
-        );
+        const report = await scanWithinBudget(url, options, {
+          signal: budget.signal,
+          limitMs,
+          scanId,
+        });
         log.info(
           {
             [LogField.DurationMs]: Math.round(performance.now() - started),
@@ -382,7 +364,6 @@ export async function runScan(
         );
         throw error;
       } finally {
-        await acpRuntime?.settled();
         if (timer !== undefined) clearTimeout(timer);
       }
     },
@@ -403,7 +384,6 @@ async function scanWithinBudget(
   url: string,
   options: ScanOptions | undefined,
   budget: { signal: AbortSignal; limitMs: number; scanId: string },
-  acpRuntime?: ReturnType<typeof prepareAcpSandbox>,
 ): Promise<ScanReport> {
   const onEvent = options?.onEvent;
   const pageOverrides = options?.pages;
@@ -819,7 +799,6 @@ async function scanWithinBudget(
     pages.find((page) => page.url === displayUrl),
   );
   const ctx: CheckContext = {
-    ...(acpRuntime ? { acpSandboxProbe: acpRuntime(fetchSignal) } : {}),
     ...(Object.keys(pageAnalysisErrors).length ? { pageAnalysisErrors } : {}),
     pageAttempts,
     targetUrl: displayUrl,
