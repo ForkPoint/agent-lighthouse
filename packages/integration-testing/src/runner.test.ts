@@ -116,6 +116,8 @@ describe("ACP sandbox conformance", () => {
     const own = await runtime(second.signal)();
     expect(own).not.toBe(shared[0]);
     expect(own.outcome).not.toBe("passed");
+    // settled() waits for every run, not only the first one.
+    await expect(runtime.settled()).resolves.toBeUndefined();
   });
   it("finds a wrong nested response field with no raw text", async () => {
     successfulSequence();
