@@ -314,9 +314,13 @@ export class UcpProfileConformanceAudit extends Audit {
       typeof version !== "string" ||
       !SUPPORTED_VERSIONS.some((supported) => supported === version)
     ) {
+      // A version without rules here is the audit's gap, not the site's
+      // defect, and a missing version is already ucp-profile's finding.
       return {
-        ...this.warn(
-          "The UCP profile selects no supported declaration version, so capability and payment conformance was not assessed.",
+        ...this.notApplicable(
+          typeof version === "string"
+            ? `This audit has no declaration rules for UCP ${version.slice(0, 40)}, so capability and payment conformance was not assessed.`
+            : "The UCP profile names no version; ucp-profile reports that defect. Capability and payment conformance was not assessed.",
           EXPECTED,
           typeof version === "string"
             ? version.slice(0, 100)

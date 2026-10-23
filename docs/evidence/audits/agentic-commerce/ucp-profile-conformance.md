@@ -45,7 +45,8 @@ the readable entries beside it.
 | :------------------------------------------------------ | :------------------------------------------------------------- |
 | No declared UCP profile                                 | `notApplicable`                                                |
 | Unreadable profile                                      | `notApplicable`; `ucp-profile` reports the unreadable artifact |
-| Missing or unsupported protocol version                 | `warn`; declarations not assessed                              |
+| Missing protocol version                                | `notApplicable`; `ucp-profile` reports the missing version     |
+| Protocol version this audit does not know               | `notApplicable`; declarations not assessed                     |
 | A checked declaration field violates the selected rules | `fail`, informative only                                       |
 | All checked fields conform                              | `pass`, informative only                                       |
 
@@ -121,8 +122,12 @@ handles each malformed declaration. The audit remains informative.
   not fetch a merchant-supplied schema or prove its contents valid.
 - Independent component versions need not equal `ucp.version`. Unknown fields
   and vendor instrument names remain open.
-- Unsupported protocol versions produce a warning with
-  `validationPerformed: false`. They do not receive a false conformance pass.
+- A protocol version this audit does not know, such as one published after
+  it, is `notApplicable` with `validationPerformed: false` and the supported
+  versions in `supportedVersions`. The profile did nothing wrong; the audit
+  has no rules for that version. It does not receive a false conformance
+  pass either. A missing `ucp.version` is also `notApplicable` here, because
+  `ucp-profile` already reports it.
 - Only 40 issue strings appear in details. `issueCount` records the full count
   and `issuesTruncated` shows when that limit applies.
 
@@ -167,6 +172,12 @@ required fields.
   It resolves only local references and checks size before recursive validation.
 - The readable and valid entry counts survive mixed malformed declarations.
   Issue details contain only scalar values or arrays of strings.
+
+## Review history
+
+- 2026-10-23: an unknown or missing protocol version moved from `warn` to
+  `notApplicable`. The warning blamed the site for the audit's own missing
+  rules, and a missing version was reported twice beside `ucp-profile`.
 
 ## Deferred
 

@@ -185,14 +185,37 @@ describe("UcpProfileConformanceAudit", () => {
   });
 
   it.each([undefined, "2027-01-01", 42])(
-    "does not claim conformance for an unsupported version %s",
+    "is not applicable, and claims no conformance, for version %s",
     (version) => {
       const result = audit.audit(context({ ucp: { version } }));
-      expect(result.status).toBe(CheckStatus.Warn);
-      expect(result.details?.["validationPerformed"]).toBe(false);
+      expect(result.status).toBe(CheckStatus.NotApplicable);
+      expect(result.details).toMatchObject({
+        validationPerformed: false,
+        supportedVersions: ["2026-01-11", "2026-04-08", "2026-08-25"],
+      });
       expect(AuditResultSchema.safeParse(result).success).toBe(true);
     },
   );
+
+  it("names a version it has no rules for, and defers a missing one", () => {
+    expect(
+      audit.audit(context({ ucp: { version: "2027-01-01" } })).message,
+    ).toContain("no declaration rules for UCP 2027-01-01");
+    expect(audit.audit(context({ ucp: {} })).message).toContain(
+      "ucp-profile reports that defect",
+    );
+  });
+
+  it("does not hide defects of a later version behind the unknown-version path", () => {
+    const body = modern("2026-08-25");
+    delete (
+      body.ucp.capabilities["dev.ucp.shopping.checkout"][0] as Record<
+        string,
+        unknown
+      >
+    )["schema"];
+    expect(audit.audit(context(body)).status).toBe(CheckStatus.Fail);
+  });
 
   it.each(["2026-04-08", "2026-08-25"])(
     "passes business declarations for %s without optional spec URLs",
