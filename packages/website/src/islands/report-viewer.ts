@@ -144,7 +144,7 @@ function pageScopeText(record: Record<string, unknown>): string | undefined {
     const a = asRecord(raw);
     if (a)
       lines.push(
-        `Fetch: ${text(a["url"])} — ${text(a["outcome"])}, HTTP ${asNumber(a["status"]) ?? "not recorded"}; ${text(a["pageType"])} (${text(a["source"])})`,
+        `Fetch: ${text(a["url"])}${asText(a["finalUrl"]) ? ` (redirected to ${text(a["finalUrl"])})` : ""} — ${text(a["outcome"])}, HTTP ${asNumber(a["status"]) ?? "not recorded"}; ${text(a["pageType"])} (${text(a["source"])})`,
       );
   }
   let auditCount = 0;

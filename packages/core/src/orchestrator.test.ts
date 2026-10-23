@@ -1651,6 +1651,26 @@ describe("runScan — selected page evidence and mixed scope", () => {
     expect(report.pagesScanned.map((p) => p.url)).toEqual([url]);
   });
 
+  it("records the URL that answered when a redirect moved the page", async () => {
+    const url = "https://example.com";
+    const moved = "https://www.example.com/home";
+    h.map.set(url, { ...ok(url, CONTENT_HTML), finalUrl: moved });
+    const report = await runScan(url);
+    expect(report.pageAttempts).toEqual([
+      expect.objectContaining({ url, status: 200, finalUrl: moved }),
+    ]);
+  });
+
+  it("leaves finalUrl out when only a trailing slash or credentials differ", async () => {
+    const url = "https://user:pass@example.com";
+    h.map.set(url, {
+      ...ok(url, CONTENT_HTML),
+      finalUrl: "https://example.com/",
+    });
+    const report = await runScan(url);
+    expect(report.pageAttempts?.[0]).not.toHaveProperty("finalUrl");
+  });
+
   it("keeps one result, progress event and trace per registered audit", async () => {
     const url = "https://example.com/story";
     const declared = "https://example.com/declared";

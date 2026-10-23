@@ -252,6 +252,7 @@ export const PageAttemptSchema = z.object({
   source: z.enum(PageTypeSource),
   outcome: z.enum(AttemptOutcome),
   status: z.number().int().nonnegative(),
+  finalUrl: z.string().optional(),
 });
 
 /** Shared manual page declarations for SDK, CLI config and MCP. */

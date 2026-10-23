@@ -98,7 +98,7 @@ export function formatPageScope(scope: PageScopeView): string {
   }
   for (const attempt of scope.attempts ?? []) {
     lines.push(
-      `Fetch: ${attempt.url} — ${attempt.outcome}, HTTP ${attempt.status}; ${attempt.pageType} (${attempt.source})`,
+      `Fetch: ${attempt.url}${attempt.finalUrl ? ` (redirected to ${attempt.finalUrl})` : ""} — ${attempt.outcome}, HTTP ${attempt.status}; ${attempt.pageType} (${attempt.source})`,
     );
   }
   return lines.join("\n");

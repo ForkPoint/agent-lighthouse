@@ -253,7 +253,7 @@ Every `PageContext` carries its `pageType` and a `pageTypeSource` of `declared` 
 - Each population gets a fresh audit instance, its own pages, and evidence limited to them. Readable text on an excluded page cannot satisfy `rendered-body` or `sample-adequate`. Header-only and origin checks keep their exemptions.
 - There is one top-level `CheckResult` per audit. A mixed scan keeps the detected population in `advisoryResults`, always informative. Counts and mass use the primary result once. A readable advisory population never promotes a failed or unread primary one.
 - Each population has `coverage`: `provenance` (`all`, `declared`, `detected`), `selectedUrls` (including failed attempts), `inputUrls` (handed to the audit; empty when gated or not started), and `unreadUrls` (no readable text, or failed).
-- `ScanReport.pageAttempts` records each requested page's URL, provenance, HTTP status and whether it parsed. A failed undeclared page is `general` with unknown confidence.
+- `ScanReport.pageAttempts` records each requested page's URL, provenance, HTTP status and whether it parsed. `finalUrl` names the URL that answered when redirects moved the request to another page. A failed undeclared page is `general` with unknown confidence.
 - Every audit emits one progress event and one trace, including skipped audits.
 - Report views keep `pageScope` apart from score and counts. Older reports without these fields still load; nothing is invented for them.
 
