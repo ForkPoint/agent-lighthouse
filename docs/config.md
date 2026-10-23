@@ -63,7 +63,7 @@ Every audit belongs to one category. `--categories`, `assertCategories` and the 
 
 Unlisted categories do not run and do not count. An unknown id exits 1.
 
-`getRegistrySummary()` from `@forkpoint/agent-lighthouse-core` reports what the installed version holds: its `version`, the number of audits and categories, the count per tier, the registry mass, and the same per category. Read the numbers from it instead of copying them. `registry-manifest.json` at the repository root is the same summary for the current source, without `version`.
+`getRegistrySummary()` from `@forkpoint/agent-lighthouse-core` reports what the installed version holds: its `version`, the number of audits and categories, the count per tier, the registry mass, and the same per category. Read the numbers from it instead of copying them. The `summary` block of `docs/evidence/audit-map.json` carries the same numbers for the current source.
 
 ## Experimental audits
 

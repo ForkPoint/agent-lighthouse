@@ -35,7 +35,7 @@ Agent Lighthouse audits whether ChatGPT, Claude, Perplexity, MCP clients, AI cra
 **One paragraph**
 
 ```text
-Agent Lighthouse is an open-source CLI, SDK, GitHub Action, and MCP server that runs <!-- registry:audits -->222<!-- /registry:audits --> checks for AI-agent readiness: llms.txt, robots.txt crawler access, Schema.org, OpenAPI, WebMCP, AEO/GEO content structure, agentic commerce, and agent operability.
+Agent Lighthouse is an open-source CLI, SDK, GitHub Action, and MCP server that checks websites for AI-agent readiness: llms.txt, robots.txt crawler access, Schema.org, OpenAPI, WebMCP, AEO/GEO content structure, agentic commerce, and agent operability.
 ```
 
 **What makes it different**
@@ -68,7 +68,7 @@ Show HN: Agent Lighthouse - audit websites for AI-agent readiness
 
 Hi HN, we built Agent Lighthouse: a Lighthouse-style CLI for checking whether AI agents and LLM crawlers can understand and act on a website.
 
-It runs <!-- registry:audits -->222<!-- /registry:audits --> checks across llms.txt, robots.txt policies for GPTBot/ClaudeBot/PerplexityBot, Schema.org, OpenAPI, WebMCP, AEO/GEO structure, agentic commerce, and agent operability.
+It checks llms.txt, robots.txt policies for GPTBot/ClaudeBot/PerplexityBot, Schema.org, OpenAPI, WebMCP, AEO/GEO structure, agentic commerce, and agent operability.
 
 Try it with:
 
@@ -88,7 +88,7 @@ Name:     Agent Lighthouse
 Tagline:  Lighthouse-style audits for AI-agent readiness
 
 Description:
-Run <!-- registry:audits -->222<!-- /registry:audits --> checks to see whether AI agents, LLM crawlers, MCP clients, and agentic browsers can discover, parse, cite, and act on your website. Includes CLI, SDK, GitHub Action, MCP server, and standalone HTML reports.
+See whether AI agents, LLM crawlers, MCP clients, and agentic browsers can discover, parse, cite, and act on your website. Includes CLI, SDK, GitHub Action, MCP server, and standalone HTML reports.
 
 Maker comment:
 Agent Lighthouse helps developers catch the parts of a website that block AI agents: blocked AI crawlers, weak Schema.org data, missing OpenAPI/WebMCP discovery, poor semantic HTML, inaccessible controls, and content that is hard for answer engines to cite.
@@ -180,7 +180,7 @@ I am working on Agent Lighthouse, an open-source scanner for whether ChatGPT, Cl
 
 [SEO agencies] It covers llms.txt, AI crawler rules in robots.txt, Schema.org, OpenAPI/WebMCP discovery, semantic HTML, accessibility, and AEO/GEO content structure. It can produce a concrete before/after report for AI visibility work.
 [DevRel] It checks docs and product pages for sitemap discovery, AI crawler rules, Schema.org, OpenAPI links, WebMCP/MCP discovery, and accessibility, so docs and APIs are easier for AI coding agents to use.
-[Ecommerce] It runs <!-- registry:audits -->222<!-- /registry:audits --> checks across AI crawler access, Product/Offer/Review schema, OpenAPI/WebMCP action surfaces, semantic HTML, and accessible forms, with a standalone HTML report plus JSON/Markdown for CI.
+[Ecommerce] It checks AI crawler access, Product/Offer/Review schema, OpenAPI/WebMCP action surfaces, semantic HTML, and accessible forms, with a standalone HTML report plus JSON/Markdown for CI.
 
 npx @forkpoint/agent-lighthouse https://example.com --view
 

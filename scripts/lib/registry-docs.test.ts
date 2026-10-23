@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import type { RegistrySummary } from "#core/registry-summary";
 import { AuditTier, Category } from "#core/types";
 import {
+  bareRegistryCounts,
   SCORING_TABLE_END,
   SCORING_TABLE_START,
-  registryManifest,
   scoringSummary,
   withRegistryValues,
   withScoringSummary,
@@ -106,10 +106,25 @@ describe("withScoringSummary", () => {
   });
 });
 
-describe("registryManifest", () => {
-  it("keeps the counts and leaves out the package version", () => {
-    const manifest = JSON.parse(registryManifest(summary));
-    expect(manifest).not.toHaveProperty("version");
-    expect(manifest).toMatchObject({ audits: 5, categories: 2 });
+describe("bareRegistryCounts", () => {
+  it("flags a typed number near the total outside a marker", () => {
+    expect(
+      bareRegistryCounts(
+        "Runs 7 checks.\nAlso <!-- registry:audits -->5<!-- /registry:audits --> audits.\nHolds 4 active audits.",
+        summary,
+      ),
+    ).toEqual(['line 1: "7 checks"', 'line 3: "4 active audits"']);
+  });
+
+  it("leaves dated, ignored, generated and distant counts alone", () => {
+    const doc = [
+      "Counted 2026-10-17: 6 audits.",
+      "Folded 6 audits into one. <!-- registry-ignore -->",
+      SCORING_TABLE_START,
+      "The current registry has 5 audits:",
+      SCORING_TABLE_END,
+      "207 legacy v1 audits and 30 audits removed.",
+    ].join("\n");
+    expect(bareRegistryCounts(doc, summary)).toEqual([]);
   });
 });

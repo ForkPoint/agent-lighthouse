@@ -312,11 +312,10 @@ An audit's subject is one document or one origin.
    │ the operator gave           │     │ llms.txt     openapi.json   │
    │                             │     │ /.well-known/*   MCP        │
    │ cache key:  URL             │     │ cache key: origin + version │
-   │ 149 audits · 91.6 mass      │     │  66 audits · 42.4 mass      │
    └─────────────────────────────┘     └─────────────────────────────┘
 ```
 
-The split counts an audit as page-scoped when it requires `rendered-body` or `sample-adequate` or has a page-type list, as the report's `conditions.coverage` does.
+A report's `conditions.coverage` splits the registry mass into `pageMass` and `originMass`. An audit counts as page-scoped when it requires `rendered-body` or `sample-adequate` or has a page-type list, as the report's `conditions.coverage` does.
 
 Some origin audits also read a discovery link from a page: `openapi-exists` reads `/openapi.json` and `<link rel="service-desc">`. They are origin audits, so they read the origin's homepage, never the scanned page. Otherwise one origin would get different verdicts depending on which URL the operator typed.
 

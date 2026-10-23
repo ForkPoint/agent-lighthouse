@@ -11,6 +11,13 @@
   },
   "summary": {
     "totalActiveAudits": 222,
+    "tiers": {
+      "scored": 163,
+      "informative": 50,
+      "experimental": 2,
+      "obsolete": 7
+    },
+    "registryMass": 132.2,
     "categories": {
       "access-crawl-control": 37,
       "content-extraction": 27,
@@ -21,9 +28,13 @@
       "agentic-commerce": 12,
       "operability-safety": 48
     },
-    "totalSunsetDossiers": 27,
+    "totalSunsetDossiers": 26,
     "totalMergedDossiers": 42,
-    "totalLegacyAudits": 207
+    "totalLegacyAudits": 207,
+    "legacyByStatus": {
+      "removed": 25,
+      "renamed": 182
+    }
   },
   "categories": [
     "access-crawl-control",
@@ -9179,11 +9190,6 @@
       "category": "meta-tags",
       "slug": "mcp-discovery-link",
       "path": "docs/evidence/sunset/meta-tags/mcp-discovery-link.md"
-    },
-    {
-      "category": "general",
-      "slug": "not-a-factor",
-      "path": "docs/evidence/sunset/not-a-factor.md"
     },
     {
       "category": "semantic-html",
