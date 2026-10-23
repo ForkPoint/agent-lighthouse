@@ -80,7 +80,7 @@ The profile declares no services, so it names nowhere to send a request.
 ## Limits
 
 - Signing keys (`keys`, or `signing_keys` in the 2026-01-11 shape) are counted in `details.signingKeys` but not judged. Google says the keys verify webhooks and other signed messages; it does not say a profile without them is rejected.
-- This readability audit does not validate capability or payment-handler declarations. The separate [declaration-conformance audit](./ucp-profile-conformance.md) checks their versioned fields. Provider-specific configuration and full nested constraints remain unvalidated.
+- This readability audit does not validate capability or payment-handler declarations. The separate [declaration-conformance audit](./ucp-profile-conformance.md) checks their versioned fields. It validates nested payment constraint structure for `2026-08-25` profiles. Provider-specific configuration and the provider-defined constraint contents of earlier versions remain unvalidated.
 - A 401 or 403 reads as absent. Google requires public access, but a WAF in front of every unknown path also answers 403, and that is not evidence of a profile.
 
 ## Implementation deviations

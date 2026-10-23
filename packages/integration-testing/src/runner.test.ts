@@ -91,6 +91,16 @@ describe("ACP sandbox conformance", () => {
     expect(JSON.stringify(result)).not.toContain("secret-token");
     expect(result.completedFixtureTested).toBe(false);
   });
+  it.each(["usd", "USD"])(
+    "changes the currency for the changed-body replay when the config says %s",
+    async (currency) => {
+      successfulSequence();
+      const runtime = prepareAcpSandbox({ ...config, currency });
+      await run(context(runtime(new AbortController().signal)));
+      const changed = JSON.parse(fetch.mock.calls[3]![0].body);
+      expect(changed.currency).toBe("eur");
+    },
+  );
   it("finds a wrong nested response field with no raw text", async () => {
     successfulSequence();
     fetch.mockReset();

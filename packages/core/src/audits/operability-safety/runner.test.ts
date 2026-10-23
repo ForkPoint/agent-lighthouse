@@ -126,6 +126,18 @@ describe("stripStyles", () => {
     },
   );
 
+  it.each(["</style/>", "</style />", '</style class="x">', "</STYLE foo>"])(
+    "preserves content after the style end tag %j",
+    (endTag) => {
+      const content = '<button id="keep">Keep</button>';
+      expect(
+        stripStyles(
+          `<style>.a{color:red}${endTag}${content}<style>.b{color:blue}</style>`,
+        ),
+      ).toBe(content);
+    },
+  );
+
   it.each(["\v", "\u00a0"])(
     "does not mistake non-HTML whitespace %j for a style end delimiter",
     (whitespace) => {

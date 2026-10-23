@@ -20,6 +20,8 @@ const h = vi.hoisted(() => ({
   robotsDelayMs: 0,
   /** Requests sent before the audits ran, or undefined before they run. */
   auditsAt: undefined as number | undefined,
+  /** The options the scan built its fetcher with. */
+  fetcherOptions: undefined as unknown,
 }));
 
 const CONNECT_TIMEOUT =
@@ -48,30 +50,33 @@ vi.mock("./fetcher", async (importOriginal) => {
   return {
     ...actual,
     isSafeUrl: async () => true,
-    createFetcher: () => ({
-      fetch: async ({ url }: { url: string }) => {
-        h.calls.push(url);
-        h.events.push(`start ${url}`);
-        const target = new URL(url);
-        let answer: FetchResult;
-        if (h.deadHosts.has(target.hostname)) {
-          answer = failed(url, CONNECT_TIMEOUT);
-        } else if (target.pathname === "/robots.txt") {
-          if (h.robotsDelayMs > 0)
-            await new Promise((resolve) =>
-              setTimeout(resolve, h.robotsDelayMs),
-            );
-          answer = h.robotsError
-            ? failed(url, h.robotsError)
-            : (h.map.get(url) ?? result(url, 404));
-        } else {
-          answer = h.map.get(url) ?? result(url, 404);
-        }
-        h.events.push(`end ${url}`);
-        return answer;
-      },
-      summary: () => ({ requests: 0, statuses: {}, failures: {}, open: [] }),
-    }),
+    createFetcher: (options: unknown) => {
+      h.fetcherOptions = options;
+      return {
+        fetch: async ({ url }: { url: string }) => {
+          h.calls.push(url);
+          h.events.push(`start ${url}`);
+          const target = new URL(url);
+          let answer: FetchResult;
+          if (h.deadHosts.has(target.hostname)) {
+            answer = failed(url, CONNECT_TIMEOUT);
+          } else if (target.pathname === "/robots.txt") {
+            if (h.robotsDelayMs > 0)
+              await new Promise((resolve) =>
+                setTimeout(resolve, h.robotsDelayMs),
+              );
+            answer = h.robotsError
+              ? failed(url, h.robotsError)
+              : (h.map.get(url) ?? result(url, 404));
+          } else {
+            answer = h.map.get(url) ?? result(url, 404);
+          }
+          h.events.push(`end ${url}`);
+          return answer;
+        },
+        summary: () => ({ requests: 0, statuses: {}, failures: {}, open: [] }),
+      };
+    },
   };
 });
 
@@ -100,6 +105,7 @@ import type { CheckContext } from "./check-context";
 import { defaultOriginCache } from "./origin-cache";
 import { PhaseId } from "./progress";
 import type { ScanEvent } from "./progress";
+import type { RequestScheduler } from "./request-scheduler";
 
 const SITE = "https://example.com/";
 const HOME = `<html><body><main><h1>Kettles</h1><p>${"copper kettle ".repeat(60)}</p></main></body></html>`;
@@ -139,8 +145,23 @@ beforeEach(() => {
   h.robotsError = "";
   h.robotsDelayMs = 0;
   h.auditsAt = undefined;
+  h.fetcherOptions = undefined;
   defaultOriginCache.clear();
   vi.mocked(runAudits).mockClear();
+});
+
+describe("runScan — request scheduler", () => {
+  it("hands the caller's scheduler to the fetcher every request goes through", async () => {
+    h.map.set(SITE, result(SITE, 200, HOME));
+    const requestScheduler: RequestScheduler = {
+      acquire: async () => () => {},
+      observe: () => {},
+    };
+
+    await runScan(SITE, { requestScheduler });
+
+    expect(h.fetcherOptions).toMatchObject({ requestScheduler });
+  });
 });
 
 describe("runScan — root files wait for robots.txt", () => {

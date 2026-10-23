@@ -126,6 +126,9 @@ describe("UcpProfileConformanceAudit", () => {
       const result = audit.audit(context(body));
       expect(result.status).toBe(CheckStatus.Fail);
       expect(result.details?.["validCapabilities"]).toBe(0);
+      expect(result.details?.["issues"]).toContain(
+        `ucp.capabilities registry key ${JSON.stringify(name)}: must be a reverse-domain name`,
+      );
     },
   );
 
@@ -647,6 +650,10 @@ describe("UcpProfileConformanceAudit", () => {
     const result = audit.audit(context(body));
     expect(result.status).toBe(CheckStatus.Fail);
     expect(result.details?.["issueCount"]).toBe(2);
+    expect(result.details?.["issues"]).toEqual([
+      "payment.handlers[0].config_schema: must be an absolute URI",
+      "payment.handlers[0].instrument_schemas[0]: must be an absolute URI",
+    ]);
   });
 
   it("caps reported issue strings without hiding the full issue count", () => {

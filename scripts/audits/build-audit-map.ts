@@ -10,14 +10,16 @@
  *   5. packages/core/migration-map.json & docs/evidence/v2-audit-map.md (legacy v1 mappings)
  *
  * Modes:
- *   pnpm build:audit-map       Regenerates docs/evidence/audit-map.json and docs/evidence/audit-map.md
- *   pnpm check:audit-map       Validates that docs/evidence/audit-map.json is up-to-date with 0 drift
+ *   pnpm build:audit-map       Regenerates docs/evidence/audit-map.json, docs/evidence/audit-map.md
+ *                              and the registry summary in docs/scoring.md
+ *   pnpm check:audit-map       Validates that all three are up-to-date with 0 drift
  */
 
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { defaultConfig } from "#core/audit-config";
 import { auditIndexFields } from "../lib/audit-index";
+import { scoringSummary, withScoringSummary } from "../lib/scoring-table";
 import { AuditTier, EvidenceGrade } from "#core/types";
 
 const REPO_ROOT = path.resolve(__dirname, "../..");
@@ -26,6 +28,7 @@ const AUDIT_MAP_JSON_PATH = path.resolve(
   "docs/evidence/audit-map.json",
 );
 const AUDIT_MAP_MD_PATH = path.resolve(REPO_ROOT, "docs/evidence/audit-map.md");
+const SCORING_DOC_PATH = path.resolve(REPO_ROOT, "docs/scoring.md");
 const LEGACY_MIGRATION_MAP_PATH = path.resolve(
   REPO_ROOT,
   "packages/core/migration-map.json",
@@ -334,6 +337,15 @@ async function main(): Promise<void> {
   const dataset = generateAuditMap();
   const formattedJson = JSON.stringify(dataset, null, 2) + "\n";
   const formattedMd = generateMarkdownDocumentation(dataset);
+  const existingScoringDoc = fs.readFileSync(SCORING_DOC_PATH, "utf8");
+  const scoringDoc = withScoringSummary(
+    existingScoringDoc,
+    scoringSummary(
+      Object.values(defaultConfig.audits)
+        .flat()
+        .map((reg) => reg.meta),
+    ),
+  );
 
   if (isCheckMode) {
     let hasError = false;
@@ -368,6 +380,14 @@ async function main(): Promise<void> {
       }
     }
 
+    if (existingScoringDoc !== scoringDoc) {
+      console.error(
+        `❌ check:audit-map: the registry summary in ${SCORING_DOC_PATH} is out of date.\n` +
+          'Run "pnpm build:audit-map" to synchronize.',
+      );
+      hasError = true;
+    }
+
     // Verify all active dossiers exist on disk
     for (const audit of dataset.audits) {
       const fullDossierPath = path.resolve(REPO_ROOT, audit.dossier);
@@ -390,6 +410,7 @@ async function main(): Promise<void> {
   } else {
     fs.writeFileSync(AUDIT_MAP_JSON_PATH, formattedJson, "utf8");
     fs.writeFileSync(AUDIT_MAP_MD_PATH, formattedMd, "utf8");
+    fs.writeFileSync(SCORING_DOC_PATH, scoringDoc, "utf8");
 
     // Also update packages/core/migration-map.json with the enriched legacy mappings
     const cleanLegacy: Record<
@@ -421,6 +442,7 @@ async function main(): Promise<void> {
 
     console.log(`✅ Successfully generated ${AUDIT_MAP_JSON_PATH}`);
     console.log(`✅ Successfully generated ${AUDIT_MAP_MD_PATH}`);
+    console.log(`✅ Updated the registry summary in ${SCORING_DOC_PATH}`);
     console.log(`✅ Synchronized ${LEGACY_MIGRATION_MAP_PATH}`);
     console.log(
       `   ${dataset.summary.totalActiveAudits} active audits, ${dataset.summary.totalSunsetDossiers} sunset dossiers, ${dataset.summary.totalMergedDossiers} merged dossiers, ${dataset.summary.totalLegacyAudits} legacy mappings.`,

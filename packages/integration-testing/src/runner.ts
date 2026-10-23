@@ -354,7 +354,7 @@ export function prepareAcpSandbox(
           HttpMethod.Post,
           JSON.stringify({
             line_items: config.testItems,
-            currency: config.currency === "usd" ? "eur" : "usd",
+            currency: config.currency.toLowerCase() === "usd" ? "eur" : "usd",
             capabilities: {},
           }),
           key,
