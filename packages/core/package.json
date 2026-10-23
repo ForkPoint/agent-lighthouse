@@ -78,6 +78,8 @@
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
     "cheerio": "^1.0.0",
     "domhandler": "^6.0.1",
     "gpt-tokenizer": "^4.0.3",

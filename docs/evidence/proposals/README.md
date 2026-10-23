@@ -1,40 +1,36 @@
-# Proposed checks — evidence dossiers
+# Proposed checks — remaining work
 
-3 proposed checks and 1 retired one from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../policy.md).
+2 proposals remain unimplemented. None runs in a scan. The table lists only
+unfinished work; the dossiers hold its evidence and limits.
 
-Seven dossiers left this folder on 2026-08-22 (Plan 5, Task 2): six tool
-surveys moved to [../research](../research/README.md) because their verdict is
-a market fact identical for every scanned URL, and `ai-crawler-edge-parity`,
-which was the same check as `bot-auth-access/ai-crawler-edge-response-parity`
-and folded into
-[../merged/access-crawl-control/ai-crawler-edge-parity.md](../merged/access-crawl-control/ai-crawler-edge-parity.md).
+ACP and UCP coverage is a product requirement. Their new registered checks
+are listed below. Overlay and MCP consistency work remains deferred.
 
-Dossiers that graduate to a shipped audit move to
-[../audits](../audits/README.md) with `status: merged`-style audit frontmatter;
-their row leaves the table below and the count above drops by one.
+| Proposal                                                                                                       | New coverage and limits                                                                    | Prerequisite                                                                     | Proposed tier                        |
+| :------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------- | :----------------------------------- |
+| [Overlay Interception Hazard](./agent-operability/overlay-interception-hazard.md)                              | Measure persistent click interception using Playwright's action point and retry behaviour. | Browser execution and local parity fixtures. HTML snapshots contain no geometry. | scored, subject to method validation |
+| [MCP annotation claim consistency](./mcp-server-quality/behavior-annotation-coverage-and-claim-consistency.md) | Report possible conflicts between tool descriptions and behaviour hints.                   | A model judge and measured precision against human labels.                       | informative (weight 0)               |
 
-Grades: **A** = documented consumer behavior or ratified standard · **B** = draft standard with adoption, or strong empirical data · **C** = plausible convention, unproven · **D** = speculative.
+## ACP and UCP coverage
 
-| Grade | Check                                                                                                                            | Domain             | Uniqueness | Implementation        | Scoring tier           |
-| :---- | :------------------------------------------------------------------------------------------------------------------------------- | :----------------- | :--------- | :-------------------- | :--------------------- |
-| A     | [Overlay Interception Hazard](./agent-operability/overlay-interception-hazard.md)                                                | agent-operability  | unique     | `headless-browser`    | scored                 |
-| A     | [ACP Endpoint Conformance Probe](./agentic-commerce/acp-endpoint-conformance-probe.md)                                           | agentic-commerce   | unique     | `operator-credential` | informative (weight 0) |
-| A     | [Behavior Annotation Coverage and Claim Consistency](./mcp-server-quality/behavior-annotation-coverage-and-claim-consistency.md) | mcp-server-quality | unique     | `llm-assisted`        | informative (weight 0) |
+| Protocol | Existing public coverage                                                                                                                                                                                                                                                            | New coverage and limits                                                                                                                                                                                                                    |
+| :------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ACP      | [Policy links](../audits/agentic-commerce/acp-policy-link-surface.md), [checkout offer fields](../audits/agentic-commerce/checkout-offer-field-mapping.md), and [cart handoff reachability](../audits/agentic-commerce/cart-handoff-reachability.md). These are public-site checks. | The [authenticated sandbox probe](../audits/agentic-commerce/acp-endpoint-conformance-probe.md) is registered and available by explicit CLI/library opt-in. It does not complete payment.                                                  |
+| UCP      | [Business profile readability](../audits/agentic-commerce/ucp-profile.md): JSON shape, readable services, version presence and declared HTTPS endpoint URLs.                                                                                                                        | [Declaration validation](../audits/agentic-commerce/ucp-profile-conformance.md) now checks supported versions. Provider-specific configuration, full nested constraint validation and live checkout conformance remain outside that check. |
 
-Retired, kept as the record of why:
+A passing public check does not establish a working checkout. Preserve
+`notApplicable` when an optional protocol artifact is absent. Neither protocol
+requires every scanned site to adopt it.
 
-| Grade | Check                                                                                                            | Domain                     | Reason                                                                                    |
-| :---- | :--------------------------------------------------------------------------------------------------------------- | :------------------------- | :---------------------------------------------------------------------------------------- |
-| D     | [Question-Heading Answer Span Alignment](./answer-selection-forensics/question-heading-answer-span-alignment.md) | answer-selection-forensics | no documented consumer; invented thresholds; the checkable part ships in two other audits |
+Both remaining proposal dossiers carry grade A for their documented consumer mechanism.
+That grade does not validate a proposed measurement method. See the
+[evidence policy](../policy.md).
 
-The 2026-10-19 evidence review re-graded all four. Its claim-by-claim log is
-[REVIEW-2026-10-19.md](./REVIEW-2026-10-19.md).
-
-On 2026-10-19 the deterministic coverage half of Behavior Annotation Coverage
-and Claim Consistency shipped as
+MCP annotation **coverage** already ships as
 [`agent-interfaces/mcp-tool-annotation-coverage`](../audits/agent-interfaces/mcp-tool-annotation-coverage.md)
-(grade A, scored). The dossier stays here for the claim-consistency judge,
-which needs a model. The retired dossier stays in this folder as the record;
-its stub was deleted. Overlay Interception Hazard needs a headless browser and
-ACP Endpoint Conformance Probe needs a merchant-issued token; the scanner has
-neither, so both stay proposals.
+(grade A, informative). It is not pending work.
+
+Completed reviews and the retired answer-span proposal live in
+[research history](../research/README.md#proposal-history).
+When remaining work ships, remove it from this list and keep its evidence in
+the registered audit's dossier.

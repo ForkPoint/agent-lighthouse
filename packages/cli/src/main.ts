@@ -212,6 +212,10 @@ async function audit(targetUrl?: string) {
     );
     process.exit(1);
   }
+  if (opts.invalidAcpSandbox) {
+    console.error(opts.invalidAcpSandbox);
+    process.exit(1);
+  }
   if (opts.invalidSnapshots) {
     console.error(`Invalid snapshots in config: ${opts.invalidSnapshots}`);
     process.exit(1);
@@ -265,6 +269,7 @@ async function audit(targetUrl?: string) {
   const report = await runScan(url, {
     onEvent,
     ...(opts.snapshots !== undefined ? { snapshots: opts.snapshots } : {}),
+    ...(opts.acpSandbox !== undefined ? { acpSandbox: opts.acpSandbox } : {}),
     ...(categories ? { categories } : {}),
     ...(pageType ? { pageType } : {}),
     ...(opts.pages !== undefined ? { pages: opts.pages } : {}),

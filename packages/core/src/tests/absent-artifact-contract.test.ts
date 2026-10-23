@@ -219,7 +219,10 @@ const ROOT_ARTIFACTS = [
     name: "the UCP business profile",
     marker: "NO_UCP_PROFILE",
     path: "/.well-known/ucp",
-    expected: ["agentic-commerce/ucp-profile"],
+    expected: [
+      "agentic-commerce/ucp-profile",
+      "agentic-commerce/ucp-profile-conformance",
+    ],
   },
 ] as const;
 

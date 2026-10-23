@@ -7313,6 +7313,123 @@
       "accessed": "2026-10-21",
       "verified": "2026-10-21",
       "keyFindings": "A description list is a set of name-value groups. Uses include terms and definitions, metadata, and questions and answers. dl/dt/dd presence or value length alone does not establish definitional intent."
+    },
+    {
+      "id": "acp-checkout-2026-04-17",
+      "title": "ACP 2026-04-17 checkout response contract",
+      "url": "https://github.com/agentic-commerce-protocol/agentic-commerce-protocol/blob/main/spec/2026-04-17/openapi/openapi.agentic_checkout.yaml",
+      "publisher": "Agentic Commerce Protocol",
+      "type": "spec",
+      "verified": "2026-10-23",
+      "keyFindings": "Versioned checkout operations use bearer auth and API-Version. Create returns 201; retrieve and cancel return 200; unknown retrieval uses Error with 404. Changed-body idempotency conflict uses 422/idempotency_conflict; in-flight collision uses 409. The adjacent JSON Schema bundle defines CheckoutSession and Error. Completed/canceled sessions cannot be canceled."
+    },
+    {
+      "id": "ucp-schema-2026-01-11-metadata",
+      "title": "UCP 2026-01-11 metadata schema",
+      "url": "https://ucp.dev/2026-01-11/schemas/ucp.json",
+      "publisher": "Universal Commerce Protocol",
+      "type": "spec",
+      "verified": "2026-10-23",
+      "keyFindings": "Versioned metadata declaration schema. Business and platform declarations have distinct requirements. Validation must use the selected profile version and preserve fields the business schema permits to be absent."
+    },
+    {
+      "id": "ucp-schema-2026-01-11-capability",
+      "title": "UCP 2026-01-11 capability schema",
+      "url": "https://ucp.dev/2026-01-11/schemas/capability.json",
+      "publisher": "Universal Commerce Protocol",
+      "type": "spec",
+      "verified": "2026-10-23",
+      "keyFindings": "Versioned capability declaration schema. Business and platform declarations have distinct requirements. Validation must use the selected profile version and preserve fields the business schema permits to be absent."
+    },
+    {
+      "id": "ucp-schema-2026-01-11-payment-handler",
+      "title": "UCP 2026-01-11 payment-handler schema",
+      "url": "https://ucp.dev/2026-01-11/schemas/shopping/types/payment_handler.json",
+      "publisher": "Universal Commerce Protocol",
+      "type": "spec",
+      "verified": "2026-10-23",
+      "keyFindings": "Versioned payment-handler declaration schema. Business and platform declarations have distinct requirements. Validation must use the selected profile version and preserve fields the business schema permits to be absent."
+    },
+    {
+      "id": "ucp-schema-2026-04-08-metadata",
+      "title": "UCP 2026-04-08 metadata schema",
+      "url": "https://ucp.dev/2026-04-08/schemas/ucp.json",
+      "publisher": "Universal Commerce Protocol",
+      "type": "spec",
+      "verified": "2026-10-23",
+      "keyFindings": "Versioned metadata declaration schema. Business and platform declarations have distinct requirements. Validation must use the selected profile version and preserve fields the business schema permits to be absent."
+    },
+    {
+      "id": "ucp-schema-2026-04-08-capability",
+      "title": "UCP 2026-04-08 capability schema",
+      "url": "https://ucp.dev/2026-04-08/schemas/capability.json",
+      "publisher": "Universal Commerce Protocol",
+      "type": "spec",
+      "verified": "2026-10-23",
+      "keyFindings": "Versioned capability declaration schema. Business and platform declarations have distinct requirements. Validation must use the selected profile version and preserve fields the business schema permits to be absent."
+    },
+    {
+      "id": "ucp-schema-2026-04-08-payment-handler",
+      "title": "UCP 2026-04-08 payment-handler schema",
+      "url": "https://ucp.dev/2026-04-08/schemas/payment_handler.json",
+      "publisher": "Universal Commerce Protocol",
+      "type": "spec",
+      "verified": "2026-10-23",
+      "keyFindings": "Versioned payment-handler declaration schema. Business and platform declarations have distinct requirements. Validation must use the selected profile version and preserve fields the business schema permits to be absent."
+    },
+    {
+      "id": "ucp-schema-2026-04-08-available-instrument",
+      "title": "UCP 2026-04-08 available payment instrument schema",
+      "url": "https://ucp.dev/2026-04-08/schemas/shopping/types/available_payment_instrument.json",
+      "publisher": "Universal Commerce Protocol",
+      "type": "spec",
+      "verified": "2026-10-23",
+      "keyFindings": "Defines the available payment instrument structure associated with business payment handler declarations. The versioned schema supplies field types and required fields."
+    },
+    {
+      "id": "ucp-schema-2026-08-25-metadata",
+      "title": "UCP 2026-08-25 metadata schema",
+      "url": "https://ucp.dev/2026-08-25/schemas/ucp.json",
+      "publisher": "Universal Commerce Protocol",
+      "type": "spec",
+      "verified": "2026-10-23",
+      "keyFindings": "Versioned metadata declaration schema. Business and platform declarations have distinct requirements. Validation must use the selected profile version and preserve fields the business schema permits to be absent."
+    },
+    {
+      "id": "ucp-schema-2026-08-25-capability",
+      "title": "UCP 2026-08-25 capability schema",
+      "url": "https://ucp.dev/2026-08-25/schemas/capability.json",
+      "publisher": "Universal Commerce Protocol",
+      "type": "spec",
+      "verified": "2026-10-23",
+      "keyFindings": "Versioned capability declaration schema. Business and platform declarations have distinct requirements. Validation must use the selected profile version and preserve fields the business schema permits to be absent."
+    },
+    {
+      "id": "ucp-schema-2026-08-25-payment-handler",
+      "title": "UCP 2026-08-25 payment-handler schema",
+      "url": "https://ucp.dev/2026-08-25/schemas/payment_handler.json",
+      "publisher": "Universal Commerce Protocol",
+      "type": "spec",
+      "verified": "2026-10-23",
+      "keyFindings": "Versioned payment-handler declaration schema. Business and platform declarations have distinct requirements. Validation must use the selected profile version and preserve fields the business schema permits to be absent."
+    },
+    {
+      "id": "ucp-schema-2026-08-25-available-instrument",
+      "title": "UCP 2026-08-25 available payment instrument schema",
+      "url": "https://ucp.dev/2026-08-25/schemas/common/types/available_payment_instrument.json",
+      "publisher": "Universal Commerce Protocol",
+      "type": "spec",
+      "verified": "2026-10-23",
+      "keyFindings": "Defines the available payment instrument structure associated with business payment handler declarations. The versioned schema supplies field types and required fields."
+    },
+    {
+      "id": "ucp-schema-2026-08-25-reverse-domain-name",
+      "title": "UCP 2026-08-25 reverse-domain name schema",
+      "url": "https://ucp.dev/2026-08-25/schemas/common/types/reverse_domain_name.json",
+      "publisher": "Universal Commerce Protocol",
+      "type": "spec",
+      "verified": "2026-10-23",
+      "keyFindings": "The 2026-08-25 reverse-domain identifier pattern permits hyphens in the first segment and digits, hyphens and underscores within later segments. Earlier versions use a narrower pattern. Apply the selected version to registry keys and extension-parent identifiers."
     }
   ]
 }

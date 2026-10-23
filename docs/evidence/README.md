@@ -5,10 +5,11 @@ Agent Lighthouse scores websites on AI-agent readiness. Every audit here must ea
 | Document                            | What it holds                                                                                                                                                                                 |
 | :---------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [policy.md](./policy.md)            | The grading rubric (A–D) and what each grade may contribute to a score                                                                                                                        |
-| [audits/](./audits/README.md)       | One dossier per registered audit (221): what it checks, graded evidence with sources, disposition. Indexes the legacy v1 audits, linking out to `sunset/` or `merged/` for the ones that left |
+| [audits/](./audits/README.md)       | One dossier per registered audit (223): what it checks, graded evidence with sources, disposition. Indexes the legacy v1 audits, linking out to `sunset/` or `merged/` for the ones that left |
 | [merged/](./merged/README.md)       | Dossiers of audits folded into another audit in v2 — kept as the record of why each signal moved                                                                                              |
 | [sunset/](./sunset/README.md)       | The 26 audits removed in v2 with the proof each signal is not a factor: rationale + full dossiers                                                                                             |
-| [proposals/](./proposals/README.md) | 3 active proposals and 1 retired proposal; see the proposal index for prerequisites                                                                                                           |
+| [proposals/](./proposals/README.md) | 2 unimplemented proposals; completed and retired work lives in research history                                                                                                               |
+| [research/](./research/README.md)   | Tool surveys, completed proposal reviews and retired proposals                                                                                                                                |
 | [sources.json](./sources.json)      | The source registry every dossier cites — URLs verified at research time; see each record for its date                                                                                        |
 
 The generated [audit map](./audit-map.md) is the current audit inventory.

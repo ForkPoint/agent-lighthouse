@@ -1,7 +1,7 @@
 # Research notes — not audits
 
-Findings from the 2026-08-20 research pass that are **market facts, not site
-checks**. Each one surveys what a third-party tool does or does not cover. The
+Tool surveys and closed proposal research. The tool surveys below are
+**market facts, not site checks** from the 2026-08-20 research pass. Each one surveys what a third-party tool does or does not cover. The
 answer is identical for every URL Agent Lighthouse scans, so none of them can
 be an audit: an audit's output must be a verdict about the site in front of it.
 
@@ -19,3 +19,19 @@ existing tooling.
 | [profound-agent-analytics-ai-visibility-passive-bot-telemetry.md](./profound-agent-analytics-ai-visibility-passive-bot-telemetry.md) | Profound agent analytics                    |
 
 Archived 2026-08-22.
+
+## Proposal history
+
+These records are complete. They are not implementation tasks.
+
+- [2026-10-19 evidence review](./proposal-history/proposed-checks-evidence-review-2026-10-19.md) — the
+  dated review of four proposals. Current requirements live in the
+  [active proposal index](../proposals/README.md).
+- [Question-Heading Answer Span Alignment](./proposal-history/question-heading-answer-span-alignment.md)
+  — retired on 2026-10-19. Its unsupported thresholds must not become a new
+  check. The proposal never shipped, so it is not a sunset audit.
+
+- [ACP Endpoint Conformance Probe](./proposal-history/acp-endpoint-conformance-probe.md)
+  — graduated to the registered informative sandbox audit on 2026-10-23. The
+  [current dossier](../audits/agentic-commerce/acp-endpoint-conformance-probe.md)
+  owns the implemented behavior and limits.

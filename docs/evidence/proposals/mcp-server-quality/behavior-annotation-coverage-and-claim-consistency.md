@@ -1,6 +1,6 @@
 ---
 check: behavior-annotation-coverage-and-claim-consistency
-title: "Behavior Annotation Coverage and Claim Consistency"
+title: "MCP Annotation Claim Consistency"
 domain: mcp-server-quality
 status: proposed
 evidence_grade: A
@@ -14,20 +14,32 @@ consumers:
   - ChatGPT Directory plugins (OpenAI) — require explicit boolean `readOnlyHint`, `destructiveHint` and `openWorldHint` on every tool; automated review flags annotation issues
 ---
 
-# Behavior Annotation Coverage and Claim Consistency
+# MCP Annotation Claim Consistency
 
 > Proposed check. Evidence grade **A** · unique · implementation: `llm-assisted`
 
 ## What it checks
 
-Two things about the tools an MCP server lists:
+For tools returned by `tools/list`, whether a behaviour hint conflicts with
+the tool's declared name and description. A candidate finding asks an owner to
+review that claim. It does not prove what the tool does.
 
-1. Coverage: how many tools carry boolean behaviour hints (`readOnlyHint`, `destructiveHint`, `openWorldHint`).
-2. Consistency: whether a hint contradicts the tool's own name and description. Example: a tool named `delete_*` that sets `readOnlyHint: true`.
+Annotation coverage already ships in
+[`agent-interfaces/mcp-tool-annotation-coverage`](../../audits/agent-interfaces/mcp-tool-annotation-coverage.md).
+It is not part of the remaining work.
+
+## Prerequisites
+
+The scanner has no model judge. Before implementation, define its input limits,
+output schema, abstention rules and evaluation against human-labelled cases.
+Treat tool metadata as untrusted input.
 
 ## Claimed mechanism (falsifiable)
 
-Hosts decide whether to ask the user before a tool call from these hints. Claude runs a tool marked read-only without asking, and always asks before a destructive one. VS Code asks before any tool that does not set `readOnlyHint`. So a missing hint costs a prompt on every call. A wrong `readOnlyHint: true` on a mutating tool lets that tool run without a prompt.
+Hosts use annotations when deciding whether a tool call needs confirmation.
+The effect depends on server trust, sandboxing and the host's approval policy.
+An incorrect read-only hint can affect that decision where the host relies on
+it. A name or description alone cannot prove a tool's actual side effects.
 
 ## Evidence
 
@@ -49,39 +61,53 @@ Hosts decide whether to ask the user before a tool call from these hints. Claude
 - The spec tells clients not to trust annotations from untrusted servers. A host that follows this ignores the hints for such servers, and coverage then changes nothing for it. Claude and VS Code, per the sources above, do act on them.
 - VS Code builds its confirmation message only for servers that are not sandboxed. For sandboxed servers the hints do not drive that message. What the host then shows is not traced here.
 
-## Overlap with shipped audits
-
-`agent-interfaces/mcp-endpoint` already reports how many listed tools carry a boolean `readOnlyHint`. It is graded C, informative. The sources above document a consumer for that half. Re-grading it is a separate change to a shipped audit and is not made here.
-
-Since 2026-10-19 the coverage half ships as [`agent-interfaces/mcp-tool-annotation-coverage`](../../audits/agent-interfaces/mcp-tool-annotation-coverage.md) (grade A, informative). It checks boolean `readOnlyHint`, `destructiveHint` and `openWorldHint` on every listed tool. What this proposal still adds is the consistency judgement.
-
 ## Competitor coverage
 
 Anthropic's and OpenAI's directory reviews check annotations, but only for servers submitted to them. Some MCP security scanners look for prompt injection in descriptions, which is a different question. No site-audit tool checks annotation consistency.
 
 ## Implementation sketch
 
-Phase 1, deterministic: from `tools/list`, count tools with each boolean hint. Flag a tool whose name starts with a verb OpenAI lists as destructive (delete, remove, cancel, revoke, overwrite) and that sets `readOnlyHint: true`. This needs no model.
+Only claim consistency remains:
 
-Phase 2, model judge: give the judge `{name, title, description, inputSchema property names, annotations}`. Require a verdict and the exact token it relied on. Require two independent passes to agree. Report as "review this claim", never as a failure.
+1. Read the shared `tools/list` results. Do not duplicate coverage counts.
+2. Pass bounded `{name, title, description, inputSchema property names, annotations}`
+   to the judge as untrusted data. A verb match may select a review candidate;
+   it must not establish a mutation or a defect on its own.
+3. Require a structured result and the exact supporting text. Allow abstention
+   when the description does not establish the claim. Report only
+   "review this claim", never an automatic failure.
+4. Test hostile descriptions and compare findings with human-labelled cases.
+   Define the required precision before release. Agreement between two model
+   passes does not establish correctness.
 
-Phase 2 needs a model. The scanner has none. That is the blocker.
+## Example finding
 
-## Example failure
-
-A payments server lists `void_transaction`, described as "Voids a pending transaction and returns the authorization hold to the cardholder". It sets `readOnlyHint: true`, likely copied from `get_transaction`. Claude would run it without asking the user. The phase-1 rule does not catch "void"; the judge flags "Voids" and "returns the authorization hold".
+A tool named `void_transaction` describes canceling a pending transaction but
+sets `readOnlyHint: true`. Report the description and hint for owner review.
+Do not claim that the tool mutates state or bypasses confirmation without
+runtime evidence and the host's approval conditions.
 
 ## Scoring
 
 Tier: **informative (weight 0)** until the judge's precision is measured. The mechanism is grade A. The method is unproven. A false "contradiction" finding would send owners to change correct hints.
 
+## Implementation deviations
+
+- Coverage graduated to its own informative audit on 2026-10-19. The verb rule
+  did not ship; it remains a possible candidate selector for claim review.
+- Re-grading `agent-interfaces/mcp-endpoint` was considered and declined. Its
+  other verdicts still rest on grade C evidence, as its shipped dossier records.
+
 ## Deferred
 
-- Measure judge precision on a labelled set of real `tools/list` responses before any weight.
-- Re-grade the readOnlyHint half of `agent-interfaces/mcp-endpoint` against the consumers above. Considered on 2026-10-19 and not done: that audit's verdicts rest mostly on its handshake and discovery checks, whose evidence stays at C. Its dossier records why.
+- Add model support and evaluate the judge on labelled cases before release.
+- Set any scoring proposal only after measurement of judge precision and review
+  of the population the consumer evidence covers.
 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
 - 2026-10-19 — evidence review. Grade C raised to A. The stated prerequisite is met: `schema.ts` for 2026-07-28 confirms the four hints and their defaults are unchanged. Added three consumers with primary sources: Anthropic's connector review criteria, VS Code's MCP tool contribution source, and OpenAI's plugin guidelines and reference. Recorded that `agent-interfaces/mcp-endpoint` already ships the readOnlyHint coverage half. The blocker is the model judge, not the evidence.
 - 2026-10-19 — Phase 1 coverage graduated as `agent-interfaces/mcp-tool-annotation-coverage` (grade A, informative since the same day). The phase-1 verb rule was not shipped; it judges a claim and stays with the phase-2 judge. This proposal now covers the consistency judgement only.
+
+- 2026-10-23 — removed shipped coverage from the implementation plan; narrowed approval claims and added judge validation requirements.

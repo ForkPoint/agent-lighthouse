@@ -11,6 +11,7 @@ export const OUTPUT_FORMATS = ["terminal", "html", "json", "md"] as const;
 export type OutputFormat = (typeof OUTPUT_FORMATS)[number];
 
 export interface AgentLighthouseConfig {
+  acpSandbox?: import("./schemas").AcpSandboxConfig;
   /** Optional versioned DOM input, validated by the scan engine. */
   snapshots?: BrowserSnapshots;
   /** Target URL (if not supplied via CLI) */

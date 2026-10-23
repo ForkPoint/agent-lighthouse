@@ -1,6 +1,6 @@
 # Evidence review — proposed checks, 2026-10-19
 
-Scope: the four dossiers in this folder. Each load-bearing claim was traced to a primary source, opened live on 2026-10-19. Accepted sources: vendor documentation, spec text from the standards body or the protocol's own repository, and reference source code cited by file and symbol. Blogs, listicles and forum posts were used as leads only.
+Historical scope: the four dossiers reviewed under `docs/evidence/proposals/` on 2026-10-19. Current scope and blockers live in the [active proposal index](../../proposals/README.md). Each load-bearing claim was traced to a primary source, opened live on 2026-10-19. Accepted sources: vendor documentation, spec text from the standards body or the protocol's own repository, and reference source code cited by file and symbol. Blogs, listicles and forum posts were used as leads only.
 
 Status key: **documented** (the source states it), **inference** (follows from documented facts, not stated), **unproven** (no source), **contradicted** (a source states the opposite).
 
@@ -86,7 +86,7 @@ Grade: **A**, up from C. The prerequisite the 2026-08-20 dossier named (confirm 
 
 ## Registry
 
-Fifteen sources were added to [`sources.json`](../sources.json) and eleven existing entries were re-stamped `verified: 2026-10-19`. Every URL stamped today returned HTTP 200 on a final pass.
+Fifteen sources were added to [`sources.json`](../../sources.json) and eleven existing entries were re-stamped `verified: 2026-10-19`. Every URL stamped today returned HTTP 200 on a final pass.
 
 ## Leads not used as evidence
 

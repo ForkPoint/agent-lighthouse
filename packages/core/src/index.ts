@@ -156,3 +156,5 @@ export {
 export type { DomPageContext } from "./check-context";
 export { detectPage } from "./detect-page";
 export { DomWorkLimitError } from "./dom-work";
+
+export { AcpSandboxConfigSchema, type AcpSandboxConfig } from "./schemas";

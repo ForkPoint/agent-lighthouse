@@ -2,7 +2,7 @@
 check: acp-endpoint-conformance-probe
 title: "ACP Endpoint Conformance Probe"
 domain: agentic-commerce
-status: proposed
+status: graduated
 evidence_grade: A
 uniqueness: unique
 difficulty: operator-credential
@@ -14,11 +14,31 @@ consumers:
 
 # ACP Endpoint Conformance Probe
 
-> Proposed check. Evidence grade **A** for the authenticated tier only · unique · implementation: needs a merchant-issued token
+> Historical proposal. The authenticated probe is now registered as
+> [agentic-commerce/acp-endpoint-conformance-probe](../../audits/agentic-commerce/acp-endpoint-conformance-probe.md).
+> That dossier defines current behavior; the text below records the original plan.
 
 ## What it checks
 
 For a merchant that runs Agentic Commerce Protocol (ACP) checkout endpoints, whether those endpoints honour the contracts ChatGPT relies on. With a merchant-issued sandbox token, it checks status codes, the error envelope, header echoes and the `CheckoutSession` shape. Without a token, it checks TLS only.
+
+## Priority
+
+ACP and UCP coverage is a product requirement. This authenticated ACP probe is
+the first remaining commerce proposal. Public-site ACP checks already ship;
+they do not establish checkout endpoint conformance. The
+[proposal index](../../proposals/README.md#acp-and-ucp-coverage) records both protocols' scope.
+
+## Prerequisites
+
+Select a supported `API-Version` and its matching response schemas. Define an
+operator-approved API origin, sandbox fixtures, token storage and redaction,
+who may supply a token, and cleanup after an interrupted run.
+
+`ScanOptions.headers` already supports HTTP headers, including bearer tokens.
+It is not a merchant-token handling contract. The task server accepts `url`,
+`snapshot` or `detectionId`; it has no merchant-token input. Public-address
+validation does not authorize forwarding a token to another origin.
 
 ## Claimed mechanism (falsifiable)
 
@@ -52,12 +72,37 @@ No public ACP conformance runner is known. OpenAI certifies integrations private
 
 ## Implementation sketch
 
-Two tiers.
+Two tiers remain to be built:
 
-1. **No token.** Check TLS on the merchant's API host: TLS 1.2 or later, port 443, valid public certificate. If `/.well-known/acp.json` is published, read `api_base_url` from it. Otherwise the operator supplies the base URL. Report nothing else.
-2. **Merchant-issued sandbox token.** Create a session and expect 201 and a `CheckoutSession` with every required field. Retrieve an unknown id and expect 404 with the `Error` object. Cancel a completed session and expect 405. Repeat a create with the same `Idempotency-Key` and a different body and expect 409 or 422. Check that `capabilities` is present on every response. Never call `/complete`.
+1. **No token.** Check TLS on the operator-approved merchant API host. If a
+   discovery document supplies `api_base_url`, validate that URL with
+   `isSafeUrl()` and require origin approval before using a credential.
+   Without an approved base URL, skip endpoint conformance.
+2. **Merchant-issued sandbox token.** Use an explicitly selected protocol
+   version, test products and sandbox fixtures. Create a session and validate
+   its status and `CheckoutSession` schema. Retrieve an unknown id and validate
+   the `404` error. Test cancellation of an operator-supplied completed session;
+   skip that branch if no such fixture exists. A second cancellation can test
+   the already-canceled branch instead. Never call `/complete`.
+3. **Response rules.** Require `capabilities` only where the selected checkout
+   response schema requires it. Validate protocol errors against `Error`.
+   Check header echoes as observations unless the selected contract requires
+   them. Use a new idempotency key per test, then change the body under the same
+   key for the conflict test. Do not reuse keys across runs.
+4. **Version conflict.** ACP 2026-04-17 specifies `422` for a changed-body
+   idempotency conflict and `409` for an in-flight collision. OpenAI's production
+   guide specifies `409` for parameter mismatch. Select the intended contract;
+   do not accept either status without naming that contract.
+5. **Execution safety.** Bind the token to the approved origin. Apply
+   `isSafeUrl()` on discovered URLs and redirects. Do not forward credentials
+   across origins without explicit authorization. Clean up sessions created by
+   the probe, including interrupted runs. Creation writes session state;
+   inventory reservation depends on the merchant and is not a universal claim.
 
-The blocker is the token, not the base URL. `ScanOptions` has no field for a credential. The task server's `POST /tasks` reads only `url` from its body, and stores the target with credentials stripped. Carrying a merchant secret through the scanner needs its own design: where the token lives, how it is redacted from reports and traces, and who may supply it. Nothing in the current codebase does this.
+The status-code difference is documented in the
+[ACP 2026-04-17 changelog](https://github.com/agentic-commerce-protocol/agentic-commerce-protocol/blob/main/changelog/2026-04-17.md)
+and [OpenAI's production guide](https://developers.openai.com/commerce/guides/production)
+(verified 2026-10-23).
 
 ## Example failure
 
@@ -81,3 +126,7 @@ Tier: **informative (weight 0)**. Grade A covers the authenticated tier, but its
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
 - 2026-10-19 — evidence review. Grade A kept, but only for an authenticated tier. The unauthenticated suite is dropped: ChatGPT always authenticates and calls from allowlisted IPs, and no 401 or 403 contract is defined. The claim that ACP has no discovery mechanism was false: ACP 2026-04-17 defines `/.well-known/acp.json`. The claim that responses "MUST echo" two headers was not in either source. Added OpenAI's production guide (certification, TLS, IP allowlist) and the Apps SDK monetization page. Removed the architecture page, which is silent on discovery, and the repository listing, which no claim needs.
+
+- 2026-10-23 — corrected the existing header transport and task-input description; added version selection, response-specific validation and sandbox prerequisites.
+
+- 2026-10-23 — graduated to a registered informative sandbox audit. Moved this proposal to research history; the registered dossier owns current behavior and limits.

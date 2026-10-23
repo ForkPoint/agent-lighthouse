@@ -36,7 +36,47 @@ All three are JSON. An auto-discovered file that fails to parse logs a warning, 
 | `timeout`          | `number` (seconds)       | `180`                          | Scan budget; `0` disables it. `--timeout` overrides it.                                   |
 | `pageType`         | `PageType`               | detected                       | Type of the target URL. `--page-type` overrides it.                                       |
 | `pages`            | `PageOverride[] \| null` | none                           | More URLs with a declared type, read next to the target.                                  |
+| `acpSandbox`       | `AcpSandboxConfig`       | none                           | Explicit authenticated sandbox probe; see below.                                          |
 | `snapshots`        | `BrowserSnapshots`       | none                           | Browser-rendered DOM input; see [browser snapshots](./architecture/browser-snapshots.md). |
+
+## ACP sandbox checkout probe
+
+The optional `acpSandbox` key enables authenticated test-session requests. It
+is available through CLI configuration and `runScan` options. Normal scans do
+not send ACP mutation requests. The MCP tool and task server do not accept this
+configuration.
+
+```json
+{
+  "url": "https://shop.example",
+  "acpSandbox": {
+    "sandboxAcknowledged": true,
+    "baseUrl": "https://sandbox-api.example/acp",
+    "apiVersion": "2026-04-17",
+    "tokenEnv": "ACP_SANDBOX_TOKEN",
+    "currency": "usd",
+    "testItems": [{ "id": "sandbox_product" }]
+  }
+}
+```
+
+Set `ACP_SANDBOX_TOKEN` in the process environment. The file stores only its
+name. `baseUrl` explicitly authorizes that HTTPS API origin; it must not contain
+credentials, a query or a fragment. The scanner disables redirects for these
+requests and never applies the merchant token to ordinary website fetches.
+
+The probe creates, retrieves, replays and cancels test sessions. It checks
+response schemas and idempotency conflicts against the pinned protocol. It
+never calls `/complete` or attempts a payment. An optional
+`completedSessionId` selects an existing completed sandbox fixture for the
+`405` cancellation test; without that fixture, this branch remains untested.
+
+Cleanup has a separate bounded attempt after scan cancellation. A lost create
+response may leave a session whose identifier the scanner never received;
+`cleanupCertain: false` reports that uncertainty. Network refusal or incomplete
+cleanup cannot produce a conformance pass. The result is informative and has
+weight 0. See the [ACP audit dossier](./evidence/audits/agentic-commerce/acp-endpoint-conformance-probe.md)
+for the exact tested contract and limits.
 
 The CLI does not read a `categories` key. Use `--categories`.
 
@@ -72,6 +112,7 @@ Unlisted categories do not run and do not count. An unknown id exits 1.
 | `categories`          | `string[]`                    | all      | Category ids to run. Unknown ids match nothing; validate them yourself.            |
 | `includeExperimental` | `boolean`                     | `false`  | Run experimental-tier audits, reported but never scored.                           |
 | `pageType`            | `PageType`                    | detected | Type of the target URL. Wins over a matching `pages` entry.                        |
+| `acpSandbox`          | `AcpSandboxConfig`            | none     | Explicit sandbox probe; see the ACP section above.                                 |
 | `pages`               | `PageOverride[] \| null`      | none     | More URLs with a declared type.                                                    |
 | `snapshots`           | `BrowserSnapshots`            | none     | Browser-rendered DOM input; adds `browserAssessment` to the report.                |
 | `timeoutMs`           | `number`                      | `180000` | Scan budget. Recorded under `conditions.budget` when it runs out; `0` disables it. |

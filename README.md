@@ -43,7 +43,7 @@ npx @forkpoint/agent-lighthouse https://example.com --view
 npx @forkpoint/agent-lighthouse https://staging.example.com --min-score 85
 ```
 
-221 audits cover `llms.txt`, robots.txt crawler policy, Schema.org, OpenAPI discovery, WebMCP action surfaces, AEO/GEO content structure, agentic commerce, and operability. Every flag is in the [CLI reference](docs/cli.md); config files and SDK options are in [configuration](docs/config.md); how the score is built is in [scoring](docs/scoring.md).
+223 audits cover `llms.txt`, robots.txt crawler policy, Schema.org, OpenAPI discovery, WebMCP action surfaces, AEO/GEO content structure, agentic commerce, and operability. Every flag is in the [CLI reference](docs/cli.md); config files and SDK options are in [configuration](docs/config.md); how the score is built is in [scoring](docs/scoring.md).
 
 ---
 

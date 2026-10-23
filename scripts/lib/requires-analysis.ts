@@ -47,6 +47,7 @@ export const GATHERER_EVIDENCE: Record<string, readonly string[]> = {
   "text-metrics": PAGE_FED_REQUIRES,
   tokens: PAGE_FED_REQUIRES,
   "ua-parity": PAGE_FED_REQUIRES,
+  acp: ORIGIN_ONLY_REQUIRES,
   author: ORIGIN_ONLY_REQUIRES,
   conditional: ORIGIN_ONLY_REQUIRES,
   currency: ORIGIN_ONLY_REQUIRES,

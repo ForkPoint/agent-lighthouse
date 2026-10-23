@@ -84,7 +84,7 @@ Tier: **informative (weight 0)**. Weight comes from `weightForGrade`, which retu
 ## Deferred
 
 - The claim-consistency judge (does a hint contradict the tool's name and description) stays in [the proposal](../../proposals/mcp-server-quality/behavior-annotation-coverage-and-claim-consistency.md). It needs a model and a measured precision.
-- The deterministic verb rule in the proposal's phase 1 (a `delete_*` tool claiming `readOnlyHint: true`) was not shipped. It judges a claim, not its presence, and belongs with the judge.
+- The name-based verb selector in the proposal (a `delete_*` tool claiming `readOnlyHint: true`) was not shipped. It selects a claim for review, not a presence check, and belongs with the judge.
 - Removing the readOnlyHint branch from `mcp-endpoint` now that this audit reports it. That is a verdict change to a shipped audit and is left to its own change.
 - The `title` Anthropic also requires is not checked here. `mcp-tool-description-coverage` reports title coverage as an advisory ratio.
 

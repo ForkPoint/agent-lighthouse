@@ -25,7 +25,12 @@ For each interactive element, whether the element is the hit target at its actio
 
 Playwright MCP's default click tool calls Playwright's `locator.click()` with no `force` option. Playwright documents that a click waits until the element "receives events", meaning it is "the hit target of the pointer event at the action point". If another element captures the click, Playwright retries and then fails with `TimeoutError`. Playwright MCP's default action timeout is 5000 ms. An element that stays covered at every scroll alignment Playwright tries therefore cannot be clicked by that tool.
 
-Test: scroll the element into view at each alignment Playwright uses (default, `end`, `center`, `start`). At each, call `document.elementsFromPoint()` at the element's centre. If the top hit is neither the element nor a descendant at every alignment, predict a failed click.
+Test the proposed measurement against Playwright's actual click action point
+and retry behaviour. Four bounding-box centre samples do not establish that a
+click will time out. Playwright selects a point from viewport-clipped content
+quads and retries temporary interception. Proof pointer: `_clickablePoint` and
+`_retryAction` in [Playwright's source](https://github.com/microsoft/playwright/blob/20a2087ea43412b90c172c88faef80786ee18b8b/packages/playwright-core/src/server/dom.ts)
+(verified 2026-10-23).
 
 ## Evidence
 
@@ -58,7 +63,19 @@ Not covered. Chrome Lighthouse's agentic category measures layout shift, which i
 
 Needs a headless browser. A static fetch has no layout. The browser snapshots in `ScanOptions.snapshots` carry HTML only, with no geometry, so they cannot be hit-tested either.
 
-After load and a settle delay, enumerate interactive nodes. For each, scroll it into view at each of Playwright's four alignments. At each, read `elementsFromPoint()` at the centre of its box. Flag the element only when an unrelated node is on top at every alignment. Record the interceptor's selector, `position` and `z-index`. Group by interceptor, so one cookie bar reports once with its blocked-element count. Report consent dialogs separately, per the limit above.
+Remaining method work:
+
+- Define eligible, visible and enabled controls. Distinguish absent targets
+  from measured controls with no interception.
+- Use Playwright's action point and retry window. Compare the result with
+  trial clicks on fixed local fixtures, including transient overlays, clipped
+  targets and sticky layers. The MCP default is 5000 ms; it is configurable.
+- Define frame and shadow-root handling. Mark unsupported contexts as
+  unmeasured. Do not treat a frame or shadow host as an unrelated interceptor.
+- Define page-state handling during scrolls and retries. Record the viewport,
+  state and observation time so findings describe the measured state.
+- Group measured interception by layer. Define consent classification and
+  uncertain cases before applying the proposed consent exemption.
 
 Viewport: Anthropic recommends "1280x800 or 1366x768" for web applications and "1024x768 or 1280x720" for general desktop tasks. Test at 1280x800 and one mobile width. (The 2026-08-20 sketch said 1280x720 was Anthropic's recommendation for this use. That was imprecise.)
 
@@ -68,11 +85,15 @@ A promo bar fixed to the bottom of the viewport covers the primary "Add to cart"
 
 ## Scoring
 
-Tier per evidence policy: **scored**. Grade A meets the bar for Playwright-driven agents. Absent overlays are `pass`. A consent dialog is reported, not failed.
+Proposed tier: **scored**. Grade A supports the consumer mechanism for
+Playwright-driven agents. The measurement method still needs validation before
+this check can ship. Measured controls with no interception can pass; no
+eligible controls or unsupported geometry must not produce a failure. Define
+the consent exemption before scoring.
 
 ## Implementation deviations
 
-- The centre-point test now runs at four scroll alignments instead of one. A single-alignment test over-predicts failure for sticky elements, which Playwright escapes.
+- The earlier four-alignment centre-point sketch is superseded. It does not match Playwright's action-point selection or its time-based retries.
 - The sticky-header offset rule and the ">25% of viewport" fixed-layer rule are dropped. No source ties either to a consumer.
 
 ## Deferred
@@ -84,3 +105,5 @@ Tier per evidence policy: **scored**. Grade A meets the bar for Playwright-drive
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
 - 2026-10-19 — evidence review. Grade A kept, narrowed to Playwright-driven agents. Added the Playwright MCP `browser_click` source and Playwright's `_retryPointerAction` as proof of the consumer path. Added browser-use's `PaintOrderRemover` in place of `enhanced_snapshot.py`, which only reads paint order. Removed the MCP versioning source, which says nothing about overlays. Marked the vision-agent claim as inference. Recorded Playwright's sticky-escape retry and Anthropic's cookie-consent guidance as counter-evidence. Corrected the viewport recommendation. Rewrote the example failure: Playwright's error names the interceptor, so the old claim that "nothing in its observation explains the failure" was false.
+
+- 2026-10-23 — replaced the centre-point implementation recipe with pending method-validation requirements.
