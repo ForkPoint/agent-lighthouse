@@ -1,5 +1,20 @@
 # @forkpoint/agent-lighthouse-website
 
+## 0.0.28
+
+### Patch Changes
+
+- fbc7535: Limit repository validation to deterministic unit and contract tests. Remove public-site scan jobs and their input data. Remove the obsolete comparison guide from website navigation.
+- 4648663: Record the URL that answered a page request when redirects moved it to another page. `pageAttempts[].finalUrl` is new and optional; it is absent when the requested URL answered, or when only a trailing slash or fragment differs, and it never carries credentials. The page scope in terminal, HTML, Markdown and the website report viewer now reads `Fetch: https://example.com (redirected to https://www.example.com/) — read, HTTP 200`.
+- 28728fd: Add a scan help request form backed by ForkPoint FormFlow. Support native form submission and inline success and error feedback without subscribing visitors to marketing emails.
+- Updated dependencies [45a1d88]
+- Updated dependencies [cb638ba]
+- Updated dependencies [4648663]
+- Updated dependencies [fbc7535]
+- Updated dependencies [6a5d1ab]
+- Updated dependencies [1dbf1e7]
+  - @forkpoint/agent-lighthouse-core@10.1.0
+
 ## 0.0.27
 
 ### Patch Changes

@@ -1,5 +1,24 @@
 # @forkpoint/agent-lighthouse-core
 
+## 10.1.0
+
+### Minor Changes
+
+- cb638ba: Add an informative, version-aware UCP capability and payment-handler declaration check. It reads the existing public business-profile response without fetching merchant-supplied schemas or executing checkout requests. The new audit has weight 0.
+- 4648663: Record the URL that answered a page request when redirects moved it to another page. `pageAttempts[].finalUrl` is new and optional; it is absent when the requested URL answered, or when only a trailing slash or fragment differs, and it never carries credentials. The page scope in terminal, HTML, Markdown and the website report viewer now reads `Fetch: https://example.com (redirected to https://www.example.com/) — read, HTTP 200`.
+- fbc7535: Add an optional caller-provided request scheduler across scans and redirect hops. Hold the shared slot until the response body finishes. Exclude queue time from request timing while retaining it in the scan budget. Scheduler implementations define pacing and refusal policy outside the engine. Export the `RequestScheduler` type from the package entry.
+
+  Fetch the scanned page immediately after robots.txt, before the other root-file probes, to obtain the main evidence earlier.
+
+- 6a5d1ab: Add `getRegistrySummary()` and `CORE_VERSION`. The summary reports the installed core version, the number of audits and categories, the audit count per tier, the registry mass, and the same figures per category, all read from the registry the package runs. Use it instead of copying audit counts.
+- 1dbf1e7: Validate nested payment constraint expressions in public UCP 2026-08-25 profiles. Preserve earlier versions' open constraint rules. Add `constraintValidationLimited` and `constraintValidationLimits` to conformance details and warn when local validation limits prevent a complete assessment. Keep provider configuration and live checkout outside this informative check.
+
+### Patch Changes
+
+- 45a1d88: Preserve page content after style end tags containing HTML whitespace, a slash or attributes, such as `</style >`, `</style/>` and `</style x>`. Accessibility and text extraction now read the following markup instead of losing it to a later style block.
+
+  Stop canceled accessibility jobs before DOM construction. The HTTP scan passes its caller/budget signal and snapshot assessment passes its caller signal to the queue. Canceled waiters release their place and listeners, and the runner permits cancellation between pages. Synchronous analysis already in progress remains non-preemptible.
+
 ## 10.0.0
 
 ### Major Changes

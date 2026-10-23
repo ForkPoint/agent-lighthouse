@@ -1,5 +1,20 @@
 # @forkpoint/agent-lighthouse
 
+## 10.1.0
+
+### Patch Changes
+
+- fbc7535: Improve the bundled Agent Lighthouse plugin guidance for declared and detected page populations, obsolete notices, browser snapshot findings, and comparable rescans. Correct MCP capability guidance and valid page types. Add evaluation cases for missing evidence, changed scan scope, and untrusted page instructions.
+- Updated dependencies [45a1d88]
+- Updated dependencies [cb638ba]
+- Updated dependencies [4648663]
+- Updated dependencies [fbc7535]
+- Updated dependencies [6a5d1ab]
+- Updated dependencies [1dbf1e7]
+  - @forkpoint/agent-lighthouse-core@10.1.0
+  - @forkpoint/agent-lighthouse-report@10.1.0
+  - @forkpoint/agent-lighthouse-server@10.1.0
+
 ## 10.0.0
 
 ### Patch Changes
