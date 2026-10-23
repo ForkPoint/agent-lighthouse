@@ -390,6 +390,218 @@ describe("UcpProfileConformanceAudit", () => {
     expect(result.status).toBe(CheckStatus.Pass);
   });
 
+  function constraintProfile(constraints: unknown, version = "2026-08-25") {
+    return {
+      ucp: {
+        version,
+        payment_handlers: {
+          "com.example.pay": [
+            {
+              id: "processor",
+              // The profile schema controls shape, not the component date.
+              version: "2026-04-08",
+              available_instruments: [{ type: "vendor_card", constraints }],
+            },
+          ],
+        },
+      },
+    };
+  }
+
+  it.each([
+    {},
+    { required: ["network", "currency"] },
+    { properties: { network: { enum: ["visa", "mastercard"] } } },
+    { properties: { token: { const: null } } },
+    { properties: { token: { const: { custom: [1, true] } } } },
+    { properties: { network: { enum: ["visa"], const: "visa" } } },
+    {
+      properties: {
+        billing: {
+          required: ["country"],
+          properties: { country: { const: "US" } },
+        },
+      },
+    },
+    { properties: { extension: {} } },
+    {
+      anyOf: [
+        { required: ["network"] },
+        { properties: { country: { enum: ["US"] } } },
+      ],
+    },
+  ])("accepts published nested constraint forms: %j", (constraints) => {
+    const result = audit.audit(context(constraintProfile(constraints)));
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.details?.["validPaymentHandlers"]).toBe(1);
+    expect(result.details?.["constraintValidationLimited"]).toBe(false);
+    expect(() => AuditResultSchema.parse(result)).not.toThrow();
+  });
+
+  it.each([
+    { required: [] },
+    { required: ["network", "network"] },
+    { required: [1] },
+    { properties: {} },
+    { properties: { network: "visa" } },
+    { properties: { network: { enum: [] } } },
+    { properties: { network: { enum: ["visa", "visa"] } } },
+    {
+      properties: {
+        network: {
+          enum: [
+            { a: 1, b: 2 },
+            { b: 2, a: 1 },
+          ],
+        },
+      },
+    },
+    { properties: { network: { enum: ["visa"], required: ["field"] } } },
+    { properties: { network: { pattern: "visa" } } },
+    { anyOf: [] },
+    { anyOf: [{}] },
+    { anyOf: [{ const: "visa" }] },
+    { anyOf: [{ required: [] }] },
+    { enum: ["visa"] },
+    { unknown_operator: true },
+  ])("rejects malformed nested constraint forms: %j", (constraints) => {
+    const result = audit.audit(context(constraintProfile(constraints)));
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.details?.["validPaymentHandlers"]).toBe(0);
+    expect(result.details?.["issues"]).toEqual([
+      "ucp.payment_handlers.com.example.pay[0].available_instruments[0].constraints: must match the 2026-08-25 nested constraint expression schema",
+    ]);
+    expect(() => AuditResultSchema.parse(result)).not.toThrow();
+  });
+
+  it("keeps the earlier protocol's provider-defined constraints open", () => {
+    const result = audit.audit(
+      context(constraintProfile({ vendor_operator: [1, 2] }, "2026-04-08")),
+    );
+    expect(result.status).toBe(CheckStatus.Pass);
+  });
+
+  it("preserves valid handlers beside malformed nested constraints", () => {
+    const profile = constraintProfile({ anyOf: [{}] });
+    profile.ucp.payment_handlers["com.example.pay"].push({
+      id: "valid",
+      version: "2026-08-25",
+      available_instruments: [{ type: "card", constraints: {} }],
+    });
+    const result = audit.audit(context(profile));
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.details?.["paymentHandlers"]).toBe(2);
+    expect(result.details?.["validPaymentHandlers"]).toBe(1);
+  });
+
+  it.each(["depth", "width"])(
+    "warns when constraint %s exceeds local limits",
+    (kind) => {
+      let constraints: Record<string, unknown> = {};
+      if (kind === "depth") {
+        for (let i = 0; i < 40; i++)
+          constraints = { properties: { nested: constraints } };
+      } else {
+        constraints = {
+          required: Array.from({ length: 2050 }, (_, i) => `field${i}`),
+        };
+      }
+      const profile = constraintProfile(constraints);
+      profile.ucp.payment_handlers["com.example.pay"].push({
+        id: "valid",
+        version: "2026-08-25",
+        available_instruments: [{ type: "card", constraints: {} }],
+      });
+      const result = audit.audit(context(profile));
+      expect(result.status).toBe(CheckStatus.Warn);
+      expect(result.details?.["constraintValidationLimited"]).toBe(true);
+      expect(result.details?.["validPaymentHandlers"]).toBe(1);
+      expect(result.details?.["issueCount"]).toBe(0);
+      expect(() => AuditResultSchema.parse(result)).not.toThrow();
+    },
+  );
+
+  it.each([32, 33])(
+    "enforces the %i-level boundary without a false pass",
+    (depth) => {
+      let literal: unknown = "value";
+      for (let i = 0; i < depth - 3; i++) literal = [literal];
+      const result = audit.audit(
+        context(
+          constraintProfile({ properties: { data: { const: literal } } }),
+        ),
+      );
+      expect(result.status).toBe(
+        depth === 32 ? CheckStatus.Pass : CheckStatus.Warn,
+      );
+    },
+  );
+
+  it.each([2048, 2049])(
+    "enforces the %i-value boundary without a false pass",
+    (nodes) => {
+      const constraints = {
+        required: Array.from({ length: nodes - 2 }, (_, i) => `field${i}`),
+      };
+      const result = audit.audit(context(constraintProfile(constraints)));
+      expect(result.status).toBe(
+        nodes === 2048 ? CheckStatus.Pass : CheckStatus.Warn,
+      );
+    },
+  );
+
+  it.each([65536, 65537])(
+    "bounds %i string and key bytes per expression",
+    (bytes) => {
+      const result = audit.audit(
+        context(constraintProfile({ required: ["x".repeat(bytes - 8)] })),
+      );
+      expect(result.status).toBe(
+        bytes === 65536 ? CheckStatus.Pass : CheckStatus.Warn,
+      );
+      if (bytes > 65536) {
+        expect(result.details?.["constraintValidationLimits"]).toEqual([
+          "ucp.payment_handlers.com.example.pay[0].available_instruments[0].constraints: exceeds 64 KiB of strings and keys",
+        ]);
+      }
+      expect(() => AuditResultSchema.parse(result)).not.toThrow();
+    },
+  );
+
+  it("names multiple instruments that exceed local validation limits", () => {
+    const profile = constraintProfile({ required: ["x".repeat(65536)] });
+    profile.ucp.payment_handlers[
+      "com.example.pay"
+    ][0]!.available_instruments.push({
+      type: "card",
+      constraints: {
+        required: Array.from({ length: 2050 }, (_, i) => `field${i}`),
+      },
+    });
+    const result = audit.audit(context(profile));
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.details?.["constraintValidationLimits"]).toEqual([
+      "ucp.payment_handlers.com.example.pay[0].available_instruments[0].constraints: exceeds 64 KiB of strings and keys",
+      "ucp.payment_handlers.com.example.pay[0].available_instruments[1].constraints: exceeds 2048 JSON values",
+    ]);
+  });
+
+  it("reports known defects even when another handler exceeds validation limits", () => {
+    const profile = constraintProfile({
+      required: Array.from({ length: 2050 }, (_, i) => `field${i}`),
+    });
+    profile.ucp.payment_handlers["com.example.pay"].push({
+      id: "invalid",
+      version: "2026-08-25",
+      available_instruments: [{ type: "card", constraints: { anyOf: [{}] } }],
+    });
+    const result = audit.audit(context(profile));
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.details?.["constraintValidationLimited"]).toBe(true);
+    expect(result.details?.["validPaymentHandlers"]).toBe(0);
+    expect(result.details?.["issueCount"]).toBe(1);
+  });
+
   it("reads the legacy capability and payment-handler arrays", () => {
     const result = audit.audit(context(legacy()));
     expect(result.status).toBe(CheckStatus.Pass);

@@ -13,6 +13,7 @@ import {
   ScoreDisplayMode,
 } from "#core/types";
 import { NO_UCP_PROFILE, readUcpProfile, UCP_PATH } from "./_ucp";
+import { validUcpConstraints } from "./_ucp-constraints";
 
 const SUPPORTED_VERSIONS = ["2026-01-11", "2026-04-08", "2026-08-25"] as const;
 const LEGACY_VERSION = "2026-01-11";
@@ -54,6 +55,8 @@ class DeclarationCheck {
   handlerCount = 0;
   validCapabilities = 0;
   validHandlers = 0;
+  constraintValidationLimited = false;
+  readonly constraintValidationLimits: string[] = [];
 
   problem(path: string, rule: string): void {
     this.issueCount++;
@@ -160,6 +163,7 @@ class DeclarationCheck {
   handler(value: unknown, path: string, version: string): void {
     this.handlerCount++;
     const before = this.issueCount;
+    let constraintsComplete = true;
     if (!isObject(value)) {
       this.problem(path, "must be an object");
       return;
@@ -213,12 +217,31 @@ class DeclarationCheck {
                 `${itemPath}.constraints`,
                 "must be an object with the selected version's declaration shape",
               );
+            } else if (
+              version === "2026-08-25" &&
+              "constraints" in instrument
+            ) {
+              const valid = validUcpConstraints(instrument["constraints"]);
+              if (typeof valid === "string") {
+                this.constraintValidationLimited = true;
+                constraintsComplete = false;
+                if (this.constraintValidationLimits.length < MAX_ISSUES) {
+                  this.constraintValidationLimits.push(
+                    `${itemPath.slice(0, 220)}.constraints: ${valid}`,
+                  );
+                }
+              } else if (!valid) {
+                this.problem(
+                  `${itemPath}.constraints`,
+                  "must match the 2026-08-25 nested constraint expression schema",
+                );
+              }
             }
           });
         }
       }
     }
-    if (before === this.issueCount) this.validHandlers++;
+    if (before === this.issueCount && constraintsComplete) this.validHandlers++;
   }
 
   registry(
@@ -354,6 +377,8 @@ export class UcpProfileConformanceAudit extends Audit {
       issues: check.issues,
       issuesTruncated: check.issueCount > check.issues.length,
       providerConfigurationValidated: false,
+      constraintValidationLimited: check.constraintValidationLimited,
+      constraintValidationLimits: check.constraintValidationLimits,
     };
     if (check.issueCount > 0) {
       return {
@@ -361,6 +386,16 @@ export class UcpProfileConformanceAudit extends Audit {
           `UCP ${version} has ${check.issueCount} declaration issue(s). Readable declarations remain counted separately.`,
           EXPECTED,
           check.issues.slice(0, 5).join("; "),
+        ),
+        details,
+      };
+    }
+    if (check.constraintValidationLimited) {
+      return {
+        ...this.warn(
+          "UCP payment constraints exceed local validation limits. Their conformance was not fully assessed.",
+          EXPECTED,
+          check.constraintValidationLimits.slice(0, 5).join("; "),
         ),
         details,
       };

@@ -21,6 +21,7 @@ sources:
   - ucp-schema-2026-08-25-metadata
   - ucp-schema-2026-08-25-capability
   - ucp-schema-2026-08-25-payment-handler
+  - ucp-schema-2026-08-25-constraint-expression
   - ucp-schema-2026-08-25-available-instrument
   - ucp-schema-2026-08-25-reverse-domain-name
 ---
@@ -35,7 +36,8 @@ Supported versions are `2026-01-11`, `2026-04-08` and `2026-08-25`.
 
 The check covers registry or array shape, required declaration fields, their
 types, date-version syntax, absolute URI syntax and extension-parent names.
-Modern handler declarations also receive instrument-list type checks. Each
+Modern handler declarations also receive instrument-list type checks. August
+2026 profiles additionally receive nested constraint-expression checks. Each
 entry is inspected independently, so one malformed declaration does not erase
 the readable entries beside it.
 
@@ -88,6 +90,14 @@ The selected protocol schemas define different discovery contexts:
   Registry keys and `extends` use their selected version's pattern
   (verified 2026-10-23).
 
+The [2026-08-25 constraint-expression schema](https://ucp.dev/2026-08-25/schemas/common/types/constraint_expression.json)
+defines closed recursive object constraints with `required`, `properties` and
+`anyOf`. Value constraints permit `enum`, `const`, or both. Nonempty and unique
+item rules apply where the schema names them. An empty root object is valid,
+but an empty `anyOf` branch is not. The April instrument schema instead permits
+any nonempty constraint object. The profile version selects these rules, even
+when a handler declares a different component version (verified 2026-10-23).
+
 **Grade: B.** The UCP standard has a named merchant integration. This supports
 checking declared protocol fields, but it does not prove how a live checkout
 handles each malformed declaration. The audit remains informative.
@@ -97,8 +107,16 @@ handles each malformed declaration. The audit remains informative.
 - This is bounded declaration-field validation, not a complete JSON Schema
   evaluation. It does not validate provider-specific `config`, compose
   capability payload schemas or establish that checkout works.
-- Nested instrument constraint expressions receive only outer object checks.
-  The check does not evaluate constraint operators or instrument schemas.
+- Nested constraint checks validate expression structure for `2026-08-25`.
+  They do not test submitted payment data against those expressions or verify
+  provider-defined instrument fields. Earlier profiles retain their published
+  open constraint-object rules.
+- Each nested expression has local limits of 32 levels, 2048 JSON values and
+  64 KiB of UTF-8 strings and object keys.
+  A limit produces `constraintValidationLimited: true`. Up to 40 path and limit
+  messages appear in `constraintValidationLimits`. With no other defects,
+  the result warns instead of passing. An unassessed handler does not count as
+  valid. Known defects still fail when another expression exceeds a limit.
 - URI checks establish syntax only. The audit makes no new requests and does
   not fetch a merchant-supplied schema or prove its contents valid.
 - Independent component versions need not equal `ucp.version`. Unknown fields
@@ -145,12 +163,15 @@ required fields.
   respective legacy schemas. Unknown fields remain open; a legacy capability's
   numeric `id` or a legacy handler's object-valued `schema` does not inherit a
   modern entity's field constraints.
+- The constraint validator pins the published August expression rules locally.
+  It resolves only local references and checks size before recursive validation.
 - The readable and valid entry counts survive mixed malformed declarations.
   Issue details contain only scalar values or arrays of strings.
 
 ## Deferred
 
-- Full provider-specific configuration and nested constraint validation need
-  their own bounded schema and source review.
+- Provider-specific configuration and instrument-target validation need
+  their own bounded schema and source review. Nested expression structure
+  validation is implemented for the published August schema.
 - No live checkout request, payment, capability execution or merchant
   certification forms part of this check.

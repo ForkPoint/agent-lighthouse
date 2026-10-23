@@ -7430,6 +7430,15 @@
       "type": "spec",
       "verified": "2026-10-23",
       "keyFindings": "The 2026-08-25 reverse-domain identifier pattern permits hyphens in the first segment and digits, hyphens and underscores within later segments. Earlier versions use a narrower pattern. Apply the selected version to registry keys and extension-parent identifiers."
+    },
+    {
+      "id": "ucp-schema-2026-08-25-constraint-expression",
+      "title": "UCP 2026-08-25 constraint expression schema",
+      "url": "https://ucp.dev/2026-08-25/schemas/common/types/constraint_expression.json",
+      "publisher": "Universal Commerce Protocol",
+      "type": "spec",
+      "verified": "2026-10-23",
+      "keyFindings": "Closed recursive object constraints permit required, properties and anyOf. Value positions permit enum and const. Nonempty and uniqueness rules differ by position; an empty root object is valid. The earlier 2026-04-08 instrument schema instead permits any nonempty constraint object."
     }
   ]
 }
