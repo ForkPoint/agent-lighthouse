@@ -1,5 +1,18 @@
 # @forkpoint/agent-lighthouse-mcp
 
+## 10.2.0
+
+### Minor Changes
+
+- 42dbe0c: Add `agent-lighthouse --registry`, which prints what the installed version checks: the core version, the number of audits and categories, the count per tier and the registry mass, overall and per category. `--registry --json` prints the `getRegistrySummary()` object. The MCP server gains a `registry_summary` tool with the same JSON. Neither runs a scan. The bundled skill now asks an agent to read the count from the tool rather than quote one.
+
+### Patch Changes
+
+- Updated dependencies [4144a23]
+- Updated dependencies [3fbf918]
+  - @forkpoint/agent-lighthouse-core@10.2.0
+  - @forkpoint/agent-lighthouse-report@10.2.0
+
 ## 10.1.0
 
 ### Patch Changes
