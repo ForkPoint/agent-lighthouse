@@ -10,7 +10,7 @@ npx @forkpoint/agent-lighthouse https://example.com --view
 npx @forkpoint/agent-lighthouse https://staging.example.com --min-score 85
 ```
 
-It writes terminal, HTML, JSON and Markdown reports for 222 audits in 8 categories:
+It writes terminal, HTML, JSON and Markdown reports for <!-- registry:audits -->222<!-- /registry:audits --> audits in <!-- registry:categories -->8<!-- /registry:categories --> categories:
 
 - Access & Crawl Control — robots.txt access for GPTBot, ClaudeBot, PerplexityBot and other AI crawlers
 - Content Extraction — clean main content, semantic structure, render and response cost

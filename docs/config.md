@@ -63,6 +63,8 @@ Every audit belongs to one category. `--categories`, `assertCategories` and the 
 
 Unlisted categories do not run and do not count. An unknown id exits 1.
 
+`getRegistrySummary()` from `@forkpoint/agent-lighthouse-core` reports what the installed version holds: its `version`, the number of audits and categories, the count per tier, the registry mass, and the same per category. Read the numbers from it instead of copying them. `registry-manifest.json` at the repository root is the same summary for the current source, without `version`.
+
 ## Experimental audits
 
 `--categories` picks which categories run. `--experimental` adds experimental-tier audits, which are excluded by default. The two filters combine. An experimental audit carries weight 0, so the flag never moves a score. See [the three tiers](./scoring.md#the-three-tiers) and the [evidence policy](./evidence/policy.md).

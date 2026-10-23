@@ -41,6 +41,8 @@ Treat an unscored result separately from zero. When you compare results, keep th
 
 Use `buildReportView(report)` from the report package if you need its prepared report view. Keep findings, coverage limits, and scoring status visible beside the number.
 
+Call `getRegistrySummary()` from the core package for the number of audits, categories and tiers in the installed version. Do not copy those numbers into your own text.
+
 The [package guide](./packages.md) explains the other entry points.
 
 ## Read reports in browser code

@@ -6,6 +6,11 @@ export type { ScanEvent } from "./progress";
 export { createFetcher, isSafeUrl, boundedDispatcher } from "./fetcher";
 export type { FetchResult, FetchOptions, FetcherOptions } from "./fetcher";
 export type { RequestScheduler } from "./request-scheduler";
+export { CORE_VERSION, getRegistrySummary } from "./registry-summary";
+export type {
+  RegistrySummary,
+  RegistryCategorySummary,
+} from "./registry-summary";
 export {
   classifyFetch,
   isRealFile,

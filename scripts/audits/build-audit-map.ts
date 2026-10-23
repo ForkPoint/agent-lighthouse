@@ -3,23 +3,32 @@
  * build-audit-map — Generator and validator for canonical docs/evidence/audit-map.json.
  *
  * Inspects:
- *   1. packages/core/src/audit-config.ts (defaultConfig.audits — all 215 active audits)
+ *   1. packages/core/src/audit-config.ts (defaultConfig.audits — every active audit)
  *   2. docs/evidence/audits/ (active dossiers)
  *   3. docs/evidence/sunset/ (sunset dossiers)
  *   4. docs/evidence/merged/ (merged dossiers)
  *   5. packages/core/migration-map.json & docs/evidence/v2-audit-map.md (legacy v1 mappings)
  *
  * Modes:
- *   pnpm build:audit-map       Regenerates docs/evidence/audit-map.json, docs/evidence/audit-map.md
- *                              and the registry summary in docs/scoring.md
- *   pnpm check:audit-map       Validates that all three are up-to-date with 0 drift
+ *   pnpm build:audit-map       Regenerates docs/evidence/audit-map.json, docs/evidence/audit-map.md,
+ *                              registry-manifest.json and every registry number in the docs
+ *                              (see scripts/lib/registry-docs.ts)
+ *   pnpm check:audit-map       Validates that all of them are up-to-date with 0 drift
  */
 
+import { execFileSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import * as prettier from "prettier";
 import { defaultConfig } from "#core/audit-config";
 import { auditIndexFields } from "../lib/audit-index";
-import { scoringSummary, withScoringSummary } from "../lib/scoring-table";
+import { getRegistrySummary } from "#core/registry-summary";
+import {
+  registryManifest,
+  scoringSummary,
+  withRegistryValues,
+  withScoringSummary,
+} from "../lib/registry-docs";
 import { AuditTier, EvidenceGrade } from "#core/types";
 
 const REPO_ROOT = path.resolve(__dirname, "../..");
@@ -29,6 +38,45 @@ const AUDIT_MAP_JSON_PATH = path.resolve(
 );
 const AUDIT_MAP_MD_PATH = path.resolve(REPO_ROOT, "docs/evidence/audit-map.md");
 const SCORING_DOC_PATH = path.resolve(REPO_ROOT, "docs/scoring.md");
+const REGISTRY_MANIFEST_PATH = path.resolve(
+  REPO_ROOT,
+  "registry-manifest.json",
+);
+
+/**
+ * Every generated registry file, keyed by absolute path: the manifest,
+ * docs/scoring.md's table, and each tracked document with an inline
+ * `<!-- registry:key -->` value. Values are the expected contents.
+ */
+async function generateRegistryDocs(): Promise<Map<string, string>> {
+  const summary = getRegistrySummary();
+  const out = new Map<string, string>([
+    [REGISTRY_MANIFEST_PATH, registryManifest(summary)],
+  ]);
+  const tracked = execFileSync(
+    "git",
+    ["ls-files", "-z", "--", "*.md", "*.astro", "*.mdx"],
+    { cwd: REPO_ROOT, encoding: "utf8" },
+  )
+    .split("\0")
+    .filter((file) => file && !file.endsWith("CHANGELOG.md"));
+  for (const file of tracked) {
+    const full = path.resolve(REPO_ROOT, file);
+    const doc = fs.readFileSync(full, "utf8");
+    let next = withRegistryValues(doc, summary);
+    if (full === SCORING_DOC_PATH)
+      next = withScoringSummary(next, scoringSummary(summary));
+    // A value with another digit count widens a Markdown table column, so
+    // a changed document is formatted as format:check expects it.
+    if (next !== doc)
+      next = await prettier.format(next, {
+        ...(await prettier.resolveConfig(full)),
+        filepath: full,
+      });
+    if (next !== doc || full === SCORING_DOC_PATH) out.set(full, next);
+  }
+  return out;
+}
 const LEGACY_MIGRATION_MAP_PATH = path.resolve(
   REPO_ROOT,
   "packages/core/migration-map.json",
@@ -337,15 +385,7 @@ async function main(): Promise<void> {
   const dataset = generateAuditMap();
   const formattedJson = JSON.stringify(dataset, null, 2) + "\n";
   const formattedMd = generateMarkdownDocumentation(dataset);
-  const existingScoringDoc = fs.readFileSync(SCORING_DOC_PATH, "utf8");
-  const scoringDoc = withScoringSummary(
-    existingScoringDoc,
-    scoringSummary(
-      Object.values(defaultConfig.audits)
-        .flat()
-        .map((reg) => reg.meta),
-    ),
-  );
+  const registryDocs = await generateRegistryDocs();
 
   if (isCheckMode) {
     let hasError = false;
@@ -380,12 +420,17 @@ async function main(): Promise<void> {
       }
     }
 
-    if (existingScoringDoc !== scoringDoc) {
-      console.error(
-        `❌ check:audit-map: the registry summary in ${SCORING_DOC_PATH} is out of date.\n` +
-          'Run "pnpm build:audit-map" to synchronize.',
-      );
-      hasError = true;
+    for (const [file, expected] of registryDocs) {
+      const existing = fs.existsSync(file)
+        ? fs.readFileSync(file, "utf8")
+        : undefined;
+      if (existing !== expected) {
+        console.error(
+          `❌ check:audit-map: registry numbers in ${file} are out of date.\n` +
+            'Run "pnpm build:audit-map" to synchronize.',
+        );
+        hasError = true;
+      }
     }
 
     // Verify all active dossiers exist on disk
@@ -410,7 +455,8 @@ async function main(): Promise<void> {
   } else {
     fs.writeFileSync(AUDIT_MAP_JSON_PATH, formattedJson, "utf8");
     fs.writeFileSync(AUDIT_MAP_MD_PATH, formattedMd, "utf8");
-    fs.writeFileSync(SCORING_DOC_PATH, scoringDoc, "utf8");
+    for (const [file, expected] of registryDocs)
+      fs.writeFileSync(file, expected, "utf8");
 
     // Also update packages/core/migration-map.json with the enriched legacy mappings
     const cleanLegacy: Record<
@@ -442,7 +488,9 @@ async function main(): Promise<void> {
 
     console.log(`✅ Successfully generated ${AUDIT_MAP_JSON_PATH}`);
     console.log(`✅ Successfully generated ${AUDIT_MAP_MD_PATH}`);
-    console.log(`✅ Updated the registry summary in ${SCORING_DOC_PATH}`);
+    console.log(
+      `✅ Updated registry numbers in ${registryDocs.size} file(s), ${REGISTRY_MANIFEST_PATH} among them`,
+    );
     console.log(`✅ Synchronized ${LEGACY_MIGRATION_MAP_PATH}`);
     console.log(
       `   ${dataset.summary.totalActiveAudits} active audits, ${dataset.summary.totalSunsetDossiers} sunset dossiers, ${dataset.summary.totalMergedDossiers} merged dossiers, ${dataset.summary.totalLegacyAudits} legacy mappings.`,
