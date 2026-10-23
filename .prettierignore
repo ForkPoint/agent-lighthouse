@@ -4,3 +4,6 @@ docs/evidence/audit-map.json
 docs/evidence/audit-map.md
 # A real scan report frozen as a skill eval fixture; kept byte-for-byte as the CLI wrote it.
 plugins/agent-lighthouse/skills/agent-lighthouse/evals/files/real-report/report/
+
+# Byte-preserved upstream ACP schema.
+packages/integration-testing/src/protocols/acp/2026-04-17/schema.agentic_checkout.json

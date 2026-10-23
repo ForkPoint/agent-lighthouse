@@ -30,6 +30,8 @@ The sections below describe the withdrawn implementation. They are not current
 scanner behavior. The [original proposal](../../research/proposal-history/acp-endpoint-conformance-probe.md)
 remains as research history.
 
+The separate [private integration testing tool and plan](../../../plans/integration-testing.md) now reuse the historical sandbox runner. The public audit remains withdrawn.
+
 ## Archived implementation
 
 ### What it checks

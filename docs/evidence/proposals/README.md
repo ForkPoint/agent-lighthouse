@@ -36,3 +36,5 @@ Completed reviews and the retired answer-span proposal live in
 [research history](../research/README.md#proposal-history).
 When remaining work ships, remove it from this list and keep its evidence in
 the registered audit's dossier.
+
+The separate [private integration testing plan](../../plans/integration-testing.md) describes the local ACP sandbox tool and future paid work. It is not a public audit proposal.

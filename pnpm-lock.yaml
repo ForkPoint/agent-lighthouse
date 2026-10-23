@@ -133,6 +133,31 @@ importers:
         specifier: ^5.0.5
         version: 5.0.5(@types/node@22.20.5)(@vitest/coverage-v8@5.0.5)(jsdom@30.1.3)(vite@8.3.4(@types/node@22.20.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
 
+  packages/integration-testing:
+    dependencies:
+      ajv:
+        specifier: ^8.20.0
+        version: 8.20.0
+      ajv-formats:
+        specifier: ^3.0.1
+        version: 3.0.1(ajv@8.20.0)
+      undici:
+        specifier: ^8.12.2
+        version: 8.12.2
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@types/node':
+        specifier: ^22.20.5
+        version: 22.20.5
+      tsup:
+        specifier: ^9.0.0
+        version: 9.0.0(jiti@2.7.0)(postcss@8.5.30)(tsx@4.23.15)(typescript@7.0.2)(yaml@2.9.1)
+      typescript:
+        specifier: ~7.0.2
+        version: 7.0.2
+
   packages/mcp:
     dependencies:
       '@forkpoint/agent-lighthouse-core':
