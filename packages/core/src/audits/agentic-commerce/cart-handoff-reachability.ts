@@ -23,6 +23,7 @@ import {
   FixEffort,
   ScoreDisplayMode,
 } from "#core/types";
+import { SCRIPT_ELEMENTS, STYLE_ELEMENTS } from "#core/raw-html";
 
 /** Where each storefront keeps its cart. */
 const CANDIDATES: Record<CommercePlatform, string[]> = {
@@ -70,8 +71,8 @@ const AGENT_UA =
 /** Visible text length, with script, style and markup removed. */
 export function textLength(html: string): number {
   return html
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(SCRIPT_ELEMENTS, " ")
+    .replace(STYLE_ELEMENTS, " ")
     .replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ")
     .trim().length;

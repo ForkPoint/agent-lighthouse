@@ -1,5 +1,6 @@
 import { type WafProtection, WafProvider } from "./contracts";
 import type { FetchResult } from "./fetcher";
+import { SCRIPT_ELEMENTS, STYLE_ELEMENTS } from "./raw-html";
 
 // A report carries the verdict, so its shape lives in `contracts.ts`.
 export { WafProvider };
@@ -34,8 +35,8 @@ function readable(body: string): boolean {
 /** The text of raw HTML, without scripts, styles or tags. */
 function textOf(body: string): string {
   return body
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(SCRIPT_ELEMENTS, " ")
+    .replace(STYLE_ELEMENTS, " ")
     .replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ")
     .trim();

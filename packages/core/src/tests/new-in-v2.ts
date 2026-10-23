@@ -12,7 +12,6 @@
  * Each Plan 5 task appends exactly one id. Sorted by landing order.
  */
 export const NEW_IN_V2: readonly string[] = [
-  "agentic-commerce/ucp-profile-conformance",
   "operability-safety/form-autofill-token-coverage",
   "operability-safety/native-control-substitution",
   "operability-safety/invisible-instruction-scan",
@@ -85,6 +84,7 @@ export const NEW_IN_V2: readonly string[] = [
   "agentic-commerce/ucp-profile",
   "operability-safety/change-password-url",
   "agent-interfaces/mcp-tool-annotation-coverage",
+  "agentic-commerce/ucp-profile-conformance",
 ];
 
 /**

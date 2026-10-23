@@ -12,6 +12,7 @@ import {
   FixEffort,
   ScoreDisplayMode,
 } from "#core/types";
+import { SCRIPT_ELEMENTS, STYLE_ELEMENTS } from "#core/raw-html";
 
 /**
  * Where the delivered tokens went.
@@ -92,8 +93,8 @@ export class TokenRatioAudit extends Audit {
     const contentTokens = countTokens(extracted.text);
     const deliveredTokens = countTokens(rawHtml);
 
-    const script = bucketOf(rawHtml, /<script\b[\s\S]*?<\/script>/gi);
-    const style = bucketOf(rawHtml, /<style\b[\s\S]*?<\/style>/gi);
+    const script = bucketOf(rawHtml, SCRIPT_ELEMENTS);
+    const style = bucketOf(rawHtml, STYLE_ELEMENTS);
     const comment = bucketOf(rawHtml, /<!--[\s\S]*?-->/g);
     const buckets: TokenBuckets = {
       script,

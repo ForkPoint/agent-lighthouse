@@ -18,6 +18,7 @@ import { LogField, logger } from "#core/logger";
 const log = logger.child({ [LogField.Component]: "a11y" });
 import { runRules } from "./engine/rules";
 import { RuleStatus } from "./engine/rules";
+import { styleEndTag } from "#core/raw-html";
 
 export interface A11yNodeFinding {
   target: string;
@@ -105,9 +106,7 @@ function endsName(html: string, at: number): boolean {
 /** Remove `<style …>…</style>` blocks, matching tag names case-insensitively. */
 function stripStyleBlocks(html: string): string {
   const open = /<style/gi;
-  // An end tag closes the element after HTML whitespace, a `/` or junk
-  // attributes too, as the HTML tokenizer reads `</style x>` and `</style/>`.
-  const close = /<\/style(?=[\t\n\f\r />])[^>]*>/gi;
+  const close = styleEndTag();
   let out = "";
   let kept = 0;
   let match: RegExpExecArray | null;

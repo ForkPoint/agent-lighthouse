@@ -114,6 +114,22 @@ describe("TokenRatioAudit", () => {
     expect(result.details?.["extractor"]).toBe("semantic");
   });
 
+  it.each(["</style >", "</style/>", "</script >"])(
+    "keeps content after the end tag %j out of the script and style buckets",
+    (endTag) => {
+      const tag = endTag.startsWith("</style") ? "style" : "script";
+      const body = (end: string) =>
+        `<html><head><${tag}>${"a{b:c}".repeat(20)}${end}</head><body><main><p>${"words here ".repeat(80)}</p></main><${tag}>x</${tag}></body></html>`;
+      const details = (html: string) =>
+        audit.audit(
+          mockCheckContext([mockPageContext("https://example.com/", html, 0)]),
+        ).details as Record<string, number>;
+      // The same page with a plain end tag counts the same bucket tokens.
+      const plain = details(body(`</${tag}>`));
+      expect(details(body(endTag))[tag]).toBeLessThanOrEqual(plain[tag]! + 2);
+    },
+  );
+
   it("splits the denominator into buckets that sum to the delivered tokens", () => {
     const html = `<html><head><style>${".a{color:red}".repeat(50)}</style></head><body><!-- note --><main><p>${"words here ".repeat(80)}</p></main><script>${"var x=1;".repeat(50)}</script></body></html>`;
     const result = audit.audit(
