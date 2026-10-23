@@ -1,9 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { gunzipSync } from "node:zlib";
-import { resolve } from "node:path";
+import { relative, resolve } from "node:path";
 import { auditList } from "./lib/registry";
 import { PAGEFIND_URL } from "./islands/search";
+import { isRetiredDocDir } from "./lib/retired-docs";
 
 /**
  * The search index, as the build actually produces it.
@@ -32,8 +33,10 @@ function builtPages(
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     if (entry.isDirectory()) {
       // Search output and the downloadable kit's offline previews are not site pages.
+      // A retired page's redirect has no content to index.
       return entry.name === "pagefind" ||
-        resolve(dir, entry.name) === resolve(DIST, "brand/kit")
+        resolve(dir, entry.name) === resolve(DIST, "brand/kit") ||
+        isRetiredDocDir(relative(DIST, resolve(dir, entry.name)))
         ? []
         : builtPages(resolve(dir, entry.name), `${route}${entry.name}/`);
     }

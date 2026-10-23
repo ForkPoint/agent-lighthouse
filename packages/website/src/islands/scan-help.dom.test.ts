@@ -9,6 +9,7 @@ beforeEach(() => {
     <input name="website" type="url" required value="https://example.com">
     <input name="email" type="email" required value="reader@example.com">
     <textarea name="question">Help with a finding</textarea>
+    <input type="text" name="_ff_honey" tabindex="-1" autocomplete="off">
     <button type="submit">Send request</button>
     <p id="scan-help-status" role="status"></p>
   </form>`;
@@ -42,6 +43,8 @@ describe("scan help submission", () => {
       website: "https://example.com",
       email: "reader@example.com",
       question: "Help with a finding",
+      // FormFlow reads an empty honeypot as a person.
+      _ff_honey: "",
     });
     finish(new Response("{}", { status: 200 }));
     await vi.waitFor(() =>

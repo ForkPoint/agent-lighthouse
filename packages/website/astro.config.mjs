@@ -5,6 +5,7 @@ import tailwind from "@tailwindcss/vite";
 import { satteri } from "@astrojs/markdown-satteri";
 import { dossierLinksPlugin } from "./src/lib/dossier-links.ts";
 import { escapeRawHtmlPlugin } from "./src/lib/raw-html.ts";
+import { retiredDocRedirects } from "./src/lib/retired-docs.ts";
 
 // The dossiers this site publishes, read from disk rather than from the content
 // collection: the plugin is built here, before Astro has a collection to
@@ -20,10 +21,14 @@ const published = new Set(
     ),
 );
 
+const base = "/agent-lighthouse";
+
 export default defineConfig({
   site: "https://forkpoint.github.io",
-  base: "/agent-lighthouse",
+  base,
   trailingSlash: "always",
+  // Removed documentation pages answer with a redirect, not a 404.
+  redirects: retiredDocRedirects(base),
   markdown: {
     // Sätteri is Astro 7's default Markdown processor and is named here only to
     // hang a plugin off it: dossier links are written for GitHub, and the plugin
