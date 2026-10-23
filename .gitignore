@@ -16,3 +16,7 @@ reports/
 # Local agent/session artifacts — never commit
 .claude/
 .superpowers/
+
+#BMAD
+_bmad/
+_bmad-output/
