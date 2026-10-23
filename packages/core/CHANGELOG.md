@@ -1,5 +1,12 @@
 # @forkpoint/agent-lighthouse-core
 
+## 10.2.0
+
+### Patch Changes
+
+- 4144a23: Close inline `<script>` and `<style>` blocks the way browsers do in the three places that read raw HTML as text. An end tag written with whitespace, a slash or attributes, such as `</style >`, `</style/>` or `</script x>`, no longer hides the page content that follows it. This affects bot-wall detection, the text-length check in `agentic-commerce/cart-handoff-reachability`, and the script and style token counts in `content-extraction/token-ratio`.
+- 3fbf918: `agentic-commerce/ucp-profile-conformance` is now `notApplicable` instead of `warn` when a UCP profile names a protocol version the audit has no rules for, or names none. The warning blamed the site for the audit's own missing rules, and a missing version was already reported by `agentic-commerce/ucp-profile`. The audit is informative, so no score moves.
+
 ## 10.1.0
 
 ### Minor Changes

@@ -1,5 +1,14 @@
 # @forkpoint/agent-lighthouse-website
 
+## 0.0.29
+
+### Patch Changes
+
+- 8f0a1fe: Redirect the removed benchmark guide at `/docs/benchmark/` to the quickstart instead of returning 404. Add FormFlow's honeypot field to the scan help form, so a bot that fills it is stored as spam while people see no change.
+- Updated dependencies [4144a23]
+- Updated dependencies [3fbf918]
+  - @forkpoint/agent-lighthouse-core@10.2.0
+
 ## 0.0.28
 
 ### Patch Changes
