@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
-import { resolve } from "node:path";
+import { relative, resolve } from "node:path";
 import { auditList, categoryList } from "./lib/registry";
 import { DOC_SECTIONS } from "./lib/markdown-slice";
 import {
@@ -11,6 +11,7 @@ import {
   sourceTypeCounts,
 } from "./lib/evidence";
 import { docPath, withBase } from "./lib/routes";
+import { isRetiredDocDir } from "./lib/retired-docs";
 
 const DIST = resolve(__dirname, "../dist");
 
@@ -288,6 +289,9 @@ describe.skipIf(!built)("the published site", () => {
       readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
         // The downloadable kit includes an offline gallery, not a site route.
         if (resolve(dir, entry.name) === resolve(DIST, "brand/kit")) return [];
+        // A retired page's redirect is not a route; retired-docs tests cover it.
+        if (isRetiredDocDir(relative(DIST, resolve(dir, entry.name))))
+          return [];
         if (entry.isDirectory()) return pages(resolve(dir, entry.name));
         return entry.name === "index.html" ? [resolve(dir, entry.name)] : [];
       });

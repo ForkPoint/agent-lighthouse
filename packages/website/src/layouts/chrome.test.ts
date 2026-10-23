@@ -3,6 +3,7 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { auditList } from "../lib/registry";
 import { auditPath, withBase } from "../lib/routes";
+import { isRetiredDocDir } from "../lib/retired-docs";
 
 const SRC = resolve(__dirname, "..");
 const DIST = resolve(SRC, "../dist");
@@ -275,8 +276,11 @@ describe.skipIf(!built)("head metadata", () => {
     return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
       const full = resolve(dir, entry.name);
       // Pagefind output and the kit's standalone previews do not use the site shell.
+      // A retired page's redirect carries Astro's redirect shell, not the site's.
       if (entry.isDirectory())
-        return entry.name === "pagefind" || full === resolve(DIST, "brand/kit")
+        return entry.name === "pagefind" ||
+          full === resolve(DIST, "brand/kit") ||
+          isRetiredDocDir(full.slice(DIST.length + 1))
           ? []
           : htmlPages(full);
       if (!entry.name.endsWith(".html")) return [];

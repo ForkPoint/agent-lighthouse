@@ -3,6 +3,7 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { DOC_SECTIONS, readDocSource } from "./lib/markdown-slice";
 import { docPath } from "./lib/routes";
+import { isRetiredDocDir } from "./lib/retired-docs";
 
 const DIST = resolve(__dirname, "../dist");
 
@@ -63,6 +64,7 @@ describe.skipIf(!built)("rendered docs pages", () => {
     const emitted = readdirSync(resolve(DIST, "docs"), { withFileTypes: true })
       .filter((entry) => entry.isDirectory())
       .map((entry) => entry.name)
+      .filter((name) => !isRetiredDocDir(`docs/${name}`))
       .sort();
 
     expect(emitted).toEqual(DOC_SECTIONS.map((section) => section.slug).sort());
