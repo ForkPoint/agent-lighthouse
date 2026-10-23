@@ -3,7 +3,7 @@
  * build-audit-map — Generator and validator for canonical docs/evidence/audit-map.json.
  *
  * Inspects:
- *   1. packages/core/src/audit-config.ts (defaultConfig.audits — all 215 active audits)
+ *   1. packages/core/src/audit-config.ts (defaultConfig.audits — every active audit)
  *   2. docs/evidence/audits/ (active dossiers)
  *   3. docs/evidence/sunset/ (sunset dossiers)
  *   4. docs/evidence/merged/ (merged dossiers)
@@ -11,15 +11,26 @@
  *
  * Modes:
  *   pnpm build:audit-map       Regenerates docs/evidence/audit-map.json, docs/evidence/audit-map.md
- *                              and the registry summary in docs/scoring.md
- *   pnpm check:audit-map       Validates that all three are up-to-date with 0 drift
+ *                              and every registry number in the docs (see scripts/lib/registry-docs.ts)
+ *   pnpm check:audit-map       Validates that all of them are up-to-date with 0 drift
  */
 
+import { execFileSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import * as prettier from "prettier";
 import { defaultConfig } from "#core/audit-config";
 import { auditIndexFields } from "../lib/audit-index";
-import { scoringSummary, withScoringSummary } from "../lib/scoring-table";
+import {
+  getRegistrySummary,
+  type RegistrySummary,
+} from "#core/registry-summary";
+import {
+  bareRegistryCounts,
+  scoringSummary,
+  withRegistryValues,
+  withScoringSummary,
+} from "../lib/registry-docs";
 import { AuditTier, EvidenceGrade } from "#core/types";
 
 const REPO_ROOT = path.resolve(__dirname, "../..");
@@ -29,6 +40,45 @@ const AUDIT_MAP_JSON_PATH = path.resolve(
 );
 const AUDIT_MAP_MD_PATH = path.resolve(REPO_ROOT, "docs/evidence/audit-map.md");
 const SCORING_DOC_PATH = path.resolve(REPO_ROOT, "docs/scoring.md");
+
+/**
+ * Every document with generated registry numbers, keyed by absolute path:
+ * docs/scoring.md's table and each tracked document with an inline
+ * `<!-- registry:key -->` value. Values are the expected contents.
+ */
+async function generateRegistryDocs(): Promise<{
+  docs: Map<string, string>;
+  bare: string[];
+}> {
+  const summary = getRegistrySummary();
+  const out = new Map<string, string>();
+  const bare: string[] = [];
+  const tracked = execFileSync(
+    "git",
+    ["ls-files", "-z", "--", "*.md", "*.astro", "*.mdx"],
+    { cwd: REPO_ROOT, encoding: "utf8" },
+  )
+    .split("\0")
+    .filter((file) => file && !file.endsWith("CHANGELOG.md"));
+  for (const file of tracked) {
+    const full = path.resolve(REPO_ROOT, file);
+    const doc = fs.readFileSync(full, "utf8");
+    for (const hit of bareRegistryCounts(doc, summary))
+      bare.push(`${file} ${hit}`);
+    let next = withRegistryValues(doc, summary);
+    if (full === SCORING_DOC_PATH)
+      next = withScoringSummary(next, scoringSummary(summary));
+    // A value with another digit count widens a Markdown table column, so
+    // a changed document is formatted as format:check expects it.
+    if (next !== doc)
+      next = await prettier.format(next, {
+        ...(await prettier.resolveConfig(full)),
+        filepath: full,
+      });
+    if (next !== doc || full === SCORING_DOC_PATH) out.set(full, next);
+  }
+  return { docs: out, bare };
+}
 const LEGACY_MIGRATION_MAP_PATH = path.resolve(
   REPO_ROOT,
   "packages/core/migration-map.json",
@@ -72,10 +122,14 @@ interface AuditMapDataset {
   readingGuide: Record<string, string>;
   summary: {
     totalActiveAudits: number;
+    /** From getRegistrySummary(), the one source of registry counts. */
+    tiers: RegistrySummary["tiers"];
+    registryMass: number;
     categories: Record<string, number>;
     totalSunsetDossiers: number;
     totalMergedDossiers: number;
     totalLegacyAudits: number;
+    legacyByStatus: Record<string, number>;
   };
   categories: string[];
   audits: ActiveAuditEntry[];
@@ -187,13 +241,15 @@ function generateAuditMap(): AuditMapDataset {
   // Sort audits deterministically by id
   activeAudits.sort((a, b) => a.id.localeCompare(b.id));
 
-  // Walk sunset and merged dossiers
+  // Walk sunset and merged dossiers. A dossier sits in a category folder;
+  // a file at the top level (sunset/not-a-factor.md) is rationale, not a dossier.
+  const inCategoryFolder = (p: string) => p.split("/").length >= 3;
   const sunsetPaths = walkMarkdownFiles(
     path.resolve(REPO_ROOT, "docs/evidence/sunset"),
-  );
+  ).filter(inCategoryFolder);
   const mergedPaths = walkMarkdownFiles(
     path.resolve(REPO_ROOT, "docs/evidence/merged"),
-  );
+  ).filter(inCategoryFolder);
 
   const sunsetDossiers: DossierRecord[] = sunsetPaths.map((p) => {
     const parts = p
@@ -216,6 +272,7 @@ function generateAuditMap(): AuditMapDataset {
   });
 
   const categories = Object.keys(defaultConfig.audits).sort();
+  const registry = getRegistrySummary();
 
   return {
     version: 6,
@@ -237,10 +294,21 @@ function generateAuditMap(): AuditMapDataset {
     },
     summary: {
       totalActiveAudits: activeAudits.length,
+      tiers: registry.tiers,
+      registryMass: registry.registryMass,
       categories: categoryCounts,
       totalSunsetDossiers: sunsetDossiers.length,
       totalMergedDossiers: mergedDossiers.length,
       totalLegacyAudits: Object.keys(legacyMap).length,
+      legacyByStatus: Object.fromEntries(
+        [...new Set(Object.values(legacyMap).map((entry) => entry.status))]
+          .sort()
+          .map((status) => [
+            status,
+            Object.values(legacyMap).filter((entry) => entry.status === status)
+              .length,
+          ]),
+      ),
     },
     categories,
     audits: activeAudits,
@@ -267,7 +335,7 @@ Current fields come from registry metadata. Evidence dossiers govern consumer cl
 ## Summary
 
 - **Total Registered Audits:** ${map.summary.totalActiveAudits} across ${map.categories.length} categories
-- **Historical v1 Legacy Audits:** ${map.summary.totalLegacyAudits} (182 carried forward, 25 sunset)
+- **Historical v1 Legacy Audits:** ${map.summary.totalLegacyAudits} (${map.summary.legacyByStatus["renamed"] ?? 0} carried forward, ${map.summary.legacyByStatus["removed"] ?? 0} sunset)
 - **Sunset Dossiers Preserved:** ${map.summary.totalSunsetDossiers} under \`docs/evidence/sunset/\`
 - **Merged Dossiers Preserved:** ${map.summary.totalMergedDossiers} under \`docs/evidence/merged/\`
 
@@ -337,15 +405,11 @@ async function main(): Promise<void> {
   const dataset = generateAuditMap();
   const formattedJson = JSON.stringify(dataset, null, 2) + "\n";
   const formattedMd = generateMarkdownDocumentation(dataset);
-  const existingScoringDoc = fs.readFileSync(SCORING_DOC_PATH, "utf8");
-  const scoringDoc = withScoringSummary(
-    existingScoringDoc,
-    scoringSummary(
-      Object.values(defaultConfig.audits)
-        .flat()
-        .map((reg) => reg.meta),
-    ),
-  );
+  const { docs: registryDocs, bare: bareCounts } = await generateRegistryDocs();
+  for (const hit of bareCounts)
+    console.error(
+      `❌ check:audit-map: hand-typed audit count in ${hit}. Write it as <!-- registry:audits -->N<!-- /registry:audits -->, or mark a different set with <!-- registry-ignore -->.`,
+    );
 
   if (isCheckMode) {
     let hasError = false;
@@ -380,12 +444,17 @@ async function main(): Promise<void> {
       }
     }
 
-    if (existingScoringDoc !== scoringDoc) {
-      console.error(
-        `❌ check:audit-map: the registry summary in ${SCORING_DOC_PATH} is out of date.\n` +
-          'Run "pnpm build:audit-map" to synchronize.',
-      );
-      hasError = true;
+    for (const [file, expected] of registryDocs) {
+      const existing = fs.existsSync(file)
+        ? fs.readFileSync(file, "utf8")
+        : undefined;
+      if (existing !== expected) {
+        console.error(
+          `❌ check:audit-map: registry numbers in ${file} are out of date.\n` +
+            'Run "pnpm build:audit-map" to synchronize.',
+        );
+        hasError = true;
+      }
     }
 
     // Verify all active dossiers exist on disk
@@ -399,7 +468,7 @@ async function main(): Promise<void> {
       }
     }
 
-    if (hasError) {
+    if (hasError || bareCounts.length) {
       process.exit(1);
     } else {
       console.log(
@@ -410,7 +479,8 @@ async function main(): Promise<void> {
   } else {
     fs.writeFileSync(AUDIT_MAP_JSON_PATH, formattedJson, "utf8");
     fs.writeFileSync(AUDIT_MAP_MD_PATH, formattedMd, "utf8");
-    fs.writeFileSync(SCORING_DOC_PATH, scoringDoc, "utf8");
+    for (const [file, expected] of registryDocs)
+      fs.writeFileSync(file, expected, "utf8");
 
     // Also update packages/core/migration-map.json with the enriched legacy mappings
     const cleanLegacy: Record<
@@ -442,7 +512,9 @@ async function main(): Promise<void> {
 
     console.log(`✅ Successfully generated ${AUDIT_MAP_JSON_PATH}`);
     console.log(`✅ Successfully generated ${AUDIT_MAP_MD_PATH}`);
-    console.log(`✅ Updated the registry summary in ${SCORING_DOC_PATH}`);
+    console.log(`✅ Checked registry numbers in ${registryDocs.size} file(s)`);
+    // A typed count cannot be filled in; it has to be rewritten by hand.
+    if (bareCounts.length) process.exitCode = 1;
     console.log(`✅ Synchronized ${LEGACY_MIGRATION_MAP_PATH}`);
     console.log(
       `   ${dataset.summary.totalActiveAudits} active audits, ${dataset.summary.totalSunsetDossiers} sunset dossiers, ${dataset.summary.totalMergedDossiers} merged dossiers, ${dataset.summary.totalLegacyAudits} legacy mappings.`,

@@ -34,9 +34,24 @@ all dossiers. The index includes purpose, feature tags, current page-type scope,
 evidence requirements, scoring metadata and source/test/dossier paths, all read
 from audit metadata. `docs/evidence/audit-map.md` has field definitions and `jq`
 examples. Read the source and dossier before changing behavior. Regenerate with
-`pnpm build:audit-map`, which also rewrites the registry summary in
-`docs/scoring.md`; CI runs `pnpm check:audit-map` to reject stale output.
+`pnpm build:audit-map`; CI runs `pnpm check:audit-map` to reject stale output.
 Do not hand-edit generated active records.
+
+## Registry numbers
+
+Never type an audit, category or tier count into a document. Code reads
+them from `getRegistrySummary()` in core; the `summary` block of
+`docs/evidence/audit-map.json` is the same numbers, generated. In Markdown or Astro, write the number
+between markers, `<!-- registry:audits -->222<!-- /registry:audits -->`, and
+run `pnpm build:audit-map`, which fills every marker in tracked `.md`,
+`.mdx` and `.astro` files and the table in `docs/scoring.md`. Keys:
+`audits`, `categories`, `scored`, `informative`, `experimental`, `obsolete`,
+`registry-mass`. `check:audit-map` fails on a number near the current total
+followed by "audits" or "checks" outside a marker. A dated historical
+count ("Counted 2026-10-17 … 215 audits") stays as written; mark any other
+line that counts a different set with `<!-- registry-ignore -->`. Do not
+put a marker in text meant to be copied raw, such as the media-kit blurbs:
+leave the number out there.
 
 ## Commands
 
@@ -48,7 +63,7 @@ pnpm lint               # oxlint, type-aware
 pnpm check:dossiers     # registry <-> dossier agreement, both directions
 pnpm check:audit-boundaries # no audit makes its own network call
 pnpm check:requires     # each audit's `requires` matches what its source reads
-pnpm check:audit-map    # audit map and docs/scoring.md summary <-> codebase & dossier agreement
+pnpm check:audit-map    # audit map and registry numbers in docs <-> codebase
 pnpm check:enums        # no string literal where an enum constant exists
 pnpm knip               # no unused file, export or dependency
 pnpm check:retired-names # user docs name no retired page type

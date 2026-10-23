@@ -82,11 +82,14 @@ major half encoded the old 10-category taxonomy. Both are gone in v2:
 
 ## Translating a v1 id
 
-`migration-map.json` is keyed by the v1 numeric id and carries all 207 of them:
-26 `removed`, 181 `renamed`. There is no third status — every id that v2 keeps
-has a `to` that is registered and running in this release.
+`migration-map.json` is keyed by the v1 numeric id and carries all 207 of them.
+At the v2 release, 26 were `removed` and 181 `renamed`; one removed audit was
+restored later, and `docs/evidence/audit-map.md` states the current split.
+There is no third status — every id that v2 keeps has a `to` that is
+registered and running in this release.
 
-Those 181 `renamed` ids point at only **148 distinct v2 ids**. Renaming is
+At the v2 release, those 181 `renamed` ids pointed at only **148 distinct v2
+ids**. Renaming is
 one-for-one at the id level, not at the audit level: 57 of the v1 ids were
 folded into 24 shared targets, so several old series collapse onto one new one.
 

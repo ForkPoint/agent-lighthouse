@@ -10,17 +10,17 @@ npx @forkpoint/agent-lighthouse https://example.com --view
 
 ## Facts
 
-|                  |                                                                          |
-| :--------------- | :----------------------------------------------------------------------- |
-| What it is       | Open-source CLI, SDK, GitHub Action and MCP server                       |
-| What it does     | Audits whether AI agents can discover, parse, cite and act on a website  |
-| Checks           | 222 audits across 8 categories, each backed by a public evidence dossier |
-| Outputs          | Terminal, HTML, JSON and Markdown reports                                |
-| Licence          | Apache-2.0                                                               |
-| Repository       | https://github.com/ForkPoint/agent-lighthouse                            |
-| Documentation    | https://forkpoint.github.io/agent-lighthouse/                            |
-| npm — CLI        | https://www.npmjs.com/package/@forkpoint/agent-lighthouse                |
-| npm — MCP server | https://www.npmjs.com/package/@forkpoint/agent-lighthouse-mcp            |
+|                  |                                                                                                                                                                                    |
+| :--------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| What it is       | Open-source CLI, SDK, GitHub Action and MCP server                                                                                                                                 |
+| What it does     | Audits whether AI agents can discover, parse, cite and act on a website                                                                                                            |
+| Checks           | <!-- registry:audits -->222<!-- /registry:audits --> audits across <!-- registry:categories -->8<!-- /registry:categories --> categories, each backed by a public evidence dossier |
+| Outputs          | Terminal, HTML, JSON and Markdown reports                                                                                                                                          |
+| Licence          | Apache-2.0                                                                                                                                                                         |
+| Repository       | https://github.com/ForkPoint/agent-lighthouse                                                                                                                                      |
+| Documentation    | https://forkpoint.github.io/agent-lighthouse/                                                                                                                                      |
+| npm — CLI        | https://www.npmjs.com/package/@forkpoint/agent-lighthouse                                                                                                                          |
+| npm — MCP server | https://www.npmjs.com/package/@forkpoint/agent-lighthouse-mcp                                                                                                                      |
 
 The audit count comes from the registry. Update `222` here and in the drafts when it changes.
 
@@ -35,7 +35,7 @@ Agent Lighthouse audits whether ChatGPT, Claude, Perplexity, MCP clients, AI cra
 **One paragraph**
 
 ```text
-Agent Lighthouse is an open-source CLI, SDK, GitHub Action, and MCP server that runs 222 checks for AI-agent readiness: llms.txt, robots.txt crawler access, Schema.org, OpenAPI, WebMCP, AEO/GEO content structure, agentic commerce, and agent operability.
+Agent Lighthouse is an open-source CLI, SDK, GitHub Action, and MCP server that checks websites for AI-agent readiness: llms.txt, robots.txt crawler access, Schema.org, OpenAPI, WebMCP, AEO/GEO content structure, agentic commerce, and agent operability.
 ```
 
 **What makes it different**
@@ -68,7 +68,7 @@ Show HN: Agent Lighthouse - audit websites for AI-agent readiness
 
 Hi HN, we built Agent Lighthouse: a Lighthouse-style CLI for checking whether AI agents and LLM crawlers can understand and act on a website.
 
-It runs 222 checks across llms.txt, robots.txt policies for GPTBot/ClaudeBot/PerplexityBot, Schema.org, OpenAPI, WebMCP, AEO/GEO structure, agentic commerce, and agent operability.
+It checks llms.txt, robots.txt policies for GPTBot/ClaudeBot/PerplexityBot, Schema.org, OpenAPI, WebMCP, AEO/GEO structure, agentic commerce, and agent operability.
 
 Try it with:
 
@@ -88,7 +88,7 @@ Name:     Agent Lighthouse
 Tagline:  Lighthouse-style audits for AI-agent readiness
 
 Description:
-Run 222 checks to see whether AI agents, LLM crawlers, MCP clients, and agentic browsers can discover, parse, cite, and act on your website. Includes CLI, SDK, GitHub Action, MCP server, and standalone HTML reports.
+See whether AI agents, LLM crawlers, MCP clients, and agentic browsers can discover, parse, cite, and act on your website. Includes CLI, SDK, GitHub Action, MCP server, and standalone HTML reports.
 
 Maker comment:
 Agent Lighthouse helps developers catch the parts of a website that block AI agents: blocked AI crawlers, weak Schema.org data, missing OpenAPI/WebMCP discovery, poor semantic HTML, inaccessible controls, and content that is hard for answer engines to cite.
@@ -180,7 +180,7 @@ I am working on Agent Lighthouse, an open-source scanner for whether ChatGPT, Cl
 
 [SEO agencies] It covers llms.txt, AI crawler rules in robots.txt, Schema.org, OpenAPI/WebMCP discovery, semantic HTML, accessibility, and AEO/GEO content structure. It can produce a concrete before/after report for AI visibility work.
 [DevRel] It checks docs and product pages for sitemap discovery, AI crawler rules, Schema.org, OpenAPI links, WebMCP/MCP discovery, and accessibility, so docs and APIs are easier for AI coding agents to use.
-[Ecommerce] It runs 222 checks across AI crawler access, Product/Offer/Review schema, OpenAPI/WebMCP action surfaces, semantic HTML, and accessible forms, with a standalone HTML report plus JSON/Markdown for CI.
+[Ecommerce] It checks AI crawler access, Product/Offer/Review schema, OpenAPI/WebMCP action surfaces, semantic HTML, and accessible forms, with a standalone HTML report plus JSON/Markdown for CI.
 
 npx @forkpoint/agent-lighthouse https://example.com --view
 

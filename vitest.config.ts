@@ -1,7 +1,16 @@
 import { defineConfig } from "vitest/config";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
+const coreVersion = (
+  JSON.parse(readFileSync("packages/core/package.json", "utf8")) as {
+    version: string;
+  }
+).version;
+
 export default defineConfig({
+  // As tsup defines it for the bundle; see packages/core/src/registry-summary.ts.
+  define: { __AGENT_LIGHTHOUSE_CORE_VERSION__: JSON.stringify(coreVersion) },
   test: {
     globals: true,
     environment: "node",

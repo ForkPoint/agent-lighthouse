@@ -1,0 +1,79 @@
+import { defaultConfig } from "#core/audit-config";
+import type { Category } from "#core/contracts";
+import { AuditTier } from "#core/contracts";
+
+/**
+ * Replaced with the package version by the bundler (`tsup.config.ts`) and by
+ * vitest. Source run through tsx has no build step, so it reads `source`.
+ */
+declare const __AGENT_LIGHTHOUSE_CORE_VERSION__: string | undefined;
+
+/** The version of this core package, or `source` when run unbuilt. */
+export const CORE_VERSION: string =
+  typeof __AGENT_LIGHTHOUSE_CORE_VERSION__ === "string"
+    ? __AGENT_LIGHTHOUSE_CORE_VERSION__
+    : "source";
+
+export interface RegistryCategorySummary {
+  id: Category;
+  name: string;
+  audits: number;
+  /** Audits in the `scored` tier, the only ones that move a score. */
+  scored: number;
+  /** Summed audit weight, rounded to one decimal. */
+  registryMass: number;
+}
+
+/** What the audit registry of this package version holds. */
+export interface RegistrySummary {
+  version: string;
+  audits: number;
+  categories: number;
+  tiers: Record<AuditTier, number>;
+  /** Summed weight of every audit, rounded to one decimal. */
+  registryMass: number;
+  /** In registry order. */
+  byCategory: RegistryCategorySummary[];
+}
+
+/** Round a summed weight to one decimal, so float drift never shows. */
+function mass(value: number): number {
+  return Math.round(value * 10) / 10;
+}
+
+/**
+ * Counts read from the registry this package runs, so a caller never needs a
+ * hand-maintained number. `pnpm build:audit-map` copies it into the summary
+ * of docs/evidence/audit-map.json and into the docs' registry markers.
+ */
+export function getRegistrySummary(): RegistrySummary {
+  const metasOf = (category: string) =>
+    (defaultConfig.audits[category] ?? []).map((audit) => audit.meta);
+  const byCategory = defaultConfig.categories.map((category) => {
+    const metas = metasOf(category.id);
+    return {
+      id: category.id as Category,
+      name: category.name,
+      audits: metas.length,
+      scored: metas.filter((meta) => meta.tier === AuditTier.Scored).length,
+      registryMass: mass(metas.reduce((sum, meta) => sum + meta.weight, 0)),
+    };
+  });
+  const metas = defaultConfig.categories.flatMap((category) =>
+    metasOf(category.id),
+  );
+  const tiers = Object.fromEntries(
+    Object.values(AuditTier).map((tier) => [
+      tier,
+      metas.filter((meta) => meta.tier === tier).length,
+    ]),
+  ) as Record<AuditTier, number>;
+  return {
+    version: CORE_VERSION,
+    audits: metas.length,
+    categories: byCategory.length,
+    tiers,
+    registryMass: mass(metas.reduce((sum, meta) => sum + meta.weight, 0)),
+    byCategory,
+  };
+}
