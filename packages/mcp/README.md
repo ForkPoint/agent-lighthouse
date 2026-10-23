@@ -30,6 +30,10 @@ It returns JSON: overall score and tier (`null` with `unscoredReason` when the s
 
 `auditWebsite(url, { pageType, pages, snapshots })`, exported from this package, runs the same scan from code.
 
+## The `registry_summary` tool
+
+Takes no arguments and runs no scan. It returns the installed version's `getRegistrySummary()` as JSON: the core version, the number of audits and categories, the count per tier, the registry mass, and the same per category.
+
 ## Links
 
 - Documentation: https://forkpoint.github.io/agent-lighthouse/

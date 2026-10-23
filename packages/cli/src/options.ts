@@ -306,6 +306,7 @@ export const CliCommand = {
   Help: "help",
   Audit: "audit",
   Serve: "serve",
+  Registry: "registry",
 } as const;
 
 export type CliCommand = (typeof CliCommand)[keyof typeof CliCommand];
@@ -347,6 +348,7 @@ export function resolveCommand(args: string[]): {
   if (args.length === 0 || args.includes("-h") || args.includes("--help"))
     return { action: CliCommand.Help };
   if (args[0] === "serve") return { action: CliCommand.Serve };
+  if (args.includes("--registry")) return { action: CliCommand.Registry };
   const rest = args[0] === "audit" ? args.slice(1) : args;
   const candidates: string[] = [];
   for (let i = 0; i < rest.length; i++) {

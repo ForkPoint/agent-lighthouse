@@ -13,7 +13,7 @@ Read the relevant official guidance when scanning or interpreting unfamiliar fin
 
 A supplied JSON report can be the baseline. Check its target URL, scan date, engine version where present, coverage, and options against the task. Record missing metadata. For a current assessment, refresh an outdated or mismatched report when a reachable target and network access are available. Otherwise label its limits and continue source review.
 
-When the `audit_website` tool from the Agent Lighthouse MCP server is available, it can run a quick scan and return a summary with fix recommendations. The current tool also accepts `pageType`, `pages`, and `snapshots`; inspect the available tool schema because older servers differ. Its summary is not the full finding set. Use the CLI when you need the full JSON report, experimental audits, or debug output.
+When the `audit_website` tool from the Agent Lighthouse MCP server is available, it can run a quick scan and return a summary with fix recommendations. The current tool also accepts `pageType`, `pages`, and `snapshots`; inspect the available tool schema because older servers differ. Its summary is not the full finding set. Use the CLI when you need the full JSON report, experimental audits, or debug output. To say how many audits the installed version runs, call the `registry_summary` tool or `agent-lighthouse --registry --json`; do not quote a remembered number.
 
 For a new scan, prefer the project's pinned Agent Lighthouse installation. Inspect any npm script before using it. Record the exact resolved version. If none exists, use this skill's fallback pin without changing the target project's dependencies:
 

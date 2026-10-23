@@ -4,10 +4,16 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { runScan } from "@forkpoint/agent-lighthouse-core";
+import { getRegistrySummary, runScan } from "@forkpoint/agent-lighthouse-core";
 import { buildReportView } from "@forkpoint/agent-lighthouse-report";
 import { createProgressNotifier } from "./progress";
-import { AUDIT_TOOL, buildAuditSummary, targetUrl, pageOptions } from "./tool";
+import {
+  AUDIT_TOOL,
+  REGISTRY_TOOL,
+  buildAuditSummary,
+  targetUrl,
+  pageOptions,
+} from "./tool";
 
 declare const __PACKAGE_VERSION__: string;
 
@@ -28,11 +34,22 @@ const server = new Server(
 
 // Register Available Tools
 server.setRequestHandler(ListToolsRequestSchema, async () => {
-  return { tools: [AUDIT_TOOL] };
+  return { tools: [AUDIT_TOOL, REGISTRY_TOOL] };
 });
 
 // Handle Tool Execution
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  if (request.params.name === REGISTRY_TOOL.name) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(getRegistrySummary(), null, 2),
+        },
+      ],
+    };
+  }
+
   if (request.params.name === AUDIT_TOOL.name) {
     const url = targetUrl(request.params.arguments);
 

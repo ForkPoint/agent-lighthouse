@@ -29,6 +29,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import {
   AttemptOutcome,
+  getRegistrySummary,
   PageType,
   PageTypeSource,
 } from "@forkpoint/agent-lighthouse-core";
@@ -90,6 +91,24 @@ describe("MCP handler page declarations", () => {
         },
       }),
     ).rejects.toThrow();
+    expect(state.runScan).not.toHaveBeenCalled();
+  });
+});
+
+describe("MCP registry_summary tool", () => {
+  it("is listed beside audit_website and takes no input", async () => {
+    const listed = await state.handlers.get(ListToolsRequestSchema)!({});
+    const tool = listed.tools.find(
+      (t: { name: string }) => t.name === "registry_summary",
+    );
+    expect(tool.inputSchema).toEqual({ type: "object", properties: {} });
+  });
+
+  it("returns the installed registry summary without scanning", async () => {
+    const result = await state.handlers.get(CallToolRequestSchema)!({
+      params: { name: "registry_summary", arguments: {} },
+    });
+    expect(JSON.parse(result.content[0].text)).toEqual(getRegistrySummary());
     expect(state.runScan).not.toHaveBeenCalled();
   });
 });
