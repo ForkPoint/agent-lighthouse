@@ -101,6 +101,22 @@ describe("ACP sandbox conformance", () => {
       expect(changed.currency).toBe("eur");
     },
   );
+  it("runs one probe per caller signal and honours each caller's abort", async () => {
+    successfulSequence();
+    const runtime = prepareAcpSandbox(config);
+    const first = new AbortController();
+    const shared = await Promise.all([
+      runtime(first.signal)(),
+      runtime(first.signal)(),
+    ]);
+    expect(shared[1]).toBe(shared[0]);
+    expect(fetch).toHaveBeenCalledTimes(6);
+    const second = new AbortController();
+    second.abort();
+    const own = await runtime(second.signal)();
+    expect(own).not.toBe(shared[0]);
+    expect(own.outcome).not.toBe("passed");
+  });
   it("finds a wrong nested response field with no raw text", async () => {
     successfulSequence();
     fetch.mockReset();
