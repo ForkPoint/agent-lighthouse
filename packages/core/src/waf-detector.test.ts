@@ -693,6 +693,19 @@ describe("detectWafProtection", () => {
       body: "<html><head><title>Access Denied</title></head><body><h1>Access Denied</h1><p>This site is not accessible from your current location.</p></body></html>",
     };
 
+    // A large inline style block closed with `</style >` is still style, not
+    // page text, so the page stays a short block page.
+    it("detects it behind a style block whose end tag carries whitespace", () => {
+      const waf = onHomepage({
+        ...geoBlock,
+        body: geoBlock.body.replace(
+          "</head>",
+          `<style>${".a{color:red}".repeat(200)}</style ></head>`,
+        ),
+      });
+      expect(waf).toMatchObject({ isBlocked: true, provider: "akamai" });
+    });
+
     it("detects it and names the location refusal", () => {
       const waf = onHomepage(geoBlock);
       expect(waf).toMatchObject({

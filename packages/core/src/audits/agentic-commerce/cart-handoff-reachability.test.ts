@@ -3,6 +3,7 @@ import {
   CartHandoffReachabilityAudit,
   challengeIn,
   jsOnlyDocument,
+  textLength,
 } from "./cart-handoff-reachability";
 import {
   mockCheckContext,
@@ -85,6 +86,18 @@ function run(store: Store = {}) {
 
   return { result: audit.audit(ctx), requests };
 }
+
+describe("textLength", () => {
+  it.each(["</style>", "</style >", "</style/>", "</script >"])(
+    "counts the text after the end tag %j",
+    (endTag) => {
+      const tag = endTag.startsWith("</style") ? "style" : "script";
+      expect(
+        textLength(`<${tag}>x${endTag}<p>hello</p><${tag}>y</${tag}>`),
+      ).toBe("hello".length);
+    },
+  );
+});
 
 describe("CartHandoffReachabilityAudit", () => {
   it("is notApplicable on an empty site", async () => {
