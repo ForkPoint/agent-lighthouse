@@ -1,3 +1,4 @@
+import { scanNow } from "./scan-environment";
 /**
  * Cookies for one redirect chain.
  *
@@ -87,7 +88,7 @@ function parse(
       maxAgeExpired = Number(raw) <= 0;
     } else if (key === "expires" && raw) {
       const when = Date.parse(raw);
-      expiresExpired = !Number.isNaN(when) && when <= Date.now();
+      expiresExpired = !Number.isNaN(when) && when <= scanNow();
     }
   }
   return {

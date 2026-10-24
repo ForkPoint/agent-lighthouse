@@ -20,6 +20,7 @@ import {
   PageType,
   ScoreDisplayMode,
 } from "#core/types";
+import { scanNow } from "#core/scan-environment";
 
 /** How many product pages are examined. */
 const MAX_PAGES = 3;
@@ -262,7 +263,7 @@ export class OfferTruthConsistencyAudit extends Audit {
       // STALE OFFER.
       if (priced?.priceValidUntil) {
         const until = new Date(priced.priceValidUntil);
-        if (!Number.isNaN(until.getTime()) && until.getTime() < Date.now()) {
+        if (!Number.isNaN(until.getTime()) && until.getTime() < scanNow()) {
           failures.push(
             `${label} carries priceValidUntil ${priced.priceValidUntil}, which has passed, so the quoted price is expired`,
           );

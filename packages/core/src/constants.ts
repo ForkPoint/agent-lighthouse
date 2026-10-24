@@ -42,6 +42,16 @@ export const MAX_CONCURRENT_REQUESTS = 10;
 export const SCANNER_USER_AGENT =
   "AgentLighthouse/1.0 (+https://github.com/ForkPoint/agent-lighthouse)";
 
+/**
+ * A mainstream browser UA: the control request of UA-parity checks.
+ *
+ * The Chrome major tracks the current Stable channel (155 per
+ * https://chromiumdash.appspot.com/fetch_releases?channel=Stable&platform=Mac&num=1,
+ * verified 2026-10-19), with the reduced `.0.0.0` version Chrome itself sends.
+ */
+export const BASELINE_UA =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36";
+
 // ── Scoring ────────────────────────────────────────────────────
 
 // Category weights are no longer hand-tuned percentages. A category's share of

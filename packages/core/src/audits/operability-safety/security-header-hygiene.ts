@@ -10,6 +10,7 @@ import {
   FixEffort,
   ScoreDisplayMode,
 } from "#core/types";
+import { scanNow } from "#core/scan-environment";
 
 /**
  * One root file, one signal: does a published `/.well-known/security.txt`
@@ -192,7 +193,7 @@ export class SecurityHeaderHygieneAudit extends Audit {
       );
     }
 
-    if (expiresAt.getTime() <= Date.now()) {
+    if (expiresAt.getTime() <= scanNow()) {
       return this.warn(
         `${path} expired on ${expires}, so RFC 9116 treats its contents as no longer valid.`,
         EXPECTED,

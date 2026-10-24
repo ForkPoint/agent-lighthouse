@@ -4,8 +4,33 @@ export { ProgressTracker, PHASE_WEIGHTS } from "./progress";
 export { PhaseId } from "./progress";
 export type { ScanEvent } from "./progress";
 export { createFetcher, isSafeUrl, boundedDispatcher } from "./fetcher";
-export type { FetchResult, FetchOptions, FetcherOptions } from "./fetcher";
-export type { RequestScheduler } from "./request-scheduler";
+export type {
+  FetchResult,
+  FetchOptions,
+  Fetcher,
+  FetcherOptions,
+  FetcherSummary,
+  HttpExchange,
+} from "./fetcher";
+export {
+  createRequestScheduler,
+  HostStopReason,
+  HostStoppedError,
+  schedulerHostKey,
+} from "./request-scheduler";
+export type {
+  DefaultRequestScheduler,
+  HostState,
+  RequestQueueSnapshot,
+  RequestScheduler,
+  RequestSchedulerOptions,
+} from "./request-scheduler";
+export { createReplay } from "./replay";
+export type { Replay } from "./replay";
+export { scanNow, withScanEnvironment } from "./scan-environment";
+export type { HostLookup, ScanEnvironment } from "./scan-environment";
+export { buildOfflineContext } from "./offline-context";
+export type { OfflineContextOptions } from "./offline-context";
 export { CORE_VERSION, getRegistrySummary } from "./registry-summary";
 export type {
   RegistrySummary,
@@ -55,7 +80,11 @@ export { pagesOfType, judgePages } from "./gatherers/pages";
 export type { PageJudgement } from "./gatherers/pages";
 export type { CheckContext, CheckFn, PageContext } from "./check-context";
 export type { ScanEvidence } from "./scan-evidence";
-export { buildScanEvidence, allEvidenceMet } from "./scan-evidence";
+export {
+  buildScanEvidence,
+  allEvidenceMet,
+  pageRendersText,
+} from "./scan-evidence";
 export { Audit, evidenceUrl } from "./audit";
 export { runAudits, planAudits } from "./audit-runner";
 export {
@@ -82,9 +111,12 @@ export {
   AuditOutcome,
 } from "./audit-trace";
 export type { AuditTrace } from "./audit-trace";
+export { parsePageContext } from "./page-context";
 export {
   parseHtml,
   extractJsonLd,
+  extractMicrodata,
+  extractRdfa,
   topLevelJsonLd,
   allJsonLdNodes,
   flattenJsonLd,

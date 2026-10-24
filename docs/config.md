@@ -73,29 +73,76 @@ Unlisted categories do not run and do not count. An unknown id exits 1.
 
 `runScan(url, options)` from `@forkpoint/agent-lighthouse-core` takes these `ScanOptions`:
 
-| Option                | Type                          | Default  | Effect                                                                             |
-| :-------------------- | :---------------------------- | :------- | :--------------------------------------------------------------------------------- |
-| `categories`          | `string[]`                    | all      | Category ids to run. Unknown ids match nothing; validate them yourself.            |
-| `includeExperimental` | `boolean`                     | `false`  | Run experimental-tier audits, reported but never scored.                           |
-| `pageType`            | `PageType`                    | detected | Type of the target URL. Wins over a matching `pages` entry.                        |
-| `pages`               | `PageOverride[] \| null`      | none     | More URLs with a declared type.                                                    |
-| `snapshots`           | `BrowserSnapshots`            | none     | Browser-rendered DOM input; adds `browserAssessment` to the report.                |
-| `timeoutMs`           | `number`                      | `180000` | Scan budget. Recorded under `conditions.budget` when it runs out; `0` disables it. |
-| `signal`              | `AbortSignal`                 | none     | Cancel the scan. `runScan` then throws.                                            |
-| `onEvent`             | `(event: ScanEvent) => void`  | none     | Progress callback. The CLI's progress display and NDJSON stream use it.            |
-| `onAuditTrace`        | `(trace: AuditTrace) => void` | none     | One record per audit, as `--trace` writes.                                         |
-| `logger`              | pino-compatible logger        | built-in | Every log line of the scan goes here, with `site`, `scan` and `component` fields.  |
-| `scanId`              | `string`                      | random   | The report's `scanId` and the `scan` log field.                                    |
-| `enforceEvidenceGate` | `boolean`                     | `true`   | `false` runs audits whose required evidence is missing. Diagnostic use only.       |
-| `dispatcher`          | undici `Dispatcher`           | default  | Dispatcher for every request the scan makes.                                       |
-| `maxConcurrent`       | `number`                      | no limit | Requests the scan may have in flight at once.                                      |
-| `requestScheduler`    | `RequestScheduler`            | none     | Shared pacing for every request and redirect hop. See below.                       |
-| `headers`             | `Record<string, string>`      | none     | Extra request headers on every fetch.                                              |
-| `bypassOriginCache`   | `boolean`                     | `false`  | Skip the shared origin evidence cache.                                             |
-| `originCache`         | `OriginCache`                 | shared   | A custom origin evidence cache.                                                    |
-| `robotsTxt`           | `FetchResult`                 | none     | A `robots.txt` response the caller already has, used instead of fetching it.       |
+| Option                | Type                               | Default    | Effect                                                                             |
+| :-------------------- | :--------------------------------- | :--------- | :--------------------------------------------------------------------------------- |
+| `categories`          | `string[]`                         | all        | Category ids to run. Unknown ids match nothing; validate them yourself.            |
+| `includeExperimental` | `boolean`                          | `false`    | Run experimental-tier audits, reported but never scored.                           |
+| `pageType`            | `PageType`                         | detected   | Type of the target URL. Wins over a matching `pages` entry.                        |
+| `pages`               | `PageOverride[] \| null`           | none       | More URLs with a declared type.                                                    |
+| `snapshots`           | `BrowserSnapshots`                 | none       | Browser-rendered DOM input; adds `browserAssessment` to the report.                |
+| `timeoutMs`           | `number`                           | `180000`   | Scan budget. Recorded under `conditions.budget` when it runs out; `0` disables it. |
+| `signal`              | `AbortSignal`                      | none       | Cancel the scan. `runScan` then throws.                                            |
+| `onEvent`             | `(event: ScanEvent) => void`       | none       | Progress callback. The CLI's progress display and NDJSON stream use it.            |
+| `onAuditTrace`        | `(trace: AuditTrace) => void`      | none       | One record per audit, as `--trace` writes.                                         |
+| `logger`              | pino-compatible logger             | built-in   | Every log line of the scan goes here, with `site`, `scan` and `component` fields.  |
+| `scanId`              | `string`                           | random     | The report's `scanId` and the `scan` log field.                                    |
+| `enforceEvidenceGate` | `boolean`                          | `true`     | `false` runs audits whose required evidence is missing. Diagnostic use only.       |
+| `dispatcher`          | undici `Dispatcher`                | default    | Dispatcher for every request the scan makes.                                       |
+| `maxConcurrent`       | `number`                           | no limit   | Requests the scan may have in flight at once.                                      |
+| `requestScheduler`    | `RequestScheduler`                 | none       | Shared pacing for every request and redirect hop. See below.                       |
+| `headers`             | `Record<string, string>`           | none       | Extra request headers on every fetch.                                              |
+| `bypassOriginCache`   | `boolean`                          | `false`    | Skip the shared origin evidence cache.                                             |
+| `originCache`         | `OriginCache`                      | shared     | A custom origin evidence cache.                                                    |
+| `robotsTxt`           | `FetchResult`                      | none       | A `robots.txt` response the caller already has, used instead of fetching it.       |
+| `onExchange`          | `(exchange: HttpExchange) => void` | none       | One record per request sent, redirect hops included. See below.                    |
+| `fetcher`             | `Fetcher`                          | built      | The fetcher every request goes through. `createReplay` makes one. See below.       |
+| `lookup`              | `HostLookup`                       | system     | Name resolution for the scan's address checks.                                     |
+| `now`                 | `() => number`                     | `Date.now` | The scan's clock in epoch milliseconds.                                            |
 
-`requestScheduler` lets several scans share one request queue per hostname. The scan calls `acquire(url, signal)` before each request and holds the returned release function until the response body is read. It calls `observe(url, status, retryAfter, { ownAgent })` after each response. `ownAgent` is `false` when the request used another client's User-Agent, as the crawler-parity checks do; a 403 to such a request is that check's finding, not a refusal of the scanner. `import type { RequestScheduler } from "@forkpoint/agent-lighthouse-core"` names the interface. Queue time does not count toward the 10-second request timeout or the reported response timings, but it does count toward the scan budget. Callers supply the scheduler implementation. The package provides the hook, not a host pacing policy.
+`requestScheduler` lets several scans share one request queue per hostname. The scan calls `acquire(url, signal)` before each request and holds the returned release function until the response body is read. It calls `observe(url, status, retryAfter, { ownAgent })` after each response. `ownAgent` is `false` when the request used an AI crawler's User-Agent, as the crawler-parity checks do; a 403 to such a request is that check's finding, not a refusal of the scanner. The scanner's own User-Agent and the browser baseline of the parity checks count as the scanner's. Queue time does not count toward the 10-second request timeout or the reported response timings, but it does count toward the scan budget.
+
+`createRequestScheduler(options)` is the default implementation. It keeps one queue per host, with apex and `www` sharing one, and sends one request at a time, `gapMs` apart. It stops a host on HTTP 429, on a 403 to the scanner's own User-Agent or the browser baseline, and on two 503s in a row. It waits out the `Retry-After` of a single 503, or 60 seconds when the header names no usable value. A 503 whose `Retry-After` is longer than `maxRetryAfterMs`, one scan budget by default, stops the host instead. A request to a stopped host fails with `HostStoppedError`, whose `reason` says why. `exportState()` returns each host's state as plain data, `importState(state)` or the `state` option restores it, and `onChange(state)` reports each change as it happens, so a caller can keep host stops and cooldowns across runs. A restored stop stays a stop and a restored cooldown keeps its remaining wait.
+
+```ts
+import {
+  createRequestScheduler,
+  runScan,
+} from "@forkpoint/agent-lighthouse-core";
+
+const requestScheduler = createRequestScheduler({
+  gapMs: 1000,
+  state: await loadHostState(),
+  onChange: (host) => saveHostState(host),
+});
+const report = await runScan("https://example.com", { requestScheduler });
+```
+
+### Capture and replay
+
+`onExchange` receives one `HttpExchange` per request the scan sends, redirect hops included. A request the scheduler refused is an exchange with an `error` and no `response`. Each record holds the request as sent, the response status, its headers as received (a field sent on several lines keeps one entry per line), the body bytes the fetcher read, whether the read stopped at the size limit, and the fetch's timings. `Authorization` and `Proxy-Authorization` values are recorded as `[redacted]`. The hop of a refused redirect is never sent, so it has no exchange.
+
+`createReplay(exchanges)` rebuilds a scan's network from those records. Pass its `fetcher` and `lookup` to `runScan` with the capture's `scanId` and a `now` that returns the capture's scan time. The scan then reads the captures and sends no request and makes no DNS lookup. With the same captures, engine version and options, the report is the same: probe names and tokens derive from `scanId`, every date an audit compares against comes from `now`, and recorded timings stand in for measured ones. Set `now` on the live scan too when the two reports must match field for field, since `durationMs` is measured on that clock.
+
+A replay answers each request with the first unused exchange of the same method, URL, headers and body, ignoring headers that change on every send, such as a request signature. It falls back to one with the same method, URL, User-Agent and Accept. A request the capture does not hold fails as an unanswered request does and is listed by `misses()`. Each exchange answers once, so make one replay per scan. A fetcher passed in `fetcher` also bypasses the shared origin evidence cache, and `dispatcher`, `maxConcurrent`, `requestScheduler`, `headers` and `onExchange` do not apply to it.
+
+```ts
+import { createReplay, runScan } from "@forkpoint/agent-lighthouse-core";
+
+const exchanges = [];
+const live = await runScan(url, { onExchange: (e) => exchanges.push(e) });
+
+const replay = createReplay(exchanges);
+const again = await runScan(url, {
+  fetcher: replay.fetcher,
+  lookup: replay.lookup,
+  scanId: live.scanId,
+  now: () => Date.parse(live.scannedAt),
+});
+```
+
+A replay cannot reproduce a scan whose budget ran out, since the budget is measured on the wall clock of the run.
+
+`buildOfflineContext(result, options)` builds the check context for one stored page the way a scan builds one: parsed, classified, checked for a bot wall, with the scan evidence derived from the response. It sends no request unless `options.fetch` is given. `runAudits(ctx, defaultConfig)` then judges the stored page alone.
 
 ```ts
 import pino from "pino";

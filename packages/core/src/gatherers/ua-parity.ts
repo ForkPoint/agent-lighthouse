@@ -7,6 +7,7 @@ const log = logger.child({ [LogField.Component]: "ua-parity" });
 import { getMainContentText } from "#core/parser";
 import { DomWorkLimitError, parseBoundedHtml } from "#core/dom-work";
 import { BOT_REGISTRY } from "#core/bot-registry";
+import { BASELINE_UA } from "#core/constants";
 
 /**
  * The AI crawler User-Agent strings the UA-parity audits send, read from the
@@ -46,15 +47,8 @@ export const AI_CRAWLER_UAS: ReadonlyArray<{
     : [],
 );
 
-/**
- * A mainstream browser UA. The control half of every pair.
- *
- * The Chrome major tracks the current Stable channel (155 per
- * https://chromiumdash.appspot.com/fetch_releases?channel=Stable&platform=Mac&num=1,
- * verified 2026-10-19), with the reduced `.0.0.0` version Chrome itself sends.
- */
-export const BASELINE_UA =
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36";
+/** The control half of every pair; defined beside the scanner's own UA. */
+export { BASELINE_UA };
 
 /**
  * How a site answered a crawler UA, relative to the same request as a browser.

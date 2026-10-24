@@ -1,4 +1,4 @@
-import { randomBytes } from "node:crypto";
+import { scanRandomHex } from "#core/scan-environment";
 import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
 import { weightForGrade } from "#core/scorer";
@@ -25,7 +25,7 @@ import {
 
 /** A domain that cannot belong to anyone: `.example` is reserved by RFC 2606. */
 function throwawayOrigin(): string {
-  return `https://al-probe-${randomBytes(6).toString("hex")}.example`;
+  return `https://al-probe-${scanRandomHex(6)}.example`;
 }
 
 /** The headers a browser client would ask to send on a preflight. */

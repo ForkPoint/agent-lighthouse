@@ -26,6 +26,13 @@ import {
 
 const log = logger.child({ [LogField.Component]: "orchestrator" });
 import { createFetcher, isSafeUrl, splitCredentials } from "./fetcher";
+import type { Fetcher, HttpExchange } from "./fetcher";
+import {
+  scanNow,
+  seededRandom,
+  withScanEnvironment,
+  type HostLookup,
+} from "./scan-environment";
 import { UnreachableHosts, isConnectFailure } from "./unreachable-hosts";
 import { gatewayTarget } from "./gateway";
 import {
@@ -151,6 +158,32 @@ export interface ScanOptions {
   maxConcurrent?: number | undefined;
   /** Shared pacing for each network request, including redirects. */
   requestScheduler?: RequestScheduler | undefined;
+  /**
+   * Called once per request the scan sends, redirect hops included, with
+   * what came back; see {@link HttpExchange}. Store the exchanges to replay
+   * the scan later with `createReplay`.
+   */
+  onExchange?: ((exchange: HttpExchange) => void) | undefined;
+  /**
+   * The fetcher every request goes through, in place of the one the scan
+   * builds. `createReplay` makes one that reads captured exchanges. With a
+   * fetcher given, `dispatcher`, `maxConcurrent`, `requestScheduler`,
+   * `headers` and `onExchange` do not apply, and the shared origin evidence
+   * cache is bypassed, so cached evidence from another scan cannot stand in
+   * for what the fetcher returns.
+   */
+  fetcher?: Fetcher | undefined;
+  /**
+   * Resolves host names for the scan's address checks, in place of the
+   * system resolver. `createReplay` makes one that knows the captured hosts.
+   */
+  lookup?: HostLookup | undefined;
+  /**
+   * The scan's clock, in epoch milliseconds: `scannedAt`, `durationMs`, the
+   * origin read time and every date an audit compares against. A replay
+   * passes a clock fixed at the capture's scan time. Omitted, `Date.now`.
+   */
+  now?: (() => number) | undefined;
   /**
    * Extra HTTP request headers to pass on all fetches.
    */
@@ -335,51 +368,60 @@ export async function runScan(
   // Every line logged during this scan names it, so lines from scans that
   // run side by side can be told apart.
   const scanId = options?.scanId ?? randomUUID();
-  return withLogContext(
-    { [LogField.Site]: logSite(url), [LogField.Scan]: scanId },
-    async () => {
-      const started = performance.now();
-      log.debug({ [LogField.Url]: url, budgetMs: limitMs }, "Scan started");
-      const budget = new AbortController();
-      const timer =
-        limitMs > 0
-          ? setTimeout(() => {
-              const message = `The scan budget of ${formatBudget(limitMs)} ran out.`;
-              log.warn({ budgetMs: limitMs }, message);
-              budget.abort(new Error(message));
-            }, limitMs)
-          : undefined;
-      try {
-        const report = await scanWithinBudget(url, options, {
-          signal: budget.signal,
-          limitMs,
-          scanId,
-        });
-        log.info(
-          {
-            [LogField.DurationMs]: Math.round(performance.now() - started),
-            score: report.overallScore,
-            pages: report.pagesScanned.length,
-            budgetExhausted: budget.signal.aborted,
-            unscoredReason: report.scanValidity?.unscoredReason,
-          },
-          "Scan finished",
-        );
-        return report;
-      } catch (error) {
-        log.debug(
-          {
-            [LogField.DurationMs]: Math.round(performance.now() - started),
-            [LogField.Error]: error,
-          },
-          "Scan threw",
-        );
-        throw error;
-      } finally {
-        if (timer !== undefined) clearTimeout(timer);
-      }
-    },
-    options?.logger,
+  // Probe tokens and other per-scan values come from the scan id, so a
+  // replay with the same id sends the same requests.
+  const environment = {
+    random: seededRandom(scanId),
+    ...(options?.now !== undefined && { now: options.now }),
+    ...(options?.lookup !== undefined && { lookup: options.lookup }),
+  };
+  return withScanEnvironment(environment, () =>
+    withLogContext(
+      { [LogField.Site]: logSite(url), [LogField.Scan]: scanId },
+      async () => {
+        const started = performance.now();
+        log.debug({ [LogField.Url]: url, budgetMs: limitMs }, "Scan started");
+        const budget = new AbortController();
+        const timer =
+          limitMs > 0
+            ? setTimeout(() => {
+                const message = `The scan budget of ${formatBudget(limitMs)} ran out.`;
+                log.warn({ budgetMs: limitMs }, message);
+                budget.abort(new Error(message));
+              }, limitMs)
+            : undefined;
+        try {
+          const report = await scanWithinBudget(url, options, {
+            signal: budget.signal,
+            limitMs,
+            scanId,
+          });
+          log.info(
+            {
+              [LogField.DurationMs]: Math.round(performance.now() - started),
+              score: report.overallScore,
+              pages: report.pagesScanned.length,
+              budgetExhausted: budget.signal.aborted,
+              unscoredReason: report.scanValidity?.unscoredReason,
+            },
+            "Scan finished",
+          );
+          return report;
+        } catch (error) {
+          log.debug(
+            {
+              [LogField.DurationMs]: Math.round(performance.now() - started),
+              [LogField.Error]: error,
+            },
+            "Scan threw",
+          );
+          throw error;
+        } finally {
+          if (timer !== undefined) clearTimeout(timer);
+        }
+      },
+      options?.logger,
+    ),
   );
 }
 
@@ -420,19 +462,24 @@ async function scanWithinBudget(
       );
     onEvent?.(event);
   });
-  const start = performance.now();
-  const fetcher = createFetcher({
-    ...(options?.requestScheduler !== undefined && {
-      requestScheduler: options.requestScheduler,
-    }),
-    ...(options?.dispatcher !== undefined && {
-      dispatcher: options.dispatcher,
-    }),
-    ...(options?.maxConcurrent !== undefined && {
-      maxConcurrent: options.maxConcurrent,
-    }),
-    ...(options?.headers !== undefined && { headers: options.headers }),
-  });
+  const start = scanNow();
+  const fetcher =
+    options?.fetcher ??
+    createFetcher({
+      ...(options?.requestScheduler !== undefined && {
+        requestScheduler: options.requestScheduler,
+      }),
+      ...(options?.onExchange !== undefined && {
+        onExchange: options.onExchange,
+      }),
+      ...(options?.dispatcher !== undefined && {
+        dispatcher: options.dispatcher,
+      }),
+      ...(options?.maxConcurrent !== undefined && {
+        maxConcurrent: options.maxConcurrent,
+      }),
+      ...(options?.headers !== undefined && { headers: options.headers }),
+    });
 
   const baseUrl = new URL(url).origin;
   const domain = new URL(url).hostname;
@@ -498,7 +545,9 @@ async function scanWithinBudget(
 
   const originCache = options?.originCache ?? defaultOriginCache;
   const bypassCache =
-    shouldBypassOriginCache(url, options) || !!options?.robotsTxt;
+    shouldBypassOriginCache(url, options) ||
+    !!options?.robotsTxt ||
+    options?.fetcher !== undefined;
   const originCacheKey = computeOriginCacheKey(
     url,
     ORIGIN_EVIDENCE_VERSION,
@@ -588,7 +637,7 @@ async function scanWithinBudget(
       ? undefined
       : await fetchPageWithRetry(fetcher, `${baseUrl}/`, fetchSignal, signal);
 
-    originReadAt = new Date().toISOString();
+    originReadAt = new Date(scanNow()).toISOString();
     originFresh = true;
 
     tracker.phaseDone();
@@ -926,7 +975,7 @@ async function scanWithinBudget(
   // ── Phase 4: Assemble report ─────────────────────────────────
   tracker.phaseStart(PhaseId.Report, 1);
 
-  const durationMs = Math.round(performance.now() - start);
+  const durationMs = Math.round(scanNow() - start);
 
   // Informative checks carry no score and no fix worth surfacing, so they are
   // advisory-only: they never become recommendations, top fails or top passes.
@@ -1159,7 +1208,7 @@ async function scanWithinBudget(
         classification: p.classification,
       }),
     })),
-    scannedAt: new Date().toISOString(),
+    scannedAt: new Date(scanNow()).toISOString(),
     durationMs,
     readinessScore,
     readinessVitals,
