@@ -1,5 +1,14 @@
 # @forkpoint/agent-lighthouse-mcp
 
+## 10.3.0
+
+### Patch Changes
+
+- Updated dependencies [33f7e6e]
+- Updated dependencies [33f7e6e]
+  - @forkpoint/agent-lighthouse-core@10.3.0
+  - @forkpoint/agent-lighthouse-report@10.3.0
+
 ## 10.2.0
 
 ### Minor Changes
