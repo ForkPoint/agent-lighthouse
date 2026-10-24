@@ -25,7 +25,12 @@ import {
 } from "./logger";
 
 const log = logger.child({ [LogField.Component]: "orchestrator" });
-import { createFetcher, isSafeUrl, splitCredentials } from "./fetcher";
+import {
+  createFetcher,
+  isSafeUrl,
+  mergeHeaders,
+  splitCredentials,
+} from "./fetcher";
 import type { Fetcher, HttpExchange } from "./fetcher";
 import {
   scanNow,
@@ -170,9 +175,10 @@ export interface ScanOptions {
    * The fetcher every request goes through, in place of the one the scan
    * builds. `createReplay` makes one that reads captured exchanges. With a
    * fetcher given, `dispatcher`, `maxConcurrent`, `requestScheduler`,
-   * `headers` and `onExchange` do not apply, and the shared origin evidence
+   * and `onExchange` do not apply, and the shared origin evidence
    * cache is bypassed, so cached evidence from another scan cannot stand in
-   * for what the fetcher returns.
+   * for what the fetcher returns. Scan `headers` still apply; per-request
+   * headers override them by case-insensitive name.
    */
   fetcher?: Fetcher | undefined;
   /**
@@ -488,21 +494,29 @@ async function scanWithinBudget(
       }
       captureExchange(exchange);
     });
-  const fetcher =
-    options?.fetcher ??
-    createFetcher({
-      ...(options?.requestScheduler !== undefined && {
-        requestScheduler: options.requestScheduler,
-      }),
-      ...(onExchange !== undefined && { onExchange }),
-      ...(options?.dispatcher !== undefined && {
-        dispatcher: options.dispatcher,
-      }),
-      ...(options?.maxConcurrent !== undefined && {
-        maxConcurrent: options.maxConcurrent,
-      }),
-      ...(options?.headers !== undefined && { headers: options.headers }),
-    });
+  const suppliedFetcher = options?.fetcher;
+  const fetcher: Fetcher = suppliedFetcher
+    ? {
+        fetch: (request) =>
+          suppliedFetcher.fetch({
+            ...request,
+            headers: mergeHeaders(options?.headers, request.headers),
+          }),
+        summary: () => suppliedFetcher.summary(),
+      }
+    : createFetcher({
+        ...(options?.requestScheduler !== undefined && {
+          requestScheduler: options.requestScheduler,
+        }),
+        ...(onExchange !== undefined && { onExchange }),
+        ...(options?.dispatcher !== undefined && {
+          dispatcher: options.dispatcher,
+        }),
+        ...(options?.maxConcurrent !== undefined && {
+          maxConcurrent: options.maxConcurrent,
+        }),
+        ...(options?.headers !== undefined && { headers: options.headers }),
+      });
 
   const domain = new URL(url).hostname;
   const displayUrl = splitCredentials(url).url;
@@ -597,8 +611,23 @@ async function scanWithinBudget(
     originHomepageResult = cachedEvidence.originHomepage;
     originCached = true;
     originReadAt = cachedEvidence.readAt;
-    for (const exchange of cachedEvidence.exchanges ?? [])
-      captureExchange?.(exchange);
+    for (const exchange of cachedEvidence.exchanges ?? []) {
+      try {
+        captureExchange?.(exchange);
+      } catch (error) {
+        // Cached evidence has the same capture contract as a live response:
+        // a failed sink must not change what the site answered.
+        log.warn(
+          {
+            [LogField.Url]: exchange.request.url,
+            [LogField.Error]: {
+              message: error instanceof Error ? error.message : String(error),
+            },
+          },
+          "Capture callback failed; the capture lacks this cached exchange",
+        );
+      }
+    }
     tracker.phaseStart(PhaseId.FetchRoot, 0);
     tracker.phaseDone();
     log.debug({ origin: baseUrl }, "Reusing cached origin evidence");

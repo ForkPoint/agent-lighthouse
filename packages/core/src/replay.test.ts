@@ -323,6 +323,80 @@ describe("createReplay", () => {
 });
 
 describe("runScan — replay", () => {
+  it("replays custom scan headers without loosening request matching", async () => {
+    liveNetwork();
+    const exchanges: HttpExchange[] = [];
+    const configured = {
+      ...options,
+      headers: {
+        "Accept-Language": "bg",
+        "X-Scan-Variant": "retail",
+        "cache-control": "max-age=60",
+      },
+    };
+    const live = await runScan(SITE, {
+      ...configured,
+      onExchange: (exchange) => exchanges.push(exchange),
+    });
+    expect(exchanges[0]!.request.headers["Accept-Language"]).toBe("bg");
+    noNetwork();
+    const replay = createReplay(exchanges);
+    const again = await runScan(SITE, {
+      ...configured,
+      fetcher: replay.fetcher,
+      lookup: replay.lookup,
+    });
+    expect(replay.misses()).toEqual([]);
+    expect(again).toEqual(live);
+    expect(mockRequest).not.toHaveBeenCalled();
+    expect(mockLookup).not.toHaveBeenCalled();
+    const mismatched = createReplay(exchanges);
+    const wrongVariant = await runScan(SITE, {
+      ...configured,
+      headers: { ...configured.headers, "X-Scan-Variant": "other" },
+      fetcher: mismatched.fetcher,
+      lookup: mismatched.lookup,
+    });
+    expect(mismatched.misses()).toContain(`GET ${SITE}`);
+    expect(wrongVariant.pagesScanned).toEqual([]);
+    expect(mockRequest).not.toHaveBeenCalled();
+    expect(mockLookup).not.toHaveBeenCalled();
+  }, 60_000);
+
+  it("keeps the scan result when a cached capture callback throws", async () => {
+    liveNetwork();
+    const warm = {
+      ...options,
+      bypassOriginCache: false,
+      originCache: new OriginCache(),
+    };
+    const baseline = await runScan(SITE, { ...warm, onExchange: () => {} });
+    mockRequest.mockClear();
+    const cachedDeliveries: string[] = [];
+    const onExchange = vi.fn((exchange: HttpExchange) => {
+      if (mockRequest.mock.calls.length === 0)
+        cachedDeliveries.push(exchange.request.url);
+      if (exchange.request.url === `${SITE}robots.txt`)
+        throw new Error("capture disk full");
+    });
+    const result = await runScan(SITE, { ...warm, onExchange });
+    expect(result.originEvidence?.cached).toBe(true);
+    expect(result.overallScore).toBe(baseline.overallScore);
+    expect(result.pagesScanned).toEqual(baseline.pagesScanned);
+    expect(
+      onExchange.mock.calls.some(
+        ([e]) => e.request.url === `${SITE}robots.txt`,
+      ),
+    ).toBe(true);
+    expect(cachedDeliveries[0]).toBe(`${SITE}robots.txt`);
+    expect(cachedDeliveries).toContain(`${SITE}llms.txt`);
+    const verdicts = (report: typeof baseline) =>
+      report.categories.flatMap((category) =>
+        category.checks.map(({ id, status, score }) => ({ id, status, score })),
+      );
+    expect(verdicts(result)).toEqual(verdicts(baseline));
+  }, 60_000);
+
   it("rebuilds the live report from the captures, with no network", async () => {
     liveNetwork();
     const exchanges: HttpExchange[] = [];
