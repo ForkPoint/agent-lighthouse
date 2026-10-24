@@ -17,6 +17,7 @@ import {
   FixEffort,
   ScoreDisplayMode,
 } from "#core/types";
+import { scanNow } from "#core/scan-environment";
 
 /** Images sampled per page, before the per-scan cap applies. */
 const PER_PAGE = 3;
@@ -128,7 +129,7 @@ export class C2paSignerTrustStatusAudit extends Audit {
     const unreadable: string[] = [];
     let manifests = 0;
     let timestamped = 0;
-    const now = Date.now();
+    const now = scanNow();
 
     for (const url of candidates.slice(0, MAX_IMAGES)) {
       const bytes = await fetchImage(ctx, url);

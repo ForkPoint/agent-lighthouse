@@ -16,6 +16,7 @@ import {
   ScoreDisplayMode,
   HttpMethod,
 } from "#core/types";
+import { scanRandom } from "#core/scan-environment";
 
 /**
  * The probe budget, as a hard cap rather than an average.
@@ -58,12 +59,13 @@ const HIGH_TRUST: readonly Sink[] = [
  * A detection token that is unique per scan and impossible to hit by accident.
  *
  * Random rather than fixed so a site that once cached a probe response cannot
- * make a later scan report a reflection it did not produce.
+ * make a later scan report a reflection it did not produce. Inside a scan the
+ * digits come from the scan id, so a replay of the scan sends the same token.
  */
 function mintCanary(): string {
   let token = "AGLH";
   for (let i = 0; i < 8; i += 1)
-    token += Math.floor(Math.random() * 16).toString(16);
+    token += Math.floor(scanRandom() * 16).toString(16);
   return token;
 }
 

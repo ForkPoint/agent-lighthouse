@@ -8,6 +8,7 @@ import {
 } from "#core/__tests__/test-utils";
 import type { CheckContext, PageContext } from "#core/check-context";
 import type { FetchResult } from "#core/fetcher";
+import { withScanEnvironment } from "#core/scan-environment";
 import {
   AuditTier,
   CheckPriority,
@@ -154,6 +155,18 @@ describe("SecurityHeaderHygieneAudit — RFC 9116 conformance", () => {
     expect(result.status).toBe(CheckStatus.Warn);
     expect(result.priority).toBe(CheckPriority.Low);
     expect(result.found).toContain("expired");
+  });
+
+  it("judges Expires against the scan's clock, not the machine's", () => {
+    const file = mockFetchResult(
+      "Contact: mailto:s@example.com\nExpires: 2026-06-01T00:00:00.000Z\n",
+      200,
+    );
+    const at = (iso: string) =>
+      withScanEnvironment({ now: () => Date.parse(iso) }, () => withFile(file));
+
+    expect(at("2026-01-01T00:00:00.000Z").status).toBe(CheckStatus.Pass);
+    expect(at("2026-12-01T00:00:00.000Z").status).toBe(CheckStatus.Warn);
   });
 
   it("does not accept a file without a Contact field", () => {

@@ -1,4 +1,4 @@
-import { randomBytes } from "node:crypto";
+import { scanRandomHex } from "#core/scan-environment";
 import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
 import type { CheckContext } from "#core/check-context";
@@ -23,7 +23,7 @@ const SNIFF_BYTES = 512;
 
 /** A name no site can be serving on purpose. */
 function randomProbeName(): string {
-  return `${randomBytes(16).toString("hex")}.txt`;
+  return `${scanRandomHex(16)}.txt`;
 }
 
 /**

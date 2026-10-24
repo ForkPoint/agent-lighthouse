@@ -31,6 +31,7 @@ import {
   FixEffort,
   ScoreDisplayMode,
 } from "#core/types";
+import { scanNow } from "#core/scan-environment";
 
 const DAY_MS = 86_400_000;
 /** How many URLs to cross-validate. Each one that was not already scanned costs a request. */
@@ -247,7 +248,7 @@ export class SitemapLastmodVerifiabilityAudit extends Audit {
 
     const valid = withLastmod.filter((entry) => isW3CDateTime(entry.lastmod));
     const malformed = withLastmod.length - valid.length;
-    const now = Date.now();
+    const now = scanNow();
     const future = valid.filter(
       (entry) => Date.parse(entry.lastmod) > now + FUTURE_SKEW_MS,
     );

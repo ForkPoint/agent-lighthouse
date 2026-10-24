@@ -1,5 +1,6 @@
 import { vi } from "vitest";
 import {
+  BASELINE_UA,
   SCANNER_USER_AGENT,
   MAX_RESPONSE_BODY_BYTES,
   REQUEST_TIMEOUT_MS,
@@ -31,7 +32,9 @@ import {
   isSafeUrl,
   MAX_REDIRECTS,
   splitCredentials,
+  type HttpExchange,
 } from "./fetcher";
+import { withScanEnvironment } from "./scan-environment";
 import { HttpMethod } from "./types";
 import type { RequestScheduler } from "./request-scheduler";
 
@@ -1435,6 +1438,23 @@ describe("fetcher.fetch — requestScheduler", () => {
     );
   });
 
+  it("counts the browser baseline as the scanner's own agent", async () => {
+    mockRequest.mockResolvedValueOnce(mockResponse(403, "") as never);
+    const { scheduler, observe } = recordingScheduler();
+
+    await createFetcher({ requestScheduler: scheduler }).fetch({
+      url: "https://example.com/",
+      userAgent: BASELINE_UA,
+    });
+
+    expect(observe).toHaveBeenCalledWith(
+      "https://example.com/",
+      403,
+      undefined,
+      { ownAgent: true },
+    );
+  });
+
   it("keeps queue time out of the timings and the request timeout", async () => {
     const timeout = vi.spyOn(AbortSignal, "timeout");
     mockRequest.mockImplementationOnce(async () => {
@@ -1452,5 +1472,252 @@ describe("fetcher.fetch — requestScheduler", () => {
     expect(result.ttfbMs).toBe(40);
     expect(result.totalMs).toBe(40);
     expect(timeout).toHaveBeenCalledWith(REQUEST_TIMEOUT_MS);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// onExchange
+// ---------------------------------------------------------------------------
+
+describe("fetcher.fetch — onExchange", () => {
+  beforeEach(() => {
+    mockRequest.mockReset();
+    mockLookup.mockReset();
+    mockLookup.mockResolvedValue({ address: "93.184.216.34", family: 4 });
+  });
+
+  function capture() {
+    const exchanges: HttpExchange[] = [];
+    return { exchanges, onExchange: (e: HttpExchange) => exchanges.push(e) };
+  }
+
+  it("records one exchange per redirect hop, with the bytes read", async () => {
+    mockRequest
+      .mockResolvedValueOnce(
+        mockResponse(301, "", { location: "/end" }) as never,
+      )
+      .mockResolvedValueOnce(
+        mockResponse(200, "arrived", { "content-type": "text/plain" }) as never,
+      );
+    const { exchanges, onExchange } = capture();
+
+    const result = await createFetcher({ onExchange }).fetch({
+      url: "https://example.com/start",
+    });
+
+    expect(exchanges.map((e) => [e.fetchId, e.hop, e.request.url])).toEqual([
+      [1, 0, "https://example.com/start"],
+      [1, 1, "https://example.com/end"],
+    ]);
+    expect(exchanges[0]!.response).toMatchObject({
+      status: 301,
+      bodyRead: false,
+      headers: { location: "/end" },
+    });
+    expect(exchanges[0]!.response!.body.byteLength).toBe(0);
+    const last = exchanges[1]!;
+    expect(last.request.method).toBe(HttpMethod.Get);
+    expect(last.request.headers["User-Agent"]).toBe(SCANNER_USER_AGENT);
+    expect(last.response).toMatchObject({
+      status: 200,
+      bodyRead: true,
+      truncated: false,
+    });
+    expect(Buffer.from(last.response!.body).toString("utf8")).toBe("arrived");
+    expect([last.ttfbMs, last.totalMs]).toEqual([
+      result.ttfbMs,
+      result.totalMs,
+    ]);
+  });
+
+  it("keeps a header sent on several lines as separate lines", async () => {
+    mockRequest.mockResolvedValueOnce({
+      ...mockResponse(200, "ok"),
+      headers: { "x-robots-tag": ["noai", "googlebot: noindex"] },
+    } as never);
+    const { exchanges, onExchange } = capture();
+
+    const result = await createFetcher({ onExchange }).fetch({
+      url: "https://example.com/",
+    });
+
+    expect(result.headers["x-robots-tag"]).toBe("noai, googlebot: noindex");
+    expect(exchanges[0]!.response!.headers["x-robots-tag"]).toEqual([
+      "noai",
+      "googlebot: noindex",
+    ]);
+  });
+
+  it("records a request the scheduler refused, with no response", async () => {
+    const scheduler: RequestScheduler = {
+      acquire: vi.fn(async () => {
+        throw new Error("host stopped");
+      }),
+      observe: vi.fn(),
+    };
+    const { exchanges, onExchange } = capture();
+
+    const result = await createFetcher({
+      requestScheduler: scheduler,
+      onExchange,
+    }).fetch({ url: "https://example.com/" });
+
+    expect(exchanges).toHaveLength(1);
+    expect(exchanges[0]!.response).toBeUndefined();
+    expect(exchanges[0]!.error).toBe(result.error);
+  });
+
+  it("records a transport failure with the result's error", async () => {
+    mockRequest.mockRejectedValueOnce(
+      Object.assign(new Error("fetch failed"), {
+        cause: { code: "ECONNREFUSED" },
+      }),
+    );
+    const { exchanges, onExchange } = capture();
+
+    const result = await createFetcher({ onExchange }).fetch({
+      url: "https://example.com/",
+    });
+
+    expect(result.error).toBe("fetch failed (ECONNREFUSED)");
+    expect(exchanges[0]!.error).toBe("fetch failed (ECONNREFUSED)");
+  });
+
+  it("does not record the hop of a refused redirect", async () => {
+    mockRequest.mockResolvedValueOnce(
+      mockResponse(302, "", {
+        location: "http://169.254.169.254/latest/meta-data/",
+      }) as never,
+    );
+    const { exchanges, onExchange } = capture();
+
+    const result = await createFetcher({ onExchange }).fetch({
+      url: "https://example.com/start",
+    });
+
+    expect(result.error).toBe("redirect-refused");
+    expect(exchanges.map((e) => e.request.url)).toEqual([
+      "https://example.com/start",
+    ]);
+  });
+
+  it("marks a body cut at the read limit as truncated", async () => {
+    const big = new Uint8Array(MAX_RESPONSE_BODY_BYTES + 10).fill(1);
+    mockRequest.mockResolvedValueOnce(mockBinaryResponse(big) as never);
+    const { exchanges, onExchange } = capture();
+
+    await createFetcher({ onExchange }).fetch({
+      url: "https://example.com/image.png",
+      binary: true,
+    });
+
+    expect(exchanges[0]!.response).toMatchObject({ truncated: true });
+    expect(exchanges[0]!.response!.body.byteLength).toBe(
+      MAX_RESPONSE_BODY_BYTES,
+    );
+  });
+
+  it("marks a read that stopped on a chunk ending at the limit as truncated", async () => {
+    const chunks = [
+      new Uint8Array(MAX_RESPONSE_BODY_BYTES).fill(1),
+      new Uint8Array(10).fill(2),
+    ];
+    mockRequest.mockResolvedValueOnce({
+      statusCode: 200,
+      headers: {},
+      body: {
+        async *[Symbol.asyncIterator]() {
+          yield* chunks;
+        },
+        dump: vi.fn(),
+      },
+    } as never);
+    const { exchanges, onExchange } = capture();
+
+    await createFetcher({ onExchange }).fetch({
+      url: "https://example.com/image.png",
+      binary: true,
+    });
+
+    expect(exchanges[0]!.response).toMatchObject({
+      bodyRead: true,
+      truncated: true,
+    });
+  });
+
+  it("keeps the bytes that arrived before a body failed", async () => {
+    mockRequest.mockResolvedValueOnce({
+      statusCode: 200,
+      headers: {},
+      body: {
+        async *[Symbol.asyncIterator]() {
+          yield Buffer.from("half a pa");
+          throw new Error("socket hang up");
+        },
+        dump: vi.fn(),
+      },
+    } as never);
+    const { exchanges, onExchange } = capture();
+
+    const result = await createFetcher({ onExchange }).fetch({
+      url: "https://example.com/",
+    });
+
+    expect(result.status).toBe(0);
+    expect(exchanges[0]!.error).toBe(result.error);
+    expect(exchanges[0]!.response).toMatchObject({
+      status: 200,
+      bodyRead: false,
+    });
+    expect(Buffer.from(exchanges[0]!.response!.body).toString("utf8")).toBe(
+      "half a pa",
+    );
+  });
+
+  it("keeps the site's answer when the capture callback throws, and counts it", async () => {
+    mockRequest.mockResolvedValueOnce(mockResponse(200, "ok") as never);
+    const fetcher = createFetcher({
+      onExchange: () => {
+        throw new Error("capture disk full");
+      },
+    });
+
+    const result = await fetcher.fetch({ url: "https://example.com/" });
+
+    expect(result.status).toBe(200);
+    expect(result.body).toBe("ok");
+    expect(fetcher.summary()).toMatchObject({
+      statuses: { "2xx": 1 },
+      captureErrors: 1,
+    });
+  });
+
+  it("redacts credentials from the recorded request", async () => {
+    mockRequest.mockResolvedValueOnce(mockResponse(200, "ok") as never);
+    const { exchanges, onExchange } = capture();
+
+    await createFetcher({ onExchange }).fetch({
+      url: "https://user:secret@example.com/",
+    });
+
+    expect(exchanges[0]!.request.url).toBe("https://example.com/");
+    expect(exchanges[0]!.request.headers["Authorization"]).toBe("[redacted]");
+    expect(JSON.stringify(exchanges)).not.toContain("secret");
+  });
+});
+
+describe("isSafeUrl — scan resolver", () => {
+  beforeEach(() => mockLookup.mockReset());
+
+  it("resolves through the scan's resolver instead of the system's", async () => {
+    const lookup = vi.fn(async () => ({ address: "10.0.0.1" }));
+
+    const safe = await withScanEnvironment({ lookup }, () =>
+      isSafeUrl("https://example.com/"),
+    );
+
+    expect(safe).toBe(false);
+    expect(lookup).toHaveBeenCalledWith("example.com");
+    expect(mockLookup).not.toHaveBeenCalled();
   });
 });

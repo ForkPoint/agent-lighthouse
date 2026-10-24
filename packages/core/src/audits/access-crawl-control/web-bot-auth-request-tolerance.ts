@@ -19,6 +19,7 @@ import {
   FixEffort,
   ScoreDisplayMode,
 } from "#core/types";
+import { scanNow } from "#core/scan-environment";
 
 /** The derived components the Web Bot Auth profile signs. */
 const COVERED = ["@authority", "@method", "@path"] as const;
@@ -178,7 +179,7 @@ export class WebBotAuthRequestToleranceAudit extends Audit {
       followRedirects: true,
       headers: signedHeaders(
         url,
-        Date.now(),
+        scanNow(),
         WebBotAuthRequestToleranceAudit.AGENT_DIRECTORY,
       ),
     });

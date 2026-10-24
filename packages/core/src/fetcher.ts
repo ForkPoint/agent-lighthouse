@@ -2,17 +2,24 @@ import type { RequestScheduler } from "./request-scheduler";
 import { request, Agent, type Dispatcher } from "undici";
 import dns from "node:dns/promises";
 import {
+  BASELINE_UA,
   SCANNER_USER_AGENT,
   REQUEST_TIMEOUT_MS,
   MAX_RESPONSE_BODY_BYTES,
 } from "./constants";
 import { isPrivateIp } from "./url-utils";
 import { LogField, logger } from "./logger";
+import { scanLookup } from "./scan-environment";
 
 const log = logger.child({ [LogField.Component]: "fetcher" });
 import { RedirectCookieJar } from "./redirect-cookies";
 import { HttpMethod } from "./types";
 
+/**
+ * Whether a URL is http(s) and resolves to a public address. Inside a scan
+ * that set a resolver (see `ScanOptions.lookup`), the name resolves through
+ * it instead of the system's.
+ */
 export async function isSafeUrl(url: string): Promise<boolean> {
   try {
     const parsed = new URL(url);
@@ -26,7 +33,10 @@ export async function isSafeUrl(url: string): Promise<boolean> {
     )
       return false;
     if (isPrivateIp(hostname)) return false;
-    const { address } = await dns.lookup(hostname);
+    const lookup = scanLookup();
+    const { address } = lookup
+      ? await lookup(hostname)
+      : await dns.lookup(hostname);
     return !isPrivateIp(address);
   } catch {
     return false;
@@ -159,11 +169,79 @@ export interface FetcherSummary {
   failures: Record<string, number>;
   /** Requests not yet answered, with how long each has waited. */
   open: Array<{ url: string; ms: number }>;
+  /**
+   * Exchanges whose `onExchange` call threw. Present only when some did:
+   * those requests kept their results, but the capture lacks them, so a
+   * replay of it is incomplete.
+   */
+  captureErrors?: number;
+}
+
+/**
+ * One HTTP request the fetcher sent, or tried to send, and what came back.
+ * A `fetch` that follows redirects sends one request per hop, and each hop
+ * is its own exchange. A request the scheduler refused is an exchange with
+ * an `error` and no `response`.
+ */
+export interface HttpExchange {
+  /** Which `fetch` call sent it, counted per fetcher from 1. Hops share it. */
+  fetchId: number;
+  /** 0 for the first request of a fetch, then one more per redirect hop. */
+  hop: number;
+  /**
+   * When the request left, after any wait for the scheduler, as ISO 8601.
+   * For a request the scheduler refused, when the fetcher asked for it.
+   */
+  startedAt: string;
+  request: {
+    url: string;
+    method: HttpMethod;
+    /** As sent. `Authorization` and `Proxy-Authorization` values are replaced by `[redacted]`. */
+    headers: Record<string, string>;
+    body?: string;
+  };
+  response?: {
+    status: number;
+    /** As received: a field sent on several lines keeps one entry per line. */
+    headers: Record<string, string | string[]>;
+    /**
+     * The bytes the fetcher read. Empty when it discarded the body unread:
+     * a redirect hop, an OPTIONS response, or a refused redirect. When the
+     * body failed mid-stream, the bytes that arrived before the `error`.
+     */
+    body: Uint8Array;
+    /** Whether the fetcher read the body to its end or to the size limit. */
+    bodyRead: boolean;
+    /** The read stopped at the fetcher's size limit; the body may go on. */
+    truncated: boolean;
+  };
+  /** Why no complete response was read, as the FetchResult reports it. */
+  error?: string;
+  /**
+   * The fetch's clocks when this exchange ended, as `FetchResult` reports
+   * them: milliseconds since the fetch started, scheduler waits excluded.
+   * On the last exchange of a fetch they equal the result's.
+   */
+  ttfbMs: number;
+  totalMs: number;
+}
+
+/** What `createFetcher` returns, and what `ScanOptions.fetcher` accepts. */
+export interface Fetcher {
+  fetch(options: FetchOptions): Promise<FetchResult>;
+  summary(): FetcherSummary;
 }
 
 export interface FetcherOptions {
   /** Shared request pacing across scans, including redirect hops. */
   requestScheduler?: RequestScheduler;
+  /**
+   * Called once per request, redirect hops included, after its response
+   * body is read or discarded, or after it failed. The record holds the
+   * bytes the fetcher judged, so a caller can store the scan's evidence and
+   * replay it later with `createReplay`.
+   */
+  onExchange?: (exchange: HttpExchange) => void;
   /**
    * undici dispatcher for every request this fetcher makes.
    *
@@ -278,27 +356,114 @@ const TEXT_READ_CAP_BYTES = 3 * MAX_RESPONSE_BODY_BYTES + 3;
 /**
  * Reads at most `cap` bytes of a response body, then stops. Leaving the loop
  * early destroys the stream, which aborts the rest of the download, so an
- * endless or huge body never sits in memory whole.
+ * endless or huge body never sits in memory whole. `truncated` means the
+ * read stopped at `cap`: the body may have ended there or gone on.
+ *
+ * When the stream fails, `onPartial` gets the bytes that arrived before the
+ * error is rethrown.
  */
 async function readCapped(
   body: AsyncIterable<Uint8Array>,
   cap: number,
-): Promise<Uint8Array> {
+  onPartial?: (bytes: Uint8Array) => void,
+): Promise<{ bytes: Uint8Array; truncated: boolean }> {
   const chunks: Uint8Array[] = [];
   let size = 0;
-  for await (const chunk of body) {
-    const room = cap - size;
-    chunks.push(chunk.byteLength > room ? chunk.subarray(0, room) : chunk);
-    size += Math.min(chunk.byteLength, room);
-    if (size >= cap) break;
+  try {
+    for await (const chunk of body) {
+      const room = cap - size;
+      chunks.push(chunk.byteLength > room ? chunk.subarray(0, room) : chunk);
+      size += Math.min(chunk.byteLength, room);
+      if (size >= cap) break;
+    }
+  } catch (error) {
+    onPartial?.(new Uint8Array(Buffer.concat(chunks, size)));
+    throw error;
   }
-  return new Uint8Array(Buffer.concat(chunks, size));
+  return {
+    bytes: new Uint8Array(Buffer.concat(chunks, size)),
+    truncated: size >= cap,
+  };
 }
 
-export function createFetcher(fetcherOptions: FetcherOptions = {}) {
+/** The response shape the fetcher reads; undici's `request` returns it. */
+export interface TransportResponse {
+  statusCode: number;
+  headers: Record<string, string | string[] | undefined>;
+  body: AsyncIterable<Uint8Array> & { dump(): Promise<unknown> };
+  /** A replayed response carries the clocks its capture reported. */
+  timing?: { ttfbMs: number; totalMs: number };
+}
+
+/** Sends one request. The default is undici's `request`. */
+export type Transport = (
+  url: string,
+  init: {
+    method: HttpMethod;
+    headers: Record<string, string>;
+    body?: string;
+    signal: AbortSignal;
+    dispatcher: Dispatcher;
+  },
+) => Promise<TransportResponse>;
+
+/** A replayed failure, with the clocks its capture reported. */
+export class ReplayedFailure extends Error {
+  readonly timing: { ttfbMs: number; totalMs: number };
+  constructor(message: string, timing: { ttfbMs: number; totalMs: number }) {
+    super(message);
+    this.name = "ReplayedFailure";
+    this.timing = timing;
+  }
+}
+
+const REDACTED_HEADERS = new Set(["authorization", "proxy-authorization"]);
+
+function capturedHeaders(
+  headers: Record<string, string>,
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [name, value] of Object.entries(headers))
+    out[name] = REDACTED_HEADERS.has(name.toLowerCase()) ? "[redacted]" : value;
+  return out;
+}
+
+function receivedHeaders(
+  headers: TransportResponse["headers"],
+): Record<string, string | string[]> {
+  const out: Record<string, string | string[]> = {};
+  for (const [name, value] of Object.entries(headers))
+    if (value !== undefined)
+      out[name] = Array.isArray(value) ? [...value] : value;
+  return out;
+}
+
+/**
+ * Whether a User-Agent speaks for this client. The browser baseline counts:
+ * a host that refuses a mainstream browser refuses the client, not one
+ * crawler token, so the scheduler stops it as it would on a 403 to the
+ * scanner's own User-Agent.
+ */
+function isOwnAgent(userAgent: string): boolean {
+  return userAgent === SCANNER_USER_AGENT || userAgent === BASELINE_UA;
+}
+
+const undiciTransport: Transport = (url, init) => request(url, init);
+
+export function createFetcher(fetcherOptions: FetcherOptions = {}): Fetcher {
+  return createFetcherWith(fetcherOptions, undiciTransport);
+}
+
+/** {@link createFetcher} over another transport; replay uses it. */
+export function createFetcherWith(
+  fetcherOptions: FetcherOptions,
+  transport: Transport,
+): Fetcher {
   const dispatcher = fetcherOptions.dispatcher ?? noRedirectAgent;
   const pending = new Set<{ url: string; since: number }>();
   const tally = createTally();
+  const onExchange = fetcherOptions.onExchange;
+  let fetchCount = 0;
   const gate =
     fetcherOptions.maxConcurrent && fetcherOptions.maxConcurrent > 0
       ? createGate(Math.floor(fetcherOptions.maxConcurrent))
@@ -341,6 +506,7 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
         url: splitCredentials(entry.url).url,
         ms: Math.round(now - entry.since),
       })),
+      ...(tally.captureErrors > 0 && { captureErrors: tally.captureErrors }),
     };
   }
 
@@ -363,15 +529,65 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
     // the credential-free URL for the request, logs, and returned result.
     const { url: targetUrl, authHeader } = splitCredentials(url);
 
+    const fetchId = (fetchCount += 1);
     const start = performance.now();
     let queuedMs = 0;
     let release: (() => void) | undefined;
     let ttfbMs = 0;
     const elapsed = () => performance.now() - start - queuedMs;
+    // The exchange of the request in flight, until it is reported.
+    let open: HttpExchange | undefined;
+    let replayedTiming: { ttfbMs: number; totalMs: number } | undefined;
+    const report = (
+      exchange: HttpExchange,
+      ttfb: number,
+      total: number,
+    ): void => {
+      open = undefined;
+      if (!onExchange) return;
+      exchange.ttfbMs = Math.round(ttfb);
+      exchange.totalMs = Math.round(total);
+      // A capture that fails, such as a full disk, must not change what the
+      // site answered. The summary counts it, so the caller can mark the
+      // capture incomplete.
+      try {
+        onExchange(exchange);
+      } catch (error) {
+        tally.captureErrors += 1;
+        log.warn(
+          {
+            [LogField.Url]: exchange.request.url,
+            [LogField.Error]: {
+              message: error instanceof Error ? error.message : String(error),
+            },
+          },
+          "Capture callback failed; the capture lacks this exchange",
+        );
+      }
+    };
     const send = async (
       target: string,
-      init: Parameters<typeof request>[1],
-    ) => {
+      init: {
+        method: HttpMethod;
+        headers: Record<string, string>;
+        body?: string;
+      },
+      hop: number,
+    ): Promise<TransportResponse> => {
+      const exchange: HttpExchange = {
+        fetchId,
+        hop,
+        startedAt: new Date().toISOString(),
+        request: {
+          url: target,
+          method: init.method,
+          headers: capturedHeaders(init.headers),
+          ...(init.body !== undefined && { body: init.body }),
+        },
+        ttfbMs: 0,
+        totalMs: 0,
+      };
+      open = exchange;
       const queuedAt = performance.now();
       try {
         if (fetcherOptions.requestScheduler) {
@@ -384,19 +600,33 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
         queuedMs += performance.now() - queuedAt;
       }
       externalSignal?.throwIfAborted();
+      // The scheduler's wait is not part of the request.
+      exchange.startedAt = new Date().toISOString();
       const timeoutSignal = AbortSignal.timeout(
         Math.max(0, Math.ceil(timeout - elapsed())),
       );
       const signal = externalSignal
         ? AbortSignal.any([timeoutSignal, externalSignal])
         : timeoutSignal;
-      const response = await request(target, { ...init, signal });
+      const response = await transport(target, {
+        ...init,
+        signal,
+        dispatcher,
+      });
+      exchange.response = {
+        status: response.statusCode,
+        headers: receivedHeaders(response.headers),
+        body: new Uint8Array(0),
+        bodyRead: false,
+        truncated: false,
+      };
       fetcherOptions.requestScheduler?.observe(
         target,
         response.statusCode,
         response.headers["retry-after"],
-        { ownAgent: (userAgent ?? SCANNER_USER_AGENT) === SCANNER_USER_AGENT },
+        { ownAgent: isOwnAgent(init.headers["User-Agent"] ?? "") },
       );
+      replayedTiming = response.timing;
       return response;
     };
 
@@ -431,12 +661,15 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
       let currentMethod = method;
       let currentBody = requestBody;
 
-      let response = await send(currentUrl, {
-        method: currentMethod,
-        headers: reqHeaders,
-        ...(currentBody !== undefined && { body: currentBody }),
-        dispatcher,
-      });
+      let response = await send(
+        currentUrl,
+        {
+          method: currentMethod,
+          headers: reqHeaders,
+          ...(currentBody !== undefined && { body: currentBody }),
+        },
+        0,
+      );
 
       // Follow redirects here rather than handing the chain to undici's
       // interceptor. The isSafeUrl gate only ever saw the URL the caller
@@ -483,7 +716,8 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
             { [LogField.Url]: targetUrl, redirectTo: next },
             "Refusing redirect out of public address space",
           );
-          const refusedMs = elapsed();
+          const refusedMs = replayedTiming?.totalMs ?? elapsed();
+          if (open) report(open, refusedMs, refusedMs);
           return {
             url: targetUrl,
             finalUrl: currentUrl,
@@ -501,6 +735,7 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
         await response.body.dump();
         release?.();
         release = undefined;
+        if (open) report(open, elapsed(), elapsed());
         cookieJar.store(response.headers["set-cookie"], currentUrl);
 
         // 303 always continues as a GET without a body; 301 and 302 do the same
@@ -537,34 +772,59 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
           );
         }
 
-        response = await send(currentUrl, {
-          method: currentMethod,
-          headers: hopHeaders,
-          ...(currentBody !== undefined && { body: currentBody }),
-          dispatcher,
-        });
+        response = await send(
+          currentUrl,
+          {
+            method: currentMethod,
+            headers: hopHeaders,
+            ...(currentBody !== undefined && { body: currentBody }),
+          },
+          hops,
+        );
       }
 
-      ttfbMs = elapsed();
+      ttfbMs = replayedTiming?.ttfbMs ?? elapsed();
 
       let body = "";
       let bytes: Uint8Array | undefined;
+      let read: { bytes: Uint8Array; truncated: boolean } | undefined;
+      // Bytes that arrived before the body failed stay in the capture.
+      const keepPartial = (partial: Uint8Array) => {
+        if (open?.response) open.response.body = partial;
+      };
       if (currentMethod === HttpMethod.Options) {
         // For OPTIONS requests, consume and discard the body
         await response.body.dump();
       } else if (binary) {
-        bytes = await readCapped(response.body, MAX_RESPONSE_BODY_BYTES);
+        read = await readCapped(
+          response.body,
+          MAX_RESPONSE_BODY_BYTES,
+          keepPartial,
+        );
+        bytes = read.bytes;
       } else {
         // The body is cut to MAX_RESPONSE_BODY_BYTES UTF-16 units below. One
         // unit takes at most 3 UTF-8 bytes, so 3x that many bytes decode to the
         // same first units as the whole body would: the verdicts do not move,
         // and a body of any size costs at most this much to read.
         // TextDecoder strips a BOM and replaces invalid bytes as `text()` did.
-        body = new TextDecoder().decode(
-          await readCapped(response.body, TEXT_READ_CAP_BYTES),
+        read = await readCapped(
+          response.body,
+          TEXT_READ_CAP_BYTES,
+          keepPartial,
         );
+        body = new TextDecoder().decode(read.bytes);
       }
-      const totalMs = elapsed();
+      const totalMs = replayedTiming?.totalMs ?? elapsed();
+      if (open) {
+        const exchange: HttpExchange = open;
+        if (exchange.response && read) {
+          exchange.response.body = read.bytes;
+          exchange.response.bodyRead = true;
+          exchange.response.truncated = read.truncated;
+        }
+        report(exchange, ttfbMs, totalMs);
+      }
 
       tally.answered(response.statusCode);
       log.trace(
@@ -615,13 +875,21 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
         ...(redirectChain.length > 0 ? { redirectChain } : {}),
       };
     } catch (err) {
-      const totalMs = elapsed();
+      const replayed = err instanceof ReplayedFailure ? err.timing : undefined;
+      const totalMs = replayed?.totalMs ?? elapsed();
       const message =
         err instanceof Error ? err.message : "Unknown fetch error";
       // Surface undici's underlying cause (ENOTFOUND, ECONNREFUSED, timeout, TLS…)
       // so an opaque "fetch failed" becomes diagnosable in the logs.
       const code = errorCode(err);
       const detail = code ? `${message} (${code})` : message;
+      const reportedTtfb = replayed?.ttfbMs ?? (ttfbMs || totalMs);
+
+      if (open) {
+        const exchange: HttpExchange = open;
+        exchange.error = detail;
+        report(exchange, reportedTtfb, totalMs);
+      }
 
       // A failed fetch is a result, not a fault: the caller reads `error` and
       // decides. One line at warn names it; the object and its stack are
@@ -645,7 +913,7 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
         status: 0,
         headers: {},
         body: "",
-        ttfbMs: Math.round(ttfbMs || totalMs),
+        ttfbMs: Math.round(reportedTtfb),
         totalMs: Math.round(totalMs),
         contentType: "",
         contentLength: 0,
@@ -665,6 +933,7 @@ function createTally() {
     requests: 0,
     statuses: {} as Record<string, number>,
     failures: {} as Record<string, number>,
+    captureErrors: 0,
     answered(status: number): void {
       tally.requests += 1;
       const group = `${Math.floor(status / 100)}xx`;

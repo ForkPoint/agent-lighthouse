@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { FetchResult } from "./fetcher";
+import type { FetchResult, HttpExchange } from "./fetcher";
 import {
   ORIGIN_EVIDENCE_VERSION,
   DEFAULT_ORIGIN_CACHE_TTL_MS,
@@ -17,6 +17,12 @@ export interface OriginEvidence {
   readAt: string; // ISO timestamp
   rootFiles: Record<string, FetchResult>;
   originHomepage?: FetchResult;
+  /**
+   * The exchanges this evidence was read from, kept when the scan that read
+   * it captured them. A later capturing scan that reuses the evidence reports
+   * them as its own, so its capture replays without a request to the site.
+   */
+  exchanges?: HttpExchange[];
 }
 
 /** Headers that make a scan authenticated. They bypass the cache and never enter a key. */
