@@ -161,7 +161,9 @@ export interface ScanOptions {
   /**
    * Called once per request the scan sends, redirect hops included, with
    * what came back; see {@link HttpExchange}. Store the exchanges to replay
-   * the scan later with `createReplay`.
+   * the scan later with `createReplay`. A scan that reuses cached origin
+   * evidence reports the exchanges that evidence was read from, so the
+   * capture holds every response the scan judged.
    */
   onExchange?: ((exchange: HttpExchange) => void) | undefined;
   /**
@@ -463,15 +465,36 @@ async function scanWithinBudget(
     onEvent?.(event);
   });
   const start = scanNow();
+  const baseUrl = new URL(url).origin;
+  // Exchanges of the origin evidence (root files and origin homepage), kept
+  // with the cached evidence: a later scan that reuses it reports them.
+  // Redirect hops share their fetch's id, so a hop follows its first request.
+  const originUrls = new Set<string>([`${baseUrl}/`]);
+  const originFetchIds = new Set<number>();
+  const originExchanges: HttpExchange[] = [];
+  // Audits later fetch some of these URLs again; those are not evidence.
+  let readingOrigin = true;
+  const captureExchange = options?.onExchange;
+  const onExchange =
+    captureExchange &&
+    ((exchange: HttpExchange) => {
+      if (
+        readingOrigin &&
+        (originFetchIds.has(exchange.fetchId) ||
+          (exchange.hop === 0 && originUrls.has(exchange.request.url)))
+      ) {
+        originFetchIds.add(exchange.fetchId);
+        originExchanges.push(exchange);
+      }
+      captureExchange(exchange);
+    });
   const fetcher =
     options?.fetcher ??
     createFetcher({
       ...(options?.requestScheduler !== undefined && {
         requestScheduler: options.requestScheduler,
       }),
-      ...(options?.onExchange !== undefined && {
-        onExchange: options.onExchange,
-      }),
+      ...(onExchange !== undefined && { onExchange }),
       ...(options?.dispatcher !== undefined && {
         dispatcher: options.dispatcher,
       }),
@@ -481,7 +504,6 @@ async function scanWithinBudget(
       ...(options?.headers !== undefined && { headers: options.headers }),
     });
 
-  const baseUrl = new URL(url).origin;
   const domain = new URL(url).hostname;
   const displayUrl = splitCredentials(url).url;
 
@@ -542,6 +564,7 @@ async function scanWithinBudget(
     "/pages/our-story",
     "/our-story",
   ];
+  for (const path of rootFilePaths) originUrls.add(`${baseUrl}${path}`);
 
   const originCache = options?.originCache ?? defaultOriginCache;
   const bypassCache =
@@ -557,6 +580,9 @@ async function scanWithinBudget(
   let cachedEvidence = !bypassCache
     ? originCache.get(originCacheKey)
     : undefined;
+  // A capturing scan can reuse evidence only with the exchanges behind it;
+  // without them its capture would lack the root files.
+  if (onExchange && !cachedEvidence?.exchanges) cachedEvidence = undefined;
   let rootFiles: Record<string, FetchResult>;
   let originHomepageResult: FetchResult | undefined;
   let originCached = false;
@@ -571,6 +597,8 @@ async function scanWithinBudget(
     originHomepageResult = cachedEvidence.originHomepage;
     originCached = true;
     originReadAt = cachedEvidence.readAt;
+    for (const exchange of cachedEvidence.exchanges ?? [])
+      captureExchange?.(exchange);
     tracker.phaseStart(PhaseId.FetchRoot, 0);
     tracker.phaseDone();
     log.debug({ origin: baseUrl }, "Reusing cached origin evidence");
@@ -670,8 +698,10 @@ async function scanWithinBudget(
       ...(originHomepageResult !== undefined && {
         originHomepage: originHomepageResult,
       }),
+      ...(onExchange && { exchanges: [...originExchanges] }),
     });
   }
+  readingOrigin = false;
 
   // Parse the requested page once, here, so the gateway check below and
   // Phase 2b share one DOM instead of parsing a large page twice.

@@ -71,9 +71,11 @@ export interface RequestSchedulerOptions {
   /** Host state from an earlier scheduler, from {@link DefaultRequestScheduler.exportState}. */
   state?: readonly HostState[];
   /**
-   * Called after a response changes what the scheduler keeps about a host:
-   * a stop, a cooldown, the 503 count or the last status. A caller that
-   * persists host state saves it here, before the request is released.
+   * Called after each response, with what the scheduler now keeps about the
+   * host: a stop, a cooldown, the 503 count and the last status. A caller
+   * that persists host state saves it here, before the request is released.
+   * The `gapMs` pause set on release is not reported: it lasts milliseconds,
+   * and saving it would add a write per request for no gain.
    */
   onChange?: (state: HostState) => void;
 }
@@ -251,14 +253,16 @@ export function createRequestScheduler(
             ])
           : previous);
         signal?.throwIfAborted();
-        if (site.stopped)
-          throw new HostStoppedError(site.host, site.stopReason);
-        const wait = site.readyAt - Date.now();
-        if (wait > 0) await pause(wait, undefined, { signal });
-        signal?.throwIfAborted();
-        // A response to another request can stop the host during the wait.
-        if (site.stopped)
-          throw new HostStoppedError(site.host, site.stopReason);
+        // A response to another request can stop the host or extend its
+        // cooldown during the wait, so check again after every pause.
+        for (;;) {
+          if (site.stopped)
+            throw new HostStoppedError(site.host, site.stopReason);
+          const wait = site.readyAt - Date.now();
+          if (wait <= 0) break;
+          await pause(wait, undefined, { signal });
+          signal?.throwIfAborted();
+        }
         site.activeUrl = url;
         site.activeSince = Date.now();
         let released = false;

@@ -169,6 +169,12 @@ export interface FetcherSummary {
   failures: Record<string, number>;
   /** Requests not yet answered, with how long each has waited. */
   open: Array<{ url: string; ms: number }>;
+  /**
+   * Exchanges whose `onExchange` call threw. Present only when some did:
+   * those requests kept their results, but the capture lacks them, so a
+   * replay of it is incomplete.
+   */
+  captureErrors?: number;
 }
 
 /**
@@ -200,10 +206,11 @@ export interface HttpExchange {
     headers: Record<string, string | string[]>;
     /**
      * The bytes the fetcher read. Empty when it discarded the body unread:
-     * a redirect hop, an OPTIONS response, or a refused redirect.
+     * a redirect hop, an OPTIONS response, or a refused redirect. When the
+     * body failed mid-stream, the bytes that arrived before the `error`.
      */
     body: Uint8Array;
-    /** Whether the fetcher read the body. */
+    /** Whether the fetcher read the body to its end or to the size limit. */
     bodyRead: boolean;
     /** The read stopped at the fetcher's size limit; the body may go on. */
     truncated: boolean;
@@ -349,23 +356,34 @@ const TEXT_READ_CAP_BYTES = 3 * MAX_RESPONSE_BODY_BYTES + 3;
 /**
  * Reads at most `cap` bytes of a response body, then stops. Leaving the loop
  * early destroys the stream, which aborts the rest of the download, so an
- * endless or huge body never sits in memory whole.
+ * endless or huge body never sits in memory whole. `truncated` means the
+ * read stopped at `cap`: the body may have ended there or gone on.
+ *
+ * When the stream fails, `onPartial` gets the bytes that arrived before the
+ * error is rethrown.
  */
 async function readCapped(
   body: AsyncIterable<Uint8Array>,
   cap: number,
+  onPartial?: (bytes: Uint8Array) => void,
 ): Promise<{ bytes: Uint8Array; truncated: boolean }> {
   const chunks: Uint8Array[] = [];
   let size = 0;
-  let truncated = false;
-  for await (const chunk of body) {
-    const room = cap - size;
-    if (chunk.byteLength > room) truncated = true;
-    chunks.push(chunk.byteLength > room ? chunk.subarray(0, room) : chunk);
-    size += Math.min(chunk.byteLength, room);
-    if (size >= cap) break;
+  try {
+    for await (const chunk of body) {
+      const room = cap - size;
+      chunks.push(chunk.byteLength > room ? chunk.subarray(0, room) : chunk);
+      size += Math.min(chunk.byteLength, room);
+      if (size >= cap) break;
+    }
+  } catch (error) {
+    onPartial?.(new Uint8Array(Buffer.concat(chunks, size)));
+    throw error;
   }
-  return { bytes: new Uint8Array(Buffer.concat(chunks, size)), truncated };
+  return {
+    bytes: new Uint8Array(Buffer.concat(chunks, size)),
+    truncated: size >= cap,
+  };
 }
 
 /** The response shape the fetcher reads; undici's `request` returns it. */
@@ -488,6 +506,7 @@ export function createFetcherWith(
         url: splitCredentials(entry.url).url,
         ms: Math.round(now - entry.since),
       })),
+      ...(tally.captureErrors > 0 && { captureErrors: tally.captureErrors }),
     };
   }
 
@@ -528,7 +547,23 @@ export function createFetcherWith(
       if (!onExchange) return;
       exchange.ttfbMs = Math.round(ttfb);
       exchange.totalMs = Math.round(total);
-      onExchange(exchange);
+      // A capture that fails, such as a full disk, must not change what the
+      // site answered. The summary counts it, so the caller can mark the
+      // capture incomplete.
+      try {
+        onExchange(exchange);
+      } catch (error) {
+        tally.captureErrors += 1;
+        log.warn(
+          {
+            [LogField.Url]: exchange.request.url,
+            [LogField.Error]: {
+              message: error instanceof Error ? error.message : String(error),
+            },
+          },
+          "Capture callback failed; the capture lacks this exchange",
+        );
+      }
     };
     const send = async (
       target: string,
@@ -753,11 +788,19 @@ export function createFetcherWith(
       let body = "";
       let bytes: Uint8Array | undefined;
       let read: { bytes: Uint8Array; truncated: boolean } | undefined;
+      // Bytes that arrived before the body failed stay in the capture.
+      const keepPartial = (partial: Uint8Array) => {
+        if (open?.response) open.response.body = partial;
+      };
       if (currentMethod === HttpMethod.Options) {
         // For OPTIONS requests, consume and discard the body
         await response.body.dump();
       } else if (binary) {
-        read = await readCapped(response.body, MAX_RESPONSE_BODY_BYTES);
+        read = await readCapped(
+          response.body,
+          MAX_RESPONSE_BODY_BYTES,
+          keepPartial,
+        );
         bytes = read.bytes;
       } else {
         // The body is cut to MAX_RESPONSE_BODY_BYTES UTF-16 units below. One
@@ -765,7 +808,11 @@ export function createFetcherWith(
         // same first units as the whole body would: the verdicts do not move,
         // and a body of any size costs at most this much to read.
         // TextDecoder strips a BOM and replaces invalid bytes as `text()` did.
-        read = await readCapped(response.body, TEXT_READ_CAP_BYTES);
+        read = await readCapped(
+          response.body,
+          TEXT_READ_CAP_BYTES,
+          keepPartial,
+        );
         body = new TextDecoder().decode(read.bytes);
       }
       const totalMs = replayedTiming?.totalMs ?? elapsed();
@@ -886,6 +933,7 @@ function createTally() {
     requests: 0,
     statuses: {} as Record<string, number>,
     failures: {} as Record<string, number>,
+    captureErrors: 0,
     answered(status: number): void {
       tally.requests += 1;
       const group = `${Math.floor(status / 100)}xx`;

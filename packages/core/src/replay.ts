@@ -6,7 +6,7 @@ import {
   type Transport,
   type TransportResponse,
 } from "./fetcher";
-import type { HostLookup } from "./scan-environment";
+import { withScanEnvironment, type HostLookup } from "./scan-environment";
 
 /**
  * A scan's network, rebuilt from its captured exchanges. Pass `fetcher` and
@@ -24,6 +24,15 @@ export interface Replay {
   lookup: HostLookup;
   /** Requests the scan made that the capture holds no exchange for, in order. */
   misses(): string[];
+  /**
+   * Requests the capture holds more than once with different answers, such
+   * as a page fetched twice at once that the site served differently. The
+   * replay answers them in the order the live scan started them, but a check
+   * that starts its request earlier or later than it did live can get the
+   * other answer. A replay that differs from its live scan only on these
+   * requests is explained by them.
+   */
+  ambiguous(): string[];
 }
 
 /** The address the replay resolves a captured host to (TEST-NET-1, RFC 5737). */
@@ -54,34 +63,22 @@ function exactKey(
   return JSON.stringify([method, url, fields, body ?? null]);
 }
 
-function headerValue(
-  headers: Record<string, string>,
-  wanted: string,
-): string | undefined {
-  for (const [name, value] of Object.entries(headers))
-    if (name.toLowerCase() === wanted) return value;
-  return undefined;
-}
-
-function looseKey(
-  method: string,
-  url: string,
-  headers: Record<string, string>,
-): string {
-  return JSON.stringify([
-    method,
-    url,
-    headerValue(headers, "user-agent") ?? null,
-    headerValue(headers, "accept") ?? null,
-  ]);
-}
-
 function hostnameOf(url: string): string | undefined {
   try {
     return new URL(url).hostname.replace(/^\[|\]$/g, "").toLowerCase();
   } catch {
     return undefined;
   }
+}
+
+/** What a capture answered, for telling two answers apart. */
+function answerOf(exchange: HttpExchange): string {
+  const response = exchange.response;
+  return JSON.stringify([
+    exchange.error ?? null,
+    response?.status ?? null,
+    response ? Buffer.from(response.body).toString("base64") : null,
+  ]);
 }
 
 function bodyOf(
@@ -93,7 +90,10 @@ function bodyOf(
       if (bytes.byteLength > 0) yield bytes;
       if (failure) throw failure;
     },
-    dump: async () => undefined,
+    // A failed discard fails as it did live.
+    dump: async () => {
+      if (failure) throw failure;
+    },
   };
 }
 
@@ -102,27 +102,32 @@ function bodyOf(
  *
  * A request matches the first unused exchange with the same method, URL,
  * request headers and body, ignoring headers that change on every send,
- * such as a request signature. Failing that, it takes the first unused one
- * with the same method, URL, User-Agent and Accept. A request with no match
- * fails, as an unanswered request does, and is listed by `misses()`.
- * Each exchange answers once, so a replay serves one scan.
+ * such as a request signature. Matches go in the order the live scan
+ * started its requests, not the order they finished. A request with no
+ * match fails, as an unanswered request does, and is listed by `misses()`;
+ * it never takes the answer to a different request. Each exchange answers
+ * once, so a replay serves one scan.
  */
 export function createReplay(exchanges: readonly HttpExchange[]): Replay {
   const exact = new Map<string, HttpExchange[]>();
-  const loose = new Map<string, HttpExchange[]>();
   const hosts = new Set<string>();
-  for (const exchange of exchanges) {
+  // The capture lists exchanges as they finish; a live scan started them in
+  // fetch order, then hop order.
+  const started = [...exchanges].sort(
+    (a, b) => a.fetchId - b.fetchId || a.hop - b.hop,
+  );
+  for (const exchange of started) {
     const { method, url, headers, body } = exchange.request;
-    const add = (map: Map<string, HttpExchange[]>, key: string) => {
-      const queue = map.get(key);
-      if (queue) queue.push(exchange);
-      else map.set(key, [exchange]);
-    };
-    add(exact, exactKey(method, url, headers, body));
-    add(loose, looseKey(method, url, headers));
+    const key = exactKey(method, url, headers, body);
+    const queue = exact.get(key);
+    if (queue) queue.push(exchange);
+    else exact.set(key, [exchange]);
     const host = hostnameOf(url);
     if (host) hosts.add(host);
   }
+  const ambiguous = [...exact.values()]
+    .filter((queue) => new Set(queue.map(answerOf)).size > 1)
+    .map(([first]) => `${first!.request.method} ${first!.request.url}`);
   const used = new Set<HttpExchange>();
   const missed: string[] = [];
   const take = (queue: HttpExchange[] | undefined) => {
@@ -133,9 +138,9 @@ export function createReplay(exchanges: readonly HttpExchange[]): Replay {
 
   const transport: Transport = async (url, init) => {
     init.signal.throwIfAborted();
-    const exchange =
-      take(exact.get(exactKey(init.method, url, init.headers, init.body))) ??
-      take(loose.get(looseKey(init.method, url, init.headers)));
+    const exchange = take(
+      exact.get(exactKey(init.method, url, init.headers, init.body)),
+    );
     if (!exchange) {
       missed.push(`${init.method} ${url}`);
       throw new ReplayedFailure(`Not in the capture: ${init.method} ${url}`, {
@@ -160,14 +165,23 @@ export function createReplay(exchanges: readonly HttpExchange[]): Replay {
     };
   };
 
+  const lookup: HostLookup = async (hostname) => {
+    if (hosts.has(hostname.toLowerCase())) return { address: REPLAY_ADDRESS };
+    throw Object.assign(new Error(`getaddrinfo ENOTFOUND ${hostname}`), {
+      code: "ENOTFOUND",
+    });
+  };
+  const fetcher = createFetcherWith({}, transport);
   return {
-    fetcher: createFetcherWith({}, transport),
-    lookup: async (hostname) => {
-      if (hosts.has(hostname.toLowerCase())) return { address: REPLAY_ADDRESS };
-      throw Object.assign(new Error(`getaddrinfo ENOTFOUND ${hostname}`), {
-        code: "ENOTFOUND",
-      });
+    // Used on its own, outside a scan, the fetcher still resolves names
+    // through the capture, so a redirect check makes no DNS lookup.
+    fetcher: {
+      fetch: (options) =>
+        withScanEnvironment({ lookup }, () => fetcher.fetch(options)),
+      summary: () => fetcher.summary(),
     },
+    lookup,
     misses: () => [...missed],
+    ambiguous: () => [...ambiguous],
   };
 }

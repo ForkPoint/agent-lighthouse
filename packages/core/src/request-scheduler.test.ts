@@ -81,6 +81,21 @@ describe("shared request pacing", () => {
     release();
   });
 
+  it("keeps a waiting request back when its cooldown grows", async () => {
+    const scheduler = createRequestScheduler({ gapMs: 0 });
+    scheduler.observe("https://example.com", 503, "0.05");
+    const started = Date.now();
+    const admitted = scheduler.acquire("https://example.com/a");
+    setTimeout(() => {
+      // A 200 resets the 503 count, so the next 503 sets a longer cooldown.
+      scheduler.observe("https://example.com", 200, undefined);
+      scheduler.observe("https://example.com", 503, "0.3");
+    }, 10);
+    const release = await admitted;
+    expect(Date.now() - started).toBeGreaterThanOrEqual(290);
+    release();
+  });
+
   it("cancels a cooldown without sending a request", async () => {
     const scheduler = createRequestScheduler({ gapMs: 1000 });
     const release = await scheduler.acquire("https://example.com");

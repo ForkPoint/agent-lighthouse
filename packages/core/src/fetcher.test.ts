@@ -1617,6 +1617,81 @@ describe("fetcher.fetch — onExchange", () => {
     );
   });
 
+  it("marks a read that stopped on a chunk ending at the limit as truncated", async () => {
+    const chunks = [
+      new Uint8Array(MAX_RESPONSE_BODY_BYTES).fill(1),
+      new Uint8Array(10).fill(2),
+    ];
+    mockRequest.mockResolvedValueOnce({
+      statusCode: 200,
+      headers: {},
+      body: {
+        async *[Symbol.asyncIterator]() {
+          yield* chunks;
+        },
+        dump: vi.fn(),
+      },
+    } as never);
+    const { exchanges, onExchange } = capture();
+
+    await createFetcher({ onExchange }).fetch({
+      url: "https://example.com/image.png",
+      binary: true,
+    });
+
+    expect(exchanges[0]!.response).toMatchObject({
+      bodyRead: true,
+      truncated: true,
+    });
+  });
+
+  it("keeps the bytes that arrived before a body failed", async () => {
+    mockRequest.mockResolvedValueOnce({
+      statusCode: 200,
+      headers: {},
+      body: {
+        async *[Symbol.asyncIterator]() {
+          yield Buffer.from("half a pa");
+          throw new Error("socket hang up");
+        },
+        dump: vi.fn(),
+      },
+    } as never);
+    const { exchanges, onExchange } = capture();
+
+    const result = await createFetcher({ onExchange }).fetch({
+      url: "https://example.com/",
+    });
+
+    expect(result.status).toBe(0);
+    expect(exchanges[0]!.error).toBe(result.error);
+    expect(exchanges[0]!.response).toMatchObject({
+      status: 200,
+      bodyRead: false,
+    });
+    expect(Buffer.from(exchanges[0]!.response!.body).toString("utf8")).toBe(
+      "half a pa",
+    );
+  });
+
+  it("keeps the site's answer when the capture callback throws, and counts it", async () => {
+    mockRequest.mockResolvedValueOnce(mockResponse(200, "ok") as never);
+    const fetcher = createFetcher({
+      onExchange: () => {
+        throw new Error("capture disk full");
+      },
+    });
+
+    const result = await fetcher.fetch({ url: "https://example.com/" });
+
+    expect(result.status).toBe(200);
+    expect(result.body).toBe("ok");
+    expect(fetcher.summary()).toMatchObject({
+      statuses: { "2xx": 1 },
+      captureErrors: 1,
+    });
+  });
+
   it("redacts credentials from the recorded request", async () => {
     mockRequest.mockResolvedValueOnce(mockResponse(200, "ok") as never);
     const { exchanges, onExchange } = capture();

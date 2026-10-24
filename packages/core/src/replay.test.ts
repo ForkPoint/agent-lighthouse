@@ -17,6 +17,7 @@ import { request } from "undici";
 import dns from "node:dns/promises";
 import { createFetcher, type HttpExchange } from "./fetcher";
 import { runScan } from "./orchestrator";
+import { OriginCache } from "./origin-cache";
 import { createReplay } from "./replay";
 import { HttpMethod } from "./types";
 
@@ -112,6 +113,72 @@ describe("createReplay", () => {
     expect(replayed.redirectChain).toEqual([
       { status: 301, from: `${SITE}old`, to: SITE },
     ]);
+    // The redirect check resolved the hop through the capture.
+    expect(mockLookup).not.toHaveBeenCalled();
+  });
+
+  it("answers requests in the order they started, not the order they finished", async () => {
+    let calls = 0;
+    mockRequest.mockImplementation((async () => {
+      calls += 1;
+      const answer = String(calls);
+      // The first request finishes last.
+      if (calls === 1) await new Promise((resolve) => setTimeout(resolve, 30));
+      return {
+        statusCode: 200,
+        headers: { "content-type": "text/plain" },
+        body: {
+          async *[Symbol.asyncIterator]() {
+            yield Buffer.from(answer);
+          },
+          dump: vi.fn(),
+        },
+      };
+    }) as unknown as typeof request);
+    mockLookup.mockResolvedValue({ address: "93.184.216.34", family: 4 });
+    const exchanges: HttpExchange[] = [];
+    const live = createFetcher({ onExchange: (e) => exchanges.push(e) });
+    const first = await Promise.all([
+      live.fetch({ url: SITE }),
+      live.fetch({ url: SITE }),
+    ]);
+    noNetwork();
+
+    const replay = createReplay(exchanges);
+    const replayed = await Promise.all([
+      replay.fetcher.fetch({ url: SITE }),
+      replay.fetcher.fetch({ url: SITE }),
+    ]);
+
+    expect(first.map((r) => r.body)).toEqual(["1", "2"]);
+    expect(replayed.map((r) => r.body)).toEqual(["1", "2"]);
+    expect(replay.ambiguous()).toEqual([`GET ${SITE}`]);
+    expect(replay.misses()).toEqual([]);
+  });
+
+  it("replays a body discard that failed", async () => {
+    liveNetwork();
+    mockRequest.mockResolvedValueOnce({
+      statusCode: 200,
+      headers: {},
+      body: {
+        async *[Symbol.asyncIterator]() {},
+        dump: vi.fn().mockRejectedValue(new Error("dump failed")),
+      },
+    } as never);
+    const exchanges: HttpExchange[] = [];
+    const first = await createFetcher({
+      onExchange: (e) => exchanges.push(e),
+    }).fetch({ url: SITE, method: HttpMethod.Options });
+    noNetwork();
+
+    const replayed = await createReplay(exchanges).fetcher.fetch({
+      url: SITE,
+      method: HttpMethod.Options,
+    });
+
+    expect(first.status).toBe(0);
+    expect(replayed).toEqual(first);
   });
 
   it("fails a request the capture does not hold, and lists it", async () => {
@@ -181,6 +248,58 @@ describe("createReplay", () => {
     expect(head.error).toMatch(/^Not in the capture: HEAD/);
   });
 
+  it("never answers a request with another one's response", async () => {
+    const post = (body: string, origin: string): HttpExchange => ({
+      fetchId: 1,
+      hop: 0,
+      startedAt: "",
+      request: {
+        url: `${SITE}mcp`,
+        method: HttpMethod.Post,
+        headers: {
+          "User-Agent": "Scanner",
+          Accept: "application/json",
+          Origin: origin,
+        },
+        body,
+      },
+      response: {
+        status: 200,
+        headers: {},
+        body: new Uint8Array(Buffer.from(`${body} from ${origin}`)),
+        bodyRead: true,
+        truncated: false,
+      },
+      ttfbMs: 1,
+      totalMs: 1,
+    });
+    const replay = createReplay([
+      post('{"method":"server/discover"}', "https://a.example"),
+      post('{"method":"server/discover"}', "https://b.example"),
+    ]);
+    const send = (body: string, origin: string) =>
+      replay.fetcher.fetch({
+        url: `${SITE}mcp`,
+        method: HttpMethod.Post,
+        userAgent: "Scanner",
+        acceptHeader: "application/json",
+        headers: { Origin: origin },
+        body,
+      });
+
+    const fromB = await send(
+      '{"method":"server/discover"}',
+      "https://b.example",
+    );
+    const tools = await send('{"method":"tools/list"}', "https://a.example");
+
+    expect(fromB.body).toBe(
+      '{"method":"server/discover"} from https://b.example',
+    );
+    expect(tools.error).toBe(`Not in the capture: POST ${SITE}mcp`);
+    expect(replay.misses()).toEqual([`POST ${SITE}mcp`]);
+  });
+
   it("resolves only the hosts the capture sent requests to", async () => {
     const replay = createReplay([
       {
@@ -231,5 +350,43 @@ describe("runScan — replay", () => {
     expect(first).toEqual(live);
     expect(second).toEqual(first);
     expect(first.scannedAt).toBe("2026-10-09T12:00:00.000Z");
+  }, 60_000);
+
+  it("captures cached origin evidence, so a warm-cache scan replays", async () => {
+    liveNetwork();
+    const originCache = new OriginCache();
+    const warm = { ...options, bypassOriginCache: false, originCache };
+    await runScan(SITE, { ...warm, onExchange: () => {} });
+    mockRequest.mockClear();
+    const exchanges: HttpExchange[] = [];
+    const live = await runScan(`${SITE}about`, {
+      ...warm,
+      onExchange: (exchange) => exchanges.push(exchange),
+    });
+    const robotsSent = mockRequest.mock.calls.some(
+      ([sent]) => sent === `${SITE}robots.txt`,
+    );
+    noNetwork();
+
+    const replay = createReplay(exchanges);
+    const replayed = await runScan(`${SITE}about`, {
+      ...options,
+      fetcher: replay.fetcher,
+      lookup: replay.lookup,
+    });
+
+    // The live scan reused the evidence; the replay read it from the capture.
+    // Only when the evidence was read, and whether it came from the cache,
+    // may differ.
+    const judged = (report: unknown) =>
+      JSON.parse(
+        JSON.stringify(report, (key, value) =>
+          key === "readAt" || key === "cached" ? undefined : value,
+        ),
+      );
+    expect(robotsSent).toBe(false);
+    expect(live.originEvidence?.cached).toBe(true);
+    expect(replay.misses()).toEqual([]);
+    expect(judged(replayed)).toEqual(judged(live));
   }, 60_000);
 });
