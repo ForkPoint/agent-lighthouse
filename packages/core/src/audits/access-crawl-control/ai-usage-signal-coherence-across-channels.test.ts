@@ -111,7 +111,10 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
         headers: { "content-usage": "train-ai=y" },
       }),
     );
-    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.details?.["notes"]).toEqual(
+      expect.arrayContaining([expect.stringContaining("Overlapping")]),
+    );
     const other = audit.audit(
       site({
         robots:
@@ -123,7 +126,7 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
     expect(other.status).toBe(CheckStatus.Pass);
   });
 
-  it("reports a prepended Content-Signal block as an edge override, not an ordinary contradiction", async () => {
+  it("does not infer edge ownership from line order", async () => {
     const result = audit.audit(
       site({
         robots:
@@ -132,11 +135,9 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
     );
     expect(result.status).toBe(CheckStatus.Fail);
     const overrides = result.details?.["edgeOverrides"] as string[];
-    expect(overrides).toHaveLength(1);
-    expect(overrides[0]).toContain("Content-Signal");
-    expect(result.remediation).toContain(
-      "above your own robots.txt directives",
-    );
+    expect(overrides).toHaveLength(0);
+    expect(contradictionsOf(result)[0]).toContain("Content-Signal");
+    expect(result.remediation).not.toContain("CDN");
   });
 
   // Coherence needs at least one declaration. Silence has nothing to
@@ -447,6 +448,38 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
     expect(unparseable.status).toBe(CheckStatus.Fail);
   });
 
+  it("keeps Content Signals paths case-sensitive and disjoint", () => {
+    const result = audit.audit(
+      site({
+        robots:
+          "User-agent: *\nContent-Signal: /Blog/ ai-train=no\nContent-Usage: /blog/ train-ai=y",
+      }),
+    );
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(contradictionsOf(result)).toEqual([]);
+  });
+
+  it("does not leak extension-only groups or equate crawl access with use", () => {
+    const result = audit.audit(
+      site({
+        robots:
+          "User-agent: A\nContent-Signal: ai-train=yes\nUser-agent: B\nContent-Usage: train-ai=n\nUser-agent: GPTBot\nDisallow: /",
+      }),
+    );
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(contradictionsOf(result)).toEqual([]);
+  });
+
+  it("does not equate Content Signals search with another vocabulary", () => {
+    const result = audit.audit(
+      site({
+        robots:
+          "User-agent: *\nContent-Signal: search=yes\nContent-Usage: search=n",
+      }),
+    );
+    expect(result.status).toBe(CheckStatus.Pass);
+  });
+
   it("is a scored grade B audit", () => {
     const { meta } = AiUsageSignalCoherenceAcrossChannelsAudit;
     expect(meta.evidenceGrade).toBe(EvidenceGrade.B);
@@ -454,4 +487,58 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
     expect(meta.weight).toBeCloseTo(0.6);
     expect(meta.id.length).toBeLessThanOrEqual(64);
   });
+});
+
+it("caps stored overlapping-pair notes and reports the omitted count", () => {
+  const audit = new AiUsageSignalCoherenceAcrossChannelsAudit();
+  const robots =
+    "User-agent: *\n" +
+    "Content-Signal: /blog/ ai-train=no\n".repeat(10) +
+    "Content-Usage: train-ai=y\n".repeat(10);
+  const result = audit.audit(site({ robots }));
+  expect(result.details?.["notes"]).toHaveLength(50);
+  expect(result.details?.["omittedNotes"]).toBe(50);
+});
+
+it("reports incomplete Content Signals parsing without claiming silence", () => {
+  const result = new AiUsageSignalCoherenceAcrossChannelsAudit().audit(
+    site({
+      robots: "#" + "x".repeat(500 * 1024) + "\nContent-Signal: search=yes",
+    }),
+  );
+  expect(result.status).toBe(CheckStatus.NotApplicable);
+  expect(result.message).toContain("incomplete");
+  expect(JSON.stringify(result)).not.toContain(
+    "No AI-usage signal in robots.txt",
+  );
+});
+
+it("keeps other robots channels when Content Signals exceeds its expansion limit", () => {
+  const audit = new AiUsageSignalCoherenceAcrossChannelsAudit();
+  const robots =
+    "User-agent: *\nContent-Usage: train-ai=y\nUser-agent: GPTBot\nDisallow: /\n";
+  const headers = { "tdm-reservation": "1" };
+  const baseline = audit.audit(site({ robots, headers }));
+  const expansion =
+    Array.from({ length: 100 }, (_, i) => `User-agent: Bot${i}`).join("\n") +
+    "\n" +
+    "Content-Signal: ai-train=no\n".repeat(100);
+  const result = audit.audit(site({ robots: robots + expansion, headers }));
+  expect(result.status).toBe(CheckStatus.Fail);
+  expect(contradictionsOf(result)).toEqual(contradictionsOf(baseline));
+  expect(result.details?.["channels"]).toEqual(
+    expect.arrayContaining([
+      "robots.txt Content-Usage",
+      "robots.txt Disallow",
+      "tdm-reservation response header",
+    ]),
+  );
+  expect(result.details?.["channels"]).not.toContain(
+    "robots.txt Content-Signal",
+  );
+  expect(result.details?.["notes"]).toEqual(
+    expect.arrayContaining([
+      expect.stringContaining("Content Signals analysis incomplete"),
+    ]),
+  );
 });

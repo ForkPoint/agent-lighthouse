@@ -1,3 +1,4 @@
+import { parseContentSignals } from "#core/gatherers/content-signals";
 import * as cheerio from "cheerio";
 import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
@@ -115,34 +116,6 @@ function aiprefSignals(
       agent,
       source,
       ...(line === undefined ? {} : { line }),
-    });
-  }
-  return out;
-}
-
-/** Read a Cloudflare `Content-Signal` line: `search=yes, ai-train=no`. */
-function contentSignals(
-  raw: string,
-  agent: string,
-  source: string,
-  line: number,
-): Signal[] {
-  const out: Signal[] = [];
-  for (const piece of raw.split(",")) {
-    const [name = "", value = ""] = piece
-      .split("=")
-      .map((p) => p.trim().toLowerCase());
-    const category = CONTENT_SIGNAL_MAP[name];
-    if (!category) continue;
-    if (value !== "yes" && value !== "no") continue;
-    out.push({
-      channel: "robots.txt Content-Signal",
-      category,
-      allow: value === "yes",
-      scope: "/",
-      agent,
-      source,
-      line,
     });
   }
   return out;
@@ -267,7 +240,7 @@ export class AiUsageSignalCoherenceAcrossChannelsAudit extends Audit {
     ],
     guidance: {
       impact:
-        "No standard defines precedence between these channels; each specifies only its own parsing. A crawler that reads TDM-Rep and a crawler that reads AIPREF therefore read disjoint inputs, and when those inputs disagree the two reach opposite conclusions about the same page. Whichever one you did not mean to publish is the one some operator will act on. The documented worst case is not even yours to make: Cloudflare’s managed robots.txt prepends its own Content-Signal block above your file, so your stated policy can be contradicted at the edge without you knowing.",
+        "No standard defines precedence between these channels; each specifies only its own parsing. A crawler that reads TDM-Rep and a crawler that reads AIPREF therefore read disjoint inputs, and when those inputs disagree the two reach opposite conclusions about the same page. Whichever one you did not mean to publish is the one some operator will act on. Content Signals use preferences are distinct from crawl access. Overlapping bot/path scopes need review without guessed precedence.",
       fix: "Decide the policy once, then say the same thing in every channel you publish. If you do not intend to maintain a channel, remove it rather than leaving a stale value — a contradicted signal is worse than a missing one. Where your CDN prepends its own robots.txt block, either turn that feature off or make your own declarations match it.",
       effort: FixEffort.Moderate,
       docsUrl:
@@ -290,9 +263,24 @@ export class AiUsageSignalCoherenceAcrossChannelsAudit extends Audit {
 
     const signals: Signal[] = [];
     const notes: string[] = [];
+    let omittedNotes = 0;
+    const addNote = (note: string): void => {
+      if (notes.length < 50)
+        notes.push(
+          note.length > 1000
+            ? `${note.slice(0, 950)} [Evidence shortened.]`
+            : note,
+        );
+      else omittedNotes += 1;
+    };
 
     const robots = ctx.rootFiles["/robots.txt"];
     const robotsBody = robots?.status === 200 ? robots.body : "";
+    const contentSignals = parseContentSignals(robotsBody);
+    if (!contentSignals.complete)
+      addNote(
+        `Content Signals analysis incomplete: ${contentSignals.limitation}`,
+      );
     if (robotsBody !== "") {
       for (const line of directiveLines(robotsBody, "content-usage")) {
         signals.push(
@@ -305,15 +293,22 @@ export class AiUsageSignalCoherenceAcrossChannelsAudit extends Audit {
           ),
         );
       }
-      for (const line of directiveLines(robotsBody, "content-signal")) {
-        signals.push(
-          ...contentSignals(
-            line.value,
-            line.group === "" ? "*" : line.group,
-            `line ${line.line}: Content-Signal: ${line.value}`,
-            line.line,
-          ),
-        );
+      if (contentSignals.complete) {
+        for (const declaration of contentSignals.declarations) {
+          for (const entry of declaration.entries) {
+            const category = CONTENT_SIGNAL_MAP[entry.name];
+            if (!entry.valid || !category) continue;
+            signals.push({
+              channel: "robots.txt Content-Signal",
+              category,
+              allow: entry.value === "yes",
+              scope: declaration.path,
+              agent: declaration.agent,
+              source: `line ${declaration.line}: Content-Signal: ${declaration.raw}`,
+              line: declaration.line,
+            });
+          }
+        }
       }
 
       const groups = parseRobots(robotsBody);
@@ -334,7 +329,7 @@ export class AiUsageSignalCoherenceAcrossChannelsAudit extends Audit {
     if (isRootArtifact(tdmrep) && tdmrep.body.trim() !== "") {
       const read = tdmrepSignals(tdmrep.body);
       if (read.malformed) {
-        notes.push(
+        addNote(
           "/.well-known/tdmrep.json is not the array of rules the TDM-Rep report defines, so its declaration is not read",
         );
       }
@@ -402,17 +397,6 @@ export class AiUsageSignalCoherenceAcrossChannelsAudit extends Audit {
     // disagreeing is that channel's own precedence question, and the audits
     // that own each channel answer it.
     const contradictions: string[] = [];
-    const edgeOverrides: string[] = [];
-    const earliestOperatorLine = Math.min(
-      ...signals
-        .filter(
-          (s) =>
-            s.line !== undefined && s.channel !== "robots.txt Content-Signal",
-        )
-        .map((s) => s.line!),
-      Number.POSITIVE_INFINITY,
-    );
-
     for (let i = 0; i < signals.length; i += 1) {
       for (let j = i + 1; j < signals.length; j += 1) {
         const a = signals[i]!;
@@ -422,24 +406,37 @@ export class AiUsageSignalCoherenceAcrossChannelsAudit extends Audit {
         if (a.allow === b.allow) continue;
         if (!agentsOverlap(a.agent, b.agent)) continue;
         if (!scopesOverlap(a.scope, b.scope)) continue;
+        // Access and use are distinct; similarly named search categories do
+        // not establish equivalence. Only identical Content Signals scopes
+        // support a contradiction without inventing effective precedence.
+        if (
+          [a, b].some(
+            (signal) => signal.channel === "robots.txt Content-Signal",
+          )
+        ) {
+          if (
+            [a, b].some((signal) => signal.channel === "robots.txt Disallow") ||
+            a.category === Category.Search
+          )
+            continue;
+          if (
+            a.scope !== b.scope ||
+            a.agent.toLowerCase() !== b.agent.toLowerCase()
+          ) {
+            addNote(
+              `Overlapping declarations for review: ${a.source}; ${b.source}. No effective precedence inferred.`,
+            );
+            continue;
+          }
+        }
         const finding = `${a.category} over ${a.scope}: ${a.channel} says ${
           a.allow ? "allowed" : "denied"
         } (${a.source}) while ${b.channel} says ${b.allow ? "allowed" : "denied"} (${b.source})`;
-        // Cloudflare's managed robots.txt prepends its Content-Signal block
-        // above the operator's own directives, so a contradiction whose
-        // Content-Signal line sits above everything the operator wrote is an
-        // edge override — a different remedy from an inconsistent policy.
-        const prepended = [a, b].find(
-          (s) =>
-            s.channel === "robots.txt Content-Signal" &&
-            (s.line ?? 0) < earliestOperatorLine,
-        );
-        if (prepended) edgeOverrides.push(finding);
-        else contradictions.push(finding);
+        contradictions.push(finding);
       }
     }
 
-    const displayValue = `${signals.length} signal(s), ${contradictions.length + edgeOverrides.length} contradiction(s)`;
+    const displayValue = `${signals.length} signal(s), ${contradictions.length} contradiction(s)`;
     const expected =
       "Every channel that carries an AI-usage signal says the same thing";
     const channels = [...new Set(signals.map((s) => s.channel))];
@@ -450,22 +447,32 @@ export class AiUsageSignalCoherenceAcrossChannelsAudit extends Audit {
     const details = {
       signals: signals.length,
       channels,
-      contradictions: [...contradictions, ...edgeOverrides].slice(0, 50),
-      edgeOverrides: edgeOverrides.slice(0, 50),
+      contradictions: contradictions.slice(0, 50),
+      // Preserve the output key without inferring CDN ownership from position.
+      edgeOverrides: [] as string[],
       notes,
+      omittedNotes,
     };
 
-    if (contradictions.length > 0 || edgeOverrides.length > 0) {
+    if (contradictions.length > 0) {
       return {
         ...this.fail(
-          edgeOverrides.length > 0
-            ? `A Content-Signal block above your own directives contradicts a signal you publish elsewhere, in ${edgeOverrides.length} case(s).`
-            : `${contradictions.length} contradiction(s) between the channels this site publishes.`,
+          `${contradictions.length} contradiction(s) between the channels this site publishes.`,
           expected,
           found,
-          edgeOverrides.length > 0
-            ? "The contradicting block sits above your own robots.txt directives, which is where a CDN prepends one. Turn that feature off, or make your declarations agree with it."
-            : "Decide the policy once and publish the same value in every channel; delete the channels you do not maintain.",
+          "Review the stated policy for the matching bot and path. Correct a channel only if its value differs from your intended use preference.",
+        ),
+        displayValue,
+        details,
+      };
+    }
+
+    if (!contentSignals.complete) {
+      return {
+        ...this.notApplicable(
+          "Cross-channel comparison is incomplete because robots.txt exceeds the analysis limit.",
+          expected,
+          "Only other available channels were checked; no absence or complete agreement is inferred.",
         ),
         displayValue,
         details,

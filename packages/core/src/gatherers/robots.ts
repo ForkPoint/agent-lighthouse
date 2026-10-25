@@ -97,7 +97,7 @@ export function parseRobotsFile(body: string): RobotsFile {
       // Host-global, outside every group. Deliberately does NOT set inRules — a
       // Sitemap line sitting between two rules must not split their group.
       if (value) sitemaps.push(value);
-    } else if (value) {
+    } else {
       inRules = true;
       otherDirectives.push({ name: directive, value });
     }
@@ -155,7 +155,9 @@ export function directiveLines(body: string, name: string): RobotsDirective[] {
       inRules = true;
       return;
     }
-    if (directive !== wanted || value === "") return;
+    // Extension directives end the agent header just like access rules.
+    if (directive !== "sitemap") inRules = true;
+    if (directive !== wanted) return;
     if (agents.length === 0) {
       out.push({ name: directive, value, group: "", line: index + 1 });
       return;

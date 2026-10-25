@@ -31,7 +31,7 @@ const AIPREF_CATEGORIES: ReadonlySet<string> = new Set(["train-ai", "search"]);
 const AIPREF_VALUES: ReadonlySet<string> = new Set(["y", "n"]);
 
 /** Content-Signal's values, which look like AIPREF values but are not. */
-const LEGACY_VALUES: ReadonlySet<string> = new Set(["yes", "no"]);
+const CONTENT_SIGNAL_VALUES: ReadonlySet<string> = new Set(["yes", "no"]);
 
 /** Findings named in the report. The rest are counted. */
 const REPORTED = 20;
@@ -80,7 +80,7 @@ export class AiprefContentUsageDeclarationValidityAudit extends Audit {
     ],
     guidance: {
       impact:
-        "AIPREF is the one AI-usage vocabulary on the IETF standards track, so a declaration written in it is the one a future crawler is most likely to read. A crawler that cannot parse the line ignores it, and the site is then treated as having no preference at all — the same outcome as publishing nothing, after the work of publishing something. The costliest version is invisible: a preference attached to a path robots.txt disallows is discarded by the spec itself, so the line looks right and does nothing.",
+        "A crawler that reads AIPREF cannot use a malformed declaration. Absent preferences remain unknown. AIPREF and Content Signals are separate optional formats; neither requires adoption of the other. AIPREF preferences attached to disallowed paths have no effect under its attachment draft.",
       fix: "Write `Content-Usage: train-ai=n` — an RFC 8941 dictionary of `y`/`n` values against the `train-ai` and `search` categories. Use `yes`/`no` only in a Cloudflare `Content-Signal:` line, which is a different directive. Attach preferences to paths a crawler is allowed to fetch, and keep the robots.txt line and the response header saying the same thing for the same path.",
       effort: FixEffort.Moderate,
       docsUrl:
@@ -97,7 +97,6 @@ export class AiprefContentUsageDeclarationValidityAudit extends Audit {
     const declarations: Declaration[] = [];
     const errors: string[] = [];
     const inert: string[] = [];
-    const legacyOnly: string[] = [];
 
     const readDictionary = (
       raw: string,
@@ -116,9 +115,9 @@ export class AiprefContentUsageDeclarationValidityAudit extends Audit {
         return;
       }
       for (const [category, value] of parsed.value) {
-        if (LEGACY_VALUES.has(value)) {
+        if (CONTENT_SIGNAL_VALUES.has(value)) {
           errors.push(
-            `${source}: "${category}=${value}" is legacy Content-Signal syntax in an AIPREF directive; AIPREF values are y and n`,
+            `${source}: "${category}=${value}" is Content-Signal syntax in an AIPREF directive; AIPREF values are y and n`,
           );
           continue;
         }
@@ -141,11 +140,6 @@ export class AiprefContentUsageDeclarationValidityAudit extends Audit {
           "robots.txt",
           line.group === "" ? "*" : line.group,
           `robots.txt line ${line.line}`,
-        );
-      }
-      for (const line of directiveLines(robotsBody, "content-signal")) {
-        legacyOnly.push(
-          `robots.txt line ${line.line}: Content-Signal: ${line.value}`,
         );
       }
     }
@@ -194,11 +188,7 @@ export class AiprefContentUsageDeclarationValidityAudit extends Audit {
     const inertScopes = new Set(inert.map((line) => line.split(":")[0]));
     const effective = declarations.filter((d) => !inertScopes.has(d.source));
 
-    if (
-      declarations.length === 0 &&
-      errors.length === 0 &&
-      legacyOnly.length === 0
-    ) {
+    if (declarations.length === 0 && errors.length === 0) {
       return this.notApplicable(
         "This site publishes no AIPREF Content-Usage declaration.",
         "A Content-Usage declaration in robots.txt or a response header",
@@ -214,15 +204,21 @@ export class AiprefContentUsageDeclarationValidityAudit extends Audit {
       "Every Content-Usage declaration parses as an RFC 8941 dictionary of AIPREF categories, attaches to a crawlable path, and agrees with the other channel";
     const found =
       `${declarations.length} declaration(s) parsed, ${errors.length} syntax or vocabulary error(s), ` +
-      `${inert.length} attached to a disallowed path, ${disagreements.length} channel disagreement(s), ` +
-      `${legacyOnly.length} legacy Content-Signal line(s).`;
+      `${inert.length} attached to a disallowed path, ${disagreements.length} channel disagreement(s).`;
     const details = {
       declarations: declarations.length,
       effectiveDeclarations: effective.length,
       syntaxErrors: errors.slice(0, REPORTED),
       inertDeclarations: inert.slice(0, REPORTED),
       channelDisagreements: disagreements.slice(0, REPORTED),
-      legacyContentSignalLines: legacyOnly.slice(0, REPORTED),
+      // Keep the existing output key for consumers; it does not imply that
+      // Content Signals is obsolete or that AIPREF adoption is required.
+      legacyContentSignalLines: directiveLines(robotsBody, "content-signal")
+        .map(
+          (line) =>
+            `robots.txt line ${line.line}: Content-Signal: ${line.value}`,
+        )
+        .slice(0, REPORTED),
     };
 
     if (
@@ -242,19 +238,6 @@ export class AiprefContentUsageDeclarationValidityAudit extends Audit {
           errors.length > 0
             ? "Write the value as an RFC 8941 dictionary of y and n against train-ai and search; yes and no belong to Content-Signal."
             : "Attach the preference to a path crawlers may fetch, and say the same thing in robots.txt and in the header.",
-        ),
-        displayValue,
-        details,
-      };
-    }
-
-    if (declarations.length === 0 && legacyOnly.length > 0) {
-      return {
-        ...this.warn(
-          "This site declares its AI-usage preference only in the legacy Content-Signal syntax.",
-          expected,
-          found,
-          "Keep the Content-Signal line if your CDN needs it, and add the AIPREF equivalent: `Content-Usage: train-ai=n`.",
         ),
         displayValue,
         details,

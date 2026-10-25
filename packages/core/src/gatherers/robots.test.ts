@@ -259,3 +259,23 @@ License: https://example.com/license.xml
     expect(directiveLines(ROBOTS, "Content-Security-Policy")).toEqual([]);
   });
 });
+
+it("separates extension-only groups and retains empty extension values", () => {
+  const body =
+    "User-agent: A\nUser-agent: B\nContent-Signal:\nUser-agent: C\nContent-Signal: ai-train=no";
+  expect(
+    directiveLines(body, "content-signal").map(({ group, value }) => [
+      group,
+      value,
+    ]),
+  ).toEqual([
+    ["A", ""],
+    ["B", ""],
+    ["C", "ai-train=no"],
+  ]);
+  expect(parseRobotsFile(body).groups.map((group) => group.userAgent)).toEqual([
+    "A",
+    "B",
+    "C",
+  ]);
+});

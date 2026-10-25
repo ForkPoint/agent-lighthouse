@@ -26,7 +26,7 @@ Checks whether the site expresses AI usage preferences in the IETF AIPREF form t
 
 ## Claimed mechanism (falsifiable)
 
-draft-ietf-aipref-attach-05 defines the only two attachment points a conformant crawler reads. They are the `Content-Usage` HTTP response header, and the `Content-Usage:` robots.txt directive with an optional path prefix (s11). draft-ietf-aipref-vocab-07 fixes the value grammar: an RFC 8941 structured-field dictionary over the categories `train-ai` and `search`, with token values `y` and `n`. Anything absent is _unknown_, and crawlers resolve unknown using their own default rather than yours (s10). Three falsifiable consequences follow. First, a site publishing only Cloudflare's legacy `Content-Signal: search=yes, ai-train=no` emits zero AIPREF preference: an AIPREF parser sees `unknown` for every category. Second, `yes` and `no` are not valid AIPREF tokens, so `Content-Usage: train-ai=no` fails structured-field parsing. Third, attach-05 states that 'Disallowed paths have no associated usage preferences', so a `Content-Usage` scoped to a path the same agent group Disallows is inert by specification.
+draft-ietf-aipref-attach-05 defines the only two attachment points a conformant crawler reads. They are the `Content-Usage` HTTP response header, and the `Content-Usage:` robots.txt directive with an optional path prefix (s11). draft-ietf-aipref-vocab-07 fixes the value grammar: an RFC 8941 structured-field dictionary over the categories `train-ai` and `search`, with token values `y` and `n`. Anything absent is _unknown_, and crawlers resolve unknown using their own default rather than yours (s10). Three falsifiable consequences follow. First, a site publishing only Cloudflare's `Content-Signal: search=yes, ai-train=no` emits zero AIPREF preference: an AIPREF parser sees `unknown` for every category. Second, `yes` and `no` are not valid AIPREF tokens, so `Content-Usage: train-ai=no` fails structured-field parsing. Third, attach-05 states that 'Disallowed paths have no associated usage preferences', so a `Content-Usage` scoped to a path the same agent group Disallows is inert by specification.
 
 ## Evidence
 
@@ -36,14 +36,13 @@ draft-ietf-aipref-attach-05 defines the only two attachment points a conformant 
   - ACTIVE, version 05, 2026-08-18. Two attachment mechanisms: (1) HTTP response header `Content-Usage: train-ai=n`; (2) robots.txt directive `Content-Usage: train-ai=n` with optional path prefix, e.g. `Content-Usage: /ai-ok/ train-ai=y`, using the same path-prefix matching as Allow/Disallow. Precedence rules: preferences apply only to crawlable resources — "Disallowed paths have no associated usage preferences"; longest matching path prefix wins. No well-known location is defined.
 - **[Content Signals Policy (announcement)](https://blog.cloudflare.com/content-signals-policy/)** — Cloudflare (vendor-doc, URL verified 2026-08-20)
   - Defines the `Content-Signal:` robots.txt directive with signals `search`, `ai-input`, `ai-train` and values `yes`/`no` (omission = no preference). Canonical example: `User-Agent: *` / `Content-Signal: search=yes, ai-train=no` / `Allow: /`. Deployed as default on ~3.8M Cloudflare domains. Cloudflare deliberately does not emit an `ai-input` signal.
-- **[Content Signals (AIPREF guide)](https://contentsignals.org/)** — Cloudflare / contentsignals.org (article, URL verified 2026-08-20)
-  - Resolves HTTP 200. Page now self-describes as "An up-to-date guide to the IETF's proposed new AI Preferences (aipref)" — i.e. the Content-Signal vocabulary is being folded into the IETF AIPREF work (s10/s11). Body is JS-rendered behind Cloudflare, so scrape the meta description or the drafts directly.
+- **[Content Signals](https://contentsignals.org/)** (verified 2026-10-25) — A separate optional publication format. Its absence from an AIPREF parser does not justify requiring AIPREF adoption.
 - **[Managed robots.txt — Cloudflare Bots](https://developers.cloudflare.com/bots/additional-configurations/managed-robots-txt/)** — Cloudflare (vendor-doc, URL verified 2026-08-20)
-  - Cloudflare prepends its own block to the origin's robots.txt: `User-Agent: *` / `Content-signal: search=yes, ai-train=no, use=reference` / `Allow: /`. When the origin already serves robots.txt it combines both files, Cloudflare's block first. This is the mechanism by which a site's own AI policy gets silently overridden at the edge — directly auditable by diffing declared vs. served robots.txt.
+  - Cloudflare prepends its own block to the origin's robots.txt: `User-Agent: *` / `Content-signal: search=yes, ai-train=no, use=reference` / `Allow: /`. When the origin already serves robots.txt it combines both files, Cloudflare's block first. Explicit managed-block markers support a qualified Cloudflare note. Line order alone does not establish ownership or policy precedence.
 
 ## Example failure
 
-A publisher wants an opt-out of AI training. Their robots.txt (or Cloudflare's prepended managed block) reads `Content-Signal: search=yes, ai-train=no` and nothing else. An AIPREF-conformant crawler looks for `Content-Usage`, finds none, resolves `train-ai` to _unknown_, and applies its own permissive default. The opt-out the operator believes they published is unenforceable under the very standard the industry is converging on. A second variant: `Content-Usage: train-ai=no` — `no` is not a valid token, the dictionary fails to parse, and the whole directive is dropped.
+`Content-Usage: train-ai=no` uses a Content-Signal value in a different format. AIPREF requires `y` or `n`. A site publishing only Content-Signal has no AIPREF declaration to validate and receives no warning for that choice.
 
 ## Scoring
 
@@ -52,9 +51,9 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Implementation deviations
 
 - `ai-input` is reported as an unknown category inside `Content-Usage`. It is Cloudflare's Content-Signal vocabulary, not AIPREF. The cross-channel audit still reads it on `Content-Signal`.
-- The parser is plain RFC 8941 (`parseDictionary` in `gatherers/structured-fields.ts`). It accepts `train-ai=yes`. This audit rejects `yes`/`no` against the vocabulary, with a message naming the legacy directive.
+- The parser is plain RFC 8941 (`parseDictionary` in `gatherers/structured-fields.ts`). It accepts `train-ai=yes`. This audit rejects `yes`/`no` against the vocabulary, with a message naming the directive.
 - Inertness is reported only for robots.txt declarations. A crawler that received a `Content-Usage` header was allowed to fetch the resource.
-- A syntax or vocabulary error, a channel disagreement, or every declaration inert fails. Only legacy `Content-Signal`, or a valid declaration beside an inert one, warns. No declaration at all is not applicable.
+- A syntax or vocabulary error, a channel disagreement, or every declaration inert fails. A valid declaration beside an inert one warns. Content-Signal alone is not applicable; separate optional formats need not coexist. No declaration at all is not applicable.
 
 ## Deferred
 
@@ -63,3 +62,7 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
   same scope, which under-reports rather than inventing a conflict.
 - **Newer registered categories.** Only `train-ai` and `search` are accepted
   until the vocabulary draft registers more.
+
+## Limits
+
+Content Signals is not superseded by AIPREF. Neither format requires adoption of the other. Managed block ownership cannot be inferred from line order.

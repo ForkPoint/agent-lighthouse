@@ -12,6 +12,7 @@
  * Each Plan 5 task appends exactly one id. Sorted by landing order.
  */
 export const NEW_IN_V2: readonly string[] = [
+  "access-crawl-control/content-signals",
   "operability-safety/form-autofill-token-coverage",
   "operability-safety/native-control-substitution",
   "operability-safety/invisible-instruction-scan",

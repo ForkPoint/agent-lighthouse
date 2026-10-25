@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { JSDOM } from "jsdom";
 import type { CheckResult, ScanReport } from "@forkpoint/agent-lighthouse-core";
 import { buildReportView } from "./view-model";
 import { generateHtmlReport } from "./html-generator";
@@ -7,6 +8,7 @@ import { hydrateReport } from "./hydrate";
 import { formatAuditScope, formatPageScope } from "./page-scope";
 import {
   AttemptOutcome,
+  EvidenceKey,
   AuditTier,
   CheckPriority,
   CheckStatus,
@@ -297,4 +299,56 @@ it("lists only audits whose population differs from a full-sample pass", () => {
   expect(ids).toContain(check.id);
   expect(ids).toContain(failing.id);
   expect(ids).not.toContain(plain.id);
+});
+
+it("shows a plain page summary and keeps raw evidence collapsed", () => {
+  const r = report();
+  r.overallScore = null;
+  r.scoreTier = null;
+  r.scanValidity = {
+    judgeable: true,
+    evidence: {
+      [EvidenceKey.OriginReachable]: true,
+      [EvidenceKey.UnblockedFetches]: true,
+      [EvidenceKey.RenderedBody]: false,
+      [EvidenceKey.SampleAdequate]: false,
+    },
+    reasons: {},
+    unscoredReason: "Too little evidence.",
+  };
+  const dom = new JSDOM(generateHtmlReport(r));
+  const section = dom.window.document.querySelector(
+    '[aria-label="Page scope"]',
+  )!;
+  expect(section.querySelector("h2")!.textContent).toBe("Pages checked");
+  expect(section.textContent).toContain("1 page · Article");
+  expect(section.textContent).toContain("Page types detected automatically");
+  expect(section.textContent).toContain(
+    "The scan found too little readable page text. It could not give an overall score.",
+  );
+  const technical = section.querySelector("details")!;
+  expect(technical.open).toBe(false);
+  expect(technical.querySelector("summary")!.textContent).toBe(
+    "Technical details",
+  );
+  expect(technical.textContent).toContain("HTTP 503");
+  expect(technical.textContent).toContain("Article URL hint");
+  expect(technical.textContent).toContain("Scope by check");
+  expect(
+    Array.from(section.querySelectorAll("pre")).every((pre) =>
+      technical.contains(pre),
+    ),
+  ).toBe(true);
+  dom.window.close();
+});
+
+it("does not infer unreadable content from absent coverage metadata", () => {
+  const r = report();
+  const dom = new JSDOM(generateHtmlReport(r));
+  const section = dom.window.document.querySelector(
+    '[aria-label="Page scope"]',
+  )!;
+  expect(section.textContent).not.toContain("Coverage limit");
+  expect(section.textContent).not.toContain("too little readable page text");
+  dom.window.close();
 });

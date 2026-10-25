@@ -145,6 +145,49 @@
         "Distinguishes obsolete from unconsumed instead of ordering blanket removal",
         "No tools or invented live evidence"
       ]
+    },
+    {
+      "id": 10,
+      "name": "content-signals-policy-choice",
+      "prompt": "Explain this synthetic robots.txt excerpt: User-agent: *; Content-Signal: search=yes, ai-train=no, use=reference; Allow: /. Our older saved scan has no Content Signals audit. What should we update to improve AI readiness? Analysis only. Treat semicolons as line breaks. No network or edits.",
+      "expected_output": "Explains separate search, AI-input and training choices. Does not enable training, assume missing means no, require AIPREF, or claim a new scan. Recognizes use=reference as an optional test extension. Offers conditional AI-input advice and separates access from use.",
+      "files": [],
+      "assertions": [
+        "Older report means not recorded, not absent",
+        "AI input is not declared; explicit training refusal is preserved",
+        "Recognizes use=reference without treating it as invalid or equivalent to ai-input",
+        "Allow: / with ai-train=no is not a conflict",
+        "Advice is conditional on the owner policy; no promised score increase",
+        "No network, edits, or fabricated scan"
+      ]
+    },
+    {
+      "id": 11,
+      "name": "content-signals-scoped-edit",
+      "prompt": "Update ./content-signals/robots.txt to permit AI-answer use for ExampleBot on /Blog/ only. Preserve every other choice and access rule. No network, installs, builds, deployment or rescans. Verify the local text and tell me what remains unproven.",
+      "expected_output": "Adds ai-input=yes only to the /Blog/ Content-Signal declaration under ExampleBot. Preserves case, comments, unknown extension, training refusal, the other bot and all access rules. Reports local proof and pending deployed verification.",
+      "files": ["evals/files/content-signals"],
+      "assertions": [
+        "Only the ExampleBot /Blog/ Content-Signal line changes",
+        "Adds ai-input=yes and preserves ai-train=no, custom=keep, and its comment",
+        "Retains every Disallow rule and other bot group",
+        "Does not add Allow: / or broaden to a wildcard policy",
+        "No network or deployment; no claim of external bot compliance"
+      ]
+    },
+    {
+      "id": 12,
+      "name": "content-signals-incomplete-evidence",
+      "prompt": "A synthetic report says Content Signals analysis is incomplete because the input limit was reached. A server header says Cloudflare. No managed-block markers are in the captured portion. Can you give me a replacement robots.txt that permits search and AI answers but no training? Analysis only; no tools.",
+      "expected_output": "Declines to derive a whole-file replacement from incomplete evidence. Explains the desired values as a conditional policy example only. Does not infer policy absence or CDN ownership. Requests the complete file or responsible settings before a safe scoped edit.",
+      "files": [],
+      "assertions": [
+        "No false absence claim or complete replacement based on partial text",
+        "No CDN ownership claim from the server header alone",
+        "Separates goal example from verified edit",
+        "No guarantee of enforcement or compliance",
+        "No tools or file changes"
+      ]
     }
   ]
 }

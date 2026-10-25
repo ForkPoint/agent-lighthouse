@@ -21,6 +21,8 @@ An obsolete check warns when it finds a retired artifact. Adding that artifact c
 
 Do not create `llms.txt`, OpenAPI, MCP, WebMCP, or commerce metadata solely to fill missing results. Separate absence, malformed content, and a linked artifact that returns an error. Judge readable surviving content when only part of an artifact is broken.
 
+For Content Signals, use [content-signals.md](content-signals.md). Optional setup advice can accompany a verified `na` result without becoming a failed check. Missing, restrictive, or undeclared preferences do not justify a score penalty or an assumed policy change.
+
 ## Browser evidence
 
 `browserAssessment` describes supplied rendered DOM. `overallScore` and `categories` describe HTTP crawler evidence. Present these as separate views. The browser score is always null. Read its `findings`, `coverage`, `missingEvidence`, `notEligible`, and `limits`; never fold them into the crawler score or count them as more crawler audits.

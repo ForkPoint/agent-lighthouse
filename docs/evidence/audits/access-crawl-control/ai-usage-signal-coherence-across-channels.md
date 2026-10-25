@@ -28,7 +28,7 @@ sources:
 
 ## What it checks
 
-Normalises every AI-usage signal the site emits — robots.txt Allow/Disallow, AIPREF Content-Usage, legacy Content-Signal, TDMRep in its three transports, RSL permits/prohibits, and noai robots directives — into one comparable model and reports where they contradict each other. Different crawlers read different channels, so contradictory signals mean different AI systems reach opposite conclusions about the same content.
+Normalises every AI-usage signal the site emits — robots.txt Allow/Disallow, AIPREF Content-Usage, Content-Signal, TDMRep in its three transports, RSL permits/prohibits, and noai robots directives — into one comparable model and reports where they contradict each other. Different crawlers read different channels, so contradictory signals mean different AI systems reach opposite conclusions about the same content.
 
 ## Claimed mechanism (falsifiable)
 
@@ -39,12 +39,12 @@ There is no defined precedence _between_ these standards; each specifies only it
 - RSL is carried in robots.txt, a Link header, an HTML link and an inline script (s12).
 - Content-Signal is carried in robots.txt (s8).
 
-Falsifiable. Normalise each channel to (path-scope, usage-category, allow|deny) triples, then compare. Two channels asserting opposite values for the same category and overlapping path scope is a mechanically detectable contradiction. It provably yields divergent outcomes, because a TDMRep-aware crawler and an AIPREF-aware crawler read disjoint inputs. The highest-value instance is documented directly. Cloudflare's managed robots.txt prepends `Content-signal: search=yes, ai-train=no, use=reference` above the operator's own file, so the operator's stated policy can be contradicted at the edge without their knowledge (s7).
+Falsifiable. Normalise each channel to (path-scope, usage-category, allow|deny) triples, then compare. Two channels asserting opposite values for the same category and overlapping path scope is a mechanically detectable contradiction. It provably yields divergent outcomes, because a TDMRep-aware crawler and an AIPREF-aware crawler read disjoint inputs. Content Signals comparisons retain explicit bot and path scope. Distinct access rules do not contradict use permission. Overlapping scopes receive review notes rather than guessed effective precedence.
 
 ## Evidence
 
 - **[Managed robots.txt — Cloudflare Bots](https://developers.cloudflare.com/bots/additional-configurations/managed-robots-txt/)** — Cloudflare (vendor-doc, URL verified 2026-08-20)
-  - Cloudflare prepends its own block to the origin's robots.txt: `User-Agent: *` / `Content-signal: search=yes, ai-train=no, use=reference` / `Allow: /`. When the origin already serves robots.txt it combines both files, Cloudflare's block first. This is the mechanism by which a site's own AI policy gets silently overridden at the edge — directly auditable by diffing declared vs. served robots.txt.
+  - Cloudflare prepends its own block to the origin's robots.txt: `User-Agent: *` / `Content-signal: search=yes, ai-train=no, use=reference` / `Allow: /`. When the origin already serves robots.txt it combines both files, Cloudflare's block first. Explicit managed-block markers support a qualified Cloudflare note. Line order alone does not establish ownership or policy precedence.
 - **[Content Signals Policy (announcement)](https://blog.cloudflare.com/content-signals-policy/)** — Cloudflare (vendor-doc, URL verified 2026-08-20)
   - Defines the `Content-Signal:` robots.txt directive with signals `search`, `ai-input`, `ai-train` and values `yes`/`no` (omission = no preference). Canonical example: `User-Agent: *` / `Content-Signal: search=yes, ai-train=no` / `Allow: /`. Deployed as default on ~3.8M Cloudflare domains. Cloudflare deliberately does not emit an `ai-input` signal.
 - **[A Vocabulary For Expressing AI Usage Preferences (draft-ietf-aipref-vocab-07)](https://datatracker.ietf.org/doc/draft-ietf-aipref-vocab/)** — IETF aipref WG (Paul Keller, Open Future; Martin Thomson, Mozilla) (draft-spec, URL verified 2026-08-20)
@@ -58,7 +58,7 @@ Falsifiable. Normalise each channel to (path-scope, usage-category, allow|deny) 
 
 ## Example failure
 
-A publisher adds `<meta name="tdm-reservation" content="1">` site-wide to claim an EU DSM Art. 4 opt-out, while robots.txt (unchanged for years) still carries `User-agent: GPTBot` / `Allow: /` with no Content-Usage directive, and Cloudflare has prepended `Content-signal: search=yes, ai-train=no, use=reference`. Three channels, three different answers for train-ai. A TDMRep-aware crawler skips the site, an AIPREF-aware crawler reads Cloudflare's block rather than the publisher's intent, and a robots-only crawler trains on everything.
+A site publishes `Content-Signal: ai-train=no` and `Content-Usage: train-ai=y` for the same bot and path. The declared training preferences differ. The scan does not prove which policy an external crawler follows.
 
 ## Scoring
 
@@ -73,7 +73,7 @@ A site that publishes no AI-usage signal in any channel is not applicable: with 
 - A contradiction needs two channels. A disagreement inside one channel belongs to the audit that owns it: `robots-ai-group-shadowing` for robots.txt rules, `aipref-content-usage-declaration-validity` for `Content-Usage`.
 - Path scopes overlap by prefix: two declarations are compared when either prefix contains the other.
 - `Content-Signal` maps into the same category space (`ai-train` to `train-ai`, `search`, `ai-input`). A line inside a named group binds only that group.
-- A `Content-Signal` block above every directive the operator wrote is reported as an edge override, with its own remedy.
+- Content-Signal parsing preserves bot and case-sensitive path scopes. Opposite values at identical scope are contradictions; overlapping scopes are review notes without inferred precedence. Crawl access and use permission are separate. Content-Signal permission is not contradicted by Disallow. Search is not equated with another format merely because both use that name. Edge ownership is not inferred from position.
 - A robots.txt root block counts as a `train-ai` denial only for tokens whose operator says the crawler collects training data: the `TRAINING_CRAWLERS` table in `_robots-txt-helpers.ts`. Since 2026-10-19 that table names `ClaudeBot`, the token Anthropic documents (https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler, verified 2026-10-19), instead of the undocumented `anthropic-ai`. It adds `MistralAI-Training` (https://docs.mistral.ai/robots, verified 2026-10-19). It drops PerplexityBot, which "is not used to crawl content for AI foundation models" (https://docs.perplexity.ai/docs/resources/perplexity-crawlers, verified 2026-10-19). It drops YouBot, documented as a search crawler (https://you.com/docs/youbot, verified 2026-10-19). It drops Diffbot, which "does not crawl pages for training generative AI foundation models" (https://www.diffbot.com/docs/crawl/faq/robots-txt, verified 2026-10-19). A block of one of those three is no longer read as a training denial.
 - The `TRAINING_CRAWLERS` table is read from the bot registry, `packages/core/src/bot-registry.ts`, since 2026-10-19. The registry counts only rows an operator page documents. `Bytespider` and `cohere-ai` have no operator page, so a block of either is no longer read as a `train-ai` denial. The scenario this closes: `User-agent: Bytespider` / `Disallow: /` beside `Content-Usage: train-ai=y` used to fail on a contradiction no operator documents. A test pins the pass.
 - Silence is not applicable. No source documents a cost for declaring nothing. Notes such as a non-array `tdmrep.json` still ride in `details.notes`.
@@ -86,6 +86,10 @@ A site that publishes no AI-usage signal in any channel is not applicable: with 
   read as that group's, but AIPREF itself does not define per-agent
   preferences. If the draft grows agent scoping, the comparison needs
   revisiting.
-- **Diffing declared against served robots.txt.** Cloudflare's prepend is
-  detected by position. Proving it came from the edge would need the origin's
-  own copy, which only the operator has.
+- **Diffing declared against served robots.txt.** Proving edge ownership needs the origin copy or explicit managed markers. Position alone does not prove it.
+
+## Limits
+
+Content Signals and access rules express different choices. A permitted use can have a crawl obstacle without a policy contradiction. Cross-format search equivalence is not established. Unknown extensions are retained without invented equivalence. No source establishes universal Content Signals consumption (https://contentsignals.org/, verified 2026-10-25). Overlapping scopes need review; only identical scopes support a Content Signals contradiction.
+
+The comparison stores at most 50 review notes and reports the omitted count. Content Signals preflight limits prevent incomplete robots.txt evidence from supporting a silence or complete-agreement claim.

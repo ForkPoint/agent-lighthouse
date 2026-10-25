@@ -4,6 +4,8 @@ import {
   AuditTier,
   CheckStatus,
   NoticeKind,
+  PageTypeSource,
+  EvidenceKey,
 } from "@forkpoint/agent-lighthouse-core";
 import { formatPageScope, formatAuditScope } from "./page-scope";
 import type { CheckResult, ScanReport } from "@forkpoint/agent-lighthouse-core";
@@ -54,16 +56,18 @@ function tierPill(c: CheckResult): { label: string; title: string } {
 function renderCheck(c: CheckResult): string {
   return `
                   <details class="check-item py-3 group cursor-pointer" data-status="${c.status}">
-                    <summary class="flex items-start justify-between gap-3 list-none select-none">
+                    <summary class="flex items-start justify-between gap-3 list-none select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 rounded-lg p-1 -m-1">
                       <div class="flex items-start gap-3">
                         <span class="mt-0.5 w-5 h-5 flex items-center justify-center rounded-full text-xs font-bold shrink-0 ${
-                          c.status === CheckStatus.Pass
-                            ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800"
-                            : c.status === CheckStatus.Warn
-                              ? "bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-800"
-                              : "bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400 border border-red-300 dark:border-red-800"
+                          c.status === CheckStatus.NotApplicable
+                            ? "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-300 dark:border-slate-700"
+                            : c.status === CheckStatus.Pass
+                              ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800"
+                              : c.status === CheckStatus.Warn
+                                ? "bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-800"
+                                : "bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400 border border-red-300 dark:border-red-800"
                         }">
-                          ${c.status === CheckStatus.Pass ? "✓" : c.status === CheckStatus.Warn ? "!" : "✗"}
+                          ${c.status === CheckStatus.NotApplicable ? "i" : c.status === CheckStatus.Pass ? "✓" : c.status === CheckStatus.Warn ? "!" : "✗"}
                         </span>
                         <div>
                           <div class="font-semibold text-slate-800 dark:text-slate-200 text-sm flex items-center gap-2">
@@ -92,6 +96,17 @@ function renderCheck(c: CheckResult): string {
                           : ""
                       }
 
+                      ${
+                        c.details?.["optionalGuidance"] === true
+                          ? Object.entries(c.details)
+                              .filter(([, value]) => Array.isArray(value))
+                              .map(
+                                ([key, value]) =>
+                                  `<div><strong>${escapeHtml(key.replace(/([a-z])([A-Z])/g, "$1 $2"))}</strong><ul>${(value as string[]).map((item) => `<li class="whitespace-pre-wrap">${escapeHtml(item)}</li>`).join("")}</ul></div>`,
+                              )
+                              .join("")
+                          : ""
+                      }
                       ${c.explanation ? `<p class="leading-relaxed font-medium text-slate-700 dark:text-slate-300">${escapeHtml(c.explanation)}</p>` : ""}
                       
                       ${
@@ -120,7 +135,7 @@ function renderCheck(c: CheckResult): string {
                         c.fix
                           ? `
                         <div class="bg-indigo-50/50 dark:bg-indigo-950/20 p-3 rounded-lg border border-indigo-200/50 dark:border-indigo-900/30">
-                          <strong class="text-indigo-900 dark:text-indigo-300 block mb-1">How to Fix:</strong>
+                          <strong class="text-indigo-900 dark:text-indigo-300 block mb-1">${c.details?.["optionalGuidance"] === true ? "Optional choices and verification:" : "How to Fix:"}</strong>
                           <span>${escapeHtml(c.fix)}</span>
                         </div>
                       `
@@ -142,7 +157,7 @@ function renderCheck(c: CheckResult): string {
                         <div class="mt-2">
                           <div class="flex items-center justify-between text-[11px] font-mono text-slate-400 mb-1">
                             <span>Recommended Code Snippet:</span>
-                            <button onclick="copySnippet(this)" class="hover:text-slate-200 font-sans">Copy Code</button>
+                            <button onclick="copySnippet(this)" aria-live="polite" class="hover:text-slate-200 font-sans">Copy Code</button>
                           </div>
                           <pre class="bg-slate-950 text-slate-200 p-3 rounded-lg font-mono text-[11px] overflow-x-auto border border-slate-800"><code>${escapeHtml(c.details.code)}</code></pre>
                         </div>
@@ -176,12 +191,79 @@ function renderObsoleteSection(found: CheckResult[], tally: string): string {
 }
 
 /**
+ * The "Optional guidance (not scored)" section: evidence-backed recommendations
+ * that do not move the site's score. Empty when no optional guidance applies.
+ */
+function renderOptionalGuidanceSection(checks: CheckResult[]): string {
+  if (checks.length === 0) return "";
+  return `
+      <section aria-label="Optional guidance" class="mb-12">
+        <div class="flex items-center justify-between pb-3 mb-6 border-b border-slate-200 dark:border-slate-800">
+          <h3 class="text-xl font-bold text-slate-900 dark:text-slate-100">Optional guidance (not scored)</h3>
+        </div>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Evidence-backed setup choices and preferences. None of this moves the score; adoption is voluntary.</p>
+        <div class="cat-card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+          <div class="checks-container divide-y divide-slate-100 dark:divide-slate-800/60">
+            ${checks.map(renderCheck).join("")}
+          </div>
+        </div>
+      </section>
+    `;
+}
+
+/**
  * Generates a standalone, zero-dependency, self-contained HTML report
  * with interactive tabs, category accordions, copyable code snippets,
  * and circular SVG score gauges.
  */
 export function generateHtmlReport(report: ScanReport): string {
   const view = buildReportView(report);
+
+  const allRenderedChecks = [
+    ...view.categories.flatMap((cat) => cat.checks),
+    ...view.optionalGuidance,
+    ...view.obsolete.found,
+  ];
+  const totalCount = allRenderedChecks.length;
+  const failCount = allRenderedChecks.filter(
+    (c) => c.status === CheckStatus.Fail,
+  ).length;
+  const warnCount = allRenderedChecks.filter(
+    (c) => c.status === CheckStatus.Warn,
+  ).length;
+  const passCount = allRenderedChecks.filter(
+    (c) => c.status === CheckStatus.Pass,
+  ).length;
+
+  const pages = view.pagesScanned;
+  const typeCounts = new Map<string, number>();
+  for (const page of pages) {
+    const label =
+      page.pageType.charAt(0).toUpperCase() + page.pageType.slice(1);
+    typeCounts.set(label, (typeCounts.get(label) ?? 0) + 1);
+  }
+  const pageTypeSummary = Array.from(typeCounts, ([label, count]) =>
+    pages.length === 1 ? label : `${count} ${label.toLowerCase()}`,
+  ).join(" · ");
+  const detectedCount = pages.filter(
+    (page) => page.classification?.source === PageTypeSource.Detected,
+  ).length;
+  const classificationSummary =
+    detectedCount === pages.length && pages.length > 0
+      ? "Page types detected automatically. Type-specific findings are advisory."
+      : detectedCount > 0
+        ? `${detectedCount} page type(s) detected automatically. Their type-specific findings are advisory.`
+        : pages.some((page) => !page.classification)
+          ? "Page type detection details are not available."
+          : "Page types supplied for this audit.";
+  const noReadableText =
+    report.scanValidity?.evidence[EvidenceKey.RenderedBody] === false;
+  const coverageLimit = noReadableText
+    ? "The scan found too little readable page text." +
+      (view.overallScore === null
+        ? " It could not give an overall score."
+        : " Some checks could not run.")
+    : view.unscoredReason;
 
   function renderGaugeSvg(score: number, size = 120, strokeWidth = 10): string {
     const radius = (size - strokeWidth) / 2;
@@ -440,35 +522,60 @@ export function generateHtmlReport(report: ScanReport): string {
     ${
       view.pageScope
         ? `<section aria-label="Page scope" class="mb-8 p-6 rounded-2xl border border-slate-700 bg-slate-900 text-slate-200">
-      <h2 class="text-lg font-bold mb-3">Page scope and coverage</h2>
+      <h2 class="text-lg font-bold mb-3">Pages checked</h2>
+      <p class="text-base font-semibold">${pages.length} ${pages.length === 1 ? "page" : "pages"}${pageTypeSummary ? ` · ${escapeHtml(pageTypeSummary)}` : ""}</p>
+      ${pages.length ? `<p class="mt-2 text-sm text-slate-400">${escapeHtml(classificationSummary)}</p>` : ""}
+      ${coverageLimit ? `<div class="mt-4 border-l-2 border-amber-400 pl-3"><h3 class="text-sm font-semibold text-amber-300">Coverage limit</h3><p class="mt-1 text-sm">${escapeHtml(coverageLimit)}</p></div>` : ""}
+      <p class="text-sm text-slate-400 mt-3">Results cover this sample, not every page on the site.</p>
+      <details class="mt-5 border-t border-slate-700 pt-4"><summary class="cursor-pointer font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-400">Technical details</summary>
+      <p class="text-xs text-slate-400 my-3">A successful HTTP response does not prove that the page has readable content. Origin evidence may also support a result. Each audit counts toward the score at most once.</p>
       <pre class="text-xs whitespace-pre-wrap break-words">${escapeHtml(formatPageScope(view.pageScope))}</pre>
-      <p class="text-xs my-3">Input URLs are pages supplied to the audit. A result applies to this sample, not every page on the site. Origin evidence may also support the result. Each audit counts toward the score at most once.</p>
-      <details class="mt-4"><summary class="cursor-pointer font-semibold">Audit populations (${view.pageScope.audits.length})</summary>
+      <details class="mt-4"><summary class="cursor-pointer font-semibold">Scope by check (${view.pageScope.audits.length})</summary>
       ${view.pageScope.audits.map((a) => `<details class="mt-3 border-t border-slate-700 pt-3"><summary class="cursor-pointer text-sm">${escapeHtml(a.title)} <span class="text-xs text-slate-400">[${escapeHtml(a.id)}] · ${escapeHtml(a.assessments.map((r) => `${r.advisory ? "advisory " : ""}${r.status}`).join(" / "))}</span></summary><pre class="mt-3 text-xs whitespace-pre-wrap break-words">${escapeHtml(formatAuditScope(a))}</pre></details>`).join("")}
+      </details>
       </details>
     </section>`
         : ""
     }
 
-    <!-- Filter Tabs -->
-    <div class="flex items-center gap-2 mb-8 overflow-x-auto pb-2">
-      <button onclick="filterStatus('all')" class="filter-btn active bg-slate-800 text-white hover:bg-slate-700 px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors">
-        All checks
-      </button>
-      <button onclick="filterStatus('fail')" class="filter-btn bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800 px-4 py-1.5 rounded-lg text-xs font-semibold border border-slate-800 transition-colors">
-        Opportunities & Failures
-      </button>
-      <button onclick="filterStatus('warn')" class="filter-btn bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800 px-4 py-1.5 rounded-lg text-xs font-semibold border border-slate-800 transition-colors">
-        Warnings
-      </button>
-      <button onclick="filterStatus('pass')" class="filter-btn bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800 px-4 py-1.5 rounded-lg text-xs font-semibold border border-slate-800 transition-colors">
-        Passed checks
-      </button>
+    <!-- Filter Tabs & View Controls -->
+    <div class="flex items-center justify-between gap-4 mb-8 flex-wrap">
+      <div class="flex items-center gap-2 overflow-x-auto pb-1">
+        <button data-filter="all" aria-pressed="true" onclick="filterStatus('all', this)" class="filter-btn active bg-slate-800 text-white hover:bg-slate-700 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer">
+          <span>All checks</span>
+          <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-700 text-slate-300 font-mono">${totalCount}</span>
+        </button>
+        <button data-filter="fail" aria-pressed="false" onclick="filterStatus('fail', this)" class="filter-btn bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800 px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-slate-800 transition-colors flex items-center gap-1.5 cursor-pointer">
+          <span>Opportunities & Failures</span>
+          <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-red-950/80 text-red-400 border border-red-800/60 font-mono">${failCount}</span>
+        </button>
+        <button data-filter="warn" aria-pressed="false" onclick="filterStatus('warn', this)" class="filter-btn bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800 px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-slate-800 transition-colors flex items-center gap-1.5 cursor-pointer">
+          <span>Warnings</span>
+          <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-950/80 text-amber-400 border border-amber-800/60 font-mono">${warnCount}</span>
+        </button>
+        <button data-filter="pass" aria-pressed="false" onclick="filterStatus('pass', this)" class="filter-btn bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800 px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-slate-800 transition-colors flex items-center gap-1.5 cursor-pointer">
+          <span>Passed checks</span>
+          <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 font-mono">${passCount}</span>
+        </button>
+      </div>
+
+      <div class="flex items-center gap-2 shrink-0">
+        <button onclick="toggleAllChecks()" id="toggle-all-btn" class="bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-800 transition-colors flex items-center gap-1.5 cursor-pointer">
+          <span id="toggle-all-icon">▼</span>
+          <span id="toggle-all-text">Expand all</span>
+        </button>
+      </div>
     </div>
 
     <!-- Category Groups -->
     <main id="audits-main">
+      <div id="filter-empty-state" class="hidden text-center py-12 px-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 mb-12">
+        <div class="text-3xl mb-2">🎉</div>
+        <h4 class="text-base font-bold text-slate-900 dark:text-slate-100 mb-1">No checks match this filter</h4>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Try selecting another filter above or view all checks.</p>
+      </div>
       ${categoryCards}
+      ${renderOptionalGuidanceSection(view.optionalGuidance)}
       ${renderObsoleteSection(view.obsolete.found, obsoleteTally(view.obsolete.absent.length, view.obsolete.unrun.length))}
     </main>
 
@@ -480,28 +587,120 @@ export function generateHtmlReport(report: ScanReport): string {
   </div>
 
   <script>
-    function filterStatus(status) {
-      document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.remove('bg-slate-800', 'text-white');
-        btn.classList.add('bg-slate-900', 'text-slate-400');
+    function filterStatus(status, btn) {
+      const activeBtn = btn || Array.from(document.querySelectorAll('.filter-btn')).find(b => b.dataset.filter === status);
+      document.querySelectorAll('.filter-btn').forEach(b => {
+        b.setAttribute('aria-pressed', String(b === activeBtn));
+        b.classList.remove('bg-slate-800', 'text-white');
+        b.classList.add('bg-slate-900', 'text-slate-400');
       });
-      event.target.classList.remove('bg-slate-900', 'text-slate-400');
-      event.target.classList.add('bg-slate-800', 'text-white');
+      if (activeBtn) {
+        const targetBtn = activeBtn.closest ? activeBtn.closest('.filter-btn') : activeBtn;
+        if (targetBtn) {
+          targetBtn.classList.remove('bg-slate-900', 'text-slate-400');
+          targetBtn.classList.add('bg-slate-800', 'text-white');
+        }
+      }
 
       document.querySelectorAll('.check-item').forEach(item => {
         if (status === 'all' || item.getAttribute('data-status') === status) {
-          item.style.display = 'block';
+          item.style.display = '';
         } else {
           item.style.display = 'none';
         }
       });
+
+      // Update visibility of category cards, groups, and optional guidance
+      document.querySelectorAll('.cat-card').forEach(card => {
+        const items = card.querySelectorAll('.check-item');
+        if (items.length > 0) {
+          const hasVisible = Array.from(items).some(i => i.style.display !== 'none');
+          card.style.display = hasVisible ? '' : 'none';
+        } else {
+          card.style.display = status === 'all' ? '' : 'none';
+        }
+      });
+      document.querySelectorAll('.group-section').forEach(group => {
+        const cards = group.querySelectorAll('.cat-card');
+        const hasVisible = Array.from(cards).some(c => c.style.display !== 'none');
+        group.style.display = hasVisible ? '' : 'none';
+      });
+      const optionalSection = document.querySelector('section[aria-label="Optional guidance"]');
+      if (optionalSection) {
+        const items = optionalSection.querySelectorAll('.check-item');
+        const hasVisible = Array.from(items).some(i => i.style.display !== 'none');
+        optionalSection.style.display = hasVisible ? '' : 'none';
+      }
+
+      const totalVisible = Array.from(document.querySelectorAll('.check-item')).filter(i => i.style.display !== 'none').length;
+      const emptyState = document.getElementById('filter-empty-state');
+      if (emptyState) {
+        emptyState.classList.toggle('hidden', totalVisible > 0);
+      }
+      updateExpandControl();
     }
 
-    function copySnippet(btn) {
-      const code = btn.closest('div').nextElementSibling.innerText;
-      navigator.clipboard.writeText(code);
-      btn.innerText = 'Copied! ✓';
-      setTimeout(() => btn.innerText = 'Copy Code', 2000);
+    function visibleChecks() {
+      return Array.from(document.querySelectorAll('.check-item')).filter(item => item.style.display !== 'none');
+    }
+
+    function updateExpandControl() {
+      const items = visibleChecks();
+      const allExpanded = items.length > 0 && items.every(item => item.open);
+      document.getElementById('toggle-all-btn').disabled = items.length === 0;
+      document.getElementById('toggle-all-icon').textContent = allExpanded ? '▲' : '▼';
+      document.getElementById('toggle-all-text').textContent = allExpanded ? 'Collapse all' : 'Expand all';
+    }
+    function toggleAllChecks() {
+      const items = visibleChecks();
+      const expand = !items.every(item => item.open);
+      items.forEach(item => { item.open = expand; });
+      updateExpandControl();
+    }
+
+    document.querySelectorAll('.check-item').forEach(item => {
+      item.addEventListener('toggle', updateExpandControl);
+    });
+    filterStatus('all');
+
+    async function copySnippet(btn) {
+      if (btn.disabled) return;
+      btn.disabled = true;
+      clearTimeout(btn.copyResetTimer);
+      const code = btn.closest('div').nextElementSibling.textContent;
+      let ok = false;
+      if (navigator.clipboard && window.isSecureContext) {
+        try {
+          await navigator.clipboard.writeText(code);
+          ok = true;
+        } catch {
+          // Fallback below
+        }
+      }
+      if (!ok) {
+        const previousFocus = document.activeElement;
+        const textarea = document.createElement('textarea');
+        try {
+          textarea.value = code;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.focus();
+          textarea.select();
+          ok = document.execCommand('copy');
+        } catch {
+          ok = false;
+        } finally {
+          textarea.remove();
+          btn.disabled = false;
+          if (previousFocus && previousFocus.focus) previousFocus.focus();
+        }
+      }
+      btn.disabled = false;
+      btn.textContent = ok ? 'Copied! ✓' : 'Copy failed — select the code and copy it';
+      if (ok) {
+        btn.copyResetTimer = setTimeout(() => { btn.textContent = 'Copy Code'; }, 2000);
+      }
     }
   </script>
 </body>

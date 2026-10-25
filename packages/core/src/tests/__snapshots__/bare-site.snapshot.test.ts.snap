@@ -37,6 +37,7 @@ fail 1   structured-data/schema-validation
 na   0   access-crawl-control/ai-content-declaration
 na   0   access-crawl-control/bravebot
 na   0   access-crawl-control/chatgpt-user
+na   0   access-crawl-control/content-signals
 na   0   access-crawl-control/crawl-delay
 na   0   access-crawl-control/tdm-rep
 na   0   agent-interfaces/agents-json

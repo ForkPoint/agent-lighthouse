@@ -71,13 +71,13 @@ describe("AiprefContentUsageDeclarationValidityAudit", () => {
 
   // `yes` parses as a token, so only the vocabulary can catch it — and the
   // message has to say which directive it belongs to.
-  it("fails a legacy Content-Signal value and names the syntax", async () => {
+  it("fails a Content-Signal value and names the syntax", async () => {
     const result = audit.audit(
       site("User-agent: *\nAllow: /\nContent-Usage: train-ai=yes\n"),
     );
     expect(result.status).toBe(CheckStatus.Fail);
     expect((result.details!["syntaxErrors"] as string[])[0]).toContain(
-      "legacy Content-Signal syntax",
+      "Content-Signal syntax",
     );
   });
 
@@ -115,13 +115,12 @@ describe("AiprefContentUsageDeclarationValidityAudit", () => {
     );
   });
 
-  it("warns when only the legacy Content-Signal directive is present", async () => {
+  it("is not applicable when only the Content-Signal directive is present", async () => {
     const result = audit.audit(
       site("User-agent: *\nContent-Signal: ai-train=no\nAllow: /\n"),
     );
-    expect(result.status).toBe(CheckStatus.Warn);
-    expect(result.details?.["legacyContentSignalLines"]).toHaveLength(1);
-    expect(result.remediation).toContain("Content-Usage: train-ai=n");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.remediation).toBeUndefined();
   });
 
   it("passes a valid, crawlable, consistent declaration", async () => {
