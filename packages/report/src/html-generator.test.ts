@@ -1,4 +1,5 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterEach, vi } from "vitest";
+import { JSDOM } from "jsdom";
 import type {
   CategoryResult,
   CheckResult,
@@ -511,6 +512,10 @@ it("shows evidence-backed optional advice without failed-check styling", () => {
     report([cat({ id: "agent-interfaces", checks: [advice] })]),
   );
   expect(output).toContain("Optional guidance (not scored)");
+  expect(output).toContain("cat-card bg-white dark:bg-slate-900");
+  expect(output).toContain(
+    "dark:bg-slate-800 text-slate-600 dark:text-slate-400",
+  );
   expect(output).toContain("search: Not declared");
   expect(output).toContain("Choose each purpose independently.");
   expect(output).toContain("External compliance cannot be proven.");
@@ -523,4 +528,225 @@ it("shows evidence-backed optional advice without failed-check styling", () => {
     ]),
   );
   expect(skipped).not.toContain("Optional guidance (not scored)");
+});
+
+describe("report UX enhancements", () => {
+  it("renders filter count badges matching check statuses", () => {
+    const r = report([
+      cat({
+        id: "agent-interfaces",
+        checks: [
+          check({ id: "c1", status: CheckStatus.Pass }),
+          check({ id: "c2", status: CheckStatus.Warn }),
+          check({ id: "c3", status: CheckStatus.Fail }),
+        ],
+      }),
+    ]);
+    const html = generateHtmlReport(r);
+
+    expect(html).toContain("filterStatus('all', this)");
+    expect(html).toContain("filterStatus('fail', this)");
+    expect(html).toContain("filterStatus('warn', this)");
+    expect(html).toContain("filterStatus('pass', this)");
+    // Total: 3, Fail: 1, Warn: 1, Pass: 1
+    expect(html).toContain(
+      '<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-700 text-slate-300 font-mono">3</span>',
+    );
+    expect(html).toContain(
+      '<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-red-950/80 text-red-400 border border-red-800/60 font-mono">1</span>',
+    );
+    expect(html).toContain(
+      '<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-950/80 text-amber-400 border border-amber-800/60 font-mono">1</span>',
+    );
+    expect(html).toContain(
+      '<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 font-mono">1</span>',
+    );
+  });
+
+  it("renders expand/collapse all toggle and empty state container", () => {
+    const html = generateHtmlReport(report([]));
+    expect(html).toContain('id="toggle-all-btn"');
+    expect(html).toContain('onclick="toggleAllChecks()"');
+    expect(html).toContain('id="filter-empty-state"');
+    expect(html).toContain("No checks match this filter");
+  });
+
+  it("renders keyboard focus-visible styling on check summary", () => {
+    const html = generateHtmlReport(
+      report([cat({ id: "agent-interfaces", checks: [check({ id: "c1" })] })]),
+    );
+    expect(html).toContain(
+      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500",
+    );
+  });
+
+  it("includes clipboard copy fallback with execCommand", () => {
+    const html = generateHtmlReport(report([]));
+    expect(html).toContain("navigator.clipboard && window.isSecureContext");
+    expect(html).toContain("document.execCommand('copy')");
+  });
+});
+
+describe("report controls in the DOM", () => {
+  let dom: JSDOM;
+  afterEach(() => dom?.window.close());
+
+  function openReport(checks: CheckResult[]) {
+    dom = new JSDOM(
+      generateHtmlReport(report([cat({ id: "agent-interfaces", checks })])),
+      {
+        runScripts: "outside-only",
+        url: "https://report.test/",
+      },
+    );
+    const scripts = dom.window.document.querySelectorAll("script");
+    dom.window.eval(scripts[scripts.length - 1]!.textContent ?? "");
+    return dom.window.document;
+  }
+
+  it("tracks visible expansion after filter changes and manual toggles", () => {
+    const doc = openReport([
+      check({ id: "passed" }),
+      check({ id: "failed", status: CheckStatus.Fail }),
+    ]);
+    // outside-only deliberately does not execute inline onclick attributes.
+    dom.window.eval(
+      "filterStatus('fail'); toggleAllChecks(); filterStatus('pass');",
+    );
+    expect(doc.getElementById("toggle-all-text")!.textContent).toBe(
+      "Expand all",
+    );
+    dom.window.eval("toggleAllChecks();");
+    expect(
+      doc.querySelector<HTMLDetailsElement>('[data-status="pass"]')!.open,
+    ).toBe(true);
+    expect(doc.getElementById("toggle-all-text")!.textContent).toBe(
+      "Collapse all",
+    );
+    const item = doc.querySelector<HTMLDetailsElement>('[data-status="pass"]')!;
+    item.open = false;
+    item.dispatchEvent(new dom.window.Event("toggle"));
+    expect(doc.getElementById("toggle-all-text")!.textContent).toBe(
+      "Expand all",
+    );
+    expect(
+      doc.querySelector('[data-filter="pass"]')!.getAttribute("aria-pressed"),
+    ).toBe("true");
+  });
+
+  it("hides empty groups and optional advice, then restores them", () => {
+    const doc = openReport([
+      check(),
+      check({
+        id: "optional",
+        status: CheckStatus.NotApplicable,
+        tier: AuditTier.Informative,
+        scoreDisplayMode: ScoreDisplayMode.Informative,
+        details: { optionalGuidance: true },
+      }),
+    ]);
+    dom.window.eval("filterStatus('fail');");
+    expect(
+      doc.getElementById("filter-empty-state")!.classList.contains("hidden"),
+    ).toBe(false);
+    expect(
+      doc.querySelector<HTMLElement>(".group-section")!.style.display,
+    ).toBe("none");
+    expect(
+      doc.querySelector<HTMLElement>('[aria-label="Optional guidance"]')!.style
+        .display,
+    ).toBe("none");
+    expect(
+      doc.querySelector<HTMLButtonElement>("#toggle-all-btn")!.disabled,
+    ).toBe(true);
+    dom.window.eval("filterStatus('all');");
+    expect(
+      doc.querySelector<HTMLElement>('[aria-label="Optional guidance"]')!.style
+        .display,
+    ).toBe("");
+    expect(
+      doc.getElementById("filter-empty-state")!.classList.contains("hidden"),
+    ).toBe(true);
+  });
+
+  it("shows the empty state on initial load with no rendered checks", () => {
+    const doc = openReport([]);
+    expect(
+      doc.getElementById("filter-empty-state")!.classList.contains("hidden"),
+    ).toBe(false);
+    expect(
+      doc.querySelector<HTMLButtonElement>("#toggle-all-btn")!.disabled,
+    ).toBe(true);
+  });
+
+  it("hides categories with no rendered checks under a status filter", () => {
+    const doc = openReport([]);
+    dom.window.eval("filterStatus('fail');");
+    expect(doc.querySelector<HTMLElement>(".cat-card")!.style.display).toBe(
+      "none",
+    );
+    dom.window.eval("filterStatus('all');");
+    expect(doc.querySelector<HTMLElement>(".cat-card")!.style.display).toBe("");
+  });
+
+  it("waits for clipboard success and preserves literal code", async () => {
+    const code = '<tag> & "quoted"\n  next line';
+    const doc = openReport([check({ details: { code } })]);
+    let resolve!: () => void;
+    const writeText = vi.fn(
+      () =>
+        new Promise<void>((r) => {
+          resolve = r;
+        }),
+    );
+    Object.defineProperty(dom.window.navigator, "clipboard", {
+      value: { writeText },
+    });
+    Object.defineProperty(dom.window, "isSecureContext", { value: true });
+    const btn = doc.querySelector<HTMLButtonElement>(
+      '[onclick="copySnippet(this)"]',
+    )!;
+    const pending = dom.window.eval(
+      "copySnippet(document.querySelector('[onclick=\"copySnippet(this)\"]'))",
+    ) as Promise<void>;
+    expect(btn.textContent).toBe("Copy Code");
+    expect(btn.disabled).toBe(true);
+    expect(writeText).toHaveBeenCalledWith(code);
+    resolve();
+    await pending;
+    expect(btn.textContent).toBe("Copied! ✓");
+    expect(btn.disabled).toBe(false);
+  });
+
+  it.each([false, "throws", true])(
+    "cleans up clipboard fallback with result %s",
+    async (result) => {
+      const doc = openReport([check({ details: { code: "literal code" } })]);
+      Object.defineProperty(doc, "execCommand", {
+        value: vi.fn(() => {
+          expect(doc.querySelector("textarea")!.value).toBe("literal code");
+          if (result === "throws") throw new Error("Copy denied");
+          return result;
+        }),
+      });
+      const btn = doc.querySelector<HTMLButtonElement>(
+        '[onclick="copySnippet(this)"]',
+      )!;
+      const filter = doc.querySelector<HTMLButtonElement>(
+        '[data-filter="all"]',
+      )!;
+      filter.focus();
+      await dom.window.eval(
+        "copySnippet(document.querySelector('[onclick=\"copySnippet(this)\"]'))",
+      );
+      expect(doc.querySelector("textarea")).toBeNull();
+      expect(doc.activeElement).toBe(filter);
+      expect(btn.disabled).toBe(false);
+      expect(btn.textContent).toBe(
+        result === true
+          ? "Copied! ✓"
+          : "Copy failed — select the code and copy it",
+      );
+    },
+  );
 });

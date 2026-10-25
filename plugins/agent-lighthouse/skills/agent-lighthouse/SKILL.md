@@ -1,6 +1,6 @@
 ---
 name: agent-lighthouse
-description: Assess and improve website agentic readiness — how well AI agents can discover, read, cite and act on a site — on any stack, using an Agent Lighthouse report plus source-code review. Use when a user asks to audit a site for AI agents or AI search, explain or fix Agent Lighthouse findings, make a site agent-ready, or check llms.txt, robots.txt rules for AI crawlers (GPTBot, ClaudeBot, PerplexityBot), structured data / JSON-LD, Markdown or text extraction, OpenAPI or MCP discovery, WebMCP actions, or agentic commerce. Accept a URL, report, or local project. Not for Google Lighthouse performance audits or developing the Agent Lighthouse engine.
+description: Assess and improve website agentic readiness — how well AI agents can discover, read, cite and act on a site — on any stack, using an Agent Lighthouse report plus source-code review. Use when a user asks to audit a site for AI agents or AI search, explain or fix Agent Lighthouse findings, make a site agent-ready, or check llms.txt, robots.txt rules for AI crawlers (GPTBot, ClaudeBot, PerplexityBot), Content Signals use preferences, structured data / JSON-LD, Markdown or text extraction, OpenAPI or MCP discovery, WebMCP actions, or agentic commerce. Accept a URL, report, or local project. Not for Google Lighthouse performance audits or developing the Agent Lighthouse engine.
 ---
 
 # Agent Lighthouse agentic readiness
@@ -41,6 +41,8 @@ Maintain a concise finding table. When a run directory exists, save it there as 
 Order work by access blockers, relevant scored failures, then other demonstrated usability or correctness defects. Review advisory findings against real site needs. Explain shared causes once when several findings point to one component.
 
 Preserve the engine's status, tier, evidence grade, notices, and skipped/not-applicable reasons. Keep declared, detected, and browser evidence separate. Do not count nested findings as extra scored audits. Do not turn missing optional files into scored failures. Do not add interfaces or schema solely to increase a score. A static MCP description is not an MCP server. Content, product data, actions, and crawler permissions must match the site's real purpose and owner policy.
+
+For Content Signals, AI-use policy choices, or related report findings, read [references/content-signals.md](references/content-signals.md). Explain the current bot/path rules before proposing a policy change. Do not treat permission choices as score fixes.
 
 ## 4. Implement when requested
 

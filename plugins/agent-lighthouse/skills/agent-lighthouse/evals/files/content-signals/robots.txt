@@ -1,0 +1,7 @@
+User-agent: ExampleBot
+Content-Signal: /Blog/ search=yes, ai-train=no, custom=keep # Keep this policy note
+Disallow: /private/
+
+User-agent: OtherBot
+Content-Signal: ai-input=no, ai-train=no
+Disallow: /
