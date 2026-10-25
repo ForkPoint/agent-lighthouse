@@ -36,7 +36,11 @@ import {
 } from "./fetcher";
 import { withScanEnvironment } from "./scan-environment";
 import { HttpMethod } from "./types";
-import type { RequestScheduler } from "./request-scheduler";
+import {
+  createRequestScheduler,
+  type RequestScheduler,
+} from "./request-scheduler";
+import { detectWafProtection, WafProvider } from "./waf-detector";
 
 const mockRequest = vi.mocked(request);
 const mockLookup = vi.mocked(dns.lookup);
@@ -1405,6 +1409,32 @@ describe("fetcher.fetch — requestScheduler", () => {
     expect(result.status).toBe(0);
     expect(result.error).toContain("host stopped");
     expect(mockRequest).not.toHaveBeenCalled();
+  });
+
+  it("reports the root-file refusal instead of a dropped unsent homepage", async () => {
+    mockRequest.mockResolvedValueOnce(
+      mockResponse(403, "Forbidden", { "content-type": "text/plain" }) as never,
+    );
+    const scheduler = createRequestScheduler({ gapMs: 0 });
+    const fetcher = createFetcher({ requestScheduler: scheduler });
+    const url = "https://example.com/";
+
+    const robots = await fetcher.fetch({ url: `${url}robots.txt` });
+    const homepage = await fetcher.fetch({ url });
+
+    expect(robots.status).toBe(403);
+    expect(homepage.status).toBe(0);
+    expect(mockRequest).toHaveBeenCalledTimes(1);
+    expect(mockRequest.mock.calls[0]?.[0]).toBe(`${url}robots.txt`);
+    expect(
+      detectWafProtection(url, homepage, { "/robots.txt": robots }, 0),
+    ).toMatchObject({
+      provider: WafProvider.GenericWaf,
+      reason: "Target server rejected crawler with HTTP 403 on /robots.txt",
+      statusCode: 403,
+    });
+    // Without the response that stopped the host, the detector cannot name a wall.
+    expect(detectWafProtection(url, homepage, {}, 0)).toBeNull();
   });
 
   it("reports each response with its status, Retry-After and agent", async () => {

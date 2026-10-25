@@ -94,14 +94,20 @@ export interface DefaultRequestScheduler extends RequestScheduler {
   importState(state: readonly HostState[]): void;
 }
 
+/**
+ * The message of a {@link HostStoppedError}. A fetch the scheduler held back
+ * carries it as its `error`, so a reader can tell a request that was never
+ * sent from one the site dropped.
+ */
+export const HOST_STOPPED_MESSAGE =
+  "Site paused after HTTP 403, 429 or repeated 503; no further requests sent";
+
 /** Thrown by `acquire` for a host the scheduler stopped. */
 export class HostStoppedError extends Error {
   readonly host: string;
   readonly reason: HostStopReason | null;
   constructor(host: string, reason: HostStopReason | null) {
-    super(
-      "Site paused after HTTP 403, 429 or repeated 503; no further requests sent",
-    );
+    super(HOST_STOPPED_MESSAGE);
     this.name = "HostStoppedError";
     this.host = host;
     this.reason = reason;

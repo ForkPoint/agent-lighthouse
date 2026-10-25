@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { detectWafProtection } from "./waf-detector";
+import { HOST_STOPPED_MESSAGE } from "./request-scheduler";
 import type { FetchResult } from "./fetcher";
 import { WafProvider } from "#core/contracts";
 
@@ -223,6 +224,32 @@ describe("detectWafProtection", () => {
           }),
         },
         3,
+      );
+      expect(waf).toBeNull();
+    });
+
+    // The scheduler stops a host on a 403 to robots.txt and never sends the
+    // homepage. That is not a dropped connection.
+    it("names the root file whose 403 stopped the host", () => {
+      const waf = detectWafProtection(
+        URL,
+        result({ status: 0, error: HOST_STOPPED_MESSAGE }),
+        { "/robots.txt": result({ status: 403, contentType: "text/plain" }) },
+        0,
+      );
+      expect(waf).toMatchObject({
+        provider: WafProvider.GenericWaf,
+        reason: "Target server rejected crawler with HTTP 403 on /robots.txt",
+        statusCode: 403,
+      });
+    });
+
+    it("reports no wall for a stopped host when no root file explains it", () => {
+      const waf = detectWafProtection(
+        URL,
+        result({ status: 0, error: HOST_STOPPED_MESSAGE }),
+        { "/robots.txt": result({ status: 200, contentType: "text/plain" }) },
+        0,
       );
       expect(waf).toBeNull();
     });
@@ -794,6 +821,8 @@ describe("detectWafProtection", () => {
       "802167ED01000000:error:0A000410:SSL routines:ssl3_read_bytes:ssl/tls alert handshake failure",
       "connect ECONNREFUSED 192.0.2.1:443",
       "getaddrinfo ENOTFOUND shop.test",
+      "connect ENETUNREACH 192.0.2.1:443",
+      "connect EHOSTUNREACH 192.0.2.1:443",
       "Connect Timeout Error (attempted address: shop.test:443, timeout: 10000ms)",
     ])("returns null for %p", (error) => {
       expect(onHomepage({ status: 0, error }, 0)).toBeNull();

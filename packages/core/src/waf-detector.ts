@@ -1,6 +1,7 @@
 import { type WafProtection, WafProvider } from "./contracts";
 import type { FetchResult } from "./fetcher";
 import { SCRIPT_ELEMENTS, STYLE_ELEMENTS } from "./raw-html";
+import { HOST_STOPPED_MESSAGE } from "./request-scheduler";
 
 // A report carries the verdict, so its shape lives in `contracts.ts`.
 export { WafProvider };
@@ -58,12 +59,13 @@ function titleOf(body: string): string {
 
 /**
  * A connection that never produced an HTTP exchange for a reason that is not
- * the site refusing a crawler: DNS, a refused port, a TLS or certificate
- * failure, or a connect timeout. These name the origin's own fault, so they
- * are never reported as a bot wall.
+ * the site refusing a crawler: DNS, a refused port, an unreachable network or
+ * host, a TLS or certificate failure, or a connect timeout. These name the
+ * origin's own fault, or the scanner's route to it, so they are never reported
+ * as a bot wall.
  */
 const NOT_A_WALL =
-  /enotfound|eai_again|econnrefused|connect timeout|und_err_connect_timeout|certificate|cert_|altnames|ssl|tls|handshake|self[- ]signed/i;
+  /enotfound|eai_again|econnrefused|enetunreach|ehostunreach|connect timeout|und_err_connect_timeout|certificate|cert_|altnames|ssl|tls|handshake|self[- ]signed/i;
 
 /**
  * Analyzes fetch results (homepage, root files, extra pages) to determine
@@ -145,6 +147,13 @@ export function detectWafProtection(
     // evidence gate reports it as an unreachable homepage, with the error.
     if (NOT_A_WALL.test(errorMsg)) return null;
 
+    // The scheduler held the homepage back after an earlier answer stopped
+    // the host. No connection was made, so none was dropped: the answer that
+    // stopped the host is the evidence.
+    if (homepageResult.error?.startsWith(HOST_STOPPED_MESSAGE)) {
+      return stoppedHostWall(rootFiles);
+    }
+
     if (
       homepageResult.status === 0 ||
       errorMsg.includes("timeout") ||
@@ -169,6 +178,29 @@ export function detectWafProtection(
   }
 
   return null;
+}
+
+/**
+ * The verdict for a homepage the scheduler never sent. A root file that
+ * answered 403 stopped the host, so it names the wall. A stop this function
+ * cannot see, such as two 503 answers in a row, gets no wall: the evidence
+ * gate already reports the homepage as paused.
+ */
+function stoppedHostWall(
+  rootFiles: Record<string, FetchResult>,
+): WafProtection | null {
+  const refused = Object.entries(rootFiles).find(
+    ([, res]) => res?.status === 403,
+  );
+  if (!refused) return null;
+  const [path] = refused;
+  return {
+    isBlocked: true,
+    provider: WafProvider.GenericWaf,
+    name: "WAF / Access Firewall",
+    reason: `Target server rejected crawler with HTTP 403 on ${path}`,
+    statusCode: 403,
+  };
 }
 
 /**
