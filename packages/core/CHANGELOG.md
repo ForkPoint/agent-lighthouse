@@ -1,5 +1,23 @@
 # @forkpoint/agent-lighthouse-core
 
+## 10.4.0
+
+### Minor Changes
+
+- b7388ad: Add an unscored Content Signals audit with bot/path scope, syntax diagnostics, and optional policy guidance. Preserve valid neighbors and separate use preferences from access rules. Do not require AIPREF adoption beside Content Signals.
+
+  Show evidence-backed optional informative guidance in HTML and Markdown without changing scores, totals, or top fixes.
+
+  Teach the companion skill to explain Content Signals choices, propose scoped edits, and distinguish local changes from deployed policy verification.
+
+  Improve HTML report filter counts, empty states, keyboard focus, and expand controls. Confirm copy success before showing feedback, report failed copies, and clean up clipboard fallbacks.
+
+  Replace the HTML page-scope debug block with a plain summary and an explicit coverage limit. Keep raw fetch and per-check scope evidence under collapsed technical details.
+
+### Patch Changes
+
+- 19cd6aa: Bot-wall detection no longer reports a dropped connection when the request scheduler held the homepage back. When no vendor-specific diagnosis applies, a host stopped by a 403 on a root file now reports that file and status, for example `Target server rejected crawler with HTTP 403 on /robots.txt`. `ENETUNREACH` and `EHOSTUNREACH` are treated as network failures, not as a bot wall.
+
 ## 10.3.0
 
 ### Minor Changes
