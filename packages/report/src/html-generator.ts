@@ -57,13 +57,15 @@ function renderCheck(c: CheckResult): string {
                     <summary class="flex items-start justify-between gap-3 list-none select-none">
                       <div class="flex items-start gap-3">
                         <span class="mt-0.5 w-5 h-5 flex items-center justify-center rounded-full text-xs font-bold shrink-0 ${
-                          c.status === CheckStatus.Pass
-                            ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800"
-                            : c.status === CheckStatus.Warn
-                              ? "bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-800"
-                              : "bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400 border border-red-300 dark:border-red-800"
+                          c.status === CheckStatus.NotApplicable
+                            ? "bg-slate-100 text-slate-600 border border-slate-300"
+                            : c.status === CheckStatus.Pass
+                              ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800"
+                              : c.status === CheckStatus.Warn
+                                ? "bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-800"
+                                : "bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400 border border-red-300 dark:border-red-800"
                         }">
-                          ${c.status === CheckStatus.Pass ? "✓" : c.status === CheckStatus.Warn ? "!" : "✗"}
+                          ${c.status === CheckStatus.NotApplicable ? "i" : c.status === CheckStatus.Pass ? "✓" : c.status === CheckStatus.Warn ? "!" : "✗"}
                         </span>
                         <div>
                           <div class="font-semibold text-slate-800 dark:text-slate-200 text-sm flex items-center gap-2">
@@ -92,6 +94,17 @@ function renderCheck(c: CheckResult): string {
                           : ""
                       }
 
+                      ${
+                        c.details?.["optionalGuidance"] === true
+                          ? Object.entries(c.details)
+                              .filter(([, value]) => Array.isArray(value))
+                              .map(
+                                ([key, value]) =>
+                                  `<div><strong>${escapeHtml(key.replace(/([a-z])([A-Z])/g, "$1 $2"))}</strong><ul>${(value as string[]).map((item) => `<li class="whitespace-pre-wrap">${escapeHtml(item)}</li>`).join("")}</ul></div>`,
+                              )
+                              .join("")
+                          : ""
+                      }
                       ${c.explanation ? `<p class="leading-relaxed font-medium text-slate-700 dark:text-slate-300">${escapeHtml(c.explanation)}</p>` : ""}
                       
                       ${
@@ -120,7 +133,7 @@ function renderCheck(c: CheckResult): string {
                         c.fix
                           ? `
                         <div class="bg-indigo-50/50 dark:bg-indigo-950/20 p-3 rounded-lg border border-indigo-200/50 dark:border-indigo-900/30">
-                          <strong class="text-indigo-900 dark:text-indigo-300 block mb-1">How to Fix:</strong>
+                          <strong class="text-indigo-900 dark:text-indigo-300 block mb-1">${c.details?.["optionalGuidance"] === true ? "Optional choices and verification:" : "How to Fix:"}</strong>
                           <span>${escapeHtml(c.fix)}</span>
                         </div>
                       `
@@ -469,6 +482,7 @@ export function generateHtmlReport(report: ScanReport): string {
     <!-- Category Groups -->
     <main id="audits-main">
       ${categoryCards}
+      ${view.optionalGuidance.length ? `<section aria-label="Optional guidance" class="mb-12"><h3 class="text-xl font-bold">Optional guidance (not scored)</h3>${view.optionalGuidance.map(renderCheck).join("")}</section>` : ""}
       ${renderObsoleteSection(view.obsolete.found, obsoleteTally(view.obsolete.absent.length, view.obsolete.unrun.length))}
     </main>
 

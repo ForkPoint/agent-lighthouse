@@ -681,3 +681,44 @@ describe("obsolete tier", () => {
     ]);
   });
 });
+
+it("keeps optional absence advice out of counts, scores and top fixes", () => {
+  const advice = check({
+    id: "optional-example",
+    status: CheckStatus.NotApplicable,
+    tier: AuditTier.Informative,
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    details: { optionalGuidance: true },
+  });
+  const before = buildReportView(
+    report([cat({ id: "agent-interfaces", checks: [] })]),
+  );
+  const view = buildReportView(
+    report([cat({ id: "agent-interfaces", checks: [advice] })]),
+  );
+  expect(view.optionalGuidance).toEqual([advice]);
+  expect(view.overallScore).toBe(before.overallScore);
+  expect(view.topFixes).toEqual(before.topFixes);
+  expect(view.categories[0]?.counts.total).toBe(0);
+  expect(view.categories[0]?.checks).toEqual([]);
+  for (const tags of [
+    [TAG_SCAN_ERROR],
+    [TAG_SKIPPED_NO_EVIDENCE],
+    [TAG_SKIPPED_PAGE_TYPE],
+  ]) {
+    expect(
+      buildReportView(
+        report([
+          cat({ id: "agent-interfaces", checks: [{ ...advice, tags }] }),
+        ]),
+      ).optionalGuidance,
+    ).toEqual([]);
+  }
+  expect(
+    buildReportView(
+      report([
+        cat({ id: "agent-interfaces", checks: [{ ...advice, details: {} }] }),
+      ]),
+    ).optionalGuidance,
+  ).toEqual([]);
+});

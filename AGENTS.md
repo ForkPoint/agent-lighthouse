@@ -42,7 +42,7 @@ Do not hand-edit generated active records.
 Never type an audit, category or tier count into a document. Code reads
 them from `getRegistrySummary()` in core; the `summary` block of
 `docs/evidence/audit-map.json` is the same numbers, generated. In Markdown or Astro, write the number
-between markers, `<!-- registry:audits -->222<!-- /registry:audits -->`, and
+between markers, `<!-- registry:audits -->223<!-- /registry:audits -->`, and
 run `pnpm build:audit-map`, which fills every marker in tracked `.md`,
 `.mdx` and `.astro` files and the table in `docs/scoring.md`. Keys:
 `audits`, `categories`, `scored`, `informative`, `experimental`, `obsolete`,

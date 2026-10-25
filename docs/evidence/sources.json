@@ -5371,8 +5371,8 @@
       "url": "https://developers.cloudflare.com/bots/additional-configurations/managed-robots-txt/",
       "type": "vendor-doc",
       "publisher": "Cloudflare",
-      "verified": "2026-08-20",
-      "keyFindings": "Cloudflare PREPENDS its own block to the origin's robots.txt: `User-Agent: *` / `Content-signal: search=yes, ai-train=no, use=reference` / `Allow: /`. When the origin already serves robots.txt it combines both files, Cloudflare's block first. This is the mechanism by which a site's own AI policy gets silently overridden at the edge — directly auditable by diffing declared vs. served robots.txt."
+      "verified": "2026-10-25",
+      "keyFindings": "Bot Preference Sync can prepend a marked managed block. Policy comments alone declare no preferences. The optional use test extension accepts immediate, reference and full. Compliance is voluntary. Line order alone does not identify ownership."
     },
     {
       "id": "s8",
@@ -5385,12 +5385,12 @@
     },
     {
       "id": "s9",
-      "title": "Content Signals (AIPREF guide)",
+      "title": "Content Signals",
       "url": "https://contentsignals.org/",
       "type": "article",
       "publisher": "Cloudflare / contentsignals.org",
-      "verified": "2026-08-20",
-      "keyFindings": "Resolves HTTP 200. Page now self-describes as \"An up-to-date guide to the IETF's proposed new AI Preferences (aipref)\" — i.e. the Content-Signal vocabulary is being folded into the IETF AIPREF work (s10/s11). Body is JS-rendered behind Cloudflare, so scrape the meta description or the drafts directly."
+      "verified": "2026-10-25",
+      "keyFindings": "Documents optional search, ai-input and ai-train preferences, yes/no values, omission as no preference, and bot/path scopes. Publication does not prove universal vendor consumption. Content Signals and AIPREF are separate formats."
     },
     {
       "id": "sandboxseo-geo-critique",

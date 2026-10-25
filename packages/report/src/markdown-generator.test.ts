@@ -510,3 +510,68 @@ describe("notices", () => {
     expect(md).toContain("No AI vendor documents reading this file.");
   });
 });
+
+it("shows evidence-backed optional advice without failed-check styling", () => {
+  const advice = check({
+    id: "optional-example",
+    title: "Optional policy choices",
+    status: CheckStatus.NotApplicable,
+    tier: AuditTier.Informative,
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    fix: "Choose each purpose independently.",
+    details: {
+      optionalGuidance: true,
+      declarations: ["search: Not declared"],
+      verification: ["External compliance cannot be proven."],
+    },
+  });
+  const output = generateMarkdownSummary(
+    report([cat({ id: "agent-interfaces", checks: [advice] })]),
+  );
+  expect(output).toContain("Optional guidance (not scored)");
+  expect(output).toContain("search: Not declared");
+  expect(output).toContain("Choose each purpose independently.");
+  expect(output).toContain("External compliance cannot be proven.");
+  const skipped = generateMarkdownSummary(
+    report([
+      cat({
+        id: "agent-interfaces",
+        checks: [{ ...advice, tags: [TAG_SCAN_ERROR] }],
+      }),
+    ]),
+  );
+  expect(skipped).not.toContain("Optional guidance (not scored)");
+});
+
+it.each([CheckStatus.Pass, CheckStatus.Warn])(
+  "renders declared %s policy evidence as literal text",
+  (status) => {
+    const evidence =
+      "[link](https://evil.test) ![image](https://evil.test/pixel) `code` **bold** <img src=x> </pre>\n# heading";
+    const result = generateMarkdownSummary(
+      report([
+        cat({
+          id: "access-crawl-control",
+          checks: [
+            check({
+              status,
+              tier: AuditTier.Informative,
+              details: {
+                optionalGuidance: true,
+                declarations: [evidence],
+                syntaxErrors: [evidence],
+                conditionalEdits: [evidence],
+                verification: [evidence],
+              },
+            }),
+          ],
+        }),
+      ]),
+    );
+    const literal =
+      "<pre>[link](https://evil.test) ![image](https://evil.test/pixel) `code` **bold** &lt;img src=x&gt; &lt;/pre&gt;\n# heading</pre>";
+    expect(result.split(literal)).toHaveLength(5);
+    expect(result).not.toContain("<img src=x>");
+    expect(result).toContain("Optional guidance (not scored)");
+  },
+);

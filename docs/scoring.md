@@ -75,12 +75,12 @@ Each category in the JSON report carries `registryMass` and `assessedMass` for t
 
 <!-- scoring-table:start -->
 
-The current registry has 222 audits: 163 scored, 50 informative, 2 experimental, 7 obsolete, with a total registry mass of 132.2:
+The current registry has 223 audits: 163 scored, 51 informative, 2 experimental, 7 obsolete, with a total registry mass of 132.2:
 
 | Category                   | Audits | Scored | Registry mass |
 | :------------------------- | -----: | -----: | ------------: |
 | Agent Operability & Safety |     48 |     38 |          31.2 |
-| Access & Crawl Control     |     37 |     32 |          28.8 |
+| Access & Crawl Control     |     38 |     32 |          28.8 |
 | Content Extraction         |     27 |     23 |          17.0 |
 | Machine Discovery          |     24 |     16 |          12.8 |
 | Agent Interfaces           |     27 |     17 |          12.6 |

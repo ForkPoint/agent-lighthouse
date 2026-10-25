@@ -492,3 +492,35 @@ describe("obsolete tier", () => {
     expect(html).not.toContain("Deprecated — no longer a factor");
   });
 });
+
+it("shows evidence-backed optional advice without failed-check styling", () => {
+  const advice = check({
+    id: "optional-example",
+    title: "Optional policy choices",
+    status: CheckStatus.NotApplicable,
+    tier: AuditTier.Informative,
+    scoreDisplayMode: ScoreDisplayMode.Informative,
+    fix: "Choose each purpose independently.",
+    details: {
+      optionalGuidance: true,
+      declarations: ["search: Not declared"],
+      verification: ["External compliance cannot be proven."],
+    },
+  });
+  const output = generateHtmlReport(
+    report([cat({ id: "agent-interfaces", checks: [advice] })]),
+  );
+  expect(output).toContain("Optional guidance (not scored)");
+  expect(output).toContain("search: Not declared");
+  expect(output).toContain("Choose each purpose independently.");
+  expect(output).toContain("External compliance cannot be proven.");
+  const skipped = generateHtmlReport(
+    report([
+      cat({
+        id: "agent-interfaces",
+        checks: [{ ...advice, tags: [TAG_SCAN_ERROR] }],
+      }),
+    ]),
+  );
+  expect(skipped).not.toContain("Optional guidance (not scored)");
+});

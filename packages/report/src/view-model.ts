@@ -138,6 +138,8 @@ export interface ReportView {
   categories: CategoryView[];
   /** Obsolete-tier checks, outside every category list and count. */
   obsolete: ObsoleteView;
+  /** Evidence-backed optional advice, outside assessed totals and fixes. */
+  optionalGuidance: CheckResult[];
   /**
    * Checks that reached a verdict and carry a non-obsolete notice, such as
    * "no AI vendor reads this". Surfaces that list no individual checks print
@@ -395,6 +397,13 @@ export function buildReportView(
     groups,
     categories: categoryViews,
     obsolete,
+    optionalGuidance: allChecks.filter(
+      (check) =>
+        check.tier === AuditTier.Informative &&
+        check.status === CheckStatus.NotApplicable &&
+        check.details?.["optionalGuidance"] === true &&
+        !didNotRun(check),
+    ),
     notices: noticedChecks(allChecks),
     topFixes,
     topPasses,

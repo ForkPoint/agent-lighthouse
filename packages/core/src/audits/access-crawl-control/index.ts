@@ -2,6 +2,7 @@
 // Order mirrors docs/evidence/audit-map.json; audit-config.ts consumes the
 // list verbatim, so this file is the category's single source of truth.
 
+export { ContentSignalsAudit } from "./content-signals";
 export { NoNofollowAudit } from "./no-nofollow";
 export { NoRedirectChainsAudit } from "./no-redirect-chains";
 // access-crawl-control/canonical — one audit in the place of the two canonical
@@ -48,6 +49,7 @@ export { RslLicensingTermsConformanceAudit } from "./rsl-licensing-terms-conform
 export { MachineActionable402PaidAccessAudit } from "./machine-actionable-402-paid-access";
 export { WebBotAuthRequestToleranceAudit } from "./web-bot-auth-request-tolerance";
 
+import { ContentSignalsAudit } from "./content-signals";
 import { NoNofollowAudit } from "./no-nofollow";
 import { NoRedirectChainsAudit } from "./no-redirect-chains";
 import { CanonicalLinksAudit } from "./canonical";
@@ -88,6 +90,7 @@ import { WebBotAuthRequestToleranceAudit } from "./web-bot-auth-request-toleranc
 
 /** Every audit that lives in the access-crawl-control category, in map order. */
 export const ACCESS_CRAWL_CONTROL_AUDITS = [
+  ContentSignalsAudit,
   NoNofollowAudit,
   NoRedirectChainsAudit,
   CanonicalLinksAudit,
