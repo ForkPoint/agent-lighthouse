@@ -13,7 +13,7 @@ import { scanLookup } from "./scan-environment";
 
 const log = logger.child({ [LogField.Component]: "fetcher" });
 import { RedirectCookieJar } from "./redirect-cookies";
-import { HttpMethod } from "./types";
+import { HttpMethod, RedirectFailure } from "./types";
 
 /**
  * Whether a URL is http(s) and resolves to a public address. Inside a scan
@@ -687,6 +687,29 @@ export function createFetcherWith(
       // Cookies set along this chain are sent back on its later hops, as a
       // browser does; without them some sites redirect until the hop limit.
       const cookieJar = new RedirectCookieJar();
+      // Compare the effective request, not the URL alone: a cookie or POST-to-GET
+      // transition can make a same-URL redirect legitimate progress.
+      const redirectState = (
+        url: string,
+        effectiveMethod: HttpMethod,
+        headers: Record<string, string>,
+      ) => {
+        const normalized = new URL(url);
+        normalized.hash = "";
+        const cookie =
+          Object.entries(headers).find(
+            ([name]) => name.toLowerCase() === "cookie",
+          )?.[1] ?? "";
+        return JSON.stringify([
+          normalized.href,
+          effectiveMethod,
+          cookie,
+          cookieJar.stateKey(),
+        ]);
+      };
+      const visited = new Set([
+        redirectState(currentUrl, currentMethod, reqHeaders),
+      ]);
 
       while (
         // This option is constant; response and hops bound the redirect loop.
@@ -728,14 +751,13 @@ export function createFetcherWith(
             totalMs: Math.round(refusedMs),
             contentType: "",
             contentLength: 0,
-            error: "redirect-refused",
+            error: RedirectFailure.Refused,
           };
         }
 
         await response.body.dump();
         release?.();
         release = undefined;
-        if (open) report(open, elapsed(), elapsed());
         cookieJar.store(response.headers["set-cookie"], currentUrl);
 
         // 303 always continues as a GET without a body; 301 and 302 do the same
@@ -771,6 +793,42 @@ export function createFetcherWith(
             callerCookie ? `${callerCookie}; ${cookies}` : cookies,
           );
         }
+
+        const state = redirectState(currentUrl, currentMethod, hopHeaders);
+        if (visited.has(state)) {
+          // Freeze terminal timing before capture callbacks run. Replay reads
+          // this same value from the last observed exchange.
+          const loopMs = replayedTiming?.totalMs ?? elapsed();
+          if (open) report(open, loopMs, loopMs);
+          tally.failed(RedirectFailure.Loop);
+          log.debug(
+            {
+              [LogField.HttpMethod]: method,
+              [LogField.Url]: targetUrl,
+              [LogField.Error]: {
+                message: RedirectFailure.Loop,
+                code: RedirectFailure.Loop,
+              },
+              [LogField.DurationMs]: Math.round(loopMs),
+            },
+            "Request failed",
+          );
+          return {
+            url: targetUrl,
+            finalUrl: redirectChain[redirectChain.length - 1]!.from,
+            status: 0,
+            headers: {},
+            body: "",
+            ttfbMs: Math.round(loopMs),
+            totalMs: Math.round(loopMs),
+            contentType: "",
+            contentLength: 0,
+            error: RedirectFailure.Loop,
+            redirectChain,
+          };
+        }
+        visited.add(state);
+        if (open) report(open, elapsed(), elapsed());
 
         response = await send(
           currentUrl,

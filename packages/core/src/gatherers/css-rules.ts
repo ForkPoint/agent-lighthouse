@@ -1,3 +1,5 @@
+import { cacheOwner } from "./cache-owner";
+import type { FetchResult } from "#core/fetcher";
 import type { CheckContext, PageContext } from "#core/check-context";
 import { isSafeUrl } from "#core/fetcher";
 
@@ -17,6 +19,30 @@ export interface CssRule {
 const MAX_SHEET_BYTES = 512 * 1024;
 /** How many linked stylesheets to fetch per page. */
 const MAX_SHEETS = 5;
+
+// Only identical CSS GETs share a response. The owner expires with the scan.
+const sheetResponses = new WeakMap<object, Map<string, Promise<FetchResult>>>();
+
+function stylesheetResponse(
+  ctx: CheckContext,
+  url: string,
+): Promise<FetchResult> {
+  const owner = cacheOwner(ctx);
+  let responses = sheetResponses.get(owner);
+  if (!responses) {
+    responses = new Map();
+    sheetResponses.set(owner, responses);
+  }
+  const requestUrl = new URL(url);
+  requestUrl.hash = "";
+  const key = requestUrl.href;
+  let response = responses.get(key);
+  if (!response) {
+    response = ctx.fetch({ url: key });
+    responses.set(key, response);
+  }
+  return response;
+}
 
 /** At-rules that hold declarations rather than nested rules, so carry no selector. */
 const DECLARATION_AT_RULES =
@@ -150,7 +176,7 @@ export async function collectPageCss(
       skippedCrossOrigin.push(absolute);
       continue;
     }
-    const result = await ctx.fetch({ url: absolute });
+    const result = await stylesheetResponse(ctx, absolute);
     if (result.status !== 200 || !result.body) continue;
     fetched.push(absolute);
     rules.push(...parseCssRules(result.body, absolute));

@@ -704,8 +704,8 @@ describe("fetcher.fetch — body and headers edge cases", () => {
 
     mockRequest.mockClear();
     await fetcher.fetch({ url: "https://example.com/a" });
-    // The original request plus MAX_REDIRECTS hops.
-    expect(mockRequest).toHaveBeenCalledTimes(MAX_REDIRECTS + 1);
+    // The repeated redirect state stops the chain before another request.
+    expect(mockRequest).toHaveBeenCalledTimes(2);
   });
 
   it("ignores header values that are neither a string nor an array", async () => {
@@ -968,6 +968,122 @@ describe("createFetcher redirect handling", () => {
     expect(result.finalUrl).toBe(
       `https://example.com/hop-${String(MAX_REDIRECTS)}`,
     );
+  });
+
+  it("stops a repeated state with scheduler and capture evidence intact", async () => {
+    const response = mockResponse(302, "", { location: "/start" });
+    mockRequest.mockResolvedValue(response as never);
+    mockLookup.mockResolvedValue({ address: "93.184.216.34", family: 4 });
+    const scheduler = createRequestScheduler({ gapMs: 0 });
+    const acquire = vi.spyOn(scheduler, "acquire");
+    const exchanges: HttpExchange[] = [];
+    const fetcher = createFetcher({
+      requestScheduler: scheduler,
+      onExchange: (exchange) => {
+        exchanges.push(exchange);
+      },
+    });
+    const result = await fetcher.fetch({ url: "https://example.com/start" });
+    expect(result.error).toBe("redirect-loop");
+    expect(result.status).toBe(0);
+    expect(mockRequest).toHaveBeenCalledTimes(1);
+    expect(acquire).toHaveBeenCalledTimes(1);
+    expect(response.body.dump).toHaveBeenCalledTimes(1);
+    expect(result.redirectChain).toEqual([
+      {
+        status: 302,
+        from: "https://example.com/start",
+        to: "https://example.com/start",
+      },
+    ]);
+    expect(exchanges).toHaveLength(1);
+    expect(fetcher.summary().failures["redirect-loop"]).toBe(1);
+  });
+
+  it("stops a two-URL loop after capturing both responses", async () => {
+    mockRequest
+      .mockResolvedValueOnce(mockResponse(302, "", { location: "/b" }) as never)
+      .mockResolvedValueOnce(
+        mockResponse(302, "", { location: "/a" }) as never,
+      );
+    mockLookup.mockResolvedValue({ address: "93.184.216.34", family: 4 });
+    const exchanges: HttpExchange[] = [];
+    const result = await createFetcher({
+      onExchange: (exchange) => {
+        exchanges.push(exchange);
+      },
+    }).fetch({ url: "https://example.com/a" });
+    expect(result.error).toBe("redirect-loop");
+    expect(mockRequest).toHaveBeenCalledTimes(2);
+    expect(exchanges).toHaveLength(2);
+    expect(result.redirectChain).toHaveLength(2);
+    expect(result.finalUrl).toBe("https://example.com/b");
+  });
+
+  it("allows a same-URL revisit after a cookie change", async () => {
+    mockRequest
+      .mockResolvedValueOnce(
+        mockResponse(302, "", {
+          location: "/start",
+          "set-cookie": "session=ready; Path=/",
+        }) as never,
+      )
+      .mockResolvedValueOnce(mockResponse(200, "ready") as never);
+    mockLookup.mockResolvedValue({ address: "93.184.216.34", family: 4 });
+    const result = await createFetcher().fetch({
+      url: "https://example.com/start",
+    });
+    expect(result.status).toBe(200);
+    expect(mockRequest).toHaveBeenCalledTimes(2);
+  });
+
+  it("permits cross-host progress when another host sets its own cookie", async () => {
+    mockRequest
+      .mockResolvedValueOnce(
+        mockResponse(302, "", { location: "https://other.test/b" }) as never,
+      )
+      .mockResolvedValueOnce(
+        mockResponse(302, "", {
+          location: "https://example.com/a",
+          "set-cookie": "session=ready; Path=/",
+        }) as never,
+      )
+      .mockResolvedValueOnce(
+        mockResponse(302, "", { location: "https://other.test/b" }) as never,
+      )
+      .mockResolvedValueOnce(mockResponse(200, "ready") as never);
+    mockLookup.mockResolvedValue({ address: "93.184.216.34", family: 4 });
+    const result = await createFetcher().fetch({
+      url: "https://example.com/a",
+    });
+    expect(result.status).toBe(200);
+    expect(mockRequest).toHaveBeenCalledTimes(4);
+    expect(mockRequest.mock.calls[2]?.[1]?.headers).not.toHaveProperty(
+      "Cookie",
+    );
+    expect(mockRequest.mock.calls[3]?.[1]?.headers).toHaveProperty(
+      "Cookie",
+      "session=ready",
+    );
+  });
+
+  it("allows a same-URL POST-to-GET redirect", async () => {
+    mockRequest
+      .mockResolvedValueOnce(
+        mockResponse(303, "", { location: "/start" }) as never,
+      )
+      .mockResolvedValueOnce(mockResponse(200, "ready") as never);
+    mockLookup.mockResolvedValue({ address: "93.184.216.34", family: 4 });
+    const result = await createFetcher().fetch({
+      url: "https://example.com/start",
+      method: HttpMethod.Post,
+      body: "payload",
+    });
+    expect(result.status).toBe(200);
+    expect(mockRequest.mock.calls[1]?.[1]).toMatchObject({
+      method: HttpMethod.Get,
+    });
+    expect(mockRequest.mock.calls[1]?.[1]).not.toHaveProperty("body");
   });
 
   // Some storefronts redirect until the cookie they set comes back. Without
