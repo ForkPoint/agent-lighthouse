@@ -100,6 +100,14 @@ function parse(
 export class RedirectCookieJar {
   private readonly cookies: StoredCookie[] = [];
 
+  /** Whole-chain state, including cookies scoped to other hosts or paths.
+   * Retain insertion order because it breaks equal-path ties in Cookie headers.
+   * This key stays in memory and must not be logged.
+   */
+  stateKey(): string {
+    return JSON.stringify(this.cookies);
+  }
+
   /** Store every Set-Cookie of a response from `from`. */
   store(setCookie: string | string[] | undefined, from: string): void {
     if (setCookie === undefined) return;

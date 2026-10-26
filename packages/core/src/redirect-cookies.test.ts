@@ -140,4 +140,19 @@ describe("RedirectCookieJar", () => {
     );
     expect(jar.header("https://example.com/")).toBeUndefined();
   });
+  it("keys all cookie scopes and remains stable for an unchanged jar", () => {
+    const jar = new RedirectCookieJar();
+    const empty = jar.stateKey();
+    jar.store("a=1; Path=/private; Secure", "https://other.test/private/start");
+    const populated = jar.stateKey();
+    expect(populated).not.toBe(empty);
+    expect(jar.header("https://example.com/")).toBeUndefined();
+    jar.store("a=1; Path=/private; Secure", "https://other.test/private/start");
+    expect(jar.stateKey()).toBe(populated);
+    jar.store(
+      "a=; Path=/private; Max-Age=0",
+      "https://other.test/private/start",
+    );
+    expect(jar.stateKey()).toBe(empty);
+  });
 });

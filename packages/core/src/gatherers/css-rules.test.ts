@@ -184,4 +184,85 @@ describe("collectPageCss", () => {
     await collectPageCss(ctx, page);
     expect(seen).toHaveLength(5);
   });
+  it("shares responses across pages and scoped audit contexts without changing cascade order", async () => {
+    const { ctx, seen } = ctxWith({
+      "https://a.test/s.css": ".sheet { color: red }",
+    });
+    const page = mockPageContext(
+      "https://a.test/",
+      '<link rel="stylesheet" href="/s.css"><style>.middle { color: blue }</style><link rel="stylesheet" href="/s.css">',
+    );
+    const other = mockPageContext(
+      "https://a.test/other",
+      '<style>.first { color: green }</style><link rel="stylesheet" href="/s.css">',
+    );
+    const [first, second] = await Promise.all([
+      collectPageCss({ ...ctx, cacheOwner: ctx }, page),
+      collectPageCss({ ...ctx, cacheOwner: ctx }, other),
+    ]);
+    expect(seen).toEqual(["https://a.test/s.css"]);
+    expect(first.rules.map((rule) => rule.selector)).toEqual([
+      ".sheet",
+      ".middle",
+      ".sheet",
+    ]);
+    expect(second.rules.map((rule) => rule.selector)).toEqual([
+      ".first",
+      ".sheet",
+    ]);
+    const independent = ctxWith({
+      "https://a.test/s.css": ".fresh { color: green }",
+    });
+    expect(
+      (await collectPageCss(independent.ctx, page)).rules[0]?.selector,
+    ).toBe(".fresh");
+    expect(independent.seen).toHaveLength(1);
+  });
+
+  it("retains the per-page reference limit with cached sheets", async () => {
+    const { ctx, seen } = ctxWith({
+      "https://a.test/s.css": ".sheet { color: red }",
+      "https://a.test/extra.css": ".extra { color: blue }",
+    });
+    const page = mockPageContext(
+      "https://a.test/",
+      '<link rel="stylesheet" href="/s.css">'.repeat(5) +
+        '<link rel="stylesheet" href="/extra.css">',
+    );
+    expect((await collectPageCss(ctx, page)).rules).toHaveLength(5);
+    expect(seen).toEqual(["https://a.test/s.css"]);
+  });
+
+  it("does not fetch an unsafe same-origin sheet", async () => {
+    const { ctx, seen } = ctxWith({});
+    const page = mockPageContext(
+      "http://127.0.0.1/",
+      '<link rel="stylesheet" href="/s.css">',
+    );
+    expect((await collectPageCss(ctx, page)).skippedCrossOrigin).toEqual([
+      "http://127.0.0.1/s.css",
+    ]);
+    expect(seen).toEqual([]);
+  });
+  it("shares fragment variants of one HTTP stylesheet and retains both cascade positions", async () => {
+    const { ctx, seen } = ctxWith({
+      "https://a.test/s.css": ".sheet { color: red }",
+    });
+    const page = mockPageContext(
+      "https://a.test/",
+      '<link rel="stylesheet" href="/s.css#one"><style>.middle { color: blue }</style><link rel="stylesheet" href="/s.css#two">',
+    );
+    const css = await collectPageCss(ctx, page);
+    expect(seen).toEqual(["https://a.test/s.css"]);
+    expect(css.rules.map((rule) => rule.selector)).toEqual([
+      ".sheet",
+      ".middle",
+      ".sheet",
+    ]);
+    expect(css.rules.map((rule) => rule.origin)).toEqual([
+      "https://a.test/s.css#one",
+      "inline <style>",
+      "https://a.test/s.css#two",
+    ]);
+  });
 });

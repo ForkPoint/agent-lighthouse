@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { NoBrokenLinksAudit } from "./no-broken-links";
 import { AuditResultSchema } from "#core/schemas";
 import {
@@ -7,6 +7,8 @@ import {
   mockFetchResult,
 } from "#core/__tests__/test-utils";
 import { CheckStatus } from "#core/types";
+
+vi.mock("#core/fetcher", () => ({ isSafeUrl: async () => true }));
 
 function fetchStub(statusByUrl: Record<string, number>) {
   return async ({ url }: { url: string }) => {
@@ -138,4 +140,66 @@ describe("NoBrokenLinksAudit", () => {
     expect(AuditResultSchema.safeParse(result).success).toBe(true);
     expect(result.displayValue!.length).toBeLessThanOrEqual(1000);
   });
+  it.each(["unsent", "timeout", "throw"])(
+    "does not call %s probes broken",
+    async (mode) => {
+      const ctx = mockCheckContext([
+        mockPageContext("https://example.com/", twoLinks),
+      ]);
+      ctx.fetch = async () => {
+        if (mode === "throw") throw new Error("unavailable");
+        return { ...mockFetchResult("", 0), error: mode };
+      };
+      const result = await audit.audit(ctx);
+      expect(result.status).toBe(CheckStatus.NotApplicable);
+      expect(result.message).toContain("Incomplete evidence");
+      expect(AuditResultSchema.safeParse(result).success).toBe(true);
+    },
+  );
+
+  it("keeps actual HTTP errors and names incomplete coverage", async () => {
+    const ctx = mockCheckContext([
+      mockPageContext(
+        "https://example.com/",
+        '<a href="/ok">OK</a><a href="/gone">Gone</a><a href="/unavailable">Unknown</a>',
+      ),
+    ]);
+    ctx.fetch = fetchStub({
+      "https://example.com/gone": 410,
+      "https://example.com/unavailable": 0,
+    });
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Warn);
+    expect(result.message).toContain("1/2 observed");
+    expect(result.message).toContain("Incomplete coverage");
+    expect(result.found).toContain("410");
+    expect(result.found).not.toContain("unavailable");
+  });
+
+  it("does not pass a partial sample with only good observed responses", async () => {
+    const ctx = mockCheckContext([
+      mockPageContext("https://example.com/", twoLinks),
+    ]);
+    ctx.fetch = fetchStub({ "https://example.com/b": 0 });
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.message).toContain("Incomplete coverage");
+  });
+  it.each([204, 302])(
+    "reports a complete HTTP %s sample without claiming HTTP 200",
+    async (status) => {
+      const ctx = mockCheckContext([
+        mockPageContext("https://example.com/", twoLinks),
+      ]);
+      ctx.fetch = fetchStub({
+        "https://example.com/a": status,
+        "https://example.com/b": status,
+      });
+      const result = await audit.audit(ctx);
+      expect(result.status).toBe(CheckStatus.Pass);
+      expect(result.message).toContain(`non-error HTTP responses (${status})`);
+      expect(result.message).not.toContain("HTTP 200");
+      expect(result.found).toContain(`HTTP ${status}`);
+    },
+  );
 });

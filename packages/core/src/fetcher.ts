@@ -687,6 +687,29 @@ export function createFetcherWith(
       // Cookies set along this chain are sent back on its later hops, as a
       // browser does; without them some sites redirect until the hop limit.
       const cookieJar = new RedirectCookieJar();
+      // Compare the effective request, not the URL alone: a cookie or POST-to-GET
+      // transition can make a same-URL redirect legitimate progress.
+      const redirectState = (
+        url: string,
+        effectiveMethod: HttpMethod,
+        headers: Record<string, string>,
+      ) => {
+        const normalized = new URL(url);
+        normalized.hash = "";
+        const cookie =
+          Object.entries(headers).find(
+            ([name]) => name.toLowerCase() === "cookie",
+          )?.[1] ?? "";
+        return JSON.stringify([
+          normalized.href,
+          effectiveMethod,
+          cookie,
+          cookieJar.stateKey(),
+        ]);
+      };
+      const visited = new Set([
+        redirectState(currentUrl, currentMethod, reqHeaders),
+      ]);
 
       while (
         // This option is constant; response and hops bound the redirect loop.
@@ -771,6 +794,38 @@ export function createFetcherWith(
             callerCookie ? `${callerCookie}; ${cookies}` : cookies,
           );
         }
+
+        const state = redirectState(currentUrl, currentMethod, hopHeaders);
+        if (visited.has(state)) {
+          const loopMs = replayedTiming?.totalMs ?? elapsed();
+          tally.failed("redirect-loop");
+          log.debug(
+            {
+              [LogField.HttpMethod]: method,
+              [LogField.Url]: targetUrl,
+              [LogField.Error]: {
+                message: "redirect-loop",
+                code: "redirect-loop",
+              },
+              [LogField.DurationMs]: Math.round(loopMs),
+            },
+            "Request failed",
+          );
+          return {
+            url: targetUrl,
+            finalUrl: redirectChain[redirectChain.length - 1]!.from,
+            status: 0,
+            headers: {},
+            body: "",
+            ttfbMs: Math.round(loopMs),
+            totalMs: Math.round(loopMs),
+            contentType: "",
+            contentLength: 0,
+            error: "redirect-loop",
+            redirectChain,
+          };
+        }
+        visited.add(state);
 
         response = await send(
           currentUrl,

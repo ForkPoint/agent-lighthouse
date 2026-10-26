@@ -100,19 +100,35 @@ export class NoBrokenLinksAudit extends Audit {
         sharedProbeUrl(ctx, url, { followRedirects: true }),
       ),
     );
-    const broken = results
-      .map((r, i) => ({ url: urlsToCheck[i]!, status: r?.status ?? 0 }))
-      .filter((r) => r.status >= 400 || r.status === 0);
+    const observed = results
+      .map((result, i) => ({
+        url: urlsToCheck[i]!,
+        status: result?.status ?? 0,
+      }))
+      .filter((result) => result.status >= 100 && result.status <= 599);
+    const unavailable = urlsToCheck.length - observed.length;
+    const coverage =
+      unavailable > 0
+        ? ` Incomplete coverage: ${unavailable}/${urlsToCheck.length} sampled link(s) had no HTTP response.`
+        : "";
+    if (observed.length === 0) {
+      return this.notApplicable(
+        `Incomplete evidence: none of the ${urlsToCheck.length} sampled internal links had an HTTP response.`,
+        "Observed HTTP responses for sampled internal links",
+        `0/${urlsToCheck.length} HTTP responses; links were not assessed`,
+      );
+    }
+    const broken = observed.filter((result) => result.status >= 400);
 
     if (broken.length > 0) {
-      const displayValue = `${broken.length}/${urlsToCheck.length} broken`;
+      const displayValue = `${broken.length}/${observed.length} observed broken`;
       const fullList = broken.map((r) => `${r.url} (${r.status})`).join(", ");
       const found =
         fullList.length > 900 ? `${fullList.slice(0, 897)}...` : fullList;
 
-      if (broken.length > urlsToCheck.length / 2) {
+      if (broken.length > observed.length / 2) {
         return this.fail(
-          `${broken.length}/${urlsToCheck.length} sampled internal link(s) are broken.`,
+          `${broken.length}/${observed.length} observed internal link(s) are broken.${coverage}`,
           "All internal links return HTTP 200",
           `Broken: ${found}`,
           {
@@ -126,7 +142,7 @@ export class NoBrokenLinksAudit extends Audit {
       }
 
       return this.warn(
-        `${broken.length}/${urlsToCheck.length} sampled internal link(s) are broken.`,
+        `${broken.length}/${observed.length} observed internal link(s) are broken.${coverage}`,
         "All internal links return HTTP 200",
         `Broken: ${found}`,
         {
@@ -139,10 +155,26 @@ export class NoBrokenLinksAudit extends Audit {
       );
     }
 
+    if (unavailable > 0) {
+      return this.notApplicable(
+        `No broken links in ${observed.length} observed HTTP response(s).${coverage}`,
+        "Observed HTTP responses for all sampled internal links",
+        `${observed.length}/${urlsToCheck.length} HTTP responses; coverage incomplete`,
+      );
+    }
+
+    const allOk = observed.every((result) => result.status === 200);
+    const observedStatuses = [
+      ...new Set(observed.map((result) => result.status)),
+    ]
+      .sort((a, b) => a - b)
+      .join(", ");
     return this.pass(
-      `All ${urlsToCheck.length} sampled internal link(s) return HTTP 200.`,
-      "All internal links return HTTP 200",
-      `${urlsToCheck.length} link(s) checked`,
+      allOk
+        ? `All ${urlsToCheck.length} sampled internal link(s) return HTTP 200.`
+        : `All ${urlsToCheck.length} sampled internal link(s) returned non-error HTTP responses (${observedStatuses}).`,
+      "No sampled internal link returns an HTTP error",
+      `${urlsToCheck.length} link(s) checked; observed HTTP ${observedStatuses}`,
     );
   }
 }
