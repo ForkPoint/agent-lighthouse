@@ -1,8 +1,10 @@
 import type { AuditMeta, AuditResult } from "#core/types";
+import { RedirectFailure } from "#core/types";
 import { Audit } from "#core/audit";
 import type { CheckContext } from "#core/check-context";
 import { weightForGrade } from "#core/scorer";
 import { sharedProbeUrl } from "#core/gatherers/discovery";
+import { redirectLimitReached } from "#core/scan-evidence";
 import {
   AuditTier,
   CheckPriority,
@@ -104,12 +106,25 @@ export class NoBrokenLinksAudit extends Audit {
       .map((result, i) => ({
         url: urlsToCheck[i]!,
         status: result?.status ?? 0,
+        // A detected loop or a chain that never ends is observed navigation
+        // failure, not missing evidence: no client reaches a page.
+        redirectFailure:
+          result?.error === RedirectFailure.Loop &&
+          Boolean(result.redirectChain?.length)
+            ? "redirect loop"
+            : result && redirectLimitReached(result)
+              ? "redirect limit reached"
+              : undefined,
       }))
-      .filter((result) => result.status >= 100 && result.status <= 599);
+      .filter(
+        (result) =>
+          result.redirectFailure !== undefined ||
+          (result.status >= 100 && result.status <= 599),
+      );
     const unavailable = urlsToCheck.length - observed.length;
     const coverage =
       unavailable > 0
-        ? ` Incomplete coverage: ${unavailable}/${urlsToCheck.length} sampled link(s) had no HTTP response.`
+        ? ` Incomplete coverage: ${unavailable}/${urlsToCheck.length} sampled link(s) could not be assessed.`
         : "";
     if (observed.length === 0) {
       return this.notApplicable(
@@ -118,11 +133,15 @@ export class NoBrokenLinksAudit extends Audit {
         `0/${urlsToCheck.length} HTTP responses; links were not assessed`,
       );
     }
-    const broken = observed.filter((result) => result.status >= 400);
+    const broken = observed.filter(
+      (result) => result.redirectFailure !== undefined || result.status >= 400,
+    );
 
     if (broken.length > 0) {
       const displayValue = `${broken.length}/${observed.length} observed broken`;
-      const fullList = broken.map((r) => `${r.url} (${r.status})`).join(", ");
+      const fullList = broken
+        .map((r) => `${r.url} (${r.redirectFailure ?? r.status})`)
+        .join(", ");
       const found =
         fullList.length > 900 ? `${fullList.slice(0, 897)}...` : fullList;
 

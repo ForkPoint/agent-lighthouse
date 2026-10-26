@@ -133,6 +133,17 @@ const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 export const FETCHER_REDIRECT_LIMIT = 20;
 
 /**
+ * True when the fetcher gave up at its hop limit and returned the last
+ * redirect instead of a page. No client that follows the chain reaches content.
+ */
+export function redirectLimitReached(result: FetchResult): boolean {
+  return (
+    REDIRECT_STATUSES.has(result.status) &&
+    (result.redirectChain?.length ?? 0) >= FETCHER_REDIRECT_LIMIT
+  );
+}
+
+/**
  * A fetch error fit for one line of a report. OpenSSL errors arrive as a
  * multi-line dump with library paths; the first line names the failure.
  */
@@ -158,10 +169,7 @@ function originReachable(
       reason: `The homepage could not be fetched: ${errorSummary(result.error)}.`,
     };
   }
-  if (
-    REDIRECT_STATUSES.has(result.status) &&
-    (result.redirectChain?.length ?? 0) >= FETCHER_REDIRECT_LIMIT
-  ) {
+  if (redirectLimitReached(result)) {
     // The fetcher stops after its hop limit and returns the last redirect.
     const chain = result.redirectChain!;
     // A loop visits some URL twice along the chain.

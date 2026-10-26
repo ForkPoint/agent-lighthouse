@@ -152,3 +152,15 @@ export const HttpMethod = {
 } as const;
 
 export type HttpMethod = (typeof HttpMethod)[keyof typeof HttpMethod];
+
+/**
+ * `FetchResult.error` codes for a redirect chain the fetcher stopped. Audits
+ * cannot import the fetcher, so the codes they compare against live here.
+ */
+export const RedirectFailure = {
+  Loop: "redirect-loop",
+  Refused: "redirect-refused",
+} as const;
+
+export type RedirectFailure =
+  (typeof RedirectFailure)[keyof typeof RedirectFailure];

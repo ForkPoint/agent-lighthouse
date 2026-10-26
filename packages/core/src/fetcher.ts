@@ -13,7 +13,7 @@ import { scanLookup } from "./scan-environment";
 
 const log = logger.child({ [LogField.Component]: "fetcher" });
 import { RedirectCookieJar } from "./redirect-cookies";
-import { HttpMethod } from "./types";
+import { HttpMethod, RedirectFailure } from "./types";
 
 /**
  * Whether a URL is http(s) and resolves to a public address. Inside a scan
@@ -751,14 +751,13 @@ export function createFetcherWith(
             totalMs: Math.round(refusedMs),
             contentType: "",
             contentLength: 0,
-            error: "redirect-refused",
+            error: RedirectFailure.Refused,
           };
         }
 
         await response.body.dump();
         release?.();
         release = undefined;
-        if (open) report(open, elapsed(), elapsed());
         cookieJar.store(response.headers["set-cookie"], currentUrl);
 
         // 303 always continues as a GET without a body; 301 and 302 do the same
@@ -797,15 +796,18 @@ export function createFetcherWith(
 
         const state = redirectState(currentUrl, currentMethod, hopHeaders);
         if (visited.has(state)) {
+          // Freeze terminal timing before capture callbacks run. Replay reads
+          // this same value from the last observed exchange.
           const loopMs = replayedTiming?.totalMs ?? elapsed();
-          tally.failed("redirect-loop");
+          if (open) report(open, loopMs, loopMs);
+          tally.failed(RedirectFailure.Loop);
           log.debug(
             {
               [LogField.HttpMethod]: method,
               [LogField.Url]: targetUrl,
               [LogField.Error]: {
-                message: "redirect-loop",
-                code: "redirect-loop",
+                message: RedirectFailure.Loop,
+                code: RedirectFailure.Loop,
               },
               [LogField.DurationMs]: Math.round(loopMs),
             },
@@ -821,11 +823,12 @@ export function createFetcherWith(
             totalMs: Math.round(loopMs),
             contentType: "",
             contentLength: 0,
-            error: "redirect-loop",
+            error: RedirectFailure.Loop,
             redirectChain,
           };
         }
         visited.add(state);
+        if (open) report(open, elapsed(), elapsed());
 
         response = await send(
           currentUrl,

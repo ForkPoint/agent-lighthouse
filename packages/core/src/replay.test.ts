@@ -117,6 +117,46 @@ describe("createReplay", () => {
     expect(mockLookup).not.toHaveBeenCalled();
   });
 
+  it.each([false, true])(
+    "replays a redirect loop with delayed capture (two URLs: %s)",
+    async (twoUrls) => {
+      let clock = 0;
+      const timer = vi
+        .spyOn(performance, "now")
+        .mockImplementation(() => clock);
+      try {
+        mockLookup.mockResolvedValue({ address: "93.184.216.34", family: 4 });
+        mockRequest.mockImplementation((async (url: string) => {
+          clock += 5;
+          return {
+            statusCode: 302,
+            headers: {
+              location: twoUrls && url.endsWith("/loop") ? "/other" : "/loop",
+            },
+            body: { async *[Symbol.asyncIterator]() {}, dump: async () => {} },
+          };
+        }) as unknown as typeof request);
+        const exchanges: HttpExchange[] = [];
+        const live = await createFetcher({
+          onExchange: (exchange) => {
+            exchanges.push(exchange);
+            clock += 25;
+          },
+        }).fetch({ url: `${SITE}loop` });
+        noNetwork();
+        const replay = createReplay(exchanges);
+        const replayed = await replay.fetcher.fetch({ url: `${SITE}loop` });
+        expect(live.error).toBe("redirect-loop");
+        expect(live.redirectChain).toHaveLength(twoUrls ? 2 : 1);
+        expect(replayed).toEqual(live);
+        expect(replay.misses()).toEqual([]);
+        expect(replay.ambiguous()).toEqual([]);
+      } finally {
+        timer.mockRestore();
+      }
+    },
+  );
+
   it("answers requests in the order they started, not the order they finished", async () => {
     let calls = 0;
     mockRequest.mockImplementation((async () => {

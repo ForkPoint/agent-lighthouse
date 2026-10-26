@@ -7,6 +7,7 @@ import {
   mockFetchResult,
 } from "#core/__tests__/test-utils";
 import { CheckStatus } from "#core/types";
+import { FETCHER_REDIRECT_LIMIT } from "#core/scan-evidence";
 
 vi.mock("#core/fetcher", () => ({ isSafeUrl: async () => true }));
 
@@ -200,6 +201,74 @@ describe("NoBrokenLinksAudit", () => {
       expect(result.message).toContain(`non-error HTTP responses (${status})`);
       expect(result.message).not.toContain("HTTP 200");
       expect(result.found).toContain(`HTTP ${status}`);
+    },
+  );
+  it("uses the observed denominator for one 404 and two unavailable probes", async () => {
+    const ctx = mockCheckContext([
+      mockPageContext(
+        "https://example.com/",
+        '<a href="/a">A</a><a href="/b">B</a><a href="/c">C</a>',
+      ),
+    ]);
+    ctx.fetch = fetchStub({
+      "https://example.com/a": 404,
+      "https://example.com/b": 0,
+      "https://example.com/c": 0,
+    });
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.displayValue).toBe("1/1 observed broken");
+    expect(result.message).toContain("Incomplete coverage");
+  });
+
+  it("keeps a confirmed redirect loop as a navigation failure", async () => {
+    const ctx = mockCheckContext([
+      mockPageContext(
+        "https://example.com/",
+        '<a href="/loop">Loop</a><a href="/unknown">Unknown</a>',
+      ),
+    ]);
+    ctx.fetch = async ({ url }) => ({
+      ...mockFetchResult("", 0),
+      url,
+      finalUrl: url,
+      error: url.endsWith("/loop") ? "redirect-loop" : "unsent",
+      ...(url.endsWith("/loop")
+        ? { redirectChain: [{ status: 302, from: url, to: url }] }
+        : {}),
+    });
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.found).toContain("redirect loop");
+    expect(result.found).not.toContain("unknown");
+    expect(result.message).toContain("Incomplete coverage");
+    expect(AuditResultSchema.safeParse(result).success).toBe(true);
+  });
+
+  it.each([
+    [FETCHER_REDIRECT_LIMIT, CheckStatus.Fail],
+    [FETCHER_REDIRECT_LIMIT - 1, CheckStatus.Pass],
+  ])(
+    "judges a redirect chain of %i hops that ends on a 302 (%s)",
+    async (hops, status) => {
+      const ctx = mockCheckContext([
+        mockPageContext("https://example.com/", '<a href="/chain">Chain</a>'),
+      ]);
+      ctx.fetch = async ({ url }) => ({
+        ...mockFetchResult("", 302),
+        url,
+        finalUrl: `${url}?n=${hops}`,
+        redirectChain: Array.from({ length: hops }, (_, n) => ({
+          status: 302,
+          from: `${url}?n=${n}`,
+          to: `${url}?n=${n + 1}`,
+        })),
+      });
+      const result = await audit.audit(ctx);
+      expect(result.status).toBe(status);
+      if (status === CheckStatus.Fail) {
+        expect(result.found).toContain("redirect limit reached");
+      }
     },
   );
 });
