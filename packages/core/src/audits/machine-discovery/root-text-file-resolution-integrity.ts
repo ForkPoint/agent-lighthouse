@@ -112,7 +112,7 @@ export class RootTextFileResolutionIntegrityAudit extends Audit {
       }
     }
 
-    const probes = [];
+    const probes: { url: string; result: FetchResult }[] = [];
     for (const url of probeUrls) {
       const result = await sharedProbeUrl(ctx, url, {
         followRedirects: true,
@@ -123,24 +123,22 @@ export class RootTextFileResolutionIntegrityAudit extends Audit {
     const robots = await sharedProbeUrl(ctx, robotsUrl, {
       followRedirects: true,
     });
-    if (!robots)
-      return this.fail(
-        "Robots file probe failed",
-        "200 OK or 404",
-        "No response",
-      );
+    // A transport failure or an unsent request is not an HTTP answer.
+    // Keep observed defects, but never infer a defect (or a pass) from gaps.
+    const observed = probes.filter((probe) => probe.result.status > 0);
+    const incomplete = observed.length < 2 || !robots || robots.status === 0;
 
     const failures: string[] = [];
-    const redirected = probes.filter((probe) =>
+    const redirected = observed.filter((probe) =>
       redirectedAway(probe.url, probe.result),
     );
-    const answering = probes.filter(
+    const answering = observed.filter(
       (probe) =>
         !redirected.includes(probe) &&
         probe.result.status >= 200 &&
         probe.result.status < 300,
     );
-    const absent = probes.filter(
+    const absent = observed.filter(
       (probe) => redirected.includes(probe) || ABSENT.has(probe.result.status),
     );
 
@@ -173,24 +171,27 @@ export class RootTextFileResolutionIntegrityAudit extends Audit {
       failures.push(
         `${answering.length} of 2 random .txt probes answered ${answering.map((probe) => probe.result.status).join("/")} instead of 404 — ${kind}`,
       );
-    } else if (absent.length < probes.length) {
-      const other = probes.filter((probe) => !absent.includes(probe));
+    } else if (absent.length < observed.length) {
+      const other = observed.filter((probe) => !absent.includes(probe));
       failures.push(
         `A random .txt probe answered ${other.map((probe) => probe.result.status).join("/")}, which is neither 404/410 nor a catch-all — the origin's answer for a missing file cannot be read`,
       );
     }
 
-    const robotsType = robots.contentType.split(";")[0]!.trim().toLowerCase();
+    const robotsType = (robots?.contentType ?? "")
+      .split(";")[0]!
+      .trim()
+      .toLowerCase();
     const robotsPlain = robotsType.startsWith("text/plain");
     // A missing robots.txt is a warning, not a failure of this audit: the
     // positive control simply did not run, which is a different thing from an
     // origin that mislabels the file it does serve.
     const warnings: string[] = [];
-    if (robots.status !== 200) {
+    if (robots && robots.status > 0 && robots.status !== 200) {
       warnings.push(
         `/robots.txt answered HTTP ${robots.status}, so the positive control did not run`,
       );
-    } else if (!robotsPlain) {
+    } else if (robots?.status === 200 && !robotsPlain) {
       failures.push(
         `/robots.txt is served as "${robotsType || "no content type"}" rather than text/plain, which strict parsers reject`,
       );
@@ -199,12 +200,14 @@ export class RootTextFileResolutionIntegrityAudit extends Audit {
     // The derived flag. Every other probe-based audit — llms.txt, ai.txt,
     // security.txt — is only as trustworthy as this answer.
     const discoveryProbeReliable =
-      absent.length === probes.length && robots.status === 200 && robotsPlain;
+      absent.length === 2 && robots?.status === 200 && robotsPlain;
     const details = {
       discoveryProbeReliable,
-      probeStatuses: probes.map((probe) => String(probe.result.status)),
-      probeNames: probes.map((probe) => new URL(probe.url).pathname),
-      robotsStatus: robots.status,
+      probeStatuses: probeUrls.map((url) =>
+        String(probes.find((probe) => probe.url === url)?.result.status ?? 0),
+      ),
+      probeNames: probeUrls.map((url) => new URL(url).pathname),
+      robotsStatus: robots?.status ?? 0,
       robotsContentType: robotsType,
       failures: failures.slice(0, 10),
       warnings: warnings.slice(0, 10),
@@ -215,7 +218,14 @@ export class RootTextFileResolutionIntegrityAudit extends Audit {
       redirected.length > 0
         ? ` (${redirected.length} redirected away from the requested path, read as absent)`
         : "";
-    const found = `Probes answered ${probes.map((probe) => probe.result.status).join(" and ")}${redirectNote}; /robots.txt answered ${robots.status} as "${robotsType || "no content type"}".`;
+    const probeAnswers = details.probeStatuses.map((status) =>
+      status === "0" ? "no HTTP response" : `HTTP ${status}`,
+    );
+    const robotsAnswer =
+      robots && robots.status > 0
+        ? `HTTP ${robots.status} as "${robotsType || "no content type"}"`
+        : "no HTTP response";
+    const found = `Probes: ${probeAnswers.join(" and ")}${redirectNote}; /robots.txt: ${robotsAnswer}.`;
     const displayValue = discoveryProbeReliable
       ? "Probes reliable"
       : "Probes unreliable";
@@ -229,6 +239,18 @@ export class RootTextFileResolutionIntegrityAudit extends Audit {
           "Serve root .txt paths from static files, order the static handler ahead of any catch-all rewrite, and serve /robots.txt as text/plain.",
         ),
         displayValue,
+        details,
+      };
+    }
+
+    if (incomplete) {
+      return {
+        ...this.notApplicable(
+          "Root .txt resolution is unverified because one or more probes returned no HTTP response.",
+          expected,
+          found,
+        ),
+        displayValue: "Unverified",
         details,
       };
     }

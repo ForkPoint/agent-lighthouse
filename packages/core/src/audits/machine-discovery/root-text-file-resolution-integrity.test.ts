@@ -7,6 +7,7 @@ import {
 } from "#core/__tests__/test-utils";
 import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
 import type { FetchOptions, FetchResult } from "#core/fetcher";
+import { AuditResultSchema } from "#core/schemas";
 import type { AuditResult } from "#core/types";
 import { AuditTier, CheckStatus, EvidenceGrade } from "#core/types";
 
@@ -32,6 +33,7 @@ const strings = (result: AuditResult, key: string): string[] =>
 interface Origin {
   /** What a root .txt path that does not exist answers. */
   probe?: (url: string, index: number) => FetchResult;
+  robotsThrows?: boolean;
   robotsStatus?: number;
   robotsType?: string;
 }
@@ -59,16 +61,17 @@ function run(origin: Origin = {}) {
   ctx.fetch = async (o: FetchOptions): Promise<FetchResult> => {
     requests.push(o);
     if (new URL(o.url).pathname === "/robots.txt") {
+      if (origin.robotsThrows) throw new Error("request not sent");
       return mockFetchResult(
         "User-agent: *\nAllow: /\n",
         origin.robotsStatus ?? 200,
         origin.robotsType ?? "text/plain",
       );
     }
+    const index = probeIndex++;
     const result = origin.probe
-      ? origin.probe(o.url, probeIndex)
+      ? origin.probe(o.url, index)
       : mockFetchResult("", 404, "text/plain");
-    probeIndex += 1;
     return result;
   };
 
@@ -242,6 +245,119 @@ describe("RootTextFileResolutionIntegrityAudit", () => {
       "positive control did not run",
     );
     expect(r.details?.["discoveryProbeReliable"]).toBe(false);
+  });
+
+  it.each([
+    {
+      name: "status zero",
+      probe: () => mockFetchResult("", 0, ""),
+      robotsStatus: 0,
+    },
+    {
+      name: "thrown requests",
+      probe: () => {
+        throw new Error("request not sent");
+      },
+      robotsThrows: true,
+    },
+    { name: "missing robots response", robotsThrows: true },
+    {
+      name: "missing second probe",
+      probe: (_url: string, index: number) => {
+        if (index === 1) throw new Error("request not sent");
+        return mockFetchResult("", 404, "text/plain");
+      },
+    },
+    {
+      name: "both probes missing with good robots",
+      probe: () => {
+        throw new Error("request not sent");
+      },
+    },
+    {
+      name: "status zero after a changed final URL",
+      probe: () => ({
+        ...mockFetchResult("", 0, ""),
+        finalUrl: "https://example.com/",
+      }),
+    },
+  ])("marks $name as unverified without a site defect", async (origin) => {
+    const r = await run(origin).result;
+    expect(AuditResultSchema.parse(r).status).toBe(CheckStatus.NotApplicable);
+    expect(r.displayValue).toBe("Unverified");
+    expect(r.details?.["discoveryProbeReliable"]).toBe(false);
+    expect(strings(r, "failures")).toEqual([]);
+    expect(audit.toCheckResult(r).title).toBe(
+      RootTextFileResolutionIntegrityAudit.meta.title,
+    );
+  });
+
+  it("retains status-zero diagnostics for the corpus failure case", async () => {
+    const r = await run({
+      probe: () => mockFetchResult("", 0, ""),
+      robotsStatus: 0,
+    }).result;
+    expect(r.status).toBe(CheckStatus.NotApplicable);
+    expect(r.details?.["probeStatuses"]).toEqual(["0", "0"]);
+    expect(r.details?.["robotsStatus"]).toBe(0);
+  });
+
+  it.each([
+    {
+      name: "catch-all with no robots response",
+      probe: () => mockFetchResult("<html>App</html>", 200, "text/html"),
+      robotsThrows: true,
+    },
+    {
+      name: "one catch-all and one unsent probe",
+      probe: (_url: string, index: number) =>
+        mockFetchResult("<html>App</html>", index === 0 ? 200 : 0, "text/html"),
+      robotsStatus: 0,
+    },
+    {
+      name: "HTTP rejection with no robots response",
+      probe: () => mockFetchResult("", 403, ""),
+      robotsThrows: true,
+    },
+    {
+      name: "bad robots type with unsent probes",
+      probe: () => mockFetchResult("", 0, ""),
+      robotsType: "text/html",
+    },
+  ])("retains the observed defect for $name", async (origin) => {
+    const r = await run(origin).result;
+    expect(AuditResultSchema.parse(r).status).toBe(CheckStatus.Fail);
+    expect(strings(r, "failures").length).toBeGreaterThan(0);
+    expect(r.details?.["discoveryProbeReliable"]).toBe(false);
+  });
+
+  it("keeps both diagnostic slots when the first probe throws", async () => {
+    const r = await run({
+      probe: (_url, index) => {
+        if (index === 0) throw new Error("request not sent");
+        return mockFetchResult("<html>App</html>", 200, "text/html");
+      },
+      robotsThrows: true,
+    }).result;
+    expect(r.status).toBe(CheckStatus.Fail);
+    expect(r.details?.["probeStatuses"]).toEqual(["0", "200"]);
+    expect(strings(r, "probeNames")).toHaveLength(2);
+    expect(r.found).toContain("no HTTP response and HTTP 200");
+    expect(r.found).toContain("/robots.txt: no HTTP response");
+  });
+
+  it("does not treat missing probes plus a robots 404 as a complete warning", async () => {
+    const r = await run({
+      probe: () => {
+        throw new Error("request not sent");
+      },
+      robotsStatus: 404,
+    }).result;
+    expect(r.status).toBe(CheckStatus.NotApplicable);
+    expect(r.details?.["probeStatuses"]).toEqual(["0", "0"]);
+    expect(strings(r, "probeNames")).toHaveLength(2);
+    expect(r.found).toContain("no HTTP response and no HTTP response");
+    expect(r.found).toContain("HTTP 404");
   });
 
   it("emits the derived flag and names the checks it qualifies", () => {
