@@ -8,6 +8,7 @@ import {
   EvidenceKey,
 } from "@forkpoint/agent-lighthouse-core";
 import { formatPageScope, formatAuditScope } from "./page-scope";
+import { describeRequestStop } from "./request-stop";
 import type { CheckResult, ScanReport } from "@forkpoint/agent-lighthouse-core";
 import {
   NOTICE_LABELS,
@@ -450,6 +451,13 @@ export function generateHtmlReport(report: ScanReport): string {
                       ? `<strong class="text-amber-400">ran out</strong> at ${Math.round(view.conditions.budget.limitMs / 1000)} s (${view.conditions.budget.skippedCount} audits not assessed)`
                       : `<strong class="text-slate-100">${Math.round(view.conditions.budget.elapsedMs / 1000)} s</strong> of ${Math.round(view.conditions.budget.limitMs / 1000)} s`
                 }
+              </span>`
+                  : ""
+              }
+              ${
+                describeRequestStop(view.conditions.requestStop)
+                  ? `<span class="px-2.5 py-1 rounded-md bg-slate-950/70 border border-slate-800 text-amber-400">
+                Request stop: ${escapeHtml(describeRequestStop(view.conditions.requestStop)!)}
               </span>`
                   : ""
               }

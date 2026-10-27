@@ -7,9 +7,9 @@ Use the report's recorded version and shape. Missing fields in an older report m
 - Keep `overallScore: null` and the recorded `scanValidity.unscoredReason`. Report missing evidence before proposing content fixes. Do not convert null to 0 or calculate a replacement score.
 - A category with no assessed scored mass has no score. Its stored `score: 0` is not a failing grade. In an MCP summary, check `assessed`.
 - Read every `categories[].checks[]` entry. Read its `coverage` and nested `advisoryResults` when present. One top-level audit can cover declared pages while its nested results describe detected pages. The nested results do not add scored audits.
-- `coverage.selectedUrls` includes pages the audit selected, including failed reads. `inputUrls` names pages supplied to it. `unreadUrls` names missing reads. Do not equate selection with successful assessment.
+- `coverage.selectedUrls` includes pages the audit selected, including failed reads. `inputUrls` names pages supplied to it. `unreadUrls` names missing reads. `unsentUrls`, when present, names requests the scanner held back after the site paused the scan. Do not equate selection with successful assessment.
 - Read `pageAttempts` and `pagesScanned[].classification` when present. Declared purpose supports type-specific scoring; detected purpose supports advisory findings. Common checks can still score detected pages.
-- Check `conditions.budget`, evidence-gate reasons, and audit errors before calling `na` an intentional absence. A budget skip or missing input proves no verdict. An `Audit error` calls for scanner diagnosis, not an invented site defect.
+- Check `conditions.budget`, `conditions.requestStop`, evidence-gate reasons, and audit errors before calling `na` an intentional absence. A `requestStop` with `stopped: true` means the site answered 429, 403 or repeated 503 and later requests were never sent; its `affectedMass` is a lower bound. A budget skip or missing input proves no verdict. An `Audit error` calls for scanner diagnosis, not an invented site defect.
 
 When the page purpose is wrong, recommend a corrected declaration and a new baseline. Do not add Article markup to a homepage to satisfy an old report. Do not compare a detected baseline with a declared rescan as proof of a site improvement.
 

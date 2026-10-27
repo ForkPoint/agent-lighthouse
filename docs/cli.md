@@ -106,6 +106,8 @@ Repeat runs overwrite them. `--view` opens nothing when `html` is not in the lis
 
 When the budget runs out, requests in flight abort and no new ones start. Every audit not finished is reported `na` with the tag `skipped:scan-budget`, and the report records it under `conditions.budget`. If the cut, together with what the evidence gate removed, leaves more than 35% of the registry's evidence mass unassessed, the scan reports no score. The config key is `timeout`.
 
+A site that answers HTTP 429, a 403 to the scanner, or two 503s in a row makes the scanner stop sending it requests. The report records that under `conditions.requestStop`: the reason, how many audit requests were not sent, and how many audits and how much scored mass they touched. Each affected audit lists the URLs under `coverage.unsentUrls`. The stop does not change the score.
+
 ### `--min-score <number>` and `--assert-category <id:min>`
 
 ```bash

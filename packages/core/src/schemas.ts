@@ -3,6 +3,7 @@ import {
   DocumentState,
   EvidenceSource,
   FieldStatus,
+  HostStopReason,
   PayloadOrigin,
   NoticeKind,
   ScoreTier,
@@ -172,6 +173,7 @@ export const AuditCoverageSchema = z.object({
   selectedUrls: z.array(z.string().max(2048)),
   inputUrls: z.array(z.string().max(2048)),
   unreadUrls: z.array(z.string().max(2048)),
+  unsentUrls: z.array(z.string().max(2048)).optional(),
 });
 
 const CheckAssessmentSchema = z.object({
@@ -303,6 +305,16 @@ export const ScanConditionsSchema = z.object({
       elapsedMs: z.number().nonnegative(),
       exhausted: z.boolean(),
       skippedCount: z.number().int().nonnegative(),
+    })
+    .optional(),
+  // Optional: reports written before the scheduler stop was reported.
+  requestStop: z
+    .object({
+      stopped: z.boolean(),
+      reason: z.enum(HostStopReason).nullable(),
+      unsentCount: z.number().int().nonnegative(),
+      affectedAuditCount: z.number().int().nonnegative(),
+      affectedMass: z.number().nonnegative(),
     })
     .optional(),
 });

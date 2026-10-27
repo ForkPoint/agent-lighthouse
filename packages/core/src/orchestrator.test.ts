@@ -16,6 +16,8 @@ const h = vi.hoisted(() => ({
   deadHost: "",
   /** How many robots.txt requests fail to connect before the host answers. */
   robotsConnectFailures: 0,
+  /** Calls after this many are held back as a stopped scheduler holds them: 0 never. */
+  stopFromCall: 0,
 }));
 
 const CONNECT_TIMEOUT =
@@ -56,6 +58,8 @@ vi.mock("./fetcher", async (importOriginal) => {
           (target.pathname === "/robots.txt" && h.robotsConnectFailures-- > 0);
         if (connectFails)
           return { ...notFound(url), status: 0, error: CONNECT_TIMEOUT };
+        if (h.stopFromCall > 0 && h.calls.length > h.stopFromCall)
+          return { ...notFound(url), status: 0, error: HOST_STOPPED_MESSAGE };
         if (h.delayMs > 0 && h.calls.length > h.delayFromCall)
           await new Promise((resolve) => setTimeout(resolve, h.delayMs));
         if (signal?.aborted) return abortedResult(url);
@@ -85,6 +89,7 @@ import type { ScanEvent } from "./progress";
 import { defaultConfig } from "./audit-config";
 import { SCAN_TIMEOUT_MS } from "./constants";
 import { DOM_WORK_LIMITS } from "./contracts";
+import { HOST_STOPPED_MESSAGE } from "./request-scheduler";
 import { runA11yForHtml } from "./audits/operability-safety/runner";
 import { runAudits } from "./audit-runner";
 import type { AuditRunResult } from "./audit-runner";
@@ -142,6 +147,7 @@ beforeEach(() => {
   h.delayFromCall = 0;
   h.deadHost = "";
   h.robotsConnectFailures = 0;
+  h.stopFromCall = 0;
   defaultOriginCache.clear();
 });
 
@@ -574,6 +580,44 @@ describe("runScan — origin homepage evidence", () => {
     expect(
       h.calls.filter((u) => u === "https://example.com/robots.txt"),
     ).toHaveLength(2);
+  });
+});
+
+describe("runScan — a scheduler stop during the audits", () => {
+  const url = "https://example.com/";
+  const FULL_HTML = `<html><body><main><h1>Kettles</h1><p>${"copper kettle ".repeat(60)}</p></main></body></html>`;
+
+  it("reports no stop when every request was sent", async () => {
+    set(url, FULL_HTML);
+    const report = await runScan(url);
+    expect(report.conditions?.requestStop).toEqual({
+      stopped: false,
+      reason: null,
+      unsentCount: 0,
+      affectedAuditCount: 0,
+      affectedMass: 0,
+    });
+  });
+
+  it("states what the audits lost and keeps the score", async () => {
+    set(url, FULL_HTML);
+    // Root files and the page are read; requests the audits make are held back.
+    h.stopFromCall = 30;
+    const report = await runScan(url);
+    const stop = report.conditions?.requestStop;
+    expect(stop?.stopped).toBe(true);
+    expect(stop?.reason).toBeNull();
+    expect(stop?.unsentCount).toBeGreaterThan(0);
+    expect(stop?.affectedAuditCount).toBeGreaterThan(0);
+    expect(stop?.affectedMass).toBeGreaterThan(0);
+    // The audits that lost requests name them in their own coverage.
+    const listed = report.categories
+      .flatMap((category) => category.checks)
+      .filter((check) => (check.coverage?.unsentUrls?.length ?? 0) > 0);
+    expect(listed.length).toBeLessThanOrEqual(stop!.affectedAuditCount);
+    expect(listed.length).toBeGreaterThan(0);
+    expect(report.overallScore).not.toBeNull();
+    expect(report.scanValidity?.unscoredReason).toBeUndefined();
   });
 });
 

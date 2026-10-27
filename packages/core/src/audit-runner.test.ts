@@ -19,6 +19,7 @@ import { mockPageContext } from "./__tests__/test-utils";
 import { unreachableContext, bareSiteContext } from "./tests/fixtures";
 import { planAllAuditsForTest } from "./tests/plan-all-audits";
 import { cacheOwner } from "./gatherers/cache-owner";
+import { HOST_STOPPED_MESSAGE } from "./request-scheduler";
 import {
   CheckPriority,
   CheckStatus,
@@ -234,6 +235,46 @@ describe("runAudits", () => {
     expect(out.categories[0]!.score).toBe(100);
 
     logs.restore();
+  });
+
+  it("lists the URLs the scheduler held back in the audit's coverage", async () => {
+    const ctx = ctxWith([PageType.Homepage]);
+    ctx.fetch = async ({ url }) => ({
+      url,
+      finalUrl: url,
+      status: url.endsWith("/held") ? 0 : 200,
+      ...(url.endsWith("/held") && { error: HOST_STOPPED_MESSAGE }),
+      headers: {},
+      body: "",
+      ttfbMs: 0,
+      totalMs: 0,
+      contentType: "",
+      contentLength: 0,
+    });
+    const config: ScanConfig = {
+      categories: [{ id: "w", name: "W", weight: 1 }],
+      audits: {
+        w: [
+          makeReg(meta({ id: "probes", category: "w" }), async (scoped) => {
+            await scoped.fetch({ url: "https://example.com/held" });
+            await scoped.fetch({ url: "https://example.com/read" });
+            await scoped.fetch({ url: "https://example.com/held" });
+            return result(CheckStatus.Pass, 1);
+          }),
+          makeReg(meta({ id: "quiet", category: "w" }), () =>
+            result(CheckStatus.Pass, 1),
+          ),
+        ],
+      },
+    };
+
+    const out = await runAudits(ctx, config);
+    const byId = new Map(out.checks.map((c) => [c.id, c]));
+    expect(byId.get("probes")!.coverage?.unsentUrls).toEqual([
+      "https://example.com/held",
+    ]);
+    expect(byId.get("quiet")!.coverage).toBeDefined();
+    expect(byId.get("quiet")!.coverage?.unsentUrls).toBeUndefined();
   });
 
   it("returns zeroed categories for empty input and works without onProgress", async () => {

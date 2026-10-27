@@ -1,5 +1,6 @@
 import { setTimeout as pause } from "node:timers/promises";
 import { SCAN_TIMEOUT_MS } from "./constants";
+import { HostStopReason } from "./contracts";
 
 export interface RequestScheduler {
   acquire(url: string, signal?: AbortSignal): Promise<() => void>;
@@ -18,19 +19,8 @@ export interface RequestScheduler {
   ): void;
 }
 
-/** Why the default scheduler stopped sending requests to a host. */
-export const HostStopReason = {
-  /** HTTP 429. */
-  TooManyRequests: "too-many-requests",
-  /** HTTP 403 to the scanner's own User-Agent or the browser baseline. */
-  Forbidden: "forbidden",
-  /** Two HTTP 503 responses in a row. */
-  Unavailable: "unavailable",
-  /** A `Retry-After` longer than the scheduler's `maxRetryAfterMs`. */
-  RetryAfterTooLong: "retry-after-too-long",
-} as const;
-export type HostStopReason =
-  (typeof HostStopReason)[keyof typeof HostStopReason];
+// Defined with the report contracts, which carry it in `conditions.requestStop`.
+export { HostStopReason };
 
 /**
  * What the default scheduler keeps about one host between requests. It is

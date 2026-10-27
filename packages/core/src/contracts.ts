@@ -213,6 +213,20 @@ export const NoticeKind = {
 
 export type NoticeKind = (typeof NoticeKind)[keyof typeof NoticeKind];
 
+/** Why the default scheduler stopped sending requests to a host. */
+export const HostStopReason = {
+  /** HTTP 429. */
+  TooManyRequests: "too-many-requests",
+  /** HTTP 403 to the scanner's own User-Agent or the browser baseline. */
+  Forbidden: "forbidden",
+  /** Two HTTP 503 responses in a row. */
+  Unavailable: "unavailable",
+  /** A `Retry-After` longer than the scheduler's `maxRetryAfterMs`. */
+  RetryAfterTooLong: "retry-after-too-long",
+} as const;
+export type HostStopReason =
+  (typeof HostStopReason)[keyof typeof HostStopReason];
+
 /**
  * Public notice attached to an audit and copied onto every result it
  * produces. An `obsolete`-tier audit must carry one of kind `obsolete`.
@@ -327,6 +341,12 @@ export interface AuditCoverage {
   selectedUrls: string[];
   inputUrls: string[];
   unreadUrls: string[];
+  /**
+   * URLs this audit requested that the request scheduler held back after the
+   * site paused the scan. Absent when there were none. A response another
+   * audit had already cached is not listed, so the list can be short.
+   */
+  unsentUrls?: string[];
 }
 
 /** Whether a requested page parsed into a page context. */
@@ -592,6 +612,24 @@ export interface ScanConditions {
     exhausted: boolean;
     /** Audits reported `na` because the budget ran out before they started. */
     skippedCount: number;
+  };
+  /**
+   * Whether the request scheduler stopped sending to the site, and what the
+   * audits lost to it. It states coverage and does not change the score.
+   */
+  requestStop?: {
+    stopped: boolean;
+    /** Why the scheduler stopped, when the scan's scheduler reports it. */
+    reason: HostStopReason | null;
+    /** Audit requests held back after the stop. */
+    unsentCount: number;
+    /** Audits that requested at least one held-back URL. */
+    affectedAuditCount: number;
+    /**
+     * Scored weight of those audits. A lower bound: an audit that read a
+     * held-back response from another audit's cache is not counted.
+     */
+    affectedMass: number;
   };
 }
 
