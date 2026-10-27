@@ -1,5 +1,11 @@
 # @forkpoint/agent-lighthouse-website
 
+## 0.0.33
+
+### Patch Changes
+
+- 19232eb: Correct the `machine-discovery/no-broken-links` Limits text: a redirect loop reported for a link can come from a cookie set on an earlier page, which the probe does not send. A JavaScript challenge cannot cause it, because browsers do not run script in a redirect response.
+
 ## 0.0.32
 
 ### Patch Changes
