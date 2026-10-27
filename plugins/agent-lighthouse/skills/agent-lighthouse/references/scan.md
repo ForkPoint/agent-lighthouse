@@ -18,7 +18,7 @@ When the `audit_website` tool from the Agent Lighthouse MCP server is available,
 For a new scan, prefer the project's pinned Agent Lighthouse installation. Inspect any npm script before using it. Record the exact resolved version. If none exists, use this skill's fallback pin without changing the target project's dependencies:
 
 ```sh
-npx --yes @forkpoint/agent-lighthouse@10.5.2 https://target.example --output terminal,html,json,md --output-dir <new-run-directory>
+npx --yes @forkpoint/agent-lighthouse@10.5.3 https://target.example --output terminal,html,json,md --output-dir <new-run-directory>
 ```
 
 The fallback requires Node.js 22.22.2+, 24.15.0+, or 26+. Check the runtime before invoking it.
