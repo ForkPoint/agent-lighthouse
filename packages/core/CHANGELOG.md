@@ -1,5 +1,30 @@
 # @forkpoint/agent-lighthouse-core
 
+## 10.5.3
+
+### Patch Changes
+
+- dc3cd64: `answer-readiness/author-page` no longer fails an author link whose probe got no HTTP response. A request the scheduler held back after the site paused the scan, a timeout or a transport failure now returns not applicable, naming the author link and the cause. An author link that answers with any HTTP status, a 404 included, is still judged.
+
+  The shared author-URL probe now keeps the error text of a fetch that throws. `answer-readiness/author-page` and `answer-readiness/about-credentials` name that failure as the cause, instead of a URL safety refusal.
+
+- bdad5d7: Read hostile page content in linear time. Five patterns could backtrack for
+  seconds on crafted input: the llms.txt link reader, the HTML tag and title
+  readers in bot-wall detection, the CSS comment stripper, the root-file HTML
+  sniffer and the URL fragment trim. Each now scans once.
+
+  Two of the rewrites also correct a reading:
+
+  - An llms.txt bullet that ended in a bare URL took the next bullet as its
+    description, so that next link was lost. Each bullet now stands alone.
+  - An inline llms.txt link followed by `:` and a line break took the next line
+    as its description. A description now stays on the link's line.
+  - A CSS comment that never closes now runs to the end of the sheet, as
+    browsers read it. Rules after it were scanned before.
+
+  `table-markdown-round-trip-loss` escapes backslashes as well as pipes when it
+  writes a table as Markdown.
+
 ## 10.5.2
 
 ### Patch Changes
