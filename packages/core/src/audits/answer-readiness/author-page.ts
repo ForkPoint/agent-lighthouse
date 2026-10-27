@@ -3,6 +3,7 @@ import { Audit } from "#core/audit";
 import { weightForGrade } from "#core/scorer";
 import type { CheckContext } from "#core/check-context";
 import { probeAuthorUrl } from "#core/gatherers/author";
+import { hasHttpResponse, missingResponseCause } from "#core/probe-evidence";
 import {
   AuditTier,
   CheckPriority,
@@ -159,7 +160,20 @@ export class AuthorPageAudit extends Audit {
 
     const urlToCheck = authorUrls[0]!;
     const result = await probeAuthorUrl(ctx, urlToCheck);
-    if (result && result.status === 200) {
+    // A probe with no HTTP response was held back by the scheduler, timed
+    // out, failed in transport or was refused by the URL safety gate. None of
+    // these says what the author URL serves, so the link is not judged.
+    if (!hasHttpResponse(result)) {
+      const cause = missingResponseCause(result);
+      return this.notApplicable(
+        `An author link points to "${urlToCheck}", but the request ${cause}, so whether it resolves is unknown.`,
+        "Author links in content resolve to 200",
+        `${urlToCheck} (not assessed: ${cause})`,
+        page.url,
+      );
+    }
+
+    if (result.status === 200) {
       return this.pass(
         `Author page at "${urlToCheck}" returns 200.`,
         "Author links in content resolve to 200",
@@ -168,24 +182,10 @@ export class AuthorPageAudit extends Audit {
       );
     }
 
-    if (result) {
-      return this.fail(
-        `Author page at "${urlToCheck}" returned HTTP ${result.status}.`,
-        "Author links in content resolve to 200",
-        `${urlToCheck} (HTTP ${result.status})`,
-        {
-          priority: CheckPriority.Medium,
-          description:
-            "AI engines that follow your author page link and get a non-200 response will flag the author as unverifiable, negating the trust benefit of having named authors. Fix the URL to return a 200 status with real author bio content.",
-          code: "# Verify: curl -I https://yoursite.com/authors/jane-smith\n# Ensure the page returns 200 with author bio content",
-        },
-        page.url,
-      );
-    }
     return this.fail(
-      `Failed to fetch author page at "${urlToCheck}".`,
+      `Author page at "${urlToCheck}" returned HTTP ${result.status}.`,
       "Author links in content resolve to 200",
-      `${urlToCheck} (fetch error)`,
+      `${urlToCheck} (HTTP ${result.status})`,
       {
         priority: CheckPriority.Medium,
         description:

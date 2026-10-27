@@ -40,6 +40,8 @@ import { RssFeedAudit } from "#core/audits/machine-discovery/rss-feed";
 import { ConditionalRequestSupportAudit } from "#core/audits/machine-discovery/conditional-request-support";
 import { AgentCommerceFeedParityAudit } from "#core/audits/machine-discovery/agent-commerce-feed-parity";
 import { AiCatalogExistsAudit } from "#core/audits/agent-interfaces/ai-catalog-exists";
+import { AuthorPageAudit } from "#core/audits/answer-readiness/author-page";
+import { HOST_STOPPED_MESSAGE } from "#core/request-scheduler";
 
 const mockRequest = vi.mocked(request);
 const mockLookup = vi.mocked(dns.lookup);
@@ -659,5 +661,156 @@ describe("agent-interfaces/ai-catalog-exists", () => {
     const result = audit.audit(ctx);
     expect(result.status).toBe(CheckStatus.Fail);
     expect(result.message).toContain("HTTP 404");
+  });
+
+  it("names a transport failure on one path", async () => {
+    const route: Route = (url) =>
+      new URL(url).pathname === "/.well-known/ard.json"
+        ? { status: 404 }
+        : { fail: "reset" };
+    const { ctx, fetcher } = liveContext(route, HOME_PAGE);
+    await readRootFiles(ctx, fetcher, CATALOG_PATHS);
+    const result = audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.message).toContain("failed before any HTTP response");
+    expect(result.message).not.toContain("HTTP 0");
+    expectValid(result);
+  });
+
+  it("keeps a confirmed 404 beside a path the scheduler held back", async () => {
+    const { ctx, fetcher } = liveContext(rateLimit, HOME_PAGE);
+    ctx.rootFiles["/.well-known/ard.json"] = await fetcher.fetch({
+      url: `${SITE}/.well-known/ard.json`,
+    });
+    await stopHost(fetcher);
+    ctx.rootFiles["/.well-known/ai-catalog.json"] = await fetcher.fetch({
+      url: `${SITE}/.well-known/ai-catalog.json`,
+    });
+    const result = audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    // The explanation and the found value both carry each path's own state.
+    for (const text of [result.message, result.found]) {
+      expect(text).toContain("/.well-known/ard.json: HTTP 404");
+      expect(text).toContain("/.well-known/ai-catalog.json: was not sent");
+      expect(text).not.toContain("HTTP 0");
+    }
+    expectValid(result);
+  });
+
+  it("passes when a path serves a manifest with entries", async () => {
+    const manifest = JSON.stringify({
+      entries: [
+        {
+          identifier: "urn:air:example.com:server:search",
+          displayName: "Search",
+          type: "application/mcp-server-card+json",
+          url: `${SITE}/mcp/search.json`,
+        },
+      ],
+    });
+    const route: Route = (url) =>
+      new URL(url).pathname === "/.well-known/ai-catalog.json"
+        ? { status: 200, body: manifest, type: "application/json" }
+        : { status: 404 };
+    const { ctx, fetcher } = liveContext(route, HOME_PAGE);
+    await readRootFiles(ctx, fetcher, CATALOG_PATHS);
+    const result = audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.message).toContain("/.well-known/ai-catalog.json");
+  });
+});
+
+describe("answer-readiness/author-page", () => {
+  const audit = new AuthorPageAudit();
+  const AUTHOR_URL = `${SITE}/authors/jane`;
+  const ARTICLE = `<html><body><main>
+    <script type="application/ld+json">
+    {"@context":"https://schema.org","@type":"Article","author":{"@type":"Person","name":"Jane","url":"${AUTHOR_URL}"}}
+    </script>
+    <p>Article.</p></main></body></html>`;
+  const authorAnswers =
+    (outcome: Outcome): Route =>
+    (url) => {
+      const path = new URL(url).pathname;
+      if (path === "/rate-limited") return { status: 429 };
+      return path === "/authors/jane" ? outcome : { status: 404 };
+    };
+
+  /**
+   * Record the URLs the scheduler held back, as the audit runner does for
+   * `coverage.unsentUrls`.
+   */
+  function trackUnsent(ctx: CheckContext): Set<string> {
+    const unsent = new Set<string>();
+    const fetch = ctx.fetch;
+    ctx.fetch = async (options) => {
+      const fetched = await fetch(options);
+      if (fetched.error?.startsWith(HOST_STOPPED_MESSAGE))
+        unsent.add(options.url);
+      return fetched;
+    };
+    return unsent;
+  }
+
+  it("leaves the author page unassessed after a host stop", async () => {
+    const { ctx, fetcher } = liveContext(
+      authorAnswers({ status: 200, body: "<p>Bio.</p>" }),
+      ARTICLE,
+      `${SITE}/blog/post`,
+    );
+    const unsent = trackUnsent(ctx);
+    await stopHost(fetcher);
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.message).toContain(AUTHOR_URL);
+    expect(result.message).toContain(
+      "was not sent: the scan paused this site after HTTP 403, 429 or repeated 503",
+    );
+    expect(result.found).toContain(`${AUTHOR_URL} (not assessed`);
+    // Verdict, explanation and coverage name the same unsent URL.
+    expect([...unsent]).toEqual([AUTHOR_URL]);
+    expectValid(result);
+  });
+
+  it.each([
+    ["timeout", "timed out before any HTTP response"],
+    ["reset", "failed before any HTTP response"],
+  ] as const)("names a %s on the author link", async (kind, cause) => {
+    const { ctx } = liveContext(
+      authorAnswers({ fail: kind }),
+      ARTICLE,
+      `${SITE}/blog/post`,
+    );
+    const unsent = trackUnsent(ctx);
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.message).toContain(AUTHOR_URL);
+    expect(result.message).toContain(cause);
+    // A transport failure was sent, so coverage lists nothing as unsent.
+    expect(unsent.size).toBe(0);
+    expectValid(result);
+  });
+
+  it("still fails an author link that answers 404", async () => {
+    const { ctx } = liveContext(
+      authorAnswers({ status: 404 }),
+      ARTICLE,
+      `${SITE}/blog/post`,
+    );
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("returned HTTP 404");
+    expectValid(result);
+  });
+
+  it("passes an author link that answers 200", async () => {
+    const { ctx } = liveContext(
+      authorAnswers({ status: 200, body: "<p>Bio.</p>" }),
+      ARTICLE,
+      `${SITE}/blog/post`,
+    );
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Pass);
+    expectValid(result);
   });
 });

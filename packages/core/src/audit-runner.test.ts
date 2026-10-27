@@ -29,6 +29,7 @@ import {
   ScoreDisplayMode,
 } from "./types";
 import { WafProvider } from "./waf-detector";
+import { AuthorPageAudit } from "./audits/answer-readiness/author-page";
 
 // Every registration in the default config; derived so a new audit does not
 // need a count edit here.
@@ -275,6 +276,58 @@ describe("runAudits", () => {
     ]);
     expect(byId.get("quiet")!.coverage).toBeDefined();
     expect(byId.get("quiet")!.coverage?.unsentUrls).toBeUndefined();
+  });
+
+  it("agrees with author-page on the author link the scheduler held back", async () => {
+    const authorUrl = "https://example.com/authors/jane";
+    const page = mockPageContext(
+      "https://example.com/blog/post",
+      `<html><body><script type="application/ld+json">{"@type":"Article","author":{"@type":"Person","name":"Jane","url":"${authorUrl}"}}</script></body></html>`,
+    );
+    const ctx = {
+      ...ctxWith([]),
+      pages: [
+        {
+          ...page,
+          pageType: PageType.Article,
+          pageTypeSource: PageTypeSource.Declared,
+        },
+      ],
+    } as CheckContext;
+    ctx.fetch = async ({ url }) => ({
+      url,
+      finalUrl: url,
+      status: 0,
+      error: HOST_STOPPED_MESSAGE,
+      headers: {},
+      body: "",
+      ttfbMs: 0,
+      totalMs: 0,
+      contentType: "",
+      contentLength: 0,
+    });
+    const config: ScanConfig = {
+      categories: [
+        { id: "answer-readiness", name: "Answer readiness", weight: 1 },
+      ],
+      audits: {
+        "answer-readiness": [
+          { create: () => new AuthorPageAudit(), meta: AuthorPageAudit.meta },
+        ],
+      },
+    };
+
+    const out = await runAudits(ctx, config);
+    const check = out.checks.find(
+      (c) => c.id === "answer-readiness/author-page",
+    )!;
+    // Verdict, explanation, found value and coverage name the same URL.
+    expect(check.status).toBe(CheckStatus.NotApplicable);
+    expect(check.explanation).toContain(authorUrl);
+    expect(check.explanation).toContain("was not sent");
+    expect(check.details?.["found"]).toContain(`${authorUrl} (not assessed`);
+    expect(check.coverage?.unsentUrls).toEqual([authorUrl]);
+    expect(AuditResultSchema.safeParse(check).success).toBe(true);
   });
 
   it("returns zeroed categories for empty input and works without onProgress", async () => {
