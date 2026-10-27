@@ -664,7 +664,9 @@ describe("publicDossier", () => {
         // section on what a User-Agent probe can prove (`ai-crawler-edge-parity`
         // already published one from its counter-evidence).
         // Content Signals and its two related audits state their limits.
-        Limits: 166,
+        // 169 since 2026-10-27: three audits state that a probe with no HTTP
+        // response is not assessed.
+        Limits: 169,
         // Every scored audit publishes its grade reasoning; the shortfall is
         // in the informative and experimental tiers, which the bar exempts.
         // 199 since 2026-10-18 (9.0.0): the new audits, and the obsolete and

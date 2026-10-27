@@ -9,6 +9,7 @@ import { weightForGrade } from "#core/scorer";
 import type { CheckContext } from "#core/check-context";
 import { isSafeUrl } from "#core/url-utils";
 import { probeSecurityUrl } from "#core/gatherers/security";
+import { hasHttpResponse, missingResponseCause } from "#core/probe-evidence";
 import { parseHtml } from "#core/parser";
 import {
   AuditTier,
@@ -125,6 +126,8 @@ interface Check {
   url: string;
   ok: boolean;
   reason?: string;
+  /** No HTTP response: the link was not assessed, so it is neither usable nor broken. */
+  unassessed?: boolean;
 }
 
 async function validate(
@@ -160,7 +163,16 @@ async function validate(
     result = await probeSecurityUrl(ctx, current.toString(), {
       followRedirects: false,
     });
-    if (!result) return { type, url, ok: false, reason: "is unreachable" };
+    if (!hasHttpResponse(result)) {
+      // An unsent, timed-out or failed probe says nothing about the page.
+      return {
+        type,
+        url,
+        ok: false,
+        unassessed: true,
+        reason: missingResponseCause(result),
+      };
+    }
     const location = result.headers["location"];
     if (result.status >= 300 && result.status < 400 && location) {
       hops += 1;
@@ -319,19 +331,24 @@ export class AcpPolicyLinkSurfaceAudit extends Audit {
     }
 
     const valid = checks.filter((c) => c.ok);
+    const unassessed = checks.filter((c) => c.unassessed);
+    const coverage =
+      unassessed.length > 0
+        ? ` Not assessed: ${unassessed.map((c) => `${c.type} (${c.url}) ${c.reason}`).join("; ")}.`
+        : "";
     const resolvedList = valid.map((c) => `${c.type}=${c.url}`).join(" ");
-    const found = `${valid.length}/8 ACP link types resolve${resolvedList ? `; ${resolvedList}` : ""}`;
+    const found = `${valid.length}/8 ACP link types resolve${resolvedList ? `; ${resolvedList}` : ""}${unassessed.length > 0 ? `; ${unassessed.length} not assessed` : ""}`;
     const pageUrl = ctx.pages[0]!.url;
 
     const brokenGates = checks.filter(
-      (c) => !c.ok && HARD_GATES.includes(c.type),
+      (c) => !c.ok && !c.unassessed && HARD_GATES.includes(c.type),
     );
     if (brokenGates.length > 0) {
       const detail = brokenGates
         .map((c) => `${c.type} ${c.url ? `(${c.url}) ` : ""}${c.reason}`)
         .join("; ");
       return this.fail(
-        `A hard-gate policy link is unusable, so is_eligible_checkout cannot be set and the catalogue is excluded from Instant Checkout: ${detail}.`,
+        `A hard-gate policy link is unusable, so is_eligible_checkout cannot be set and the catalogue is excluded from Instant Checkout: ${detail}.${coverage}`,
         EXPECTED,
         found,
         this.recommendation(),
@@ -339,17 +356,31 @@ export class AcpPolicyLinkSurfaceAudit extends Audit {
       );
     }
 
-    if (valid.length < ACP_LINK_TYPES.length) {
-      const missing = checks
-        .filter((c) => !c.ok)
-        .map((c) => `${c.type} ${c.reason}`)
-        .join("; ");
+    // Without a response from a hard-gate link, checkout eligibility is
+    // unknown: neither the exclusion nor a complete surface can be claimed.
+    const gateUnknown = unassessed.some((c) => HARD_GATES.includes(c.type));
+    const defects = checks.filter((c) => !c.ok && !c.unassessed);
+    if (defects.length > 0) {
+      const missing = defects.map((c) => `${c.type} ${c.reason}`).join("; ");
+      const eligibility = gateUnknown
+        ? "Checkout eligibility was not assessed, and"
+        : "Both hard gates are satisfied, so checkout eligibility is intact, but";
       return this.warn(
-        `${valid.length} of 8 ACP link types resolve. Both hard gates are satisfied, so checkout eligibility is intact, but the CheckoutSession response cannot carry a complete links array: ${missing}.`,
+        `${valid.length} of 8 ACP link types resolve. ${eligibility} the CheckoutSession response cannot carry a complete links array: ${missing}.${coverage}`,
         EXPECTED,
         found,
         this.recommendation(),
         pageUrl,
+      );
+    }
+
+    if (unassessed.length > 0) {
+      return this.notApplicable(
+        gateUnknown
+          ? `Checkout eligibility was not assessed because a hard-gate policy link got no HTTP response.${coverage}`
+          : `Both hard gates resolve and no assessed link is defective, but the surface is incomplete.${coverage}`,
+        EXPECTED,
+        found,
       );
     }
 

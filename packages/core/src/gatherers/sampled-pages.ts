@@ -14,14 +14,15 @@ const pageCache = new WeakMap<
 >();
 
 /**
- * Fetch a URL a sitemap listed, at most once per scan.
+ * Fetch a URL a sitemap listed, at most once per scan, and return whatever
+ * came back: a 200, another HTTP status, or a result with no HTTP response.
+ * Undefined only for a URL that fails the SSRF gate.
  *
  * Several audits sample the same sitemap, so without this the same document is
  * pulled once per audit. Keyed on the CheckContext object, so one scan shares
- * its documents and two scans share nothing. Returns undefined for a URL that
- * fails the SSRF gate or does not answer 200.
+ * its documents and two scans share nothing.
  */
-export function fetchSampledPage(
+export function fetchSampledPageResult(
   ctx: FetchingContext,
   url: string,
 ): Promise<FetchResult | undefined> {
@@ -37,10 +38,22 @@ export function fetchSampledPage(
     { [LogField.Gatherer]: "sampled-pages" },
     async () => {
       if (!(await isSafeUrl(url))) return undefined;
-      const result = await ctx.fetch({ url });
-      return result.status === 200 ? result : undefined;
+      return ctx.fetch({ url });
     },
   );
   perScan.set(url, pending);
   return pending;
+}
+
+/**
+ * {@link fetchSampledPageResult}, narrowed to a page that answered 200.
+ * Undefined for any other outcome, so a caller that must tell a missing page
+ * from an unread one uses the result form instead.
+ */
+export async function fetchSampledPage(
+  ctx: FetchingContext,
+  url: string,
+): Promise<FetchResult | undefined> {
+  const result = await fetchSampledPageResult(ctx, url);
+  return result?.status === 200 ? result : undefined;
 }

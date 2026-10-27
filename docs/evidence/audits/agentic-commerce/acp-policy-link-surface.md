@@ -42,6 +42,10 @@ Falsifiable claim: ACP spec 2026-04-17 makes `links` one of the 9 REQUIRED field
 - **[ACP Getting Started: Sellers](https://agenticcommerce.dev/docs/getting-started/sellers)** — Agentic Commerce Protocol (spec, URL verified 2026-08-20)
   - Seller obligations: implement the five HTTPS/JSON checkout endpoints; calculate all amounts (item prices, discounts, taxes, shipping); manage inventory and availability; process payments through their PSP; fulfil orders. Sellers must declare capabilities in every checkout response, including payment handlers (handler id, name, version, PSP reference, configuration) and optional extensions. Sellers must validate payment handler IDs against declared capabilities and manage state transitions to ready_for_payment.
 
+## Limits
+
+A link is judged only on an HTTP response. A probe that was not sent, timed out or failed before any response is not assessed, and the result names the cause. When a hard-gate link is not assessed, checkout eligibility is not assessed either: the audit claims neither exclusion nor a complete surface. A confirmed 404, a soft 404 and a 200 page without policy text still fail.
+
 ## Example failure
 
 A Shopify store renders its refund policy at /policies/refund-policy but the PDP only links it from a JS-hydrated footer drawer, so raw HTML contains no href to it; return_policy resolves to nothing and the merchant's CheckoutSession `links` array ships incomplete. Worse case: /terms 301-redirects cross-domain to a Zendesk help centre that returns 403 to non-browser clients — terms_of_use fails the hard gate and is_eligible_checkout cannot be set.

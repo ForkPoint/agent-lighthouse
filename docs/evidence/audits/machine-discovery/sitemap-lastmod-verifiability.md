@@ -32,6 +32,10 @@ Google states it uses <lastmod> 'if it's consistently and verifiably (for exampl
 - **[Sitemaps XML format — protocol](https://www.sitemaps.org/protocol.html)** — sitemaps.org (spec, URL verified 2026-08-20)
   - lastmod must be W3C Datetime (YYYY-MM-DD or full timestamp). Path-scope rule. A sitemap at /catalog/sitemap.xml may only list URLs under /catalog/. All URLs must share protocol and host with the sitemap. A file is capped at 50,000 URLs and 50MB (52,428,800 bytes). An index file is capped at 50,000 sitemaps, and may only reference sitemaps on the same site.
 
+## Limits
+
+Only pages the audit read enter the comparison. A sampled page that was not sent, timed out, failed in transport or answered with a status other than 200 has no page dates to read, so it is reported as not read, never as a page that publishes no modification time. When part of the sample is not read and the read part shows no defect, the audit returns not applicable with incomplete coverage. Future-dated and malformed lastmod values come from the sitemap itself and are reported either way.
+
 ## Example failure
 
 A Hugo site regenerates every page on each deploy, so sitemap.xml lists 4,000 URLs all with lastmod=2026-08-19T04:11:00Z. The JSON-LD dateModified on those pages ranges from 2019 to 2026. Google and every pull crawler downweight the sitemap's lastmod entirely. A genuinely revised pricing page published 2026-08-18 therefore gets no priority over 4,000 unchanged archive pages, and is re-fetched weeks later. Meanwhile the site owner's SEO tool reports '100% of URLs have lastmod' as a pass.

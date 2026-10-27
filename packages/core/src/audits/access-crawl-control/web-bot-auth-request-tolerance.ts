@@ -11,6 +11,7 @@ import type { CheckContext } from "#core/check-context";
 import { weightForGrade } from "#core/scorer";
 import { isSafeUrl } from "#core/url-utils";
 import { probeSecurityUrl } from "#core/gatherers/security";
+import { hasHttpResponse, missingResponseCause } from "#core/probe-evidence";
 import {
   AuditTier,
   CheckPriority,
@@ -169,7 +170,7 @@ export class WebBotAuthRequestToleranceAudit extends Audit {
     });
     if (!baseline || baseline.status < 200 || baseline.status >= 300) {
       return this.notApplicable(
-        `The unsigned baseline answered HTTP ${baseline?.status ?? 0}, so a signed request has nothing to be compared against.`,
+        `The unsigned baseline ${hasHttpResponse(baseline) ? `answered HTTP ${baseline.status}` : missingResponseCause(baseline)}, so a signed request has nothing to be compared against.`,
         "A 2xx baseline to compare the signed request against",
         `HTTP ${baseline?.status ?? 0} unsigned`,
       );
@@ -183,8 +184,15 @@ export class WebBotAuthRequestToleranceAudit extends Audit {
         WebBotAuthRequestToleranceAudit.AGENT_DIRECTORY,
       ),
     });
-    if (!signed)
-      return this.fail("Signed probe failed", "HTTP 200", "No response");
+    // A signed request with no HTTP response was not compared: it may never
+    // have been sent, so it shows no refusal of the signature headers.
+    if (!hasHttpResponse(signed)) {
+      return this.notApplicable(
+        `The unsigned request was answered HTTP ${baseline.status}, but the signed request ${missingResponseCause(signed)}, so the two cannot be compared.`,
+        "A signed request answered with an HTTP status",
+        `HTTP ${baseline.status} unsigned; signed: no HTTP response`,
+      );
+    }
 
     const acceptSignature = signed.headers["accept-signature"];
     const vary = (signed.headers["vary"] ?? "").toLowerCase();

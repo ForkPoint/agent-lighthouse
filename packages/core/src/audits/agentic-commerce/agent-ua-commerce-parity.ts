@@ -22,6 +22,8 @@ import {
   probeChallenge,
 } from "#core/gatherers/ua-parity";
 import { BotToken } from "#core/bot-registry";
+import { causeOfError } from "#core/probe-evidence";
+import { RedirectFailure } from "#core/types";
 import { resolvePolicyLinks } from "./acp-policy-link-surface";
 import {
   AuditTier,
@@ -88,6 +90,15 @@ function pathOf(url: string): string {
 function reasonFor(
   probe: UaProbe,
 ): { hard: boolean; text: string } | undefined {
+  // A loop is an answer the agent observes; other transport failures are not.
+  if (probe.blockClass === BlockClass.TransportError) {
+    return probe.evidence === RedirectFailure.Loop
+      ? {
+          hard: false,
+          text: `a redirect loop where a browser got ${probe.baselineStatus}`,
+        }
+      : undefined;
+  }
   const challenge = probeChallenge(probe);
   if (challenge) return { hard: false, text: `a ${challenge}` };
   if (probe.blockClass === BlockClass.PayPerCrawl) {
@@ -218,6 +229,27 @@ export class AgentUaCommerceParityAudit extends Audit {
       );
     }
 
+    // An agent probe with no HTTP response was not compared: the request may
+    // never have been sent, so it says nothing about how the site treats the
+    // agent.
+    const unassessed = comparable.filter(
+      (probe) =>
+        probe.blockClass === BlockClass.TransportError &&
+        probe.evidence !== RedirectFailure.Loop,
+    );
+    const coverage =
+      unassessed.length > 0
+        ? ` Not assessed: ${unassessed
+            .slice(0, MAX_SHOWN)
+            .map(
+              (probe) =>
+                `the ${labelFor(probe.token)} request to ${probe.url} ${causeOfError(probe.evidence)}`,
+            )
+            .join(
+              "; ",
+            )}${unassessed.length > MAX_SHOWN ? ` (${unassessed.length - MAX_SHOWN} more)` : ""}.`
+        : "";
+
     const findings: string[] = [];
     const refusals: string[] = [];
     // The scope note belongs to probe findings only. A robots.txt finding is
@@ -261,7 +293,7 @@ export class AgentUaCommerceParityAudit extends Audit {
       ? " robots.txt disallows GPTBot while admitting OAI-SearchBot: opting out of training while staying in search is a deliberate posture, and this audit scores nothing against it."
       : "";
 
-    const found = `${targets.length} commerce target(s) probed from the scanner's address with the ${TOKENS.map(labelFor).join(" and ")} User-Agents; ${comparable.length} comparable probe(s); ${findings.length} finding(s); ${refusals.length} ambiguous refusal(s)`;
+    const found = `${targets.length} commerce target(s) probed from the scanner's address with the ${TOKENS.map(labelFor).join(" and ")} User-Agents; ${comparable.length - unassessed.length} comparable probe(s); ${findings.length} finding(s); ${refusals.length} ambiguous refusal(s); ${unassessed.length} not assessed`;
 
     if (findings.length > 0) {
       const shown = findings.slice(0, MAX_SHOWN).join("; ");
@@ -275,7 +307,7 @@ export class AgentUaCommerceParityAudit extends Audit {
           : "";
       const scope = probeFindings > 0 || refusals.length > 0 ? `${SCOPE} ` : "";
       return this.fail(
-        `${shown}${more}.${note} ${scope}${CIDR_SOURCES}${posture}`,
+        `${shown}${more}.${note} ${scope}${CIDR_SOURCES}${posture}${coverage}`,
         EXPECTED,
         found,
         CheckPriority.Critical,
@@ -289,10 +321,18 @@ export class AgentUaCommerceParityAudit extends Audit {
           ? ` (${refusals.length - MAX_SHOWN} more)`
           : "";
       return this.warn(
-        `${shown}${more}. ${SCOPE} ${AMBIGUITY} ${CIDR_SOURCES}${posture}`,
+        `${shown}${more}. ${SCOPE} ${AMBIGUITY} ${CIDR_SOURCES}${posture}${coverage}`,
         EXPECTED,
         found,
         CheckPriority.Medium,
+      );
+    }
+
+    if (unassessed.length > 0) {
+      return this.notApplicable(
+        `No assessed request naming a shopping agent was answered differently from a browser, but coverage is incomplete.${coverage}`,
+        EXPECTED,
+        found,
       );
     }
 

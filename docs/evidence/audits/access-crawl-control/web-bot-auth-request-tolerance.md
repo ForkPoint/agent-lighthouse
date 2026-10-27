@@ -43,6 +43,10 @@ Web Bot Auth signs outbound requests with three headers: `Signature-Input` (with
 - **[Web Bot Auth Architecture (draft-meunier-web-bot-auth-architecture-05)](https://datatracker.ietf.org/doc/draft-meunier-web-bot-auth-architecture/)** — IETF (draft-spec, URL verified 2026-08-20)
   - Version 05, last updated 2026-03-02, now EXPIRED and replaced by draft-meunier-webbotauth-httpsig-protocol. Cite s1, not this, for current header semantics; useful only as the architectural rationale (identifying automated traffic via HTTP Message Signatures).
 
+## Limits
+
+The audit compares two HTTP responses. When the signed request gets no HTTP response, because it was not sent, timed out or failed in transport, the comparison is not possible and the audit returns not applicable with the cause. Such a probe is not evidence that the signature headers were refused.
+
 ## Example failure
 
 A site fronted by a strict WAF rule that rejects requests with unrecognised headers returns 200 to the baseline GET and 403 to the identical GET carrying `Signature`, `Signature-Input` and `Signature-Agent`. Every Web Bot Auth-signed agent — precisely the well-behaved, cryptographically identifiable population the operator would want to allow — is rejected before any verification can occur, and nothing in the site's config names this as an AI-access decision.
