@@ -100,6 +100,9 @@ export function allJsonLdNodes(blocks: object[]): object[] {
 /** @deprecated v1 name for the deep walk. Use topLevelJsonLd (structure) or allJsonLdNodes (deep search). Removed in v2. */
 export const flattenJsonLd = allJsonLdNodes;
 
+/** Characters trimmed from the end of a bare URL in prose. */
+const TRAILING_PUNCTUATION = new Set(".,;:!?'\")]`>");
+
 /**
  * Extract links from Markdown-ish text (llms.txt, READMEs).
  *
@@ -115,7 +118,13 @@ export function extractMarkdownLinks(
 ): Array<{ url: string; label: string; description: string }> {
   const out: Array<{ url: string; label: string; description: string }> = [];
   const seen = new Set<string>();
-  const clean = (u: string) => u.replace(/[.,;:!?'")\]`>]+$/, "");
+  // Trailing punctuation is trimmed by hand: an anchored `[...]+$` regex
+  // retries from every punctuation run and is quadratic on hostile input.
+  const clean = (u: string) => {
+    let end = u.length;
+    while (end > 0 && TRAILING_PUNCTUATION.has(u[end - 1]!)) end -= 1;
+    return u.slice(0, end);
+  };
   const push = (url: string, label: string, description: string) => {
     const c = clean(url.trim());
     if (!/^https?:\/\//i.test(c) || seen.has(c)) return;
@@ -124,13 +133,16 @@ export function extractMarkdownLinks(
   };
 
   // 1. Inline Markdown links anywhere: [label](url) with optional ": desc".
-  const inline = /\[([^\]]+)\]\(([^)\s]+)\)(?::\s*([^\n]+))?/g;
+  // A label never holds `[`, so a run of unclosed `[` cannot rescan the body.
+  const inline = /\[([^[\]]+)\]\(([^)\s]+)\)(?::\s*([^\n]+))?/g;
   let m: RegExpExecArray | null;
   while ((m = inline.exec(body)) !== null) push(m[2]!, m[1]!, m[3] ?? "");
 
   // 2. Bare-URL list items: "- **Label**: https://… — description".
   const bullet =
-    /^\s*(?:[-*+]|\d+\.)\s+(?:\*\*([^*]+)\*\*[:\-—]?\s*)?(https?:\/\/\S+)\s*(?:[-—:]\s*(.+))?$/gm;
+    // Horizontal whitespace only: `\s` crosses lines under the `m` flag, so a
+    // run of blank lines made every line start rescan the rest of the body.
+    /^[ \t]*(?:[-*+]|\d+\.)[ \t]+(?:\*\*([^*\n]+)\*\*[:\-—]?[ \t]*)?(https?:\/\/\S+)[ \t]*(?:[-—:][ \t]*(.+))?$/gm;
   while ((m = bullet.exec(body)) !== null) push(m[2]!, m[1] ?? "", m[3] ?? "");
 
   return out;

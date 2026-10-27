@@ -11,6 +11,7 @@ describe("isHtmlDocument", () => {
     "﻿  <!doctype HTML><html>",
     "<!-- build 42 -->\n<!DOCTYPE html><html>",
     "<HTML lang=en>",
+    "<!-- a --> <!-- b -->\n\n<html>",
   ])("reads %j as an HTML document", (body) => {
     expect(isHtmlDocument(body)).toBe(true);
   });
@@ -20,9 +21,16 @@ describe("isHtmlDocument", () => {
     '{"servers":[]}',
     '<?xml version="1.0"?><urlset></urlset>',
     "<htmlish>",
+    "<!-- never closed <html>",
     "",
   ])("does not read %j as an HTML document", (body) => {
     expect(isHtmlDocument(body)).toBe(false);
+  });
+
+  it("reads a body of repeated comment openers in linear time", () => {
+    const started = performance.now();
+    expect(isHtmlDocument("<!--".repeat(50_000))).toBe(false);
+    expect(performance.now() - started).toBeLessThan(1_000);
   });
 });
 

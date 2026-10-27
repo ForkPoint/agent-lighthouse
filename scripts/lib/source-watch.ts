@@ -263,8 +263,7 @@ export function ietfDraftOf(url: string): string | null {
     return null;
   }
   const host = parsed.hostname.toLowerCase();
-  if (host !== "datatracker.ietf.org" && !host.endsWith("ietf.org"))
-    return null;
+  if (host !== "ietf.org" && !host.endsWith(".ietf.org")) return null;
   const match =
     /\/(draft-[a-z0-9-]+?)(?:-\d{2})?(?:\.(?:html|txt|xml|pdf))?\/?$/i.exec(
       parsed.pathname.replace(/\/(?:doc\.json|history|referencedby)\/?$/, "/"),
@@ -539,7 +538,7 @@ function changeList(changes: Change[]): string {
 }
 
 function escapeCell(text: string): string {
-  return text.replace(/\|/g, "\\|").replace(/\n/g, " ");
+  return text.replace(/[\\|]/g, "\\$&").replace(/\n/g, " ");
 }
 
 /** The rolling issue body. Review-worthy changes come first; cosmetic ones are truncated first. */

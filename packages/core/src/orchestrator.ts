@@ -338,7 +338,9 @@ function reusableTargetPage(
 
 /** A URL without its fragment and trailing slash, to tell two URLs of one page. */
 function samePageKey(pageUrl: string): string {
-  return pageUrl.replace(/#.*$/, "").replace(/\/$/, "");
+  const hash = pageUrl.indexOf("#");
+  const bare = hash === -1 ? pageUrl : pageUrl.slice(0, hash);
+  return bare.endsWith("/") ? bare.slice(0, -1) : bare;
 }
 
 /**

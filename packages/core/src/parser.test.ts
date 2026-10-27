@@ -1097,6 +1097,32 @@ See [Docs](https://a.com/docs) again.
   it("returns an empty array when there are no links", () => {
     expect(extractMarkdownLinks("just some prose, nothing here")).toEqual([]);
   });
+
+  it("keeps the next bullet as its own link, not as a description", () => {
+    const links = extractMarkdownLinks(
+      "- https://a.com/one\n- https://a.com/two\n",
+    );
+    expect(links).toEqual([
+      { url: "https://a.com/one", label: "", description: "" },
+      { url: "https://a.com/two", label: "", description: "" },
+    ]);
+  });
+
+  // A hostile llms.txt must not stall the scan. Each body below took seconds
+  // with the earlier patterns; the bound is loose so a loaded machine passes.
+  it.each([
+    ["a run of unclosed brackets", "[".repeat(50_000)],
+    ["a run of blank lines", "\n".repeat(50_000) + "x"],
+    ["a bullet followed by blank lines", "- " + " \n".repeat(50_000)],
+    [
+      "a URL ending in punctuation",
+      "- https://a.com/" + ".".repeat(50_000) + "x",
+    ],
+  ])("reads %s in linear time", (_, hostile) => {
+    const started = performance.now();
+    extractMarkdownLinks(hostile);
+    expect(performance.now() - started).toBeLessThan(1_000);
+  });
 });
 
 // ---------------------------------------------------------------------------

@@ -23,13 +23,24 @@ import type { FetchResult } from "#core/fetcher";
 /** Bytes read from the start of a body when looking for an HTML document. */
 const SNIFF_BYTES = 1024;
 
-/** Optional BOM and whitespace, any comments, then a doctype or `<html>`. */
-const HTML_START =
-  /^﻿?\s*(?:<!--[\s\S]*?-->\s*)*<(?:!doctype\s+html|html[\s>])/i;
+/** A doctype or `<html>` at the start of what remains. */
+const HTML_OPEN = /^<(?:!doctype\s+html|html[\s>])/i;
 
-/** True when a body opens as an HTML document. */
+/**
+ * True when a body opens as an HTML document: optional BOM and whitespace, any
+ * comments, then a doctype or `<html>`. The comments are skipped by a scan: a
+ * repeated lazy comment group backtracks badly on crafted input.
+ */
 export function isHtmlDocument(body: string): boolean {
-  return HTML_START.test(body.slice(0, SNIFF_BYTES));
+  let rest = body.slice(0, SNIFF_BYTES);
+  if (rest.startsWith("\uFEFF")) rest = rest.slice(1);
+  rest = rest.trimStart();
+  while (rest.startsWith("<!--")) {
+    const close = rest.indexOf("-->", 4);
+    if (close === -1) return false;
+    rest = rest.slice(close + 3).trimStart();
+  }
+  return HTML_OPEN.test(rest);
 }
 
 /**

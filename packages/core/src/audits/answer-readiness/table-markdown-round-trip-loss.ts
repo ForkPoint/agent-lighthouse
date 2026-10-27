@@ -56,14 +56,19 @@ interface TableReport {
   strandedUnits: string[];
 }
 
-/** One line of the GFM text, split on the pipes a serializer did not escape. */
+/**
+ * One line of the GFM text, split on the pipes a serializer did not escape.
+ * `\|` reads as a pipe and `\\` as a backslash, the two escapes
+ * {@link serialize} writes.
+ */
 function splitRow(line: string): string[] {
   const cells: string[] = [];
   let current = "";
   for (let i = 0; i < line.length; i += 1) {
     const ch = line[i]!;
-    if (ch === "\\" && line[i + 1] === "|") {
-      current += "|";
+    const next = line[i + 1];
+    if (ch === "\\" && (next === "|" || next === "\\")) {
+      current += next;
       i += 1;
       continue;
     }
@@ -160,7 +165,7 @@ function buildGrid($: CheerioAPI, table: Element): Cell[][] {
  */
 function serialize(grid: Cell[][]): string {
   const line = (cells: string[]) =>
-    `| ${cells.map((c) => c.replace(/\|/g, "\\|")).join(" | ")} |`;
+    `| ${cells.map((c) => c.replace(/[\\|]/g, "\\$&")).join(" | ")} |`;
   const width = grid[0]?.length ?? 0;
   const written = grid.map((row, r) =>
     row.map((cell, c) =>
@@ -330,7 +335,9 @@ export class TableMarkdownRoundTripLossAudit extends Audit {
         ...new Set(outside.match(UNIT_TOKEN) ?? []),
       ].filter(
         (token) =>
-          !new RegExp(token.replace(/[$€£¥₹%]/g, "\\$&"), "i").test(inside),
+          !new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i").test(
+            inside,
+          ),
       );
 
       reports.push({
