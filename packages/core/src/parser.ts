@@ -103,6 +103,9 @@ export const flattenJsonLd = allJsonLdNodes;
 /** Characters trimmed from the end of a bare URL in prose. */
 const TRAILING_PUNCTUATION = new Set(".,;:!?'\")]`>");
 
+/** Characters that open a bare-URL bullet's description. */
+const BULLET_SEPARATORS = new Set("-—:");
+
 /**
  * Extract links from Markdown-ish text (llms.txt, READMEs).
  *
@@ -141,13 +144,18 @@ export function extractMarkdownLinks(
   while ((m = inline.exec(body)) !== null) push(m[2]!, m[1]!, m[3] ?? "");
 
   // 2. Bare-URL list items: "- **Label**: https://… — description".
+  // Horizontal whitespace only: `\s` crosses lines under the `m` flag, so a
+  // run of blank lines made every line start rescan the rest of the body. The
+  // regex stops at the URL; the description is read from the rest of the line
+  // by hand, since a `-` that could end the URL or open the description let
+  // one line be matched many ways.
   const bullet =
-    // Horizontal whitespace only: `\s` crosses lines under the `m` flag, so a
-    // run of blank lines made every line start rescan the rest of the body.
-    // The description starts at a non-space, so no whitespace run can be split
-    // two ways.
-    /^[ \t]*(?:[-*+]|\d+\.)[ \t]+(?:\*\*([^*\n]+)\*\*[:\-—]?[ \t]*)?(https?:\/\/\S+)[ \t]*(?:[-—:][ \t]*(\S.*))?$/gm;
-  while ((m = bullet.exec(body)) !== null) push(m[2]!, m[1] ?? "", m[3] ?? "");
+    /^[ \t]*(?:[-*+]|\d+\.)[ \t]+(?:\*\*([^*\n]+)\*\*[:\-—]?[ \t]*)?(https?:\/\/\S+)(.*)$/gm;
+  while ((m = bullet.exec(body)) !== null) {
+    const rest = m[3]!.trim();
+    if (rest !== "" && !BULLET_SEPARATORS.has(rest[0]!)) continue;
+    push(m[2]!, m[1] ?? "", rest.slice(1).trim());
+  }
 
   return out;
 }
