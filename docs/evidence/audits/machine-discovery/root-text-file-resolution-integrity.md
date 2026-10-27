@@ -45,6 +45,11 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 
 ## Implementation deviations
 
+- **No HTTP response means unverified, not a site defect.** Status zero and
+  failed fetches leave the check unverified (`na`) unless another received
+  response proves a defect. An incomplete probe set cannot pass. A received
+  robots.txt 404 warns only when both random probes resolve as absent;
+  missing probe responses leave that case unverified.
 - **Renamed** from `root-text-file-resolution-integrity-indexnow-key-file-precon`,
   which exceeds the 64-character id cap. The title and guidance state the
   IndexNow precondition instead.

@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import {
   probeUaParity,
   sharedUaProbes,
+  sharedUaFetch,
   classifyResponse,
   AI_CRAWLER_UAS,
   BASELINE_UA,
@@ -435,5 +436,156 @@ describe("sharedUaProbes", () => {
     const ctx = scan();
     expect(await sharedControlProbe(ctx, "https://127.0.0.1/")).toBeUndefined();
     expect(ctx.calls).toEqual([]);
+  });
+});
+
+describe("raw and classified UA response sharing", () => {
+  const url = "https://example.com/cart";
+  const agent = AI_CRAWLER_UAS.find((entry) => entry.token === "chatgpt-user")!;
+
+  it.each(["parity-first", "raw-first", "concurrent"])(
+    "shares a crawler response across scoped contexts: %s",
+    async (order) => {
+      const controller = new AbortController();
+      const browser = ok("browser article ".repeat(40));
+      const answer = res(
+        403,
+        { "x-agent-response": "blocked" },
+        "crawler denied",
+      );
+      browser.headers["x-browser-response"] = "allowed";
+      const fetch = vi.fn(async (options: FetchOptions) =>
+        options.userAgent === BASELINE_UA ? browser : answer,
+      );
+      const owner = { fetch };
+      const parityContext = { fetch, cacheOwner: owner };
+      const rawContext = { fetch, cacheOwner: owner };
+      const opts = { signal: controller.signal };
+      const parity = () =>
+        sharedUaProbes(parityContext, [url], [agent.token], opts);
+      const raw = () => sharedUaFetch(rawContext, url, agent.ua, opts);
+      if (order === "parity-first") {
+        await parity();
+        await raw();
+      } else if (order === "raw-first") {
+        await raw();
+        await parity();
+      } else await Promise.all([parity(), raw(), parity(), raw()]);
+
+      expect(await raw()).toBe(answer);
+      expect(await parity()).toMatchObject([
+        {
+          token: agent.token,
+          blockClass: BlockClass.Opaque403,
+          baselineStatus: 200,
+          probeStatus: 403,
+          baselineBody: browser.body,
+          probeBody: answer.body,
+          baselineHeaders: browser.headers,
+          probeHeaders: answer.headers,
+        },
+      ]);
+      expect(fetch).toHaveBeenCalledTimes(2);
+      expect(fetch).toHaveBeenCalledWith({
+        url,
+        userAgent: agent.ua,
+        followRedirects: true,
+        signal: controller.signal,
+      });
+      expect(fetch).toHaveBeenCalledWith({
+        url,
+        userAgent: BASELINE_UA,
+        followRedirects: true,
+        signal: controller.signal,
+      });
+    },
+  );
+
+  it.each([false, true])(
+    "keeps first-caller signal ownership (omitted: %s)",
+    async (omitSignal) => {
+      const first = new AbortController();
+      const later = new AbortController();
+      first.abort();
+      const fetch = vi.fn(async (options: FetchOptions) =>
+        options.signal?.aborted ? res(0) : ok(),
+      );
+      const ctx = { fetch };
+      const raw = await sharedUaFetch(
+        ctx,
+        url,
+        agent.ua,
+        omitSignal ? {} : { signal: first.signal },
+      );
+      const classified = await sharedUaProbes(ctx, [url], [agent.token], {
+        signal: later.signal,
+      });
+      expect(classified[0]?.probeStatus).toBe(omitSignal ? 200 : 0);
+      expect(await sharedUaFetch(ctx, url, agent.ua)).toBe(raw);
+      expect(
+        fetch.mock.calls.filter(([options]) => options.userAgent === agent.ua),
+      ).toEqual([
+        [
+          {
+            url,
+            userAgent: agent.ua,
+            followRedirects: true,
+            signal: omitSignal ? undefined : first.signal,
+          },
+        ],
+      ]);
+      expect(fetch).toHaveBeenCalledTimes(2);
+    },
+  );
+
+  it("keeps distinct URLs, UAs and scans separate", async () => {
+    const fetch = vi.fn(async () => ok());
+    const first = { fetch };
+    const second = { fetch };
+    await sharedUaProbes(first, [url], [agent.token]);
+    await sharedUaFetch(first, url, agent.ua);
+    await sharedUaFetch(first, url, CONTROL_UA);
+    await sharedUaFetch(first, `${url}/next`, agent.ua);
+    await sharedUaFetch(second, url, agent.ua);
+    expect(fetch).toHaveBeenCalledTimes(5);
+  });
+
+  it("keeps the raw response when DOM limits prevent classification", async () => {
+    const deep = res(200, {}, "<div>".repeat(DOM_WORK_LIMITS.maxDepth + 100));
+    const fetch = vi.fn(async (options: FetchOptions) =>
+      options.userAgent === BASELINE_UA ? ok() : deep,
+    );
+    const ctx = { fetch };
+    expect(await sharedUaProbes(ctx, [url], [agent.token])).toEqual([]);
+    expect(await sharedUaFetch(ctx, url, agent.ua)).toBe(deep);
+    expect(await sharedUaProbes(ctx, [url], [agent.token])).toEqual([]);
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("shares unanswered crawler responses without retrying", async () => {
+    const unanswered = res(0);
+    const fetch = vi.fn(async (options: FetchOptions) =>
+      options.userAgent === BASELINE_UA ? ok() : unanswered,
+    );
+    const ctx = { fetch };
+    await sharedUaProbes(ctx, [url], [agent.token]);
+    expect(await sharedUaFetch(ctx, url, agent.ua)).toBe(unanswered);
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("preserves a rejected crawler request for both consumers", async () => {
+    const fetch = vi.fn(async (options: FetchOptions) => {
+      if (options.userAgent !== BASELINE_UA)
+        throw new Error("unexpected failure");
+      return ok();
+    });
+    const ctx = { fetch };
+    await expect(sharedUaProbes(ctx, [url], [agent.token])).rejects.toThrow(
+      "unexpected failure",
+    );
+    await expect(sharedUaFetch(ctx, url, agent.ua)).rejects.toThrow(
+      "unexpected failure",
+    );
+    expect(fetch).toHaveBeenCalledTimes(2);
   });
 });

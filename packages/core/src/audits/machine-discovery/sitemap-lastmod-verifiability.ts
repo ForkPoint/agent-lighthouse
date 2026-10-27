@@ -10,7 +10,8 @@ import { Audit } from "#core/audit";
 import { weightForGrade } from "#core/scorer";
 import type { CheckContext, PageContext } from "#core/check-context";
 import type { FetchResult } from "#core/fetcher";
-import { fetchSampledPage } from "#core/gatherers/sampled-pages";
+import { fetchSampledPageResult } from "#core/gatherers/sampled-pages";
+import { hasHttpResponse, missingResponseCause } from "#core/probe-evidence";
 import {
   parseHtml,
   extractJsonLd,
@@ -294,6 +295,8 @@ export class SitemapLastmodVerifiabilityAudit extends Audit {
     let corroborated = 0;
     let divergent = 0;
     let noSignal = 0;
+    // Pages with no page body: their dates are unknown, not absent.
+    const unread: string[] = [];
     const worst: string[] = [];
 
     for (const entry of sample) {
@@ -305,8 +308,19 @@ export class SitemapLastmodVerifiabilityAudit extends Audit {
       if (scanned) {
         signals = signalsFromPage(scanned);
       } else {
-        const result = await fetchSampledPage(ctx, entry.loc);
-        if (result) signals = signalsFromFetch(result);
+        const result = await fetchSampledPageResult(ctx, entry.loc);
+        if (!hasHttpResponse(result)) {
+          unread.push(`${entry.loc} ${missingResponseCause(result)}`);
+          continue;
+        }
+        // A refusal or an error status carries no page to read dates from.
+        if (result.status !== 200) {
+          unread.push(
+            `${entry.loc} answered HTTP ${result.status}, so no page was read`,
+          );
+          continue;
+        }
+        signals = signalsFromFetch(result);
       }
 
       // A recent run of lastmod values and a Last-Modified header can both be
@@ -339,7 +353,8 @@ export class SitemapLastmodVerifiabilityAudit extends Audit {
       }
     }
 
-    const compared = sample.length - noSignal;
+    const read = sample.length - unread.length;
+    const compared = read - noSignal;
     const contentDiverges =
       compared > 0 && divergent / compared > DIVERGENT_SHARE;
     // Nearby edits can be real, including a batch publication. The shape
@@ -370,17 +385,21 @@ export class SitemapLastmodVerifiabilityAudit extends Audit {
         `${malformed} lastmod value(s) are malformed — not W3C Datetime — and are ignored by parsers`,
       );
     }
-    if (sample.length > 0 && noSignal / sample.length > NO_SIGNAL_SHARE) {
+    if (read > 0 && noSignal / read > NO_SIGNAL_SHARE) {
       notes.push(
-        `${noSignal} of ${sample.length} sampled URLs (${pct(noSignal, sample.length)}%) publish no modification time at all, so their lastmod cannot be verified — add dateModified to the page's JSON-LD`,
+        `${noSignal} of ${read} read sample URLs (${pct(noSignal, read)}%) publish no modification time at all, so their lastmod cannot be verified — add dateModified to the page's JSON-LD`,
       );
     }
+    const coverage =
+      unread.length > 0
+        ? ` Not read: ${unread.slice(0, 3).join("; ")}${unread.length > 3 ? ` (${unread.length - 3} more)` : ""}.`
+        : "";
 
-    const found = `${sample.length} sampled URL(s) of ${withLastmod.length} with lastmod; ${corroborated} corroborated, ${divergent} divergent, ${noSignal} unverifiable; ${malformed} malformed; ${future.length} future-dated`;
+    const found = `${sample.length} sampled URL(s) of ${withLastmod.length} with lastmod; ${corroborated} corroborated, ${divergent} divergent, ${noSignal} unverifiable, ${unread.length} not read; ${malformed} malformed; ${future.length} future-dated`;
 
     if (problems.length > 0) {
       return this.fail(
-        [...problems, ...notes].join(". ") + ".",
+        [...problems, ...notes].join(". ") + "." + coverage,
         EXPECTED,
         found,
         CheckPriority.Medium,
@@ -389,10 +408,18 @@ export class SitemapLastmodVerifiabilityAudit extends Audit {
 
     if (notes.length > 0) {
       return this.warn(
-        `${notes.join(". ")}.`,
+        `${notes.join(". ")}.${coverage}`,
         EXPECTED,
         found,
         CheckPriority.Low,
+      );
+    }
+
+    if (unread.length > 0) {
+      return this.notApplicable(
+        `${unread.length} of ${sample.length} sampled pages could not be read, so the sample is incomplete; ${corroborated} of the ${read} read agree with their lastmod.${coverage}`,
+        EXPECTED,
+        found,
       );
     }
 

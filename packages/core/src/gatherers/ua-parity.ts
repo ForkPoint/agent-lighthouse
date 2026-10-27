@@ -429,12 +429,8 @@ export async function sharedUaProbes(
         pending = withLogContext(
           { [LogField.Gatherer]: "ua-parity" },
           async () => {
-            const probe = await ctx.fetch({
-              url,
-              userAgent: agent.ua,
-              followRedirects: true,
-              signal: opts.signal,
-            });
+            const probe = await sharedUaFetch(ctx, url, agent.ua, opts);
+            if (!probe) return undefined;
             const verdict = classifyWithinLimits(baselineResult, probe);
             if (!verdict) return undefined;
             return {
@@ -497,10 +493,12 @@ export function sharedControlProbe(
 /**
  * One URL under one user agent, at most once per scan, body included.
  *
- * `sharedUaProbes` keeps only statuses, which is all a parity verdict needs. An
- * audit that has to read the document — a cart page carrying a bot challenge,
- * say — goes through here instead, and a browser-UA request shares the same
- * cache entry `sharedUaProbes` already filled.
+ * Raw readers and `sharedUaProbes` share the same response, including its body.
+ * Parity classification keeps a separate derived-result cache. Browser-UA
+ * requests also share the baseline cache, regardless of which caller runs first.
+ * The first caller supplies the request signal, as with the baseline cache;
+ * audit callers use the scan-bound fetcher for cancellation. Responses remain
+ * available for the scan lifetime, including bodies classification cannot read.
  */
 export function sharedUaFetch(
   ctx: ProbeContext,
