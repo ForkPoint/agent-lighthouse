@@ -1,5 +1,26 @@
 # @forkpoint/agent-lighthouse-core
 
+## 10.5.0
+
+### Minor Changes
+
+- 3feab9c: Report a request-scheduler stop during a scan. When a site answers HTTP 429, a 403 to the scanner, or two 503s in a row, the scanner stops sending it requests. The report now states this under `conditions.requestStop`: `stopped`, `reason`, `unsentCount`, `affectedAuditCount` and `affectedMass`. Each affected audit lists the held-back URLs under `coverage.unsentUrls`. The Markdown and HTML reports print one line when the stop cost requests. The score does not change.
+
+  `HostStopReason` now lives with the report contracts and is still exported from the package root.
+
+### Patch Changes
+
+- 69b3516: Return an unverified, not-applicable root-text resolution result when HTTP evidence is incomplete instead of treating status zero or failed requests as site defects. Keep failures supported by received HTTP responses and prevent incomplete probe sets from passing.
+- 69b3516: Share equivalent crawler responses between UA parity checks and raw UA readers so overlapping checks do not repeat the same request. Preserve per-scan isolation and DOM-limit handling.
+- 69b3516: Stop reading probes with no HTTP response as site defects. A request the scheduler held back after a site paused the scan, a timeout or a transport failure is now reported as not assessed, with its cause, instead of "HTTP 0":
+
+  - `agentic-commerce/acp-policy-link-surface` no longer fails a policy link it never reached, and no longer claims checkout exclusion without a response from a hard-gate link.
+  - `agentic-commerce/agent-ua-commerce-parity` no longer warns that an agent "gets HTTP 0 where a browser got 200". A redirect loop still warns.
+  - `access-crawl-control/web-bot-auth-request-tolerance` returns not applicable when the signed request gets no response, instead of failing.
+  - `machine-discovery/sitemap-lastmod-verifiability` no longer counts unread sample pages, or pages that answered a non-200 status, as pages that publish no modification time.
+
+  Confirmed 404s, soft 404s, stub pages and pages without the expected content are still judged.
+
 ## 10.4.1
 
 ### Patch Changes
