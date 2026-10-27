@@ -35,6 +35,17 @@ describe("TableMarkdownRoundTripLossAudit", () => {
     expect(result.status).toBe(CheckStatus.NotApplicable);
   });
 
+  it("round-trips cells that hold backslashes and pipes", async () => {
+    const result = audit.audit(
+      page(`<table>
+  <tr><th>Path</th><th>Rule</th></tr>
+  <tr><td>C:\\data\\</td><td>a|b</td></tr>
+  <tr><td>\\|</td><td>x\\y</td></tr>
+</table>`),
+    );
+    expect(result.status).toBe(CheckStatus.Pass);
+  });
+
   it("passes a clean two-column table with zero loss", async () => {
     const result = audit.audit(page(CLEAN));
     expect(result.status).toBe(CheckStatus.Pass);

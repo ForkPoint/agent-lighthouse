@@ -43,6 +43,17 @@ describe("parseCssRules", () => {
     expect(rules[0]!.selector).toBe(".b");
   });
 
+  it("drops an unclosed comment to the end of the sheet", () => {
+    const rules = parseCssRules(".a { opacity: 0 } /* .b { opacity: 0 }");
+    expect(rules.map((r) => r.selector)).toEqual([".a"]);
+  });
+
+  it("strips a sheet of unclosed comment openers in linear time", () => {
+    const started = performance.now();
+    expect(parseCssRules("/*".repeat(50_000))).toEqual([]);
+    expect(performance.now() - started).toBeLessThan(1_000);
+  });
+
   it("records the enclosing at-rule on a nested rule", () => {
     const [rule] = parseCssRules("@media print { .a { display: none } }");
     expect(rule).toMatchObject({ selector: ".a", atRule: "media print" });

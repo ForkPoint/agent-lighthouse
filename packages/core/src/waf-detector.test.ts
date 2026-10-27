@@ -40,6 +40,15 @@ describe("detectWafProtection", () => {
     expect(onHomepage({ body: "<html><body>Shop</body></html>" })).toBeNull();
   });
 
+  it("reads a body of unclosed tags in linear time", () => {
+    const started = performance.now();
+    onHomepage({
+      headers: { "x-akamai-transformed": "x" },
+      body: "<title" + "<".repeat(50_000),
+    });
+    expect(performance.now() - started).toBeLessThan(1_000);
+  });
+
   it("returns null when there is no homepage result at all", () => {
     expect(detectWafProtection(URL, null, {}, 3)).toBeNull();
   });

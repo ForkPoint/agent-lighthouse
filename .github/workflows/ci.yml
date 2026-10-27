@@ -9,6 +9,10 @@ on:
   # pull request opened with GITHUB_TOKEN triggers no pull_request run.
   workflow_dispatch:
 
+# CI reads the repository and writes nothing back.
+permissions:
+  contents: read
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest

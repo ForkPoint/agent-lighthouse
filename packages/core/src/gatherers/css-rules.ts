@@ -124,8 +124,22 @@ function skipBlock(text: string, open: number): number {
   return text.length;
 }
 
+/**
+ * Remove CSS comments with a scan rather than a lazy regex, which restarts at
+ * every unclosed `/*` and is quadratic on hostile stylesheets. An unclosed
+ * comment runs to the end of the source, as CSS parsers treat it.
+ */
 function stripComments(source: string): string {
-  return source.replace(/\/\*[\s\S]*?\*\//g, "");
+  let out = "";
+  let from = 0;
+  for (;;) {
+    const open = source.indexOf("/*", from);
+    if (open === -1) return out + source.slice(from);
+    out += source.slice(from, open);
+    const close = source.indexOf("*/", open + 2);
+    if (close === -1) return out;
+    from = close + 2;
+  }
 }
 
 export interface PageCss {

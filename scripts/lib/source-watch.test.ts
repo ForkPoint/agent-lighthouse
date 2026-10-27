@@ -75,6 +75,10 @@ describe("URL classification", () => {
       ietfDraftOf("https://datatracker.ietf.org/wg/aipref/about"),
     ).toBeNull();
     expect(ietfDraftOf("https://www.rfc-editor.org/rfc/rfc9309")).toBeNull();
+    expect(ietfDraftOf("https://notietf.org/doc/draft-foo-bar/")).toBeNull();
+    expect(ietfDraftOf("https://ietf.org/doc/draft-foo-bar/")).toBe(
+      "draft-foo-bar",
+    );
   });
 });
 

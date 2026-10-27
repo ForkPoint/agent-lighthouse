@@ -33,12 +33,15 @@ function readable(body: string): boolean {
   return text.split(" ").filter(Boolean).length > 50 || text.length > 200;
 }
 
-/** The text of raw HTML, without scripts, styles or tags. */
+/**
+ * The text of raw HTML, without scripts, styles or tags. A tag match stops at
+ * the next `<`, so a run of unclosed tags is read in linear time.
+ */
 function textOf(body: string): string {
   return body
     .replace(SCRIPT_ELEMENTS, " ")
     .replace(STYLE_ELEMENTS, " ")
-    .replace(/<[^>]+>/g, " ")
+    .replace(/<[^<>]+>/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -52,7 +55,7 @@ const BLOCK_PAGE_MAX_CHARS = 1000;
 
 /** The page title, lower-cased, or "" when there is none. */
 function titleOf(body: string): string {
-  return (/<title[^>]*>([^<]*)<\/title>/i.exec(body)?.[1] ?? "")
+  return (/<title[^<>]*>([^<]*)<\/title>/i.exec(body)?.[1] ?? "")
     .trim()
     .toLowerCase();
 }
