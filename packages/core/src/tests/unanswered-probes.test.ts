@@ -35,6 +35,11 @@ import { AcpPolicyLinkSurfaceAudit } from "#core/audits/agentic-commerce/acp-pol
 import { AgentUaCommerceParityAudit } from "#core/audits/agentic-commerce/agent-ua-commerce-parity";
 import { WebBotAuthRequestToleranceAudit } from "#core/audits/access-crawl-control/web-bot-auth-request-tolerance";
 import { SitemapLastmodVerifiabilityAudit } from "#core/audits/machine-discovery/sitemap-lastmod-verifiability";
+import { AboutCredentialsAudit } from "#core/audits/answer-readiness/about-credentials";
+import { RssFeedAudit } from "#core/audits/machine-discovery/rss-feed";
+import { ConditionalRequestSupportAudit } from "#core/audits/machine-discovery/conditional-request-support";
+import { AgentCommerceFeedParityAudit } from "#core/audits/machine-discovery/agent-commerce-feed-parity";
+import { AiCatalogExistsAudit } from "#core/audits/agent-interfaces/ai-catalog-exists";
 
 const mockRequest = vi.mocked(request);
 const mockLookup = vi.mocked(dns.lookup);
@@ -43,7 +48,12 @@ const SITE = "https://example.com";
 
 /** What the mocked network does with one request. */
 type Outcome =
-  | { status: number; body?: string; type?: string }
+  | {
+      status: number;
+      body?: string;
+      type?: string;
+      headers?: Record<string, string>;
+    }
   | { fail: "timeout" | "reset" };
 
 type Route = (url: string, headers: Record<string, string>) => Outcome;
@@ -60,7 +70,10 @@ function respond(outcome: Outcome) {
   const bytes = Buffer.from(outcome.body ?? "", "utf8");
   return {
     statusCode: outcome.status,
-    headers: { "content-type": outcome.type ?? "text/html; charset=utf-8" },
+    headers: {
+      "content-type": outcome.type ?? "text/html; charset=utf-8",
+      ...outcome.headers,
+    },
     body: {
       async *[Symbol.asyncIterator]() {
         yield bytes;
@@ -383,5 +396,268 @@ describe("machine-discovery/sitemap-lastmod-verifiability", () => {
       HOME,
     );
     expect((await audit.audit(ctx)).status).toBe(CheckStatus.Pass);
+  });
+});
+
+const HOME_PAGE = "<html><body><main><p>Home.</p></main></body></html>";
+
+/** Read root files through the fetcher, as the scan's root phase does. */
+async function readRootFiles(
+  ctx: CheckContext,
+  fetcher: Fetcher,
+  paths: string[],
+): Promise<void> {
+  for (const path of paths)
+    ctx.rootFiles[path] = await fetcher.fetch({ url: `${SITE}${path}` });
+}
+
+describe("answer-readiness/about-credentials", () => {
+  const audit = new AboutCredentialsAudit();
+  const ABOUT_PATHS = [
+    "/about/",
+    "/about-us/",
+    "/about",
+    "/pages/about",
+    "/pages/about-us",
+    "/pages/our-story",
+    "/our-story",
+  ];
+
+  it("leaves the about page unassessed after a host stop", async () => {
+    const { ctx, fetcher } = liveContext(rateLimit, HOME_PAGE);
+    await stopHost(fetcher);
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.message).toContain("7 of 7 common paths were not assessed");
+    expect(result.message).toContain("was not sent");
+    expectValid(result);
+  });
+
+  it("fails on the root phase's 404s without asking again", async () => {
+    const { ctx, fetcher } = liveContext(rateLimit, HOME_PAGE);
+    await readRootFiles(ctx, fetcher, ABOUT_PATHS);
+    await stopHost(fetcher);
+    const calls = mockRequest.mock.calls.length;
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("No about page found");
+    expect(mockRequest.mock.calls.length).toBe(calls);
+  });
+
+  it("still judges an about page that answers without credentials", async () => {
+    const route: Route = (url) =>
+      new URL(url).pathname === "/about/"
+        ? {
+            status: 200,
+            body: "<html><body><p>We sell shoes.</p></body></html>",
+          }
+        : { status: 404 };
+    const { ctx } = liveContext(route, HOME_PAGE);
+    const result = await audit.audit(ctx);
+    expect(result.status).not.toBe(CheckStatus.NotApplicable);
+    expect(result.status).not.toBe(CheckStatus.Pass);
+  });
+});
+
+describe("machine-discovery/rss-feed", () => {
+  const audit = new RssFeedAudit();
+  const ADVERTISED = `<html><head><link rel="alternate" type="application/rss+xml" href="/news.xml"></head><body><p>Home.</p></body></html>`;
+
+  it("does not claim the common paths are empty after a host stop", async () => {
+    const { ctx, fetcher } = liveContext(rateLimit, HOME_PAGE);
+    await stopHost(fetcher);
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.message).toContain("no feed was read at the common paths");
+    expect(result.message).toContain("was not sent");
+    expect(result.message).not.toContain("nothing at the common paths");
+    expectValid(result);
+  });
+
+  it("states the observed absence when every path answers 404", async () => {
+    const { ctx } = liveContext(() => ({ status: 404 }), HOME_PAGE);
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.message).toContain("nothing at the common paths");
+  });
+
+  it.each([
+    ["timeout", "timed out before any HTTP response"],
+    ["reset", "read ECONNRESET"],
+  ] as const)(
+    "does not fail an advertised feed lost to a %s",
+    async (fail, cause) => {
+      const route: Route = (url) =>
+        new URL(url).pathname === "/news.xml" ? { fail } : { status: 404 };
+      const { ctx } = liveContext(route, ADVERTISED);
+      const result = await audit.audit(ctx);
+      expect(result.status).toBe(CheckStatus.NotApplicable);
+      expect(result.message).toContain(cause);
+      expectValid(result);
+    },
+  );
+
+  it("still fails an advertised feed that answers 404", async () => {
+    const { ctx } = liveContext(() => ({ status: 404 }), ADVERTISED);
+    expect((await audit.audit(ctx)).status).toBe(CheckStatus.Fail);
+  });
+});
+
+describe("machine-discovery/conditional-request-support", () => {
+  const audit = new ConditionalRequestSupportAudit();
+  const ROBOTS = {
+    status: 200,
+    body: "User-agent: *\nAllow: /\n",
+    type: "text/plain",
+  };
+
+  it("does not infer missing files after a host stop", async () => {
+    const { ctx, fetcher } = liveContext(
+      (url) =>
+        new URL(url).pathname === "/robots.txt" ? ROBOTS : rateLimit(url, {}),
+      HOME_PAGE,
+    );
+    await readRootFiles(ctx, fetcher, ["/robots.txt"]);
+    await stopHost(fetcher);
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.message).toContain("No discovery surface could be read");
+    expect(result.message).toContain("was not sent");
+    expect(result.message).not.toContain("there is no robots.txt");
+    expectValid(result);
+  });
+
+  const revalidating =
+    (conditional: Outcome): Route =>
+    (url, headers) => {
+      if (new URL(url).pathname !== "/robots.txt") return { status: 404 };
+      if ("If-None-Match" in headers) return conditional;
+      return { ...ROBOTS, headers: { etag: '"v1"' } };
+    };
+
+  it.each([
+    ["timeout", "timed out before any HTTP response"],
+    ["reset", "read ECONNRESET"],
+  ] as const)(
+    "does not read a conditional request lost to a %s as a 200",
+    async (fail, cause) => {
+      const { ctx, fetcher } = liveContext(revalidating({ fail }), HOME_PAGE);
+      await readRootFiles(ctx, fetcher, ["/robots.txt"]);
+      const result = await audit.audit(ctx);
+      expect(result.status).toBe(CheckStatus.NotApplicable);
+      expect(result.message).toContain("If-None-Match request");
+      expect(result.message).toContain(cause);
+      expect(result.message).not.toContain("rather than 304");
+      expectValid(result);
+    },
+  );
+
+  it("still fails a conditional request answered 200", async () => {
+    const { ctx, fetcher } = liveContext(
+      revalidating({ ...ROBOTS, headers: { etag: '"v1"' } }),
+      HOME_PAGE,
+    );
+    await readRootFiles(ctx, fetcher, ["/robots.txt"]);
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("problem");
+  });
+});
+
+describe("machine-discovery/agent-commerce-feed-parity", () => {
+  const audit = new AgentCommerceFeedParityAudit();
+  const locs = Array.from(
+    { length: 3 },
+    (_, i) => `${SITE}/products/item-${i}`,
+  );
+  const sitemap = `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${locs
+    .map((loc) => `<url><loc>${loc}</loc></url>`)
+    .join("")}</urlset>`;
+  const site =
+    (page: Outcome): Route =>
+    (url) => {
+      const path = new URL(url).pathname;
+      if (path === "/sitemap.xml")
+        return { status: 200, body: sitemap, type: "application/xml" };
+      if (path.startsWith("/products/")) return page;
+      return { status: 404 };
+    };
+
+  it("marks an unread sample unassessed after a host stop", async () => {
+    // The first product page answers 429; the scheduler holds back the rest.
+    let first = true;
+    const route: Route = (url, headers) => {
+      if (new URL(url).pathname.startsWith("/products/") && first) {
+        first = false;
+        return { status: 429 };
+      }
+      return site({ status: 200, body: HOME_PAGE })(url, headers);
+    };
+    const { ctx } = liveContext(route, HOME_PAGE);
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.message).toContain("2 were not read");
+    expect(result.message).toContain("was not sent");
+    expectValid(result);
+  });
+
+  it("still reports no product page when the sample was read", async () => {
+    const { ctx } = liveContext(
+      site({ status: 200, body: HOME_PAGE }),
+      HOME_PAGE,
+    );
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.message).toContain("No product page in the sitemap sample");
+  });
+});
+
+describe("agent-interfaces/ai-catalog-exists", () => {
+  const audit = new AiCatalogExistsAudit();
+  const CATALOG_PATHS = [
+    "/.well-known/ard.json",
+    "/.well-known/ai-catalog.json",
+  ];
+
+  it("leaves the catalog unassessed when the root reads were held back", async () => {
+    const { ctx, fetcher } = liveContext(rateLimit, HOME_PAGE);
+    await stopHost(fetcher);
+    await readRootFiles(ctx, fetcher, CATALOG_PATHS);
+    const result = audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.message).toContain("not every well-known path was read");
+    expect(result.message).toContain("was not sent");
+    expect(result.message).not.toContain("HTTP 0");
+    expectValid(result);
+  });
+
+  it.each([
+    ["timeout", "timed out before any HTTP response"],
+    ["redirect loop", "is caught in a redirect loop"],
+  ] as const)("names a %s on one path", async (_kind, cause) => {
+    const route: Route = (url) => {
+      const path = new URL(url).pathname;
+      if (path === "/.well-known/ard.json") return { status: 404 };
+      return _kind === "timeout"
+        ? { fail: "timeout" }
+        : { status: 302, headers: { location: path } };
+    };
+    const { ctx, fetcher } = liveContext(route, HOME_PAGE);
+    for (const path of CATALOG_PATHS)
+      ctx.rootFiles[path] = await fetcher.fetch({
+        url: `${SITE}${path}`,
+        followRedirects: true,
+      });
+    const result = audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.message).toContain(cause);
+  });
+
+  it("still fails when both paths answer 404", async () => {
+    const { ctx, fetcher } = liveContext(() => ({ status: 404 }), HOME_PAGE);
+    await readRootFiles(ctx, fetcher, CATALOG_PATHS);
+    const result = audit.audit(ctx);
+    expect(result.status).toBe(CheckStatus.Fail);
+    expect(result.message).toContain("HTTP 404");
   });
 });

@@ -60,6 +60,10 @@ The autodiscovery link is reported in `found`, as `autodiscovery <link> present 
 
 **Counter-evidence:** No LLM vendor — OpenAI, Anthropic, or Perplexity — documents consuming RSS or Atom feeds anywhere. Apple's current June 2026 Applebot page dropped the RSS mention entirely. OpenAI's Agentic Commerce product feed spec goes further and explicitly excludes syndication formats: 'JSON, spreadsheet, XML, RSS, and Atom sources are not part of this compatibility path.' NLWeb adoption remains negligible in absolute terms. RFC 4287 does not itself define HTML <link rel=alternate> autodiscovery, so the autodiscovery half of this audit rests on convention rather than the ratified spec. Net: the feed is a documented discovery input for Google and (historically) Apple, but there is no evidence any LLM ingests feeds directly.
 
+## Limits
+
+A feed candidate with no HTTP response, because the request was not sent, timed out or failed in transport, is not read. The audit then says no feed was read at that path, never that nothing is there. An advertised feed that got no response returns not applicable rather than fail; an advertised feed that answers without a feed still fails.
+
 ## Implementation deviations
 
 - **Absorbs `rss-feed-link` (4.16).** Its dossier is kept at

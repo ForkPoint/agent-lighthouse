@@ -13,7 +13,8 @@ import { weightForGrade } from "#core/scorer";
 import type { CheckContext, PageContext } from "#core/check-context";
 
 import { fetchImageHead } from "#core/gatherers/media";
-import { fetchSampledPage } from "#core/gatherers/sampled-pages";
+import { fetchSampledPageResult } from "#core/gatherers/sampled-pages";
+import { hasHttpResponse, missingResponseCause } from "#core/probe-evidence";
 import {
   parseHtml,
   extractJsonLd,
@@ -382,7 +383,16 @@ export class AgentCommerceFeedParityAudit extends Audit {
   };
 
   async audit(ctx: CheckContext): Promise<AuditResult> {
-    const candidates = await this.collect(ctx);
+    const { candidates, unread } = await this.collect(ctx);
+
+    // Sample pages that were never read may be the product pages.
+    if (candidates.length === 0 && unread.length > 0) {
+      return this.notApplicable(
+        `No product page among the sitemap sample pages that were read; ${unread.length} were not read: ${unread.slice(0, 3).join("; ")}${unread.length > 3 ? ` (${unread.length - 3} more)` : ""}.`,
+        EXPECTED,
+        `${unread.length} sampled sitemap URL(s) not read`,
+      );
+    }
 
     if (candidates.length === 0) {
       return this.notApplicable(
@@ -481,12 +491,15 @@ export class AgentCommerceFeedParityAudit extends Audit {
   }
 
   /** Up to 20 sitemap URLs, opened, keeping the ones that are product pages. */
-  private async collect(ctx: CheckContext): Promise<Candidate[]> {
+  private async collect(
+    ctx: CheckContext,
+  ): Promise<{ candidates: Candidate[]; unread: string[] }> {
     const tree = await siteSitemapTree(ctx);
     const scanned = new Map<string, PageContext>();
     for (const page of ctx.pages) scanned.set(page.url, page);
 
     const out: Candidate[] = [];
+    const unread: string[] = [];
     for (const entry of sampleEntries(tree.entries, MAX_SAMPLE)) {
       const page = scanned.get(entry.loc);
       if (page) {
@@ -496,15 +509,19 @@ export class AgentCommerceFeedParityAudit extends Audit {
           out.push({ url: page.url, $: page.$, product, ids: idIndex(blocks) });
         continue;
       }
-      const result = await fetchSampledPage(ctx, entry.loc);
-      if (!result) continue;
+      const result = await fetchSampledPageResult(ctx, entry.loc);
+      if (!hasHttpResponse(result)) {
+        unread.push(`${entry.loc} ${missingResponseCause(result)}`);
+        continue;
+      }
+      if (result.status !== 200) continue;
       const $ = parseHtml(result.body);
       const blocks = extractJsonLd($);
       const product = productNode(blocks, extractMetaTags($));
       if (product)
         out.push({ url: entry.loc, $, product, ids: idIndex(blocks) });
     }
-    return out;
+    return { candidates: out, unread };
   }
 
   private assess({ url, $, product, ids }: Candidate): Assessment {

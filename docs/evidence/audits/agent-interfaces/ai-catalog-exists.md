@@ -47,6 +47,10 @@ The AI catalog is the central discovery file that tells AI agents what capabilit
 
 **Counter-evidence:** The SEP is not merged — nothing about this is in the ratified spec (current revision 2026-07-28). `ai-catalog.json` is not in the IANA Well-Known URIs registry (106 entries on 2026-10-18; mcp, mcp.json, ai-catalog.json, webmcp, openapi are all absent). The MCP extension repo carrying the discovery text had 10 stars on 2026-10-18. No MCP client vendor documents consuming it. Anthropic's own docs say 'You can manually add any third-party connector to Claude as long as you have the URL of that remote MCP server'. OpenAI's Apps SDK routes through a developer-mode URL paste, plus 'public plugin submission' with 'domain verification'. A probe of 19 major domains found only 2 publishers, both large SaaS vendors. SEP-2127 itself lists 'No Domain-Level Discovery' as an _unsolved_ pain point, which is an admission that the mechanism does not yet work.
 
+## Limits
+
+A well-known path whose request got no HTTP response, because it was not sent, timed out, failed in transport or ended in a redirect loop, is not read. When no manifest is found and a path was not read, the audit returns not applicable with the cause instead of reporting the catalog as absent. Both paths must answer without a manifest before absence is reported.
+
 ## Implementation deviations
 
 - The pass condition is a non-empty `entries` array, the only field the ARD v0.91 schema requires and the only one hf-discover reads. `specVersion` and `host` are read when present and never required. Until 2026-10-18 the audit also required them (from ARD v0.9 §4.1) and failed manifests without them. Parsing lives in the shared `_ard.ts`.

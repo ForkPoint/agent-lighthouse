@@ -26,6 +26,7 @@
  */
 
 import type { CheckContext } from "#core/check-context";
+import { hasHttpResponse, missingResponseCause } from "#core/probe-evidence";
 
 /** ARD v0.91 §5.1 normative path: consumers MUST fetch it. */
 export const ARD_PATH = "/.well-known/ard.json";
@@ -97,6 +98,11 @@ export type ArdRead =
    * manifest the site published, the same line `isRootArtifact` draws.
    */
   | { ok: false; reason: "absent"; path: string; found: string }
+  /**
+   * A well-known path got no HTTP response: the request was held back, timed
+   * out or failed in transport. Says nothing about the file.
+   */
+  | { ok: false; reason: "unread"; path: string; found: string }
   | { ok: false; reason: "not-json"; path: string; found: string }
   /** Valid JSON object, but not an ARD manifest. */
   | {
@@ -169,6 +175,13 @@ function readAt(ctx: CheckContext, path: string): ArdRead {
   const result = ctx.rootFiles[path];
   if (!result)
     return { ok: false, reason: "absent", path, found: "Not fetched" };
+  if (!hasHttpResponse(result))
+    return {
+      ok: false,
+      reason: "unread",
+      path,
+      found: missingResponseCause(result),
+    };
   if (result.status !== 200 || !result.body) {
     return {
       ok: false,
@@ -265,8 +278,18 @@ export function readAiCatalog(ctx: CheckContext): ArdRead {
   const failures = reads.filter(
     (r): r is Exclude<ArdRead, { ok: true }> => !r.ok,
   );
-  const broken = failures.find((r) => r.reason !== "absent");
+  const broken = failures.find(
+    (r) => r.reason !== "absent" && r.reason !== "unread",
+  );
   if (broken) return broken;
+  // Absence is claimed only when both paths answered without a manifest.
+  if (failures.some((r) => r.reason === "unread"))
+    return {
+      ok: false,
+      reason: "unread",
+      path: CATALOG_PATHS_LABEL,
+      found: failures.map((r) => `${r.path}: ${r.found}`).join("; "),
+    };
   return {
     ok: false,
     reason: "absent",
@@ -285,6 +308,8 @@ export function describeFailure(read: Exclude<ArdRead, { ok: true }>): string {
   switch (read.reason) {
     case "absent":
       return `Neither ${ARD_PATH} nor ${AI_CATALOG_PATH} is served (${read.found}).`;
+    case "unread":
+      return `The AI catalog was not assessed: no manifest was found, and not every well-known path was read (${read.found}).`;
     case "not-json":
       return `${read.path} is served but is not valid JSON.`;
     case "shape":

@@ -665,8 +665,9 @@ describe("publicDossier", () => {
         // already published one from its counter-evidence).
         // Content Signals and its two related audits state their limits.
         // 169 since 2026-10-27: three audits state that a probe with no HTTP
-        // response is not assessed.
-        Limits: 169,
+        // response is not assessed. 171 the same day: five more state it, and
+        // three of them already published Limits from their counter-evidence.
+        Limits: 171,
         // Every scored audit publishes its grade reasoning; the shortfall is
         // in the informative and experimental tiers, which the bar exempts.
         // 199 since 2026-10-18 (9.0.0): the new audits, and the obsolete and

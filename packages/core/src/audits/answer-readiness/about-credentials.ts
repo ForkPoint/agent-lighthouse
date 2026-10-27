@@ -3,6 +3,7 @@ import { Audit } from "#core/audit";
 import { weightForGrade } from "#core/scorer";
 import type { CheckContext } from "#core/check-context";
 import { probeAuthorUrl } from "#core/gatherers/author";
+import { hasHttpResponse, missingResponseCause } from "#core/probe-evidence";
 import {
   AuditTier,
   CheckPriority,
@@ -96,24 +97,47 @@ export class AboutCredentialsAudit extends Audit {
       }
     }
 
-    // Try fetching if not in rootFiles
+    // Probe the paths the root fetch did not answer. A path with no HTTP
+    // response is unassessed: it says nothing about whether the page exists.
+    const unassessed: string[] = [];
     if (!aboutResult) {
       for (const path of aboutPaths) {
-        try {
-          const result = await probeAuthorUrl(ctx, `${ctx.baseUrl}${path}`);
-          if (result && result.status === 200 && result.body) {
-            aboutResult = result;
-            break;
+        const known = ctx.rootFiles[path];
+        let result = hasHttpResponse(known) ? known : undefined;
+        if (!result) {
+          try {
+            const probed = await probeAuthorUrl(ctx, `${ctx.baseUrl}${path}`);
+            if (!hasHttpResponse(probed)) {
+              unassessed.push(`${path} ${missingResponseCause(probed)}`);
+              continue;
+            }
+            result = probed;
+          } catch {
+            unassessed.push(`${path} could not be fetched`);
+            continue;
           }
-        } catch {
-          // continue trying other paths
+        }
+        if (result.status === 200 && result.body) {
+          aboutResult = result;
+          break;
         }
       }
     }
 
+    if (
+      (!aboutResult || aboutResult.status !== 200 || !aboutResult.body) &&
+      unassessed.length > 0
+    ) {
+      return this.notApplicable(
+        `No about page was found, but ${unassessed.length} of ${aboutPaths.length} common paths were not assessed: ${unassessed.join("; ")}.`,
+        'About page returns 200 with content mentioning "team", "experience", "expertise"',
+        `${aboutPaths.length - unassessed.length} path(s) answered without an about page; ${unassessed.length} not assessed`,
+      );
+    }
+
     if (!aboutResult || aboutResult.status !== 200 || !aboutResult.body) {
       return this.fail(
-        "No about page found at /about/ or /about-us/.",
+        `No about page found at ${aboutPaths.join(", ")}.`,
         'About page returns 200 with content mentioning "team", "experience", "expertise"',
         "About page not found",
         {

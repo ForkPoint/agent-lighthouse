@@ -6,6 +6,7 @@ import { isSafeUrl } from "#core/fetcher";
 import { linksWithRel } from "./structured-fields";
 import { HttpMethod } from "#core/types";
 import { LogField, withLogContext } from "#core/logger";
+import { causeOfError, missingResponseCause } from "#core/probe-evidence";
 
 /**
  * Feed discovery and parsing, once per scan.
@@ -74,6 +75,8 @@ export interface FeedDocument {
   /** What the document actually is, decided by its root element. */
   declaredType: FeedFormat;
   status: number;
+  /** The fetch error when the request got no HTTP response, such as a held-back request. */
+  error?: string;
   /** A byte-order mark or whitespace before the first element. Both break strict parsers. */
   bomOrLeadingSpace: boolean;
   parsed: boolean;
@@ -347,6 +350,7 @@ export function parseFeed(url: string, result: FetchResult): FeedDocument {
     contentType: result.headers["content-type"] ?? result.contentType ?? "",
     declaredType: FeedFormat.Unknown,
     status: result.status,
+    ...(result.error !== undefined && { error: result.error }),
     bomOrLeadingSpace,
     parsed: false,
     selfLink: header.self,
@@ -504,6 +508,31 @@ export async function sharedFeeds(
     }
   }
   return docs;
+}
+
+/**
+ * The feed URLs {@link sharedFeeds} tried that got no HTTP response, each with
+ * its cause. Read after `sharedFeeds` found nothing: an empty list means every
+ * candidate answered, so the absence was observed rather than assumed.
+ */
+export async function unansweredFeedUrls(
+  ctx: FeedContext,
+  opts: { max?: number } = {},
+): Promise<Array<{ url: string; cause: string }>> {
+  const candidates = [
+    ...discoverFeedUrls(ctx).slice(0, opts.max ?? 4),
+    ...CONVENTIONAL_FEED_PATHS.map((path) => resolve(path, ctx.baseUrl)),
+  ].filter(Boolean);
+  const out: Array<{ url: string; cause: string }> = [];
+  for (const url of new Set(candidates)) {
+    const doc = await sharedFeed(ctx, url);
+    if (doc && doc.status >= 100 && doc.status <= 599) continue;
+    out.push({
+      url,
+      cause: doc ? causeOfError(doc.error) : missingResponseCause(undefined),
+    });
+  }
+  return out;
 }
 
 const canonicalCheckCache = new WeakMap<
