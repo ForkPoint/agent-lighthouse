@@ -146,13 +146,14 @@ export function extractMarkdownLinks(
   // 2. Bare-URL list items: "- **Label**: https://… — description".
   // Horizontal whitespace only: `\s` crosses lines under the `m` flag, so a
   // run of blank lines made every line start rescan the rest of the body. The
-  // regex stops at the URL; the description is read from the rest of the line
-  // by hand, since a `-` that could end the URL or open the description let
-  // one line be matched many ways.
+  // regex ends at the URL and the rest of the line is read by a sticky match:
+  // any pattern after `\S+` overlaps it, and lets one line match many ways.
   const bullet =
-    /^[ \t]*(?:[-*+]|\d+\.)[ \t]+(?:\*\*([^*\n]+)\*\*[:\-—]?[ \t]*)?(https?:\/\/\S+)(.*)$/gm;
+    /^[ \t]*(?:[-*+]|\d+\.)[ \t]+(?:\*\*([^*\n]+)\*\*[:\-—]?[ \t]*)?(https?:\/\/\S+)/gm;
+  const lineRest = /[^\n\r\u2028\u2029]*/y;
   while ((m = bullet.exec(body)) !== null) {
-    const rest = m[3]!.trim();
+    lineRest.lastIndex = bullet.lastIndex;
+    const rest = (lineRest.exec(body)?.[0] ?? "").trim();
     if (rest !== "" && !BULLET_SEPARATORS.has(rest[0]!)) continue;
     push(m[2]!, m[1] ?? "", rest.slice(1).trim());
   }
