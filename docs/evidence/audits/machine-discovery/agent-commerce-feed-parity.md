@@ -46,6 +46,10 @@ Google's automatic item updates repairs feed and page discrepancies 'using the s
 - **[Automatic item updates](https://support.google.com/merchants/answer/3246284)** — Google Merchant Center (vendor-doc, URL verified 2026-08-20)
   - Google repairs feed/landing-page discrepancies 'using the structured data markup the crawlers find on your website'. Required markup: price + priceCurrency (or priceSpecification), availability with valid ItemAvailability values, itemCondition mapped to NewCondition/RefurbishedCondition/UsedCondition. When markup is missing, ML 'advanced data extractors' run instead, and 'if the extractors are unable to determine price availability, or condition information, your products will be subject to item-level disapprovals.' This makes PDP structured data an auditable proxy for feed eligibility.
 
+## Limits
+
+A sampled sitemap page with no HTTP response, because the request was not sent, timed out or failed in transport, is not read. When no product page is found among the read pages and some sample pages were not read, the audit says so and names the causes, instead of stating that the sample holds no product page.
+
 ## Example failure
 
 A Shopify store's Product JSON-LD emits `"availability": "InStock"` — a bare token, not the schema.org URL. It omits `itemCondition` and `offers.seller`. It renders the sale price in the DOM via a currency-conversion script, so the JSON-LD says 49.00 USD while the visible price is 42.00 USD. Google's Rich Results Test passes. Automatic item updates cannot parse availability or condition. It falls back to ML extractors, and item-level disapprovals begin. Separately, the OpenAI feed is rejected on brand and seller_name. An agent reading the page quotes 49.00 to a shopper who is charged 42.00 — or the reverse.

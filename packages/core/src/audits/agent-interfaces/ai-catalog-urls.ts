@@ -145,7 +145,7 @@ export class AiCatalogUrlsAudit extends Audit {
     // same absence would penalize one missing file three times over.
     if (!read.ok) {
       return this.notApplicable(
-        `No ARD manifest to traverse: ${read.path} ${read.reason === "absent" ? "is not served" : "is not a valid ARD manifest"} — see the AI Catalog exists check.`,
+        `No ARD manifest to traverse: ${read.path} ${read.reason === "absent" ? "is not served" : read.reason === "unread" ? "was not read" : "is not a valid ARD manifest"} — see the AI Catalog exists check.`,
         EXPECTED,
         read.found,
       );

@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import type { FetchOptions, FetchResult } from "#core/fetcher";
 import { isSafeUrl } from "#core/fetcher";
 import { LogField, withLogContext } from "#core/logger";
+import { hasHttpResponse, missingResponseCause } from "#core/probe-evidence";
 
 /**
  * The conditional-request probe, once per URL per scan.
@@ -31,6 +32,12 @@ export interface RevalidationResult {
   honoursIfModifiedSince: boolean | undefined;
   /** Requests actually sent, so a caller can report the probe's own cost. */
   requests: number;
+  /**
+   * Requests that got no HTTP response, each with its cause. Their checks are
+   * left unjudged. With `status` 0 the first GET itself went unanswered, and
+   * nothing about the surface was read.
+   */
+  unanswered: string[];
 }
 
 /** The slice of CheckContext this gatherer needs, kept structural to avoid a cycle. */
@@ -64,7 +71,24 @@ async function probe(
   if (!(await isSafeUrl(url))) return undefined;
 
   const first = await ctx.fetch({ url, followRedirects: true, signal });
+  // An unanswered first GET is not a missing surface: report it as unread.
+  if (!hasHttpResponse(first))
+    return {
+      url,
+      status: 0,
+      etag: "",
+      lastModified: "",
+      cacheControl: "",
+      bytes: 0,
+      bodyStable: true,
+      etagStable: true,
+      honoursIfNoneMatch: undefined,
+      honoursIfModifiedSince: undefined,
+      requests: 1,
+      unanswered: [`the first GET ${missingResponseCause(first)}`],
+    };
   if (first.status < 200 || first.status >= 300) return undefined;
+  const unanswered: string[] = [];
 
   const etag = first.headers["etag"] ?? "";
   const lastModified = first.headers["last-modified"] ?? "";
@@ -74,8 +98,12 @@ async function probe(
   // encoding, so a differing ETag is the origin's instability and not ours.
   const second = await ctx.fetch({ url, followRedirects: true, signal });
   requests += 1;
-  const bodyStable = hash(first.body) === hash(second.body);
-  const etagStable = (second.headers["etag"] ?? "") === etag;
+  // Without a second answer, stability is unknown, so it is not faulted.
+  const secondRead = hasHttpResponse(second);
+  if (!secondRead)
+    unanswered.push(`the repeat GET ${missingResponseCause(second)}`);
+  const bodyStable = !secondRead || hash(first.body) === hash(second.body);
+  const etagStable = !secondRead || (second.headers["etag"] ?? "") === etag;
 
   let honoursIfNoneMatch: boolean | undefined;
   if (etag !== "") {
@@ -86,7 +114,12 @@ async function probe(
       signal,
     });
     requests += 1;
-    honoursIfNoneMatch = conditional.status === 304;
+    if (hasHttpResponse(conditional))
+      honoursIfNoneMatch = conditional.status === 304;
+    else
+      unanswered.push(
+        `the If-None-Match request ${missingResponseCause(conditional)}`,
+      );
   }
 
   let honoursIfModifiedSince: boolean | undefined;
@@ -98,7 +131,12 @@ async function probe(
       signal,
     });
     requests += 1;
-    honoursIfModifiedSince = conditional.status === 304;
+    if (hasHttpResponse(conditional))
+      honoursIfModifiedSince = conditional.status === 304;
+    else
+      unanswered.push(
+        `the If-Modified-Since request ${missingResponseCause(conditional)}`,
+      );
   }
 
   return {
@@ -113,6 +151,7 @@ async function probe(
     honoursIfNoneMatch,
     honoursIfModifiedSince,
     requests,
+    unanswered,
   };
 }
 

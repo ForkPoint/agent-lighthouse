@@ -38,6 +38,10 @@ Google documents that on a 304 'Google crawlers signal the next processing syste
 - **[IndexNow Protocol Documentation](https://www.indexnow.org/documentation)** — IndexNow (Microsoft/Yandex) (spec, URL verified 2026-08-20)
   - Ownership is proven by hosting a UTF-8 text file at the host root named {key}.txt whose body is the key. Key must be 8-128 chars from [a-zA-Z0-9-]. Verification is a byte comparison. HTTP 403 is returned when the key is 'not found in the key file' or invalid. 422 signals a host or schema mismatch, 429 a rate limit, and 202 means 'key validation pending'. keyLocation restricts submittable URLs to the key file's directory and deeper. Batch POST accepts up to 10,000 URLs.
 
+## Limits
+
+Each check is judged only on an HTTP response. A surface whose first GET got no response is not read and is not called missing. A repeat GET or a conditional request with no response leaves its check unjudged; it is never read as a 200 or as an unstable validator. When part of the probe set is unanswered and nothing assessed shows a problem, the audit returns not applicable with the causes.
+
 ## Example failure
 
 A 38MB sitemap index tree is served through a CDN configured with `Cache-Control: no-store` and dynamic Brotli compression that generates a fresh weak ETag per request. Six AI crawlers polling hourly each re-download the full tree every time. The origin's WAF starts issuing 429s to the noisiest agents. Per Google's documented handling of 429 and 5xx, that throttles crawling of the whole host — including the product pages the owner actually cares about. Every existing audit reports the sitemap as valid and reachable.

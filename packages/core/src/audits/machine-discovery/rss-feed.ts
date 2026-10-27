@@ -6,6 +6,7 @@ import {
   CONVENTIONAL_FEED_PATHS,
   discoverFeedHeadUrls,
   sharedFeeds,
+  unansweredFeedUrls,
 } from "#core/gatherers/feeds";
 import {
   AuditTier,
@@ -53,15 +54,31 @@ export class RssFeedAudit extends Audit {
         : "no autodiscovery <link> in <head>";
 
     const feed = feeds[0];
+    // Candidates with no HTTP response were never read: the feed may be there.
+    const unanswered = feed ? [] : await unansweredFeedUrls(ctx);
+    const unread =
+      unanswered.length > 0
+        ? ` Not assessed: ${unanswered.map((u) => `${u.url} ${u.cause}`).join("; ")}.`
+        : "";
     // Absent artifact, absent verdict. The dossier grades a feed B with an
     // explicit non-consumer beside its one consumer, so the audit informs
     // rather than penalises: a site that neither publishes nor advertises a
     // feed is not judged. An advertised feed that does not answer is broken.
     if (!feed && autodiscoveryUrls.length === 0) {
       return this.notApplicable(
-        `No RSS or Atom feed is published or advertised: no autodiscovery <link> in <head>, and nothing at the common paths (${PATHS}). A feed is optional, so its absence is not scored.`,
+        unanswered.length > 0
+          ? `No autodiscovery <link> in <head> advertises a feed, and no feed was read at the common paths (${PATHS}). A feed is optional, so its absence is not scored.${unread}`
+          : `No RSS or Atom feed is published or advertised: no autodiscovery <link> in <head>, and nothing at the common paths (${PATHS}). A feed is optional, so its absence is not scored.`,
         "At least one feed returns HTTP 200 with valid XML",
         `No feed found; ${linkNote}`,
+      );
+    }
+    // An advertised feed that never answered is not shown to be broken.
+    if (!feed && unanswered.some((u) => autodiscoveryUrls.includes(u.url))) {
+      return this.notApplicable(
+        `An autodiscovery <link> advertises a feed at ${autodiscoveryUrls[0]}, but it got no HTTP response, so whether it serves a feed is unknown.${unread}`,
+        "At least one feed returns HTTP 200 with valid XML",
+        `No feed read; ${linkNote}`,
       );
     }
     if (!feed) {

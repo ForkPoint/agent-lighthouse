@@ -140,7 +140,7 @@ export class AiCatalogMetadataAudit extends Audit {
     // zero for the same absence would triple-penalize one missing file.
     if (!read.ok) {
       return this.notApplicable(
-        `No ARD manifest to grade: ${read.path} ${read.reason === "absent" ? "is not served" : "is not a valid ARD manifest"} — see the AI Catalog exists check.`,
+        `No ARD manifest to grade: ${read.path} ${read.reason === "absent" ? "is not served" : read.reason === "unread" ? "was not read" : "is not a valid ARD manifest"} — see the AI Catalog exists check.`,
         EXPECTED,
         read.found,
       );

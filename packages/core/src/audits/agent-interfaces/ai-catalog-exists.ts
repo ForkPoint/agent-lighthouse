@@ -140,6 +140,11 @@ export class AiCatalogExistsAudit extends Audit {
     if (!read.ok) {
       const message = describeFailure(read);
 
+      // A path that was never read cannot show the catalog is missing.
+      if (read.reason === "unread") {
+        return this.notApplicable(message, EXPECTED, read.found);
+      }
+
       // The advertisement only mitigates *absence*. When a manifest is served
       // and merely malformed, saying "advertised but not served there" would be
       // a wrong diagnosis, so the ad is reported as context instead.

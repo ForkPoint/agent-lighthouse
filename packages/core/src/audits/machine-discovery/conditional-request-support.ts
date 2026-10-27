@@ -98,9 +98,27 @@ export class ConditionalRequestSupportAudit extends Audit {
     }
 
     const surfaces: Surface[] = [];
+    // Requests with no HTTP response, per surface. Their checks stay unjudged.
+    const unread: string[] = [];
     for (const entry of urls) {
       const result = await sharedRevalidation(ctx, entry.url);
-      if (result) surfaces.push({ url: entry.url, kind: entry.kind, result });
+      if (!result) continue;
+      for (const cause of result.unanswered)
+        unread.push(`${entry.kind} ${entry.url}: ${cause}`);
+      if (result.status > 0)
+        surfaces.push({ url: entry.url, kind: entry.kind, result });
+    }
+    const coverage =
+      unread.length > 0
+        ? ` Not assessed: ${unread.slice(0, 5).join("; ")}${unread.length > 5 ? ` (${unread.length - 5} more)` : ""}.`
+        : "";
+
+    if (surfaces.length === 0 && unread.length > 0) {
+      return this.notApplicable(
+        `No discovery surface could be read, so revalidation was not assessed.${coverage}`,
+        "A robots.txt, sitemap or feed that answers conditional requests",
+        `${urls.length} candidate surface(s), none read`,
+      );
     }
 
     if (surfaces.length === 0) {
@@ -189,7 +207,7 @@ export class ConditionalRequestSupportAudit extends Audit {
     if (failures.length > 0) {
       return {
         ...this.fail(
-          `${failures.length} discovery surface problem(s): a crawler cannot ask this site what changed.`,
+          `${failures.length} discovery surface problem(s): a crawler cannot ask this site what changed.${coverage}`,
           expected,
           found,
           "Emit a content-derived ETag and a Last-Modified that moves with the content, and answer conditional requests with 304.",
@@ -202,10 +220,22 @@ export class ConditionalRequestSupportAudit extends Audit {
     if (warnings.length > 0) {
       return {
         ...this.warn(
-          `Every surface revalidates, but ${warnings.length} problem(s) remain around them.`,
+          `Every assessed surface revalidates, but ${warnings.length} problem(s) remain around them.${coverage}`,
           expected,
           found,
           "Drop no-store and private from public discovery surfaces, and split any sitemap past the protocol’s size limits.",
+        ),
+        displayValue,
+        details,
+      };
+    }
+
+    if (unread.length > 0) {
+      return {
+        ...this.notApplicable(
+          `No assessed surface shows a revalidation problem, but coverage is incomplete.${coverage}`,
+          expected,
+          found,
         ),
         displayValue,
         details,
