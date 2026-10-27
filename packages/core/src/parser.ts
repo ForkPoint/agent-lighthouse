@@ -133,8 +133,10 @@ export function extractMarkdownLinks(
   };
 
   // 1. Inline Markdown links anywhere: [label](url) with optional ": desc".
-  // A label never holds `[`, so a run of unclosed `[` cannot rescan the body.
-  const inline = /\[([^[\]]+)\]\(([^)\s]+)\)(?::\s*([^\n]+))?/g;
+  // Neither the label nor the URL may hold a bracket, so a run of unclosed
+  // links cannot rescan the body. The description starts at a non-space and
+  // stays on the link's line.
+  const inline = /\[([^[\]\n]+)\]\(([^)[\]\s]+)\)(?::[ \t]*(\S[^\n]*))?/g;
   let m: RegExpExecArray | null;
   while ((m = inline.exec(body)) !== null) push(m[2]!, m[1]!, m[3] ?? "");
 
@@ -142,7 +144,9 @@ export function extractMarkdownLinks(
   const bullet =
     // Horizontal whitespace only: `\s` crosses lines under the `m` flag, so a
     // run of blank lines made every line start rescan the rest of the body.
-    /^[ \t]*(?:[-*+]|\d+\.)[ \t]+(?:\*\*([^*\n]+)\*\*[:\-—]?[ \t]*)?(https?:\/\/\S+)[ \t]*(?:[-—:][ \t]*(.+))?$/gm;
+    // The description starts at a non-space, so no whitespace run can be split
+    // two ways.
+    /^[ \t]*(?:[-*+]|\d+\.)[ \t]+(?:\*\*([^*\n]+)\*\*[:\-—]?[ \t]*)?(https?:\/\/\S+)[ \t]*(?:[-—:][ \t]*(\S.*))?$/gm;
   while ((m = bullet.exec(body)) !== null) push(m[2]!, m[1] ?? "", m[3] ?? "");
 
   return out;

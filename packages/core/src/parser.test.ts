@@ -1112,6 +1112,12 @@ See [Docs](https://a.com/docs) again.
   // with the earlier patterns; the bound is loose so a loaded machine passes.
   it.each([
     ["a run of unclosed brackets", "[".repeat(50_000)],
+    ["a run of escaped brackets", "[" + "[\\".repeat(50_000)],
+    ["a run of nested link openers", "[\\](" + "[!](!".repeat(50_000)],
+    [
+      "a bullet URL followed by tabs",
+      "*\thttp://!-" + "\t".repeat(50_000) + "\u2028",
+    ],
     ["a run of blank lines", "\n".repeat(50_000) + "x"],
     ["a bullet followed by blank lines", "- " + " \n".repeat(50_000)],
     [
