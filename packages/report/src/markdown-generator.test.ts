@@ -10,6 +10,7 @@ import {
   CheckPriority,
   CheckStatus,
   EvidenceKey,
+  HostStopReason,
   NoticeKind,
   PageType,
   PageTypeSource,
@@ -416,6 +417,42 @@ describe("scan conditions — the budget line", () => {
   it("prints no budget line for a report written before the budget existed", () => {
     const md = generateMarkdownSummary({ ...report([]), conditions });
     expect(md).not.toContain("**Budget:**");
+  });
+
+  it("states a scheduler stop that cost the audits requests", () => {
+    const md = generateMarkdownSummary({
+      ...report([]),
+      conditions: {
+        ...conditions,
+        requestStop: {
+          stopped: true,
+          reason: HostStopReason.TooManyRequests,
+          unsentCount: 41,
+          affectedAuditCount: 12,
+          affectedMass: 7.4,
+        },
+      },
+    });
+    expect(md).toContain(
+      "- **Request Stop:** The site paused the scan after HTTP 429: 41 audit request(s) were not sent, affecting at least 12 audit(s) and 7.4 scored mass.",
+    );
+  });
+
+  it("prints no stop line when nothing was held back", () => {
+    const md = generateMarkdownSummary({
+      ...report([]),
+      conditions: {
+        ...conditions,
+        requestStop: {
+          stopped: true,
+          reason: HostStopReason.Forbidden,
+          unsentCount: 0,
+          affectedAuditCount: 0,
+          affectedMass: 0,
+        },
+      },
+    });
+    expect(md).not.toContain("**Request Stop:**");
   });
 });
 

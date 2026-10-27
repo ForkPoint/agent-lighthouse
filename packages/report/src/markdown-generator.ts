@@ -12,6 +12,7 @@ import type {
 import { AuditTier } from "@forkpoint/agent-lighthouse-core";
 import { buildReportView } from "./view-model";
 import { PROJECT_URL } from "./brand";
+import { describeRequestStop } from "./request-stop";
 import {
   NOTICE_LABELS,
   NOTICE_LINK_LABELS,
@@ -85,7 +86,7 @@ function conditionsBlock(view: ReturnType<typeof buildReportView>): string {
 - **Page Type:** \`${c.pageType.type}\` (${c.pageType.source})
 - **Origin Evidence:** \`${c.origin.cached ? "cached" : "fresh"}\` (version: \`${c.origin.version}\`, read at: \`${c.origin.readAt}\`)
 - **Evidence Coverage:** \`${c.coverage.assessedMass} / ${c.coverage.registryMass}\` mass (${pct}%) — page: \`${c.coverage.pageMass}\`, origin: \`${c.coverage.originMass}\`, gated: \`${c.coverage.gatedMass}\`
-- **Unscored Checks:** \`${c.unscored.totalCount}\` (${c.unscored.informativeCount} advisory, ${c.unscored.gatedCount} gated)${budgetLine(c.budget)}\n`;
+- **Unscored Checks:** \`${c.unscored.totalCount}\` (${c.unscored.informativeCount} advisory, ${c.unscored.gatedCount} gated)${budgetLine(c.budget)}${stopLine(c.requestStop)}\n`;
 }
 
 /** The budget line of the conditions block, or nothing for an older report. */
@@ -98,6 +99,12 @@ function budgetLine(budget: ScanConditions["budget"]): string {
   return budget.exhausted
     ? `\n- **Budget:** \`ran out\` at ${limit} s — ${budget.skippedCount} audits not assessed`
     : `\n- **Budget:** \`${elapsed} s\` of ${limit} s`;
+}
+
+/** The request-stop line of the conditions block, when the stop cost requests. */
+function stopLine(stop: ScanConditions["requestStop"]): string {
+  const text = describeRequestStop(stop);
+  return text ? `\n- **Request Stop:** ${text}` : "";
 }
 
 function optionalGuidanceSection(

@@ -1,4 +1,9 @@
-import type { RequestScheduler } from "./request-scheduler";
+import {
+  HOST_STOPPED_MESSAGE,
+  schedulerHostKey,
+  type DefaultRequestScheduler,
+  type RequestScheduler,
+} from "./request-scheduler";
 import { randomUUID } from "node:crypto";
 import { DomWorkLimitError } from "./dom-work";
 import { SnapshotScanOptionsSchema, snapshotUrlKey } from "./schemas";
@@ -913,7 +918,7 @@ async function scanWithinBudget(
     .sort((a, b) => compareCodePoints(a.url, b.url));
 
   // Requests the scan answered itself instead of sending; logged at the end.
-  const notSent = { budget: 0, unreachable: 0 };
+  const notSent = { budget: 0, unreachable: 0, stopped: 0 };
   const unreachableHosts = new UnreachableHosts([
     url,
     pageResult.finalUrl || url,
@@ -945,6 +950,7 @@ async function scanWithinBudget(
       }
       const result = await fetcher.fetch({ ...options, signal: fetchSignal });
       unreachableHosts.record(options.url, result);
+      if (result.error?.startsWith(HOST_STOPPED_MESSAGE)) notSent.stopped += 1;
       return result;
     },
     ...(wafProtection != null && { wafProtection }),
@@ -1008,6 +1014,7 @@ async function scanWithinBudget(
       failures: requests.failures,
       notSentBudget: notSent.budget,
       notSentUnreachable: notSent.unreachable,
+      notSentStopped: notSent.stopped,
       open: requests.open.length,
     },
     "Audits finished",
@@ -1207,6 +1214,31 @@ async function scanWithinBudget(
     cached: originCached,
   };
 
+  // A scheduler stop mid-scan leaves the audits it cut short to say so one by
+  // one; this states the whole loss once. The score is left as it is.
+  const scheduler = options?.requestScheduler;
+  const hostState =
+    scheduler && "exportState" in scheduler
+      ? (scheduler as DefaultRequestScheduler)
+          .exportState()
+          .find((state) => state.host === schedulerHostKey(baseUrl))
+      : undefined;
+  const affected = allChecks.filter((check) =>
+    [check, ...(check.advisoryResults ?? [])].some(
+      (result) => (result.coverage?.unsentUrls?.length ?? 0) > 0,
+    ),
+  );
+  const affectedMass = affected
+    .filter((check) => check.tier === AuditTier.Scored)
+    .reduce((sum, check) => sum + (check.weight ?? 0), 0);
+  const requestStop: NonNullable<ScanConditions["requestStop"]> = {
+    stopped: hostState?.stopped ?? notSent.stopped > 0,
+    reason: hostState?.stopReason ?? null,
+    unsentCount: notSent.stopped,
+    affectedAuditCount: affected.length,
+    affectedMass: Number(affectedMass.toFixed(1)),
+  };
+
   const conditions: ScanConditions = {
     url: displayUrl,
     pageType: pageTypeCondition,
@@ -1235,6 +1267,7 @@ async function scanWithinBudget(
         c.tags?.includes(TAG_SKIPPED_SCAN_BUDGET),
       ).length,
     },
+    requestStop,
   };
 
   const productFields = [...overrideTypeByKey.values()].includes(

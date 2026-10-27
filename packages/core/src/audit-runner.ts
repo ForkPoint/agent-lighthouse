@@ -38,6 +38,8 @@ import type { ScanEvidence } from "./scan-evidence";
 import { CheckResultSchema } from "./schemas";
 import { auditPageTypes, normalizeAuditMeta } from "./audit-applicability";
 import { cacheOwner } from "./gatherers/cache-owner";
+import type { FetchOptions } from "./fetcher";
+import { HOST_STOPPED_MESSAGE } from "./request-scheduler";
 import {
   AttemptOutcome,
   AuditTier,
@@ -605,10 +607,23 @@ export async function runAudits(
           ): Promise<CheckResult> => {
             if (assessment?.skipped) return assessment.skipped;
             const mode = assessment?.scoreDisplayMode ?? scoreDisplayMode;
+            // URLs this audit asked for that the scheduler held back after
+            // the site paused the scan. A gatherer cache hit never reaches
+            // this fetch, so another audit's held-back read is not listed.
+            const unsent = new Set<string>();
             const finish = (check: CheckResult): CheckResult => ({
               ...check,
               ...(mode ? { scoreDisplayMode: mode } : {}),
-              ...(assessment ? { coverage: assessment.coverage } : {}),
+              ...(assessment
+                ? {
+                    coverage: {
+                      ...assessment.coverage,
+                      ...(unsent.size > 0 && {
+                        unsentUrls: [...unsent].sort(compareCodePoints),
+                      }),
+                    },
+                  }
+                : {}),
             });
             if (budget?.aborted)
               return finish(
@@ -626,6 +641,12 @@ export async function runAudits(
                 pages,
                 evidence: assessment?.evidence ?? ctx.evidence,
                 cacheOwner: cacheOwner(ctx),
+                fetch: async (options: FetchOptions) => {
+                  const fetched = await ctx.fetch(options);
+                  if (fetched.error?.startsWith(HOST_STOPPED_MESSAGE))
+                    unsent.add(options.url);
+                  return fetched;
+                },
               };
               const result = await instance.audit(scopedCtx);
               if (budget?.aborted)
