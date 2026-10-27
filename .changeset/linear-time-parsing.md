@@ -11,6 +11,8 @@ Two of the rewrites also correct a reading:
 
 - An llms.txt bullet that ended in a bare URL took the next bullet as its
   description, so that next link was lost. Each bullet now stands alone.
+- An inline llms.txt link followed by `:` and a line break took the next line
+  as its description. A description now stays on the link's line.
 - A CSS comment that never closes now runs to the end of the sheet, as
   browsers read it. Rules after it were scanned before.
 
