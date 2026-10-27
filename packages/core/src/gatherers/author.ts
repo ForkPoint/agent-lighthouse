@@ -36,8 +36,21 @@ export function probeAuthorUrl(
           followRedirects: options.followRedirects ?? false,
           ...(options.headers ? { headers: options.headers } : {}),
         });
-      } catch {
-        return undefined;
+      } catch (error) {
+        // A thrown fetch is a transport failure, not a safety refusal: keep
+        // its text so the caller can name the real cause.
+        return {
+          url,
+          finalUrl: url,
+          status: 0,
+          headers: {},
+          body: "",
+          ttfbMs: 0,
+          totalMs: 0,
+          contentType: "",
+          contentLength: 0,
+          error: error instanceof Error ? error.message : String(error),
+        };
       }
     });
     cache.set(key, hit);

@@ -86,7 +86,7 @@ describe("AuthorPageAudit", () => {
     expect(result.status).toBe(CheckStatus.Pass);
   });
 
-  it("fails when fetching the author page throws a network error", async () => {
+  it("leaves the author page unassessed when the probe gets no response", async () => {
     const page = mockPageContext(
       "https://example.com/blog/post",
       `<html><body>
@@ -100,8 +100,13 @@ describe("AuthorPageAudit", () => {
       throw new Error("Network error");
     };
     const result = await audit.audit(ctx);
-    expect(result.status).toBe(CheckStatus.Fail);
-    expect(result.message).toContain("Failed to fetch");
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+    expect(result.message).toContain("https://example.com/authors/jane");
+    expect(result.message).toContain("whether it resolves is unknown");
+    expect(result.message).toContain(
+      "failed before any HTTP response (Network error)",
+    );
+    expect(result.message).not.toContain("URL safety gate");
   });
 
   it("finds author URL in JSON-LD via @graph and passes when fetch returns 200", async () => {
