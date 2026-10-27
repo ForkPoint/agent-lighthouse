@@ -1,5 +1,21 @@
 # @forkpoint/agent-lighthouse-report
 
+## 10.5.0
+
+### Minor Changes
+
+- 3feab9c: Report a request-scheduler stop during a scan. When a site answers HTTP 429, a 403 to the scanner, or two 503s in a row, the scanner stops sending it requests. The report now states this under `conditions.requestStop`: `stopped`, `reason`, `unsentCount`, `affectedAuditCount` and `affectedMass`. Each affected audit lists the held-back URLs under `coverage.unsentUrls`. The Markdown and HTML reports print one line when the stop cost requests. The score does not change.
+
+  `HostStopReason` now lives with the report contracts and is still exported from the package root.
+
+### Patch Changes
+
+- Updated dependencies [69b3516]
+- Updated dependencies [3feab9c]
+- Updated dependencies [69b3516]
+- Updated dependencies [69b3516]
+  - @forkpoint/agent-lighthouse-core@10.5.0
+
 ## 10.4.1
 
 ### Patch Changes
