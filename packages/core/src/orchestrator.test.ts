@@ -1,6 +1,7 @@
 import { vi } from "vitest";
 import type { PageOverride } from "./types";
-import type { FetchResult } from "./fetcher";
+import { createFetcher, type FetchResult } from "./fetcher";
+import { createRequestScheduler } from "./request-scheduler";
 
 // ── Mocks ────────────────────────────────────────────────────────
 // Shared, test-controlled URL → FetchResult map. The fetcher mock looks each
@@ -49,7 +50,7 @@ vi.mock("./fetcher", async (importOriginal) => {
     // sanitize the scanned URL); only the network fetch is stubbed.
     ...actual,
     isSafeUrl: async () => true,
-    createFetcher: () => ({
+    createFetcher: vi.fn(() => ({
       fetch: async ({ url, signal }: { url: string; signal?: AbortSignal }) => {
         h.calls.push(url);
         const target = new URL(url);
@@ -66,7 +67,7 @@ vi.mock("./fetcher", async (importOriginal) => {
         return h.map.get(url) ?? notFound(url);
       },
       summary: () => ({ requests: 0, statuses: {}, failures: {}, open: [] }),
-    }),
+    })),
   };
 });
 
@@ -2059,5 +2060,37 @@ describe("runScan — logging", () => {
     expect(calls.length).toBeGreaterThan(5);
     expect(calls.every((c) => c.fields["scan"] === "run-42")).toBe(true);
     expect(calls.at(-1)).toMatchObject({ level: "info", msg: "Scan finished" });
+  });
+});
+
+describe("ready request scan options", () => {
+  it("forwards admission configuration to its fetcher", async () => {
+    const scheduler = createRequestScheduler();
+    vi.mocked(createFetcher).mockClear();
+    await runScan("https://example.com/", {
+      requestScheduler: scheduler,
+      readyRequestScheduling: true,
+      maxConcurrent: 1,
+    });
+    expect(createFetcher).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requestScheduler: scheduler,
+        readyRequestScheduling: true,
+        maxConcurrent: 1,
+      }),
+    );
+  });
+  it("rejects ready admission configuration for a supplied fetcher", async () => {
+    const fetcher = {
+      fetch: vi.fn(),
+      summary: () => ({ requests: 0, statuses: {}, failures: {}, open: [] }),
+    };
+    await expect(
+      runScan("https://example.com/", {
+        fetcher,
+        readyRequestScheduling: true,
+      }),
+    ).rejects.toThrow("cannot configure a supplied fetcher");
+    expect(fetcher.fetch).not.toHaveBeenCalled();
   });
 });

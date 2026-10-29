@@ -24,6 +24,7 @@ export type {
   RequestQueueSnapshot,
   RequestScheduler,
   RequestSchedulerOptions,
+  RequestAdmission,
 } from "./request-scheduler";
 export { createReplay } from "./replay";
 export type { Replay } from "./replay";

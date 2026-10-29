@@ -1,0 +1,9 @@
+# Ready-host request scheduling
+
+`createRequestScheduler({ maxConcurrent: 32 })` limits active requests across fetchers. Enable `readyRequestScheduling: true` on `createFetcher` or `runScan` to admit ready hosts before consuming a fetcher's `maxConcurrent` allowance. The default scheduler supports this additive API. Custom schedulers must implement `acquireRequest(url, { owner, maxConcurrent }, signal)` to opt in. Each fetcher supplies one stable owner object. An owner's limit must remain constant. Limits must be positive safe integers. A supplied fetcher must configure its own admission; `runScan` rejects this option alongside a supplied fetcher.
+
+The scheduler holds one lease per normalized host through response-body completion. Apex and www share that lease. Pending work holds no execution capacity. Shared-host queues rotate owner turns and retain each owner's FIFO order. Cancellation removes only its pending entry. Release is idempotent. Imports and response-policy changes recheck the frontier.
+
+The implementation rebuilds a bounded frontier on queue, capacity or state changes. It sorts at most one entry per known host by readiness and fair host turn. Its frontier cost is O(H log H), plus O(Q) queue selection for queued work; it keeps one wake timer rather than one timer per request. No live speedup claim follows from the deterministic ordering test.
+
+`FetcherSummary.queueWaitMs`, `HttpExchange.queueWaitMs` and request log `LogField.QueueWaitMs` separate scheduler-admission wait from HTTP timing. These diagnostics exclude waiting in the legacy fetcher FIFO gate. The summary sums overlapping waits. That sum is not elapsed time or time saved. Captured HTTP timing remains authoritative during replay. Without opt-in, the fetcher retains its existing FIFO admission gate and custom-scheduler behavior.

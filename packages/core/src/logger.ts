@@ -59,6 +59,7 @@ export type LogFormat = (typeof LogFormat)[keyof typeof LogFormat];
  * module wrote it. HTTP and URL names are OpenTelemetry's.
  */
 export const LogField = {
+  QueueWaitMs: "queueWaitMs",
   Component: "component",
   Site: "site",
   Scan: "scan",

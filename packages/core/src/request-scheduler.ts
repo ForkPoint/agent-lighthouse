@@ -1,8 +1,18 @@
-import { setTimeout as pause } from "node:timers/promises";
 import { SCAN_TIMEOUT_MS } from "./constants";
 import { HostStopReason } from "./contracts";
 
+/** Atomic admission identity and active-request limit for one fetcher. */
+export interface RequestAdmission {
+  owner: object;
+  maxConcurrent?: number;
+}
+
 export interface RequestScheduler {
+  acquireRequest?(
+    url: string,
+    admission: RequestAdmission,
+    signal?: AbortSignal,
+  ): Promise<() => void>;
   acquire(url: string, signal?: AbortSignal): Promise<() => void>;
   observe(
     url: string,
@@ -48,6 +58,8 @@ export interface RequestQueueSnapshot extends HostState {
 }
 
 export interface RequestSchedulerOptions {
+  /** Global active-request ceiling across all owners. Default unlimited. */
+  maxConcurrent?: number;
   /** Pause between the end of one request to a host and the next. Default 0. */
   gapMs?: number;
   /**
@@ -71,6 +83,11 @@ export interface RequestSchedulerOptions {
 }
 
 export interface DefaultRequestScheduler extends RequestScheduler {
+  acquireRequest(
+    url: string,
+    admission: RequestAdmission,
+    signal?: AbortSignal,
+  ): Promise<() => void>;
   /** Whether any request to this host's queue got an HTTP status. */
   answered(url: string): boolean;
   /** Every host's queue, as copies. */
@@ -156,9 +173,32 @@ export function createRequestScheduler(
   );
   const onChange = options.onChange;
 
-  interface Site extends RequestQueueSnapshot {
-    tail: Promise<void>;
+  function limit(name: string, value: number | undefined): number {
+    if (value === undefined) return Infinity;
+    if (!Number.isSafeInteger(value) || value < 1)
+      throw new RangeError(`${name} must be a positive safe integer`);
+    return value;
   }
+  const globalLimit = limit("maxConcurrent", options.maxConcurrent);
+  const legacyOwner = {};
+  interface Pending {
+    url: string;
+    owner: object;
+    ownerLimit: number;
+    resolve: (release: () => void) => void;
+    reject: (error: unknown) => void;
+    cleanup: () => void;
+  }
+  interface Site extends RequestQueueSnapshot {
+    pending: Pending[];
+    lastOwner: object | null;
+    turn: number;
+  }
+  const owners = new Map<object, number>();
+  const ownerLimits = new WeakMap<object, number>();
+  let active = 0;
+  let turn = 0;
+  let wake: ReturnType<typeof setTimeout> | undefined;
   const sites = new Map<string, Site>();
 
   function siteFor(url: string): Site {
@@ -166,7 +206,9 @@ export function createRequestScheduler(
     let site = sites.get(key);
     if (!site) {
       site = {
-        tail: Promise.resolve(),
+        pending: [],
+        lastOwner: null,
+        turn: turn++,
         host: key,
         readyAt: 0,
         stopped: false,
@@ -199,6 +241,136 @@ export function createRequestScheduler(
     site.stopReason = reason;
   }
 
+  // A bounded frontier contains at most one candidate per known host. Rebuild
+  // only on queue/state/capacity changes, with a single wake for future work.
+  function dispatch(): void {
+    if (wake !== undefined) clearTimeout(wake);
+    wake = undefined;
+    const frontier = [...sites.values()].filter((site) => site.pending.length);
+    frontier.sort((a, b) => a.readyAt - b.readyAt || a.turn - b.turn);
+    let next = Infinity;
+    for (const site of frontier) {
+      if (site.stopped) {
+        for (const entry of site.pending.splice(0)) {
+          entry.cleanup();
+          entry.reject(new HostStoppedError(site.host, site.stopReason));
+        }
+        site.waiting = 0;
+        continue;
+      }
+      if (site.activeUrl !== null || active >= globalLimit) continue;
+      // The last admitted owner's new backlog takes the last owner turn.
+      const previousOwner = site.pending.filter(
+        (item) => item.owner === site.lastOwner,
+      );
+      site.pending = site.pending.filter(
+        (item) => item.owner !== site.lastOwner,
+      );
+      site.pending.push(...previousOwner);
+      // Only each owner's first request may compete: preserve owner FIFO.
+      const seen = new Set<object>();
+      const eligible = site.pending.filter((entry) => {
+        if (seen.has(entry.owner)) return false;
+        seen.add(entry.owner);
+        return (owners.get(entry.owner) ?? 0) < entry.ownerLimit;
+      });
+      const entry = eligible[0];
+      if (!entry) continue;
+      if (site.readyAt > Date.now()) {
+        next = Math.min(next, site.readyAt);
+        continue;
+      }
+      site.pending.splice(site.pending.indexOf(entry), 1);
+      // Rotate the admitted owner's backlog behind the other owner turns.
+      const sameOwner = site.pending.filter(
+        (item) => item.owner === entry.owner,
+      );
+      site.pending = site.pending.filter((item) => item.owner !== entry.owner);
+      site.pending.push(...sameOwner);
+      site.waiting = site.pending.length;
+      entry.cleanup();
+      active += 1;
+      owners.set(entry.owner, (owners.get(entry.owner) ?? 0) + 1);
+      site.activeUrl = entry.url;
+      site.activeSince = Date.now();
+      site.lastOwner = entry.owner;
+      site.turn = turn++;
+      let released = false;
+      entry.resolve(() => {
+        if (released) return;
+        released = true;
+        active -= 1;
+        const count = (owners.get(entry.owner) ?? 1) - 1;
+        if (count) owners.set(entry.owner, count);
+        else owners.delete(entry.owner);
+        site.activeUrl = null;
+        site.activeSince = null;
+        site.readyAt = Math.max(site.readyAt, Date.now() + gapMs);
+        dispatch();
+      });
+    }
+    if (next !== Infinity)
+      wake = setTimeout(
+        dispatch,
+        Math.min(2_147_483_647, Math.max(0, next - Date.now())),
+      );
+  }
+
+  function acquireRequest(
+    url: string,
+    admission: RequestAdmission,
+    signal?: AbortSignal,
+  ): Promise<() => void> {
+    const ownerLimit = limit(
+      "admission.maxConcurrent",
+      admission.maxConcurrent,
+    );
+    if (typeof admission.owner !== "object" || admission.owner === null)
+      throw new TypeError("admission.owner must be a stable object");
+    const existingLimit = ownerLimits.get(admission.owner);
+    if (existingLimit !== undefined && existingLimit !== ownerLimit)
+      throw new RangeError(
+        "admission.maxConcurrent must stay constant for an owner",
+      );
+    ownerLimits.set(admission.owner, ownerLimit);
+    const site = siteFor(url);
+    return new Promise((resolve, reject) => {
+      if (signal?.aborted) {
+        reject(
+          signal.reason instanceof Error
+            ? signal.reason
+            : new Error("Request cancelled"),
+        );
+        return;
+      }
+      const abort = () => {
+        const index = site.pending.indexOf(entry);
+        if (index < 0) return;
+        site.pending.splice(index, 1);
+        site.waiting = site.pending.length;
+        entry.cleanup();
+        reject(
+          signal?.reason instanceof Error
+            ? signal.reason
+            : new Error("Request cancelled"),
+        );
+        dispatch();
+      };
+      const entry: Pending = {
+        url,
+        owner: admission.owner,
+        ownerLimit,
+        resolve,
+        reject,
+        cleanup: () => signal?.removeEventListener("abort", abort),
+      };
+      site.pending.push(entry);
+      site.waiting = site.pending.length;
+      signal?.addEventListener("abort", abort, { once: true });
+      dispatch();
+    });
+  }
+
   function importState(state: readonly HostState[]): void {
     for (const entry of state) {
       const site = siteFor(`https://${entry.host}/`);
@@ -208,75 +380,26 @@ export function createRequestScheduler(
       site.unavailable = entry.unavailable;
       site.lastStatus = entry.lastStatus;
     }
+    dispatch();
   }
 
   if (options.state) importState(options.state);
 
   return {
     snapshot() {
-      return [...sites.values()].map(({ tail: _tail, ...state }) => ({
-        ...state,
-      }));
+      return [...sites.values()].map(
+        ({ pending: _pending, lastOwner: _owner, turn: _turn, ...state }) => ({
+          ...state,
+        }),
+      );
     },
     exportState() {
       return [...sites.values()].map(stateOf);
     },
     importState,
-    async acquire(url, signal) {
-      const site = siteFor(url);
-      site.waiting += 1;
-      const previous = site.tail;
-      let unlock!: () => void;
-      site.tail = new Promise<void>((resolve) => {
-        unlock = resolve;
-      });
-      // Cancellation must not let a later waiter overtake an active request.
-      let abort: (() => void) | undefined;
-      try {
-        await (signal
-          ? Promise.race([
-              previous,
-              new Promise<never>((_, reject) => {
-                abort = () =>
-                  reject(
-                    signal.reason instanceof Error
-                      ? signal.reason
-                      : new Error("Request cancelled"),
-                  );
-                signal.addEventListener("abort", abort, { once: true });
-                if (signal.aborted) abort();
-              }),
-            ])
-          : previous);
-        signal?.throwIfAborted();
-        // A response to another request can stop the host or extend its
-        // cooldown during the wait, so check again after every pause.
-        for (;;) {
-          if (site.stopped)
-            throw new HostStoppedError(site.host, site.stopReason);
-          const wait = site.readyAt - Date.now();
-          if (wait <= 0) break;
-          await pause(wait, undefined, { signal });
-          signal?.throwIfAborted();
-        }
-        site.activeUrl = url;
-        site.activeSince = Date.now();
-        let released = false;
-        return () => {
-          if (released) return;
-          released = true;
-          site.activeUrl = null;
-          site.activeSince = null;
-          site.readyAt = Math.max(site.readyAt, Date.now() + gapMs);
-          unlock();
-        };
-      } catch (error) {
-        void previous.then(unlock);
-        throw error;
-      } finally {
-        site.waiting -= 1;
-        if (abort) signal?.removeEventListener("abort", abort);
-      }
+    acquireRequest,
+    acquire(url, signal) {
+      return acquireRequest(url, { owner: legacyOwner }, signal);
     },
     answered(url) {
       return (sites.get(schedulerHostKey(url))?.lastStatus ?? null) !== null;
@@ -305,7 +428,11 @@ export function createRequestScheduler(
           else site.readyAt = Math.max(site.readyAt, until);
         }
       }
-      onChange?.(stateOf(site));
+      try {
+        onChange?.(stateOf(site));
+      } finally {
+        dispatch();
+      }
     },
   };
 }

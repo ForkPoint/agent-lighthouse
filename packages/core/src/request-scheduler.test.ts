@@ -6,7 +6,7 @@ import {
   type HostState,
 } from "./request-scheduler";
 
-// Use real timers: node:timers/promises is deliberately abortable.
+// Keep real timers for pacing checks; atomic-frontier tests opt into fake time.
 afterEach(() => vi.useRealTimers());
 
 describe("shared request pacing", () => {
@@ -23,14 +23,14 @@ describe("shared request pacing", () => {
       {
         host: "example.com",
         activeUrl: "https://example.com/a",
-        waiting: 1,
+        waiting: 0,
         lastStatus: 429,
         stopped: true,
       },
     ]);
     const copy = scheduler.snapshot();
     copy[0]!.waiting = 999;
-    expect(scheduler.snapshot()[0]!.waiting).toBe(1);
+    expect(scheduler.snapshot()[0]!.waiting).toBe(0);
     controller.abort();
     await expect(queued).rejects.toThrow();
     release();
@@ -290,4 +290,162 @@ describe("shared request pacing", () => {
       createRequestScheduler({ maxRetryAfterMs: Number.NaN }),
     ).toThrow(RangeError);
   });
+});
+
+describe("atomic ready admission", () => {
+  it("rotates three owners and preserves each owner's FIFO", async () => {
+    const scheduler = createRequestScheduler();
+    const a = {},
+      b = {},
+      c = {};
+    const first = await scheduler.acquireRequest("https://shared.test/first", {
+      owner: a,
+    });
+    const order: string[] = [];
+    const enqueue = (owner: object, path: string) =>
+      scheduler
+        .acquireRequest(`https://shared.test/${path}`, { owner })
+        .then((release) => {
+          order.push(path);
+          return release();
+        });
+    const pending = [
+      enqueue(a, "a1"),
+      enqueue(a, "a2"),
+      enqueue(b, "b1"),
+      enqueue(b, "b2"),
+      enqueue(c, "c1"),
+    ];
+    first();
+    await Promise.all(pending);
+    expect(order).toEqual(["b1", "c1", "a1", "b2", "a2"]);
+  });
+
+  it("leaves capacity free during a cooldown and enforces all limits", async () => {
+    vi.useFakeTimers();
+    const scheduler = createRequestScheduler({ maxConcurrent: 2 });
+    const a = {},
+      b = {};
+    scheduler.observe("https://cool.test", 503, "1");
+    const cool = scheduler.acquireRequest("https://cool.test", {
+      owner: a,
+      maxConcurrent: 1,
+    });
+    const one = await scheduler.acquireRequest("https://one.test", {
+      owner: a,
+      maxConcurrent: 1,
+    });
+    const two = await scheduler.acquireRequest("https://two.test", {
+      owner: b,
+      maxConcurrent: 1,
+    });
+    let entered = false;
+    const three = scheduler
+      .acquireRequest("https://three.test", { owner: a, maxConcurrent: 1 })
+      .then((release) => {
+        entered = true;
+        return release;
+      });
+    two();
+    await Promise.resolve();
+    expect(entered).toBe(false);
+    one();
+    (await three)();
+    await vi.advanceTimersByTimeAsync(1000);
+    (await cool)();
+    expect(
+      scheduler
+        .snapshot()
+        .every((site) => site.activeUrl === null && site.waiting === 0),
+    ).toBe(true);
+  });
+
+  it("rechecks imported cooldowns and makes release idempotent", async () => {
+    vi.useFakeTimers();
+    const scheduler = createRequestScheduler({ maxConcurrent: 1 });
+    const release = await scheduler.acquire("https://one.test");
+    const controller = new AbortController();
+    const cancelled = scheduler.acquire(
+      "https://one.test/cancel",
+      controller.signal,
+    );
+    controller.abort(new Error("cancelled"));
+    await expect(cancelled).rejects.toThrow("cancelled");
+    const next = scheduler.acquire("https://one.test/next");
+    scheduler.importState([
+      {
+        host: "one.test",
+        readyAt: Date.now() + 1000,
+        stopped: false,
+        stopReason: null,
+        unavailable: 0,
+        lastStatus: null,
+      },
+    ]);
+    release();
+    release();
+    let entered = false;
+    void next.then(() => {
+      entered = true;
+      return entered;
+    });
+    await vi.advanceTimersByTimeAsync(999);
+    expect(entered).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    (await next)();
+  });
+
+  it.each([0, -1, 1.5, Infinity, NaN])(
+    "rejects invalid limits: %s",
+    (maxConcurrent) => {
+      expect(() => createRequestScheduler({ maxConcurrent })).toThrow(
+        RangeError,
+      );
+      const scheduler = createRequestScheduler();
+      expect(() =>
+        scheduler.acquireRequest("https://one.test", {
+          owner: {},
+          maxConcurrent,
+        }),
+      ).toThrow(RangeError);
+    },
+  );
+});
+
+it("rejects conflicting limits for a stable owner", async () => {
+  const scheduler = createRequestScheduler();
+  const owner = {};
+  const release = await scheduler.acquireRequest("https://one.test", {
+    owner,
+    maxConcurrent: 1,
+  });
+  expect(() =>
+    scheduler.acquireRequest("https://two.test", { owner, maxConcurrent: 2 }),
+  ).toThrow("must stay constant");
+  release();
+});
+
+it("enforces the global cap independently across three owners and hosts", async () => {
+  const scheduler = createRequestScheduler({ maxConcurrent: 2 });
+  const first = await scheduler.acquireRequest("https://one.test", {
+    owner: {},
+  });
+  const second = await scheduler.acquireRequest("https://two.test", {
+    owner: {},
+  });
+  let entered = false;
+  const third = scheduler
+    .acquireRequest("https://three.test", { owner: {} })
+    .then((release) => {
+      entered = true;
+      return release;
+    });
+  await Promise.resolve();
+  expect(entered).toBe(false);
+  expect(
+    scheduler.snapshot().filter((site) => site.activeUrl !== null),
+  ).toHaveLength(2);
+  first();
+  (await third)();
+  second();
 });

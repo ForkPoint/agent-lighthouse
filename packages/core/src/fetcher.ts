@@ -163,6 +163,8 @@ function errorCode(err: unknown): string | undefined {
 export interface FetcherSummary {
   /** Requests that got an answer or failed. */
   requests: number;
+  /** Sum of scheduler-admission waits; excludes the legacy fetcher gate. Not wall-clock time saved. */
+  queueWaitMs?: number;
   /** Answered requests by status class, such as `2xx`. */
   statuses: Record<string, number>;
   /** Failed requests by error code, such as `UND_ERR_CONNECT_TIMEOUT`. */
@@ -184,6 +186,8 @@ export interface FetcherSummary {
  * an `error` and no `response`.
  */
 export interface HttpExchange {
+  /** Scheduler-admission wait for this exchange; excludes the legacy fetcher gate and HTTP timing. */
+  queueWaitMs?: number;
   /** Which `fetch` call sent it, counted per fetcher from 1. Hops share it. */
   fetchId: number;
   /** 0 for the first request of a fetch, then one more per redirect hop. */
@@ -235,6 +239,8 @@ export interface Fetcher {
 export interface FetcherOptions {
   /** Shared request pacing across scans, including redirect hops. */
   requestScheduler?: RequestScheduler;
+  /** Admit ready hosts atomically with scheduler and fetcher limits. */
+  readyRequestScheduling?: boolean;
   /**
    * Called once per request, redirect hops included, after its response
    * body is read or discarded, or after it failed. The record holds the
@@ -464,8 +470,25 @@ export function createFetcherWith(
   const tally = createTally();
   const onExchange = fetcherOptions.onExchange;
   let fetchCount = 0;
+  const ready = fetcherOptions.readyRequestScheduling === true;
+  const owner = {};
+  let queueWaitMs = 0;
+  if (
+    ready &&
+    typeof fetcherOptions.requestScheduler?.acquireRequest !== "function"
+  )
+    throw new Error(
+      "readyRequestScheduling requires a scheduler with acquireRequest",
+    );
+  if (
+    ready &&
+    fetcherOptions.maxConcurrent !== undefined &&
+    (!Number.isSafeInteger(fetcherOptions.maxConcurrent) ||
+      fetcherOptions.maxConcurrent < 1)
+  )
+    throw new RangeError("maxConcurrent must be a positive safe integer");
   const gate =
-    fetcherOptions.maxConcurrent && fetcherOptions.maxConcurrent > 0
+    !ready && fetcherOptions.maxConcurrent && fetcherOptions.maxConcurrent > 0
       ? createGate(Math.floor(fetcherOptions.maxConcurrent))
       : undefined;
 
@@ -500,6 +523,7 @@ export function createFetcherWith(
     const now = performance.now();
     return {
       requests: tally.requests,
+      queueWaitMs: Math.round(queueWaitMs),
       statuses: { ...tally.statuses },
       failures: { ...tally.failures },
       open: [...pending].map((entry) => ({
@@ -591,13 +615,25 @@ export function createFetcherWith(
       const queuedAt = performance.now();
       try {
         if (fetcherOptions.requestScheduler) {
-          release = await fetcherOptions.requestScheduler.acquire(
-            target,
-            externalSignal,
-          );
+          const scheduler = fetcherOptions.requestScheduler;
+          release = ready
+            ? await scheduler.acquireRequest!(
+                target,
+                {
+                  owner,
+                  ...(fetcherOptions.maxConcurrent !== undefined && {
+                    maxConcurrent: fetcherOptions.maxConcurrent,
+                  }),
+                },
+                externalSignal,
+              )
+            : await scheduler.acquire(target, externalSignal);
         }
       } finally {
-        queuedMs += performance.now() - queuedAt;
+        const waited = performance.now() - queuedAt;
+        queuedMs += waited;
+        queueWaitMs += waited;
+        exchange.queueWaitMs = Math.round(waited);
       }
       externalSignal?.throwIfAborted();
       // The scheduler's wait is not part of the request.
@@ -892,6 +928,7 @@ export function createFetcherWith(
           ...(currentUrl !== targetUrl && { finalUrl: currentUrl }),
           [LogField.HttpStatus]: response.statusCode,
           [LogField.DurationMs]: Math.round(totalMs),
+          [LogField.QueueWaitMs]: Math.round(queuedMs),
           ttfbMs: Math.round(ttfbMs),
           ...(hops > 0 && { hops }),
           [LogField.UserAgent]: ua,
@@ -961,6 +998,7 @@ export function createFetcherWith(
           [LogField.Url]: targetUrl,
           [LogField.Error]: { message: detail, ...(code && { code }) },
           [LogField.DurationMs]: Math.round(totalMs),
+          [LogField.QueueWaitMs]: Math.round(queuedMs),
         },
         "Request failed",
       );

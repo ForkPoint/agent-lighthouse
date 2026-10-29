@@ -162,9 +162,9 @@ export interface ScanOptions {
    * undici dispatcher for every request this scan makes.
    */
   dispatcher?: Dispatcher | undefined;
-  /**
-   * How many requests this scan may have in flight at once.
-   */
+  /** Use atomic ready-host admission; requires a supporting scheduler. */
+  readyRequestScheduling?: boolean | undefined;
+  /** How many requests this scan may have in flight at once. */
   maxConcurrent?: number | undefined;
   /** Shared pacing for each network request, including redirects. */
   requestScheduler?: RequestScheduler | undefined;
@@ -502,6 +502,10 @@ async function scanWithinBudget(
       captureExchange(exchange);
     });
   const suppliedFetcher = options?.fetcher;
+  if (suppliedFetcher && options?.readyRequestScheduling)
+    throw new Error(
+      "readyRequestScheduling cannot configure a supplied fetcher; configure it when creating that fetcher",
+    );
   const fetcher: Fetcher = suppliedFetcher
     ? {
         fetch: (request) =>
@@ -518,6 +522,9 @@ async function scanWithinBudget(
         ...(onExchange !== undefined && { onExchange }),
         ...(options?.dispatcher !== undefined && {
           dispatcher: options.dispatcher,
+        }),
+        ...(options?.readyRequestScheduling !== undefined && {
+          readyRequestScheduling: options.readyRequestScheduling,
         }),
         ...(options?.maxConcurrent !== undefined && {
           maxConcurrent: options.maxConcurrent,
