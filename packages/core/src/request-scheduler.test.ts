@@ -449,3 +449,68 @@ it("enforces the global cap independently across three owners and hosts", async 
   (await third)();
   second();
 });
+
+it("refuses an owner that is not an object", () => {
+  const scheduler = createRequestScheduler();
+  expect(() =>
+    scheduler.acquireRequest("https://one.test", {
+      owner: null as unknown as object,
+    }),
+  ).toThrow(TypeError);
+});
+
+it("rejects a request whose signal is already aborted, without queueing it", async () => {
+  const scheduler = createRequestScheduler();
+  const reason = new Error("gone");
+  await expect(
+    scheduler.acquireRequest(
+      "https://one.test",
+      { owner: {} },
+      AbortSignal.abort(reason),
+    ),
+  ).rejects.toBe(reason);
+  await expect(
+    scheduler.acquireRequest(
+      "https://one.test",
+      { owner: {} },
+      AbortSignal.abort("plain"),
+    ),
+  ).rejects.toThrow("Request cancelled");
+  expect(scheduler.snapshot()[0]).toMatchObject({
+    waiting: 0,
+    activeRequests: 0,
+  });
+});
+
+describe("Retry-After forms", () => {
+  it("reads the first value of a repeated header", () => {
+    const scheduler = createRequestScheduler({ defaultRetryAfterMs: 60_000 });
+    const before = Date.now();
+    scheduler.observe("https://one.test", 503, ["2", "90"]);
+    const readyAt = scheduler.exportState()[0]!.readyAt;
+    expect(readyAt - before).toBeGreaterThanOrEqual(2000);
+    expect(readyAt - before).toBeLessThan(10_000);
+  });
+
+  it.each(["-5", "not a date", "   "])(
+    "falls back to the default wait for %j",
+    (value) => {
+      const scheduler = createRequestScheduler({ defaultRetryAfterMs: 7000 });
+      const before = Date.now();
+      scheduler.observe("https://one.test", 503, value);
+      const readyAt = scheduler.exportState()[0]!.readyAt;
+      expect(readyAt - before).toBeGreaterThanOrEqual(7000);
+      expect(readyAt - before).toBeLessThan(8000);
+    },
+  );
+
+  it("keeps the first stop reason when a stopped host refuses again", () => {
+    const scheduler = createRequestScheduler();
+    scheduler.observe("https://one.test", 429, undefined);
+    scheduler.observe("https://one.test", 403, undefined);
+    expect(scheduler.exportState()[0]).toMatchObject({
+      stopped: true,
+      stopReason: HostStopReason.TooManyRequests,
+    });
+  });
+});
