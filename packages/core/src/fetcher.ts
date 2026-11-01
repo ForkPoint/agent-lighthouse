@@ -1,4 +1,9 @@
-import type { RequestScheduler } from "./request-scheduler";
+import {
+  createRequestDiagnostics,
+  RequestAbortSource,
+  type RequestDiagnostics,
+} from "./request-diagnostics";
+import { HostStoppedError, type RequestScheduler } from "./request-scheduler";
 import { request, Agent, type Dispatcher } from "undici";
 import dns from "node:dns/promises";
 import {
@@ -186,6 +191,7 @@ export interface FetcherSummary {
  * an `error` and no `response`.
  */
 export interface HttpExchange {
+  diagnostics?: RequestDiagnostics;
   /** Scheduler-admission wait for this exchange; excludes the legacy fetcher gate and HTTP timing. */
   queueWaitMs?: number;
   /** Which `fetch` call sent it, counted per fetcher from 1. Hops share it. */
@@ -237,6 +243,10 @@ export interface Fetcher {
 }
 
 export interface FetcherOptions {
+  /** Add transport event evidence without changing legacy clocks or replay. */
+  requestDiagnostics?: boolean;
+  /** Optional scan-budget signal for explicit first-abort attribution. */
+  budgetSignal?: AbortSignal;
   /** Shared request pacing across scans, including redirect hops. */
   requestScheduler?: RequestScheduler;
   /** Admit ready hosts atomically with scheduler and fetcher limits. */
@@ -372,6 +382,7 @@ async function readCapped(
   body: AsyncIterable<Uint8Array>,
   cap: number,
   onPartial?: (bytes: Uint8Array) => void,
+  onLimit?: () => void,
 ): Promise<{ bytes: Uint8Array; truncated: boolean }> {
   const chunks: Uint8Array[] = [];
   let size = 0;
@@ -380,7 +391,10 @@ async function readCapped(
       const room = cap - size;
       chunks.push(chunk.byteLength > room ? chunk.subarray(0, room) : chunk);
       size += Math.min(chunk.byteLength, room);
-      if (size >= cap) break;
+      if (size >= cap) {
+        onLimit?.();
+        break;
+      }
     }
   } catch (error) {
     onPartial?.(new Uint8Array(Buffer.concat(chunks, size)));
@@ -561,12 +575,52 @@ export function createFetcherWith(
     const elapsed = () => performance.now() - start - queuedMs;
     // The exchange of the request in flight, until it is reported.
     let open: HttpExchange | undefined;
+    let diagnostic: ReturnType<typeof createRequestDiagnostics> | undefined;
+    let diagnosticCleanup: (() => void) | undefined;
     let replayedTiming: { ttfbMs: number; totalMs: number } | undefined;
+    const finishTransport = (): void => {
+      diagnosticCleanup?.();
+      diagnosticCleanup = undefined;
+      diagnostic?.finish();
+    };
+    const throwIfRequestExpired = (): void => {
+      if (ready && elapsed() >= timeout) {
+        diagnostic?.attributeAbort(RequestAbortSource.RequestTimeout);
+        throw new DOMException(
+          "The operation was aborted due to timeout",
+          "TimeoutError",
+        );
+      }
+    };
     const report = (
       exchange: HttpExchange,
       ttfb: number,
       total: number,
     ): void => {
+      finishTransport();
+      if (exchange.diagnostics)
+        log.trace(
+          {
+            [LogField.FetchId]: exchange.fetchId,
+            [LogField.Hop]: exchange.hop,
+            [LogField.Url]: exchange.request.url,
+            [LogField.HttpMethod]: exchange.request.method,
+            ...(exchange.response && {
+              [LogField.HttpStatus]: exchange.response.status,
+            }),
+            ...(exchange.error && {
+              [LogField.Error]: {
+                message: exchange.error,
+                ...(exchange.diagnostics.failureCode && {
+                  code: exchange.diagnostics.failureCode,
+                }),
+              },
+            }),
+            [LogField.QueueWaitMs]: exchange.queueWaitMs,
+            [LogField.RequestDiagnostics]: exchange.diagnostics,
+          },
+          "Request exchange",
+        );
       open = undefined;
       if (!onExchange) return;
       exchange.ttfbMs = Math.round(ttfb);
@@ -610,8 +664,41 @@ export function createFetcherWith(
         },
         ttfbMs: 0,
         totalMs: 0,
+        queueWaitMs: 0,
       };
       open = exchange;
+      diagnostic = undefined;
+      if (fetcherOptions.requestDiagnostics) {
+        diagnostic = createRequestDiagnostics();
+        exchange.diagnostics = diagnostic.value;
+        const currentDiagnostic = diagnostic;
+        const externalAbort = () => {
+          currentDiagnostic.attributeAbort(
+            fetcherOptions.budgetSignal?.aborted &&
+              externalSignal?.reason === fetcherOptions.budgetSignal.reason
+              ? RequestAbortSource.SiteBudget
+              : RequestAbortSource.Caller,
+          );
+        };
+        if (externalSignal?.aborted) {
+          // A pre-composed signal exposes its reason, not the historical
+          // order of two already-aborted inputs with the same reason.
+          if (
+            fetcherOptions.budgetSignal?.aborted &&
+            externalSignal !== fetcherOptions.budgetSignal &&
+            externalSignal.reason === fetcherOptions.budgetSignal.reason
+          )
+            currentDiagnostic.attributeAbort(null);
+          else externalAbort();
+        } else
+          externalSignal?.addEventListener("abort", externalAbort, {
+            once: true,
+          });
+        diagnosticCleanup = () =>
+          externalSignal?.removeEventListener("abort", externalAbort);
+      }
+      externalSignal?.throwIfAborted();
+      throwIfRequestExpired();
       const queuedAt = performance.now();
       try {
         if (fetcherOptions.requestScheduler) {
@@ -636,6 +723,7 @@ export function createFetcherWith(
         exchange.queueWaitMs = Math.round(waited);
       }
       externalSignal?.throwIfAborted();
+      throwIfRequestExpired();
       // The scheduler's wait is not part of the request.
       exchange.startedAt = new Date().toISOString();
       const timeoutSignal = AbortSignal.timeout(
@@ -644,11 +732,33 @@ export function createFetcherWith(
       const signal = externalSignal
         ? AbortSignal.any([timeoutSignal, externalSignal])
         : timeoutSignal;
-      const response = await transport(target, {
-        ...init,
-        signal,
-        dispatcher,
-      });
+      if (diagnostic) {
+        // AbortSignal.any preserves the first reason. Read that reason before
+        // classifying failures, so a later timeout cannot replace caller abort.
+        const currentDiagnostic = diagnostic;
+        const abort = () => {
+          currentDiagnostic.attributeAbort(
+            signal.reason === timeoutSignal.reason && timeoutSignal.aborted
+              ? RequestAbortSource.RequestTimeout
+              : fetcherOptions.budgetSignal?.aborted &&
+                  signal.reason === fetcherOptions.budgetSignal.reason
+                ? RequestAbortSource.SiteBudget
+                : RequestAbortSource.Caller,
+          );
+        };
+        if (signal.aborted) abort();
+        else signal.addEventListener("abort", abort, { once: true });
+        const cleanExternal = diagnosticCleanup;
+        diagnosticCleanup = () => {
+          cleanExternal?.();
+          signal.removeEventListener("abort", abort);
+        };
+      }
+      const issueTransport = () =>
+        transport(target, { ...init, signal, dispatcher });
+      const response = await (diagnostic
+        ? diagnostic.run(issueTransport)
+        : issueTransport());
       exchange.response = {
         status: response.statusCode,
         headers: receivedHeaders(response.headers),
@@ -768,9 +878,20 @@ export function createFetcherWith(
           break;
         }
 
+        if (ready) {
+          // A drained response no longer needs an execution permit. Resolve
+          // redirect safety outside the lease, while keeping every URL gate.
+          await response.body.dump();
+          release?.();
+          release = undefined;
+          // Preserve legacy exchange clocks, but stop attributing later DNS
+          // waits and deadline events to an already completed HTTP hop.
+          finishTransport();
+        }
+
         gateArmed ??= await isSafeUrl(targetUrl);
         if (gateArmed && !(await isSafeUrl(next))) {
-          await response.body.dump();
+          if (!ready) await response.body.dump();
           log.warn(
             { [LogField.Url]: targetUrl, redirectTo: next },
             "Refusing redirect out of public address space",
@@ -791,9 +912,11 @@ export function createFetcherWith(
           };
         }
 
-        await response.body.dump();
-        release?.();
-        release = undefined;
+        if (!ready) {
+          await response.body.dump();
+          release?.();
+          release = undefined;
+        }
         cookieJar.store(response.headers["set-cookie"], currentUrl);
 
         // 303 always continues as a GET without a body; 301 and 302 do the same
@@ -886,6 +1009,10 @@ export function createFetcherWith(
       const keepPartial = (partial: Uint8Array) => {
         if (open?.response) open.response.body = partial;
       };
+      const bodyLimit = () => {
+        if (diagnostic)
+          diagnostic.attributeAbort(RequestAbortSource.ResponseLimit);
+      };
       if (currentMethod === HttpMethod.Options) {
         // For OPTIONS requests, consume and discard the body
         await response.body.dump();
@@ -894,6 +1021,7 @@ export function createFetcherWith(
           response.body,
           MAX_RESPONSE_BODY_BYTES,
           keepPartial,
+          bodyLimit,
         );
         bytes = read.bytes;
       } else {
@@ -906,6 +1034,7 @@ export function createFetcherWith(
           response.body,
           TEXT_READ_CAP_BYTES,
           keepPartial,
+          bodyLimit,
         );
         body = new TextDecoder().decode(read.bytes);
       }
@@ -976,13 +1105,27 @@ export function createFetcherWith(
         err instanceof Error ? err.message : "Unknown fetch error";
       // Surface undici's underlying cause (ENOTFOUND, ECONNREFUSED, timeout, TLS…)
       // so an opaque "fetch failed" becomes diagnosable in the logs.
-      const code = errorCode(err);
+      const code = errorCode(err) ?? diagnostic?.value.failureCode;
       const detail = code ? `${message} (${code})` : message;
       const reportedTtfb = replayed?.ttfbMs ?? (ttfbMs || totalMs);
 
       if (open) {
         const exchange: HttpExchange = open;
         exchange.error = detail;
+        if (exchange.diagnostics && code)
+          exchange.diagnostics.failureCode ??= code;
+        if (diagnostic) {
+          diagnostic.attributeAbort(
+            externalSignal?.aborted
+              ? fetcherOptions.budgetSignal?.aborted &&
+                externalSignal.reason === fetcherOptions.budgetSignal.reason
+                ? RequestAbortSource.SiteBudget
+                : RequestAbortSource.Caller
+              : err instanceof HostStoppedError
+                ? RequestAbortSource.Scheduler
+                : RequestAbortSource.Transport,
+          );
+        }
         report(exchange, reportedTtfb, totalMs);
       }
 

@@ -59,8 +59,52 @@ import * as tableUtils from "./table";
 
 // Document context for the two checks that read `document` globally.
 let currentDocument: Document;
+interface RootAttributeIndex {
+  ids: Map<string, AnyNode[]>;
+  labels: Map<string, AnyNode[]>;
+}
+let attributeIndexes = new WeakMap<object, RootAttributeIndex>();
 export function setDocument(doc: Document): void {
   currentDocument = doc;
+  // runRules is synchronous over a fixed document. Rebuild on every run so
+  // a later scan of the same, edited DOM never reads a stale index.
+  attributeIndexes = new WeakMap();
+}
+
+function getAttributeIndex(
+  root: Document | DocumentFragment,
+): RootAttributeIndex {
+  const cached = attributeIndexes.get(root);
+  if (cached) return cached;
+  const index: RootAttributeIndex = { ids: new Map(), labels: new Map() };
+  for (const node of root.querySelectorAll("[id]")) {
+    const id = node.getAttribute("id")!;
+    const group = index.ids.get(id);
+    if (group) group.push(node);
+    else index.ids.set(id, [node]);
+  }
+  for (const node of root.querySelectorAll("label[for]")) {
+    const id = node.getAttribute("for")!;
+    const group = index.labels.get(id);
+    if (group) group.push(node);
+    else index.labels.set(id, [node]);
+  }
+  attributeIndexes.set(root, index);
+  return index;
+}
+
+// Keep the original CSS selector path for unusual strings. Common framework
+// IDs have exact attribute-value equality without CSS escape edge cases.
+const INDEXABLE_ID = /^[A-Za-z0-9_.:-]+$/;
+function nodesWithId(root: Document | DocumentFragment, id: string): AnyNode[] {
+  return INDEXABLE_ID.test(id)
+    ? (getAttributeIndex(root).ids.get(id) ?? [])
+    : Array.from(root.querySelectorAll(`[id="${escapeSelector(id)}"]`));
+}
+function labelsForId(root: Document | DocumentFragment, id: string): AnyNode[] {
+  return INDEXABLE_ID.test(id)
+    ? (getAttributeIndex(root).labels.get(id) ?? []).slice()
+    : Array.from(root.querySelectorAll(`label[for="${escapeSelector(id)}"]`));
 }
 
 // ── check result builder ─────────────────────────────────────────
@@ -751,12 +795,9 @@ const duplicateId: EvaluateFn = function (node) {
     ) || ""
   ).trim();
   if (!id) return true;
-  const root = getRootNode(node) as unknown as {
-    querySelectorAll: (s: string) => ArrayLike<AnyNode>;
-  };
-  const matchingNodes = Array.from(
-    root.querySelectorAll(`[id="${escapeSelector(id)}"]`),
-  ).filter((foundNode) => foundNode !== node);
+  const matchingNodes = nodesWithId(getRootNode(node), id).filter(
+    (foundNode) => foundNode !== node,
+  );
   if (matchingNodes.length) this.relatedNodes(matchingNodes);
   this.data(id);
   return matchingNodes.length === 0;
@@ -1139,11 +1180,10 @@ const implicitLabel: EvaluateFn = function (_node, _options, virtualNode) {
 const explicitLabel: EvaluateFn = function (_node, _options, virtualNode) {
   if (!virtualNode.attr("id")) return false;
   if (!virtualNode.actualNode) return undefined;
-  const root = getRootNode(virtualNode.actualNode) as unknown as {
-    querySelectorAll: (s: string) => ArrayLike<AnyNode>;
-  };
-  const id = escapeSelector(virtualNode.attr("id") as string);
-  const labels = Array.from(root.querySelectorAll(`label[for="${id}"]`));
+  const labels = labelsForId(
+    getRootNode(virtualNode.actualNode),
+    virtualNode.attr("id") as string,
+  );
   this.relatedNodes(labels);
   if (!labels.length) return false;
   try {
@@ -1166,15 +1206,15 @@ const explicitLabel: EvaluateFn = function (_node, _options, virtualNode) {
 const hiddenExplicitLabel: EvaluateFn = function (node, _options, virtualNode) {
   if (virtualNode.hasAttr("id")) {
     if (!virtualNode.actualNode) return undefined;
-    const root = getRootNode(node) as unknown as {
-      querySelector: (s: string) => AnyNode | null;
-    };
-    const id = escapeSelector(
-      (node as unknown as { getAttribute: (a: string) => string }).getAttribute(
+    const id = String(
+      (node as unknown as { getAttribute: (a: string) => string | null }).getAttribute(
         "id",
       ),
     );
-    const labelNode = root.querySelector(`label[for="${id}"]`);
+    const root = getRootNode(node);
+    const labelNode = INDEXABLE_ID.test(id)
+      ? getAttributeIndex(root).labels.get(id)?.[0]
+      : root.querySelector(`label[for="${escapeSelector(id)}"]`);
     if (labelNode && !isVisibleToScreenReaders(labelNode)) {
       let name: string;
       try {
