@@ -17,7 +17,7 @@ import { detailLines } from "#core/detail-lines";
 import {
   NATIVE_INTERACTIVE,
   accessibleName,
-  hasClickSignal,
+  createClickSignalMatcher,
   hasInlineHandler,
   isElement,
   stopsPropagation,
@@ -227,6 +227,7 @@ async function survey(ctx: CheckContext): Promise<Survey> {
     // holding a ghost inner div is reported once rather than twice.
     const flagged = new Set<unknown>();
 
+    const hasClickSignal = createClickSignalMatcher($, css.rules);
     $("body *").each((_i, node) => {
       if (!isElement(node)) return;
       const tag = node.tagName?.toLowerCase() ?? "";
@@ -251,7 +252,7 @@ async function survey(ctx: CheckContext): Promise<Survey> {
           .some((parent) => flagged.has(parent));
         if (
           !ancestorFlagged &&
-          hasClickSignal(node, $, css.rules) &&
+          hasClickSignal(node) &&
           !wrapsControl(node, $) &&
           !insideControl(node, $)
         ) {

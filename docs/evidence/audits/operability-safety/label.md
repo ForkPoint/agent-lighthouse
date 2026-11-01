@@ -60,3 +60,7 @@ Anthropic's `find` searches "for elements matching a natural-language descriptio
 The browser view runs on each complete, unredacted, non-loading capture that carries readable text and whose accessibility rule pass completed. The pass runs the audit's rules over the capture HTML with page scripts off and no resource loading. A pass with no results records missing evidence instead of a verdict. The finding is informative with weight 0. It does not prove HTTP delivery, computed appearance, a complete accessibility tree, live form state, or action success. A truncated, redacted or still-loading capture records missing evidence. Existing implementation limits still apply.
 
 The review appears in [Browser-rendered snapshot assessment](../../../architecture/browser-snapshots.md#supported-audit-inventory). The eligibility record lives in `packages/core/src/snapshot-eligibility.ts`. The crawler grade, tier and weight stay unchanged.
+
+## Implementation deviations
+
+The accessibility engine indexes exact ID values and explicit labels once per rule run for common IDs. Label order, duplicate related nodes and each check's result stay unchanged. Unusual ID strings retain the original escaped CSS selector path. A new run rebuilds the index, including when the same DOM has changed. This removes repeated full-document searches without dropping a rule or changing its evidence.

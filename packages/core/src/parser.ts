@@ -3,6 +3,7 @@ import type { CheerioAPI } from "cheerio";
 import type { AnyNode, Element } from "domhandler";
 import type { PageClassification } from "./types";
 import { hiddenFromReaders } from "./dom-visibility";
+import { createExplicitLabelLookup } from "./html-labels";
 import { ClassificationConfidence, PageType, PageTypeSource } from "./types";
 
 export function parseHtml(html: string): CheerioAPI {
@@ -522,6 +523,7 @@ export function extractForms($: CheerioAPI): Array<{
     required: boolean;
   }>;
 }> {
+  const labelFor = createExplicitLabelLookup($);
   const forms: Array<{
     action: string;
     method: string;
@@ -545,8 +547,8 @@ export function extractForms($: CheerioAPI): Array<{
         const id = $(inputEl).attr("id");
         let label: string | undefined;
         if (id) {
-          const labelEl = $(`label[for="${escapeAttrValue(id)}"]`);
-          if (labelEl.length) {
+          const labelEl = labelFor(id);
+          if (labelEl) {
             label = labelEl.text().trim();
           }
         }

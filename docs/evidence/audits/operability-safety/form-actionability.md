@@ -47,7 +47,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - Every fillable field needs a `name`. A plain form does not submit a nameless control, and WebMCP's declarative API uses `name` as the tool input property. A field in a `<form toolname=…>` reports the WebMCP reason.
 - A `<form toolname=…>` is evaluated by the same rules as every other form.
 - `placeholder` never counts as a label. It is not part of the accessible name computation.
-- `label[for]` lookup is document-wide, as HTML permits.
+- `label[for]` lookup is document-wide, as HTML permits. Each fixed-DOM pass indexes common field IDs once. The audit still reads the first label; form extraction still combines all matching label text. Unusual IDs retain the original escaped selector path.
 - The `autocomplete` half is a convention (C) riding on the A-grade label mechanism. No vendor documents an agent reading `autocomplete`.
 - `type` is not scored. It only skips non-data inputs.
 - `toolautosubmit`, `tooldescription` and `toolparamdescription` are not evaluated.
