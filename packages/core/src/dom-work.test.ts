@@ -1,3 +1,5 @@
+import v8 from "node:v8";
+import { runInNewContext } from "node:vm";
 import { describe, expect, it } from "vitest";
 import { parseHtml } from "./parser";
 import { parsePageContext } from "./page-context";
@@ -132,5 +134,29 @@ describe("depth checked while parse5 builds the tree", () => {
     const html =
       "<p>a<span>b<p>c</p><template><div>t</div></template><svg><style>s</style></svg>";
     expect(parseBoundedHtml(html).html()).toBe(parseHtml(html).html());
+  });
+});
+
+describe("parsed strings", () => {
+  v8.setFlagsFromString("--expose-gc");
+  const gc = runInNewContext("gc") as () => void;
+  const heapMiB = () => {
+    gc();
+    gc();
+    return v8.getHeapStatistics().used_heap_size / 2 ** 20;
+  };
+  const html = `<html><body><script>${"x".repeat(2_000_000)}</script><p data-x="${"y".repeat(500_000)}">hi</p></body></html>`;
+
+  // parse5 appends one character at a time; unflattened, this page holds
+  // about 80 MB of string pieces for as long as the tree lives.
+  it.each([
+    ["parseHtml", parseHtml],
+    ["parseBoundedHtml", (body: string) => parseBoundedHtml(body)],
+  ])("%s holds a page's text flat", (_, parse) => {
+    const before = heapMiB();
+    const $ = parse(html);
+    expect(heapMiB() - before).toBeLessThan(20);
+    expect($("script").text().length).toBe(2_000_000);
+    expect($("p").attr("data-x")?.length).toBe(500_000);
   });
 });

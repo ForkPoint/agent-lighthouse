@@ -3,10 +3,13 @@ import type { CheerioAPI } from "cheerio";
 import type { AnyNode, Element } from "domhandler";
 import type { PageClassification } from "./types";
 import { hiddenFromReaders } from "./dom-visibility";
+import { flattenStrings } from "./dom-work";
 import { ClassificationConfidence, PageType, PageTypeSource } from "./types";
 
 export function parseHtml(html: string): CheerioAPI {
-  return cheerio.load(html);
+  const $ = cheerio.load(html);
+  flattenStrings($.root()[0]!);
+  return $;
 }
 
 export function extractJsonLd($: CheerioAPI): object[] {
