@@ -1,3 +1,4 @@
+import { deflateRawSync, inflateRawSync } from "node:zlib";
 import { cacheOwner } from "./cache-owner";
 import type { FetchOptions, FetchResult } from "#core/fetcher";
 import { isSafeUrl } from "#core/fetcher";
@@ -367,6 +368,42 @@ interface ProbeCache {
 
 const probeCache = new WeakMap<object, ProbeCache>();
 
+/** Bodies of at least this many characters are cached compressed. */
+const PACK_MIN_CHARS = 64 * 1024;
+
+/** A packed response: its fields without the body, and the body reader. */
+const packed = new WeakMap<
+  FetchResult,
+  { rest: Omit<FetchResult, "body">; read: () => string }
+>();
+
+/**
+ * `result` with its body held compressed and inflated on each read.
+ *
+ * One scan caches a response per crawler UA and URL for its whole life, and
+ * most of them repeat the same page. A 4 MB homepage probed by eighteen UAs
+ * on four URLs otherwise holds about 300 MB of heap per scan. HTML compresses
+ * to about a tenth, and few readers ask for a probe body again.
+ */
+function packBody(result: FetchResult): FetchResult {
+  if (result.body.length < PACK_MIN_CHARS) return result;
+  const bytes = deflateRawSync(result.body, { level: 1 });
+  const { body: _body, ...rest } = result;
+  const read = () => inflateRawSync(bytes).toString();
+  const out = Object.defineProperty({ ...rest }, "body", {
+    get: read,
+    enumerable: true,
+  }) as FetchResult;
+  packed.set(out, { rest, read });
+  return out;
+}
+
+/** `result` with a plain body string, inflated once. */
+function unpackBody(result: FetchResult): FetchResult {
+  const entry = packed.get(result);
+  return entry ? { ...entry.rest, body: entry.read() } : result;
+}
+
 function cacheFor(ctx: object): ProbeCache {
   let cache = probeCache.get(cacheOwner(ctx));
   if (!cache) {
@@ -431,15 +468,26 @@ export async function sharedUaProbes(
           async () => {
             const probe = await sharedUaFetch(ctx, url, agent.ua, opts);
             if (!probe) return undefined;
-            const verdict = classifyWithinLimits(baselineResult, probe);
+            const verdict = classifyWithinLimits(
+              baselineResult,
+              unpackBody(probe),
+            );
             if (!verdict) return undefined;
-            return {
+            const entry: UaProbe = {
               url,
               token: agent.token,
               baselineStatus: baselineResult.status,
               probeStatus: probe.status,
               ...verdict,
             };
+            // Keep the compressed copy, not the string classification read.
+            const read = packed.get(probe)?.read;
+            if (read)
+              Object.defineProperty(entry, "probeBody", {
+                get: read,
+                enumerable: true,
+              });
+            return entry;
           },
         );
         cache.probes.set(key, pending);
@@ -478,12 +526,14 @@ export function sharedControlProbe(
   if (!pending) {
     pending = withLogContext({ [LogField.Gatherer]: "ua-parity" }, async () => {
       if (!(await isSafeUrl(url))) return undefined;
-      return ctx.fetch({
-        url,
-        userAgent: CONTROL_UA,
-        followRedirects: true,
-        signal: opts.signal,
-      });
+      return packBody(
+        await ctx.fetch({
+          url,
+          userAgent: CONTROL_UA,
+          followRedirects: true,
+          signal: opts.signal,
+        }),
+      );
     });
     cache.controls.set(url, pending);
   }
@@ -499,6 +549,7 @@ export function sharedControlProbe(
  * The first caller supplies the request signal, as with the baseline cache;
  * audit callers use the scan-bound fetcher for cancellation. Responses remain
  * available for the scan lifetime, including bodies classification cannot read.
+ * Crawler-UA bodies are held compressed and inflated on each read.
  */
 export function sharedUaFetch(
   ctx: ProbeContext,
@@ -515,12 +566,14 @@ export function sharedUaFetch(
   if (!pending) {
     pending = withLogContext({ [LogField.Gatherer]: "ua-parity" }, async () => {
       if (!(await isSafeUrl(url))) return undefined;
-      return ctx.fetch({
+      const result = await ctx.fetch({
         url,
         userAgent,
         followRedirects: true,
         signal: opts.signal,
       });
+      // The baseline is read by every comparison, so it stays a plain string.
+      return baseline ? result : packBody(result);
     });
     map.set(key, pending);
   }

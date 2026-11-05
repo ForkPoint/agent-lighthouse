@@ -100,5 +100,40 @@ export function parseBoundedHtml(
 ): CheerioAPI {
   const $ = cheerio.load(html, { treeAdapter: depthBoundedAdapter() });
   assertDomWork($, maxAncestorSteps);
+  flattenStrings($.root()[0]!);
   return $;
+}
+
+/** V8 stores a string this short flat; only longer ones can be ropes. */
+const MIN_ROPE_LENGTH = 13;
+
+/**
+ * `value` as a new flat string. Slicing needs flat characters, so V8
+ * flattens the temporary concatenation and slices the flat copy; the rope
+ * `value` pointed to is left for collection. Flattening the rope in place,
+ * by searching it, held in a small test but not in a live scan.
+ */
+function flat(value: string): string {
+  return value.length < MIN_ROPE_LENGTH ? value : `${value} `.slice(0, -1);
+}
+
+/**
+ * Replace every text and attribute string of a parsed tree with a flat copy.
+ *
+ * parse5 builds each text node and attribute value one character at a time,
+ * and V8 keeps such a string as a rope of one 32-byte piece per character
+ * until something copies it whole. A parsed page held through the audits kept
+ * its inline scripts that way: a 2 MB script cost 63 MB of heap.
+ */
+export function flattenStrings(root: AnyNode): void {
+  const stack: AnyNode[] = [root];
+  while (stack.length > 0) {
+    const node = stack.pop()!;
+    if ("data" in node && typeof node.data === "string")
+      node.data = flat(node.data);
+    if (isTag(node))
+      for (const [name, value] of Object.entries(node.attribs))
+        node.attribs[name] = flat(value);
+    if (hasChildren(node)) for (const child of node.children) stack.push(child);
+  }
 }

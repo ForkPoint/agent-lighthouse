@@ -390,6 +390,36 @@ describe("sharedUaProbes", () => {
     expect(ctx.calls).toHaveLength(3);
   });
 
+  // A large page probed by many UAs would otherwise hold one string per UA.
+  it("holds large crawler bodies compressed and returns them intact", async () => {
+    const big = page("the full article body ".repeat(5000));
+    const url = "https://example.com/";
+    const ctx = {
+      fetch: async (o: FetchOptions) =>
+        mockFetchResult(
+          o.userAgent === BASELINE_UA ? big : `${big}<!-- bot -->`,
+          200,
+          "text/html",
+        ),
+    };
+    const [probe] = await sharedUaProbes(ctx, [url], ["gptbot"]);
+    const gptbot = AI_CRAWLER_UAS.find((u) => u.token === "gptbot")!.ua;
+    const raw = await sharedUaFetch(ctx, url, gptbot);
+    const control = await sharedControlProbe(ctx, url);
+
+    expect(probe?.blockClass).toBe(BlockClass.Ok);
+    expect(probe?.probeBody).toBe(`${big}<!-- bot -->`);
+    expect(probe?.baselineBody).toBe(big);
+    expect(raw?.body).toBe(`${big}<!-- bot -->`);
+    expect(control?.body).toBe(`${big}<!-- bot -->`);
+    expect({ ...raw }.body).toBe(raw?.body);
+    // A getter means the cache holds the compressed bytes, not the string.
+    for (const held of [probe, raw, control]) {
+      const key = held === probe ? "probeBody" : "body";
+      expect(Object.getOwnPropertyDescriptor(held, key)).toHaveProperty("get");
+    }
+  });
+
   it("does not share its cache between two scans", async () => {
     const first = scan();
     const second = scan();
