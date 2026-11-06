@@ -10,9 +10,9 @@
     "typecheck": "astro check"
   },
   "dependencies": {
-    "@astrojs/markdown-satteri": "0.4.5",
+    "@astrojs/markdown-satteri": "0.4.6",
     "@forkpoint/agent-lighthouse-core": "workspace:*",
-    "astro": "^7.4.2"
+    "astro": "^7.4.4"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.12",
