@@ -1,4 +1,9 @@
-import type { RequestScheduler } from "./request-scheduler";
+import {
+  createRequestDiagnostics,
+  RequestAbortSource,
+  type RequestDiagnostics,
+} from "./request-diagnostics";
+import { HostStoppedError, type RequestScheduler } from "./request-scheduler";
 import { request, Agent, type Dispatcher } from "undici";
 import dns from "node:dns/promises";
 import {
@@ -186,6 +191,7 @@ export interface FetcherSummary {
  * an `error` and no `response`.
  */
 export interface HttpExchange {
+  diagnostics?: RequestDiagnostics;
   /** Scheduler-admission wait for this exchange; excludes the legacy fetcher gate and HTTP timing. */
   queueWaitMs?: number;
   /** Which `fetch` call sent it, counted per fetcher from 1. Hops share it. */
@@ -237,6 +243,10 @@ export interface Fetcher {
 }
 
 export interface FetcherOptions {
+  /** Add transport event evidence without changing legacy clocks or replay. */
+  requestDiagnostics?: boolean;
+  /** Optional scan-budget signal for explicit first-abort attribution. */
+  budgetSignal?: AbortSignal;
   /** Shared request pacing across scans, including redirect hops. */
   requestScheduler?: RequestScheduler;
   /** Admit ready hosts atomically with scheduler and fetcher limits. */
@@ -561,12 +571,40 @@ export function createFetcherWith(
     const elapsed = () => performance.now() - start - queuedMs;
     // The exchange of the request in flight, until it is reported.
     let open: HttpExchange | undefined;
+    let diagnostic: ReturnType<typeof createRequestDiagnostics> | undefined;
+    let diagnosticCleanup: (() => void) | undefined;
     let replayedTiming: { ttfbMs: number; totalMs: number } | undefined;
     const report = (
       exchange: HttpExchange,
       ttfb: number,
       total: number,
     ): void => {
+      diagnosticCleanup?.();
+      diagnosticCleanup = undefined;
+      diagnostic?.finish();
+      if (exchange.diagnostics)
+        log.trace(
+          {
+            [LogField.FetchId]: exchange.fetchId,
+            [LogField.Hop]: exchange.hop,
+            [LogField.Url]: exchange.request.url,
+            [LogField.HttpMethod]: exchange.request.method,
+            ...(exchange.response && {
+              [LogField.HttpStatus]: exchange.response.status,
+            }),
+            ...(exchange.error && {
+              [LogField.Error]: {
+                message: exchange.error,
+                ...(exchange.diagnostics.failureCode && {
+                  code: exchange.diagnostics.failureCode,
+                }),
+              },
+            }),
+            [LogField.QueueWaitMs]: exchange.queueWaitMs,
+            [LogField.RequestDiagnostics]: exchange.diagnostics,
+          },
+          "Request exchange",
+        );
       open = undefined;
       if (!onExchange) return;
       exchange.ttfbMs = Math.round(ttfb);
@@ -612,6 +650,27 @@ export function createFetcherWith(
         totalMs: 0,
       };
       open = exchange;
+      diagnostic = undefined;
+      if (fetcherOptions.requestDiagnostics) {
+        diagnostic = createRequestDiagnostics();
+        exchange.diagnostics = diagnostic.value;
+        const value = diagnostic.value;
+        const externalAbort = () => {
+          if (value.abortSource !== null) return;
+          value.abortSource =
+            fetcherOptions.budgetSignal?.aborted &&
+            externalSignal?.reason === fetcherOptions.budgetSignal.reason
+              ? RequestAbortSource.SiteBudget
+              : RequestAbortSource.Caller;
+        };
+        if (externalSignal?.aborted) externalAbort();
+        else
+          externalSignal?.addEventListener("abort", externalAbort, {
+            once: true,
+          });
+        diagnosticCleanup = () =>
+          externalSignal?.removeEventListener("abort", externalAbort);
+      }
       const queuedAt = performance.now();
       try {
         if (fetcherOptions.requestScheduler) {
@@ -644,11 +703,33 @@ export function createFetcherWith(
       const signal = externalSignal
         ? AbortSignal.any([timeoutSignal, externalSignal])
         : timeoutSignal;
-      const response = await transport(target, {
-        ...init,
-        signal,
-        dispatcher,
-      });
+      if (diagnostic) {
+        // AbortSignal.any preserves the first reason. Read that reason before
+        // classifying failures, so a later timeout cannot replace caller abort.
+        const value = diagnostic.value;
+        const abort = () => {
+          if (value.abortSource !== null) return;
+          value.abortSource =
+            signal.reason === timeoutSignal.reason && timeoutSignal.aborted
+              ? RequestAbortSource.RequestTimeout
+              : fetcherOptions.budgetSignal?.aborted &&
+                  signal.reason === fetcherOptions.budgetSignal.reason
+                ? RequestAbortSource.SiteBudget
+                : RequestAbortSource.Caller;
+        };
+        if (signal.aborted) abort();
+        else signal.addEventListener("abort", abort, { once: true });
+        const cleanExternal = diagnosticCleanup;
+        diagnosticCleanup = () => {
+          cleanExternal?.();
+          signal.removeEventListener("abort", abort);
+        };
+      }
+      const issueTransport = () =>
+        transport(target, { ...init, signal, dispatcher });
+      const response = await (diagnostic
+        ? diagnostic.run(issueTransport)
+        : issueTransport());
       exchange.response = {
         status: response.statusCode,
         headers: receivedHeaders(response.headers),
@@ -983,6 +1064,18 @@ export function createFetcherWith(
       if (open) {
         const exchange: HttpExchange = open;
         exchange.error = detail;
+        if (exchange.diagnostics && code)
+          exchange.diagnostics.failureCode = code;
+        if (exchange.diagnostics && exchange.diagnostics.abortSource === null) {
+          exchange.diagnostics.abortSource = externalSignal?.aborted
+            ? fetcherOptions.budgetSignal?.aborted &&
+              externalSignal.reason === fetcherOptions.budgetSignal.reason
+              ? RequestAbortSource.SiteBudget
+              : RequestAbortSource.Caller
+            : err instanceof HostStoppedError
+              ? RequestAbortSource.Scheduler
+              : RequestAbortSource.Transport;
+        }
         report(exchange, reportedTtfb, totalMs);
       }
 

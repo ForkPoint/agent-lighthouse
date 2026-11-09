@@ -2064,6 +2064,21 @@ describe("runScan — logging", () => {
 });
 
 describe("ready request scan options", () => {
+  it("gives a normal scan's fetcher no scheduler and no ready admission", async () => {
+    vi.mocked(createFetcher).mockClear();
+    await runScan("https://example.com/");
+    const options = vi.mocked(createFetcher).mock.calls[0]?.[0];
+    expect(options).toBeDefined();
+    expect(options).not.toHaveProperty("requestScheduler");
+    expect(options).not.toHaveProperty("readyRequestScheduling");
+  });
+  it("forwards an explicit opt-out unchanged", async () => {
+    vi.mocked(createFetcher).mockClear();
+    await runScan("https://example.com/", { readyRequestScheduling: false });
+    expect(vi.mocked(createFetcher).mock.calls[0]?.[0]).toMatchObject({
+      readyRequestScheduling: false,
+    });
+  });
   it("forwards admission configuration to its fetcher", async () => {
     const scheduler = createRequestScheduler();
     vi.mocked(createFetcher).mockClear();

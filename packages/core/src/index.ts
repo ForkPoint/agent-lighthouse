@@ -196,3 +196,6 @@ export {
 export type { DomPageContext } from "./check-context";
 export { detectPage } from "./detect-page";
 export { DomWorkLimitError } from "./dom-work";
+
+export { RequestAbortSource } from "./request-diagnostics";
+export type { RequestDiagnostics } from "./request-diagnostics";

@@ -60,6 +60,8 @@ export interface RequestQueueSnapshot extends HostState {
   /** Requests the host may have in flight now: 1 unless auto-throttle raised it. */
   hostLimit: number;
   waiting: number;
+  /** Live connection bounds per exact origin; absent in legacy mode. */
+  origins?: Array<{ origin: string; capacity: number; activeRequests: number }>;
 }
 
 /**
@@ -81,6 +83,8 @@ export interface AutoThrottleOptions {
 export interface RequestSchedulerOptions {
   /** Global active-request ceiling across all owners. Default unlimited. */
   maxConcurrent?: number;
+  /** Bound exact origins to their usable transport capacity. Unknown origins start at 1. */
+  originCapacity?: boolean;
   /** Pause between the end of one request to a host and the next. Default 0. */
   gapMs?: number;
   /**
@@ -114,6 +118,8 @@ export interface DefaultRequestScheduler extends RequestScheduler {
     admission: RequestAdmission,
     signal?: AbortSignal,
   ): Promise<() => void>;
+  /** Update usable connection capacity; null resets an origin to unknown (1). Zero blocks new grants. */
+  updateOriginCapacity(origin: string, capacity: number | null): void;
   /** Whether any request to this host's queue got an HTTP status. */
   answered(url: string): boolean;
   /** Every host's queue, as copies. */
@@ -236,6 +242,16 @@ export function createRequestScheduler(
     lastOwner: object | null;
     turn: number;
   }
+  const origins = new Map<string, { capacity: number; active: number }>();
+  function originFor(url: string) {
+    const origin = new URL(url).origin;
+    let state = origins.get(origin);
+    if (!state) {
+      state = { capacity: 1, active: 0 };
+      origins.set(origin, state);
+    }
+    return state;
+  }
   const owners = new Map<object, number>();
   const ownerLimits = new WeakMap<object, number>();
   let active = 0;
@@ -352,7 +368,11 @@ export function createRequestScheduler(
         const eligible = site.pending.filter((entry) => {
           if (seen.has(entry.owner)) return false;
           seen.add(entry.owner);
-          return (owners.get(entry.owner) ?? 0) < entry.ownerLimit;
+          return (
+            (owners.get(entry.owner) ?? 0) < entry.ownerLimit &&
+            (!options.originCapacity ||
+              originFor(entry.url).active < originFor(entry.url).capacity)
+          );
         });
         const entry = eligible[0];
         if (!entry) continue;
@@ -372,6 +392,10 @@ export function createRequestScheduler(
         site.waiting = site.pending.length;
         entry.cleanup();
         active += 1;
+        const origin = options.originCapacity
+          ? originFor(entry.url)
+          : undefined;
+        if (origin) origin.active += 1;
         owners.set(entry.owner, (owners.get(entry.owner) ?? 0) + 1);
         const lease: Lease = {
           url: entry.url,
@@ -388,6 +412,7 @@ export function createRequestScheduler(
           if (released) return;
           released = true;
           active -= 1;
+          if (origin) origin.active -= 1;
           const count = (owners.get(entry.owner) ?? 1) - 1;
           if (count) owners.set(entry.owner, count);
           else owners.delete(entry.owner);
@@ -425,6 +450,7 @@ export function createRequestScheduler(
       );
     ownerLimits.set(admission.owner, ownerLimit);
     const site = siteFor(url);
+    if (options.originCapacity) originFor(url);
     return new Promise((resolve, reject) => {
       if (signal?.aborted) {
         reject(
@@ -477,7 +503,34 @@ export function createRequestScheduler(
   if (options.state) importState(options.state);
 
   return {
+    updateOriginCapacity(url, capacity) {
+      if (!options.originCapacity)
+        throw new Error("originCapacity mode is not enabled");
+      if (
+        capacity !== null &&
+        (!Number.isSafeInteger(capacity) || capacity < 0)
+      )
+        throw new RangeError(
+          "origin capacity must be a non-negative safe integer or null",
+        );
+      originFor(url).capacity = capacity ?? 1;
+      dispatch();
+    },
     snapshot() {
+      const originSnapshots = new Map<
+        string,
+        NonNullable<RequestQueueSnapshot["origins"]>
+      >();
+      for (const [origin, value] of origins) {
+        const host = schedulerHostKey(origin);
+        const entries = originSnapshots.get(host) ?? [];
+        entries.push({
+          origin,
+          capacity: value.capacity,
+          activeRequests: value.active,
+        });
+        originSnapshots.set(host, entries);
+      }
       return [...sites.values()].map(
         ({
           pending: _pending,
@@ -488,6 +541,9 @@ export function createRequestScheduler(
           ...state
         }) => ({
           ...state,
+          ...(options.originCapacity && {
+            origins: originSnapshots.get(state.host) ?? [],
+          }),
         }),
       );
     },
