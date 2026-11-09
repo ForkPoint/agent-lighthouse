@@ -85,7 +85,7 @@
     "gpt-tokenizer": "^4.1.0",
     "jsdom": "^30.1.3",
     "parse5-htmlparser2-tree-adapter": "^8.0.1",
-    "undici": "^8.12.3",
+    "undici": "^8.12.4",
     "zod": "^4.6.7"
   },
   "devDependencies": {
@@ -94,7 +94,7 @@
     "esbuild": "^0.28.2",
     "tsup": "^9.0.0",
     "typescript": "~7.0.2",
-    "vitest": "^5.0.5"
+    "vitest": "^5.1.0"
   },
   "engines": {
     "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
