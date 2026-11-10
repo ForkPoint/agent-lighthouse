@@ -7,13 +7,29 @@ export interface RequestAdmission {
   maxConcurrent?: number;
 }
 
+/**
+ * What the holder of a request learned, passed back when it releases the
+ * request. A scheduler that adapts to the host reads it; others ignore it.
+ */
+export interface RequestOutcome {
+  /** HTTP status of the answer, or `null` when none arrived. */
+  status: number | null;
+  /** Epoch milliseconds when the response headers arrived. */
+  answeredAt?: number;
+  /** The caller gave up first, so the request says nothing about the host. */
+  aborted?: boolean;
+}
+
+/** Ends an admitted request; the outcome is optional. */
+export type RequestRelease = (outcome?: RequestOutcome) => void;
+
 export interface RequestScheduler {
   acquireRequest?(
     url: string,
     admission: RequestAdmission,
     signal?: AbortSignal,
-  ): Promise<() => void>;
-  acquire(url: string, signal?: AbortSignal): Promise<() => void>;
+  ): Promise<RequestRelease>;
+  acquire(url: string, signal?: AbortSignal): Promise<RequestRelease>;
   observe(
     url: string,
     status: number,
@@ -68,15 +84,16 @@ export interface RequestQueueSnapshot extends HostState {
  * Adaptive per-host concurrency. A host starts at one request in flight. The
  * limit grows by one after a full window of healthy answers and halves on
  * strain, between 1 and `maxPerHost`. Strain is a 5xx answer, a request that
- * ended without an answer, such as a timeout or reset, or a request that took
- * longer than `slowMs` from admission to release. `gapMs` still separates each
+ * ended without an answer, such as a timeout or reset, or a request whose
+ * response headers came more than `slowMs` after admission. A request its
+ * caller aborted is not judged either way. `gapMs` still separates each
  * release from the next admission to the host, and 403, 429 and 503 keep their
  * stop and cooldown rules.
  */
 export interface AutoThrottleOptions {
   /** The most requests one host may have in flight. */
   maxPerHost: number;
-  /** A request held longer than this counts as strain. Default 5000 ms. */
+  /** An answer slower than this, from admission to headers, counts as strain. Default 5000 ms. */
   slowMs?: number;
 }
 
@@ -117,7 +134,7 @@ export interface DefaultRequestScheduler extends RequestScheduler {
     url: string,
     admission: RequestAdmission,
     signal?: AbortSignal,
-  ): Promise<() => void>;
+  ): Promise<RequestRelease>;
   /** Update usable connection capacity; null resets an origin to unknown (1). Zero blocks new grants. */
   updateOriginCapacity(origin: string, capacity: number | null): void;
   /** Whether any request to this host's queue got an HTTP status. */
@@ -225,7 +242,9 @@ export function createRequestScheduler(
     url: string;
     owner: object;
     ownerLimit: number;
-    resolve: (release: () => void) => void;
+    /** The exact origin, kept only in origin-capacity mode. */
+    origin: string | undefined;
+    resolve: (release: RequestRelease) => void;
     reject: (error: unknown) => void;
     cleanup: () => void;
   }
@@ -233,6 +252,9 @@ export function createRequestScheduler(
     url: string;
     since: number;
     status: number | null;
+    /** When the response headers arrived, or `null` before. */
+    answeredAt: number | null;
+    aborted: boolean;
   }
   interface Site extends RequestQueueSnapshot {
     pending: Pending[];
@@ -243,8 +265,7 @@ export function createRequestScheduler(
     turn: number;
   }
   const origins = new Map<string, { capacity: number; active: number }>();
-  function originFor(url: string) {
-    const origin = new URL(url).origin;
+  function originState(origin: string) {
     let state = origins.get(origin);
     if (!state) {
       state = { capacity: 1, active: 0 };
@@ -252,12 +273,25 @@ export function createRequestScheduler(
     }
     return state;
   }
+  function hasOriginRoom(origin: string): boolean {
+    const state = origins.get(origin);
+    return (state?.active ?? 0) < (state?.capacity ?? 1);
+  }
+  // An idle origin at the default capacity holds nothing worth keeping, and a
+  // long run meets thousands of them.
+  function releaseOrigin(origin: string): void {
+    const state = originState(origin);
+    state.active -= 1;
+    if (state.active === 0 && state.capacity === 1) origins.delete(origin);
+  }
   const owners = new Map<object, number>();
   const ownerLimits = new WeakMap<object, number>();
   let active = 0;
   let turn = 0;
   let wake: ReturnType<typeof setTimeout> | undefined;
   const sites = new Map<string, Site>();
+  /** Hosts with requests waiting: the only ones `dispatch` has to visit. */
+  const queued = new Set<Site>();
 
   function siteFor(url: string): Site {
     const key = schedulerHostKey(url);
@@ -306,11 +340,12 @@ export function createRequestScheduler(
   // Additive increase, multiplicative decrease, as TCP congestion control.
   // Without auto-throttle `maxPerHost` is 1, so the limit never moves.
   function adapt(site: Site, lease: Lease, now: number): void {
-    if (maxPerHost === 1) return;
+    if (maxPerHost === 1 || lease.aborted) return;
+    // Slowness ends at the headers: reading a large body is not strain.
     const strained =
       lease.status === null ||
       lease.status >= 500 ||
-      now - lease.since > slowMs;
+      (lease.answeredAt ?? now) - lease.since > slowMs;
     if (strained) {
       site.hostLimit = Math.max(1, Math.floor(site.hostLimit / 2));
       site.healthy = 0;
@@ -329,6 +364,23 @@ export function createRequestScheduler(
     site.stopReason = reason;
   }
 
+  // Ready admission rejects a stopped host's queue at once. A plain `acquire`
+  // waiter learns of the stop as before: once the host's requests in flight end.
+  function rejectStopped(site: Site): void {
+    const keep: Pending[] = [];
+    for (const entry of site.pending) {
+      if (entry.owner === legacyOwner && site.leases.length > 0) {
+        keep.push(entry);
+        continue;
+      }
+      entry.cleanup();
+      entry.reject(new HostStoppedError(site.host, site.stopReason));
+    }
+    site.pending = keep;
+    site.waiting = keep.length;
+    if (!keep.length) queued.delete(site);
+  }
+
   // A bounded frontier contains at most one candidate per known host. Rebuild
   // only on queue/state/capacity changes, with a single wake for future work.
   // Each pass admits at most one request per host, so hosts take turns; passes
@@ -340,17 +392,11 @@ export function createRequestScheduler(
     let next = Infinity;
     for (let admitted = true; admitted;) {
       admitted = false;
-      const frontier = [...sites.values()].filter(
-        (site) => site.pending.length,
-      );
+      const frontier = [...queued];
       frontier.sort((a, b) => a.readyAt - b.readyAt || a.turn - b.turn);
       for (const site of frontier) {
         if (site.stopped) {
-          for (const entry of site.pending.splice(0)) {
-            entry.cleanup();
-            entry.reject(new HostStoppedError(site.host, site.stopReason));
-          }
-          site.waiting = 0;
+          rejectStopped(site);
           continue;
         }
         if (site.leases.length >= site.hostLimit || active >= globalLimit)
@@ -370,8 +416,7 @@ export function createRequestScheduler(
           seen.add(entry.owner);
           return (
             (owners.get(entry.owner) ?? 0) < entry.ownerLimit &&
-            (!options.originCapacity ||
-              originFor(entry.url).active < originFor(entry.url).capacity)
+            (entry.origin === undefined || hasOriginRoom(entry.origin))
           );
         });
         const entry = eligible[0];
@@ -390,17 +435,18 @@ export function createRequestScheduler(
         );
         site.pending.push(...sameOwner);
         site.waiting = site.pending.length;
+        if (!site.pending.length) queued.delete(site);
         entry.cleanup();
         active += 1;
-        const origin = options.originCapacity
-          ? originFor(entry.url)
-          : undefined;
-        if (origin) origin.active += 1;
+        const origin = entry.origin;
+        if (origin !== undefined) originState(origin).active += 1;
         owners.set(entry.owner, (owners.get(entry.owner) ?? 0) + 1);
         const lease: Lease = {
           url: entry.url,
           since: Date.now(),
           status: null,
+          answeredAt: null,
+          aborted: false,
         };
         site.leases.push(lease);
         syncActive(site);
@@ -408,11 +454,17 @@ export function createRequestScheduler(
         site.turn = turn++;
         admitted = true;
         let released = false;
-        entry.resolve(() => {
+        entry.resolve((outcome) => {
           if (released) return;
           released = true;
+          // The holder's own outcome is exact; `observe` matches by URL only.
+          if (outcome) {
+            lease.status = outcome.status;
+            lease.answeredAt = outcome.answeredAt ?? null;
+            lease.aborted = outcome.aborted === true;
+          }
           active -= 1;
-          if (origin) origin.active -= 1;
+          if (origin !== undefined) releaseOrigin(origin);
           const count = (owners.get(entry.owner) ?? 1) - 1;
           if (count) owners.set(entry.owner, count);
           else owners.delete(entry.owner);
@@ -436,7 +488,7 @@ export function createRequestScheduler(
     url: string,
     admission: RequestAdmission,
     signal?: AbortSignal,
-  ): Promise<() => void> {
+  ): Promise<RequestRelease> {
     const ownerLimit = limit(
       "admission.maxConcurrent",
       admission.maxConcurrent,
@@ -450,7 +502,7 @@ export function createRequestScheduler(
       );
     ownerLimits.set(admission.owner, ownerLimit);
     const site = siteFor(url);
-    if (options.originCapacity) originFor(url);
+    const origin = options.originCapacity ? new URL(url).origin : undefined;
     return new Promise((resolve, reject) => {
       if (signal?.aborted) {
         reject(
@@ -465,6 +517,7 @@ export function createRequestScheduler(
         if (index < 0) return;
         site.pending.splice(index, 1);
         site.waiting = site.pending.length;
+        if (!site.pending.length) queued.delete(site);
         entry.cleanup();
         reject(
           signal?.reason instanceof Error
@@ -477,12 +530,14 @@ export function createRequestScheduler(
         url,
         owner: admission.owner,
         ownerLimit,
+        origin,
         resolve,
         reject,
         cleanup: () => signal?.removeEventListener("abort", abort),
       };
       site.pending.push(entry);
       site.waiting = site.pending.length;
+      queued.add(site);
       signal?.addEventListener("abort", abort, { once: true });
       dispatch();
     });
@@ -513,7 +568,7 @@ export function createRequestScheduler(
         throw new RangeError(
           "origin capacity must be a non-negative safe integer or null",
         );
-      originFor(url).capacity = capacity ?? 1;
+      originState(new URL(url).origin).capacity = capacity ?? 1;
       dispatch();
     },
     snapshot() {
@@ -564,7 +619,10 @@ export function createRequestScheduler(
       const lease = site.leases.find(
         (held) => held.url === url && held.status === null,
       );
-      if (lease) lease.status = status;
+      if (lease) {
+        lease.status = status;
+        lease.answeredAt = Date.now();
+      }
       if (status === 429) stop(site, HostStopReason.TooManyRequests);
       else if (status === 403 && request?.ownAgent !== false)
         stop(site, HostStopReason.Forbidden);

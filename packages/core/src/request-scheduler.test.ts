@@ -23,14 +23,14 @@ describe("shared request pacing", () => {
       {
         host: "example.com",
         activeUrl: "https://example.com/a",
-        waiting: 0,
+        waiting: 1,
         lastStatus: 429,
         stopped: true,
       },
     ]);
     const copy = scheduler.snapshot();
     copy[0]!.waiting = 999;
-    expect(scheduler.snapshot()[0]!.waiting).toBe(0);
+    expect(scheduler.snapshot()[0]!.waiting).toBe(1);
     controller.abort();
     await expect(queued).rejects.toThrow();
     release();
@@ -512,5 +512,22 @@ describe("Retry-After forms", () => {
       stopped: true,
       stopReason: HostStopReason.TooManyRequests,
     });
+  });
+});
+
+describe("a stopped host's queue", () => {
+  it("rejects ready waiters at once and plain waiters once the host is idle", async () => {
+    const scheduler = createRequestScheduler();
+    const release = await scheduler.acquire("https://stop.test/a");
+    const plain = scheduler.acquire("https://stop.test/b");
+    const ready = scheduler.acquireRequest("https://stop.test/c", {
+      owner: {},
+    });
+    scheduler.observe("https://stop.test/a", 429, undefined);
+    await expect(ready).rejects.toBeInstanceOf(HostStoppedError);
+    expect(scheduler.snapshot()[0]).toMatchObject({ waiting: 1 });
+    release();
+    await expect(plain).rejects.toBeInstanceOf(HostStoppedError);
+    expect(scheduler.snapshot()[0]).toMatchObject({ waiting: 0 });
   });
 });

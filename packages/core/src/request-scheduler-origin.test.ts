@@ -158,4 +158,18 @@ describe("origin transport admission", () => {
         RangeError,
       );
   });
+
+  it("forgets an idle origin at the default capacity and keeps a set one", async () => {
+    const scheduler = createRequestScheduler({ originCapacity: true });
+    const origins = () => scheduler.snapshot()[0]?.origins;
+    const release = await scheduler.acquireRequest(`${origin}/a`, {
+      owner: {},
+    });
+    expect(origins()).toEqual([{ origin, capacity: 1, activeRequests: 1 }]);
+    release();
+    expect(origins()).toEqual([]);
+    scheduler.updateOriginCapacity(origin, 3);
+    (await scheduler.acquireRequest(`${origin}/b`, { owner: {} }))();
+    expect(origins()).toEqual([{ origin, capacity: 3, activeRequests: 0 }]);
+  });
 });

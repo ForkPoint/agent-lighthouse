@@ -3,7 +3,11 @@ import {
   RequestAbortSource,
   type RequestDiagnostics,
 } from "./request-diagnostics";
-import { HostStoppedError, type RequestScheduler } from "./request-scheduler";
+import {
+  HostStoppedError,
+  type RequestRelease,
+  type RequestScheduler,
+} from "./request-scheduler";
 import { request, Agent, type Dispatcher } from "undici";
 import dns from "node:dns/promises";
 import {
@@ -483,6 +487,9 @@ export function createFetcherWith(
   const ready = fetcherOptions.readyRequestScheduling === true;
   const owner = {};
   let queueWaitMs = 0;
+  // Queue-wait fields appear only with a scheduler, so a fetcher without one
+  // writes the same exchanges, summaries and logs as before they existed.
+  const scheduled = fetcherOptions.requestScheduler !== undefined;
   if (
     ready &&
     typeof fetcherOptions.requestScheduler?.acquireRequest !== "function"
@@ -533,7 +540,7 @@ export function createFetcherWith(
     const now = performance.now();
     return {
       requests: tally.requests,
-      queueWaitMs: Math.round(queueWaitMs),
+      ...(scheduled && { queueWaitMs: Math.round(queueWaitMs) }),
       statuses: { ...tally.statuses },
       failures: { ...tally.failures },
       open: [...pending].map((entry) => ({
@@ -566,7 +573,18 @@ export function createFetcherWith(
     const fetchId = (fetchCount += 1);
     const start = performance.now();
     let queuedMs = 0;
-    let release: (() => void) | undefined;
+    let release: RequestRelease | undefined;
+    // What the hop in flight got, for the scheduler to judge its host by.
+    let answer: { status: number; answeredAt: number } | undefined;
+    const releaseHop = () => {
+      const done = release;
+      release = undefined;
+      done?.({
+        status: answer?.status ?? null,
+        ...(answer && { answeredAt: answer.answeredAt }),
+        aborted: externalSignal?.aborted === true,
+      });
+    };
     let ttfbMs = 0;
     const elapsed = () => performance.now() - start - queuedMs;
     // The exchange of the request in flight, until it is reported.
@@ -672,6 +690,7 @@ export function createFetcherWith(
           externalSignal?.removeEventListener("abort", externalAbort);
       }
       const queuedAt = performance.now();
+      answer = undefined;
       try {
         if (fetcherOptions.requestScheduler) {
           const scheduler = fetcherOptions.requestScheduler;
@@ -691,8 +710,10 @@ export function createFetcherWith(
       } finally {
         const waited = performance.now() - queuedAt;
         queuedMs += waited;
-        queueWaitMs += waited;
-        exchange.queueWaitMs = Math.round(waited);
+        if (scheduled) {
+          queueWaitMs += waited;
+          exchange.queueWaitMs = Math.round(waited);
+        }
       }
       externalSignal?.throwIfAborted();
       // The scheduler's wait is not part of the request.
@@ -737,6 +758,7 @@ export function createFetcherWith(
         bodyRead: false,
         truncated: false,
       };
+      answer = { status: response.statusCode, answeredAt: Date.now() };
       fetcherOptions.requestScheduler?.observe(
         target,
         response.statusCode,
@@ -873,8 +895,7 @@ export function createFetcherWith(
         }
 
         await response.body.dump();
-        release?.();
-        release = undefined;
+        releaseHop();
         cookieJar.store(response.headers["set-cookie"], currentUrl);
 
         // 303 always continues as a GET without a body; 301 and 302 do the same
@@ -1009,7 +1030,7 @@ export function createFetcherWith(
           ...(currentUrl !== targetUrl && { finalUrl: currentUrl }),
           [LogField.HttpStatus]: response.statusCode,
           [LogField.DurationMs]: Math.round(totalMs),
-          [LogField.QueueWaitMs]: Math.round(queuedMs),
+          ...(scheduled && { [LogField.QueueWaitMs]: Math.round(queuedMs) }),
           ttfbMs: Math.round(ttfbMs),
           ...(hops > 0 && { hops }),
           [LogField.UserAgent]: ua,
@@ -1091,7 +1112,7 @@ export function createFetcherWith(
           [LogField.Url]: targetUrl,
           [LogField.Error]: { message: detail, ...(code && { code }) },
           [LogField.DurationMs]: Math.round(totalMs),
-          [LogField.QueueWaitMs]: Math.round(queuedMs),
+          ...(scheduled && { [LogField.QueueWaitMs]: Math.round(queuedMs) }),
         },
         "Request failed",
       );
@@ -1109,7 +1130,7 @@ export function createFetcherWith(
         error: detail,
       };
     } finally {
-      release?.();
+      releaseHop();
     }
   }
 

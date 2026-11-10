@@ -122,8 +122,8 @@ describe("auto-throttle", () => {
     const slow = await scheduler.acquireRequest("https://site.test/slow", {
       owner,
     });
-    scheduler.observe("https://site.test/slow", 200, undefined);
     vi.advanceTimersByTime(1001);
+    scheduler.observe("https://site.test/slow", 200, undefined);
     slow();
     expect(limitOf(scheduler)).toBe(1);
   });
@@ -431,17 +431,69 @@ describe("auto-throttle edge cases", () => {
     const edge = await scheduler.acquireRequest("https://site.test/edge", {
       owner,
     });
-    scheduler.observe("https://site.test/edge", 200, undefined);
     vi.advanceTimersByTime(500);
+    scheduler.observe("https://site.test/edge", 200, undefined);
     edge();
     expect(limitOf(scheduler)).toBe(2);
     const past = await scheduler.acquireRequest("https://site.test/past", {
       owner,
     });
-    scheduler.observe("https://site.test/past", 200, undefined);
     vi.advanceTimersByTime(501);
+    scheduler.observe("https://site.test/past", 200, undefined);
     past();
     expect(limitOf(scheduler)).toBe(1);
+  });
+
+  it("counts a fast answer with a slow body as healthy", async () => {
+    vi.useFakeTimers();
+    const scheduler = createRequestScheduler({
+      autoThrottle: { maxPerHost: 4, slowMs: 500 },
+    });
+    const big = await scheduler.acquireRequest("https://site.test/big", {
+      owner,
+    });
+    vi.advanceTimersByTime(100);
+    scheduler.observe("https://site.test/big", 200, undefined);
+    vi.advanceTimersByTime(5000);
+    big();
+    expect(limitOf(scheduler)).toBe(2);
+  });
+
+  it("does not judge the host by a request its caller aborted", async () => {
+    vi.useFakeTimers();
+    const scheduler = createRequestScheduler({
+      autoThrottle: { maxPerHost: 4, slowMs: 500 },
+    });
+    await healthy(scheduler, "https://site.test/warm");
+    expect(limitOf(scheduler)).toBe(2);
+    const gone = await scheduler.acquireRequest("https://site.test/gone", {
+      owner,
+    });
+    vi.advanceTimersByTime(5000);
+    gone({ status: null, aborted: true });
+    expect(limitOf(scheduler)).toBe(2);
+  });
+
+  it("judges each lease by the outcome its holder reports", async () => {
+    vi.useFakeTimers();
+    const scheduler = createRequestScheduler({
+      autoThrottle: { maxPerHost: 4, slowMs: 500 },
+    });
+    await healthy(scheduler, "https://site.test/warm");
+    expect(limitOf(scheduler)).toBe(2);
+    // Two requests for one URL, as crawler User-Agent probes send. The second
+    // answers first; matching by URL would give its status to the first.
+    const first = await scheduler.acquireRequest("https://site.test/same", {
+      owner,
+    });
+    const second = await scheduler.acquireRequest("https://site.test/same", {
+      owner,
+    });
+    scheduler.observe("https://site.test/same", 200, undefined);
+    second({ status: 200, answeredAt: Date.now() });
+    expect(limitOf(scheduler)).toBe(2);
+    first({ status: 200, answeredAt: Date.now() });
+    expect(limitOf(scheduler)).toBe(3);
   });
 
   it("treats a 403 to a borrowed User-Agent as a healthy answer", async () => {

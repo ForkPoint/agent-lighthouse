@@ -9,6 +9,7 @@ import {
   createRequestScheduler,
   HOST_STOPPED_MESSAGE,
   type RequestAdmission,
+  type RequestOutcome,
   type RequestScheduler,
 } from "./request-scheduler";
 import { captureLogs } from "./tests/capture-logs";
@@ -289,14 +290,49 @@ describe("fetcher ready admission: leases and evidence", () => {
     }
   });
 
-  it("reports zero queue wait for a fetcher without a scheduler", async () => {
+  it("writes no queue wait for a fetcher without a scheduler", async () => {
     const exchanges: HttpExchange[] = [];
     const fetcher = createFetcherWith(
       { onExchange: (exchange) => exchanges.push(exchange) },
       ok,
     );
     await fetcher.fetch({ url: "https://site.test/a" });
-    expect(fetcher.summary().queueWaitMs).toBe(0);
-    expect(exchanges[0]?.queueWaitMs).toBe(0);
+    expect(fetcher.summary()).not.toHaveProperty("queueWaitMs");
+    expect(exchanges[0]).not.toHaveProperty("queueWaitMs");
+  });
+
+  it("releases each hop with its own status, or as aborted", async () => {
+    const outcomes: (RequestOutcome | undefined)[] = [];
+    const scheduler: RequestScheduler = {
+      async acquire() {
+        return (outcome) => outcomes.push(outcome);
+      },
+      observe() {},
+    };
+    const hops: Transport = async (url) =>
+      url.endsWith("/from")
+        ? { statusCode: 301, headers: { location: "/to" }, body: body() }
+        : { statusCode: 503, headers: {}, body: body() };
+    const fetcher = createFetcherWith({ requestScheduler: scheduler }, hops);
+    await fetcher.fetch({ url: "https://site.test/from" });
+    expect(outcomes).toEqual([
+      { status: 301, answeredAt: expect.any(Number), aborted: false },
+      { status: 503, answeredAt: expect.any(Number), aborted: false },
+    ]);
+
+    outcomes.length = 0;
+    const controller = new AbortController();
+    const hang: Transport = (_url, init) =>
+      new Promise((_resolve, reject) => {
+        init.signal.addEventListener("abort", () =>
+          reject(new Error("aborted", { cause: init.signal.reason })),
+        );
+        controller.abort(new Error("caller left"));
+      });
+    await createFetcherWith({ requestScheduler: scheduler }, hang).fetch({
+      url: "https://site.test/slow",
+      signal: controller.signal,
+    });
+    expect(outcomes).toEqual([{ status: null, aborted: true }]);
   });
 });

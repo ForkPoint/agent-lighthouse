@@ -26,6 +26,8 @@ export type {
   RequestSchedulerOptions,
   RequestAdmission,
   AutoThrottleOptions,
+  RequestOutcome,
+  RequestRelease,
 } from "./request-scheduler";
 export { createReplay } from "./replay";
 export type { Replay } from "./replay";
