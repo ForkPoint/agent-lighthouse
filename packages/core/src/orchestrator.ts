@@ -162,9 +162,9 @@ export interface ScanOptions {
    * undici dispatcher for every request this scan makes.
    */
   dispatcher?: Dispatcher | undefined;
-  /**
-   * How many requests this scan may have in flight at once.
-   */
+  /** Use atomic ready-host admission; requires a supporting scheduler. */
+  readyRequestScheduling?: boolean | undefined;
+  /** How many requests this scan may have in flight at once. */
   maxConcurrent?: number | undefined;
   /** Shared pacing for each network request, including redirects. */
   requestScheduler?: RequestScheduler | undefined;
@@ -176,6 +176,8 @@ export interface ScanOptions {
    * capture holds every response the scan judged.
    */
   onExchange?: ((exchange: HttpExchange) => void) | undefined;
+  /** Include per-hop transport diagnostics in captures and logs. */
+  requestDiagnostics?: boolean | undefined;
   /**
    * The fetcher every request goes through, in place of the one the scan
    * builds. `createReplay` makes one that reads captured exchanges. With a
@@ -502,6 +504,14 @@ async function scanWithinBudget(
       captureExchange(exchange);
     });
   const suppliedFetcher = options?.fetcher;
+  if (suppliedFetcher && options?.readyRequestScheduling)
+    throw new Error(
+      "readyRequestScheduling cannot configure a supplied fetcher; configure it when creating that fetcher",
+    );
+  if (suppliedFetcher && options?.requestDiagnostics)
+    throw new Error(
+      "requestDiagnostics cannot configure a supplied fetcher; configure it when creating that fetcher",
+    );
   const fetcher: Fetcher = suppliedFetcher
     ? {
         fetch: (request) =>
@@ -512,12 +522,19 @@ async function scanWithinBudget(
         summary: () => suppliedFetcher.summary(),
       }
     : createFetcher({
+        budgetSignal: budget.signal,
+        ...(options?.requestDiagnostics !== undefined && {
+          requestDiagnostics: options.requestDiagnostics,
+        }),
         ...(options?.requestScheduler !== undefined && {
           requestScheduler: options.requestScheduler,
         }),
         ...(onExchange !== undefined && { onExchange }),
         ...(options?.dispatcher !== undefined && {
           dispatcher: options.dispatcher,
+        }),
+        ...(options?.readyRequestScheduling !== undefined && {
+          readyRequestScheduling: options.readyRequestScheduling,
         }),
         ...(options?.maxConcurrent !== undefined && {
           maxConcurrent: options.maxConcurrent,
@@ -592,11 +609,12 @@ async function scanWithinBudget(
     shouldBypassOriginCache(url, options) ||
     !!options?.robotsTxt ||
     options?.fetcher !== undefined;
-  const originCacheKey = computeOriginCacheKey(
-    url,
-    ORIGIN_EVIDENCE_VERSION,
-    options?.headers,
-  );
+  // Cached exchanges carry diagnostics and queue waits only when the scan
+  // that read them had them, so scans that differ in either keep apart.
+  const originCacheKey =
+    computeOriginCacheKey(url, ORIGIN_EVIDENCE_VERSION, options?.headers) +
+    (options?.requestDiagnostics ? "|diagnostics" : "") +
+    (options?.requestScheduler ? "|scheduled" : "");
 
   let cachedEvidence = !bypassCache
     ? originCache.get(originCacheKey)
@@ -672,6 +690,26 @@ async function scanWithinBudget(
       earlyPage.catch(() => {});
     }
 
+    // Ready admission completes essential evidence before optional probes can
+    // stop the host. Await the entire redirect chain, not only its first hop.
+    const isHomepageScan = url === `${baseUrl}/` || url === baseUrl;
+    const homepageFirst = options?.readyRequestScheduling === true;
+    // A homepage scan is about to fetch the origin homepage as its page, so
+    // it is not fetched twice here; the page result fills the slot below.
+    const fetchOriginHomepage = async () => {
+      if (!isHomepageScan)
+        originHomepageResult = await fetchPageWithRetry(
+          fetcher,
+          `${baseUrl}/`,
+          fetchSignal,
+          signal,
+        );
+    };
+    if (homepageFirst) {
+      if (earlyPage) await earlyPage;
+      await fetchOriginHomepage();
+    }
+
     const rootResults = await Promise.all(
       rootFilePaths.map((path) => {
         if (path === "/robots.txt") return Promise.resolve(robots);
@@ -694,12 +732,7 @@ async function scanWithinBudget(
       rootFiles[path] = rootResults[i]!;
     });
 
-    // A homepage scan is about to fetch the origin homepage as its page, so
-    // it is not fetched twice here; the page result fills the slot below.
-    const isHomepageScan = url === `${baseUrl}/` || url === baseUrl;
-    originHomepageResult = isHomepageScan
-      ? undefined
-      : await fetchPageWithRetry(fetcher, `${baseUrl}/`, fetchSignal, signal);
+    if (!homepageFirst) await fetchOriginHomepage();
 
     originReadAt = new Date(scanNow()).toISOString();
     originFresh = true;

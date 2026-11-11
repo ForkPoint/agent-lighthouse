@@ -6,7 +6,7 @@ import {
   type HostState,
 } from "./request-scheduler";
 
-// Use real timers: node:timers/promises is deliberately abortable.
+// Keep real timers for pacing checks; atomic-frontier tests opt into fake time.
 afterEach(() => vi.useRealTimers());
 
 describe("shared request pacing", () => {
@@ -289,5 +289,256 @@ describe("shared request pacing", () => {
     expect(() =>
       createRequestScheduler({ maxRetryAfterMs: Number.NaN }),
     ).toThrow(RangeError);
+  });
+});
+
+describe("atomic ready admission", () => {
+  it("rotates three owners and preserves each owner's FIFO", async () => {
+    const scheduler = createRequestScheduler();
+    const a = {},
+      b = {},
+      c = {};
+    const first = await scheduler.acquireRequest("https://shared.test/first", {
+      owner: a,
+    });
+    const order: string[] = [];
+    const enqueue = (owner: object, path: string) =>
+      scheduler
+        .acquireRequest(`https://shared.test/${path}`, { owner })
+        .then((release) => {
+          order.push(path);
+          return release();
+        });
+    const pending = [
+      enqueue(a, "a1"),
+      enqueue(a, "a2"),
+      enqueue(b, "b1"),
+      enqueue(b, "b2"),
+      enqueue(c, "c1"),
+    ];
+    first();
+    await Promise.all(pending);
+    expect(order).toEqual(["b1", "c1", "a1", "b2", "a2"]);
+  });
+
+  it("leaves capacity free during a cooldown and enforces all limits", async () => {
+    vi.useFakeTimers();
+    const scheduler = createRequestScheduler({ maxConcurrent: 2 });
+    const a = {},
+      b = {};
+    scheduler.observe("https://cool.test", 503, "1");
+    const cool = scheduler.acquireRequest("https://cool.test", {
+      owner: a,
+      maxConcurrent: 1,
+    });
+    const one = await scheduler.acquireRequest("https://one.test", {
+      owner: a,
+      maxConcurrent: 1,
+    });
+    const two = await scheduler.acquireRequest("https://two.test", {
+      owner: b,
+      maxConcurrent: 1,
+    });
+    let entered = false;
+    const three = scheduler
+      .acquireRequest("https://three.test", { owner: a, maxConcurrent: 1 })
+      .then((release) => {
+        entered = true;
+        return release;
+      });
+    two();
+    await Promise.resolve();
+    expect(entered).toBe(false);
+    one();
+    (await three)();
+    await vi.advanceTimersByTimeAsync(1000);
+    (await cool)();
+    expect(
+      scheduler
+        .snapshot()
+        .every((site) => site.activeUrl === null && site.waiting === 0),
+    ).toBe(true);
+  });
+
+  it("rechecks imported cooldowns and makes release idempotent", async () => {
+    vi.useFakeTimers();
+    const scheduler = createRequestScheduler({ maxConcurrent: 1 });
+    const release = await scheduler.acquire("https://one.test");
+    const controller = new AbortController();
+    const cancelled = scheduler.acquire(
+      "https://one.test/cancel",
+      controller.signal,
+    );
+    controller.abort(new Error("cancelled"));
+    await expect(cancelled).rejects.toThrow("cancelled");
+    const next = scheduler.acquire("https://one.test/next");
+    scheduler.importState([
+      {
+        host: "one.test",
+        readyAt: Date.now() + 1000,
+        stopped: false,
+        stopReason: null,
+        unavailable: 0,
+        lastStatus: null,
+      },
+    ]);
+    release();
+    release();
+    let entered = false;
+    void next.then(() => {
+      entered = true;
+      return entered;
+    });
+    await vi.advanceTimersByTimeAsync(999);
+    expect(entered).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    (await next)();
+  });
+
+  it.each([0, -1, 1.5, Infinity, NaN])(
+    "rejects invalid limits: %s",
+    (maxConcurrent) => {
+      expect(() => createRequestScheduler({ maxConcurrent })).toThrow(
+        RangeError,
+      );
+      const scheduler = createRequestScheduler();
+      expect(() =>
+        scheduler.acquireRequest("https://one.test", {
+          owner: {},
+          maxConcurrent,
+        }),
+      ).toThrow(RangeError);
+    },
+  );
+});
+
+it("rejects conflicting limits for a stable owner", async () => {
+  const scheduler = createRequestScheduler();
+  const owner = {};
+  const release = await scheduler.acquireRequest("https://one.test", {
+    owner,
+    maxConcurrent: 1,
+  });
+  expect(() =>
+    scheduler.acquireRequest("https://two.test", { owner, maxConcurrent: 2 }),
+  ).toThrow("must stay constant");
+  release();
+});
+
+it("enforces the global cap independently across three owners and hosts", async () => {
+  const scheduler = createRequestScheduler({ maxConcurrent: 2 });
+  const first = await scheduler.acquireRequest("https://one.test", {
+    owner: {},
+  });
+  const second = await scheduler.acquireRequest("https://two.test", {
+    owner: {},
+  });
+  let entered = false;
+  const third = scheduler
+    .acquireRequest("https://three.test", { owner: {} })
+    .then((release) => {
+      entered = true;
+      return release;
+    });
+  await Promise.resolve();
+  expect(entered).toBe(false);
+  expect(
+    scheduler.snapshot().filter((site) => site.activeUrl !== null),
+  ).toHaveLength(2);
+  first();
+  (await third)();
+  second();
+});
+
+it("refuses an owner that is not an object", () => {
+  const scheduler = createRequestScheduler();
+  expect(() =>
+    scheduler.acquireRequest("https://one.test", {
+      owner: null as unknown as object,
+    }),
+  ).toThrow(TypeError);
+});
+
+it("rejects a request whose signal is already aborted, without queueing it", async () => {
+  const scheduler = createRequestScheduler();
+  const reason = new Error("gone");
+  await expect(
+    scheduler.acquireRequest(
+      "https://one.test",
+      { owner: {} },
+      AbortSignal.abort(reason),
+    ),
+  ).rejects.toBe(reason);
+  await expect(
+    scheduler.acquireRequest(
+      "https://one.test",
+      { owner: {} },
+      AbortSignal.abort("plain"),
+    ),
+  ).rejects.toThrow("Request cancelled");
+  expect(scheduler.snapshot()[0]).toMatchObject({
+    waiting: 0,
+    activeRequests: 0,
+  });
+});
+
+describe("Retry-After forms", () => {
+  it("reads the first value of a repeated header", () => {
+    const scheduler = createRequestScheduler({ defaultRetryAfterMs: 60_000 });
+    const before = Date.now();
+    scheduler.observe("https://one.test", 503, ["2", "90"]);
+    const readyAt = scheduler.exportState()[0]!.readyAt;
+    expect(readyAt - before).toBeGreaterThanOrEqual(2000);
+    expect(readyAt - before).toBeLessThan(10_000);
+  });
+
+  it.each(["-5", "not a date", "   "])(
+    "falls back to the default wait for %j",
+    (value) => {
+      const scheduler = createRequestScheduler({ defaultRetryAfterMs: 7000 });
+      const before = Date.now();
+      scheduler.observe("https://one.test", 503, value);
+      const readyAt = scheduler.exportState()[0]!.readyAt;
+      expect(readyAt - before).toBeGreaterThanOrEqual(7000);
+      expect(readyAt - before).toBeLessThan(8000);
+    },
+  );
+
+  it("keeps the first stop reason when a stopped host refuses again", () => {
+    const scheduler = createRequestScheduler();
+    scheduler.observe("https://one.test", 429, undefined);
+    scheduler.observe("https://one.test", 403, undefined);
+    expect(scheduler.exportState()[0]).toMatchObject({
+      stopped: true,
+      stopReason: HostStopReason.TooManyRequests,
+    });
+  });
+});
+
+describe("a stopped host's queue", () => {
+  it("rejects ready waiters at once and plain waiters once the host is idle", async () => {
+    const scheduler = createRequestScheduler();
+    const release = await scheduler.acquire("https://stop.test/a");
+    const plain = scheduler.acquire("https://stop.test/b");
+    const ready = scheduler.acquireRequest("https://stop.test/c", {
+      owner: {},
+    });
+    scheduler.observe("https://stop.test/a", 429, undefined);
+    await expect(ready).rejects.toBeInstanceOf(HostStoppedError);
+    expect(scheduler.snapshot()[0]).toMatchObject({ waiting: 1 });
+    release();
+    await expect(plain).rejects.toBeInstanceOf(HostStoppedError);
+    expect(scheduler.snapshot()[0]).toMatchObject({ waiting: 0 });
+  });
+
+  it("rejects a stopped host's waiters while the global limit is full", async () => {
+    const scheduler = createRequestScheduler({ maxConcurrent: 1 });
+    const release = await scheduler.acquire("https://busy.test/a");
+    const ready = scheduler.acquireRequest("https://stop.test/b", {
+      owner: {},
+    });
+    scheduler.observe("https://stop.test/x", 429, undefined);
+    await expect(ready).rejects.toBeInstanceOf(HostStoppedError);
+    release();
   });
 });
