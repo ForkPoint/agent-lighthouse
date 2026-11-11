@@ -1,5 +1,15 @@
 # @forkpoint/agent-lighthouse-server
 
+## 10.6.0
+
+### Patch Changes
+
+- Updated dependencies [add6101]
+- Updated dependencies [57b22e7]
+- Updated dependencies [57b22e7]
+- Updated dependencies [57b22e7]
+  - @forkpoint/agent-lighthouse-core@10.6.0
+
 ## 10.5.3
 
 ### Patch Changes
