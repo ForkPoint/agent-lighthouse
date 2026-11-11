@@ -1,5 +1,17 @@
 # @forkpoint/agent-lighthouse-core
 
+## 10.6.0
+
+### Minor Changes
+
+- 57b22e7: Add opt-in `autoThrottle` to `createRequestScheduler`. A responsive host may take up to `maxPerHost` requests at once: the limit grows by one after a full window of healthy answers and halves on a 5xx, a request without an answer, or an answer whose headers came later than `slowMs`. Reading the body does not count as slowness. A request its caller aborted before any answer is not judged; one that got an answer is judged by it. The release function a scheduler returns now takes an optional `RequestOutcome` (status, header time, abort), so each request is judged by its own answer, and fields it leaves out keep what `observe` recorded; `RequestOutcome` and `RequestRelease` are exported. Off by default, so a scheduler without it still sends one request per host. `RequestQueueSnapshot` gains `activeRequests` and `hostLimit`, and `AutoThrottleOptions` is exported.
+- 57b22e7: Add opt-in exact-origin transport admission and optional per-hop request diagnostics. Keep origin waiting outside global, host and owner permits, preserve unknown and zero stream capacity, and expose live origin bounds alongside host queues. An owner's request held by a full origin no longer holds back its requests to another origin of the host, and idle origins at the default capacity are forgotten. Diagnostics listeners attach on first use, not at import, and cached origin evidence is reused only by scans with the same diagnostics and scheduler settings. Ready scans now complete the primary HTTP redirect chain and origin homepage before optional root probes. Legacy ordering, HTTP timing and replay remain compatible.
+- 57b22e7: Add opt-in ready-host request admission with atomic global, per-fetcher and host limits. Expose separate queue-wait diagnostics while preserving HTTP timing, refusal policy and legacy fetcher admission. Queue-wait fields appear only on a fetcher with a scheduler. A stopped host rejects ready waiters at once; a plain `acquire` waiter still learns of the stop once the host's requests in flight end.
+
+### Patch Changes
+
+- add6101: Reduce heap held by one scan. Parsed HTML trees now store flat text and attribute strings instead of one rope piece per character, and crawler-UA response bodies in the per-scan probe cache stay compressed until an audit reads them. A 4 MB storefront homepage dropped from 480 MB to 195 MB of peak live heap with the same score.
+
 ## 10.5.3
 
 ### Patch Changes
