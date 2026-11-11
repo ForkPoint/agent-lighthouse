@@ -335,4 +335,34 @@ describe("fetcher ready admission: leases and evidence", () => {
     });
     expect(outcomes).toEqual([{ status: null, aborted: true }]);
   });
+
+  it("releases an answered hop as answered when its caller aborts the body", async () => {
+    const outcomes: (RequestOutcome | undefined)[] = [];
+    const scheduler: RequestScheduler = {
+      async acquire() {
+        return (outcome) => outcomes.push(outcome);
+      },
+      observe() {},
+    };
+    const controller = new AbortController();
+    const cut: Transport = async () => ({
+      statusCode: 500,
+      headers: {},
+      body: {
+        async *[Symbol.asyncIterator]() {
+          yield new TextEncoder().encode("partial");
+          controller.abort(new Error("site budget"));
+          throw new Error("aborted");
+        },
+        async dump() {},
+      },
+    });
+    await createFetcherWith({ requestScheduler: scheduler }, cut).fetch({
+      url: "https://site.test/busy",
+      signal: controller.signal,
+    });
+    expect(outcomes).toEqual([
+      { status: 500, answeredAt: expect.any(Number), aborted: false },
+    ]);
+  });
 });

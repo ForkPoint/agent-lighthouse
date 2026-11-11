@@ -184,4 +184,18 @@ describe("Phase 5 Origin Evidence & Cache Gates", () => {
       expect(cache.get(keyV2)).toBeUndefined(); // Version mismatch yields cache miss
     });
   });
+
+  it("keeps origin evidence apart for scans with and without diagnostics", async () => {
+    const originCache = new OriginCache();
+    const url = "https://diagnostics.example.org/";
+    const plain = await runScan(url, { originCache });
+    const traced = await runScan(url, {
+      originCache,
+      requestDiagnostics: true,
+    });
+    const again = await runScan(url, { originCache, requestDiagnostics: true });
+    expect(plain.originEvidence?.cached).toBe(false);
+    expect(traced.originEvidence?.cached).toBe(false);
+    expect(again.originEvidence?.cached).toBe(true);
+  });
 });

@@ -172,4 +172,32 @@ describe("origin transport admission", () => {
     (await scheduler.acquireRequest(`${origin}/b`, { owner: {} }))();
     expect(origins()).toEqual([{ origin, capacity: 3, activeRequests: 0 }]);
   });
+
+  it("forgets an idle origin reset to the default capacity", async () => {
+    const scheduler = createRequestScheduler({ originCapacity: true });
+    const origins = () => scheduler.snapshot()[0]?.origins;
+    (await scheduler.acquireRequest(`${origin}/a`, { owner: {} }))();
+    scheduler.updateOriginCapacity(origin, null);
+    scheduler.updateOriginCapacity(`${origin}:8443`, 1);
+    expect(origins()).toEqual([]);
+    scheduler.updateOriginCapacity(origin, 2);
+    expect(origins()).toEqual([{ origin, capacity: 2, activeRequests: 0 }]);
+    scheduler.updateOriginCapacity(origin, null);
+    expect(origins()).toEqual([]);
+  });
+
+  it("lets an owner reach a free origin past its request to a full one", async () => {
+    const scheduler = createRequestScheduler({ originCapacity: true });
+    const owner = {};
+    scheduler.updateOriginCapacity("https://www.example.test", 0);
+    let www = false;
+    void scheduler
+      .acquireRequest("https://www.example.test/a", { owner })
+      .then(() => (www = true));
+    const apex = await scheduler.acquireRequest("https://example.test/b", {
+      owner,
+    });
+    expect(www).toBe(false);
+    apex();
+  });
 });

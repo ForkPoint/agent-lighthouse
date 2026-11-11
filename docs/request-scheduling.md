@@ -2,9 +2,9 @@
 
 `createRequestScheduler({ maxConcurrent: 32 })` limits active requests across fetchers. Enable `readyRequestScheduling: true` on `createFetcher` or `runScan` to admit ready hosts before consuming a fetcher's `maxConcurrent` allowance. The default scheduler supports this additive API. Custom schedulers must implement `acquireRequest(url, { owner, maxConcurrent }, signal)` to opt in. Each fetcher supplies one stable owner object. An owner's limit must remain constant. Limits must be positive safe integers. A supplied fetcher must configure its own admission; `runScan` rejects this option alongside a supplied fetcher.
 
-The scheduler holds one lease per normalized host through response-body completion. Apex and www share that lease. Pending work holds no execution capacity. Shared-host queues rotate owner turns and retain each owner's FIFO order. Cancellation removes only its pending entry. Release is idempotent. Imports and response-policy changes recheck the frontier.
+The scheduler holds one lease per normalized host through response-body completion. Apex and www share that lease. Pending work holds no execution capacity. Shared-host queues rotate owner turns and retain each owner's FIFO order per origin: with `originCapacity`, an owner's request held only by a full origin does not hold back its requests to another origin of the host. Cancellation removes only its pending entry. Release is idempotent. Imports and response-policy changes recheck the frontier.
 
-The implementation rebuilds a bounded frontier on queue, capacity or state changes. It sorts at most one entry per known host by readiness and fair host turn. Each pass admits at most one request per host, so hosts take turns. Passes repeat until one admits nothing, so a host with several free slots fills them all when its gap ends. Each pass costs O(H log H), plus O(Q) queue selection for queued work. It keeps one wake timer rather than one timer per request. No live speedup claim follows from the deterministic ordering test.
+The implementation rebuilds a bounded frontier on queue, capacity or state changes. It sorts only hosts with waiting requests, by readiness and fair host turn. Each pass admits at most one request per host, so hosts take turns. Passes repeat until one admits nothing or the global limit is full, so a host with several free slots fills them all when its gap ends. Each pass costs O(H log H) for H hosts with waiting requests, plus O(Q) queue selection for queued work. A pass stops at the global limit; while that limit is full, a change only rejects the queues of stopped hosts. It keeps one wake timer rather than one timer per request. No live speedup claim follows from the deterministic ordering test.
 
 `FetcherSummary.queueWaitMs`, `HttpExchange.queueWaitMs` and request log `LogField.QueueWaitMs` separate scheduler-admission wait from HTTP timing. These diagnostics exclude waiting in the legacy fetcher FIFO gate. The summary sums overlapping waits. That sum is not elapsed time or time saved. Captured HTTP timing remains authoritative during replay. Without opt-in, the fetcher retains its existing FIFO admission gate and custom-scheduler behavior.
 
@@ -15,16 +15,16 @@ The implementation rebuilds a bounded frontier on queue, capacity or state chang
 Each host starts at one request in flight. After a full window of healthy answers, the host limit grows by one, up to `maxPerHost`. A window is as many healthy releases as the current limit. Any strain halves the limit, down to one. Strain is one of:
 
 - a 5xx answer
-- a request that ended without an answer, such as a timeout, a reset or a cancellation
-- a request held longer than `slowMs` (default 5000 ms) from admission to release
+- a request that ended without an answer, such as a timeout or a reset
+- an answer whose response headers came more than `slowMs` (default 5000 ms) after admission
 
-A 404 or any other 2xx–4xx answer is healthy. `gapMs` still separates each release from the next admission to that host, so each slot keeps the configured pause. The 403, 429 and 503 rules are unchanged: they stop the host or start a cooldown whatever the limit.
+Reading the response body does not count toward `slowMs`, so a large page on a fast host stays healthy. A request its caller aborted before any answer, such as one cut off by the scan budget, is not judged either way. A request that got an answer is judged by it, even if its caller aborted it during the body. The release function takes an optional `RequestOutcome` with the request's status, header time and abort; fields it leaves out keep what `observe` recorded. A 404 or any other 2xx–4xx answer is healthy. `gapMs` still separates each release from the next admission to that host, so each slot keeps the configured pause. The 403, 429 and 503 rules are unchanged: they stop the host or start a cooldown whatever the limit.
 
 The host limit is not part of `HostState` and is not exported or imported. Every new scheduler starts each host at one. `snapshot()` reports `activeRequests` and `hostLimit` per host. With ready admission, a fetcher's `maxConcurrent` still caps its own requests, so raise it above one for a scan to use more than one slot on a host.
 
 ## Origin transport capacity
 
-`createRequestScheduler({ originCapacity: true })` adds an opt-in bound per exact origin. Unknown origins start at 1. An adapter calls `updateOriginCapacity(origin, capacity)` with the usable connection capacity. Zero holds pending work. `null` resets a closed connection to unknown (1). Grants reserve origin, normalized-host, owner and global capacity together. Waiting work holds none of these permits. Lower capacity does not cancel existing leases. `HostState` stays unchanged. Queue snapshots optionally include `origins` with capacity and active counts.
+`createRequestScheduler({ originCapacity: true })` adds an opt-in bound per exact origin. Unknown origins start at 1. An adapter calls `updateOriginCapacity(origin, capacity)` with the usable connection capacity. Zero holds pending work. `null` resets a closed connection to unknown (1). The scheduler forgets an idle origin at capacity 1, so resets do not grow its state. Grants reserve origin, normalized-host, owner and global capacity together. Waiting work holds none of these permits. Lower capacity does not cancel existing leases. `HostState` stays unchanged. Queue snapshots optionally include `origins` with capacity and active counts.
 
 Core does not infer peer SETTINGS through private Undici symbols. An adapter must report effective transport capacity from a supported transport. A custom or unpatched SDK transport still works with standard diagnostics; it must not claim peer capacity that it cannot observe. The external corpus pins its own narrow Undici diagnostics patch and filters events by owned public Client identity and socket identity. That adapter requires one connection per origin.
 
@@ -33,6 +33,8 @@ Ready scans complete robots and the primary page's full HTTP redirect chain befo
 ## Transport diagnostics
 
 A supplied custom fetcher must configure its own diagnostics. `runScan` rejects `requestDiagnostics: true` alongside a supplied fetcher. The default custom-fetcher path remains unchanged.
+
+Diagnostics listeners attach on the first fetch with `requestDiagnostics: true`, not when core is imported. Origin evidence cached by a scan is reused only by a scan with the same `requestDiagnostics` setting and the same scheduler use, since its exchanges carry those fields.
 
 Set `requestDiagnostics: true` on `createFetcher` or `runScan` to add optional `HttpExchange.diagnostics` and per-hop `Request exchange` log records. Fetch IDs and hop numbers correlate requests within a fetcher. Scan log context identifies the scan. The corpus request-log sink adds run and attempt IDs. Each record includes its method, observed response status, failure message and scheduler wait. Existing terminal request logs and replay clocks keep their meaning.
 

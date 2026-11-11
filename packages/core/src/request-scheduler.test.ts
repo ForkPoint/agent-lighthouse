@@ -530,4 +530,15 @@ describe("a stopped host's queue", () => {
     await expect(plain).rejects.toBeInstanceOf(HostStoppedError);
     expect(scheduler.snapshot()[0]).toMatchObject({ waiting: 0 });
   });
+
+  it("rejects a stopped host's waiters while the global limit is full", async () => {
+    const scheduler = createRequestScheduler({ maxConcurrent: 1 });
+    const release = await scheduler.acquire("https://busy.test/a");
+    const ready = scheduler.acquireRequest("https://stop.test/b", {
+      owner: {},
+    });
+    scheduler.observe("https://stop.test/x", 429, undefined);
+    await expect(ready).rejects.toBeInstanceOf(HostStoppedError);
+    release();
+  });
 });

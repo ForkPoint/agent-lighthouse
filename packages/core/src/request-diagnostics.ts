@@ -61,38 +61,47 @@ function listen(
     }
   });
 }
-listen("undici:request:create", (timing) => {
-  timing.value.created = true;
-});
-listen("undici:client:sendHeaders", (timing, event) => {
-  timing.sent = performance.now();
-  timing.value.headersSent = true;
-  timing.value.transportWaitMs = Math.round(timing.sent - timing.start);
-  const socket = event["socket"] as { alpnProtocol?: unknown } | undefined;
-  timing.value.protocol = socket
-    ? socket.alpnProtocol === "h2"
-      ? "h2"
-      : "http/1.1"
-    : null;
-});
-listen("undici:request:headers", (timing) => {
-  timing.value.responseHeaders = true;
-  timing.headers = performance.now();
-  if (timing.sent !== undefined)
-    timing.value.responseWaitMs = Math.round(timing.headers - timing.sent);
-});
-listen("undici:request:trailers", (timing) => {
-  timing.value.bodyEnded = true;
-  if (timing.headers !== undefined)
-    timing.value.bodyMs = Math.round(performance.now() - timing.headers);
-});
-listen("undici:request:error", (timing) => {
-  timing.value.transportError = true;
-  timing.value.abortSource ??= RequestAbortSource.Transport;
-});
+
+// Listeners attach on first use, not at import: while any is attached, Undici
+// publishes every request in the process, the scanner's or not.
+let installed = false;
+function install(): void {
+  if (installed) return;
+  installed = true;
+  listen("undici:request:create", (timing) => {
+    timing.value.created = true;
+  });
+  listen("undici:client:sendHeaders", (timing, event) => {
+    timing.sent = performance.now();
+    timing.value.headersSent = true;
+    timing.value.transportWaitMs = Math.round(timing.sent - timing.start);
+    const socket = event["socket"] as { alpnProtocol?: unknown } | undefined;
+    timing.value.protocol = socket
+      ? socket.alpnProtocol === "h2"
+        ? "h2"
+        : "http/1.1"
+      : null;
+  });
+  listen("undici:request:headers", (timing) => {
+    timing.value.responseHeaders = true;
+    timing.headers = performance.now();
+    if (timing.sent !== undefined)
+      timing.value.responseWaitMs = Math.round(timing.headers - timing.sent);
+  });
+  listen("undici:request:trailers", (timing) => {
+    timing.value.bodyEnded = true;
+    if (timing.headers !== undefined)
+      timing.value.bodyMs = Math.round(performance.now() - timing.headers);
+  });
+  listen("undici:request:error", (timing) => {
+    timing.value.transportError = true;
+    timing.value.abortSource ??= RequestAbortSource.Transport;
+  });
+}
 
 /** Isolate one logical transport call; no URL or credential enters diagnostics. */
 export function createRequestDiagnostics() {
+  install();
   const timing: Timing = {
     start: performance.now(),
     done: false,

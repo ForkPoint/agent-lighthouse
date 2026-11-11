@@ -582,9 +582,21 @@ export function createFetcherWith(
       done?.({
         status: answer?.status ?? null,
         ...(answer && { answeredAt: answer.answeredAt }),
-        aborted: externalSignal?.aborted === true,
+        // An answer already says how the host is doing, abort or not.
+        aborted: !answer && externalSignal?.aborted === true,
       });
     };
+    // Which side cut the request off, from the reason its signal carries.
+    const abortSourceOf = (
+      reason: unknown,
+      timeoutSignal?: AbortSignal,
+    ): RequestAbortSource =>
+      timeoutSignal?.aborted && reason === timeoutSignal.reason
+        ? RequestAbortSource.RequestTimeout
+        : fetcherOptions.budgetSignal?.aborted &&
+            reason === fetcherOptions.budgetSignal.reason
+          ? RequestAbortSource.SiteBudget
+          : RequestAbortSource.Caller;
     let ttfbMs = 0;
     const elapsed = () => performance.now() - start - queuedMs;
     // The exchange of the request in flight, until it is reported.
@@ -675,11 +687,7 @@ export function createFetcherWith(
         const value = diagnostic.value;
         const externalAbort = () => {
           if (value.abortSource !== null) return;
-          value.abortSource =
-            fetcherOptions.budgetSignal?.aborted &&
-            externalSignal?.reason === fetcherOptions.budgetSignal.reason
-              ? RequestAbortSource.SiteBudget
-              : RequestAbortSource.Caller;
+          value.abortSource = abortSourceOf(externalSignal?.reason);
         };
         if (externalSignal?.aborted) externalAbort();
         else
@@ -730,13 +738,7 @@ export function createFetcherWith(
         const value = diagnostic.value;
         const abort = () => {
           if (value.abortSource !== null) return;
-          value.abortSource =
-            signal.reason === timeoutSignal.reason && timeoutSignal.aborted
-              ? RequestAbortSource.RequestTimeout
-              : fetcherOptions.budgetSignal?.aborted &&
-                  signal.reason === fetcherOptions.budgetSignal.reason
-                ? RequestAbortSource.SiteBudget
-                : RequestAbortSource.Caller;
+          value.abortSource = abortSourceOf(signal.reason, timeoutSignal);
         };
         if (signal.aborted) abort();
         else signal.addEventListener("abort", abort, { once: true });
@@ -1089,10 +1091,7 @@ export function createFetcherWith(
           exchange.diagnostics.failureCode = code;
         if (exchange.diagnostics && exchange.diagnostics.abortSource === null) {
           exchange.diagnostics.abortSource = externalSignal?.aborted
-            ? fetcherOptions.budgetSignal?.aborted &&
-              externalSignal.reason === fetcherOptions.budgetSignal.reason
-              ? RequestAbortSource.SiteBudget
-              : RequestAbortSource.Caller
+            ? abortSourceOf(externalSignal.reason)
             : err instanceof HostStoppedError
               ? RequestAbortSource.Scheduler
               : RequestAbortSource.Transport;

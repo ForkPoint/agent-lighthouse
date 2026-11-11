@@ -1052,4 +1052,33 @@ describe("auto-throttle work conservation under random load", () => {
       true,
     );
   });
+
+  it("keeps the observed header time when an outcome leaves it out", async () => {
+    vi.useFakeTimers();
+    const scheduler = createRequestScheduler({
+      autoThrottle: { maxPerHost: 4, slowMs: 500 },
+    });
+    const big = await scheduler.acquireRequest("https://site.test/big", {
+      owner,
+    });
+    vi.advanceTimersByTime(100);
+    scheduler.observe("https://site.test/big", 200, undefined);
+    vi.advanceTimersByTime(8000);
+    big({ status: null });
+    expect(limitOf(scheduler)).toBe(2);
+  });
+
+  it("judges an answered request its caller then aborted", async () => {
+    const scheduler = createRequestScheduler({
+      autoThrottle: { maxPerHost: 4 },
+    });
+    await healthy(scheduler, "https://site.test/warm");
+    expect(limitOf(scheduler)).toBe(2);
+    const failing = await scheduler.acquireRequest("https://site.test/500", {
+      owner,
+    });
+    scheduler.observe("https://site.test/500", 500, undefined);
+    failing({ status: null, aborted: true });
+    expect(limitOf(scheduler)).toBe(1);
+  });
 });

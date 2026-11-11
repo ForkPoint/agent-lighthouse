@@ -390,7 +390,8 @@ export function createRequestScheduler(
     if (wake !== undefined) clearTimeout(wake);
     wake = undefined;
     let next = Infinity;
-    for (let admitted = true; admitted;) {
+    // A pass at the global limit admits nothing, so none starts there.
+    for (let admitted = true; admitted && active < globalLimit;) {
       admitted = false;
       const frontier = [...queued];
       frontier.sort((a, b) => a.readyAt - b.readyAt || a.turn - b.turn);
@@ -399,8 +400,8 @@ export function createRequestScheduler(
           rejectStopped(site);
           continue;
         }
-        if (site.leases.length >= site.hostLimit || active >= globalLimit)
-          continue;
+        if (active >= globalLimit) break;
+        if (site.leases.length >= site.hostLimit) continue;
         // The last admitted owner's new backlog takes the last owner turn.
         const previousOwner = site.pending.filter(
           (item) => item.owner === site.lastOwner,
@@ -410,14 +411,15 @@ export function createRequestScheduler(
         );
         site.pending.push(...previousOwner);
         // Only each owner's first request may compete: preserve owner FIFO.
+        // A request held only by its full origin does not hold back the
+        // owner's requests to another origin of the host, such as apex and www.
         const seen = new Set<object>();
         const eligible = site.pending.filter((entry) => {
           if (seen.has(entry.owner)) return false;
+          if (entry.origin !== undefined && !hasOriginRoom(entry.origin))
+            return false;
           seen.add(entry.owner);
-          return (
-            (owners.get(entry.owner) ?? 0) < entry.ownerLimit &&
-            (entry.origin === undefined || hasOriginRoom(entry.origin))
-          );
+          return (owners.get(entry.owner) ?? 0) < entry.ownerLimit;
         });
         const entry = eligible[0];
         if (!entry) continue;
@@ -458,10 +460,12 @@ export function createRequestScheduler(
           if (released) return;
           released = true;
           // The holder's own outcome is exact; `observe` matches by URL only.
+          // A field the outcome leaves out keeps what `observe` recorded, and
+          // an answered request is judged even if its caller then gave up.
           if (outcome) {
-            lease.status = outcome.status;
-            lease.answeredAt = outcome.answeredAt ?? null;
-            lease.aborted = outcome.aborted === true;
+            lease.status = outcome.status ?? lease.status;
+            lease.answeredAt = outcome.answeredAt ?? lease.answeredAt;
+            lease.aborted = outcome.aborted === true && lease.status === null;
           }
           active -= 1;
           if (origin !== undefined) releaseOrigin(origin);
@@ -476,6 +480,12 @@ export function createRequestScheduler(
           dispatch();
         });
       }
+    }
+    // At the global limit a release dispatches again, so no wake is needed,
+    // but a stopped host's queue still fails at once.
+    if (active >= globalLimit) {
+      for (const site of queued) if (site.stopped) rejectStopped(site);
+      return;
     }
     if (next !== Infinity)
       wake = setTimeout(
@@ -568,7 +578,10 @@ export function createRequestScheduler(
         throw new RangeError(
           "origin capacity must be a non-negative safe integer or null",
         );
-      originState(new URL(url).origin).capacity = capacity ?? 1;
+      const origin = new URL(url).origin;
+      const state = originState(origin);
+      state.capacity = capacity ?? 1;
+      if (state.active === 0 && state.capacity === 1) origins.delete(origin);
       dispatch();
     },
     snapshot() {
