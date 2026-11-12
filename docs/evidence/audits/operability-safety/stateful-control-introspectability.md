@@ -53,6 +53,7 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 
 - The audit sits in `operability-safety`. The proposal's `agent-operability` domain is a research grouping, not a category.
 - The state-class vocabulary and the click-signal test live in `_agent-affordances.ts`, shared with `ghost-clickable-element-ratio` so the two cannot drift.
+- Each page survey selects cursor-pointer rules once. It still matches each selector against the current element, so context-sensitive selectors keep their original meaning. This avoids repeating declaration scans for every element without changing evidence or coverage.
 - Native state counts as introspectable without ARIA: `<details>`, `<select>` and checkbox or radio inputs expose `open`, `selected` and `checked` in the DOM.
 - A `<summary>` raises no finding of its own. Its state belongs to its parent `<details>`.
 - A disclosure trigger is a clickable element with `aria-controls`, or one immediately followed by an element whose class matches `/accordion|collapse|panel|details-content/`. The wider "sits before a collapsible panel" would need layout.

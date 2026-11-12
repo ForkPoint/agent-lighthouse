@@ -1,4 +1,4 @@
-import type { CheerioAPI } from "cheerio";
+import { createExplicitLabelLookup } from "#core/html-labels";
 import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
 import { weightForGrade } from "#core/scorer";
@@ -139,30 +139,6 @@ function isStandardAutocomplete(value: string): boolean {
   return purpose !== undefined && STANDARD_AUTOCOMPLETE_TOKENS.has(purpose);
 }
 
-/**
- * Escape only what a quoted attribute value needs: `"` and `\`.
- *
- * Both source audits also escaped `:` and `]`. That was superfluous rather than
- * broken — the selector engine here resolves `label[for="form\:email"]` and
- * `label[for="a\]b"]` to the same elements as the unescaped forms — so this is
- * a simplification with no behaviour change, verified against both id shapes.
- */
-function escapeAttrValue(id: string): string {
-  return id.replace(/(["\\])/g, "\\$1");
-}
-
-/**
- * HTML lets a `<label for>` live anywhere in the document, and layout-driven
- * markup routinely puts it in a sibling grid cell. Both source audits checked
- * this and disagreed on the scope; the document-wide lookup is the one that
- * matches the spec, and it is the real behaviour change in this pair.
- */
-function labelFor($: CheerioAPI, id: string | undefined) {
-  if (!id) return undefined;
-  const label = $(`label[for="${escapeAttrValue(id)}"]`);
-  return label.length > 0 ? label.first() : undefined;
-}
-
 export class FormActionabilityAudit extends Audit {
   static override meta: AuditMeta = {
     id: "operability-safety/form-actionability",
@@ -213,6 +189,7 @@ export class FormActionabilityAudit extends Audit {
 
     for (const page of ctx.pages) {
       const $ = page.$;
+      const labelFor = createExplicitLabelLookup($);
 
       $("form").each((formIndex, formEl) => {
         // A `<form toolname=…>` is a declarative WebMCP tool. It is still just
@@ -271,7 +248,7 @@ export class FormActionabilityAudit extends Audit {
             }
 
             // Check: explicit label association.
-            const forLabel = labelFor($, id);
+            const forLabel = labelFor(id)?.first();
             const hasForLabel = forLabel !== undefined;
             const hasWrappingLabel = $input.closest("label").length > 0;
             const hasAriaLabel =
