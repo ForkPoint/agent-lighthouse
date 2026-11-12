@@ -7,6 +7,7 @@ export const RequestAbortSource = {
   Caller: "caller-cancellation",
   Scheduler: "scheduler-refusal",
   Transport: "transport-error",
+  ResponseLimit: "response-limit",
 } as const;
 export type RequestAbortSource =
   (typeof RequestAbortSource)[keyof typeof RequestAbortSource];
@@ -34,6 +35,8 @@ interface Timing {
   sent?: number;
   headers?: number;
   done: boolean;
+  abortFinal: boolean;
+  sendCount: number;
 }
 const context = new AsyncLocalStorage<Timing>();
 const requests = new WeakMap<object, Timing>();
@@ -72,8 +75,18 @@ function install(): void {
     timing.value.created = true;
   });
   listen("undici:client:sendHeaders", (timing, event) => {
-    timing.sent = performance.now();
+    timing.sendCount += 1;
     timing.value.headersSent = true;
+    if (timing.sendCount > 1) {
+      // Native retries reuse the same request object. Do not combine different
+      // sends into a fabricated timing sample or protocol claim.
+      timing.value.transportWaitMs = null;
+      timing.value.responseWaitMs = null;
+      timing.value.bodyMs = null;
+      timing.value.protocol = null;
+      return;
+    }
+    timing.sent = performance.now();
     timing.value.transportWaitMs = Math.round(timing.sent - timing.start);
     const socket = event["socket"] as { alpnProtocol?: unknown } | undefined;
     timing.value.protocol = socket
@@ -85,18 +98,27 @@ function install(): void {
   listen("undici:request:headers", (timing) => {
     timing.value.responseHeaders = true;
     timing.headers = performance.now();
-    if (timing.sent !== undefined)
+    if (timing.sendCount === 1 && timing.sent !== undefined)
       timing.value.responseWaitMs = Math.round(timing.headers - timing.sent);
   });
   listen("undici:request:trailers", (timing) => {
     timing.value.bodyEnded = true;
-    if (timing.headers !== undefined)
+    if (timing.sendCount === 1 && timing.headers !== undefined)
       timing.value.bodyMs = Math.round(performance.now() - timing.headers);
   });
-  listen("undici:request:error", (timing) => {
+  listen("undici:request:error", (timing, event) => {
     timing.value.transportError = true;
-    timing.value.abortSource ??= RequestAbortSource.Transport;
+    const error = event["error"] as { code?: unknown } | undefined;
+    if (!timing.value.failureCode && typeof error?.code === "string")
+      timing.value.failureCode = error.code;
+    attributeAbort(timing, RequestAbortSource.Transport);
   });
+}
+
+function attributeAbort(timing: Timing, source: RequestAbortSource | null) {
+  if (timing.abortFinal) return;
+  timing.abortFinal = true;
+  timing.value.abortSource = source;
 }
 
 /** Isolate one logical transport call; no URL or credential enters diagnostics. */
@@ -105,6 +127,8 @@ export function createRequestDiagnostics() {
   const timing: Timing = {
     start: performance.now(),
     done: false,
+    abortFinal: false,
+    sendCount: 0,
     value: {
       transportWaitMs: null,
       connectionSetupMs: null,
@@ -121,6 +145,9 @@ export function createRequestDiagnostics() {
   };
   return {
     value: timing.value,
+    attributeAbort(source: RequestAbortSource | null) {
+      attributeAbort(timing, source);
+    },
     run<T>(fn: () => T): T {
       timing.start = performance.now();
       return context.run(timing, fn);

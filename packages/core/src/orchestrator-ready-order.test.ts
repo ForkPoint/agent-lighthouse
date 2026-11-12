@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MockAgent } from "undici";
 import { runScan } from "./orchestrator";
 import { createRequestScheduler } from "./request-scheduler";
+import { RequestAbortSource } from "./request-diagnostics";
 import type { HttpExchange } from "./fetcher";
 import { defaultOriginCache } from "./origin-cache";
 
@@ -65,6 +66,7 @@ describe("ready scan essential evidence order", () => {
         dispatcher,
         lookup,
         readyRequestScheduling: true,
+        requestDiagnostics: true,
         onExchange: (e) => exchanges.push(e),
         requestScheduler: createRequestScheduler({
           autoThrottle: { maxPerHost: 4 },
@@ -76,6 +78,14 @@ describe("ready scan essential evidence order", () => {
       expect(
         exchanges.find((e) => e.request.url === `${origin}/en/`)?.response,
       ).toMatchObject({ status: 200, bodyRead: true });
+      expect(exchanges.length).toBeGreaterThan(0);
+      expect(
+        exchanges.every((exchange) => exchange.diagnostics !== undefined),
+      ).toBe(true);
+      expect(
+        exchanges.find((exchange) => exchange.request.url === `${origin}/en/`)
+          ?.diagnostics?.abortSource,
+      ).toBeNull();
     } finally {
       await dispatcher.close();
     }
@@ -150,12 +160,15 @@ describe("ready scan essential evidence order", () => {
 
   it("ends a slow homepage on the site budget before sending optional roots", async () => {
     const { dispatcher, calls } = fixture(undefined, 200);
+    const exchanges: HttpExchange[] = [];
     try {
       const report = await runScan(origin, {
         dispatcher,
         lookup,
         timeoutMs: 40,
         readyRequestScheduling: true,
+        requestDiagnostics: true,
+        onExchange: (exchange) => exchanges.push(exchange),
         requestScheduler: createRequestScheduler({
           autoThrottle: { maxPerHost: 4 },
         }),
@@ -163,6 +176,10 @@ describe("ready scan essential evidence order", () => {
       });
       expect(report.conditions?.budget?.exhausted).toBe(true);
       expect(calls).not.toContain("/llms.txt");
+      expect(
+        exchanges.find((exchange) => exchange.request.url === `${origin}/en/`)
+          ?.diagnostics?.abortSource,
+      ).toBe(RequestAbortSource.SiteBudget);
     } finally {
       await dispatcher.close();
     }
