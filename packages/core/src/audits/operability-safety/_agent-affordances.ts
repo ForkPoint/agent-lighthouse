@@ -67,45 +67,52 @@ export function stopsPropagation(el: Element): boolean {
 const CURSOR_POINTER = /(^|;)\s*cursor\s*:\s*pointer\b/;
 
 /**
- * Does anything about this element advertise that clicking it does something?
+ * Prepare an element predicate for one page survey with fixed CSS input.
  *
  * Three independent signals, any one of which is enough: an inline handler
  * attribute, a class or `data-*` name from the clickability vocabulary, or a
  * stylesheet rule that gives it the hand cursor. The CSS arm is why the
  * caller passes the rules the css-rules gatherer collected.
  */
-export function hasClickSignal(
-  el: Element,
+export function createClickSignalMatcher(
   $: CheerioAPI,
   rules: readonly CssRule[] = [],
-): boolean {
-  const attribs = el.attribs ?? {};
+): (el: Element) => boolean {
+  // The page survey has one fixed CSS input. Inspect declarations once, not
+  // once per element. Keep selector matching element-relative: selecting all
+  // matches up front changes context-sensitive selectors such as :scope.
+  const selectors = rules
+    .filter((rule) => CURSOR_POINTER.test(rule.declarations))
+    .map((rule) => rule.selector);
 
-  if (hasInlineHandler(el)) return true;
+  return (el: Element): boolean => {
+    const attribs = el.attribs ?? {};
 
-  const names = [
-    attribs["class"] ?? "",
-    ...Object.keys(attribs).filter((k) => k.startsWith("data-")),
-  ];
-  for (const name of names) {
-    for (const token of name.split(/\s+/)) {
-      if (token && CLICKABILITY_CLASS_RE.test(token)) return true;
+    if (hasInlineHandler(el)) return true;
+
+    const names = [
+      attribs["class"] ?? "",
+      ...Object.keys(attribs).filter((k) => k.startsWith("data-")),
+    ];
+    for (const name of names) {
+      for (const token of name.split(/\s+/)) {
+        if (token && CLICKABILITY_CLASS_RE.test(token)) return true;
+      }
     }
-  }
 
-  for (const rule of rules) {
-    if (!CURSOR_POINTER.test(rule.declarations)) continue;
-    // A stylesheet may carry selectors cheerio cannot parse (vendor
-    // pseudo-elements, `:has()` in older builds). One of those must not take
-    // the audit down, so an unparseable selector is skipped, not fatal.
-    try {
-      if ($(el).is(rule.selector)) return true;
-    } catch {
-      continue;
+    for (const selector of selectors) {
+      // A stylesheet may carry selectors cheerio cannot parse (vendor
+      // pseudo-elements, `:has()` in older builds). One of those must not take
+      // the audit down, so an unparseable selector is skipped, not fatal.
+      try {
+        if ($(el).is(selector)) return true;
+      } catch {
+        continue;
+      }
     }
-  }
 
-  return false;
+    return false;
+  };
 }
 
 /** Collapse whitespace and trim, the way an accessible name is computed. */

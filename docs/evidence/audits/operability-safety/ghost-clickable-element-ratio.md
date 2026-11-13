@@ -58,6 +58,7 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Implementation deviations
 
 - The clickability and accessible-name helpers live in `_agent-affordances.ts`. Several audits in this category share them, so the patterns cannot drift apart.
+- Each page survey selects cursor-pointer rules once. It still matches each selector against the current element, so context-sensitive selectors keep their original meaning. This avoids repeating declaration scans for every element without changing evidence or coverage.
 - The ratio is reported as semantic / (semantic + ghost). The floor is 0.9: a page at 0.9 warns, below it fails, and a page with no ghost passes.
 - The empty-name arm covers `<a>`, `<button>` and `<summary>` only. A form control usually takes its name from `<label for>`, which this resolution does not follow.
 - A ghost whose ancestor was already flagged on the click-signal arm is not counted again.

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import * as cheerio from "cheerio";
 import {
-  hasClickSignal,
+  createClickSignalMatcher,
   accessibleName,
   STATE_CLASS_RE,
   CLICKABILITY_CLASS_RE,
@@ -15,17 +15,17 @@ describe("_agent-affordances", () => {
   it("reads cursor:pointer out of a stylesheet as a click signal", () => {
     const $ = load('<div class="promo">Buy</div>');
     const rules = parseCssRules(".promo { cursor: pointer }");
-    expect(hasClickSignal($(".promo")[0]!, $, rules)).toBe(true);
+    expect(createClickSignalMatcher($, rules)($(".promo")[0]!)).toBe(true);
   });
 
   it("does not call a plain div clickable", () => {
     const $ = load('<div class="wrapper">Buy</div>');
-    expect(hasClickSignal($(".wrapper")[0]!, $, [])).toBe(false);
+    expect(createClickSignalMatcher($)($(".wrapper")[0]!)).toBe(false);
   });
 
   it("treats an inline handler attribute as a click signal", () => {
     const $ = load('<div onclick="go()">Buy</div>');
-    expect(hasClickSignal($("div")[0]!, $, [])).toBe(true);
+    expect(createClickSignalMatcher($)($("div")[0]!)).toBe(true);
   });
 
   // A stylesheet may carry a selector cheerio cannot parse. One bad selector
@@ -33,8 +33,65 @@ describe("_agent-affordances", () => {
   it("survives a selector cheerio cannot parse", () => {
     const $ = load('<div class="promo">Buy</div>');
     const rules = parseCssRules("div:::broken( { cursor: pointer }");
-    expect(() => hasClickSignal($(".promo")[0]!, $, rules)).not.toThrow();
-    expect(hasClickSignal($(".promo")[0]!, $, rules)).toBe(false);
+    expect(() =>
+      createClickSignalMatcher($, rules)($(".promo")[0]!),
+    ).not.toThrow();
+    expect(createClickSignalMatcher($, rules)($(".promo")[0]!)).toBe(false);
+  });
+
+  it("inspects a fixed stylesheet once for a complete page survey", () => {
+    const $ = load(
+      Array.from({ length: 100 }, () => '<div class="plain"></div>').join(""),
+    );
+    let declarationReads = 0;
+    const rules = Array.from({ length: 500 }, (_value, i) => ({
+      selector: `.rule-${i}`,
+      origin: "inline",
+      get declarations() {
+        declarationReads++;
+        return "color: red";
+      },
+    }));
+    const matches = createClickSignalMatcher($, rules);
+    const results = $("div").toArray().map(matches);
+    expect(results).toEqual(Array.from({ length: 100 }, () => false));
+    expect(declarationReads).toBe(500);
+  });
+
+  it("keeps element-relative selector semantics and observes DOM changes", () => {
+    const $ = load('<div class="first"></div><div class="second"></div>');
+    for (const selector of [
+      ":scope",
+      ".first",
+      "div + div",
+      "div:not(.first)",
+    ]) {
+      const matches = createClickSignalMatcher(
+        $,
+        parseCssRules(`${selector} { cursor: pointer }`),
+      );
+      for (const node of $("div").toArray())
+        expect(matches(node)).toBe($(node).is(selector));
+      $("div").first().attr("class", "second");
+      for (const node of $("div").toArray())
+        expect(matches(node)).toBe($(node).is(selector));
+      $("div").first().attr("class", "first");
+    }
+  });
+
+  it("does not share stylesheet matches between documents", () => {
+    const first = load('<div class="target"></div>');
+    const second = load('<div class="target"></div>');
+    const firstMatches = createClickSignalMatcher(
+      first,
+      parseCssRules(".target { cursor: pointer }"),
+    );
+    const secondMatches = createClickSignalMatcher(
+      second,
+      parseCssRules(".target { color: red }"),
+    );
+    expect(firstMatches(first("div")[0]!)).toBe(true);
+    expect(secondMatches(second("div")[0]!)).toBe(false);
   });
 
   it("resolves an accessible name from aria-labelledby before own text", () => {

@@ -16,7 +16,7 @@ import { detailLines } from "#core/detail-lines";
 import {
   NATIVE_INTERACTIVE,
   STATE_CLASS_RE,
-  hasClickSignal,
+  createClickSignalMatcher,
   isElement,
 } from "./_agent-affordances";
 import {
@@ -135,6 +135,7 @@ async function survey(ctx: CheckContext): Promise<Survey> {
       verdicts.set(node, finding);
     };
 
+    const hasClickSignal = createClickSignalMatcher($, css.rules);
     $("body *").each((_i, node) => {
       if (!isElement(node)) return;
       const tag = node.tagName?.toLowerCase() ?? "";
@@ -178,7 +179,7 @@ async function survey(ctx: CheckContext): Promise<Survey> {
       const clickable =
         NATIVE_INTERACTIVE.has(tag) ||
         role === "button" ||
-        hasClickSignal(node, $, css.rules);
+        hasClickSignal(node);
 
       // (c) A disclosure trigger: it opens something, so it has an open state.
       if (clickable) {

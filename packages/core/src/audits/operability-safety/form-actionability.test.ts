@@ -9,6 +9,15 @@ const page = (html: string) =>
 describe("FormActionabilityAudit", () => {
   const audit = new FormActionabilityAudit();
 
+  it("uses the first explicit label when labels disagree on field purpose", () => {
+    const result = audit.audit(
+      page(
+        '<label for="field">Reference</label><form><input id="field" name="reference"></form><label for="field">Email</label>',
+      ),
+    );
+    expect(result.status).toBe(CheckStatus.Pass);
+  });
+
   it("returns na when no forms are present", () => {
     const result = audit.audit(
       page("<html><body><h1>Hello</h1></body></html>"),
