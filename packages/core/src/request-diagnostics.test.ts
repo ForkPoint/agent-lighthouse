@@ -5,6 +5,7 @@ import {
   type HttpExchange,
   type Transport,
 } from "./fetcher";
+import { MAX_RESPONSE_BODY_BYTES } from "./constants";
 import { RequestAbortSource } from "./request-diagnostics";
 import { createRequestScheduler } from "./request-scheduler";
 
@@ -126,10 +127,18 @@ describe("per-hop request diagnostics", () => {
       const exchanges: HttpExchange[] = [];
       const transport: Transport = (_url, { signal }) =>
         new Promise((_resolve, reject) => {
-          // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- the test asserts on the exact abort reason
-          signal.addEventListener("abort", () => reject(signal.reason), {
-            once: true,
-          });
+          signal.addEventListener(
+            "abort",
+            () => {
+              const reason: unknown = signal.reason;
+              reject(
+                reason instanceof Error ? reason : new Error("fixture abort"),
+              );
+            },
+            {
+              once: true,
+            },
+          );
         });
       const fetcher = createFetcherWith(
         {
@@ -312,4 +321,140 @@ it("gives redirect hops separate diagnostics while preserving fetch identity", a
     [1, 1, 20],
   ]);
   expect(exchanges[0]?.diagnostics).not.toBe(exchanges[1]?.diagnostics);
+});
+
+it("keeps an intentional response limit distinct from a transport failure", async () => {
+  const exchanges: HttpExchange[] = [];
+  const transport: Transport = async () => {
+    const request = {};
+    emit("request:create", request);
+    emit("client:sendHeaders", request, { socket: { alpnProtocol: "h2" } });
+    emit("request:headers", request);
+    return {
+      statusCode: 200,
+      headers: {},
+      body: {
+        async *[Symbol.asyncIterator]() {
+          try {
+            yield new Uint8Array(MAX_RESPONSE_BODY_BYTES + 1);
+          } finally {
+            emit("request:error", request);
+          }
+        },
+        async dump() {},
+      },
+    };
+  };
+  const fetcher = createFetcherWith(
+    { requestDiagnostics: true, onExchange: (e) => exchanges.push(e) },
+    transport,
+  );
+  const result = await fetcher.fetch({
+    url: "https://site.test",
+    binary: true,
+  });
+  expect(result.status).toBe(200);
+  expect(result.error).toBeUndefined();
+  expect(result.bytes).toHaveLength(MAX_RESPONSE_BODY_BYTES);
+  expect(exchanges[0]?.response).toMatchObject({
+    status: 200,
+    bodyRead: true,
+    truncated: true,
+  });
+  expect(exchanges[0]?.diagnostics).toMatchObject({
+    abortSource: RequestAbortSource.ResponseLimit,
+    transportError: true,
+    headersSent: true,
+    responseHeaders: true,
+    bodyEnded: false,
+  });
+});
+
+it("retains unknown first source when pre-aborted inputs share a reason", async () => {
+  const caller = new AbortController(),
+    budget = new AbortController();
+  const reason = new Error("shared reason");
+  caller.abort(reason);
+  budget.abort(reason);
+  const exchanges: HttpExchange[] = [];
+  const transport = vi.fn<Transport>();
+  const fetcher = createFetcherWith(
+    {
+      requestDiagnostics: true,
+      budgetSignal: budget.signal,
+      onExchange: (exchange) => exchanges.push(exchange),
+    },
+    transport,
+  );
+  await fetcher.fetch({
+    url: "https://site.test",
+    signal: AbortSignal.any([caller.signal, budget.signal]),
+  });
+  expect(transport).not.toHaveBeenCalled();
+  expect(exchanges[0]?.diagnostics?.abortSource).toBeNull();
+  expect(exchanges[0]?.error).toBe("shared reason");
+});
+
+it("retains the first native error code when wrapper failure has none", async () => {
+  const exchanges: HttpExchange[] = [];
+  const transport: Transport = async () => {
+    const request = {};
+    emit("request:create", request);
+    emit("request:error", request, { error: { code: "ECONNRESET" } });
+    emit("request:error", request, { error: { code: "LATER_CODE" } });
+    throw new Error("generic wrapper");
+  };
+  const fetcher = createFetcherWith(
+    {
+      requestDiagnostics: true,
+      onExchange: (exchange) => exchanges.push(exchange),
+    },
+    transport,
+  );
+  const result = await fetcher.fetch({ url: "https://site.test" });
+  expect(exchanges[0]?.diagnostics?.failureCode).toBe("ECONNRESET");
+  expect(result.error).toBe("generic wrapper (ECONNRESET)");
+  expect(fetcher.summary().failures).toHaveProperty("ECONNRESET", 1);
+});
+
+it("tracks native resends internally and leaves combined timing/protocol unknown", async () => {
+  vi.useFakeTimers();
+  const exchanges: HttpExchange[] = [];
+  const transport: Transport = async () => {
+    const request = {};
+    emit("request:create", request);
+    await sleep(10);
+    emit("client:sendHeaders", request, { socket: { alpnProtocol: "h2" } });
+    await sleep(10);
+    emit("request:headers", request);
+    emit("request:error", request, { error: { code: "FIRST_NATIVE" } });
+    await sleep(10);
+    emit("client:sendHeaders", request, { socket: { alpnProtocol: false } });
+    await sleep(10);
+    emit("request:headers", request);
+    return response(request, 5);
+  };
+  const fetcher = createFetcherWith(
+    {
+      requestDiagnostics: true,
+      onExchange: (exchange) => exchanges.push(exchange),
+    },
+    transport,
+  );
+  const pending = fetcher.fetch({ url: "https://site.test" });
+  await vi.advanceTimersByTimeAsync(50);
+  await pending;
+  expect(exchanges[0]?.diagnostics).not.toHaveProperty("sendCount");
+  expect(exchanges[0]?.diagnostics).toMatchObject({
+    created: true,
+    headersSent: true,
+    responseHeaders: true,
+    bodyEnded: true,
+    transportError: true,
+    failureCode: "FIRST_NATIVE",
+    protocol: null,
+    transportWaitMs: null,
+    responseWaitMs: null,
+    bodyMs: null,
+  });
 });

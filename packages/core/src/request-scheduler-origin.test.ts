@@ -31,11 +31,8 @@ describe("origin transport admission", () => {
             abort.signal,
           )
           .then(
-            (release) => {
-              releases.push(release);
-              return undefined;
-            },
-            () => {},
+            (release) => releases.push(release),
+            () => undefined,
           ),
       );
       await Promise.resolve();
