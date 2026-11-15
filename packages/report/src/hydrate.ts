@@ -2,6 +2,7 @@ import type {
   CategoryResult,
   CheckRecommendation,
   CheckResult,
+  PortableScanReport,
   ReadinessVitals,
   ScanReport,
   ScoreTier,
@@ -10,11 +11,17 @@ import {
   CATEGORY_MASS,
   CATEGORY_NAMES,
   countCategoryStatuses,
+  hydratePortableReport,
   isInformative,
   CheckStatus,
 } from "@forkpoint/agent-lighthouse-core";
 import { CATEGORY_ORDER } from "./sections";
 import { generateScanSummary } from "./summary";
+
+export {
+  hydratePortableReport,
+  toPortableReport,
+} from "@forkpoint/agent-lighthouse-core";
 
 /**
  * Structural view of a persisted `scans` row. Kept dependency-free (no drizzle
@@ -45,13 +52,20 @@ export interface PersistedScanRow {
 }
 
 /**
- * Reconstruct the canonical nested `ScanReport` from the flattened DB row.
+ * Reconstruct the canonical nested `ScanReport` from a flattened DB row or
+ * a compact PortableScanReport.
  *
  * The DB stores `checkResults` flat plus a `categoryScores` map; previously each
  * web surface (report page, pdf, shared report) re-grouped these by hand. This
  * helper does it once so they can all go through `buildReportView`.
  */
-export function hydrateReport(row: PersistedScanRow): ScanReport {
+export function hydrateReport(
+  row: PersistedScanRow | PortableScanReport,
+): ScanReport {
+  if ("schemaVersion" in row && "checks" in row) {
+    return hydratePortableReport(row);
+  }
+
   const checkResults = row.checkResults ?? [];
   const categoryScores = row.categoryScores ?? {};
 

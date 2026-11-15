@@ -621,6 +621,90 @@ export const ScanReportSchema = z.object({
   pageIdentity: ScanPageIdentitySchema.optional(),
 });
 
+const PortableCheckAssessmentSchema = z.object({
+  id: z.string().max(64),
+  status: CheckStatusSchema,
+  score: z.number().min(0).max(1),
+  displayValue: z.string().max(1000).optional(),
+  explanation: z.string().max(5000).optional(),
+  pageUrl: z
+    .string()
+    .max(2048)
+    .url()
+    .optional()
+    .or(z.string().max(2048).startsWith("/"))
+    .or(z.string().length(0)),
+  details: z
+    .object({
+      expected: z.string().max(10000).optional(),
+      found: z.string().max(10000).optional(),
+      code: z.string().max(10000).optional(),
+    })
+    .catchall(DetailValueSchema)
+    .optional(),
+  priority: CheckPrioritySchema.optional(),
+  remediation: z.string().max(5000).optional(),
+  tags: z.array(z.string().max(50)).max(20).optional(),
+  coverage: AuditCoverageSchema.optional(),
+});
+
+export const PortableCheckResultSchema = PortableCheckAssessmentSchema.extend({
+  advisoryResults: z.array(PortableCheckAssessmentSchema).optional(),
+});
+
+export const PortableScanReportSchema = z.object({
+  schemaVersion: z.literal(1),
+  coreVersion: z.string(),
+  scanId: z.string(),
+  url: z.string().url(),
+  domain: z.string(),
+  overallScore: z.number().min(0).max(100).nullable(),
+  scoreTier: z.enum(ScoreTier).nullable(),
+  scannedAt: z.string(),
+  durationMs: z.number(),
+  pagesScanned: z.array(ScannedPageSchema),
+  pageAttempts: z.array(PageAttemptSchema).optional(),
+  checks: z.array(PortableCheckResultSchema),
+  scanValidity: z
+    .object({
+      judgeable: z.boolean(),
+      evidence: z.record(EvidenceKeySchema, z.boolean()),
+      reasons: z.partialRecord(EvidenceKeySchema, z.string()),
+      unscoredReason: z.string().optional(),
+    })
+    .optional(),
+  originEvidence: ScanConditionsSchema.shape.origin.optional(),
+  conditions: ScanConditionsSchema.optional(),
+  wafProtection: z
+    .object({
+      isBlocked: z.boolean(),
+      provider: z.enum(WafProvider).optional(),
+      name: z.string(),
+      reason: z.string(),
+      statusCode: z.number().optional(),
+      isRateLimit: z.boolean().optional(),
+    })
+    .optional(),
+  productFields: z
+    .object({
+      sku: z.enum(FieldStatus),
+      gtin: z.enum(FieldStatus),
+      brand: z.enum(FieldStatus),
+      category: z.enum(FieldStatus),
+      availability: z.enum(FieldStatus),
+      priceCurrency: z.enum(FieldStatus),
+      stockLevel: z.enum(FieldStatus),
+      reviewCount: z.enum(FieldStatus),
+      sourceUrl: z.string().optional(),
+    })
+    .optional(),
+  browserAssessment: BrowserAssessmentSchema.optional(),
+  pageIdentity: ScanPageIdentitySchema.optional(),
+  previousScore: z.number().optional(),
+  scoreDelta: z.number().optional(),
+  createdAt: z.string().optional(),
+});
+
 const buildSnapshotsJsonSchema = () =>
   z.toJSONSchema(BrowserSnapshotsSchema, { unrepresentable: "any" });
 let snapshotsJsonSchema:

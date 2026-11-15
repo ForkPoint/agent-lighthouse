@@ -69,7 +69,7 @@ describe.skipIf(!built)("built contracts entry", () => {
 
   it("bundles snapshot input and report schemas for the browser without scanner dependencies", async () => {
     const inputs = await browserInputs(
-      `export { BrowserSnapshotsSchema, BrowserAssessmentSchema, ScanReportSchema } from "@forkpoint/agent-lighthouse-core/schemas";`,
+      `export { BrowserSnapshotsSchema, BrowserAssessmentSchema, ScanReportSchema, PortableScanReportSchema, PortableCheckResultSchema } from "@forkpoint/agent-lighthouse-core/schemas";`,
     );
     expect(inputs.length).toBeGreaterThan(0);
     expect(

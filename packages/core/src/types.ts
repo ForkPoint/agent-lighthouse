@@ -44,6 +44,8 @@ export type {
   PageAttempt,
   PageClassification,
   PageOverride,
+  PortableCheckResult,
+  PortableScanReport,
   ProductFieldVerification,
   ReadinessVitals,
   ScanConditions,

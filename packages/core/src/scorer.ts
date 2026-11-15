@@ -1,4 +1,4 @@
-import type { CheckResult, CategoryResult } from "./types";
+import type { CheckResult, CategoryResult, ReadinessVitals } from "./types";
 import { CATEGORY_NAMES, TAG_SKIPPED_NO_EVIDENCE } from "./constants";
 import {
   AuditTier,
@@ -209,4 +209,76 @@ export function skippedMassShare(checks: CheckResult[], tag: string): number {
     if (check.tags?.includes(tag)) skipped += mass;
   }
   return total === 0 ? 0 : skipped / total;
+}
+
+export const READINESS_VITAL_IDS = {
+  /** v1 3.8, 3.14, 3.21, 3.22, 3.23, 3.24 after the v2 rename. */
+  commerce: [
+    "structured-data/service-schema",
+    "agentic-commerce/offer-schema",
+    "agentic-commerce/product-identifiers",
+    "structured-data/advanced-product-details",
+    // 3.23 (product-reviews) folded into 3.13 (review-schema) in Plan 4.
+    "structured-data/review-schema",
+    "agentic-commerce/product-transaction-certainty",
+  ],
+  /** The v1 content list, minus sunsets, with merged ids mapped to survivors. */
+  content: [
+    "machine-discovery/llms-txt-exists",
+    "machine-discovery/llms-txt-structure",
+    "machine-discovery/llms-txt-link-descriptions",
+    "machine-discovery/llms-txt-links-valid",
+    "machine-discovery/llms-full-txt",
+    "machine-discovery/sitemap-exists",
+    "machine-discovery/discovery-index-coverage",
+    "machine-discovery/sitemap-absolute-urls",
+    "machine-discovery/sitemap-lastmod",
+    "answer-readiness/faq-sections",
+    "answer-readiness/question-headings",
+    "answer-readiness/first-paragraph-answers",
+    "answer-readiness/direct-definitions",
+    "answer-readiness/comparison-tables",
+    // 9.6 (numbered-steps) folded into 6.8 (semantic-lists) in Plan 4.
+    "content-extraction/semantic-lists",
+    "answer-readiness/specific-numbers",
+    "answer-readiness/dates-on-content",
+    "answer-readiness/content-without-clickthrough",
+    "answer-readiness/meta-description",
+    "answer-readiness/brand-name",
+    "answer-readiness/trust-signals",
+    "answer-readiness/review-signals",
+  ],
+} as const;
+
+export function calculateReadinessVitals(
+  checks: Array<{
+    id: string;
+    category: string;
+    score: number;
+    status: CheckStatus;
+  }>,
+): ReadinessVitals {
+  const applicable = checks.filter(
+    (c) => c.status !== CheckStatus.NotApplicable,
+  );
+
+  const average = (matching: Array<{ score: number }>) => {
+    if (matching.length === 0) return 0;
+    return Math.round(
+      (matching.reduce((sum, c) => sum + c.score, 0) / matching.length) * 100,
+    );
+  };
+
+  const getScore = (ids: readonly string[]) =>
+    average(applicable.filter((c) => ids.includes(c.id)));
+
+  const getCategoryScore = (category: string) =>
+    average(applicable.filter((c) => c.category === category));
+
+  return {
+    commerce: getScore(READINESS_VITAL_IDS.commerce),
+    content: getScore(READINESS_VITAL_IDS.content),
+    botAccessibility: getCategoryScore("access-crawl-control"),
+    technical: getCategoryScore("content-extraction"),
+  };
 }

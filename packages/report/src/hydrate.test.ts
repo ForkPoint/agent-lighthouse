@@ -245,4 +245,38 @@ describe("hydrateReport", () => {
     expect(r.originEvidence).toEqual(originEvidence);
     expect(r.conditions).toEqual(conditions);
   });
+
+  it("hydrates a PortableScanReport into a full ScanReport", () => {
+    const portable: import("@forkpoint/agent-lighthouse-core").PortableScanReport =
+      {
+        schemaVersion: 1,
+        coreVersion: "10.6.0",
+        scanId: "portable-1",
+        url: "https://portable.test/",
+        domain: "portable.test",
+        overallScore: 85,
+        scoreTier: ScoreTier.PartiallyReady,
+        scannedAt: "2026-11-15T21:00:00.000Z",
+        durationMs: 800,
+        pagesScanned: [
+          { url: "https://portable.test/", pageType: PageType.Homepage },
+        ],
+        checks: [
+          {
+            id: "access-crawl-control/canonical",
+            status: CheckStatus.Pass,
+            score: 1,
+          },
+        ],
+      };
+
+    const r = hydrateReport(portable);
+    expect(r.scanId).toBe("portable-1");
+    expect(r.overallScore).toBe(85);
+    expect(r.scoreTier).toBe(ScoreTier.PartiallyReady);
+    expect(r.checkResults).toHaveLength(1);
+    expect(r.checkResults![0]!.title).toBeDefined();
+    expect(r.categories).toHaveLength(1);
+    expect(r.categories[0]!.id).toBe("access-crawl-control");
+  });
 });

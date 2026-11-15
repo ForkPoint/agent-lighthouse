@@ -9,7 +9,15 @@ export type {
   BuildReportViewOptions,
 } from "./view-model";
 export { generateScanSummary } from "./summary";
-export { hydrateReport } from "./hydrate";
+export {
+  hydrateReport,
+  hydratePortableReport,
+  toPortableReport,
+} from "./hydrate";
+export type {
+  PortableScanReport,
+  PortableCheckResult,
+} from "@forkpoint/agent-lighthouse-core";
 export {
   SECTION_GROUPS,
   SECTION_GROUP_LABELS,

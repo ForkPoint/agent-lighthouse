@@ -178,6 +178,11 @@ describe("parseCliOptions", () => {
     });
   });
 
+  it("parses portable in output formats", () => {
+    const o = parseCliOptions(["-o", "portable,json"], "https://example.test");
+    expect(o.outputFormats).toEqual(["portable", "json"]);
+  });
+
   // The bug this flag shipped with: it was documented in the help text and
   // never parsed, so a narrowed scan silently ran every category.
   it("parses --categories into a list", () => {

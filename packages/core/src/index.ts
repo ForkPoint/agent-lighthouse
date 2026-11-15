@@ -145,14 +145,17 @@ export {
   calculateCategoryScore,
   buildCategoryResult,
   calculateOverallScore,
+  calculateReadinessVitals,
   categoryAssessedMass,
   countCategoryStatuses,
   isCategoryAssessed,
   isInformative,
   isObsolete,
+  READINESS_VITAL_IDS,
   weightForGrade,
 } from "./scorer";
 export { extractProductFieldVerification } from "./product-fields";
+export { toPortableReport, hydratePortableReport } from "./portable-report";
 
 // Types & Schemas
 export * from "./contracts";
