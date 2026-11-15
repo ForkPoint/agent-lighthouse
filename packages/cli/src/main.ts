@@ -16,6 +16,7 @@ import {
   LogLevel,
   LogFormat,
   getRegistrySummary,
+  toPortableReport,
 } from "@forkpoint/agent-lighthouse-core";
 import { formatRegistrySummary } from "./registry";
 import { createProgressRenderer } from "./progress-renderer";
@@ -102,7 +103,7 @@ Options:
                                Use config "pages" for more URL/type declarations.
   --experimental               Also run experimental-tier audits (excluded by default;
                                they are reported but never scored)
-  -o, --output <formats>       Output formats (comma-separated: terminal, html, json, md) [default: terminal,html,json]
+  -o, --output <formats>       Output formats (comma-separated: terminal, html, json, md, portable) [default: terminal,html,json]
   -d, --output-dir <path>      Output directory for generated reports [default: ./reports]
   -v, --view                   Automatically open the generated HTML report in your browser
   --timeout <seconds>          Wall-clock budget for the scan [default: 180]. When it runs out the
@@ -484,6 +485,21 @@ async function audit(targetUrl?: string) {
     writeFileSync(jsonPath, JSON.stringify(report, null, 2));
     if (!isSilent)
       console.log(`  \x1b[90m• JSON Report:\x1b[0m    ${jsonPath}`);
+  }
+
+  // Portable JSON Report
+  if (
+    outputFormats.includes("portable") ||
+    outputFormats.includes("portable-json")
+  ) {
+    const portablePath = resolve(
+      outputDir,
+      "agent-lighthouse-report.portable.json",
+    );
+    const portable = toPortableReport(report);
+    writeFileSync(portablePath, JSON.stringify(portable, null, 2));
+    if (!isSilent)
+      console.log(`  \x1b[90m• Portable Report:\x1b[0m ${portablePath}`);
   }
 
   // HTML Report

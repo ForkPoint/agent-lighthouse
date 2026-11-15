@@ -578,6 +578,71 @@ export interface ScanReport {
   pageIdentity?: ScanPageIdentity;
 }
 
+/**
+ * Minimal per-check execution facts. All static metadata (title, description,
+ * impact, guidance fix, docsUrl, evidenceUrl, category, weight, etc.) is
+ * omitted and reconstructed from the engine/report version registry.
+ */
+export interface PortableCheckResult {
+  id: string;
+  status: CheckStatus;
+  score: number;
+  displayValue?: string;
+  explanation?: string;
+  pageUrl?: string;
+  details?: {
+    expected?: string;
+    found?: string;
+    code?: string;
+    [key: string]: unknown;
+  };
+  priority?: CheckPriority;
+  remediation?: string;
+  tags?: string[];
+  coverage?: AuditCoverage;
+  advisoryResults?: PortableCheckResult[];
+}
+
+/**
+ * Compact, portable scan report. Contains only execution facts, environment
+ * conditions, and minimal check findings. All macro aggregations (categories,
+ * top passes/fails, recommendations, summaries, readiness vitals) are omitted
+ * and losslessly rehydrated using the engine version's registry and scoring laws.
+ */
+export interface PortableScanReport {
+  schemaVersion: 1;
+  coreVersion: string;
+  scanId: string;
+  url: string;
+  domain: string;
+  overallScore: number | null;
+  scoreTier: ScoreTier | null;
+  scannedAt: string;
+  durationMs: number;
+  pagesScanned: Array<{
+    url: string;
+    pageType: PageType;
+    classification?: PageClassification;
+  }>;
+  pageAttempts?: PageAttempt[];
+  checks: PortableCheckResult[];
+  scanValidity?: ScanValidity;
+  originEvidence?: {
+    origin: string;
+    version: string;
+    readAt: string;
+    cached: boolean;
+  };
+  conditions?: ScanConditions;
+  wafProtection?: WafProtection;
+  productFields?: ProductFieldVerification;
+  browserAssessment?: BrowserAssessment;
+  pageIdentity?: ScanPageIdentity;
+  previousScore?: number;
+  scoreDelta?: number;
+  createdAt?: string;
+}
+
 export interface ScanConditions {
   url: string;
   pageType: {
