@@ -10,14 +10,14 @@
 //
 // What replaces it is the mechanism Google Lighthouse 13.3+ reports in its
 // Agentic Browsing category as "Registered WebMCP tools" (grade B): tools
-// registered at runtime through `navigator.modelContext`. Lighthouse reads them
+// registered at runtime through `document.modelContext`. Lighthouse reads them
 // from a live browser; this scanner has no JS runtime, so it reports the
 // registrations it can see in the served document and says plainly that absence
 // is not evidence of absence. That honesty is why the tier is `experimental`
 // and the weight 0 — the check informs, it never scores.
 //
 // RE-CHECK TRIGGER: if this project ever gains a headless-browser gatherer,
-// this audit should read `navigator.modelContext.getTools()` after load instead
+// this audit should read `document.modelContext.getTools()` after load instead
 // of pattern-matching source text, and the `warn`/`na` branches below collapse.
 import type { AuditMeta, AuditResult } from "#core/types";
 import { Audit } from "#core/audit";
@@ -32,8 +32,8 @@ import {
   ScoreDisplayMode,
 } from "#core/types";
 
-/** The runtime API surface. Nothing else in the platform carries this name. */
-const API_RE = /navigator\s*\.\s*modelContext/;
+/** Match the current Document surface and the legacy Navigator surface. */
+const API_RE = /\b(?:document|navigator)\s*\.\s*modelContext/;
 
 /**
  * `registerTool("name", …)` — the string-first form.
@@ -78,7 +78,7 @@ function callBodies(source: string): string[] {
 interface Registration {
   /** Tool names observed in the served document, deduplicated and ordered. */
   tools: string[];
-  /** A page referenced `navigator.modelContext` at all. */
+  /** A page referenced `document.modelContext` at all. */
   apiReferenced: boolean;
   /** A page carries a declarative WebMCP form, which another audit owns. */
   declarativeForms: boolean;
@@ -119,12 +119,12 @@ function survey(ctx: CheckContext): Registration {
 }
 
 const EXPECTED =
-  "Tools registered at runtime through navigator.modelContext, observable in the served document";
+  "Tools registered through document.modelContext or legacy navigator.modelContext, observable in the served document";
 
 const SAMPLE = `<!-- WebMCP is a JavaScript API: tools are registered imperatively at
      runtime. There is no manifest file, and no well-known path. -->
 <script>
-  navigator.modelContext.registerTool({
+  document.modelContext.registerTool({
     name: "search_products",
     description: "Search the product catalog by keyword or category",
     inputSchema: {
@@ -146,7 +146,7 @@ export class WebmcpRegisteredToolsAudit extends Audit {
     title: "WebMCP registered tools",
     failureTitle: "WebMCP registered tools",
     description:
-      'WebMCP lets a page register agent-callable tools at runtime through navigator.modelContext, which is what Chrome exposes to an in-browser agent and what Lighthouse reports as "Registered WebMCP tools". This scanner has no JavaScript runtime, so it reports the registrations visible in the served document and treats silence as unknown rather than as absence — which is why it is experimental and never scores.',
+      "WebMCP lets a page register agent-callable tools through document.modelContext; older integrations use navigator.modelContext. This scanner has no JavaScript runtime, so it reports the registrations visible in the served document and treats silence as unknown rather than as absence. The audit is experimental and never scores.",
     scoreDisplayMode: ScoreDisplayMode.Informative,
     weight: weightForGrade(EvidenceGrade.B, AuditTier.Experimental),
     evidenceGrade: EvidenceGrade.B,
@@ -168,7 +168,7 @@ export class WebmcpRegisteredToolsAudit extends Audit {
     guidance: {
       impact:
         "A page with no registered tools gives an in-browser agent nothing structured to call, so it falls back to reading the DOM and clicking — slower, and wrong more often on anything past a single text input. Note that this is upside rather than a deficiency: the API is an origin trial, and no site is penalised here for not having adopted it.",
-      fix: "Register your tools from the page with navigator.modelContext.registerTool(), giving each a name, a description an agent can select on, and an inputSchema. For tools that map onto a form, the declarative toolname/tooldescription attributes are simpler and are covered by the agent-interfaces/webmcp-declarative-forms audit.",
+      fix: "Register your tools from the page with document.modelContext.registerTool(), giving each a name, a description an agent can select on, and an inputSchema. For tools that map onto a form, the declarative toolname/tooldescription attributes are simpler and are covered by the agent-interfaces/webmcp-declarative-forms audit.",
       code: SAMPLE,
       effort: FixEffort.Moderate,
       docsUrl: "https://developer.chrome.com/docs/ai/webmcp",
@@ -184,16 +184,16 @@ export class WebmcpRegisteredToolsAudit extends Audit {
       return this.pass(
         `WebMCP tools are registered from the page: ${found.tools.join(", ")}.`,
         EXPECTED,
-        `${count} registered via navigator.modelContext: ${found.tools.join(", ")}`,
+        `${count} registered via document.modelContext: ${found.tools.join(", ")}`,
         found.pageUrl,
       );
     }
 
     if (found.apiReferenced) {
       return this.warn(
-        "A script references navigator.modelContext but no tool name is observable in the served document, so it cannot be confirmed that any tool is registered.",
+        "A script references WebMCP modelContext but no tool name is observable in the served document, so it cannot be confirmed that any tool is registered.",
         EXPECTED,
-        "navigator.modelContext referenced, no tool name observable",
+        "WebMCP modelContext referenced, no tool name observable",
         CheckPriority.Low,
         found.pageUrl,
       );
@@ -203,7 +203,7 @@ export class WebmcpRegisteredToolsAudit extends Audit {
     // Reporting them here too would score one adoption decision twice.
     if (found.declarativeForms) {
       return this.notApplicable(
-        "This site registers its tools declaratively from forms, which agent-interfaces/webmcp-declarative-forms assesses; no imperative navigator.modelContext registration was observed.",
+        "This site registers its tools declaratively from forms, which agent-interfaces/webmcp-declarative-forms assesses; no imperative document.modelContext registration was observed.",
         EXPECTED,
         "Declarative WebMCP forms only",
       );
@@ -216,7 +216,7 @@ export class WebmcpRegisteredToolsAudit extends Audit {
     return this.notApplicable(
       "No WebMCP registration was observed. This scan cannot execute the page JavaScript, so tools registered from an external bundle are invisible to it and absence here is not evidence of absence.",
       EXPECTED,
-      "No navigator.modelContext registration in the served document",
+      "No document.modelContext registration in the served document",
     );
   }
 }

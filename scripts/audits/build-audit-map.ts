@@ -148,7 +148,10 @@ function walkMarkdownFiles(dir: string): string[] {
       results = results.concat(walkMarkdownFiles(full));
     } else if (entry.name.endsWith(".md") && entry.name !== "README.md") {
       results.push(
-        path.relative(path.resolve(REPO_ROOT, "docs/evidence"), full),
+        path
+          .relative(path.resolve(REPO_ROOT, "docs/evidence"), full)
+          .split(path.sep)
+          .join("/"),
       );
     }
   }
