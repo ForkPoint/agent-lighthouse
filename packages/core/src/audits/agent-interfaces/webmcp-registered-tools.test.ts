@@ -26,88 +26,118 @@ describe("WebmcpRegisteredToolsAudit", () => {
     await expectNotApplicableOnEmpty(audit);
   });
 
-  describe("imperative registration detection", () => {
-    it("passes on a registerTool call and names the tool", () => {
-      const result = audit.audit(
-        mockCheckContext([
-          page(
-            script(`navigator.modelContext.registerTool({
+  describe.each(["document", "navigator"])(
+    "imperative registration through %s",
+    (receiver) => {
+      it("passes on a registerTool call and names the tool", () => {
+        const result = audit.audit(
+          mockCheckContext([
+            page(
+              script(`${receiver}.modelContext.registerTool({
               name: "search_products",
               description: "Search the catalog",
               inputSchema: { type: "object" },
             });`),
-          ),
-        ]),
-      );
-      expect(result.status).toBe(CheckStatus.Pass);
-      expect(result.found).toContain("search_products");
-    });
+            ),
+          ]),
+        );
+        expect(result.status).toBe(CheckStatus.Pass);
+        expect(result.found).toContain("search_products");
+      });
 
-    it("reads tools out of a provideContext call", () => {
-      const result = audit.audit(
-        mockCheckContext([
-          page(
-            script(`navigator.modelContext.provideContext({
+      it("reads tools out of a provideContext call", () => {
+        const result = audit.audit(
+          mockCheckContext([
+            page(
+              script(`${receiver}.modelContext.provideContext({
               tools: [
                 { name: 'add_to_cart', description: 'Add an item' },
                 { name: 'checkout', description: 'Check out' },
               ],
             });`),
-          ),
-        ]),
-      );
-      expect(result.status).toBe(CheckStatus.Pass);
-      expect(result.found).toContain("add_to_cart");
-      expect(result.found).toContain("checkout");
-    });
+            ),
+          ]),
+        );
+        expect(result.status).toBe(CheckStatus.Pass);
+        expect(result.found).toContain("add_to_cart");
+        expect(result.found).toContain("checkout");
+      });
 
-    it("accepts a bare string first argument to registerTool", () => {
-      const result = audit.audit(
-        mockCheckContext([
-          page(script(`navigator.modelContext.registerTool("get_status", fn)`)),
-        ]),
-      );
-      expect(result.status).toBe(CheckStatus.Pass);
-      expect(result.found).toContain("get_status");
-    });
+      it("accepts a bare string first argument to registerTool", () => {
+        const result = audit.audit(
+          mockCheckContext([
+            page(
+              script(`${receiver}.modelContext.registerTool("get_status", fn)`),
+            ),
+          ]),
+        );
+        expect(result.status).toBe(CheckStatus.Pass);
+        expect(result.found).toContain("get_status");
+      });
 
-    it("deduplicates a tool registered on more than one page", () => {
-      const js = script(
-        'navigator.modelContext.registerTool({ name: "search" });',
-      );
-      const result = audit.audit(
-        mockCheckContext([page(js), page(js, "https://example.com/shop")]),
-      );
-      expect(result.status).toBe(CheckStatus.Pass);
-      expect(result.found).toContain("1 tool");
-    });
+      it("deduplicates a tool registered on more than one page", () => {
+        const js = script(
+          `${receiver}.modelContext.registerTool({ name: "search" });`,
+        );
+        const result = audit.audit(
+          mockCheckContext([page(js), page(js, "https://example.com/shop")]),
+        );
+        expect(result.status).toBe(CheckStatus.Pass);
+        expect(result.found).toContain("1 tool");
+      });
 
-    it("warns when the API is referenced but no tool name is observable", () => {
-      const result = audit.audit(
-        mockCheckContext([
-          page(script("if (navigator.modelContext) { init(); }")),
-        ]),
-      );
-      expect(result.status).toBe(CheckStatus.Warn);
-      expect(result.message).toContain("navigator.modelContext");
-    });
+      it("warns when the API is referenced but no tool name is observable", () => {
+        const result = audit.audit(
+          mockCheckContext([
+            page(script(`if (${receiver}.modelContext) { init(); }`)),
+          ]),
+        );
+        expect(result.status).toBe(CheckStatus.Warn);
+        expect(result.message).toContain("modelContext");
+      });
 
-    it("ignores a script that never touches navigator.modelContext", () => {
-      const result = audit.audit(
-        mockCheckContext([
-          page(script('window.registerTool({ name: "not_webmcp" });')),
-        ]),
-      );
-      expect(result.status).toBe(CheckStatus.NotApplicable);
-    });
+      it("ignores a script that never touches the WebMCP context", () => {
+        const result = audit.audit(
+          mockCheckContext([
+            page(script('window.registerTool({ name: "not_webmcp" });')),
+          ]),
+        );
+        expect(result.status).toBe(CheckStatus.NotApplicable);
+      });
 
-    it("does not read external script bodies it never fetched", () => {
-      const result = audit.audit(
-        mockCheckContext([page('<script src="/bundle.js"></script>')]),
-      );
-      expect(result.status).toBe(CheckStatus.NotApplicable);
-      expect(result.message).toContain("cannot execute");
-    });
+      it("does not read external script bodies it never fetched", () => {
+        const result = audit.audit(
+          mockCheckContext([page('<script src="/bundle.js"></script>')]),
+        );
+        expect(result.status).toBe(CheckStatus.NotApplicable);
+        expect(result.message).toContain("cannot execute");
+      });
+    },
+  );
+
+  it("does not mistake a similarly named object for document.modelContext", () => {
+    const result = audit.audit(
+      mockCheckContext([
+        page(
+          script('mydocument.modelContext.registerTool({ name: "other" });'),
+        ),
+      ]),
+    );
+    expect(result.status).toBe(CheckStatus.NotApplicable);
+  });
+
+  it("deduplicates a tool observed through current and legacy contexts", () => {
+    const result = audit.audit(
+      mockCheckContext([
+        page(script('document.modelContext.registerTool({ name: "search" });')),
+        page(
+          script('navigator.modelContext.registerTool({ name: "search" });'),
+          "https://example.com/shop",
+        ),
+      ]),
+    );
+    expect(result.status).toBe(CheckStatus.Pass);
+    expect(result.found).toContain("1 tool");
   });
 
   describe("non-double-counting with webmcp-declarative-forms", () => {

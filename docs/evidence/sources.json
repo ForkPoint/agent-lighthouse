@@ -6410,9 +6410,9 @@
       "url": "https://webmachinelearning.github.io/webmcp/",
       "publisher": "W3C Web Machine Learning Community Group",
       "type": "spec",
-      "keyFindings": "Checked as an adjacent agent-facing standard: defines in-page tool registration and form-synthesized tools only. No site-navigation manifest, no .well-known or root JSON discovery file of any kind.",
-      "verified": "2026-08-21",
-      "accessed": "2026-08-21"
+      "keyFindings": "Defines ModelContext on Document with registerTool, getTools and executeTool. Tool registration and discovery are in-page; no site-navigation manifest or standardized .well-known WebMCP discovery file is defined.",
+      "verified": "2026-11-23",
+      "accessed": "2026-11-23"
     },
     {
       "id": "webstatus-declarative-webmcp",

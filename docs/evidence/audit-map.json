@@ -2148,7 +2148,7 @@
       "category": "agent-interfaces",
       "slug": "webmcp-registered-tools",
       "title": "WebMCP registered tools",
-      "purpose": "WebMCP lets a page register agent-callable tools at runtime through navigator.modelContext, which is what Chrome exposes to an in-browser agent and what Lighthouse reports as \"Registered WebMCP tools\". This scanner has no JavaScript runtime, so it reports the registrations visible in the served document and treats silence as unknown rather than as absence — which is why it is experimental and never scores.",
+      "purpose": "WebMCP lets a page register agent-callable tools through document.modelContext; older integrations use navigator.modelContext. This scanner has no JavaScript runtime, so it reports the registrations visible in the served document and treats silence as unknown rather than as absence. The audit is experimental and never scores.",
       "features": [
         "agent-protocol",
         "experimental",
